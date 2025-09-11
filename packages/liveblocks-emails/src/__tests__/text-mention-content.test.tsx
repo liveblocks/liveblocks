@@ -1,44 +1,15 @@
-import { html, htmlSafe } from "@liveblocks/core";
+import { html, htmlSafe, MENTION_CHARACTER } from "@liveblocks/core";
 import { describe, expect, test } from "vitest";
 
-import { MENTION_CHARACTER } from "../lib/constants";
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import {
-  convertMentionContent,
-  type ConvertMentionContentElements,
-} from "../mention-content";
-import { resolveUsers } from "./_helpers";
+  convertTextMentionContent,
+  type ConvertTextMentionContentElements,
+} from "../text-mention-content";
+import { resolveGroupsInfo, resolveUsers } from "./_helpers";
 
-const buildMentionTextEditorNodes = ({
-  mentionedUserId,
-}: {
-  mentionedUserId: string;
-}): LiveblocksTextEditorNode[] => [
-  {
-    type: "text",
-    text: "Hello ",
-    bold: false,
-    italic: false,
-    strikethrough: false,
-    code: false,
-  },
-  {
-    type: "mention",
-    kind: "user",
-    id: mentionedUserId,
-  },
-  {
-    type: "text",
-    text: " !",
-    bold: false,
-    italic: false,
-    strikethrough: false,
-    code: false,
-  },
-];
-
-describe("convert mention content", () => {
-  const elements: ConvertMentionContentElements<string> = {
+describe("convert text mention content", () => {
+  const elements: ConvertTextMentionContentElements<string> = {
     container: ({ children }) => {
       const content = [
         // prettier-ignore
@@ -47,9 +18,9 @@ describe("convert mention content", () => {
 
       return content.join("\n"); //NOTE: to represent a valid HTML string
     },
-    mention: ({ node, user }) => {
+    mention: ({ node, user, group }) => {
       // prettier-ignore
-      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
+      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : node.id}</span>`
     },
     text: ({ node }) => {
       // Note: construction following the schema 👇
@@ -83,13 +54,48 @@ describe("convert mention content", () => {
     },
   };
 
-  test("should convert mention content", async () => {
-    const mention = buildMentionTextEditorNodes({
-      mentionedUserId: "user-dracula",
+  test("should convert text mention content", async () => {
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "user",
+        id: "user-dracula",
+      },
+      {
+        type: "text",
+        text: " and ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "group",
+        id: "group-vampires",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
+    const content = await convertTextMentionContent<string>(mention, {
+      elements,
     });
-    const content = await convertMentionContent<string>(mention, { elements });
     const expected =
-      "<div>Hello <span data-mention>@user-dracula</span> !</div>";
+      "<div>Hello <span data-mention>@user-dracula</span> and <span data-mention>@group-vampires</span> !</div>";
 
     expect(content).toEqual(expected);
   });
@@ -118,7 +124,7 @@ describe("convert mention content", () => {
         code: false,
       },
     ];
-    const content = await convertMentionContent<string>(mention, {
+    const content = await convertTextMentionContent<string>(mention, {
       elements,
     });
     const expected =
@@ -151,7 +157,7 @@ describe("convert mention content", () => {
         code: false,
       },
     ];
-    const content = await convertMentionContent<string>(mention, {
+    const content = await convertTextMentionContent<string>(mention, {
       elements,
     });
     const expected =
@@ -161,13 +167,69 @@ describe("convert mention content", () => {
   });
 
   test("should resolve user info", async () => {
-    const mention = buildMentionTextEditorNodes({ mentionedUserId: "user-0" });
-    const content = await convertMentionContent<string>(mention, {
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "user",
+        id: "user-0",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
+    const content = await convertTextMentionContent<string>(mention, {
       elements,
       resolveUsers,
     });
     const expected =
       "<div>Hello <span data-mention>@Charlie Layne</span> !</div>";
+
+    expect(content).toEqual(expected);
+  });
+
+  test("should resolve group info", async () => {
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "group",
+        id: "group-0",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
+    const content = await convertTextMentionContent<string>(mention, {
+      elements,
+      resolveGroupsInfo,
+    });
+    const expected =
+      "<div>Hello <span data-mention>@Engineering</span> !</div>";
 
     expect(content).toEqual(expected);
   });
@@ -190,7 +252,7 @@ describe("convert mention content", () => {
         },
       ];
 
-      const content = await convertMentionContent<string>(mention, {
+      const content = await convertTextMentionContent<string>(mention, {
         elements,
       });
       const expected =
@@ -198,11 +260,31 @@ describe("convert mention content", () => {
       expect(content).toEqual(expected);
     });
 
-    test("should escape html entities in mention w/ username", async () => {
-      const mention = buildMentionTextEditorNodes({
-        mentionedUserId: "user-mina",
-      });
-      const content = await convertMentionContent<string>(mention, {
+    test("should escape html entities in mention w/ name", async () => {
+      const mention: LiveblocksTextEditorNode[] = [
+        {
+          type: "text",
+          text: "Hello ",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "mention",
+          kind: "user",
+          id: "user-dracula",
+        },
+        {
+          type: "text",
+          text: " !",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+      ];
+      const content = await convertTextMentionContent<string>(mention, {
         elements,
         resolveUsers: ({ userIds }) => {
           return userIds.map((userId) => {

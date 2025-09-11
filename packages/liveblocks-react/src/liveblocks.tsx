@@ -8,6 +8,7 @@ import type {
 import type {
   AiUserMessage,
   AsyncResult,
+  BaseGroupInfo,
   BaseRoomInfo,
   CopilotId,
   DM,
@@ -60,6 +61,8 @@ import type {
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
   CreateAiChatOptions,
+  GroupInfoAsyncResult,
+  GroupInfoAsyncSuccess,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
@@ -95,6 +98,12 @@ function missingUserError(userId: string) {
 function missingRoomInfoError(roomId: string) {
   return new Error(
     `resolveRoomsInfo didn't return anything for room '${roomId}'`
+  );
+}
+
+function missingGroupInfoError(groupId: string) {
+  return new Error(
+    `resolveGroupsInfo didn't return anything for group '${groupId}'`
   );
 }
 
@@ -179,6 +188,34 @@ function selectorFor_useRoomInfo(
     return {
       isLoading: false,
       error: missingRoomInfoError(roomId),
+    };
+  }
+
+  return {
+    isLoading: false,
+    info: state.data,
+  };
+}
+
+function selectorFor_useGroupInfo(
+  state: AsyncResult<BaseGroupInfo | undefined> | undefined,
+  groupId: string
+): GroupInfoAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this group info" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingGroupInfoError(groupId),
     };
   }
 
@@ -988,6 +1025,90 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   } as const;
 }
 
+function useGroupInfo_withClient(
+  client: OpaqueClient,
+  groupId: string
+): GroupInfoAsyncResult {
+  const groupsInfoStore = client[kInternal].groupsInfoStore;
+
+  const getGroupInfoState = useCallback(
+    () => groupsInfoStore.getItemState(groupId),
+    [groupsInfoStore, groupId]
+  );
+
+  const selector = useCallback(
+    (state: ReturnType<typeof getGroupInfoState>) =>
+      selectorFor_useGroupInfo(state, groupId),
+    [groupId]
+  );
+
+  const result = useSyncExternalStoreWithSelector(
+    groupsInfoStore.subscribe,
+    getGroupInfoState,
+    getGroupInfoState,
+    selector,
+    shallow
+  );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(
+    () => void groupsInfoStore.enqueue(groupId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call groupsInfoStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the groupId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the groupId gets invalidated, the group info would be fetched again.
+  );
+
+  return result;
+}
+
+function useGroupInfoSuspense_withClient(
+  client: OpaqueClient,
+  groupId: string
+) {
+  const groupsInfoStore = client[kInternal].groupsInfoStore;
+
+  const getGroupInfoState = useCallback(
+    () => groupsInfoStore.getItemState(groupId),
+    [groupsInfoStore, groupId]
+  );
+  const groupInfoState = getGroupInfoState();
+
+  if (!groupInfoState || groupInfoState.isLoading) {
+    throw groupsInfoStore.enqueue(groupId);
+  }
+
+  if (groupInfoState.error) {
+    throw groupInfoState.error;
+  }
+
+  // Throw an error if `undefined` was returned by `resolveGroupsInfo` for this group ID
+  if (!groupInfoState.data) {
+    throw missingGroupInfoError(groupId);
+  }
+
+  const state = useSyncExternalStore(
+    groupsInfoStore.subscribe,
+    getGroupInfoState,
+    getGroupInfoState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  assert(state.data !== undefined, "Unexpected missing group info data");
+  return {
+    isLoading: false,
+    info: state.data,
+    error: undefined,
+  } as const;
+}
+
 /**
  * (Private beta)  Returns the chats for the current user.
  *
@@ -1385,6 +1506,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+      useGroupInfo: (groupId: string) =>
+        useGroupInfo_withClient(client, groupId),
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
@@ -1396,6 +1519,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
+      useGroupInfo: (groupId: string) =>
+        useGroupInfoSuspense_withClient(client, groupId),
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
@@ -1468,6 +1593,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     ),
     resolveUsers: useInitialUnlessFunction(o.resolveUsers),
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
+    resolveGroupsInfo: useInitialUnlessFunction(o.resolveGroupsInfo),
 
     baseUrl: useInitial(
       // @ts-expect-error - Hidden config options
@@ -1758,6 +1884,26 @@ function useRoomInfoSuspense(roomId: string): RoomInfoAsyncSuccess {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
 }
 
+/**
+ * Returns group info from a given group ID.
+ *
+ * @example
+ * const { info, error, isLoading } = useGroupInfo("group-id");
+ */
+function useGroupInfo(groupId: string): GroupInfoAsyncResult {
+  return useGroupInfo_withClient(useClient(), groupId);
+}
+
+/**
+ * Returns group info from a given group ID.
+ *
+ * @example
+ * const { info } = useGroupInfo("group-id");
+ */
+function useGroupInfoSuspense(groupId: string): GroupInfoAsyncSuccess {
+  return useGroupInfoSuspense_withClient(useClient(), groupId);
+}
+
 type TypedBundle = LiveblocksContextBundle<DU, DM>;
 
 /**
@@ -1985,6 +2131,8 @@ export {
   useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,
+  useGroupInfo,
+  useGroupInfoSuspense,
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,

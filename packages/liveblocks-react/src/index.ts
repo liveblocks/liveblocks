@@ -91,6 +91,7 @@ export {
   useSendAiMessage,
   useUserThreads_experimental as useUserThreads_experimental,
   useRoomInfo,
+  useGroupInfo,
   useUnreadInboxNotificationsCount,
   useUser,
   useAiChat,

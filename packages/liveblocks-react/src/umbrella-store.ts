@@ -37,7 +37,6 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  getMentionsFromCommentBody,
   getSubscriptionKey,
   kInternal,
   MutableSignal,
@@ -2186,18 +2185,10 @@ function applyOptimisticUpdates_forSubscriptions(
               break;
             }
 
-            // Create subscriptions for every threads in the room which the user participates in but doesn't have a subscription for yet
             case "replies_and_mentions": {
-              if (
-                isThreadParticipant(thread, update.userId) &&
-                !subscriptions[subscriptionKey]
-              ) {
-                subscriptions[subscriptionKey] = {
-                  kind: "thread",
-                  subjectId: thread.id,
-                  createdAt: new Date(),
-                };
-              }
+              // TODO: We can't go through the comments and create subscriptions optimistically because
+              //       we might not have group members for all group IDs which means we can't reliably
+              //       know if the user was mentioned with a group mention.
               break;
             }
 
@@ -2535,41 +2526,4 @@ function upsertReaction(
   }
 
   return reactions;
-}
-
-/**
- * Returns whether a user is a thread participant:
- * - If the user commented in the thread
- * - If the user was mentioned in the thread
- */
-function isThreadParticipant<M extends BaseMetadata>(
-  thread: ThreadData<M>,
-  userId: string
-) {
-  let isParticipant = false;
-
-  for (const comment of thread.comments) {
-    if (comment.deletedAt) {
-      continue;
-    }
-
-    if (comment.userId === userId) {
-      isParticipant = true;
-
-      break;
-    }
-
-    const mentions = getMentionsFromCommentBody(
-      comment.body,
-      (mention) => mention.kind === "user" && mention.id === userId
-    );
-
-    if (mentions.length > 0) {
-      isParticipant = true;
-
-      break;
-    }
-  }
-
-  return isParticipant;
 }

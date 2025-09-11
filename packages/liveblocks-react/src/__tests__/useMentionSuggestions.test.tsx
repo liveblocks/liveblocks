@@ -117,6 +117,51 @@ describe("useMentionSuggestions", () => {
     unmount();
   });
 
+  test("should support multiple kinds of mentions", async () => {
+    const roomId = nanoid();
+
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: () => [
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+        { kind: "group", id: "here", userIds: ["a", "b", "c"] },
+        { kind: "group", id: "0" },
+        { kind: "group", id: "1" },
+      ],
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        mentionSuggestions: useMentionSuggestions(roomId, ""),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.mentionSuggestions).toBeUndefined();
+
+    await waitFor(() =>
+      expect(result.current.mentionSuggestions).not.toBeUndefined()
+    );
+
+    expect(result.current.mentionSuggestions).toEqual([
+      { kind: "user", id: "a" },
+      { kind: "user", id: "b" },
+      { kind: "user", id: "c" },
+      { kind: "group", id: "here", userIds: ["a", "b", "c"] },
+      { kind: "group", id: "0" },
+      { kind: "group", id: "1" },
+    ]);
+
+    unmount();
+  });
+
   test("should invoke resolveMentionSuggestions with the expected arguments", async () => {
     const roomId = nanoid();
 

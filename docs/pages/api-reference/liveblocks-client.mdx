@@ -62,7 +62,7 @@ const client = createClient({
   // Disconnect users after X (ms) of inactivity, disabled by default
   backgroundKeepAliveTimeout: undefined,
 
-  // Resolve user info for Comments and Notifications
+  // Resolve user info for Comments, Text Editor, and Notifications
   resolveUsers: async ({ userIds }) => {
     const usersData = await __getUsersFromDB__(userIds);
 
@@ -82,7 +82,18 @@ const client = createClient({
     }));
   },
 
-  // Resolve mention suggestions for Comments
+  // Resolve group info for Comments and Text Editor
+  resolveGroupsInfo: async ({ groupIds }) => {
+    const groupsData = await __getGroupsFromDB__(groupIds);
+
+    return groupsData.map((groupData) => ({
+      avatar: groupData.avatar.src,
+      name: groupData.name,
+      // description: groupData.description,
+    }));
+  },
+
+  // Resolve mention suggestions for Comments and Text Editor
   resolveMentionSuggestions: async ({ text, roomId }) => {
     const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
@@ -160,7 +171,7 @@ const client = createClient({
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments). Return an array of
+    [Comments](/docs/ready-made-features/comments), [Text Editor](/docs/ready-made-features/text-editor), and [Notifications](/docs/ready-made-features/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
@@ -169,16 +180,25 @@ const client = createClient({
     detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
   >
     A function that resolves room information in
-    [Comments](/docs/ready-made-features/comments). Return an array of
+    [Notifications](/docs/ready-made-features/notifications). Return an array of
     `RoomInfo` objects in the same order they arrived. [Learn
     more](#createClientResolveRoomsInfo).
   </PropertiesListItem>
   <PropertiesListItem
+    name="resolveGroupsInfo"
+    detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
+  >
+    A function that resolves group information in
+    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of
+    `GroupInfo` objects in the same order they arrived. [Learn
+    more](#createClientResolveGroupsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem
     name="resolveMentionSuggestions"
-    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments). Return an array of user IDs.
+    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of user IDs or mention objects.
     [Learn more](#createClientResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
@@ -424,11 +444,13 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-[Comments](/docs/ready-made-features/comments) stores user IDs in its system,
-but no other user information. To display user information in Comments
-components, such as a user’s name or avatar, you need to resolve these IDs into
-user objects. This function receives a list of user IDs and you should return a
-list of user objects of the same size, in the same order.
+[Comments](/docs/ready-made-features/comments) and
+[Text Editor](/docs/ready-made-features/text-editor) store user IDs in their
+system, but no other user information. To display user information in Comments,
+Text Editor, and Notifications components, such as a user’s name or avatar, you
+need to resolve these IDs into user objects. This function receives a list of
+user IDs and you should return a list of user objects of the same size, in the
+same order.
 
 User IDs are automatically resolved in batches with a maximum of 50 users per
 batch to optimize performance and prevent overwhelming your user resolution
@@ -554,12 +576,57 @@ via `href`, but the room ID might not be enough for you to construct the URL ,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
+### resolveGroupsInfo [#createClientResolveGroupsInfo]
+
+When using group mentions with [Comments](/docs/ready-made-features/comments)
+and [Text Editor](/docs/ready-made-features/text-editor), group IDs will be used
+instead of user IDs. Similarly to [`resolveUsers`](#createClientResolveUsers),
+you can provide a resolver function to the `resolveGroupsInfo` option in
+[`createClient`](#createClient) to assign information like names and avatars to
+group IDs.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  resolveGroupsInfo: async ({ groupIds }) => {
+    const groupsData = await __getGroupsFromDB__(groupIds);
+
+    return groupsData.map((groupData) => ({
+      name: groupData.name,
+      avatar: groupData.avatar.src,
+    }));
+  },
+
+  // Other options
+  // ...
+});
+```
+
+#### Accessing group info in React
+
+You can access any values set within `resolveGroupsInfo` with the
+[`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook.
+
+```tsx
+import { useGroupInfo } from "@liveblocks/react/suspense";
+
+function Component() {
+  const group = useGroupInfo("group-engineering");
+
+  // { name: "Engineering", avatar: "https://...", ... }
+  console.log(group);
+}
+```
+
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/ready-made-features/comments),
-you can provide a resolver function to the `resolveMentionSuggestions` option in
+To enable creating mentions in [Comments](/docs/ready-made-features/comments)
+and [Text Editor](/docs/ready-made-features/text-editor), you can provide a
+resolver function to the `resolveMentionSuggestions` option in
 [`createClient`](#createClient). These mentions will be displayed in the
-[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component and in
+text editors.
 
 This resolver function will receive the mention currently being typed (e.g. when
 writing “@jane”, `text` will be `jane`) and should return a list of user IDs
@@ -585,6 +652,64 @@ const client = createClient({
   // Other options
   // ...
 });
+```
+
+#### Group mentions
+
+To support group mentions in [Comments](/docs/ready-made-features/comments) and
+[Text Editor](/docs/ready-made-features/text-editor), you can return a list of
+mention objects instead of user IDs to suggest a mix of user and group mentions.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const dbUsers = await __findUsersFromDB__(roomId);
+    const dbGroups = await __findGroupsFromDB__(roomId);
+
+    // Show groups and users matching the text being typed
+    return [
+      ...dbGroups.map((group) => ({
+        kind: "group",
+        id: group.id,
+      })),
+      ...dbUsers.map((user) => ({
+        kind: "user",
+        id: user.id,
+      })),
+    ];
+  },
+
+  // Other options
+  // ...
+});
+```
+
+The mention objects specify which kind of mention it is, the ID to mention (user
+ID or group ID), etc.
+
+```tsx
+// A user mention suggestion
+{
+  kind: "user",
+  id: "user-1",
+}
+
+// A group mention suggestion
+{
+  kind: "group",
+  id: "group-1",
+}
+
+// A group mention suggestion with fixed group members
+// When using fixed group members via `userIds`, they will take precedence
+// if the group ID exists on Liveblocks.
+{
+  kind: "group",
+  id: "here",
+  members: ["user-1", "user-2"],
+}
 ```
 
 ### createClient for Node.js [#createClientNode]
@@ -5173,10 +5298,27 @@ client.resolvers.invalidateRoomsInfo();
 client.resolvers.invalidateRoomsInfo(["room-0", "room-1"]);
 ```
 
+### invalidateGroupsInfo
+
+`client.resolvers.invalidateGroupsInfo` can be used to invalidate some or all
+groups that were previously cached by
+[`resolveGroupsInfo`](#createClientResolveGroupsInfo).
+
+It can be used when updating a group’s name for example, to instantly refresh
+the group info everywhere without having to perform a page reload.
+
+```tsx
+// Invalidate all groups
+client.resolvers.invalidateGroupsInfo();
+
+// Only invalidate "group-0" and "group-1"
+client.resolvers.invalidateGroupsInfo(["group-0", "group-1"]);
+```
+
 ### invalidateMentionSuggestions
 
-`client.resolvers.invalidateRoomsInfo` can be used to invalidate all mention
-suggestions that were previously cached by
+`client.resolvers.invalidateMentionSuggestions` can be used to invalidate all
+mention suggestions that were previously cached by
 [`resolveMentionSuggestions`](#createClientResolveMentionSuggestions).
 
 It can be used when updating a room’s list of users for example, to prevent
@@ -5291,9 +5433,10 @@ const stringComment = await stringifyCommentBody(comment.body, {
     link: ({ element, href }) =>
       `<a href="${href}" target="_blank">${element.url}</a>`,
 
-    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
-    mention: ({ element, user }) =>
-      `<a href="${user.profileUrl}">${element.id}</a>`,
+    // Optional, override the `mention` element.
+    // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
+    mention: ({ element, user, group }) =>
+      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${element.id}</a>`,
   },
 
   // Optional, get your user’s names and info from their ID to be displayed in mentions
@@ -5306,6 +5449,19 @@ const stringComment = await stringifyCommentBody(comment.body, {
 
       // Custom formatting in `elements.mention` allows custom properties to be used
       profileUrl: userData.profileUrl,
+    }));
+  },
+
+  // Optional, get your group’s names and info from their ID to be displayed in mentions
+  async resolveGroupsInfo({ groupIds }) {
+    const groupsData = await __getGroupsFromDB__(groupIds);
+
+    return groupsData.map((groupData) => ({
+      // Name is inserted into the output instead of a group’s ID
+      name: groupData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      settingsUrl: groupData.settingsUrl,
     }));
   },
 });
@@ -5401,6 +5557,9 @@ declare global {
     // Custom room info set with resolveRoomsInfo
     RoomInfo: {};
 
+    // Custom group info set with resolveGroupsInfo
+    GroupInfo: {};
+
     // Custom activities data for custom notification kinds
     ActivitiesData: {};
   }
@@ -5455,6 +5614,13 @@ declare global {
       // Example, rooms with a title and url
       title: string;
       url: string;
+    };
+
+    // Custom group info set with resolveGroupsInfo
+    GroupInfo: {
+      // Example, groups with a name and a badge
+      name: string;
+      badge: string;
     };
 
     // Custom activities data for custom notification kinds

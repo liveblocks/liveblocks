@@ -2,6 +2,7 @@ import type { AuthManager, AuthValue } from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
   convertToSubscriptionData,
@@ -9,6 +10,7 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -44,12 +46,14 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
+import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type {
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -300,12 +304,12 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   // Text editor
   createTextMention({
     roomId,
-    userId,
     mentionId,
+    mention,
   }: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }): Promise<void>;
 
   deleteTextMention({
@@ -485,6 +489,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
+
+  groupsStore: BatchStore<GroupData | undefined, string>;
+
+  getGroup(groupId: string): Promise<GroupData | undefined>;
 }
 
 export function createApiClient<M extends BaseMetadata>({
@@ -1317,9 +1325,13 @@ export function createApiClient<M extends BaseMetadata>({
    * -----------------------------------------------------------------------------------------------*/
   async function createTextMention(options: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }) {
+    if (options.mention.kind !== "user" && options.mention.kind !== "group") {
+      return assertNever(options.mention, "Unexpected mention kind");
+    }
+
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
@@ -1327,7 +1339,14 @@ export function createApiClient<M extends BaseMetadata>({
         roomId: options.roomId,
       }),
       {
-        userId: options.userId,
+        userId:
+          options.mention.kind === "user" ? options.mention.id : undefined,
+        groupId:
+          options.mention.kind === "group" ? options.mention.id : undefined,
+        userIds:
+          options.mention.kind === "group"
+            ? options.mention.userIds
+            : undefined,
         mentionId: options.mentionId,
       }
     );
@@ -1526,6 +1545,7 @@ export function createApiClient<M extends BaseMetadata>({
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
+      groups: GroupDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1539,6 +1559,12 @@ export function createApiClient<M extends BaseMetadata>({
         query,
       }
     );
+
+    const groups = json.groups.map(convertToGroupData);
+
+    // Instead of being returned publicly, the user's groups are put in
+    // a separate store which is also used for on-demand fetching.
+    groupsStore.setData(groups.map((group) => [group.id, group]));
 
     return {
       inboxNotifications: json.inboxNotifications.map(
@@ -1773,6 +1799,40 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Groups
+   * -------------------------------------------------------------------------------------------------
+   */
+
+  const batchedGetGroups = new Batch(
+    async (batchedGroupIds: string[]) => {
+      const groupIds = batchedGroupIds.flat();
+      const { groups: plainGroups } = await httpClient.post<{
+        groups: GroupDataPlain[];
+      }>(
+        url`/v2/c/groups/find`,
+        await authManager.getAuthValue({
+          requestedScope: "comments:read",
+        }),
+        { groupIds }
+      );
+
+      const groups = new Map<string, GroupData>();
+
+      for (const group of plainGroups) {
+        groups.set(group.id, convertToGroupData(group));
+      }
+
+      return groupIds.map((groupId) => groups.get(groupId));
+    },
+    { delay: 50 }
+  );
+  const groupsStore = createBatchStore(batchedGetGroups);
+
+  function getGroup(groupId: string) {
+    return batchedGetGroups.get(groupId);
+  }
+
   return {
     // Room threads
     getThreads,
@@ -1826,6 +1886,9 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // Groups
+    groupsStore,
+    getGroup,
     // AI
     executeContextualPrompt,
   };

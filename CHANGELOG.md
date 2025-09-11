@@ -2,13 +2,54 @@
 
 ## v3.7.0
 
+This release introduces group mentions (e.g. `@engineering`) across all packages
+and first-class support for tenants. Learn more about
+[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+
 ### `@liveblocks/client`
 
+- Add new `resolveGroupsInfo` resolver to provide information about groups (e.g.
+  `name`, `avatar`, etc) similar to `resolveUsers`.
+- Support returning group mention suggestions in `resolveMentionSuggestions`.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
 - Add query filters `roomId` and `kind` on the `getInboxNotifications` method.
 
 ### `@liveblocks/react`
 
+- Add `useGroupInfo` hook to use `resolveGroupsInfo` in React, same as `useUser`
+  for `resolveUsers`.
 - Add query filters `roomId` and `kind` on the `useInboxNotifications` hook.
+
+### `@liveblocks/react-ui`
+
+- Support group mentions in default components (mentions suggestions dropdowns,
+  `Thread`, `Composer`, `InboxNotification`, etc).
+
+### `@liveblocks/react-lexical`, `@liveblocks/react-tiptap`, and `@liveblocks/node-lexical`
+
+- Support group mentions in text editors and comments-related components.
+
+### `@liveblocks/node-lexical` and `@liveblocks/node-prosemirror`
+
+- Support group mentions in text editors.
+
+### `@liveblocks/node`
+
+- Add methods to manage groups on Liveblocks (e.g. `createGroup`,
+  `getUserGroups`).
+- Add `tenantId` parameters to methods that need it when using tenants.
+- Mark `getThreadParticipants` as deprecated, use thread subscriptions or
+  `getMentionsFromCommentBody` instead.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
+
+### `@liveblocks/emails`
+
+- Support group mentions in email notifications helpers. These functions now
+  accept a `resolveGroupsInfo` option that passes the results to mentions as
+  `group`.
 
 ## v3.6.1
 
