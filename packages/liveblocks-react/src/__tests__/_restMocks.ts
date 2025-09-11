@@ -2,6 +2,7 @@ import type {
   BaseMetadata,
   CommentBody,
   CommentData,
+  GroupData,
   InboxNotificationData,
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -177,6 +178,7 @@ export function mockGetInboxNotifications(
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
       subscriptions: SubscriptionData[];
+      groups: GroupData[];
       meta: {
         requestedAt: string; // ISO date
         nextCursor: string | null;
@@ -274,4 +276,14 @@ export function mockUpdateNotificationSettings(
     "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );
+}
+
+export function mockFindGroups(
+  resolver: ResponseResolver<
+    RestRequest<{ groupIds: string[] }, never>,
+    RestContext,
+    { groups: GroupData[] }
+  >
+) {
+  return rest.post("https://api.liveblocks.io/v2/c/groups/find", resolver);
 }

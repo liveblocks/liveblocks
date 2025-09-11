@@ -37,7 +37,6 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  getMentionsFromCommentBody,
   getSubscriptionKey,
   kInternal,
   MutableSignal,
@@ -61,6 +60,7 @@ import type {
   AiChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
+  InboxNotificationsQuery,
   NotificationSettingsAsyncResult,
   RoomSubscriptionSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -259,6 +259,12 @@ export function makeUserThreadsQueryKey(
 export function makeAiChatsQueryKey(
   query: AiChatsQuery | undefined
 ): AiChatsQueryKey {
+  return stableStringify(query ?? {});
+}
+
+export function makeInboxNotificationsQueryKey(
+  query: InboxNotificationsQuery | undefined
+) {
   return stableStringify(query ?? {});
 }
 
@@ -556,6 +562,7 @@ class SinglePageResource {
 type RoomId = string;
 type UserQueryKey = string;
 type RoomQueryKey = string;
+type InboxNotificationsQueryKey = string;
 
 type AiChatsQueryKey = string;
 
@@ -1014,7 +1021,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly threadSubscriptions: DerivedSignal<CleanThreadSubscriptions>;
 
-    readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
+    readonly loadingNotifications: DefaultMap<
+      InboxNotificationsQueryKey,
+      LoadableResource<InboxNotificationsAsyncResult>
+    >;
     readonly roomSubscriptionSettingsByRoomId: DefaultMap<
       RoomId,
       LoadableResource<RoomSubscriptionSettingsAsyncResult>
@@ -1040,7 +1050,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  #notificationsPaginationState: PaginatedResource;
 
   // Room Threads
   #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
@@ -1059,26 +1068,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
     this.permissionHints = createStore_forPermissionHints();
-
-    this.#notificationsPaginationState = new PaginatedResource(
-      async (cursor?: string) => {
-        const result = await this.#client.getInboxNotifications({ cursor });
-
-        this.updateThreadifications(
-          result.threads,
-          result.inboxNotifications,
-          result.subscriptions
-        );
-
-        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-        if (this.#notificationsLastRequestedAt === null) {
-          this.#notificationsLastRequestedAt = result.requestedAt;
-        }
-
-        const nextCursor = result.nextCursor;
-        return nextCursor;
-      }
-    );
 
     const notificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getNotificationSettings();
@@ -1256,29 +1245,57 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    const loadingNotifications = {
-      signal: DerivedSignal.from((): InboxNotificationsAsyncResult => {
-        const resource = this.#notificationsPaginationState;
+    const loadingNotifications = new DefaultMap(
+      (
+        queryKey: InboxNotificationsQueryKey
+      ): LoadableResource<InboxNotificationsAsyncResult> => {
+        const query = JSON.parse(queryKey) as InboxNotificationsQuery;
 
-        const result = resource.get();
-        if (result.isLoading || result.error) {
-          return result;
-        }
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client.getInboxNotifications({
+            cursor,
+            query,
+          });
 
-        const page = result.data;
+          this.updateThreadifications(
+            result.threads,
+            result.inboxNotifications,
+            result.subscriptions
+          );
+
+          // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+          if (this.#notificationsLastRequestedAt === null) {
+            this.#notificationsLastRequestedAt = result.requestedAt;
+          }
+
+          const nextCursor = result.nextCursor;
+          return nextCursor;
+        });
+
+        const signal = DerivedSignal.from((): InboxNotificationsAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const page = result.data;
+          return {
+            isLoading: false,
+            inboxNotifications:
+              this.outputs.notifications.get().sortedNotifications,
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        }, shallow2);
+
         return {
-          isLoading: false,
-          inboxNotifications:
-            this.outputs.notifications.get().sortedNotifications,
-          hasFetchedAll: page.hasFetchedAll,
-          isFetchingMore: page.isFetchingMore,
-          fetchMoreError: page.fetchMoreError,
-          fetchMore: page.fetchMore,
+          signal,
+          waitUntilLoaded: resource.waitUntilLoaded,
         };
-      }),
-
-      waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
-    };
+      }
+    );
 
     const roomSubscriptionSettingsByRoomId = new DefaultMap(
       (roomId: RoomId) => {
@@ -2168,18 +2185,10 @@ function applyOptimisticUpdates_forSubscriptions(
               break;
             }
 
-            // Create subscriptions for every threads in the room which the user participates in but doesn't have a subscription for yet
             case "replies_and_mentions": {
-              if (
-                isThreadParticipant(thread, update.userId) &&
-                !subscriptions[subscriptionKey]
-              ) {
-                subscriptions[subscriptionKey] = {
-                  kind: "thread",
-                  subjectId: thread.id,
-                  createdAt: new Date(),
-                };
-              }
+              // TODO: We can't go through the comments and create subscriptions optimistically because
+              //       we might not have group members for all group IDs which means we can't reliably
+              //       know if the user was mentioned with a group mention.
               break;
             }
 
@@ -2517,41 +2526,4 @@ function upsertReaction(
   }
 
   return reactions;
-}
-
-/**
- * Returns whether a user is a thread participant:
- * - If the user commented in the thread
- * - If the user was mentioned in the thread
- */
-function isThreadParticipant<M extends BaseMetadata>(
-  thread: ThreadData<M>,
-  userId: string
-) {
-  let isParticipant = false;
-
-  for (const comment of thread.comments) {
-    if (comment.deletedAt) {
-      continue;
-    }
-
-    if (comment.userId === userId) {
-      isParticipant = true;
-
-      break;
-    }
-
-    const mentions = getMentionsFromCommentBody(
-      comment.body,
-      (mention) => mention.kind === "user" && mention.id === userId
-    );
-
-    if (mentions.length > 0) {
-      isParticipant = true;
-
-      break;
-    }
-  }
-
-  return isParticipant;
 }

@@ -28,6 +28,7 @@ import type {
   EnterOptions,
   IYjsProvider,
   LiveblocksErrorContext,
+  MentionData,
   OpaqueClient,
   RoomEventMessage,
   RoomSubscriptionSettings,
@@ -787,15 +788,18 @@ function useYjsProvider(): IYjsProvider | undefined {
 }
 
 /** @private - Internal API, do not rely on it. */
-function useCreateTextMention(): (userId: string, mentionId: string) => void {
+function useCreateTextMention(): (
+  mentionId: string,
+  mention: MentionData
+) => void {
   const room = useRoom();
   return useCallback(
-    (userId: string, mentionId: string): void => {
+    (mentionId: string, mention: MentionData): void => {
       room[kInternal]
-        .createTextMention(userId, mentionId)
+        .createTextMention(mentionId, mention)
         .catch((err): void => {
           console.error(
-            `Cannot create text mention for user '${userId}' and mention '${mentionId}'`,
+            `Cannot create text mention for mention '${mentionId}'`,
             err
           );
         });

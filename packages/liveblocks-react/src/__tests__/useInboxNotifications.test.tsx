@@ -66,6 +66,7 @@ describe("useInboxNotifications", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -118,6 +119,7 @@ describe("useInboxNotifications", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -188,6 +190,7 @@ describe("useInboxNotifications", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -204,6 +207,7 @@ describe("useInboxNotifications", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -288,6 +292,7 @@ describe("useInboxNotifications", () => {
           threads: [],
           inboxNotifications: [],
           subscriptions: [],
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -456,6 +461,7 @@ describe("useInboxNotifications - Suspense", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -525,7 +531,7 @@ describe("useInboxNotifications: polling", () => {
   afterAll(() => {
     vi.useRealTimers();
   });
-  test("should poll threads every x seconds", async () => {
+  test("should poll inbox notifications every x seconds", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
@@ -545,6 +551,7 @@ describe("useInboxNotifications: polling", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -607,6 +614,134 @@ describe("useInboxNotifications: polling", () => {
     unmount();
   });
 
+  test("should fetch inbox notifications for a given query", async () => {
+    const roomA = nanoid();
+    const roomB = nanoid();
+    const threads = [
+      dummyThreadData({ roomId: roomA }),
+      dummyThreadData({ roomId: roomB }),
+    ];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId: roomA,
+        threadId: threads[0]!.id,
+      }),
+      dummyThreadInboxNotificationData({
+        roomId: roomB,
+        threadId: threads[1]!.id,
+      }),
+    ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        const query = _req.url.searchParams.get("query");
+
+        // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
+        if (query) {
+          return res(
+            ctx.json({
+              threads: threads.filter((thread) => thread.roomId === roomA),
+              inboxNotifications: inboxNotifications.filter(
+                (inboxNotification) => inboxNotification.roomId === roomA
+              ),
+              subscriptions,
+              groups: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+              },
+            })
+          );
+        }
+
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            subscriptions,
+            groups: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            subscriptions,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useInboxNotifications({ query: { roomId: roomA } }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: inboxNotifications.filter(
+          (inboxNotification) => inboxNotification.roomId === roomA
+        ),
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+
+    const { result: result2, unmount: unmount2 } = renderHook(
+      () => useInboxNotifications(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result2.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result2.current).toEqual({
+        isLoading: false,
+        inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount2();
+  });
+
   test("should restart polling after a component is remounted", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
@@ -627,6 +762,7 @@ describe("useInboxNotifications: polling", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -717,6 +853,7 @@ describe("useInboxNotifications: polling", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -878,6 +1015,7 @@ describe("useInboxNotificationsSuspense: error", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -983,6 +1121,7 @@ describe("useInboxNotifications: pagination", () => {
             threads: [thread2],
             inboxNotifications: inboxNotificationsPage2,
             subscriptions: subscriptionsPage2,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-2",
@@ -996,6 +1135,7 @@ describe("useInboxNotifications: pagination", () => {
             threads: [thread3],
             inboxNotifications: inboxNotificationsPage3,
             subscriptions: subscriptionsPage3,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-3",
@@ -1009,12 +1149,27 @@ describe("useInboxNotifications: pagination", () => {
             threads: [thread1],
             inboxNotifications: inboxNotificationsPage1,
             subscriptions: subscriptionsPage1,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",
             },
           });
         }
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: "cursor-1",
+          },
+        });
       }),
       mockGetInboxNotificationsDelta(() => {
         return HttpResponse.json({
@@ -1150,6 +1305,7 @@ describe("useInboxNotifications: pagination", () => {
             threads: [threadTwo],
             inboxNotifications: inboxNotificationsPageTwo,
             subscriptions: subscriptionsPageTwo,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -1162,6 +1318,7 @@ describe("useInboxNotifications: pagination", () => {
             threads: [threadOne],
             inboxNotifications: inboxNotificationsPageOne,
             subscriptions: subscriptionsPageOne,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",
@@ -1248,6 +1405,7 @@ describe("useInboxNotifications: pagination", () => {
             threads: [threadOne],
             inboxNotifications: inboxNotificationsPageOne,
             subscriptions: subscriptionsPageOne,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: "cursor-1",

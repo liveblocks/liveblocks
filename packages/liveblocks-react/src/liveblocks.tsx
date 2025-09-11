@@ -8,6 +8,7 @@ import type {
 import type {
   AiUserMessage,
   AsyncResult,
+  BaseGroupInfo,
   BaseRoomInfo,
   CopilotId,
   DM,
@@ -60,6 +61,8 @@ import type {
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
   CreateAiChatOptions,
+  GroupInfoAsyncResult,
+  GroupInfoAsyncSuccess,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
@@ -72,6 +75,7 @@ import type {
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
   UseAiChatsOptions,
+  UseInboxNotificationsOptions,
   UserAsyncResult,
   UserAsyncSuccess,
   UseSendAiMessageOptions,
@@ -80,6 +84,7 @@ import type {
 } from "./types";
 import {
   makeAiChatsQueryKey,
+  makeInboxNotificationsQueryKey,
   makeUserThreadsQueryKey,
   UmbrellaStore,
 } from "./umbrella-store";
@@ -93,6 +98,12 @@ function missingUserError(userId: string) {
 function missingRoomInfoError(roomId: string) {
   return new Error(
     `resolveRoomsInfo didn't return anything for room '${roomId}'`
+  );
+}
+
+function missingGroupInfoError(groupId: string) {
+  return new Error(
+    `resolveGroupsInfo didn't return anything for group '${groupId}'`
   );
 }
 
@@ -177,6 +188,34 @@ function selectorFor_useRoomInfo(
     return {
       isLoading: false,
       error: missingRoomInfoError(roomId),
+    };
+  }
+
+  return {
+    isLoading: false,
+    info: state.data,
+  };
+}
+
+function selectorFor_useGroupInfo(
+  state: AsyncResult<BaseGroupInfo | undefined> | undefined,
+  groupId: string
+): GroupInfoAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // If this is a "success" state, but there still is no data, then it means
+  // the "resolving of this group info" returned undefined. In that case, still treat
+  // this as an error state.
+  if (!state.data) {
+    return {
+      isLoading: false,
+      error: missingGroupInfoError(groupId),
     };
   }
 
@@ -388,8 +427,8 @@ function makeLiveblocksContextBundle<
   const bundle: LiveblocksContextBundle<U, M> = {
     LiveblocksProvider,
 
-    useInboxNotifications: () =>
-      useInboxNotifications_withClient(client, identity, shallow),
+    useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
+      useInboxNotifications_withClient(client, identity, shallow, options),
     useUnreadInboxNotificationsCount: () =>
       useUnreadInboxNotificationsCount_withClient(client),
 
@@ -417,8 +456,8 @@ function makeLiveblocksContextBundle<
     suspense: {
       LiveblocksProvider,
 
-      useInboxNotifications: () =>
-        useInboxNotificationsSuspense_withClient(client),
+      useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
+        useInboxNotificationsSuspense_withClient(client, options),
       useUnreadInboxNotificationsCount: () =>
         useUnreadInboxNotificationsCountSuspense_withClient(client),
 
@@ -452,15 +491,21 @@ function makeLiveblocksContextBundle<
 function useInboxNotifications_withClient<T>(
   client: OpaqueClient,
   selector: (result: InboxNotificationsAsyncResult) => T,
-  isEqual: (a: T, b: T) => boolean
+  isEqual: (a: T, b: T) => boolean,
+  options?: UseInboxNotificationsOptions
 ): T {
   const { store, notificationsPoller: poller } =
     getLiveblocksExtrasForClient(client);
 
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(
-    () => void store.outputs.loadingNotifications.waitUntilLoaded()
+    () =>
+      void store.outputs.loadingNotifications
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -481,24 +526,36 @@ function useInboxNotifications_withClient<T>(
   }, [poller]);
 
   return useSignal(
-    store.outputs.loadingNotifications.signal,
+    store.outputs.loadingNotifications.getOrCreate(queryKey).signal,
     selector,
     isEqual
   );
 }
 
-function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
+function useInboxNotificationsSuspense_withClient(
+  client: OpaqueClient,
+  options?: UseInboxNotificationsOptions
+) {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
   // Suspend until there are at least some inbox notifications
-  use(store.outputs.loadingNotifications.waitUntilLoaded());
+  use(
+    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+  );
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
-  const result = useInboxNotifications_withClient(client, identity, shallow);
+  const result = useInboxNotifications_withClient(
+    client,
+    identity,
+    shallow,
+    options
+  );
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -520,8 +577,12 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 
   const store = getLiveblocksExtrasForClient(client).store;
 
+  const queryKey = makeInboxNotificationsQueryKey(undefined);
+
   // Suspend until there are at least some inbox notifications
-  use(store.outputs.loadingNotifications.waitUntilLoaded());
+  use(
+    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+  );
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
@@ -964,6 +1025,90 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   } as const;
 }
 
+function useGroupInfo_withClient(
+  client: OpaqueClient,
+  groupId: string
+): GroupInfoAsyncResult {
+  const groupsInfoStore = client[kInternal].groupsInfoStore;
+
+  const getGroupInfoState = useCallback(
+    () => groupsInfoStore.getItemState(groupId),
+    [groupsInfoStore, groupId]
+  );
+
+  const selector = useCallback(
+    (state: ReturnType<typeof getGroupInfoState>) =>
+      selectorFor_useGroupInfo(state, groupId),
+    [groupId]
+  );
+
+  const result = useSyncExternalStoreWithSelector(
+    groupsInfoStore.subscribe,
+    getGroupInfoState,
+    getGroupInfoState,
+    selector,
+    shallow
+  );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(
+    () => void groupsInfoStore.enqueue(groupId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call groupsInfoStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the groupId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the groupId gets invalidated, the group info would be fetched again.
+  );
+
+  return result;
+}
+
+function useGroupInfoSuspense_withClient(
+  client: OpaqueClient,
+  groupId: string
+) {
+  const groupsInfoStore = client[kInternal].groupsInfoStore;
+
+  const getGroupInfoState = useCallback(
+    () => groupsInfoStore.getItemState(groupId),
+    [groupsInfoStore, groupId]
+  );
+  const groupInfoState = getGroupInfoState();
+
+  if (!groupInfoState || groupInfoState.isLoading) {
+    throw groupsInfoStore.enqueue(groupId);
+  }
+
+  if (groupInfoState.error) {
+    throw groupInfoState.error;
+  }
+
+  // Throw an error if `undefined` was returned by `resolveGroupsInfo` for this group ID
+  if (!groupInfoState.data) {
+    throw missingGroupInfoError(groupId);
+  }
+
+  const state = useSyncExternalStore(
+    groupsInfoStore.subscribe,
+    getGroupInfoState,
+    getGroupInfoState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  assert(state.data !== undefined, "Unexpected missing group info data");
+  return {
+    isLoading: false,
+    info: state.data,
+    error: undefined,
+  } as const;
+}
+
 /**
  * (Private beta)  Returns the chats for the current user.
  *
@@ -1361,6 +1506,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+      useGroupInfo: (groupId: string) =>
+        useGroupInfo_withClient(client, groupId),
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
@@ -1372,6 +1519,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
+      useGroupInfo: (groupId: string) =>
+        useGroupInfoSuspense_withClient(client, groupId),
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
@@ -1444,6 +1593,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     ),
     resolveUsers: useInitialUnlessFunction(o.resolveUsers),
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
+    resolveGroupsInfo: useInitialUnlessFunction(o.resolveGroupsInfo),
 
     baseUrl: useInitial(
       // @ts-expect-error - Hidden config options
@@ -1579,8 +1729,13 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
  * @example
  * const { inboxNotifications, error, isLoading } = useInboxNotifications();
  */
-function useInboxNotifications() {
-  return useInboxNotifications_withClient(useClient(), identity, shallow);
+function useInboxNotifications(options?: UseInboxNotificationsOptions) {
+  return useInboxNotifications_withClient(
+    useClient(),
+    identity,
+    shallow,
+    options
+  );
 }
 
 /**
@@ -1589,8 +1744,8 @@ function useInboxNotifications() {
  * @example
  * const { inboxNotifications } = useInboxNotifications();
  */
-function useInboxNotificationsSuspense() {
-  return useInboxNotificationsSuspense_withClient(useClient());
+function useInboxNotificationsSuspense(options?: UseInboxNotificationsOptions) {
+  return useInboxNotificationsSuspense_withClient(useClient(), options);
 }
 
 function useInboxNotificationThread<M extends BaseMetadata>(
@@ -1727,6 +1882,26 @@ function useRoomInfo(roomId: string): RoomInfoAsyncResult {
  */
 function useRoomInfoSuspense(roomId: string): RoomInfoAsyncSuccess {
   return useRoomInfoSuspense_withClient(useClient(), roomId);
+}
+
+/**
+ * Returns group info from a given group ID.
+ *
+ * @example
+ * const { info, error, isLoading } = useGroupInfo("group-id");
+ */
+function useGroupInfo(groupId: string): GroupInfoAsyncResult {
+  return useGroupInfo_withClient(useClient(), groupId);
+}
+
+/**
+ * Returns group info from a given group ID.
+ *
+ * @example
+ * const { info } = useGroupInfo("group-id");
+ */
+function useGroupInfoSuspense(groupId: string): GroupInfoAsyncSuccess {
+  return useGroupInfoSuspense_withClient(useClient(), groupId);
 }
 
 type TypedBundle = LiveblocksContextBundle<DU, DM>;
@@ -1956,6 +2131,8 @@ export {
   useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,
+  useGroupInfo,
+  useGroupInfoSuspense,
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,

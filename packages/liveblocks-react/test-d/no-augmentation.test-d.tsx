@@ -505,6 +505,28 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// The useGroupInfo() hook
+{
+  const { info, error, isLoading } = classic.useGroupInfo("group-id");
+  expectType<boolean>(isLoading);
+  expectType<string | undefined>(info?.name);
+  expectType<string | undefined>(info?.avatar);
+  expectType<Json | undefined>(info?.nonexisting);
+  expectType<Error | undefined>(error);
+}
+
+// The useGroupInfo() hook (suspense)
+{
+  const { info, error, isLoading } = suspense.useGroupInfo("group-id");
+  expectType<false>(isLoading);
+  expectType<string | undefined>(info.name);
+  expectType<string | undefined>(info.avatar);
+  expectType<Json | undefined>(info?.nonexisting);
+  expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
 // The useCreateThread() hook
 {
   const createThread = classic.useCreateThread();

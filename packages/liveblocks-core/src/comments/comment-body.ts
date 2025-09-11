@@ -1,5 +1,5 @@
-import type { ResolveUsersArgs } from "../client";
-import type { DU } from "../globals/augmentation";
+import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../client";
+import type { DGI, DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
 import { sanitizeUrl } from "../lib/url";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -82,9 +82,14 @@ export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolveUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
+   */
+  group?: DGI;
 };
 
 export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
@@ -133,6 +138,14 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 };
 
 export function isCommentBodyParagraph(
@@ -250,36 +263,65 @@ export function getMentionsFromCommentBody(
   return mentions;
 }
 
-export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
+export async function resolveMentionsInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>
-): Promise<Map<string, U["info"]>> {
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>,
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>
+): Promise<{
+  users: Map<string, U["info"]>;
+  groups: Map<string, DGI>;
+}> {
   const resolvedUsers = new Map<string, U["info"]>();
+  const resolvedGroupsInfo = new Map<string, DGI>();
 
-  if (!resolveUsers) {
-    return resolvedUsers;
+  if (!resolveUsers && !resolveGroupsInfo) {
+    return {
+      users: resolvedUsers,
+      groups: resolvedGroupsInfo,
+    };
   }
 
-  const userIds = getMentionsFromCommentBody(
-    body,
-    (mention) => mention.kind === "user"
-  ).map((mention) => mention.id);
+  const mentions = getMentionsFromCommentBody(body);
+  const userIds = mentions
+    .filter((mention) => mention.kind === "user")
+    .map((mention) => mention.id);
+  const groupIds = mentions
+    .filter((mention) => mention.kind === "group")
+    .map((mention) => mention.id);
 
-  const users = await resolveUsers({
-    userIds,
-  });
+  const [users, groups] = await Promise.all([
+    resolveUsers && userIds.length > 0 ? resolveUsers({ userIds }) : undefined,
+    resolveGroupsInfo && groupIds.length > 0
+      ? resolveGroupsInfo({ groupIds })
+      : undefined,
+  ]);
 
-  for (const [index, userId] of userIds.entries()) {
-    const user = users?.[index];
-
-    if (user) {
-      resolvedUsers.set(userId, user);
+  if (users) {
+    for (const [index, userId] of userIds.entries()) {
+      const user = users[index];
+      if (user) {
+        resolvedUsers.set(userId, user);
+      }
     }
   }
 
-  return resolvedUsers;
+  if (groups) {
+    for (const [index, groupId] of groupIds.entries()) {
+      const group = groups[index];
+      if (group) {
+        resolvedGroupsInfo.set(groupId, group);
+      }
+    }
+  }
+
+  return {
+    users: resolvedUsers,
+    groups: resolvedGroupsInfo,
+  };
 }
 
 const htmlEscapables = {
@@ -458,8 +500,8 @@ const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMe
     paragraph: ({ children }) => children,
     text: ({ element }) => element.text,
     link: ({ element }) => element.text ?? element.url,
-    mention: ({ element, user }) => {
-      return `@${user?.name ?? element.id}`;
+    mention: ({ element, user, group }) => {
+      return `@${user?.name ?? group?.name ?? element.id}`;
     },
   };
 
@@ -503,9 +545,9 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMet
       // prettier-ignore
       return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return html`<span data-mention>@${user?.name ? html`${user?.name}` : element.id}</span>`;
+      return html`<span data-mention>@${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
     },
   };
 
@@ -548,9 +590,9 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
       // prettier-ignore
       return markdown`[${element.text ?? element.url}](${href})`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return markdown`@${user?.name ?? element.id}`;
+      return markdown`@${user?.name ?? group?.name ?? element.id}`;
     },
   };
 
@@ -573,10 +615,12 @@ export async function stringifyCommentBody(
         : stringifyCommentBodyPlainElements),
     ...options?.elements,
   };
-  const resolvedUsers = await resolveUsersInCommentBody(
-    body,
-    options?.resolveUsers
-  );
+  const { users: resolvedUsers, groups: resolvedGroupsInfo } =
+    await resolveMentionsInCommentBody(
+      body,
+      options?.resolveUsers,
+      options?.resolveGroupsInfo
+    );
 
   const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
@@ -588,7 +632,14 @@ export async function stringifyCommentBody(
                   elements.mention(
                     {
                       element: inline,
-                      user: resolvedUsers.get(inline.id),
+                      user:
+                        inline.kind === "user"
+                          ? resolvedUsers.get(inline.id)
+                          : undefined,
+                      group:
+                        inline.kind === "group"
+                          ? resolvedGroupsInfo.get(inline.id)
+                          : undefined,
                     },
                     inlineIndex
                   ),

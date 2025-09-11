@@ -46,6 +46,7 @@ describe("useInboxNotificationThread", () => {
           threads,
           inboxNotifications,
           subscriptions: [],
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -119,6 +120,7 @@ describe("useInboxNotificationThread", () => {
           threads: [], // NOTE! Not setting the thread ID, making it a broken reference from the inbox notification
           inboxNotifications,
           subscriptions: [],
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
@@ -224,6 +226,7 @@ describe("useInboxNotificationThread", () => {
           threads,
           inboxNotifications,
           subscriptions,
+          groups: [],
           meta: {
             requestedAt: new Date().toISOString(),
             nextCursor: null,
