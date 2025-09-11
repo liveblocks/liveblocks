@@ -3582,11 +3582,15 @@ console.log(subscriptions);
 <PropertiesList title="Options">
   <PropertiesListItem name="roomId" type="string">
     Only return inbox notifications for the given room. [Learn
-    more](#filtering-by-room-id).
+    more](#filtering-inbox-notifications).
+  </PropertiesListItem>
+  <PropertiesListItem name="kind" type="string">
+    Only return inbox notifications for the kind. [Learn
+    more](#filtering-inbox-notifications).
   </PropertiesListItem>
 </PropertiesList>
 
-#### Filtering by room ID [#filtering-by-room-id]
+#### Filtering inbox notifications [#filtering-inbox-notifications]
 
 You can filter inbox notifications by those that are associated with a specific
 room or kind, by passing a `string` to `query.roomId` or `query.kind`.

@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.7.1
+
+### `@liveblocks/react`
+
+- Add query filters `roomId` and `kind` on the
+  `useUnreadInboxNotificationsCount` hook.
+
 ## v3.7.0
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
