@@ -659,6 +659,7 @@ describe("useInboxNotifications: polling", () => {
                 (inboxNotification) => inboxNotification.roomId === roomA
               ),
               subscriptions,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
@@ -672,6 +673,7 @@ describe("useInboxNotifications: polling", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
