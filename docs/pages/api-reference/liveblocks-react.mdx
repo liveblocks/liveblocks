@@ -3837,7 +3837,7 @@ It’s possible to return inbox notifications that match a certain query with th
 room ID or kind.
 
 ```tsx
-// Returns threads that match the entire `query`, e.g. { roomId: "room1", ... }
+// Returns inbox notifications that match the entire `query`, e.g. { roomId: "room1", ... }
 const { inboxNotifications } = useInboxNotifications({
   query: {
     // Filter for roomId
@@ -3978,6 +3978,24 @@ Returns the number of unread inbox notifications for the current user.
 import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
+```
+
+#### Querying unread inbox notifications count
+
+It’s possible to return the count of unread inbox notifications that match a
+certain query with the `query` option. You can filter unread inbox notifications
+count based on their associated room ID or kind.
+
+```tsx
+// Returns the count that match the entire `query`, e.g. { roomId: "room1", ... }
+const { count } = useUnreadInboxNotificationsCount({
+  query: {
+    // Filter for roomId
+    roomId: "room1",
+    // Filter for kind
+    kind: "thread",
+  },
+});
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
