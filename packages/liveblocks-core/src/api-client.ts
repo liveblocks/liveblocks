@@ -402,7 +402,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 }
 
 export interface NotificationHttpApi<M extends BaseMetadata> {
-  getInboxNotifications(options?: { cursor?: string }): Promise<{
+  getInboxNotifications(options?: {
+    cursor?: string;
+    query?: { roomId?: string; kind?: string };
+  }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     subscriptions: SubscriptionData[];
@@ -412,6 +415,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   getInboxNotificationsSince(options: {
     since: Date;
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
@@ -1525,8 +1529,17 @@ export function createApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Inbox notifications (User-level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getInboxNotifications(options?: { cursor?: string }) {
+  async function getInboxNotifications(options?: {
+    cursor?: string;
+    query?: { roomId?: string; kind?: string };
+  }) {
     const PAGE_SIZE = 50;
+
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
 
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
@@ -1543,6 +1556,7 @@ export function createApiClient<M extends BaseMetadata>({
       {
         cursor: options?.cursor,
         limit: PAGE_SIZE,
+        query,
       }
     );
 
@@ -1565,8 +1579,15 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function getInboxNotificationsSince(options: {
     since: Date;
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -1580,7 +1601,7 @@ export function createApiClient<M extends BaseMetadata>({
     }>(
       url`/v2/c/inbox-notifications/delta`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
-      { since: options.since.toISOString() },
+      { since: options.since.toISOString(), query },
       { signal: options.signal }
     );
     return {

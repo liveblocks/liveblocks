@@ -203,7 +203,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: { cursor?: string }): Promise<{
+  getInboxNotifications(options?: {
+    cursor?: string;
+    query?: { roomId?: string; kind?: string };
+  }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     subscriptions: SubscriptionData[];
@@ -236,6 +239,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getInboxNotificationsSince(options: {
     since: Date;
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {

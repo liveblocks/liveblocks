@@ -43,7 +43,11 @@ describe("Umbrella Store", () => {
     ).toEqual(LOADING); // versions by room ID
 
     // Sync async-results getters
-    expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
+    expect(
+      store.outputs.loadingNotifications
+        .getOrCreate(JSON.stringify({ roomId: "room-a" }))
+        .signal.get()
+    ).toEqual(LOADING);
     expect(store.outputs.notificationSettings.signal.get()).toEqual(LOADING);
     expect(
       store.outputs.roomSubscriptionSettingsByRoomId
@@ -65,8 +69,14 @@ describe("Umbrella Store", () => {
     );
 
     // Sync async-results getter
-    expect(store.outputs.loadingNotifications.signal.get()).toBe(
-      store.outputs.loadingNotifications.signal.get()
+    expect(
+      store.outputs.loadingNotifications
+        .getOrCreate(JSON.stringify({ roomId: "room-a" }))
+        .signal.get()
+    ).toBe(
+      store.outputs.loadingNotifications
+        .getOrCreate(JSON.stringify({ roomId: "room-a" }))
+        .signal.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(

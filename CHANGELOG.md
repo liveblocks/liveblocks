@@ -14,11 +14,13 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 - Support returning group mention suggestions in `resolveMentionSuggestions`.
 - Support group mentions in `stringifyCommentBody`, it now accepts a
   `resolveGroupsInfo` option that passes the results to mentions as `group`.
+- Add query filters `roomId` and `kind` on the `getInboxNotifications` method.
 
 ### `@liveblocks/react`
 
 - Add `useGroupInfo` hook to use `resolveGroupsInfo` in React, same as `useUser`
   for `resolveUsers`.
+- Add query filters `roomId` and `kind` on the `useInboxNotifications` hook.
 
 ### `@liveblocks/react-ui`
 
