@@ -4,27 +4,11 @@
 
 ### `@liveblocks/client`
 
-- Add query filters on the `getInboxNotifications` method:
-
-```
-const inboxNotifications = await client.getInboxNotifications({
-  query: {
-    roomId:"room1"
-  },
-});
-```
+- Add query filters `roomId` on the `getInboxNotifications` method.
 
 ### `@liveblocks/react`
 
-- Add query filters on the `useInboxNotifications` hook:
-
-```
-const { inboxNotifications } = useInboxNotifications({
-  query: {
-     roomId:"room1"
-  }
-});
-```
+- Add query filters `roomId` on the `useInboxNotifications` hook.
 
 ## v3.6.1
 
