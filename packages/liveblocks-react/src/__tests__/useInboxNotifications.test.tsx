@@ -636,54 +636,49 @@ describe("useInboxNotifications: polling", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        const query = _req.url.searchParams.get("query");
+      mockGetInboxNotifications(async ({ request }) => {
+        const url = new URL(request.url);
+        const query = url.searchParams.get("query");
 
         // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
         if (query) {
-          return res(
-            ctx.json({
-              threads: threads.filter((thread) => thread.roomId === roomA),
-              inboxNotifications: inboxNotifications.filter(
-                (inboxNotification) => inboxNotification.roomId === roomA
-              ),
-              subscriptions,
-              groups: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
-        }
-
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
+          return HttpResponse.json({
+            threads: threads.filter((thread) => thread.roomId === roomA),
+            inboxNotifications: inboxNotifications.filter(
+              (inboxNotification) => inboxNotification.roomId === roomA
+            ),
             subscriptions,
             groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        );
+          });
+        }
+
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+      mockGetInboxNotificationsDelta(async () => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -1157,7 +1152,7 @@ describe("useInboxNotifications: pagination", () => {
           });
         }
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+      mockGetInboxNotificationsDelta(async () => {
         return HttpResponse.json({
           threads: [],
           inboxNotifications: [],

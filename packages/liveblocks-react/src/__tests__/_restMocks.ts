@@ -279,11 +279,11 @@ export function mockUpdateNotificationSettings(
 }
 
 export function mockFindGroups(
-  resolver: ResponseResolver<
-    RestRequest<{ groupIds: string[] }, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    never,
+    { groupIds: string[] },
     { groups: GroupData[] }
   >
 ) {
-  return rest.post("https://api.liveblocks.io/v2/c/groups/find", resolver);
+  return http.post("https://api.liveblocks.io/v2/c/groups/find", resolver);
 }
