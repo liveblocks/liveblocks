@@ -732,17 +732,6 @@ function createStore_forNotifications() {
     });
   }
 
-  function findMany(query?: InboxNotificationsQuery) {
-    const crit: ((inboxNotification: InboxNotificationData) => boolean)[] = [];
-
-    if (query !== undefined) {
-      crit.push(makeInboxNotificationsFilter(query));
-    }
-    return Array.from(signal.get().values()).filter((inboxNotification) =>
-      crit.every((pred) => pred(inboxNotification))
-    );
-  }
-
   return {
     signal: signal.asReadonly(),
 
@@ -754,7 +743,6 @@ function createStore_forNotifications() {
     clear,
     updateAssociatedNotification,
     upsert,
-    findMany,
   };
 }
 
@@ -1291,7 +1279,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
-          const inboxNotifications = this.notifications.findMany(query);
+          const crit: ((
+            inboxNotification: InboxNotificationData
+          ) => boolean)[] = [];
+
+          if (query !== undefined) {
+            crit.push(makeInboxNotificationsFilter(query));
+          }
+          const inboxNotifications = this.outputs.notifications
+            .get()
+            .sortedNotifications.filter((inboxNotification) =>
+              crit.every((pred) => pred(inboxNotification))
+            );
 
           const page = result.data;
           return {
