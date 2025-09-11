@@ -195,7 +195,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getInboxNotifications(options?: {
     cursor?: string;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
@@ -229,7 +229,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getInboxNotificationsSince(options: {
     since: Date;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
