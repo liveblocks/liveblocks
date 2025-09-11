@@ -52,6 +52,7 @@ import {
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
+import { makeInboxNotificationsFilter } from "./lib/querying";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -731,6 +732,17 @@ function createStore_forNotifications() {
     });
   }
 
+  function findMany(query?: InboxNotificationsQuery) {
+    const crit: ((inboxNotification: InboxNotificationData) => boolean)[] = [];
+
+    if (query !== undefined) {
+      crit.push(makeInboxNotificationsFilter(query));
+    }
+    return Array.from(signal.get().values()).filter((inboxNotification) =>
+      crit.every((pred) => pred(inboxNotification))
+    );
+  }
+
   return {
     signal: signal.asReadonly(),
 
@@ -742,6 +754,7 @@ function createStore_forNotifications() {
     clear,
     updateAssociatedNotification,
     upsert,
+    findMany,
   };
 }
 
@@ -1278,11 +1291,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
+          const inboxNotifications = this.notifications.findMany(query);
+
           const page = result.data;
           return {
             isLoading: false,
-            inboxNotifications:
-              this.outputs.notifications.get().sortedNotifications,
+            inboxNotifications,
             hasFetchedAll: page.hasFetchedAll,
             isFetchingMore: page.isFetchingMore,
             fetchMoreError: page.fetchMoreError,
