@@ -429,8 +429,9 @@ function makeLiveblocksContextBundle<
 
     useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
       useInboxNotifications_withClient(client, identity, shallow, options),
-    useUnreadInboxNotificationsCount: () =>
-      useUnreadInboxNotificationsCount_withClient(client),
+    useUnreadInboxNotificationsCount: (
+      options?: UseInboxNotificationsOptions
+    ) => useUnreadInboxNotificationsCount_withClient(client, options),
 
     useMarkInboxNotificationAsRead,
     useMarkAllInboxNotificationsAsRead,
@@ -458,8 +459,9 @@ function makeLiveblocksContextBundle<
 
       useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
         useInboxNotificationsSuspense_withClient(client, options),
-      useUnreadInboxNotificationsCount: () =>
-        useUnreadInboxNotificationsCountSuspense_withClient(client),
+      useUnreadInboxNotificationsCount: (
+        options?: UseInboxNotificationsOptions
+      ) => useUnreadInboxNotificationsCountSuspense_withClient(client, options),
 
       useMarkInboxNotificationAsRead,
       useMarkAllInboxNotificationsAsRead,
@@ -561,30 +563,35 @@ function useInboxNotificationsSuspense_withClient(
   return result;
 }
 
-function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
+function useUnreadInboxNotificationsCount_withClient(
+  client: OpaqueClient,
+  options?: UseInboxNotificationsOptions
+) {
   return useInboxNotifications_withClient(
     client,
     selectorFor_useUnreadInboxNotificationsCount,
-    shallow
+    shallow,
+    options
   );
 }
 
 function useUnreadInboxNotificationsCountSuspense_withClient(
-  client: OpaqueClient
+  client: OpaqueClient,
+  options?: UseInboxNotificationsOptions
 ) {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
-  const queryKey = makeInboxNotificationsQueryKey(undefined);
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
 
   // Suspend until there are at least some inbox notifications
   use(
     store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
   );
 
-  const result = useUnreadInboxNotificationsCount_withClient(client);
+  const result = useUnreadInboxNotificationsCount_withClient(client, options);
   assert(!result.isLoading, "Did not expect loading");
   assert(!result.error, "Did not expect error");
   return result;
@@ -1807,8 +1814,10 @@ function useDeleteInboxNotification() {
  * @example
  * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
  */
-function useUnreadInboxNotificationsCount() {
-  return useUnreadInboxNotificationsCount_withClient(useClient());
+function useUnreadInboxNotificationsCount(
+  options?: UseInboxNotificationsOptions
+) {
+  return useUnreadInboxNotificationsCount_withClient(useClient(), options);
 }
 
 /**
@@ -1817,8 +1826,13 @@ function useUnreadInboxNotificationsCount() {
  * @example
  * const { count } = useUnreadInboxNotificationsCount();
  */
-function useUnreadInboxNotificationsCountSuspense() {
-  return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
+function useUnreadInboxNotificationsCountSuspense(
+  options?: UseInboxNotificationsOptions
+) {
+  return useUnreadInboxNotificationsCountSuspense_withClient(
+    useClient(),
+    options
+  );
 }
 
 /**
