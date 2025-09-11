@@ -149,6 +149,7 @@ function Chat({ chatId }: { chatId: string }) {
                 <UserMessage
                   key={message.id}
                   message={message}
+                  copilotId={copilotId === "default" ? undefined : copilotId}
                   onBranchChange={setBranchId}
                 />
               );

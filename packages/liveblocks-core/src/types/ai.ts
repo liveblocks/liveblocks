@@ -606,7 +606,7 @@ export function patchContentWithDelta(
         closePart(lastPart, now);
         content.push({
           type: "reasoning",
-          text: delta.textDelta ?? "",
+          text: delta.textDelta,
           startedAt: now,
         });
       }
