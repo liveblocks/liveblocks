@@ -155,14 +155,12 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
 
 export type InboxNotificationsQuery = {
   /**
-   * Whether to only return inbox notifications for a specific room. If not provided,
-   * all the user's inbox notifications will be returned.
+   * Whether to only return inbox notifications for a specific room.
    */
   roomId?: string;
 
   /**
-   * Whether to only return inbox notifications for a specific kind. If not provided,
-   * all the user's inbox notifications will be returned.
+   * Whether to only return inbox notifications for a specific kind.
    */
   kind?: string;
 };
