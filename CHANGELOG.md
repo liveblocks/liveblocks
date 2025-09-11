@@ -2,6 +2,14 @@
 
 ## v3.7.0
 
+### `@liveblocks/client`
+
+- Add query filters `roomId` and `kind` on the `getInboxNotifications` method.
+
+### `@liveblocks/react`
+
+- Add query filters `roomId` and `kind` on the `useInboxNotifications` hook.
+
 ## v3.6.1
 
 ### `@liveblocks/client`

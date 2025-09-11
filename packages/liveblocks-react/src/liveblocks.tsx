@@ -72,6 +72,7 @@ import type {
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
   UseAiChatsOptions,
+  UseInboxNotificationsOptions,
   UserAsyncResult,
   UserAsyncSuccess,
   UseSendAiMessageOptions,
@@ -80,6 +81,7 @@ import type {
 } from "./types";
 import {
   makeAiChatsQueryKey,
+  makeInboxNotificationsQueryKey,
   makeUserThreadsQueryKey,
   UmbrellaStore,
 } from "./umbrella-store";
@@ -388,8 +390,8 @@ function makeLiveblocksContextBundle<
   const bundle: LiveblocksContextBundle<U, M> = {
     LiveblocksProvider,
 
-    useInboxNotifications: () =>
-      useInboxNotifications_withClient(client, identity, shallow),
+    useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
+      useInboxNotifications_withClient(client, identity, shallow, options),
     useUnreadInboxNotificationsCount: () =>
       useUnreadInboxNotificationsCount_withClient(client),
 
@@ -417,8 +419,8 @@ function makeLiveblocksContextBundle<
     suspense: {
       LiveblocksProvider,
 
-      useInboxNotifications: () =>
-        useInboxNotificationsSuspense_withClient(client),
+      useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
+        useInboxNotificationsSuspense_withClient(client, options),
       useUnreadInboxNotificationsCount: () =>
         useUnreadInboxNotificationsCountSuspense_withClient(client),
 
@@ -452,15 +454,21 @@ function makeLiveblocksContextBundle<
 function useInboxNotifications_withClient<T>(
   client: OpaqueClient,
   selector: (result: InboxNotificationsAsyncResult) => T,
-  isEqual: (a: T, b: T) => boolean
+  isEqual: (a: T, b: T) => boolean,
+  options?: UseInboxNotificationsOptions
 ): T {
   const { store, notificationsPoller: poller } =
     getLiveblocksExtrasForClient(client);
 
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(
-    () => void store.outputs.loadingNotifications.waitUntilLoaded()
+    () =>
+      void store.outputs.loadingNotifications
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -481,24 +489,36 @@ function useInboxNotifications_withClient<T>(
   }, [poller]);
 
   return useSignal(
-    store.outputs.loadingNotifications.signal,
+    store.outputs.loadingNotifications.getOrCreate(queryKey).signal,
     selector,
     isEqual
   );
 }
 
-function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
+function useInboxNotificationsSuspense_withClient(
+  client: OpaqueClient,
+  options?: UseInboxNotificationsOptions
+) {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
   // Suspend until there are at least some inbox notifications
-  use(store.outputs.loadingNotifications.waitUntilLoaded());
+  use(
+    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+  );
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
-  const result = useInboxNotifications_withClient(client, identity, shallow);
+  const result = useInboxNotifications_withClient(
+    client,
+    identity,
+    shallow,
+    options
+  );
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -520,8 +540,12 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 
   const store = getLiveblocksExtrasForClient(client).store;
 
+  const queryKey = makeInboxNotificationsQueryKey(undefined);
+
   // Suspend until there are at least some inbox notifications
-  use(store.outputs.loadingNotifications.waitUntilLoaded());
+  use(
+    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+  );
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
@@ -1579,8 +1603,13 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
  * @example
  * const { inboxNotifications, error, isLoading } = useInboxNotifications();
  */
-function useInboxNotifications() {
-  return useInboxNotifications_withClient(useClient(), identity, shallow);
+function useInboxNotifications(options?: UseInboxNotificationsOptions) {
+  return useInboxNotifications_withClient(
+    useClient(),
+    identity,
+    shallow,
+    options
+  );
 }
 
 /**
@@ -1589,8 +1618,8 @@ function useInboxNotifications() {
  * @example
  * const { inboxNotifications } = useInboxNotifications();
  */
-function useInboxNotificationsSuspense() {
-  return useInboxNotificationsSuspense_withClient(useClient());
+function useInboxNotificationsSuspense(options?: UseInboxNotificationsOptions) {
+  return useInboxNotificationsSuspense_withClient(useClient(), options);
 }
 
 function useInboxNotificationThread<M extends BaseMetadata>(

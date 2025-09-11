@@ -153,6 +153,26 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
+export type InboxNotificationsQuery = {
+  /**
+   * Whether to only return inbox notifications for a specific room.
+   */
+  roomId?: string;
+
+  /**
+   * Whether to only return inbox notifications for a specific kind.
+   */
+  kind?: string;
+};
+
+export type UseInboxNotificationsOptions = {
+  /**
+   * The query to filter the inbox notifications by. If provided, only inbox notifications
+   * that match the query will be returned. If not provided, all inbox notifications will be returned.
+   */
+  query?: InboxNotificationsQuery;
+};
+
 export type UserAsyncResult<T> = AsyncResult<T, "user">;
 export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
@@ -1399,7 +1419,9 @@ export type LiveblocksContextBundle<
        * @example
        * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
-      useInboxNotifications(): InboxNotificationsAsyncResult;
+      useInboxNotifications(
+        options?: UseInboxNotificationsOptions
+      ): InboxNotificationsAsyncResult;
 
       /**
        * Returns the number of unread inbox notifications for the current user.
@@ -1452,7 +1474,9 @@ export type LiveblocksContextBundle<
              * @example
              * const { inboxNotifications } = useInboxNotifications();
              */
-            useInboxNotifications(): InboxNotificationsAsyncSuccess;
+            useInboxNotifications(
+              options?: UseInboxNotificationsOptions
+            ): InboxNotificationsAsyncSuccess;
 
             /**
              * Returns the number of unread inbox notifications for the current user.
