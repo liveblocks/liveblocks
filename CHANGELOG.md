@@ -51,6 +51,12 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
   accept a `resolveGroupsInfo` option that passes the results to mentions as
   `group`.
 
+## 3.6.2
+
+### `@liveblocks/node`
+
+- Rename `budgetToken` to `budgetTokens` in `AnthropicProviderOptions`.
+
 ## v3.6.1
 
 ### `@liveblocks/client`

@@ -218,7 +218,7 @@ type AnthropicProviderOptions = {
   anthropic: {
     thinking: {
       type: "enabled" | "disabled";
-      budgetToken: number;
+      budgetTokens: number;
     };
   };
 };
