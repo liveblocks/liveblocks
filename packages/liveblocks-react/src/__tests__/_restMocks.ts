@@ -205,6 +205,7 @@ export function mockGetInboxNotificationsDelta(
       deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string; // ISO date
+        nextCursor?: string;
       };
     }
   >
