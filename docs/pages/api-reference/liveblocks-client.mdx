@@ -703,9 +703,11 @@ ID or group ID), etc.
 }
 
 // A group mention suggestion with fixed group members
+// When using fixed group members via `userIds`, they will take precedence
+// if the group ID exists on Liveblocks.
 {
   kind: "group",
-  id: "group-1",
+  id: "here",
   members: ["user-1", "user-2"],
 }
 ```
