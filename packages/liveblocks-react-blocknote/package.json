@@ -60,6 +60,9 @@
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
+  "overrides": {
+    "@tiptap/core": "^3.4.2"
+  },
   "peerDependenciesMeta": {
     "@types/react": {
       "optional": true
