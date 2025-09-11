@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  CommentBody,
   CommentData,
   InboxNotificationData,
   NotificationSettingsPlain,
@@ -10,15 +11,15 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
-import type { ResponseResolver, RestContext, RestRequest } from "msw";
-import { rest } from "msw";
+import type { HttpResponseResolver } from "msw";
+import { http } from "msw";
 
 export function mockGetThreads(
-  resolver: ResponseResolver<
-    RestRequest<never, { roomId: string }>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    never,
     {
-      data: ThreadData<any>[];
+      data: ThreadData[];
       inboxNotifications: InboxNotificationData[];
       subscriptions: SubscriptionData[];
       meta: {
@@ -29,7 +30,7 @@ export function mockGetThreads(
     }
   >
 ) {
-  return rest.get(
+  return http.get(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/threads",
     resolver
   );
@@ -37,30 +38,30 @@ export function mockGetThreads(
 
 export function mockGetThread(
   params: { threadId: string },
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    never,
     {
-      thread: ThreadData<any>;
+      thread: ThreadData;
       inboxNotification?: InboxNotificationData;
       subscription?: SubscriptionData;
     }
   >
 ) {
-  return rest.get(
+  return http.get(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/thread-with-notification/${params.threadId}`,
     resolver
   );
 }
 
 export function mockCreateThread(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
-    ThreadData<any>
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    { id: string; comment: { id: string; body: CommentBody } },
+    ThreadData
   >
 ) {
-  return rest.post(
+  return http.post(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/threads",
     resolver
   );
@@ -68,9 +69,9 @@ export function mockCreateThread(
 
 export function mockDeleteThread(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.delete(
+  return http.delete(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}`,
     resolver
   );
@@ -78,13 +79,13 @@ export function mockDeleteThread(
 
 export function mockCreateComment(
   params: { threadId: string },
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    { id: string; body: CommentBody },
     CommentData
   >
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments`,
     resolver
   );
@@ -92,9 +93,9 @@ export function mockCreateComment(
 
 export function mockDeleteComment(
   params: { threadId: string; commentId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.delete(
+  return http.delete(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}`,
     resolver
   );
@@ -102,9 +103,9 @@ export function mockDeleteComment(
 
 export function mockEditThreadMetadata<M extends BaseMetadata>(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
+  resolver: HttpResponseResolver<{ roomId: string }, M, M>
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/metadata`,
     resolver
   );
@@ -112,9 +113,9 @@ export function mockEditThreadMetadata<M extends BaseMetadata>(
 
 export function mockMarkThreadAsResolved(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/mark-as-resolved`,
     resolver
   );
@@ -122,9 +123,9 @@ export function mockMarkThreadAsResolved(
 
 export function mockMarkThreadAsUnresolved(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/mark-as-unresolved`,
     resolver
   );
@@ -132,9 +133,9 @@ export function mockMarkThreadAsUnresolved(
 
 export function mockSubscribeToThread(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/subscribe`,
     resolver
   );
@@ -142,36 +143,36 @@ export function mockSubscribeToThread(
 
 export function mockUnsubscribeFromThread(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.post(
+  return http.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/unsubscribe`,
     resolver
   );
 }
 
 export function mockMarkInboxNotificationsAsRead(
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver<{ roomId: string }>
 ) {
-  return rest.post(
+  return http.post(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/inbox-notifications/read",
     resolver
   );
 }
 
 export function mockMarkAllInboxNotificationsAsRead(
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver
 ) {
-  return rest.post(
+  return http.post(
     "https://api.liveblocks.io/v2/c/inbox-notifications/read",
     resolver
   );
 }
 
 export function mockGetInboxNotifications(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    never,
+    never,
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
@@ -183,16 +184,16 @@ export function mockGetInboxNotifications(
     }
   >
 ) {
-  return rest.get(
+  return http.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
     resolver
   );
 }
 
 export function mockGetInboxNotificationsDelta(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    never,
+    never,
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
@@ -206,16 +207,16 @@ export function mockGetInboxNotificationsDelta(
     }
   >
 ) {
-  return rest.get(
+  return http.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications/delta",
     resolver
   );
 }
 
 export function mockDeleteAllInboxNotifications(
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver
 ) {
-  return rest.delete(
+  return http.delete(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
     resolver
   );
@@ -223,61 +224,53 @@ export function mockDeleteAllInboxNotifications(
 
 export function mockDeleteInboxNotification(
   params: { inboxNotificationId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
+  resolver: HttpResponseResolver
 ) {
-  return rest.delete(
+  return http.delete(
     `https://api.liveblocks.io/v2/c/inbox-notifications/${params.inboxNotificationId}`,
     resolver
   );
 }
 
 export function mockGetRoomSubscriptionSettings(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    never,
     RoomSubscriptionSettings
   >
 ) {
-  return rest.get(
+  return http.get(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }
 
 export function mockUpdateRoomSubscriptionSettings(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
+  resolver: HttpResponseResolver<
+    { roomId: string },
+    never,
     RoomSubscriptionSettings
   >
 ) {
-  return rest.post(
+  return http.post(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }
 
 export function mockGetNotificationSettings(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
-    NotificationSettingsPlain
-  >
+  resolver: HttpResponseResolver<never, never, NotificationSettingsPlain>
 ) {
-  return rest.get(
+  return http.get(
     "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );
 }
 
 export function mockUpdateNotificationSettings(
-  resolver: ResponseResolver<
-    RestRequest<never, never>,
-    RestContext,
-    PartialNotificationSettings
-  >
+  resolver: HttpResponseResolver<never, never, PartialNotificationSettings>
 ) {
-  return rest.post(
+  return http.post(
     "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );

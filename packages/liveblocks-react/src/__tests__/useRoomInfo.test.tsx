@@ -1,10 +1,9 @@
-import "@testing-library/jest-dom";
-
 import type { ResolveRoomsInfoArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
@@ -17,11 +16,11 @@ async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
 
 describe("useRoomInfo", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return an error if resolveRoomsInfo is not set", async () => {
@@ -137,7 +136,7 @@ describe("useRoomInfo", () => {
   test("should cache results based on room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -183,7 +182,7 @@ describe("useRoomInfo", () => {
   test("should revalidate instantly if its cache is invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -242,7 +241,7 @@ describe("useRoomInfo", () => {
   test("should batch (and deduplicate) requests for the same room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => ({ name: roomId }))
     );
     const {
@@ -396,7 +395,7 @@ describe("useRoomInfo", () => {
   test("should return an error if resolveRoomsInfo returns undefined for a specifc room ID", async () => {
     const roomId = nanoid();
 
-    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+    const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
       roomIds.map((roomId) => {
         if (roomId === "abc") {
           return undefined;
@@ -447,11 +446,11 @@ describe("useRoomInfo", () => {
 
 describe("useRoomInfoSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend with Suspense", async () => {

@@ -1,4 +1,5 @@
 import { kInternal } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
 
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
@@ -27,7 +28,7 @@ const NO_CLIENT = {
 const LOADING = { isLoading: true };
 
 describe("Umbrella Store", () => {
-  it("getters returns the expected shapes", () => {
+  test("getters returns the expected shapes", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
@@ -55,7 +56,7 @@ describe("Umbrella Store", () => {
     ).toEqual(LOADING);
   });
 
-  it("calling getters multiple times should always return a stable result", () => {
+  test("calling getters multiple times should always return a stable result", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!

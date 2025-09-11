@@ -1,5 +1,3 @@
-import "@testing-library/jest-dom";
-
 import { batch, HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
@@ -9,9 +7,20 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -52,18 +61,16 @@ describe("useInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -106,33 +113,29 @@ describe("useInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+      mockGetInboxNotificationsDelta(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -180,36 +183,32 @@ describe("useInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
     let getInboxNotificationsReqCount = 0;
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         getInboxNotificationsReqCount++;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -241,8 +240,8 @@ describe("useInboxNotifications", () => {
 
   test("should return an error if initial call if failing", async () => {
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(ctx.status(500));
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -284,18 +283,16 @@ describe("useInboxNotifications", () => {
     });
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -339,20 +336,20 @@ describe("useInboxNotifications", () => {
 
 describe("useInboxNotifications: error", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should retry with exponential backoff on error", async () => {
     let getInboxNotificationsReqCount = 0;
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         getInboxNotificationsReqCount++;
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -370,23 +367,23 @@ describe("useInboxNotifications: error", () => {
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
     expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
     expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
     expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
     await waitFor(() =>
       expect(result.current).toEqual({
@@ -396,13 +393,13 @@ describe("useInboxNotifications: error", () => {
     );
 
     // Wait for 5 second for the error to clear
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current).toEqual({ isLoading: true });
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
     expect(result.current).toEqual({ isLoading: true });
 
@@ -413,9 +410,9 @@ describe("useInboxNotifications: error", () => {
 
   test("should not retry if a 403 Forbidden response is received from server", async () => {
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         // Return a 403 status from the server for the initial fetch
-        return res(ctx.status(403));
+        return HttpResponse.json(null, { status: 403 });
       })
     );
 
@@ -454,33 +451,29 @@ describe("useInboxNotifications - Suspense", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+      mockGetInboxNotificationsDelta(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -526,11 +519,11 @@ describe("useInboxNotifications - Suspense", () => {
 
 describe("useInboxNotifications: polling", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   test("should poll threads every x seconds", async () => {
     const roomId = nanoid();
@@ -546,35 +539,31 @@ describe("useInboxNotifications: polling", () => {
     let pollerCount = 0;
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         initialCount++;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+      mockGetInboxNotificationsDelta(() => {
         pollerCount++;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -605,12 +594,12 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
-    jest.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(60_000);
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
-    jest.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(60_000);
     // Wait for the second polling to occur
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(2));
@@ -632,35 +621,31 @@ describe("useInboxNotifications: polling", () => {
     let pollerCount = 0;
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         hasCalledGetNotifications = true;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+      mockGetInboxNotificationsDelta(() => {
         pollerCount++;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -691,14 +676,14 @@ describe("useInboxNotifications: polling", () => {
     expect(pollerCount).toBe(0);
 
     // Wait for the first polling to occur after the initial render
-    await jest.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Unmount Component 1 and verify that no new poll happens after the next interval
     unmountComp1();
 
     // Advance time by a lot to ensure no next poll happens
-    await jest.advanceTimersByTimeAsync(999_999); // Wait a loooooooooooooooong time
+    await vi.advanceTimersByTimeAsync(999_999); // Wait a loooooooooooooooong time
     expect(pollerCount).toBe(1);
 
     // Mount Component 2 and verify that a new poll happens immediately (because the last time we polled was 999999ms ago)
@@ -706,7 +691,7 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() => expect(pollerCount).toBe(2));
 
     // And polling keeps happening every 60s too
-    await jest.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(3));
 
     unmountComp2();
@@ -726,35 +711,31 @@ describe("useInboxNotifications: polling", () => {
     let pollerCount = 0;
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         hasCalledGetNotifications = true;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+      mockGetInboxNotificationsDelta(() => {
         pollerCount++;
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -785,11 +766,11 @@ describe("useInboxNotifications: polling", () => {
     expect(pollerCount).toBe(0);
 
     // Wait for the first polling to occur after the initial render
-    await jest.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance 10 seconds (more than the the currently set maximum stale time, 5000)
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
 
     // Dispatch a `visibilitychange` event and verify that when the document becomes
     // visible a new poll happens since more than 5000 ms has passed since the last poll
@@ -803,19 +784,19 @@ describe("useInboxNotifications: polling", () => {
 
 describe("useInboxNotificationsSuspense: error", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -850,11 +831,11 @@ describe("useInboxNotificationsSuspense: error", () => {
     expect(screen.getByText("Loading, yo")).toBeInTheDocument();
 
     // Wait until all fetch attempts have been done
-    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
-    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
-    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
-    await act(() => jest.advanceTimersByTimeAsync(10_000)); // fetch attempt 4
-    await act(() => jest.advanceTimersByTimeAsync(15_000)); // fetch attempt 5
+    await act(() => vi.advanceTimersToNextTimerAsync()); // fetch attempt 1
+    await act(() => vi.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
+    await act(() => vi.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
+    await act(() => vi.advanceTimersByTimeAsync(10_000)); // fetch attempt 4
+    await act(() => vi.advanceTimersByTimeAsync(15_000)); // fetch attempt 5
 
     // Check if the error boundary's fallback is displayed
     expect(
@@ -862,7 +843,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     ).toBeInTheDocument();
 
     // Wait until the error boundary auto-clears
-    await act(() => jest.advanceTimersByTimeAsync(5_000));
+    await act(() => vi.advanceTimersByTimeAsync(5_000));
 
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));
@@ -885,25 +866,23 @@ describe("useInboxNotificationsSuspense: error", () => {
 
     let n = 0;
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) => {
+      mockGetInboxNotifications(() => {
         n++;
         if (n <= 1) {
           // Mock an error response from the server
-          return res(ctx.status(500));
+          return HttpResponse.json(null, { status: 500 });
         }
 
         // Mock a successful response from the server for the subsequent fetches
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -939,7 +918,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     expect(screen.getByText("Loading your notifications")).toBeInTheDocument();
 
     // Wait until all fetch attempts have been done
-    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
+    await act(() => vi.advanceTimersToNextTimerAsync()); // fetch attempt 1
 
     // Check if the error boundary's fallback is displayed
     expect(screen.getByText("Done loading!")).toBeInTheDocument();
@@ -993,70 +972,62 @@ describe("useInboxNotifications: pagination", () => {
     let isPage3Requested = false;
 
     server.use(
-      mockGetInboxNotifications(async (req, res, ctx) => {
-        const url = new URL(req.url);
+      mockGetInboxNotifications(({ request }) => {
+        const url = new URL(request.url);
         const cursor = url.searchParams.get("cursor");
 
         // Request for Page 2
         if (cursor === "cursor-1") {
           isPage2Requested = true;
-          return res(
-            ctx.json({
-              threads: [thread2],
-              inboxNotifications: inboxNotificationsPage2,
-              subscriptions: subscriptionsPage2,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: "cursor-2",
-              },
-            })
-          );
+          return HttpResponse.json({
+            threads: [thread2],
+            inboxNotifications: inboxNotificationsPage2,
+            subscriptions: subscriptionsPage2,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-2",
+            },
+          });
         }
         // Request for Page 3
         else if (cursor === "cursor-2") {
           isPage3Requested = true;
-          return res(
-            ctx.json({
-              threads: [thread3],
-              inboxNotifications: inboxNotificationsPage3,
-              subscriptions: subscriptionsPage3,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: "cursor-3",
-              },
-            })
-          );
+          return HttpResponse.json({
+            threads: [thread3],
+            inboxNotifications: inboxNotificationsPage3,
+            subscriptions: subscriptionsPage3,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-3",
+            },
+          });
         }
         // Request for the first page
         else {
           isPage1Requested = true;
-          return res(
-            ctx.json({
-              threads: [thread1],
-              inboxNotifications: inboxNotificationsPage1,
-              subscriptions: subscriptionsPage1,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: "cursor-1",
-              },
-            })
-          );
-        }
-      }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
+          return HttpResponse.json({
+            threads: [thread1],
+            inboxNotifications: inboxNotificationsPage1,
+            subscriptions: subscriptionsPage1,
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-1",
             },
-          })
-        );
+          });
+        }
+      }),
+      mockGetInboxNotificationsDelta(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 
@@ -1167,39 +1138,35 @@ describe("useInboxNotifications: pagination", () => {
     let getNotificationsReqCount = 0;
 
     server.use(
-      mockGetInboxNotifications(async (req, res, ctx) => {
+      mockGetInboxNotifications(({ request }) => {
         getNotificationsReqCount++;
-        const url = new URL(req.url);
+        const url = new URL(request.url);
         const cursor = url.searchParams.get("cursor");
 
         // Request for Page 2 (final page)
         if (cursor === "cursor-1") {
           isPageTwoRequested = true;
-          return res(
-            ctx.json({
-              threads: [threadTwo],
-              inboxNotifications: inboxNotificationsPageTwo,
-              subscriptions: subscriptionsPageTwo,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
+          return HttpResponse.json({
+            threads: [threadTwo],
+            inboxNotifications: inboxNotificationsPageTwo,
+            subscriptions: subscriptionsPageTwo,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          });
         }
         // Request for the first page
         else {
-          return res(
-            ctx.json({
-              threads: [threadOne],
-              inboxNotifications: inboxNotificationsPageOne,
-              subscriptions: subscriptionsPageOne,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: "cursor-1",
-              },
-            })
-          );
+          return HttpResponse.json({
+            threads: [threadOne],
+            inboxNotifications: inboxNotificationsPageOne,
+            subscriptions: subscriptionsPageOne,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-1",
+            },
+          });
         }
       })
     );
@@ -1271,28 +1238,26 @@ describe("useInboxNotifications: pagination", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications(async (req, res, ctx) => {
-        const url = new URL(req.url);
+      mockGetInboxNotifications(({ request }) => {
+        const url = new URL(request.url);
         const cursor = url.searchParams.get("cursor");
 
         // Initial load (Page 1)
         if (cursor === null) {
-          return res(
-            ctx.json({
-              threads: [threadOne],
-              inboxNotifications: inboxNotificationsPageOne,
-              subscriptions: subscriptionsPageOne,
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: "cursor-1",
-              },
-            })
-          );
+          return HttpResponse.json({
+            threads: [threadOne],
+            inboxNotifications: inboxNotificationsPageOne,
+            subscriptions: subscriptionsPageOne,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: "cursor-1",
+            },
+          });
         }
         // Page 2
         else {
           isPageTwoRequested = true;
-          return res(ctx.status(500));
+          return HttpResponse.json(null, { status: 500 });
         }
       })
     );

@@ -8,7 +8,6 @@
       "cache": false,
       "dependsOn": ["build"],
       "inputs": [
-        "jest.*",
         "e2e/**/*.tsx",
         "e2e/**/*.ts",
         "src/**/*.tsx",

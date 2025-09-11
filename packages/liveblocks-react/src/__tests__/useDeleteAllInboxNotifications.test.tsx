@@ -1,6 +1,8 @@
 import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import {
   dummyCommentData,
@@ -48,10 +50,9 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -59,10 +60,13 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {
@@ -126,10 +130,9 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -137,10 +140,13 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(500)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -209,10 +215,9 @@ describe("useDeleteAllInboxNotifications", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -220,10 +225,13 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(500)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -299,10 +307,9 @@ describe("useDeleteAllInboxNotifications", () => {
     let hasCalledDeleteThread = false;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -310,13 +317,16 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204))),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      }),
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
         hasCalledDeleteThread = true;
-        return res(ctx.status(204));
+        return HttpResponse.json(null, { status: 204 });
       })
     );
 
@@ -393,10 +403,9 @@ describe("useDeleteAllInboxNotifications", () => {
     let hasCalledDeleteComment = false;
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -404,17 +413,17 @@ describe("useDeleteAllInboxNotifications", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204))),
-      mockDeleteComment(
-        { threadId: thread.id, commentId: comment.id },
-        async (_req, res, ctx) => {
-          hasCalledDeleteComment = true;
-          return res(ctx.status(204));
-        }
-      )
+          },
+          { status: 200 }
+        );
+      }),
+      mockDeleteAllInboxNotifications(() => {
+        return HttpResponse.json(null, { status: 204 });
+      }),
+      mockDeleteComment({ threadId: thread.id, commentId: comment.id }, () => {
+        hasCalledDeleteComment = true;
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {

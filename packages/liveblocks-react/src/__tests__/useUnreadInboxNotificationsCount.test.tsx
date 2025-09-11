@@ -1,9 +1,17 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -48,18 +56,16 @@ describe("useUnreadInboxNotificationsCount", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -107,33 +113,29 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+      mockGetInboxNotificationsDelta(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 

@@ -1,6 +1,7 @@
 import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { useMentionSuggestions } from "../use-mention-suggestions";
 import { act, createContextsForTest } from "./_utils";
@@ -21,11 +22,11 @@ async function legacyResolveMentionSuggestions({
 
 describe("useMentionSuggestions", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return the results from resolveMentionSuggestions", async () => {
@@ -120,7 +121,7 @@ describe("useMentionSuggestions", () => {
   test("should invoke resolveMentionSuggestions with the expected arguments", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -161,7 +162,7 @@ describe("useMentionSuggestions", () => {
   test("should cache results and not invoke resolveMentionSuggestions with previously provided arguments", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -230,7 +231,7 @@ describe("useMentionSuggestions", () => {
   test("should invoke resolveMentionSuggestions again if its cache was invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
@@ -307,7 +308,7 @@ describe("useMentionSuggestions", () => {
   test("should debounce the invokations of resolveMentionSuggestions", async () => {
     const roomId = nanoid();
 
-    const resolveMentionSuggestions = jest.fn(
+    const resolveMentionSuggestions = vi.fn(
       ({ text }: ResolveMentionSuggestionsArgs) =>
         text.split("").map((id) => ({ kind: "user" as const, id }))
     );
