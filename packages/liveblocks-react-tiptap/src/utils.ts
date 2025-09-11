@@ -1,5 +1,5 @@
 import type { ClientRectObject } from "@floating-ui/react-dom";
-import type { ContextualPromptContext } from "@liveblocks/core";
+import { assertNever, type ContextualPromptContext } from "@liveblocks/core";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
@@ -15,8 +15,15 @@ import {
 } from "y-prosemirror";
 import type { RelativePosition } from "yjs";
 
-import type { YSyncPluginState } from "./types";
-import { LIVEBLOCKS_MENTION_TYPE } from "./types";
+import type {
+  SerializedTiptapMentionData,
+  TiptapMentionData,
+  YSyncPluginState,
+} from "./types";
+import {
+  LIVEBLOCKS_GROUP_MENTION_TYPE,
+  LIVEBLOCKS_MENTION_TYPE,
+} from "./types";
 
 const CONTEXT_TRUNCATION = "[…]";
 const CONTEXT_BLOCK_SEPARATOR = "\n";
@@ -62,20 +69,52 @@ export const getRectFromCoords = (coords: {
 export const getMentionsFromNode = (
   node: ProseMirrorNode,
   range: Range
-): { notificationId: string; userId: string }[] => {
-  const result: { notificationId: string; userId: string }[] = [];
+): Map<string, TiptapMentionData> => {
+  const mentions = new Map<string, TiptapMentionData>();
+
   node.nodesBetween(range.from, range.to, (child) => {
-    if (child.type.name === LIVEBLOCKS_MENTION_TYPE) {
-      const mention = child.attrs as { id?: string; notificationId?: string };
+    if (
+      child.type.name === LIVEBLOCKS_MENTION_TYPE ||
+      child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
+    ) {
+      const mention = child.attrs as Omit<SerializedTiptapMentionData, "kind">;
+
       if (mention.id && mention.notificationId) {
-        result.push({
-          notificationId: mention.notificationId,
-          userId: mention.id,
-        });
+        if (child.type.name === LIVEBLOCKS_MENTION_TYPE) {
+          mentions.set(mention.notificationId, {
+            kind: "user",
+            id: mention.id,
+            notificationId: mention.notificationId,
+          });
+        } else if (child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE) {
+          let userIds: string[] | undefined;
+
+          if (mention.userIds) {
+            try {
+              const parsedUserIds = JSON.parse(mention.userIds) as string[];
+
+              if (Array.isArray(parsedUserIds)) {
+                userIds = parsedUserIds;
+              }
+            } catch {
+              userIds = undefined;
+            }
+          }
+
+          mentions.set(mention.notificationId, {
+            kind: "group",
+            id: mention.id,
+            userIds,
+            notificationId: mention.notificationId,
+          });
+        } else {
+          assertNever(child.type.name, "Unexpected mention kind");
+        }
       }
     }
   });
-  return result;
+
+  return mentions;
 };
 
 // How to modify data in transformPasted, inspired by: https://discuss.prosemirror.net/t/modify-specific-node-on-copy-and-paste-in-clipboard/4901/4

@@ -41,4 +41,4 @@ export {
   prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
 } from "./thread-notification";
-export type { ResolveUsersArgs } from "@liveblocks/core";
+export type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "@liveblocks/core";

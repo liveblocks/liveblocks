@@ -87,6 +87,7 @@ export {
   useInboxNotificationsSuspense as useInboxNotifications,
   useNotificationSettingsSuspense as useNotificationSettings,
   useRoomInfoSuspense as useRoomInfo,
+  useGroupInfoSuspense as useGroupInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,
   useUserThreadsSuspense_experimental as useUserThreads_experimental,

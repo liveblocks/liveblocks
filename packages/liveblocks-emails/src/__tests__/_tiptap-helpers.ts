@@ -1,7 +1,4 @@
-import type {
-  SerializedTiptapRootNode,
-  TiptapMentionNodeWithContext,
-} from "../tiptap-editor";
+import type { SerializedTiptapRootNode } from "../tiptap-editor";
 
 /**
  * A simple `Uint8Array` representing a tiptap document
@@ -35,7 +32,9 @@ export const docUpdate = new Uint8Array([
 export const docUpdateBuffer = docUpdate.buffer;
 
 export const MENTIONED_USER_ID = "user-0";
+export const MENTIONED_GROUP_ID = "group-0";
 export const MENTION_ID = "in_8QpppsmEJhJzWQ8Q3B7BP";
+export const GROUP_MENTION_ID = "in_QQ6EOi7jsH-LNw0C8Lpaf";
 
 // Without line breaks
 export const docStateRoot: SerializedTiptapRootNode = {
@@ -127,52 +126,4 @@ export const docStateRoot2: SerializedTiptapRootNode = {
     },
     { type: "paragraph" },
   ],
-};
-
-export const createTipTapMentionNodeWithContext = ({
-  mentionedUserId,
-  mentionId,
-}: {
-  mentionedUserId: string;
-  mentionId: string;
-}): TiptapMentionNodeWithContext => {
-  return {
-    before: [
-      {
-        type: "text",
-        text: "Hey this a tip tap ",
-      },
-      {
-        type: "text",
-        text: "example",
-        marks: [
-          {
-            type: "bold",
-            attrs: {},
-          },
-          {
-            type: "italic",
-            attrs: {},
-          },
-        ],
-      },
-      {
-        type: "text",
-        text: " hiha! ",
-      },
-    ],
-    mention: {
-      type: "liveblocksMention",
-      attrs: {
-        id: mentionedUserId,
-        notificationId: mentionId,
-      },
-    },
-    after: [
-      {
-        type: "text",
-        text: " fun right?",
-      },
-    ],
-  };
 };

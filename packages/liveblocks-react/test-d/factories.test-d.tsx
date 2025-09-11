@@ -647,6 +647,52 @@ ctx.useOthersListener(({ user, type }) => {
 
 // ---------------------------------------------------------
 
+// The useGroupInfo() hook
+{
+  {
+    const { info, error, isLoading } = ctx.useGroupInfo("group-id");
+    //                                 ^^^ [1]
+    expectType<boolean>(isLoading);
+    expectType<string | undefined>(info?.name);
+    expectType<string | undefined>(info?.avatar);
+    expectType<Json | undefined>(info?.nonexisting);
+    expectType<Error | undefined>(error);
+  }
+  {
+    const { info, error, isLoading } = lbctx.useGroupInfo("group-id");
+    //                                 ^^^^^ [2]
+    expectType<boolean>(isLoading);
+    expectType<string | undefined>(info?.name);
+    expectType<string | undefined>(info?.avatar);
+    expectType<Json | undefined>(info?.nonexisting);
+    expectType<Error | undefined>(error);
+  }
+}
+
+// The useGroupInfo() hook (suspense)
+{
+  {
+    const { info, error, isLoading } = ctx.suspense.useGroupInfo("group-id");
+    //                                 ^^^^^^^^^^^^ [3]
+    expectType<false>(isLoading);
+    expectType<string | undefined>(info.name);
+    expectType<string | undefined>(info.avatar);
+    expectType<Json | undefined>(info.nonexisting);
+    expectType<undefined>(error);
+  }
+  {
+    const { info, error, isLoading } = lbctx.suspense.useGroupInfo("group-id");
+    //                                 ^^^^^^^^^^^^^^ [4]
+    expectType<false>(isLoading);
+    expectType<string | undefined>(info.name);
+    expectType<string | undefined>(info.avatar);
+    expectType<Json | undefined>(info.nonexisting);
+    expectType<undefined>(error);
+  }
+}
+
+// ---------------------------------------------------------
+
 // The useCreateThread() hook
 {
   {

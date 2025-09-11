@@ -1,6 +1,7 @@
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
+  MentionData,
   Relax,
   TextEditorType,
   ThreadData,
@@ -23,6 +24,7 @@ export const LIVEBLOCKS_MENTION_NOTIFIER_KEY = new PluginKey(
 
 export const LIVEBLOCKS_MENTION_EXTENSION = "liveblocksMentionExt";
 export const LIVEBLOCKS_MENTION_TYPE = "liveblocksMention";
+export const LIVEBLOCKS_GROUP_MENTION_TYPE = "liveblocksGroupMention";
 
 export const THREADS_ACTIVE_SELECTION_PLUGIN = new PluginKey(
   "lb-threads-active-selection-plugin"
@@ -360,3 +362,13 @@ export type AiCommands<ReturnType = boolean> = {
 export type YSyncPluginState = {
   binding: ProsemirrorBinding;
 };
+
+export type TiptapMentionData = MentionData & {
+  notificationId: string;
+};
+
+export type SerializedTiptapMentionData = TiptapMentionData extends infer T
+  ? T extends { kind: "group" }
+    ? Omit<T, "userIds"> & { userIds?: string }
+    : T
+  : never;

@@ -46,6 +46,7 @@ describe("useMarkInboxNotificationAsRead", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -114,6 +115,7 @@ describe("useMarkInboxNotificationAsRead", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

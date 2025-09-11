@@ -7,6 +7,7 @@ import {
   createCommentAttachmentId,
   type EventSource,
   makeEventSource,
+  MENTION_CHARACTER,
   type MentionData,
   sanitizeUrl,
 } from "@liveblocks/core";
@@ -68,7 +69,6 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUiConfig } from "../../config";
-import { MENTION_CHARACTER } from "../../constants";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,

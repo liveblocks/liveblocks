@@ -3,7 +3,7 @@ import { Document, User } from "@/types";
 import { getUser } from "./getUser";
 
 type Props = {
-  userIds?: Document["id"][];
+  userIds?: string[];
   search?: string;
 };
 
@@ -12,10 +12,10 @@ type Props = {
  *
  * Simulates calling your database and returning a list of user with seeded random colours
  *
- * @param userIds - The user's ids to get
- * @param searchTerm - The term to filter your users by, checks users' ids and names
+ * @param userIds - The user ids to get
+ * @param search - The term to filter your users by, checks users' ids and names
  */
-export async function getUsers({ userIds, search }: Props) {
+export async function getUsers({ userIds, search }: Props = {}) {
   const usersPromises: Promise<User | null>[] = [];
 
   // Filter by userIds or get all users

@@ -16,13 +16,14 @@ import { $getRoot } from "lexical";
 import { applyUpdate, Doc, encodeStateAsUpdate, encodeStateVector } from "yjs";
 
 import { createNoOpProvider, registerCollaborationListeners } from "./collab";
+import { GroupMentionNode } from "./GroupMentionNodeLite";
 import { MentionNode } from "./MentionNodeLite";
 import { ThreadMarkNode } from "./ThreadNodeLite";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-const LIVEBLOCKS_NODES = [ThreadMarkNode, MentionNode];
+const LIVEBLOCKS_NODES = [ThreadMarkNode, MentionNode, GroupMentionNode];
 
 export { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 

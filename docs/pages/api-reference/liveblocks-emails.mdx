@@ -171,7 +171,7 @@ and returns unread comment body(s) related to the notification, as React nodes.
 It can return one of three formats, an `unreadMention` type containing one
 comment, an `unreadReplies` type returning multiple comments, or `null` if there
 are no unread mentions/replies. You can also
-[resolve user & room data](#prepare-thread-notification-email-as-react-resolving-data)
+[resolve public data](#prepare-thread-notification-email-as-react-resolving-data)
 and
 [customize the components](#prepare-thread-notification-email-as-react-customizing-components).
 
@@ -393,11 +393,20 @@ export async function POST(request: Request) {
     name="options.resolveUsers"
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
-    A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments). Return an array of
+    A function that resolves user information. Return an array of
     `UserMeta["info"]` objects in the same order they arrived. Works similarly
     to the [resolver on the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveGroupsInfo"
+    detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
+  >
+    A function that resolves group information. Return an array of `GroupInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo).
     [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
@@ -442,7 +451,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem
     name="options.components.Mention"
-    detailedType={`({ element: CommentBodyMention, user?: UserInfo["info"]" }) => ReactNode`}
+    detailedType={`({ element: CommentBodyMention, user?: UserInfo["info"], group?: GroupInfo }) => ReactNode`}
   >
     The mention element.
   </PropertiesListItem>
@@ -451,14 +460,16 @@ export async function POST(request: Request) {
 #### Resolving data [#prepare-thread-notification-email-as-react-resolving-data]
 
 Similarly to on the client, you can resolve
-[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[group info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
+and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
-<Banner title="Resolving users" type="info">
-  When resolving users the function receives a list of user IDs and you should
-  return a list of user objects of the same size, in the same order.
+<Banner title="Resolving users and groups" type="info">
+  When resolving users and groups, the function receives a list of IDs and you
+  should return a list of objects of the same size, in the same order.
 </Banner>
 
 ```tsx
@@ -473,6 +484,14 @@ const emailData = await prepareThreadNotificationEmailAsReact(
       return usersData.map((userData) => ({
         name: userData.name, // "Nimesh"
         avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveGroupsInfo: async ({ groupIds }) => {
+      const groupsData = await __getGroupsFromDB__(groupIds);
+
+      return groupsData.map((groupData) => ({
+        name: groupData.name, // "Engineering"
+        avatar: groupData.avatar.src, // "https://..."
       }));
     },
     resolveRoomInfo({ roomId }) {
@@ -515,9 +534,11 @@ const emailData = await prepareThreadNotificationEmailAsReact(
         <Text className="text-sm text-black m-0 mb-4">{children}</Text>
       ),
 
-      // `user` is the optional data returned from `resolveUsers`
-      Mention: ({ element, user }) => (
-        <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
+      Mention: ({ element, user, group }) => (
+        <span style={{ color: "red" }}>
+          @{user?.name ?? group?.name ?? element.id}
+        </span>
       ),
 
       // If the link is rich-text render it, otherwise use the URL
@@ -542,7 +563,7 @@ and returns unread comment body(s) related to the notification, as an HTML-safe
 string. It can return one of three formats, an `unreadMention` type containing
 one comment, an `unreadReplies` type returning multiple comments, or `null` if
 there are no unread mentions/replies. You can also
-[resolve user & room data](#prepare-thread-notification-email-as-html-resolving-data)
+[resolve public data](#prepare-thread-notification-email-as-html-resolving-data)
 and
 [customize the styles](#prepare-thread-notification-email-as-html-styling-elements).
 
@@ -780,6 +801,16 @@ export async function POST(request: Request) {
     [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
+    name="options.resolveGroupsInfo"
+    detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
+  >
+    A function that resolves group information. Return an array of `GroupInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
     name="options.resolveRoomInfo"
     detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
   >
@@ -818,14 +849,16 @@ export async function POST(request: Request) {
 #### Resolving data [#prepare-thread-notification-email-as-html-resolving-data]
 
 Similarly to on the client, you can resolve
-[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[group info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
+and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
-<Banner title="Resolving users" type="info">
-  When resolving users the function receives a list of user IDs and you should
-  return a list of user objects of the same size, in the same order.
+<Banner title="Resolving users and groups" type="info">
+  When resolving users and groups, the function receives a list of IDs and you
+  should return a list of objects of the same size, in the same order.
 </Banner>
 
 ```tsx
@@ -840,6 +873,14 @@ const emailData = await prepareThreadNotificationEmailAsHtml(
       return usersData.map((userData) => ({
         name: userData.name, // "Nimesh"
         avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveGroupsInfo: async ({ groupIds }) => {
+      const groupsData = await __getGroupsFromDB__(groupIds);
+
+      return groupsData.map((groupData) => ({
+        name: groupData.name, // "Engineering"
+        avatar: groupData.avatar.src, // "https://..."
       }));
     },
     resolveRoomInfo({ roomId }) {
@@ -967,7 +1008,7 @@ Takes a
 and returns an unread text mention with its surrounding text as React nodes. It
 can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
-[resolve user & room data](#prepare-text-mention-notification-email-as-react-resolving-data)
+[resolve public data](#prepare-text-mention-notification-email-as-react-resolving-data)
 and
 [customize the components](#prepare-text-mention-notification-email-as-react-customizing-components).
 
@@ -1130,6 +1171,16 @@ export async function POST(request: Request) {
     more](#prepare-text-mention-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
+    name="options.resolveGroupsInfo"
+    detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
+  >
+    A function that resolves group information. Return an array of `GroupInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
     name="options.resolveRoomInfo"
     detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
   >
@@ -1159,7 +1210,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem
     name="options.components.Mention"
-    detailedType={`({ element: LiveblocksTextEditorMentionNode, user?: UserInfo["info"]" }) => ReactNode`}
+    detailedType={`({ element: LiveblocksTextEditorMentionNode, user?: UserInfo["info"], group?: GroupInfo }) => ReactNode`}
   >
     The mention element.
   </PropertiesListItem>
@@ -1168,14 +1219,16 @@ export async function POST(request: Request) {
 #### Resolving data [#prepare-text-mention-notification-email-as-react-resolving-data]
 
 Similarly to on the client, you can resolve
-[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[group info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
+and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
-<Banner title="Resolving users" type="info">
-  When resolving users the function receives a list of user IDs and you should
-  return a list of user objects of the same size, in the same order.
+<Banner title="Resolving users and groups" type="info">
+  When resolving users and groups, the function receives a list of IDs and you
+  should return a list of objects of the same size, in the same order.
 </Banner>
 
 ```tsx
@@ -1190,6 +1243,14 @@ const emailData = await prepareTextMentionNotificationEmailAsReact(
       return usersData.map((userData) => ({
         name: userData.name, // "Nimesh"
         avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveGroupsInfo: async ({ groupIds }) => {
+      const groupsData = await __getGroupsFromDB__(groupIds);
+
+      return groupsData.map((groupData) => ({
+        name: groupData.name, // "Engineering"
+        avatar: groupData.avatar.src, // "https://..."
       }));
     },
     resolveRoomInfo({ roomId }) {
@@ -1232,9 +1293,11 @@ const emailData = await prepareThreadNotificationEmailAsReact(
         <Text className="text-sm text-black m-0 mb-4">{children}</Text>
       ),
 
-      // `user` is the optional data returned from `resolveUsers`
-      Mention: ({ element, user }) => (
-        <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
+      Mention: ({ element, user, group }) => (
+        <span style={{ color: "red" }}>
+          @{user?.name ?? group?.name ?? element.id}
+        </span>
       ),
     },
     // +++
@@ -1256,7 +1319,7 @@ Takes a
 and returns an unread text mention with its surrounding text as an HTML string.
 It can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
-[resolve user & room data](#prepare-text-mention-notification-email-as-html-resolving-data)
+[resolve public data](#prepare-text-mention-notification-email-as-html-resolving-data)
 and
 [customize the styles](#prepare-text-mention-notification-email-as-html-styling-elements).
 
@@ -1419,6 +1482,16 @@ export async function POST(request: Request) {
     more](#prepare-text-mention-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
+    name="options.resolveGroupsInfo"
+    detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
+  >
+    A function that resolves group information. Return an array of `GroupInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
     name="options.resolveRoomInfo"
     detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
   >
@@ -1455,14 +1528,16 @@ export async function POST(request: Request) {
 #### Resolving data [#prepare-text-mention-notification-email-as-html-resolving-data]
 
 Similarly to on the client, you can resolve
-[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[group info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
+and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
-<Banner title="Resolving users" type="info">
-  When resolving users the function receives a list of user IDs and you should
-  return a list of user objects of the same size, in the same order.
+<Banner title="Resolving users and groups" type="info">
+  When resolving users and groups, the function receives a list of IDs and you
+  should return a list of objects of the same size, in the same order.
 </Banner>
 
 ```tsx
@@ -1477,6 +1552,14 @@ const emailData = await prepareTextMentionNotificationEmailAsHtml(
       return usersData.map((userData) => ({
         name: userData.name, // "Nimesh"
         avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveGroupsInfo: async ({ groupIds }) => {
+      const groupsData = await __getGroupsFromDB__(groupIds);
+
+      return groupsData.map((groupData) => ({
+        name: groupData.name, // "Engineering"
+        avatar: groupData.avatar.src, // "https://..."
       }));
     },
     resolveRoomInfo({ roomId }) {
