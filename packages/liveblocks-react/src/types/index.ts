@@ -1453,7 +1453,9 @@ export type LiveblocksContextBundle<
        * @example
        * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
        */
-      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncResult;
+      useUnreadInboxNotificationsCount(
+        options?: UseInboxNotificationsOptions
+      ): UnreadInboxNotificationsCountAsyncResult;
 
       /**
        * @experimental
@@ -1508,7 +1510,9 @@ export type LiveblocksContextBundle<
              * @example
              * const { count } = useUnreadInboxNotificationsCount();
              */
-            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
+            useUnreadInboxNotificationsCount(
+              options?: UseInboxNotificationsOptions
+            ): UnreadInboxNotificationsCountAsyncSuccess;
 
             /**
              * Returns notification settings for the current user.

@@ -1,7 +1,11 @@
-import type { BaseMetadata, ThreadData } from "@liveblocks/client";
+import type {
+  BaseMetadata,
+  InboxNotificationData,
+  ThreadData,
+} from "@liveblocks/client";
 import { isStartsWithOperator } from "@liveblocks/core";
 
-import type { ThreadsQuery } from "../types";
+import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
 
 /**
  * Creates a predicate function that will filter all ThreadData instances that
@@ -11,10 +15,10 @@ export function makeThreadsFilter<M extends BaseMetadata>(
   query: ThreadsQuery<M>
 ): (thread: ThreadData<M>) => boolean {
   return (thread: ThreadData<M>) =>
-    matchesQuery(thread, query) && matchesMetadata(thread, query);
+    matchesThreadsQuery(thread, query) && matchesMetadata(thread, query);
 }
 
-function matchesQuery(
+function matchesThreadsQuery(
   thread: ThreadData<BaseMetadata>,
   q: ThreadsQuery<BaseMetadata>
 ) {
@@ -51,4 +55,21 @@ function matchesOperator(
   } else {
     return value === op;
   }
+}
+
+export function makeInboxNotificationsFilter(
+  query: InboxNotificationsQuery
+): (inboxNotification: InboxNotificationData) => boolean {
+  return (inboxNotification: InboxNotificationData) =>
+    matchesInboxNotificationsQuery(inboxNotification, query);
+}
+
+function matchesInboxNotificationsQuery(
+  inboxNotification: InboxNotificationData,
+  q: InboxNotificationsQuery
+) {
+  return (
+    (q.roomId === undefined || q.roomId === inboxNotification.roomId) &&
+    (q.kind === undefined || q.kind === inboxNotification.kind)
+  );
 }

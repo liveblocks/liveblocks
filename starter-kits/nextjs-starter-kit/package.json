@@ -14,13 +14,13 @@
     "@blocknote/core": "^0.25.2",
     "@blocknote/mantine": "^0.25.2",
     "@blocknote/react": "^0.25.2",
-    "@liveblocks/client": "3.7.0-preview1",
-    "@liveblocks/emails": "3.7.0-preview1",
-    "@liveblocks/node": "3.7.0-preview1",
-    "@liveblocks/react": "3.7.0-preview1",
-    "@liveblocks/react-blocknote": "3.7.0-preview1",
-    "@liveblocks/react-tiptap": "3.7.0-preview1",
-    "@liveblocks/react-ui": "3.7.0-preview1",
+    "@liveblocks/client": "^3.7.1",
+    "@liveblocks/emails": "^3.7.1",
+    "@liveblocks/node": "^3.7.1",
+    "@liveblocks/react": "^3.7.1",
+    "@liveblocks/react-blocknote": "^3.7.1",
+    "@liveblocks/react-tiptap": "^3.7.1",
+    "@liveblocks/react-ui": "^3.7.1",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-select": "^2.1.6",
@@ -66,7 +66,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-unused-imports": "^3.0.0",
     "prettier": "^3.0.1",
-    "typescript": "^5.4.3"
+    "typescript": "^5.9.2"
   },
   "overrides": {
     "@types/react": "19.0.12"

@@ -8,8 +8,8 @@ import { SessionProvider } from "next-auth/react";
 import { ReactNode, useEffect } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
-import { getUsers, getGroups } from "@/lib/database";
 import { syncLiveblocksGroups } from "@/lib/actions/syncLiveblocksGroups";
+import { getGroups, getUsers } from "@/lib/database";
 
 const SYNC_LIVEBLOCKS_GROUPS_KEY = "sync-liveblocks-groups";
 const SYNC_LIVEBLOCKS_GROUPS_VALUE = "1";
@@ -100,7 +100,7 @@ export function Providers({
             .filter((group) => group !== null)
             .map((group) => ({
               kind: "group" as const,
-              id: group?.id,
+              id: group.id,
             }));
 
           // Get user suggestions
@@ -109,7 +109,7 @@ export function Providers({
             .filter((user) => user !== null)
             .map((user) => ({
               kind: "user" as const,
-              id: user?.id,
+              id: user.id,
             }));
 
           // Return combined suggestions

@@ -1,7 +1,7 @@
 import { groups } from "@/data/groups";
+import { users } from "@/data/users";
 import { Group } from "@/types";
 import { getGroup } from "./getGroup";
-import { users } from "@/data/users";
 
 type Props = {
   groupIds?: string[];
