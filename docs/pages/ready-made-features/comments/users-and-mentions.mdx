@@ -240,16 +240,26 @@ const client = createClient({
     // "mar"
     console.log(text);
 
-    const dbUsers = await __findUsersFromDB__(roomId);
-    const dbGroups = await __findGroupsFromDB__(roomId);
+    let userIds;
+    let groupIds;
+
+    if (text) {
+      // If there's a query, get user IDs from your back end that match
+      userIds = await __queryUserIds__(text);
+      groupIds = await __queryGroupIds__(text);
+    } else {
+      // If there's no query, get all of the room's user IDs
+      userIds = await __getAllUserIds__();
+      groupIds = await _getAllGroupIds__();
+    }
 
     // Show groups and users matching the text being typed
     return [
-      ...dbGroups.map((group) => ({
+      ...groupIds.map((group) => ({
         kind: "group",
         id: group.id,
       })),
-      ...dbUsers.map((user) => ({
+      ...userIds.map((user) => ({
         kind: "user",
         id: user.id,
       })),
