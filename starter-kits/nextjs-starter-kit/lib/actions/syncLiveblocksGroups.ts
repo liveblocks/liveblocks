@@ -1,8 +1,8 @@
 "use server";
 
 import { LiveblocksError } from "@liveblocks/node";
-import { liveblocks } from "@/liveblocks.server.config";
 import { getGroups } from "@/lib/database";
+import { liveblocks } from "@/liveblocks.server.config";
 
 /**
  * Sync Groups with Liveblocks
