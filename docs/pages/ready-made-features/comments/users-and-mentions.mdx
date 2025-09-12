@@ -244,11 +244,11 @@ const client = createClient({
     let groupIds;
 
     if (text) {
-      // If there's a query, get user IDs from your back end that match
+      // If there's a query, get user and groups IDs from your back end that match
       userIds = await __queryUserIds__(text);
       groupIds = await __queryGroupIds__(text);
     } else {
-      // If there's no query, get all of the room's user IDs
+      // If there's no query, get all of the room's user and group IDs
       userIds = await __getAllUserIds__();
       groupIds = await _getAllGroupIds__();
     }
