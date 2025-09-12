@@ -123,39 +123,35 @@ describe("useUnreadInboxNotificationsCount", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        const query = _req.url.searchParams.get("query");
+      mockGetInboxNotifications(async ({ request }) => {
+        const query = new URL(request.url).searchParams.get("query");
 
         // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
         if (query) {
-          return res(
-            ctx.json({
-              threads: threads.filter((thread) => thread.roomId === roomA),
-              inboxNotifications: inboxNotifications.filter(
-                (inboxNotification) => inboxNotification.roomId === roomA
-              ),
-              subscriptions,
-              groups: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
-        }
-
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
+          return HttpResponse.json({
+            threads: threads.filter((thread) => thread.roomId === roomA),
+            inboxNotifications: inboxNotifications.filter(
+              (inboxNotification) => inboxNotification.roomId === roomA
+            ),
             subscriptions,
             groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        );
+          });
+        }
+
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
