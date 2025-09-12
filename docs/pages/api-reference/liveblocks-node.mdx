@@ -647,6 +647,27 @@ and returns no response.
 await liveblocks.deleteRoom("my-room-id");
 ```
 
+#### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
+
+Prepares a room for connectivity, making the eventual connection faster. Use
+this when you know you'll be loading a room but are not yet connected to it.
+This is a wrapper around the
+[Prewarm Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-prewarm)
+and returns no response.
+
+```ts
+await liveblocks.prewarmRoom("my-room-id");
+```
+
+This endpoint is particularly useful when you want to optimize the initial
+connection time for users. For example, you might call this method when a user
+navigates to a page where they're likely to join a room, but before they
+actually connect.
+
+```ts
+await liveblocks.prewarmRoom(roomId);
+```
+
 #### Liveblocks.updateRoomId [#post-rooms-update-roomId]
 
 Permanently updates a room’s ID. `newRoomId` will replace `currentRoomId`. Note
