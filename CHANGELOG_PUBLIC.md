@@ -20,7 +20,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 37 (2025-09-12)
 
+## Website
+
+- AI assistant has been added to the documentation and dashboard pages. It can answer
+  questions on anything related to Liveblocks, such as code, recommendations, bugs,
+  billing, usage, and project information. It's powered by
+  [`AiChat`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#AiChat).
+
 ## Contributors
+
+ctnicholas, pierrelevaillant
 
 # Week 36 (2025-09-05)
 
