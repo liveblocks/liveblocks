@@ -1,7 +1,9 @@
+import { describe, expect, test } from "vitest";
+
 import { freeze } from "../freeze";
 
 describe("freeze", () => {
-  it("freezes objects", () => {
+  test("freezes objects", () => {
     const x = freeze({ a: 1 }) as Record<string, unknown>;
     expect(() => {
       x.b = 2;

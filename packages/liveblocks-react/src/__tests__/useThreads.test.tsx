@@ -1357,6 +1357,7 @@ describe("useThreads", () => {
             threads: [oldThread],
             inboxNotifications: [inboxNotification],
             subscriptions: [subscription],
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -1446,6 +1447,7 @@ describe("useThreads", () => {
             threads: [newThread],
             inboxNotifications: [inboxNotification],
             subscriptions: [subscription],
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

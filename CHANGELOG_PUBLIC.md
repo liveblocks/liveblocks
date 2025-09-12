@@ -18,6 +18,205 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 36 (2025-09-05)
+
+## v3.6.0
+
+### `@liveblocks/client`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
+
+## v3.5.4
+
+### `@liveblocks/client`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
+
+## Dashboard
+
+- Add API reference modal to AI Copilot detail pages, with React, Node.js, and REST API snippets to get started quickly.
+
+## Contributors
+
+pierrelevaillant, nvie, jrowny, nimeshnayaju, marcbouchenoire
+
+# Week 35 (2025-08-29)
+
+## v3.5.1
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where deleting a thread/comment from Tiptap would also remove any
+  comments contained within it.
+
+## v3.5.0
+
+### `@liveblocks/node`
+
+- Add the following methods for managing AI copilots and knowledge sources:
+  - `getAiCopilots`
+  - `createAiCopilot`
+  - `getAiCopilot`
+  - `updateAiCopilot`
+  - `deleteAiCopilot`
+  - `createWebKnowledgeSource`
+  - `createFileKnowledgeSource`
+  - `deleteFileKnowledgeSource`
+  - `deleteWebKnowledgeSource`
+  - `getKnowledgeSources`
+  - `getKnowledgeSource`
+  - `getFileKnowledgeSourceMarkdown`
+  - `getWebKnowledgeSourceLinks`
+
+## v3.4.2
+
+### `@liveblocks/react-ui`
+
+- Fix improved Markdown streaming in `AiChat` only being enabled in reasoning
+  blocks, it’s now enabled for all Markdown.
+
+## v3.4.1
+
+### `@liveblocks/core`
+
+- Fix a bug where copilot id wasn't passed when setting tool call result if a
+  tool call was defined with `execute` callback.
+
+### `@liveblocks/react`
+
+- Update `useSendAiMessage` to use the the last used copilot id in a chat when
+  no copilot id is passed to the hook or the method returned by the hook.
+
+## Website
+
+- New blog post: [Mock up AI agents in your product with the Liveblocks Collaboration Kit for Figma](https://liveblocks.io/blog/mock-up-ai-agents-in-your-propuct-with-the-liveblocks-collaboration-kit-for-figma).
+
+## Contributors
+
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas
+
+# Week 34 (2025-08-22)
+
+## v3.4.0
+
+### `@liveblocks/react`
+
+Tool calls will now stream in while under construction. This means that tools
+will render sooner and more often re-render, while `partialArgs` are streaming
+in.
+
+> New behavior (v3.4 and higher):
+>
+> - 1st render: `{ stage: "receiving", partialArgs: {} }`
+> - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
+> - 3rd render: `{ stage: "receiving", partialArgs: { cities: [""] } }`
+> - 4th render: `{ stage: "receiving", partialArgs: { cities: ["Pa"] } }`
+> - 5th render: `{ stage: "receiving", partialArgs: { cities: ["Paris"] } }`
+> - etc.
+> - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
+> - And `{ stage: "executed", args, result }` (same as before)
+>
+> Before (v3.3 and lower):
+>
+> - Stage "receiving" would never happen
+> - 1st render would be with
+>   `{ stage: "executing", args: { cities: ["Paris"] } }`
+> - 2nd render would be with `{ stage: "executed", args, result }`
+
+#### Other changes
+
+- In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
+  whenever the room ID (the `id` prop) changes.
+
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
+- Improve Markdown rendering during streaming in `AiChat`: incomplete content is
+  now handled gracefully so things like bold, links, or tables all render
+  instantly without seeing partial Markdown syntax first.
+- Render all messages in `AiChat` as Markdown, including ones from the user.
+- Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
+  component" would render as "Use the `` component")
+- Improve shimmer animation visible on elements like the
+  "Thinking…"/"Reasoning…" placeholders in `AiChat`.
+
+## Infrastructure
+
+- Improved LiveList conflict resolution that will keep the conflicting element closer to its intended destination.
+
+## Contributors
+
+nvie, marcbouchenoire
+
+# Week 33 (2025-08-15)
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
+## All versions
+
+- Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
+  instead of `a file.txt`)
+
+## Infrastructure
+
+- Fixed a bug that caused unreliable storage updates under high concurrency.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the
+  token limit got exceeded during the response generation. If this now happens,
+  the response will indicate a clear error to the user.
+
+## Dashboard
+
+- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+
+## Documentation
+
+- More info on styling AI chat components.
+- Disambiguate semantics for `LiveList.delete()`.
+
+## Contributors
+
+marcbouchenoire, ctnicholas, nvie, jrowny, nimeshnayaju
+
 # Week 32 (2025-08-08)
 
 ## v3.3.0

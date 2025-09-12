@@ -40,6 +40,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "tenantId",
+            "description": "A filter on tenant ID."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "query",
             "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
           },
@@ -1761,8 +1769,9 @@
     "/rooms/{roomId}/threads/{threadId}/participants": {
       "get": {
         "summary": "Get thread participants",
-        "tags": ["Comments"],
-        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
+        "x-badge": "Deprecated",
+        "tags": ["Deprecated"],
+        "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "operationId": "get-rooms-roomId-threads-threadId-participants",
         "parameters": [
           {
@@ -3068,6 +3077,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "tenantId",
+            "description": "The tenant ID to filter notifications for."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "query",
             "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
           },
@@ -3766,6 +3783,963 @@
             }
           }
         }
+      }
+    },
+    "/groups": {
+      "post": {
+        "summary": "Create group",
+        "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).",
+        "tags": ["Groups"],
+        "operationId": "post-groups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict - Group already exists"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get groups",
+        "description": "This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).",
+        "tags": ["Groups"],
+        "operationId": "get-groups",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of groups and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}": {
+      "get": {
+        "summary": "Get group",
+        "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-reference/liveblocks-node#get-group).",
+        "tags": ["Groups"],
+        "operationId": "get-groups-groupId",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to retrieve.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete group",
+        "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-reference/liveblocks-node#delete-group).",
+        "tags": ["Groups"],
+        "operationId": "delete-groups-groupId",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to delete.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content - Group deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/add-members": {
+      "post": {
+        "summary": "Add group members",
+        "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).",
+        "tags": ["Groups"],
+        "operationId": "post-groups-groupId-add-members",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to add members to.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGroupMembers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/remove-members": {
+      "post": {
+        "summary": "Remove group members",
+        "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).",
+        "tags": ["Groups"],
+        "operationId": "post-groups-groupId-remove-members",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to remove members from.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveGroupMembers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/groups": {
+      "get": {
+        "summary": "Get user groups",
+        "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).",
+        "tags": ["Groups"],
+        "operationId": "get-users-userId-groups",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user to get groups for.",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of groups the user belongs to and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - User not found"
+          }
+        }
+      }
+    },
+    "/ai/copilots": {
+      "get": {
+        "summary": "Get AI copilots",
+        "description": "This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-reference/liveblocks-node#get-ai-copilots).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of AI copilots.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAiCopilots"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "operationId": "get-ai-copilots"
+      },
+      "post": {
+        "summary": "Create AI copilot",
+        "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
+        "tags": ["AI"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-ai-copilot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAiCopilot"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}": {
+      "get": {
+        "summary": "Get AI copilot",
+        "description": "This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-reference/liveblocks-node#get-ai-copilot).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-ai-copilot"
+      },
+      "post": {
+        "summary": "Update AI copilot",
+        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "update-ai-copilot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAiCopilot"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete AI copilot",
+        "description": "This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-node#delete-ai-copilot).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The AI copilot was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-ai-copilot"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge": {
+      "get": {
+        "summary": "Get knowledge sources",
+        "description": "This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of knowledge sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetKnowledgeSources"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-knowledge-sources"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get knowledge source",
+        "description": "This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSource"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web": {
+      "post": {
+        "summary": "Create web knowledge source",
+        "description": "This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-reference/liveblocks-node#create-web-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the ID of the created knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-web-knowledge-source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebKnowledgeSource"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/file/{name}": {
+      "put": {
+        "summary": "Create file knowledge source",
+        "description": "This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the ID of the created knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-file-knowledge-source",
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/file/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get file knowledge source content",
+        "description": "This endpoint returns the content of a file knowledge source as Markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the content of the file knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-file-knowledge-source-content"
+      },
+      "delete": {
+        "summary": "Delete file knowledge source",
+        "description": "This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The file knowledge source was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-file-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}": {
+      "delete": {
+        "summary": "Delete web knowledge source",
+        "description": "This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The web knowledge source was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-web-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}/links": {
+      "get": {
+        "summary": "Get web knowledge source links",
+        "description": "This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of web knowledge source links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWebKnowledgeSourceLinks"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-web-knowledge-source-links"
       }
     }
   },
@@ -4695,6 +5669,937 @@
             }
           }
         ]
+      },
+      "AiCopilot": {
+        "title": "AiCopilot",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "openai"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "o1",
+                  "o1-mini",
+                  "o3",
+                  "o3-mini",
+                  "o4-mini",
+                  "gpt-4.1",
+                  "gpt-4.1-mini",
+                  "gpt-4.1-nano",
+                  "gpt-4o",
+                  "gpt-4o-mini",
+                  "gpt-4-turbo",
+                  "gpt-4"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "anthropic"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "claude-4-opus-20250514",
+                  "claude-4-sonnet-20250514",
+                  "claude-3-7-sonnet-20250219",
+                  "claude-3-5-sonnet-latest",
+                  "claude-3-5-haiku-latest",
+                  "claude-3-opus-latest"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetTokens": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "s"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "google"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "gemini-2.5-flash",
+                  "gemini-2.5-pro",
+                  "gemini-2.0-flash-001",
+                  "gemini-1.5-flash",
+                  "gemini-1.5-pro"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "openai-compatible"
+              },
+              "providerModel": {
+                "type": "string"
+              },
+              "compatibleProviderName": {
+                "type": "string"
+              },
+              "providerBaseUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "compatibleProviderName",
+              "providerBaseUrl",
+              "createdAt",
+              "updatedAt"
+            ]
+          }
+        ],
+        "discriminator": {
+          "propertyName": "provider"
+        }
+      },
+      "CreateAiCopilot": {
+        "title": "CreateAiCopilot",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerApiKey": {
+            "type": "string"
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetTokens": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "budgetTokens"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              }
+            ],
+            "nullable": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/CopilotSettings",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+          },
+          "compatibleProviderName": {
+            "type": "string"
+          },
+          "providerBaseUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "systemPrompt",
+          "provider",
+          "providerApiKey",
+          "providerModel"
+        ]
+      },
+      "UpdateAiCopilot": {
+        "title": "UpdateAiCopilot",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerApiKey": {
+            "type": "string"
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetTokens": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "budgetTokens"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              }
+            ],
+            "nullable": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/CopilotSettings",
+            "nullable": true
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+          },
+          "compatibleProviderName": {
+            "type": "string"
+          },
+          "providerBaseUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "CopilotSettings": {
+        "title": "CopilotSettings",
+        "type": "object",
+        "properties": {
+          "maxTokens": {
+            "type": "number"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "topP": {
+            "type": "number"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "frequencyPenalty": {
+            "type": "number"
+          },
+          "presencePenalty": {
+            "type": "number"
+          },
+          "stopSequences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "seed": {
+            "type": "number"
+          },
+          "maxRetries": {
+            "type": "number"
+          }
+        }
+      },
+      "GetAiCopilots": {
+        "title": "GetAiCopilots",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiCopilot"
+            }
+          }
+        }
+      },
+      "KnowledgeSource": {
+        "title": "KnowledgeSource",
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "const": "ai-knowledge-web-source"
+              },
+              "id": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"]
+              },
+              "errorMessage": {
+                "type": "string"
+              },
+              "link": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["individual_link", "crawl", "sitemap"]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "const": "ai-knowledge-file-source"
+              },
+              "id": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"]
+              },
+              "errorMessage": {
+                "type": "string"
+              },
+              "file": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "mimeType": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateWebKnowledgeSource": {
+        "title": "CreateWebKnowledgeSource",
+        "type": "object",
+        "properties": {
+          "copilotId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["individual_link", "crawl", "sitemap"]
+          }
+        },
+        "required": ["copilotId", "url", "type"]
+      },
+      "GetKnowledgeSources": {
+        "title": "GetKnowledgeSources",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeSource"
+            }
+          }
+        }
+      },
+      "WebKnowledgeSourceLink": {
+        "title": "WebKnowledgeSourceLink",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ingesting", "ready", "error"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastIndexedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "url", "status", "createdAt", "lastIndexedAt"]
+      },
+      "GetWebKnowledgeSourceLinks": {
+        "title": "GetWebKnowledgeSourceLinks",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebKnowledgeSourceLink"
+            }
+          }
+        }
+      }
+    },
+    "Group": {
+      "title": "Group",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["group"]
+        },
+        "id": {
+          "type": "string"
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scopes": {
+          "type": "object",
+          "properties": {
+            "mention": {
+              "type": "boolean"
+            }
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/GroupMember"
+          }
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "tenantId",
+        "createdAt",
+        "updatedAt",
+        "scopes",
+        "members"
+      ]
+    },
+    "GroupMember": {
+      "title": "GroupMember",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "addedAt"]
+    },
+    "CreateGroup": {
+      "title": "CreateGroup",
+      "type": "object",
+      "properties": {
+        "groupId": {
+          "type": "string"
+        },
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tenantId": {
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "properties": {
+            "mention": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      "required": ["groupId"]
+    },
+    "AddGroupMembers": {
+      "title": "AddGroupMembers",
+      "type": "object",
+      "properties": {
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["memberIds"]
+    },
+    "RemoveGroupMembers": {
+      "title": "RemoveGroupMembers",
+      "type": "object",
+      "properties": {
+        "memberIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["memberIds"]
+    },
+    "GetGroups": {
+      "title": "GetGroups",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Group"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        }
+      }
+    },
+    "GetUserGroups": {
+      "title": "GetUserGroups",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/Group"
+          }
+        },
+        "nextCursor": {
+          "type": "string"
+        }
       }
     },
     "securitySchemes": {
@@ -5119,6 +7024,15 @@
     },
     {
       "name": "Notifications"
+    },
+    {
+      "name": "Groups"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "AI"
     },
     {
       "name": "Deprecated"

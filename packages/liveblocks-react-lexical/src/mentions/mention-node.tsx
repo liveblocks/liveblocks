@@ -1,4 +1,4 @@
-import { createInboxNotificationId } from "@liveblocks/core";
+import { createInboxNotificationId, MENTION_CHARACTER } from "@liveblocks/core";
 import { User } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
@@ -12,8 +12,6 @@ import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
 import { Mention } from "./mention-component";
-
-const MENTION_CHARACTER = "@";
 
 export type SerializedMentionNode = Spread<
   {
@@ -101,7 +99,7 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   decorate(): JSX.Element {
     return (
       <Mention nodeKey={this.getKey()}>
-        {MENTION_CHARACTER}
+        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
         <User userId={this.getUserId()} />
       </Mention>
     );

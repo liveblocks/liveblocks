@@ -1,4 +1,5 @@
 import type { CommentBody } from "@liveblocks/client";
+import { describe, expect, test } from "vitest";
 
 import type { ComposerBody } from "../../../types";
 import { commentBodyToComposerBody, composerBodyToCommentBody } from "../utils";
@@ -17,8 +18,15 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
             children: [
               { text: "Hello " },
               { text: "world", bold: true },
-              { text: " and " },
+              { text: ", " },
               { type: "mention", kind: "user", id: "chris" },
+              { text: " and " },
+              {
+                type: "mention",
+                kind: "group",
+                id: "here",
+                userIds: ["nimesh", "vincent"],
+              },
             ],
           },
         ],
@@ -36,12 +44,26 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
               bold: true,
             },
             {
-              text: " and ",
+              text: ", ",
             },
             {
               type: "mention",
               kind: "user",
               id: "chris",
+              children: [
+                {
+                  text: "",
+                },
+              ],
+            },
+            {
+              text: " and ",
+            },
+            {
+              type: "mention",
+              kind: "group",
+              id: "here",
+              userIds: ["nimesh", "vincent"],
               children: [
                 {
                   text: "",

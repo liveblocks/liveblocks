@@ -1,6 +1,8 @@
 import type {
+  AiAssistantMessage,
   AiChatMessage,
   AiReasoningPart,
+  AiRetrievalPart,
   AiTextPart,
   AiToolInvocationPart,
 } from "@liveblocks/core";
@@ -31,10 +33,17 @@ export type AiMessageContentToolInvocationPartProps = {
   /** @internal */
   isStreaming: boolean;
   /** @internal */
-  message: AiChatMessage;
+  message: AiAssistantMessage;
   part: AiToolInvocationPart;
+};
+
+/** @internal */
+export type AiMessageContentRetrievalPartProps = {
   /** @internal */
-  copilotId?: string;
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
+  part: AiRetrievalPart;
 };
 
 export interface AiMessageContentComponents {
@@ -47,6 +56,11 @@ export interface AiMessageContentComponents {
    * The component used to display reasoning parts.
    */
   ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
+
+  /**
+   * The component used to display knowledge retrieval parts.
+   */
+  RetrievalPart: ComponentType<AiMessageContentRetrievalPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.
@@ -67,10 +81,4 @@ export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {
    * the message content.
    */
   components?: Partial<AiMessageContentComponents>;
-
-  /**
-   * @internal
-   * The id of the copilot to use to set tool call result.
-   */
-  copilotId?: string;
 }

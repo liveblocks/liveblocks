@@ -1,12 +1,22 @@
 "use client";
 
-import { assertNever } from "@liveblocks/core";
+import {
+  type AiReasoningPart,
+  type AiRetrievalPart,
+  assertNever,
+} from "@liveblocks/core";
 import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 
 import { Emoji } from "./components/internal/Emoji";
+import { Duration, getDuration } from "./primitives/Duration";
 import type { ComposerBodyMark, Direction } from "./types";
 import { pluralize } from "./utils/pluralize";
+
+const MINIMUM_VISIBLE_DURATION = 3 * 1000;
+
+// TODO: Move overrides to single-argument-as-object with Liveblocks 4.0,
+//       it didn't make the cut for 3.0 but we should do it next time.
 
 export interface LocalizationOverrides {
   locale: string;
@@ -70,8 +80,15 @@ export interface AiComposerOverrides {
 
 export interface AiChatMessageOverrides {
   AI_CHAT_MESSAGE_DELETED: string;
-  AI_CHAT_MESSAGE_THINKING: string;
-  AI_CHAT_MESSAGE_REASONING: (isStreaming: boolean) => string;
+  AI_CHAT_MESSAGE_THINKING: ReactNode;
+  AI_CHAT_MESSAGE_REASONING: (
+    isStreaming: boolean,
+    part: AiReasoningPart
+  ) => ReactNode;
+  AI_CHAT_MESSAGE_RETRIEVAL: (
+    isStreaming: boolean,
+    part: AiRetrievalPart
+  ) => ReactNode;
 }
 
 export interface AiChatOverrides {
@@ -131,6 +148,13 @@ export type Overrides = LocalizationOverrides &
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
 }>;
+
+function isDurationVisible(
+  from: Date | string | number,
+  to: Date | string | number | undefined
+) {
+  return getDuration(from, to ?? Date.now()) >= MINIMUM_VISIBLE_DURATION;
+}
 
 export const defaultOverrides: Overrides = {
   locale: "en",
@@ -231,8 +255,49 @@ export const defaultOverrides: Overrides = {
   AI_COMPOSER_ABORT: "Abort response",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
-  AI_CHAT_MESSAGE_REASONING: (isStreaming) =>
-    isStreaming ? "Reasoning…" : "Reasoning",
+  AI_CHAT_MESSAGE_REASONING: (isStreaming: boolean, part: AiReasoningPart) =>
+    isStreaming ? (
+      <>Reasoning…</>
+    ) : (
+      <>
+        Reasoned
+        {isDurationVisible(part.startedAt, part.endedAt) ? (
+          <>
+            {" "}
+            for{" "}
+            <Duration
+              className="lb-duration lb-ai-chat-message-reasoning-duration"
+              from={part.startedAt}
+              to={part.endedAt}
+            />
+          </>
+        ) : null}
+      </>
+    ),
+  AI_CHAT_MESSAGE_RETRIEVAL: (isStreaming: boolean, part: AiRetrievalPart) =>
+    isStreaming ? (
+      <>
+        Searching{" "}
+        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>
+        …
+      </>
+    ) : (
+      <>
+        Searched{" "}
+        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>
+        {isDurationVisible(part.startedAt, part.endedAt) ? (
+          <>
+            {" "}
+            for{" "}
+            <Duration
+              className="lb-duration lb-ai-chat-message-retrieval-duration"
+              from={part.startedAt}
+              to={part.endedAt}
+            />
+          </>
+        ) : null}
+      </>
+    ),
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
   AI_TOOL_CONFIRMATION_CONFIRM: "Confirm",

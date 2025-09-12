@@ -1,13 +1,13 @@
 import {
   isCommentBodyLink,
   isCommentBodyMention,
+  MENTION_CHARACTER,
   sanitizeUrl,
 } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
-import { MENTION_CHARACTER } from "../../constants";
 import type {
   CommentBodyComponents,
   CommentBodyProps,

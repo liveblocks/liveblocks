@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
 async function setupChatA(page: Page) {
   const textInput = page.locator(
@@ -10,10 +11,10 @@ async function setupChatA(page: Page) {
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send");
   }
 
   // Clear any existing text
@@ -31,10 +32,10 @@ async function setupChatB(page: Page) {
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send");
   }
 
   // Clear any existing text
@@ -55,11 +56,11 @@ async function sendMessageToChatA(page: Page, message: string) {
   ).toBeVisible();
 
   // Wait for generation to finish by monitoring button state change
-  // Button should become "secondary" (abort) during generation, then back to "primary" (send)
-  await expect(sendButton).toHaveAttribute("data-variant", "secondary", {
+  // Button should become "Abort response" during generation, then back to "Send"
+  await expect(sendButton).toHaveAttribute("aria-label", "Abort response", {
     timeout: 10000,
   });
-  await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+  await expect(sendButton).toHaveAttribute("aria-label", "Send", {
     timeout: 60000,
   });
 }
@@ -76,47 +77,33 @@ async function sendMessageToChatB(page: Page, message: string) {
   ).toBeVisible();
 
   // Wait for generation to finish by monitoring button state change
-  // Button should become "secondary" (abort) during generation, then back to "primary" (send)
-  await expect(sendButton).toHaveAttribute("data-variant", "secondary", {
+  // Button should become "Abort response" during generation, then back to "Send"
+  await expect(sendButton).toHaveAttribute("aria-label", "Abort response", {
     timeout: 10000,
   });
-  await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+  await expect(sendButton).toHaveAttribute("aria-label", "Send", {
     timeout: 60000,
   });
 }
 
 test.describe("AiChat Knowledge Isolation", () => {
+  test.afterEach(async () => {
+    await cleanupAllChats();
+  });
+
   test.beforeEach(async ({ page }) => {
-    // Clean up existing chats
-    await page.goto("/chats");
-    await expect(page.locator("h1")).toHaveText("List of all chats");
-
-    // Delete chat-a if it exists
-    const chatALink = page.locator('a[href="/chats/chat-a"]');
-    if (await chatALink.isVisible()) {
-      const deleteButton = chatALink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(chatALink).not.toBeVisible();
-    }
-
-    // Delete chat-b if it exists
-    const chatBLink = page.locator('a[href="/chats/chat-b"]');
-    if (await chatBLink.isVisible()) {
-      const deleteButton = chatBLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(chatBLink).not.toBeVisible();
-    }
+    // Note: Each test will create its own unique chat IDs to avoid conflicts
   });
 
   test("should NOT share knowledge between separate AiChat instances", async ({
     page,
   }) => {
-    // Go to the dual chat page
-    await page.goto("/dual-chat");
+    // Create unique test chat IDs and go to the dual chat page
+    const chatId1 = createRandomChat(page);
+    const chatId2 = createRandomChat(page);
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, {
+      waitUntil: "networkidle",
+    });
 
     // Wait for the page title and both chats to be visible
     await expect(
@@ -163,7 +150,13 @@ test.describe("AiChat Knowledge Isolation", () => {
   test("should isolate different knowledge values between chats", async ({
     page,
   }) => {
-    await page.goto("/dual-chat");
+    // Create unique test chat IDs
+    const chatId1 = createRandomChat(page);
+    const chatId2 = createRandomChat(page);
+
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, {
+      waitUntil: "networkidle",
+    });
 
     // Wait for the page title to be visible
     await expect(
@@ -212,8 +205,12 @@ test.describe("AiChat Knowledge Isolation", () => {
   test("should SHARE knowledge when using RegisterAiKnowledge globally", async ({
     page,
   }) => {
-    // Go to the dual chat page (now contains both local and global knowledge testing)
-    await page.goto("/dual-chat");
+    // Create unique test chat IDs and go to the dual chat page
+    const chatId1 = createRandomChat(page);
+    const chatId2 = createRandomChat(page);
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, {
+      waitUntil: "networkidle",
+    });
 
     // Wait for the page title and both chats to be visible
     await expect(

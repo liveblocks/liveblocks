@@ -10,8 +10,15 @@ import type {
 import { createNotificationSettings, LiveList } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
-import { Liveblocks, LiveblocksError } from "../client";
+import {
+  type AiCopilot,
+  type CreateAiCopilotOptions,
+  Liveblocks,
+  LiveblocksError,
+  type UpdateAiCopilotOptions,
+} from "../client";
 import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
@@ -1296,7 +1303,7 @@ describe("client", () => {
       const update = new Uint8Array([21, 31]);
       server.use(
         http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () => {
-          return HttpResponse.arrayBuffer(update);
+          return HttpResponse.arrayBuffer(update.buffer);
         })
       );
 
@@ -1315,9 +1322,9 @@ describe("client", () => {
           ({ request }) => {
             const url = new URL(request.url);
             if (url.searchParams.get("guid") === "subdoc") {
-              return HttpResponse.arrayBuffer(update);
+              return HttpResponse.arrayBuffer(update.buffer);
             }
-            return HttpResponse.arrayBuffer(new Uint8Array([0]));
+            return HttpResponse.arrayBuffer(new Uint8Array([0]).buffer);
           }
         )
       );
@@ -2354,6 +2361,1678 @@ describe("client", () => {
           root.set("z", new LiveList([1, 2, 3]));
         })
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe("create group", () => {
+    test("should return the created group when createGroup receives a successful response", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        memberIds: ["user1", "user2"],
+        tenantId: "tenant1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "tenant1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [
+                  {
+                    id: "user1",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                  {
+                    id: "user2",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should create a group without members when createGroup receives a successful response", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        tenantId: "tenant1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "tenant1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when createGroup receives an error response", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        memberIds: ["user1"],
+        tenantId: "tenant1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                error: "GROUP_ALREADY_EXISTS",
+                message: "Group already exists",
+              },
+              { status: 409 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.createGroup(createGroupParams);
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(409);
+          expect(err.message).toBe("Group already exists");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get group", () => {
+    test("should return the specified group when getGroup receives a successful response", async () => {
+      const group = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(group, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getGroup({
+          groupId: "group1",
+        })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when getGroup receives an error response", async () => {
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getGroup({
+          groupId: "group1",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("add group members", () => {
+    test("should return the updated group when addGroupMembers receives a successful response", async () => {
+      const memberIds = ["user3", "user4"];
+
+      const updatedGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+          {
+            id: "user2",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+          {
+            id: "user3",
+            addedAt: "2022-07-13T15:00:00.000Z",
+          },
+          {
+            id: "user4",
+            addedAt: "2022-07-13T15:00:00.000Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/add-members`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(updatedGroup, { status: 200 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.addGroupMembers({
+          groupId: "group1",
+          memberIds,
+        })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user3",
+            addedAt: new Date("2022-07-13T15:00:00.000Z"),
+          },
+          {
+            id: "user4",
+            addedAt: new Date("2022-07-13T15:00:00.000Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when addGroupMembers receives an error response", async () => {
+      const memberIds = ["user3"];
+
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/add-members`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.addGroupMembers({
+          groupId: "group1",
+          memberIds,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("remove group members", () => {
+    test("should return the updated group when removeGroupMembers receives a successful response", async () => {
+      const memberIds = ["user2", "user3"];
+
+      const updatedGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T15:30:00.000Z",
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/remove-members`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(updatedGroup, { status: 200 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.removeGroupMembers({
+          groupId: "group1",
+          memberIds,
+        })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T15:30:00.000Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when removeGroupMembers receives an error response", async () => {
+      const memberIds = ["user2"];
+
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/remove-members`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.removeGroupMembers({
+          groupId: "group1",
+          memberIds,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("delete group", () => {
+    test("should delete a group when deleteGroup receives a successful response", async () => {
+      server.use(
+        http.delete(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.text(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      const res = await client.deleteGroup({
+        groupId: "group1",
+      });
+
+      expect(res).toBeUndefined();
+    });
+
+    test("should throw a LiveblocksError when deleteGroup receives an error response", async () => {
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.delete(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.deleteGroup({
+          groupId: "group1",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get groups", () => {
+    test("should return a list of groups when getGroups receives a successful response", async () => {
+      const groups = [
+        {
+          type: "group",
+          id: "group1",
+          tenantId: "tenant1",
+          createdAt: "2022-07-13T14:32:50.697Z",
+          updatedAt: "2022-07-13T14:32:50.697Z",
+          scopes: { mention: true },
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+          ],
+        },
+        {
+          type: "group",
+          id: "group2",
+          tenantId: "tenant1",
+          createdAt: "2022-07-14T10:00:00.000Z",
+          updatedAt: "2022-07-14T10:00:00.000Z",
+          scopes: { mention: true },
+          members: [
+            {
+              id: "user2",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+            {
+              id: "user3",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor1",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getGroups()).resolves.toEqual({
+        nextCursor: "cursor1",
+        data: [
+          {
+            type: "group",
+            id: "group1",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-13T14:32:50.697Z"),
+            updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            scopes: { mention: true },
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+            ],
+          },
+          {
+            type: "group",
+            id: "group2",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-14T10:00:00.000Z"),
+            updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            scopes: { mention: true },
+            members: [
+              {
+                id: "user2",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+              {
+                id: "user3",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return an empty list when getGroups receives an empty response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: null,
+              data: [],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getGroups()).resolves.toEqual({
+        nextCursor: null,
+        data: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when getGroups receives an error response", async () => {
+      const error = {
+        error: "UNAUTHORIZED",
+        message: "Unauthorized access",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(error, { status: 401 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getGroups();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(401);
+          expect(err.message).toBe("Unauthorized access");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get user groups", () => {
+    test("should return a list of groups when getUserGroups receives a successful response", async () => {
+      const userId = "user1";
+      const groups = [
+        {
+          type: "group",
+          id: "group1",
+          tenantId: "tenant1",
+          createdAt: "2022-07-13T14:32:50.697Z",
+          updatedAt: "2022-07-13T14:32:50.697Z",
+          scopes: { mention: true },
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+            {
+              id: "user2",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+          ],
+        },
+        {
+          type: "group",
+          id: "group3",
+          tenantId: "tenant1",
+          createdAt: "2022-07-15T09:00:00.000Z",
+          updatedAt: "2022-07-15T09:00:00.000Z",
+          scopes: { mention: true },
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-15T09:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor2",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getUserGroups({ userId })).resolves.toEqual({
+        nextCursor: "cursor2",
+        data: [
+          {
+            type: "group",
+            id: "group1",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-13T14:32:50.697Z"),
+            updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            scopes: { mention: true },
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+              {
+                id: "user2",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+            ],
+          },
+          {
+            type: "group",
+            id: "group3",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-15T09:00:00.000Z"),
+            updatedAt: new Date("2022-07-15T09:00:00.000Z"),
+            scopes: { mention: true },
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-15T09:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return the next page of user groups when getUserGroups with additional params receives a successful response", async () => {
+      const userId = "user1";
+      const startingAfter = "cursor1";
+      const limit = 1;
+
+      const groups = [
+        {
+          type: "group",
+          id: "group2",
+          tenantId: "tenant1",
+          createdAt: "2022-07-14T10:00:00.000Z",
+          updatedAt: "2022-07-14T10:00:00.000Z",
+          scopes: { mention: true },
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, (res) => {
+          const url = new URL(res.request.url);
+          expect(url.searchParams.size).toEqual(2);
+          expect(url.searchParams.get("startingAfter")).toEqual(startingAfter);
+          expect(url.searchParams.get("limit")).toEqual(limit.toString());
+
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor3",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserGroups({ userId, startingAfter, limit })
+      ).resolves.toEqual({
+        nextCursor: "cursor3",
+        data: [
+          {
+            type: "group",
+            id: "group2",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-14T10:00:00.000Z"),
+            updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            scopes: { mention: true },
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return an empty list when getUserGroups receives an empty response", async () => {
+      const userId = "user1";
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: null,
+              data: [],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getUserGroups({ userId })).resolves.toEqual({
+        nextCursor: null,
+        data: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when getUserGroups receives an error response", async () => {
+      const userId = "user1";
+
+      const error = {
+        error: "USER_NOT_FOUND",
+        message: "User not found",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.getUserGroups({ userId });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("User not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("AI copilots", () => {
+    const copilot: AiCopilot = {
+      type: "copilot",
+      id: "copilot_123",
+      name: "Test Copilot",
+      description: "A test AI copilot",
+      systemPrompt: "You are a helpful assistant",
+      providerModel: "gpt-4o",
+      knowledgePrompt: "Use the provided knowledge",
+      provider: "openai",
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastUsedAt: new Date("2023-01-03T00:00:00.000Z"),
+      settings: {
+        maxTokens: 1000,
+        temperature: 0.7,
+      },
+    };
+
+    describe("get AI copilots", () => {
+      test("should return a list of AI copilots when getAiCopilots receives a successful response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(
+              {
+                nextCursor: "cursor1",
+                data: [copilot],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(client.getAiCopilots()).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [copilot],
+        });
+      });
+
+      test("should return a list of AI copilots with pagination parameters", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, ({ request }) => {
+            const url = new URL(request.url);
+            expect(url.searchParams.get("limit")).toEqual("10");
+            expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+            return HttpResponse.json(
+              {
+                nextCursor: "cursor2",
+                data: [copilot],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getAiCopilots({ limit: 10, startingAfter: "cursor1" })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [copilot],
+        });
+      });
+
+      test("should throw a LiveblocksError when getAiCopilots receives an error response", async () => {
+        const error = {
+          error: "UNAUTHORIZED",
+          message: "Invalid secret key",
+        };
+
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(error, { status: 401 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getAiCopilots();
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(401);
+            expect(err.message).toBe("Invalid secret key");
+            expect(err.name).toBe("LiveblocksError");
+          }
+        }
+      });
+    });
+
+    describe("create AI copilot", () => {
+      test("should create an AI copilot when createAiCopilot receives a successful response", async () => {
+        const createData: CreateAiCopilotOptions = {
+          name: "Test Copilot",
+          description: "A test AI copilot",
+          systemPrompt: "You are a helpful assistant",
+          knowledgePrompt: "Use the provided knowledge",
+          provider: "openai" as const,
+          providerApiKey: "sk_xxx",
+          providerModel: "gpt-4o",
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(createData);
+              return HttpResponse.json(copilot, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createAiCopilot(createData);
+        expect(result).toEqual(copilot);
+      });
+
+      test("should throw a LiveblocksError when createAiCopilot receives an error response", async () => {
+        const error = {
+          error: "INVALID_REQUEST",
+          message: "Invalid copilot data",
+        };
+
+        server.use(
+          http.post(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(error, { status: 400 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createAiCopilot({
+            name: "Test",
+            systemPrompt: "Test",
+            providerApiKey: "sk_xxx",
+            provider: "openai",
+            providerModel: "gpt-4",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid copilot data");
+          }
+        }
+      });
+    });
+
+    describe("get AI copilot", () => {
+      test("should return an AI copilot when getAiCopilot receives a successful response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return HttpResponse.json(copilot, { status: 200 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(client.getAiCopilot("copilot_123")).resolves.toEqual(
+          copilot
+        );
+      });
+
+      test("should throw a LiveblocksError when getAiCopilot receives an error response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getAiCopilot("nonexistent");
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+
+    describe("update AI copilot", () => {
+      test("should update an AI copilot when updateAiCopilot receives a successful response", async () => {
+        const updateData: UpdateAiCopilotOptions = {
+          name: "Updated Copilot",
+          systemPrompt: "You are an updated assistant",
+        };
+
+        const updatedCopilot = {
+          ...copilot,
+          name: "Updated Copilot",
+          systemPrompt: "You are an updated assistant",
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(updateData);
+              return HttpResponse.json(updatedCopilot, { status: 200 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.updateAiCopilot("copilot_123", updateData);
+        expect(result).toEqual(updatedCopilot);
+      });
+
+      test("should throw a LiveblocksError when updateAiCopilot receives an error response", async () => {
+        server.use(
+          http.post(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.updateAiCopilot("nonexistent", { name: "Updated" });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+
+    describe("delete AI copilot", () => {
+      test("should delete an AI copilot when deleteAiCopilot receives a successful response", async () => {
+        server.use(
+          http.delete(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return HttpResponse.text(null, { status: 204 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteAiCopilot("copilot_123");
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteAiCopilot receives an error response", async () => {
+        server.use(
+          http.delete(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteAiCopilot("nonexistent");
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+  });
+
+  describe("knowledge source management", () => {
+    const webKnowledgeSource = {
+      id: "ks_web_123",
+      type: "ai-knowledge-web-source" as const,
+      link: {
+        url: "https://example.com",
+        type: "individual_link" as const,
+      },
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    const fileKnowledgeSource = {
+      id: "ks_file_123",
+      type: "ai-knowledge-file-source" as const,
+      file: {
+        name: "document.pdf",
+        mimeType: "application/pdf",
+      },
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    const webKnowledgeSourceLink = {
+      id: "link_123",
+      url: "https://example.com/page1",
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    describe("create web knowledge source", () => {
+      test("should create a web knowledge source when createWebKnowledgeSource receives a successful response", async () => {
+        const createData = {
+          copilotId: "copilot_123",
+          url: "https://example.com",
+          type: "individual_link" as const,
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(createData);
+              return HttpResponse.json({ id: "ks_web_123" }, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createWebKnowledgeSource(createData);
+        expect(result).toEqual({ id: "ks_web_123" });
+      });
+
+      test("should throw a LiveblocksError when createWebKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "INVALID_URL",
+          message: "Invalid URL provided",
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web`,
+            () => {
+              return HttpResponse.json(error, { status: 400 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createWebKnowledgeSource({
+            copilotId: "copilot_123",
+            url: "invalid-url",
+            type: "individual_link",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid URL provided");
+          }
+        }
+      });
+    });
+
+    describe("create file knowledge source", () => {
+      test("should create a file knowledge source when createFileKnowledgeSource receives a successful response", async () => {
+        // Create a mock File object
+        const file = new File(["test content"], "test.pdf", {
+          type: "application/pdf",
+        });
+
+        server.use(
+          http.put(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:name`,
+            async ({ request, params }) => {
+              expect(params.name).toBe("test.pdf");
+              expect(request.headers.get("Content-Type")).toBe(
+                "application/pdf"
+              );
+              const body = await request.text();
+              expect(body).toBe("test content");
+              return HttpResponse.json({ id: "ks_file_123" }, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createFileKnowledgeSource({
+          copilotId: "copilot_123",
+          file,
+        });
+        expect(result).toEqual({ id: "ks_file_123" });
+      });
+
+      test("should throw a LiveblocksError when createFileKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "INVALID_FILE",
+          message: "Invalid file provided",
+        };
+
+        const file = new File(["test content"], "test.pdf", {
+          type: "application/pdf",
+        });
+
+        server.use(
+          http.put(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:name`,
+            () => {
+              return HttpResponse.json(error, { status: 400 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createFileKnowledgeSource({
+            copilotId: "copilot_123",
+            file,
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid file provided");
+          }
+        }
+      });
+    });
+
+    describe("delete web knowledge source", () => {
+      test("should delete a web knowledge source when deleteWebKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.text(null, { status: 204 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteWebKnowledgeSource({
+          copilotId: "copilot_123",
+          knowledgeSourceId: "ks_web_123",
+        });
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteWebKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteWebKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("delete file knowledge source", () => {
+      test("should delete a file knowledge source when deleteFileKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.text(null, { status: 204 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteFileKnowledgeSource({
+          copilotId: "copilot_123",
+          knowledgeSourceId: "ks_file_123",
+        });
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteFileKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteFileKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get knowledge sources", () => {
+      test("should return a list of knowledge sources when getKnowledgeSources receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge`,
+            () => {
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor1",
+                  data: [webKnowledgeSource, fileKnowledgeSource],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSources({ copilotId: "copilot_123" })
+        ).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [webKnowledgeSource, fileKnowledgeSource],
+        });
+      });
+
+      test("should return a list of knowledge sources with pagination parameters", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge`,
+            ({ request }) => {
+              const url = new URL(request.url);
+              expect(url.searchParams.get("limit")).toEqual("10");
+              expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor2",
+                  data: [webKnowledgeSource],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSources({
+            copilotId: "copilot_123",
+            limit: 10,
+            startingAfter: "cursor1",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [webKnowledgeSource],
+        });
+      });
+    });
+
+    describe("get knowledge source", () => {
+      test("should return a knowledge source when getKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(webKnowledgeSource, {
+                status: 200,
+              });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+          })
+        ).resolves.toEqual(webKnowledgeSource);
+      });
+
+      test("should throw a LiveblocksError when getKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get file knowledge source markdown", () => {
+      test("should return file content when getFileKnowledgeSourceMarkdown receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(
+                {
+                  id: "ks_file_123",
+                  content: "# Document Title\n\nThis is the content.",
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getFileKnowledgeSourceMarkdown({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_file_123",
+          })
+        ).resolves.toEqual("# Document Title\n\nThis is the content.");
+      });
+
+      test("should throw a LiveblocksError when getFileKnowledgeSourceMarkdown receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getFileKnowledgeSourceMarkdown({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get web knowledge source links", () => {
+      test("should return a list of links when getWebKnowledgeSourceLinks receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            () => {
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor1",
+                  data: [webKnowledgeSourceLink],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [webKnowledgeSourceLink],
+        });
+      });
+
+      test("should return a list of links with pagination parameters", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            ({ request }) => {
+              const url = new URL(request.url);
+              expect(url.searchParams.get("limit")).toEqual("20");
+              expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor2",
+                  data: [webKnowledgeSourceLink],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+            limit: 20,
+            startingAfter: "cursor1",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [webKnowledgeSourceLink],
+        });
+      });
+
+      test("should throw a LiveblocksError when getWebKnowledgeSourceLinks receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
     });
   });
 });

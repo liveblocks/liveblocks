@@ -469,7 +469,9 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
   if (!myTool.render) {
     expectType<undefined>(myTool.render);
   } else {
-    const internal = { [kInternal]: { execute: undefined } };
+    const internal = {
+      [kInternal]: { execute: undefined, messageStatus: "generating" as const },
+    };
 
     // Possible JSX rendering invocation 1
     myTool.render({
@@ -559,7 +561,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
-          expectType<Json>(partialArgs);
+          expectType<JsonObject>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
         } else if (stage === "executing") {
@@ -587,7 +589,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
-          expectType<Json>(partialArgs);
+          expectType<JsonObject>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
         } else if (stage === "executing") {

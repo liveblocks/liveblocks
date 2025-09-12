@@ -83,6 +83,7 @@ export function url(
  * - Absolute URLs with an http or https protocol (e.g. https://liveblocks.io)
  * - Absolute URLs with a `www` prefix (e.g. www.liveblocks.io)
  * - Relative URLs (e.g. /path/to/page)
+ * - Hash-only URLs (e.g. #hash)
  *
  * The presence/absence of trailing slashes is preserved.
  * Rejected URLs are returned as `null`.
@@ -91,6 +92,11 @@ export function sanitizeUrl(url: string): string | null {
   // If the URL starts with "www.", normalize it as an HTTPS URL
   if (url.startsWith("www.")) {
     url = "https://" + url;
+  }
+
+  // If the URL is an empty hash, return it as is.
+  if (url === "#") {
+    return url;
   }
 
   try {
@@ -159,4 +165,13 @@ export function generateUrl(
   return isAbsolute
     ? urlObject.href
     : urlObject.href.replace(PLACEHOLDER_BASE_URL, "");
+}
+
+export function isUrl(string: string): boolean {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }

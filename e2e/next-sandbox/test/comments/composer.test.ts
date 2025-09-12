@@ -460,6 +460,8 @@ test.describe("Composer", () => {
       // Navigate through the mention suggestions and select one
       await editor.press("ArrowDown");
       await editor.press("ArrowDown");
+      await editor.press("ArrowDown");
+      await editor.press("ArrowDown");
       await editor.press("Enter");
 
       await editor.pressSequentially("!");
@@ -558,6 +560,46 @@ test.describe("Composer", () => {
       await expect(
         page.locator(".lb-composer-mention-suggestions-list")
       ).not.toBeVisible();
+    });
+
+    test("should support user and group mentions", async () => {
+      const { editor } = getComposer(page);
+
+      // Insert a user mention
+      await editor.pressSequentially("Hello @alici");
+      await page
+        .locator(".lb-composer-suggestions-list-item")
+        .getByText("Alicia H.")
+        .click();
+
+      // Wait for the mention suggestions to disappear
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
+
+      // Insert a group mention
+      await editor.pressSequentially("and @enginee");
+      await page
+        .locator(".lb-composer-suggestions-list-item")
+        .getByText("Engineering")
+        .click();
+
+      // ➡️ The editor contains the mentions
+      expect(await getEditorText(editor)).toEqual(
+        "Hello @Alicia H. and @Engineering "
+      );
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the mentions
+      const output = await getOutputJson(page);
+      expect(output?.body.content[0].children).toEqual([
+        { text: "Hello " },
+        { type: "mention", kind: "user", id: "user-2" },
+        { text: " and " },
+        { type: "mention", kind: "group", id: "group-1" },
+        { text: " " },
+      ]);
     });
 
     test("should insert emojis via the emoji picker", async () => {

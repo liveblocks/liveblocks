@@ -1,7 +1,9 @@
+import { describe, expect, test } from "vitest";
+
 import { stableStringify } from "../stringify";
 
 describe("stable stringify", () => {
-  it("returns the same result as JSON.stringify", () => {
+  test("returns the same result as JSON.stringify", () => {
     expect(
       stableStringify({
         a: 2,
@@ -18,7 +20,7 @@ describe("stable stringify", () => {
     expect(stableStringify(null)).toEqual(JSON.stringify(null));
   });
 
-  it("supports objects in a stable way", () => {
+  test("supports objects in a stable way", () => {
     expect(
       stableStringify({
         a: 2,
@@ -32,7 +34,7 @@ describe("stable stringify", () => {
     );
   });
 
-  it("supports nested objects", () => {
+  test("supports nested objects", () => {
     expect(stableStringify([{ a: 2, b: true }])).toEqual(
       stableStringify([{ b: true, a: 2 }])
     );
@@ -41,7 +43,7 @@ describe("stable stringify", () => {
     ).toEqual(stableStringify([{ b: true, a: 2, c: [[{ d: 0, e: 0 }]] }]));
   });
 
-  it("explicitly-undefined keys become implicit-undefined", () => {
+  test("explicitly-undefined keys become implicit-undefined", () => {
     expect(stableStringify([{ b: true, c: undefined, a: 2 }])).toEqual(
       '[{"a":2,"b":true}]'
     );

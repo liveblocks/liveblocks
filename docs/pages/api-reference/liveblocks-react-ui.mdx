@@ -380,6 +380,30 @@ function Chat() {
 }
 ```
 
+##### Customize CSS variables and classes [#AiChat-variables-and-classes]
+
+You can customize the default styles of the chat by modifying CSS variables and
+classes prefixed with `lb`. Here are some examples.
+
+```css
+/* Lowers spacing and shrinks font size */
+.lb-ai-chat {
+  --lb-spacing: 0.6em;
+  font-size: 14px;
+}
+
+/* Removes composer shadow and adds border */
+.lb-ai-chat-composer {
+  box-shadow: 0;
+  border: 1px solid #f0f0f0;
+}
+
+/* Removes padding below the composer */
+.lb-ai-chat-footer {
+  padding-bottom: 0;
+}
+```
+
 ##### Customize how Markdown is rendered [#AiChat-markdown]
 
 You can customize how Markdown is rendered in messages by passing components to
@@ -643,6 +667,10 @@ render: () => (
   <PropertiesListItem name="children" type="ReactNode">
     Content to display inside the tool container. Typically used for
     tool-specific UI or descriptions.
+  </PropertiesListItem>
+  <PropertiesListItem name="variant" type="'block' | 'minimal'">
+    The visual appearance of the tool. The `"block"` variant (default) displays
+    the tool as a block with a border.
   </PropertiesListItem>
   <PropertiesListItem name="collapsed" type="boolean">
     Whether the tool content should be collapsed. When collapsed, only the title
@@ -1550,22 +1578,43 @@ function MentionSuggestions({
   return (
     <Composer.Suggestions>
       <Composer.SuggestionsList>
-        {mentions.map((mention) => (
-          <MentionSuggestion key={mention.id} userId={mention.id} />
-        ))}
+        {mentions.map((mention) => {
+          switch (mention.kind) {
+            case "user":
+              return (
+                <UserMentionSuggestion key={mention.id} userId={mention.id} />
+              );
+            case "group":
+              return (
+                <GroupMentionSuggestion key={mention.id} groupId={mention.id} />
+              );
+          }
+        })}
       </Composer.SuggestionsList>
     </Composer.Suggestions>
   );
 }
 
 // Render a single mention suggestion from a `userId`
-function MentionSuggestion({ userId }: { userId: string }) {
+function UserMentionSuggestion({ userId }: { userId: string }) {
   const { user } = useUser(userId);
 
   return (
     <Composer.SuggestionsListItem value={user.id}>
       <img src={user.avatar} alt={user.name} />
       {user.name}
+    </Composer.SuggestionsListItem>
+  );
+}
+
+// Render a single mention suggestion from a `groupId`
+function GroupMentionSuggestion({ groupId }: { groupId: string }) {
+  const { group } = useGroupInfo(groupId);
+
+  return (
+    <Composer.SuggestionsListItem value={group.id}>
+      <img src={group.avatar} alt={group.name} />
+      {group.name}
     </Composer.SuggestionsListItem>
   );
 }
@@ -2145,8 +2194,9 @@ Displays links within `Comment.Body`.
 #### Timestamp [#primitives-Timestamp]
 
 Displays a formatted date, and automatically re-renders to support relative
-formatting. Defaults to relative formatting for recent dates (e.g. “5 minutes
-ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
+formatting. Defaults to relative formatting for nearby dates (e.g. “5 minutes
+ago” or "in 1 day") and a short absolute formatting for more distant ones (e.g.
+“25 Aug”).
 
 ```tsx
 <Timestamp date={new Date()} />
@@ -2205,6 +2255,64 @@ function MyComments({ thread }: { thread: ThreadData }) {
   </PropertiesListItem>
   <PropertiesListItem name="locale" type="string">
     The locale used when formatting the date. Defaults to the browser’s locale.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Duration [#primitives-Duration]
+
+Displays a formatted duration, and automatically re-renders to if the duration
+is in progress. Defaults to a short format (e.g. “5s” or “1m 40s”).
+
+```tsx
+<Duration duration={3 * 60 * 1000} />
+```
+
+Instead of providing a duration in milliseconds, you can also provide start and
+end dates for the duration via the `from` and `to` props. If only `from` is
+provided it means that the duration is in progress, and the component will
+re-render at an interval, customizable with the `interval` prop.
+
+<PropertiesList>
+  <PropertiesListItem name="duration" type="number">
+    The duration in milliseconds. If provided, `from` and `to` will be ignored.
+  </PropertiesListItem>
+  <PropertiesListItem name="from" type="Date | string | number">
+    The date at which the duration starts. If provided, `duration` will be
+    ignored. If provided without `to` it means that the duration is in progress,
+    and the component will re-render at an interval, customizable with the
+    `interval` prop.
+  </PropertiesListItem>
+  <PropertiesListItem name="to" type="Date | string | number">
+    The date at which the duration ends. If `from` is provided without `to`,
+    `Date.now()` will be used.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="function"
+    detailedType="(duration: number) => ReactNode"
+  >
+    A function to format the displayed date. Defaults to a short duration
+    formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="title"
+    type="string | function"
+    detailedType="string | ((duration: number) => string)"
+  >
+    The `title` attribute’s value or a function to format it. Defaults to an
+    longer duration formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem name="interval" type="number | false" defaultValue="500">
+    The interval in milliseconds at which the component will re-render if `from`
+    is provided without `to`, meaning that the duration is in progress. Can be
+    set to `false` to disable re-rendering.
+  </PropertiesListItem>
+  <PropertiesListItem name="locale" type="string">
+    The locale used when formatting the duration. Defaults to the browser’s
+    locale.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.

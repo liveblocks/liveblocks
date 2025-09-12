@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import type { SerializedTiptapRootNode } from "../tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
@@ -6,17 +8,18 @@ import {
 } from "../tiptap-editor";
 import { generateInboxNotificationId } from "./_helpers";
 import {
-  createTipTapMentionNodeWithContext,
   docStateRoot,
   docStateRoot2,
   docUpdateBuffer,
+  GROUP_MENTION_ID,
   MENTION_ID,
+  MENTIONED_GROUP_ID,
   MENTIONED_USER_ID,
 } from "./_tiptap-helpers";
 
 describe("tiptap editor", () => {
   describe("get serialized state", () => {
-    it("should parse correctly a real document", () => {
+    test("should parse correctly a real document", () => {
       const state = getSerializedTiptapState({
         buffer: docUpdateBuffer,
         key: "default",
@@ -27,7 +30,7 @@ describe("tiptap editor", () => {
   });
 
   describe("find mention node with context", () => {
-    it("should flatten tiptap tree", () => {
+    test("should flatten tiptap tree", () => {
       const flattenNodes = flattenTiptapTree(docStateRoot2.content);
       expect(flattenNodes).toEqual([
         { type: "paragraph" },
@@ -76,7 +79,7 @@ describe("tiptap editor", () => {
       ]);
     });
 
-    it("should find no mention with context", () => {
+    test("should find no mention with context", () => {
       const root: SerializedTiptapRootNode = {
         type: "doc",
         content: [
@@ -107,25 +110,144 @@ describe("tiptap editor", () => {
 
       const context = findTiptapMentionNodeWithContext({
         root,
-        mentionedUserId: "user-dracula",
-        mentionId: generateInboxNotificationId(),
+        textMentionId: generateInboxNotificationId(),
       });
 
       expect(context).toBeNull();
     });
 
-    it("should find a mention with context", () => {
+    test("should find a user mention with context", () => {
       const context = findTiptapMentionNodeWithContext({
         root: docStateRoot2,
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
-      });
-      const expected = createTipTapMentionNodeWithContext({
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
+        textMentionId: MENTION_ID,
       });
 
-      expect(context).toEqual(expected);
+      expect(context).toEqual({
+        before: [
+          {
+            type: "text",
+            text: "Hey this a tip tap ",
+          },
+          {
+            type: "text",
+            text: "example",
+            marks: [
+              {
+                type: "bold",
+                attrs: {},
+              },
+              {
+                type: "italic",
+                attrs: {},
+              },
+            ],
+          },
+          {
+            type: "text",
+            text: " hiha! ",
+          },
+        ],
+        mention: {
+          type: "liveblocksMention",
+          attrs: {
+            id: MENTIONED_USER_ID,
+            notificationId: MENTION_ID,
+          },
+        },
+        after: [
+          {
+            type: "text",
+            text: " fun right?",
+          },
+        ],
+      });
+    });
+
+    test("should find a group mention with context", () => {
+      const root: SerializedTiptapRootNode = {
+        type: "doc",
+        content: [
+          {
+            type: "text",
+            text: "Hey this a tip tap ",
+          },
+          {
+            type: "text",
+            text: "example",
+            marks: [
+              {
+                type: "bold",
+                attrs: {},
+              },
+              {
+                type: "italic",
+                attrs: {},
+              },
+            ],
+          },
+          {
+            type: "text",
+            text: " hiha! ",
+          },
+          {
+            type: "liveblocksGroupMention",
+            attrs: {
+              id: MENTIONED_GROUP_ID,
+              notificationId: GROUP_MENTION_ID,
+              userIds: undefined,
+            },
+          },
+          {
+            type: "text",
+            text: " fun right?",
+          },
+        ],
+      };
+
+      const context = findTiptapMentionNodeWithContext({
+        root,
+        textMentionId: GROUP_MENTION_ID,
+      });
+
+      expect(context).toEqual({
+        before: [
+          {
+            type: "text",
+            text: "Hey this a tip tap ",
+          },
+          {
+            type: "text",
+            text: "example",
+            marks: [
+              {
+                type: "bold",
+                attrs: {},
+              },
+              {
+                type: "italic",
+                attrs: {},
+              },
+            ],
+          },
+          {
+            type: "text",
+            text: " hiha! ",
+          },
+        ],
+        mention: {
+          type: "liveblocksGroupMention",
+          attrs: {
+            id: MENTIONED_GROUP_ID,
+            notificationId: GROUP_MENTION_ID,
+          },
+        },
+        after: [
+          {
+            type: "text",
+            text: " fun right?",
+          },
+        ],
+      });
     });
   });
 });

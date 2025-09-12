@@ -6,14 +6,16 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
+  DGI,
   DU,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
-  resolveUsersInCommentBody,
+  resolveMentionsInCommentBody,
   sanitizeUrl,
 } from "@liveblocks/core";
 
@@ -63,9 +65,14 @@ export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolveUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
+   */
+  group?: DGI;
 };
 
 /**
@@ -105,6 +112,14 @@ export type ConvertCommentBodyOptions<T, U extends BaseUserMeta = DU> = {
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
+
+  /**
    * The elements used to customize the resulting format `T`.
    */
   elements: ConvertCommentBodyElements<T, U>;
@@ -117,10 +132,12 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
   body: CommentBody,
   options: ConvertCommentBodyOptions<T, U>
 ): Promise<T> {
-  const resolvedUsers = await resolveUsersInCommentBody(
-    body,
-    options?.resolveUsers
-  );
+  const { users: resolvedUsers, groups: resolvedGroupsInfo } =
+    await resolveMentionsInCommentBody(
+      body,
+      options?.resolveUsers,
+      options?.resolveGroupsInfo
+    );
 
   const blocks: T[] = body.content
     .map((block, index) => {
@@ -132,7 +149,14 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
                 return options.elements.mention(
                   {
                     element: inline,
-                    user: resolvedUsers.get(inline.id),
+                    user:
+                      inline.kind === "user"
+                        ? resolvedUsers.get(inline.id)
+                        : undefined,
+                    group:
+                      inline.kind === "group"
+                        ? resolvedGroupsInfo.get(inline.id)
+                        : undefined,
                   },
                   inlineIndex
                 );

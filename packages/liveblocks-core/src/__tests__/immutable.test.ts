@@ -1,3 +1,14 @@
+import {
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  type MockInstance,
+  onTestFinished,
+  test,
+  vi,
+} from "vitest";
+
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -46,33 +57,37 @@ export async function prepareStorageImmutableTest<
 
   const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, actor);
 
-  subject.wss.onReceive.subscribe((data) => {
-    const messages = parseAsClientMsgs(data);
-    for (const message of messages) {
-      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        totalStorageOps += message.ops.length;
-        ref.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-        subject.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
+  onTestFinished(
+    subject.wss.onReceive.subscribe((data) => {
+      const messages = parseAsClientMsgs(data);
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          totalStorageOps += message.ops.length;
+          ref.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          subject.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        }
       }
-    }
-  });
+    })
+  );
 
   state = lsonToJson(subject.storage.root) as ToJson<S>;
   refState = lsonToJson(ref.storage.root) as ToJson<S>;
 
-  ref.room.events.storageBatch.subscribe(() => {
-    refState = lsonToJson(ref.storage.root) as ToJson<S>;
-  });
+  onTestFinished(
+    ref.room.events.storageBatch.subscribe(() => {
+      refState = lsonToJson(ref.storage.root) as ToJson<S>;
+    })
+  );
 
   function expectStorageAndStateInBothClients(
     data: ToJson<S>,
@@ -657,11 +672,11 @@ describe("2 ways tests with two clients", () => {
 
   describe("unsupported types", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: MockInstance;
 
     beforeAll(() => {
       originalEnv = process.env;
-      consoleErrorSpy = jest.spyOn(console, "error");
+      consoleErrorSpy = vi.spyOn(console, "error");
     });
 
     afterEach(() => {
@@ -728,10 +743,6 @@ describe("2 ways tests with two clients", () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
     });
-  });
-
-  describe("Map/LiveMap", () => {
-    // TODO
   });
 });
 

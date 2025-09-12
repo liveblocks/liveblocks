@@ -24,7 +24,11 @@ import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { AiExtension } from "./ai/AiExtension";
-import { CommentsExtension } from "./comments/CommentsExtension";
+import {
+  areSetsEqual,
+  CommentsExtension,
+  FILTERED_THREADS_PLUGIN_KEY,
+} from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
   LiveblocksExtensionOptions,
@@ -210,6 +214,37 @@ export const useLiveblocksExtension = (
 
   useReportTextEditor(textEditorType, options.field ?? DEFAULT_OPTIONS.field);
 
+  const prevThreadsRef = useRef<Set<string> | undefined>(undefined);
+
+  useEffect(() => {
+    if (!isEditorReady) return;
+
+    if (!editor.current) return;
+
+    const newThreads = options.threads_experimental
+      ? new Set(options.threads_experimental.map((t) => t.id))
+      : undefined;
+
+    const hasFilteredThreadsChanged = !areSetsEqual(
+      prevThreadsRef.current,
+      newThreads
+    );
+
+    if (hasFilteredThreadsChanged) {
+      prevThreadsRef.current = newThreads;
+    }
+
+    if (hasFilteredThreadsChanged) {
+      editor.current.view.dispatch(
+        editor.current.state.tr.setMeta(FILTERED_THREADS_PLUGIN_KEY, {
+          filteredThreads: options.threads_experimental
+            ? new Set(options.threads_experimental.map((t) => t.id))
+            : undefined,
+        })
+      );
+    }
+  }, [isEditorReady, options.threads_experimental]);
+
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
@@ -306,7 +341,7 @@ export const useLiveblocksExtension = (
                       pos + node.nodeSize,
                       this.editor.state.doc.content.size - 1
                     );
-                    tr.removeMark(trimmedFrom, trimmedTo, commentMarkType);
+                    tr.removeMark(trimmedFrom, trimmedTo, mark);
                     tr.addMark(
                       trimmedFrom,
                       trimmedTo,
@@ -371,7 +406,9 @@ export const useLiveblocksExtension = (
       if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention: createTextMention,
+            onCreateMention: (mention) => {
+              createTextMention(mention.notificationId, mention);
+            },
             onDeleteMention: deleteTextMention,
           })
         );

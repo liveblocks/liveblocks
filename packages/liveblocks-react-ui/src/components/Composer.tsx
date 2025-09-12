@@ -5,8 +5,9 @@ import type {
   CommentAttachment,
   CommentMixedAttachment,
   DM,
+  GroupMentionData,
 } from "@liveblocks/core";
-import { assertNever, Permission } from "@liveblocks/core";
+import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
@@ -38,7 +39,8 @@ import {
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
-import { FLOATING_ELEMENT_SIDE_OFFSET, MENTION_CHARACTER } from "../constants";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
+import { UsersIcon } from "../icons";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
 import { CodeIcon } from "../icons/Code";
@@ -69,12 +71,15 @@ import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
+import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { Group } from "./internal/Group";
+import { GroupDescription } from "./internal/GroupDescription";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -231,6 +236,10 @@ interface ComposerEditorContainerProps
   onEditorClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
+interface ComposerMentionProps extends ComposerEditorMentionProps {
+  overrides?: ComposerProps["overrides"];
+}
+
 function ComposerInsertMentionEditorAction({
   label,
   tooltipLabel,
@@ -335,18 +344,39 @@ function ComposerAttachFilesEditorAction({
   );
 }
 
-function ComposerMention({ mention }: ComposerEditorMentionProps) {
+function ComposerUserMention({ mention }: ComposerMentionProps) {
+  return (
+    <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <User userId={mention.id} />
+    </ComposerPrimitive.Mention>
+  );
+}
+
+function ComposerGroupMention({ mention }: ComposerMentionProps) {
+  const isMember = useIsGroupMentionMember(mention as GroupMentionData);
+
+  return (
+    <ComposerPrimitive.Mention
+      className="lb-mention lb-composer-mention"
+      data-self={isMember ? "" : undefined}
+    >
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <Group groupId={mention.id} />
+    </ComposerPrimitive.Mention>
+  );
+}
+
+export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
   switch (mention.kind) {
     case "user":
-      return (
-        <ComposerPrimitive.Mention className="lb-composer-mention">
-          {MENTION_CHARACTER}
-          <User userId={mention.id} />
-        </ComposerPrimitive.Mention>
-      );
+      return <ComposerUserMention mention={mention} {...props} />;
+
+    case "group":
+      return <ComposerGroupMention mention={mention} {...props} />;
 
     default:
-      return assertNever(mention.kind, "Unhandled mention kind");
+      return assertNever(mention, "Unhandled mention kind");
   }
 }
 
@@ -357,14 +387,14 @@ function ComposerMentionSuggestions({
     <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {mentions.map((mention) => {
-          switch (mention.kind) {
-            case "user":
-              return (
-                <ComposerPrimitive.SuggestionsListItem
-                  key={mention.id}
-                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-                  value={mention.id}
-                >
+          return (
+            <ComposerPrimitive.SuggestionsListItem
+              key={mention.id}
+              className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+              value={mention.id}
+            >
+              {mention.kind === "user" ? (
+                <>
                   <Avatar
                     userId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
@@ -373,12 +403,29 @@ function ComposerMentionSuggestions({
                     userId={mention.id}
                     className="lb-composer-mention-suggestion-user"
                   />
-                </ComposerPrimitive.SuggestionsListItem>
-              );
-
-            default:
-              return assertNever(mention.kind, "Unhandled mention kind");
-          }
+                </>
+              ) : mention.kind === "group" ? (
+                <>
+                  <Avatar
+                    groupId={mention.id}
+                    className="lb-composer-mention-suggestion-avatar"
+                    icon={<UsersIcon />}
+                  />
+                  <Group
+                    groupId={mention.id}
+                    className="lb-composer-mention-suggestion-group"
+                  >
+                    <GroupDescription
+                      groupId={mention.id}
+                      className="lb-composer-mention-suggestion-group-description"
+                    />
+                  </Group>
+                </>
+              ) : (
+                assertNever(mention, "Unhandled mention kind")
+              )}
+            </ComposerPrimitive.SuggestionsListItem>
+          );
         })}
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
@@ -548,7 +595,7 @@ function ComposerEditorContainer({
   }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    disabled: disabled || hasMaxAttachments,
+    disabled: disabled || !showAttachments || hasMaxAttachments,
   });
 
   useLayoutEffect(() => {

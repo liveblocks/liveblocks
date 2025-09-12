@@ -7,13 +7,14 @@
 import type { JSONSchema7 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
+import { IncrementalJsonParser } from "../lib/IncrementalJsonParser";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
-import type { Brand } from "../lib/utils";
+import type { Brand, ISODateString } from "../lib/utils";
+import { findLastIndex } from "../lib/utils";
 
 export type Cursor = Brand<string, "Cursor">;
-export type ISODateString = Brand<string, "ISODateString">;
 
 type ChatId = string;
 
@@ -332,7 +333,11 @@ export type AiReceivingToolInvocationPart = {
   stage: "receiving";
   invocationId: string;
   name: string;
-  partialArgs: Json;
+  /** @internal */
+  partialArgsText: string; // The raw, partial JSON text value
+  partialArgs: JsonObject; // The interpreted, partial JSON value
+  /** @internal */
+  __appendDelta?: (delta: string) => void; // Internal method for delta updates
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
@@ -365,17 +370,37 @@ export type AiTextDelta = {
   textDelta: string;
 };
 
-// NOTE: This chunk type is { type: 'reasoning', textDelta } in the Vercel AI
-// SDK, but I'm renaming it to reasoning-delta here, to distinguish it better
-// from the { type: "reasoning", text } part!
-export type AiReasoningDelta = Relax<
-  | { type: "reasoning-delta"; textDelta: string }
-  | { type: "reasoning-delta"; signature: string }
->;
+export type AiReasoningDelta = {
+  type: "reasoning-delta";
+  textDelta: string;
+};
+
+// Available since protocol V5, this is the start of a tool invocation stream
+export type AiToolInvocationStreamStart = {
+  type: "tool-stream";
+  invocationId: string;
+  name: string;
+};
+
+// Available since protocol V5, this is a partial tool invocation that is being
+// constructed by the server and sent to the client as a delta. The client will
+// append this delta to the last tool invocation stream's partial JSON buffer
+// that will eventually become the full `args` value when JSON.parse()'ed.
+export type AiToolInvocationDelta = {
+  type: "tool-delta";
+  /**
+   * The textual delta to be appended to the last tool invocation stream's
+   * partial JSON buffer that will eventually become the full `args` value when
+   * JSON.parse()'ed.
+   */
+  delta: string;
+};
 
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
+  startedAt: ISODateString;
+  endedAt?: ISODateString;
 };
 
 export type AiUploadedImagePart = {
@@ -386,18 +411,39 @@ export type AiUploadedImagePart = {
   mimeType: string;
 };
 
+/**
+ * Represents a pending or completed knowledge retrieval operation.
+ * Since protocol V6.
+ */
+export type AiRetrievalPart = {
+  type: "retrieval";
+  kind: "knowledge";
+  id: string;
+  query: string;
+  startedAt: ISODateString;
+  endedAt?: ISODateString;
+};
+
 // "Parts" are what make up the "content" of a message.
 // "Content" is always an "array of parts".
 export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
 export type AiAssistantContentPart =
   | AiReasoningPart
   | AiTextPart
-  | AiToolInvocationPart;
+  | AiToolInvocationPart
+  | AiRetrievalPart;
 
 export type AiAssistantDeltaUpdate =
-  | AiTextDelta // ...or a delta to append to the last sent part
-  | AiReasoningDelta // ...or a delta to append to the last sent part
-  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
+  | AiTextDelta // a delta appended to the last part (if text)
+  | AiReasoningDelta // a delta appended to the last part (if reasoning)
+  | AiExecutingToolInvocationPart // a tool invocation ready to be executed by the client
+
+  // Since protocol V5, if tool-call-streaming is enabled
+  | AiToolInvocationStreamStart // the start of a new tool-call stream
+  | AiToolInvocationDelta // a partial/under-construction tool invocation (since protocol V5)
+
+  // Since protocol V6, clients can receive retrieval parts
+  | AiRetrievalPart; // Emitted when created, and when later updated with endedAt
 
 export type AiUserMessage = {
   id: MessageId;
@@ -425,6 +471,7 @@ export type AiGeneratingAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "generating";
   contentSoFar: AiAssistantContentPart[];
@@ -439,6 +486,7 @@ export type AiAwaitingToolAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "awaiting-tool";
   contentSoFar: AiAssistantContentPart[];
@@ -454,6 +502,7 @@ export type AiCompletedAssistantMessage = {
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "completed";
   /** @internal */
@@ -467,6 +516,7 @@ export type AiFailedAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "failed";
   contentSoFar: AiAssistantContentPart[];
@@ -484,10 +534,55 @@ export type AiKnowledgeSource = {
 
 // --------------------------------------------------------------------------------------------------
 
-export function appendDelta(
+/**
+ * Finds the last item in the content array that matches the type and the given
+ * keyFn. If found, replaces that item with newItem in the content array. If
+ * not found, appends newItem to the content array.
+ * Mutates the content array in-place.
+ */
+function replaceOrAppend<const T extends AiAssistantContentPart>(
   content: AiAssistantContentPart[],
-  delta: AiAssistantDeltaUpdate
+  newItem: T,
+  keyFn: (item: T) => string,
+  now: ISODateString
 ): void {
+  const existingIndex = findLastIndex(
+    content,
+    (item) => item.type === newItem.type && keyFn(item as T) === keyFn(newItem)
+  );
+
+  if (existingIndex > -1) {
+    // Replace the existing one
+    content[existingIndex] = newItem;
+  } else {
+    // No existing one found, just append
+    closePart(content[content.length - 1], now);
+    content.push(newItem);
+  }
+}
+
+/**
+ * Given a part, mutates it in-place by setting its endedAt timestamp.
+ */
+function closePart(
+  prevPart: AiAssistantContentPart | undefined,
+  endedAt: ISODateString
+) {
+  // Currently, only reasoning parts have an endedAt timestamp
+  if (prevPart?.type === "reasoning") {
+    prevPart.endedAt ??= endedAt;
+  }
+}
+
+export function patchContentWithDelta(
+  content: AiAssistantContentPart[],
+  delta: AiAssistantDeltaUpdate | null
+): void {
+  if (delta === null)
+    // Nothing to do
+    return;
+
+  const now = new Date().toISOString() as ISODateString;
   const lastPart = content[content.length - 1] as
     | AiAssistantContentPart
     | undefined;
@@ -499,6 +594,7 @@ export function appendDelta(
       if (lastPart?.type === "text") {
         lastPart.text += delta.textDelta;
       } else {
+        closePart(lastPart, now);
         content.push({ type: "text", text: delta.textDelta });
       }
       break;
@@ -507,18 +603,71 @@ export function appendDelta(
       if (lastPart?.type === "reasoning") {
         lastPart.text += delta.textDelta;
       } else {
+        closePart(lastPart, now);
         content.push({
           type: "reasoning",
-          text: delta.textDelta ?? "",
+          text: delta.textDelta,
+          startedAt: now,
         });
       }
       break;
 
+    case "tool-stream": {
+      const toolInvocation = createReceivingToolInvocation(
+        delta.invocationId,
+        delta.name
+      );
+      content.push(toolInvocation);
+      break;
+    }
+
+    case "tool-delta": {
+      // Take the last part, expect it to be a tool invocation in receiving
+      // stage. If not, ignore this delta. If it is, append the delta to the
+      // parser
+      if (
+        lastPart?.type === "tool-invocation" &&
+        lastPart.stage === "receiving"
+      ) {
+        lastPart.__appendDelta?.(delta.delta);
+      }
+      // Otherwise ignore the delta - it's out of order or unexpected
+      break;
+    }
+
     case "tool-invocation":
-      content.push(delta);
+      replaceOrAppend(content, delta, (x) => x.invocationId, now);
+      break;
+
+    case "retrieval":
+      replaceOrAppend(content, delta, (x) => x.id, now);
       break;
 
     default:
       return assertNever(delta, "Unhandled case");
   }
+}
+
+/**
+ * Creates a receiving tool invocation part for testing purposes.
+ * This helper eliminates the need to manually create fake tool invocation objects
+ * and provides a clean API for tests.
+ */
+export function createReceivingToolInvocation(
+  invocationId: string,
+  name: string,
+  partialArgsText: string = ""
+): AiReceivingToolInvocationPart {
+  const parser = new IncrementalJsonParser(partialArgsText); // FRONTEND only
+  return {
+    type: "tool-invocation",
+    stage: "receiving",
+    invocationId,
+    name,
+    // --- Alternative implementation for FRONTEND only ------------------------
+    get partialArgsText(): string { return parser.source; }, // prettier-ignore
+    get partialArgs(): JsonObject { return parser.json; }, // prettier-ignore
+    __appendDelta(delta: string) { parser.append(delta); }, // prettier-ignore
+    // ------------------------------------------------------------------------
+  } satisfies AiReceivingToolInvocationPart;
 }

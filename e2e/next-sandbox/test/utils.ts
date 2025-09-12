@@ -38,14 +38,14 @@ export function genRoomId(testInfo: TestInfo) {
     .replace(/^-+/, "")
     .replace(/-+$/, "");
   let roomId = `e2e:${title}`;
-  if (roomId.length > 128) {
+  if (roomId.length > 100) {
     // Room IDs cannot be longer than 128 chars. If this happens, take a short
     // hash from the full room ID, then cut it off and attach the hash. This
     // way, test names can still be arbitrarily long, human-readable (at least
     // the first part of it), and yet still stable for reuse, so we don't have
     // an ever-growing set of rooms when running against DEV or PROD.
     const hash = hash7(roomId);
-    roomId = roomId.slice(0, 128 - hash.length) + hash;
+    roomId = roomId.slice(0, 100 - hash.length) + hash;
   }
   return roomId;
 }
@@ -82,7 +82,7 @@ export async function preparePage(url: string, options?: WindowOptions) {
     viewport: { width, height },
   });
   const page = await context.newPage();
-  await page.goto(url);
+  await page.goto(url, { waitUntil: "networkidle" });
   return page;
 }
 

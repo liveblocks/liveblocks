@@ -1,8 +1,10 @@
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
+  MentionData,
   Relax,
   TextEditorType,
+  ThreadData,
 } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content, Range } from "@tiptap/core";
@@ -22,6 +24,7 @@ export const LIVEBLOCKS_MENTION_NOTIFIER_KEY = new PluginKey(
 
 export const LIVEBLOCKS_MENTION_EXTENSION = "liveblocksMentionExt";
 export const LIVEBLOCKS_MENTION_TYPE = "liveblocksMention";
+export const LIVEBLOCKS_GROUP_MENTION_TYPE = "liveblocksGroupMention";
 
 export const THREADS_ACTIVE_SELECTION_PLUGIN = new PluginKey(
   "lb-threads-active-selection-plugin"
@@ -88,6 +91,7 @@ export type LiveblocksExtensionOptions = {
   mentions?: boolean; // | MentionsConfiguration
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
+  threads_experimental?: ThreadData[];
   initialContent?: Content;
   enablePermanentUserData?: boolean;
   /**
@@ -358,3 +362,13 @@ export type AiCommands<ReturnType = boolean> = {
 export type YSyncPluginState = {
   binding: ProsemirrorBinding;
 };
+
+export type TiptapMentionData = MentionData & {
+  notificationId: string;
+};
+
+export type SerializedTiptapMentionData = TiptapMentionData extends infer T
+  ? T extends { kind: "group" }
+    ? Omit<T, "userIds"> & { userIds?: string }
+    : T
+  : never;

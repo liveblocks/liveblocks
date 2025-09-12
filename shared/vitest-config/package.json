@@ -7,9 +7,9 @@
     ".": "./index.js"
   },
   "dependencies": {
-    "@vitest/coverage-istanbul": "^3.0.7",
-    "fast-check": "^3.19.0",
+    "fast-check": "^4.3.0",
+    "jsdom": "^25.0.1",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.9"
+    "whatwg-fetch": "^3.6.20"
   }
 }

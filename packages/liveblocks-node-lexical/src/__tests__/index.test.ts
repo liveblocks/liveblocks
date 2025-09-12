@@ -1,3 +1,5 @@
+import { test } from "vitest";
+
 import * as _ from "..";
 
 test.todo("Write test for createLiveblocksDocument");

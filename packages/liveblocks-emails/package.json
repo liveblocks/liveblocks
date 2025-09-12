@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/emails",
-  "version": "3.3.0",
+  "version": "3.7.1",
   "description": "A set of functions and utilities to make sending emails based on Liveblocks notification events easy. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -30,22 +30,22 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.3.0",
-    "@liveblocks/node": "3.3.0"
+    "@liveblocks/core": "3.7.1",
+    "@liveblocks/node": "3.7.1"
   },
   "peerDependencies": {
     "react": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "csstype": "3.0.2",
-    "msw": "^2.7.0"
+    "msw": "^2.10.4"
   },
   "sideEffects": false,
   "bugs": {

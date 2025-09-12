@@ -28,6 +28,7 @@ import type {
   EnterOptions,
   IYjsProvider,
   LiveblocksErrorContext,
+  MentionData,
   OpaqueClient,
   RoomEventMessage,
   RoomSubscriptionSettings,
@@ -597,12 +598,15 @@ function RoomProviderInner<
   }
 
   // Note: We'll hold on to the initial value given here, and ignore any
-  // changes to this argument in subsequent renders
-  const frozenProps = useInitial({
-    initialPresence: props.initialPresence,
-    initialStorage: props.initialStorage,
-    autoConnect: props.autoConnect ?? typeof window !== "undefined",
-  }) as EnterOptions<P, S>;
+  // changes to this argument in subsequent renders, except when roomId changes
+  const frozenProps = useInitial(
+    {
+      initialPresence: props.initialPresence,
+      initialStorage: props.initialStorage,
+      autoConnect: props.autoConnect ?? typeof window !== "undefined",
+    },
+    roomId
+  ) as EnterOptions<P, S>;
 
   const [{ room }, setRoomLeavePair] = useState(() =>
     stableEnterRoom(roomId, {
@@ -784,15 +788,18 @@ function useYjsProvider(): IYjsProvider | undefined {
 }
 
 /** @private - Internal API, do not rely on it. */
-function useCreateTextMention(): (userId: string, mentionId: string) => void {
+function useCreateTextMention(): (
+  mentionId: string,
+  mention: MentionData
+) => void {
   const room = useRoom();
   return useCallback(
-    (userId: string, mentionId: string): void => {
+    (mentionId: string, mention: MentionData): void => {
       room[kInternal]
-        .createTextMention(userId, mentionId)
+        .createTextMention(mentionId, mention)
         .catch((err): void => {
           console.error(
-            `Cannot create text mention for user '${userId}' and mention '${mentionId}'`,
+            `Cannot create text mention for mention '${mentionId}'`,
             err
           );
         });

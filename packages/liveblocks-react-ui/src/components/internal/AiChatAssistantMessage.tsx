@@ -5,6 +5,8 @@ import {
   memo,
   type ReactNode,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -21,6 +23,7 @@ import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
   AiMessageContentReasoningPartProps,
+  AiMessageContentRetrievalPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
@@ -54,12 +57,6 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
 
   /**
-   * @internal
-   * The id of the copilot to use to set tool call result.
-   */
-  copilotId?: string;
-
-  /**
    * Override the component's components.
    */
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
@@ -73,12 +70,13 @@ interface ReasoningPartProps extends AiMessageContentReasoningPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
+interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
+  components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+}
+
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    (
-      { message, className, overrides, components, copilotId, ...props },
-      forwardedRef
-    ) => {
+    ({ message, className, overrides, components, ...props }, forwardedRef) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
@@ -104,17 +102,12 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
-              copilotId={copilotId}
             />
           );
         }
       } else if (message.status === "completed") {
         children = (
-          <AssistantMessageContent
-            message={message}
-            components={components}
-            copilotId={copilotId}
-          />
+          <AssistantMessageContent message={message} components={components} />
         );
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
@@ -123,7 +116,6 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
-              copilotId={copilotId}
             />
           );
         } else {
@@ -132,7 +124,6 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 message={message}
                 components={components}
-                copilotId={copilotId}
               />
 
               <div className="lb-ai-chat-message-error">
@@ -167,23 +158,32 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   message,
   components,
-  copilotId,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
-  copilotId?: string;
 }) {
+  const ref = useRef(components);
+  const BoundTextPart = useMemo(
+    () => (props: TextPartProps) => (
+      <TextPart {...props} components={ref.current} />
+    ),
+    []
+  );
+  const BoundReasoningPart = useMemo(
+    () => (props: ReasoningPartProps) => (
+      <ReasoningPart {...props} components={ref.current} />
+    ),
+    []
+  );
   return (
     <AiMessage.Content
       message={message}
       components={{
-        TextPart: (props) => <TextPart {...props} components={components} />,
-        ReasoningPart: (props) => (
-          <ReasoningPart {...props} components={components} />
-        ),
+        TextPart: BoundTextPart,
+        ReasoningPart: BoundReasoningPart,
+        RetrievalPart,
         ToolInvocationPart,
       }}
-      copilotId={copilotId}
       className="lb-ai-chat-message-content"
     />
   );
@@ -192,12 +192,13 @@ function AssistantMessageContent({
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
-function TextPart({ part, components }: TextPartProps) {
+function TextPart({ part, components, isStreaming }: TextPartProps) {
   return (
     <Prose
       content={part.text}
       className="lb-ai-chat-message-text"
       components={components}
+      partial={isStreaming}
     />
   );
 }
@@ -230,17 +231,38 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {/* TODO: Show duration as "Reasoned for x seconds"? */}
-        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)}
+        {$.AI_CHAT_MESSAGE_REASONING(isStreaming, part)}
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Prose content={part.text} components={components} />
+        <Prose
+          content={part.text}
+          partial={isStreaming}
+          components={components}
+        />
       </Collapsible.Content>
     </Collapsible.Root>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * RetrievalPart
+ * -----------------------------------------------------------------------------------------------*/
+function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
+  const $ = useOverrides();
+
+  return (
+    <div
+      className={cn(
+        "lb-ai-chat-message-retrieval",
+        isStreaming && "lb-ai-chat-pending"
+      )}
+    >
+      {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
+    </div>
   );
 }
 
@@ -250,7 +272,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
 function ToolInvocationPart({
   part,
   message,
-  copilotId,
 }: AiMessageContentToolInvocationPartProps) {
   return (
     <div className="lb-ai-chat-message-tool-invocation">
@@ -267,11 +288,7 @@ function ToolInvocationPart({
           </div>
         }
       >
-        <AiMessageToolInvocation
-          part={part}
-          message={message}
-          copilotId={copilotId}
-        />
+        <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
     </div>
   );

@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import type { Pos } from "../position";
 import {
@@ -40,7 +41,7 @@ const ALPHABET =
  */
 function genPos() {
   const digits = fc.constantFrom(...ALPHABET);
-  return fc.stringOf(digits, { minLength: 1 }).map(asPos);
+  return fc.string({ unit: digits, minLength: 1 }).map(asPos);
 }
 
 /**
@@ -61,9 +62,8 @@ function genUnverifiedPos() {
       // But ensure to throw in a higher likeliness of position-like values
       fc.constantFrom(...ALPHABET),
 
-      // Also throw in a couple definitely-illegal chars from the entire ASCII charset
-      fc.ascii(),
-      fc.unicodeString()
+      // Also throw in a couple definitely-illegal chars
+      fc.string({ unit: "binary" })
     )
     .map(
       (s) =>
@@ -78,7 +78,7 @@ function genUnverifiedPos() {
  * Possible values: "", " ", "  ", "   ", etc.
  */
 function genZeroes() {
-  return fc.stringOf(fc.constantFrom(ZERO));
+  return fc.string({ unit: fc.constantFrom(ZERO) });
 }
 
 /**
@@ -136,7 +136,7 @@ describe("digits", () => {
 });
 
 describe("position datastructure", () => {
-  it("zero is an illegal Pos value", () => {
+  test("zero is an illegal Pos value", () => {
     fc.assert(
       fc.property(
         genZeroes(),
@@ -148,7 +148,7 @@ describe("position datastructure", () => {
     );
   });
 
-  it("for valid strings, asPos is a noop", () => {
+  test("for valid strings, asPos is a noop", () => {
     fc.assert(
       fc.property(
         genPos(),
@@ -160,7 +160,7 @@ describe("position datastructure", () => {
     );
   });
 
-  it("asPos is idempotent", () => {
+  test("asPos is idempotent", () => {
     fc.assert(
       fc.property(
         fc.string(),
@@ -280,7 +280,7 @@ describe("after / before", () => {
     expect(after(asPos(NINE + THREE))).toBe(NINE + FOUR); // e.g. after(.93) => .99
   });
 
-  it("always outputs valid Pos values", () => {
+  test("always outputs valid Pos values", () => {
     fc.assert(
       fc.property(
         genPos(),
@@ -293,7 +293,7 @@ describe("after / before", () => {
     );
   });
 
-  it('after generates alphabetically "higher" values', () => {
+  test('after generates alphabetically "higher" values', () => {
     fc.assert(
       fc.property(
         genUnverifiedPos(),
@@ -306,7 +306,7 @@ describe("after / before", () => {
     );
   });
 
-  it('before generates alphabetically "lower" values', () => {
+  test('before generates alphabetically "lower" values', () => {
     fc.assert(
       fc.property(
         genPos(),
@@ -321,7 +321,7 @@ describe("after / before", () => {
 });
 
 describe("between", () => {
-  it("throws for equal values", () => {
+  test("throws for equal values", () => {
     expect(() => between(asPos("x"), asPos("x"))).toThrow();
     expect(() => between(asPos("x"), asPos("x        "))).toThrow();
 
@@ -336,7 +336,7 @@ describe("between", () => {
     );
   });
 
-  it("always output valid positions", () => {
+  test("always output valid positions", () => {
     fc.assert(
       fc.property(
         genPosRange(),
@@ -348,7 +348,7 @@ describe("between", () => {
     );
   });
 
-  it("arguments are commutative", () => {
+  test("arguments are commutative", () => {
     fc.assert(
       fc.property(
         genPos(),
@@ -363,7 +363,7 @@ describe("between", () => {
     );
   });
 
-  it("generates values that are alphabetically between inputs", () => {
+  test("generates values that are alphabetically between inputs", () => {
     fc.assert(
       fc.property(
         genPosRange(),
@@ -474,13 +474,13 @@ describe("makePosition", () => {
 });
 
 describe("comparePosition", () => {
-  it("basics", () => {
+  test("basics", () => {
     expect(asPos("1") < asPos("2")).toBe(true);
     expect(asPos("!") < asPos("~~")).toBe(true);
     expect(asPos("11111") > asPos("11")).toBe(true);
   });
 
-  it("correct compares output of before/after", () => {
+  test("correct compares output of before/after", () => {
     fc.assert(
       fc.property(
         genPos(),
@@ -495,7 +495,7 @@ describe("comparePosition", () => {
     );
   });
 
-  it("correct compares output of between", () => {
+  test("correct compares output of between", () => {
     fc.assert(
       fc.property(
         genPosRange(),

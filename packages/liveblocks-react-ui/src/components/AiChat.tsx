@@ -128,7 +128,6 @@ export interface AiChatProps extends ComponentProps<"div"> {
 
 interface AiChatMessagesProps extends ComponentProps<"div"> {
   messages: NonNullable<ReturnType<typeof useAiChatMessages>["messages"]>;
-  copilotId: AiChatProps["copilotId"];
   overrides: AiChatProps["overrides"];
   components: AiChatProps["components"];
   lastSentMessageId: MessageId | null;
@@ -158,7 +157,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
   (
     {
       messages,
-      copilotId,
       overrides,
       components,
       lastSentMessageId,
@@ -393,6 +391,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 key={message.id}
                 message={message}
                 overrides={overrides}
+                components={components}
               />
             );
           } else if (message.role === "assistant") {
@@ -402,7 +401,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 message={message}
                 overrides={overrides}
                 components={components}
-                copilotId={copilotId}
               />
             );
           } else {
@@ -489,9 +487,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         {...props}
         className={cn(
           "lb-root lb-ai-chat",
-          layout === "compact"
-            ? "lb-ai-chat:layout-compact"
-            : "lb-ai-chat:layout-inset",
+          `lb-ai-chat:layout-${layout}`,
           className
         )}
       >
@@ -512,7 +508,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <>
               <AiChatMessages
                 ref={messagesRef}
-                copilotId={copilotId}
                 messages={messages}
                 overrides={overrides}
                 components={components}

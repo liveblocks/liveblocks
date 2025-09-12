@@ -1,11 +1,21 @@
 import { defineConfig } from "vitest/config";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import tsconfigPaths from "vite-tsconfig-paths";
 
-export function defaultLiveblocksVitestConfig(_options) {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export function defaultLiveblocksVitestConfig(options = {}) {
   return defineConfig({
-    plugins: [tsconfigPaths()],
+    plugins: [
+      tsconfigPaths({
+        projects: ["./tsconfig.json"],
+      }),
+    ],
     test: {
+      setupFiles: [path.join(__dirname, "setup.js")],
+
       coverage: {
         provider: "istanbul",
         reporter: ["text", "html"],
@@ -19,6 +29,7 @@ export function defaultLiveblocksVitestConfig(_options) {
           // branches: 100,
         },
       },
+      ...options.test,
     },
   });
 }

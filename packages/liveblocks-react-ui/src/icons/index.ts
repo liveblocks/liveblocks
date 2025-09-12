@@ -49,4 +49,6 @@ export { TextIcon } from "./Text";
 export { TranslateIcon } from "./Translate";
 export { UnderlineIcon } from "./Underline";
 export { UndoIcon } from "./Undo";
+export { UserIcon } from "./User";
+export { UsersIcon } from "./Users";
 export { WarningIcon } from "./Warning";

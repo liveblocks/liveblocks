@@ -1,83 +1,51 @@
-import type { Immutable } from "../src/types/Immutable";
+import { test } from "vitest";
+
 import { LiveMap } from "../src/crdts/LiveMap";
-import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
+import { prepareTestsConflicts } from "./utils";
 
-describe("LiveMap single client", () => {
-  test(
-    "remote set conflicts with another set",
-    prepareTestsConflicts(
-      {
-        map: new LiveMap<string, string>(),
-      },
-      async ({ root1, root2, wsUtils, assert }) => {
-        root1.get("map").set("key", "A");
-        root2.get("map").set("key", "B");
+test(
+  "remote set conflicts with another set",
+  prepareTestsConflicts(
+    { map: new LiveMap<string, string>() },
 
-        assert(
-          { map: new Map([["key", "A"]]) },
-          { map: new Map([["key", "B"]]) }
-        );
+    async ({ root1, root2, control, assert }) => {
+      root1.get("map").set("key", "a");
+      root2.get("map").set("key", "b");
+      assert(
+        { map: new Map([["key", "a"]]) },
+        { map: new Map([["key", "b"]]) }
+      );
 
-        await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert({ map: new Map([["key", "a"]]) });
 
-        assert({ map: new Map([["key", "A"]]) });
+      await control.flushB();
+      assert({ map: new Map([["key", "b"]]) });
+    }
+  )
+);
 
-        await wsUtils.flushSocket2Messages();
+test(
+  "remote set conflicts with a delete",
+  prepareTestsConflicts(
+    { map: new LiveMap<string, string>([["key", "a"]]) },
 
-        assert({ map: new Map([["key", "B"]]) });
-      }
-    )
-  );
+    async ({ root1, root2, control, assert }) => {
+      root1.get("map").delete("key");
+      root2.get("map").set("key", "b");
+      assert(
+        { map: new Map() }, //
+        { map: new Map([["key", "b"]]) }
+      );
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/7278076193?check_suite_focus=true#step:6:85
-  test.skip(
-    "remote set conflicts with a delete",
-    prepareTestsConflicts(
-      {
-        map: new LiveMap<string, string>([["key", "A"]]),
-      },
-      async ({ root1, root2, wsUtils, assert }) => {
-        root1.get("map").delete("key");
-        root2.get("map").set("key", "B");
+      await control.flushA();
+      assert(
+        { map: new Map() }, //
+        { map: new Map([["key", "b"]]) }
+      );
 
-        assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
-
-        await wsUtils.flushSocket1Messages();
-
-        assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
-
-        await wsUtils.flushSocket2Messages();
-
-        assert({ map: new Map([["key", "B"]]) });
-      }
-    )
-  );
-});
-
-describe("LiveMap single client", () => {
-  test(
-    "fast consecutive sets on same key",
-    prepareSingleClientTest(
-      {
-        map: new LiveMap<string, string>(),
-      },
-      async ({ root, flushSocketMessages, room }) => {
-        const states: Immutable[] = [];
-        room.subscribe(root, () => states.push(root.toImmutable()), {
-          isDeep: true,
-        });
-
-        root.get("map").set("key", "A");
-        root.get("map").set("key", "B");
-
-        await flushSocketMessages();
-
-        expect(states).toEqual([
-          { map: new Map([["key", "A"]]) },
-          { map: new Map([["key", "B"]]) },
-        ]);
-      }
-    )
-  );
-});
+      await control.flushB();
+      assert({ map: new Map([["key", "b"]]) });
+    }
+  )
+);

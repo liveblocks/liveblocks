@@ -1,8 +1,8 @@
-import { html, htmlSafe } from "@liveblocks/core";
+import { html, htmlSafe, MENTION_CHARACTER } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
 import { convertCommentBody } from "../comment-body";
-import { MENTION_CHARACTER } from "../lib/constants";
 import {
   buildCommentBodyWithMention,
   commentBody1,
@@ -14,6 +14,7 @@ import {
   commentBodyWithHtml2,
   commentBodyWithInvalidUrls,
   commentBodyWithValidUrls,
+  resolveGroupsInfo,
   resolveUsers,
 } from "./_helpers";
 
@@ -61,20 +62,20 @@ describe("convert comment body", () => {
       // prettier-ignore
       return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
     },
   };
 
-  it("should convert simple text elements", async () => {
+  test("should convert simple text elements", async () => {
     const body = await convertCommentBody(commentBody1, { elements });
     const expected = "<p>What do you think of this team? 🤔</p>";
 
     expect(body).toEqual(expected);
   });
 
-  it("should convert with italic and bold", async () => {
+  test("should convert with italic and bold", async () => {
     const body = await convertCommentBody(commentBody5, { elements });
     const expected =
       "<p><strong>Bold text</strong> and <em>italic text</em></p>";
@@ -82,7 +83,7 @@ describe("convert comment body", () => {
     expect(body).toEqual(expected);
   });
 
-  it("should convert with code and strikethrough", async () => {
+  test("should convert with code and strikethrough", async () => {
     const body = await convertCommentBody(commentBody6, { elements });
     const expected =
       "<p><s>Strikethrough text</s> and <code>code text</code></p>";
@@ -90,7 +91,7 @@ describe("convert comment body", () => {
     expect(body).toEqual(expected);
   });
 
-  it("should convert with link", async () => {
+  test("should convert with link", async () => {
     const [body1, body2] = await Promise.all([
       convertCommentBody(commentBody4, { elements }),
       convertCommentBody(commentBody7, { elements }),
@@ -105,7 +106,7 @@ describe("convert comment body", () => {
     expect(body2).toEqual(expected2);
   });
 
-  it("should preserve valid URLs", async () => {
+  test("should preserve valid URLs", async () => {
     const body = await convertCommentBody(commentBodyWithValidUrls, {
       elements,
     });
@@ -115,7 +116,7 @@ describe("convert comment body", () => {
     expect(body).toEqual(expected);
   });
 
-  it("should replace invalid URLs with plain text", async () => {
+  test("should replace invalid URLs with plain text", async () => {
     const body = await convertCommentBody(commentBodyWithInvalidUrls, {
       elements,
     });
@@ -125,38 +126,80 @@ describe("convert comment body", () => {
     expect(body).toEqual(expected);
   });
 
-  it("should convert with user mention", async () => {
+  test("should convert with mentions", async () => {
     const body = await convertCommentBody(
-      buildCommentBodyWithMention({ mentionedUserId: "user-dracula" }),
+      {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello" },
+              { text: " " },
+              { type: "mention", kind: "user", id: "user-dracula" },
+              { text: " and " },
+              {
+                type: "mention",
+                kind: "group",
+                id: "here",
+                userIds: ["user-0", "user-1"],
+              },
+              { text: "!" },
+            ],
+          },
+        ],
+      },
       { elements }
     );
-    const expected = "<p>Hello <span data-mention>@user-dracula</span> !</p>";
+    const expected =
+      "<p>Hello <span data-mention>@user-dracula</span> and <span data-mention>@here</span>!</p>";
 
     expect(body).toEqual(expected);
   });
 
-  it("should convert with a resolved user mention", async () => {
+  test("should convert with resolved mentions", async () => {
     const body = await convertCommentBody(
-      buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
+      {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello" },
+              { text: " " },
+              { type: "mention", kind: "user", id: "user-2" },
+              { text: ", " },
+              { type: "mention", kind: "user", id: "$unknownUser" },
+              { text: ", " },
+              { type: "mention", kind: "group", id: "group-1" },
+              { text: " and " },
+              { type: "mention", kind: "group", id: "$unknownGroup" },
+              { text: "!" },
+            ],
+          },
+        ],
+      },
       {
         elements,
         resolveUsers,
+        resolveGroupsInfo,
       }
     );
-    const expected = "<p>Hello <span data-mention>@Tatum Paolo</span> !</p>";
+    const expected =
+      "<p>Hello <span data-mention>@Tatum Paolo</span>, <span data-mention>@$unknownUser</span>, <span data-mention>@Design</span> and <span data-mention>@$unknownGroup</span>!</p>";
 
     expect(body).toEqual(expected);
   });
 
   describe("use-case/escaping html entities", () => {
-    it("should escape html entities in text", async () => {
+    test("should escape html entities in text", async () => {
       const body = await convertCommentBody(commentBodyWithHtml, { elements });
       const expected = "<p>Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>";
 
       expect(body).toEqual(expected);
     });
 
-    it("should escape html entities in link w/ text", async () => {
+    test("should escape html entities in link w/ text", async () => {
       const body = await convertCommentBody(commentBodyWithHtml2, { elements });
       const expected =
         '<p>Trying with <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">&lt;script&gt;injected script&lt;/script&gt;</a> !</p>';
@@ -164,9 +207,9 @@ describe("convert comment body", () => {
       expect(body).toEqual(expected);
     });
 
-    it("should escape html entities in mention w/ username", async () => {
+    test("should escape html entities in mention w/ name", async () => {
       const body = await convertCommentBody(
-        buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
+        buildCommentBodyWithMention({ kind: "user", id: "user-0" }),
         {
           elements,
           resolveUsers: ({ userIds }) => {
