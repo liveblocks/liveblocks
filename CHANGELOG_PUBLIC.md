@@ -18,6 +18,95 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 37 (2025-09-12)
+
+## v3.7.1
+
+### `@liveblocks/react`
+
+- Add query filters `roomId` and `kind` on the
+  `useUnreadInboxNotificationsCount` hook.
+
+## v3.7.0
+
+This release introduces group mentions (e.g. `@engineering`) across all packages
+and first-class support for tenants. Learn more about [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+
+### `@liveblocks/client`
+
+- Add new `resolveGroupsInfo` resolver to provide information about groups (e.g.
+  `name`, `avatar`, etc) similar to `resolveUsers`.
+- Support returning group mention suggestions in `resolveMentionSuggestions`.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
+- Add query filters `roomId` and `kind` on the `getInboxNotifications` method.
+
+### `@liveblocks/react`
+
+- Add `useGroupInfo` hook to use `resolveGroupsInfo` in React, same as `useUser`
+  for `resolveUsers`.
+- Add query filters `roomId` and `kind` on the `useInboxNotifications` hook.
+
+### `@liveblocks/react-ui`
+
+- Support group mentions in default components (mentions suggestions dropdowns,
+  `Thread`, `Composer`, `InboxNotification`, etc).
+
+### `@liveblocks/react-lexical`, `@liveblocks/react-tiptap`, and `@liveblocks/node-lexical`
+
+- Support group mentions in text editors and comments-related components.
+
+### `@liveblocks/node-lexical` and `@liveblocks/node-prosemirror`
+
+- Support group mentions in text editors.
+
+### `@liveblocks/node`
+
+- Add methods to manage groups on Liveblocks (e.g. `createGroup`,
+  `getUserGroups`).
+- Add `tenantId` parameters to methods that need it when using tenants.
+- Mark `getThreadParticipants` as deprecated, use thread subscriptions or
+  `getMentionsFromCommentBody` instead.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
+
+### `@liveblocks/emails`
+
+- Support group mentions in email notifications helpers. These functions now
+  accept a `resolveGroupsInfo` option that passes the results to mentions as
+  `group`.
+
+## 3.6.2
+
+### `@liveblocks/node`
+
+- Rename `budgetToken` to `budgetTokens` in `AnthropicProviderOptions`.
+
+## v3.6.1
+
+### `@liveblocks/client`
+
+- Fixes a bug where a specific combination of concurrent LiveList mutations
+  could break eventual consistency (two clients disagreeing on the final
+  document state).
+
+### `@liveblocks/react-ui`
+
+- Only show retrieval and reasoning durations in `AiChat` when they are 3
+  seconds or longer.
+- Make `AiTool` titles selectable.
+
+## Website
+
+- AI assistant has been added to the documentation and dashboard pages. It can answer
+  questions on anything related to Liveblocks, such as code, recommendations, bugs,
+  billing, usage, and project information. It's powered by
+  [`AiChat`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#AiChat).
+
+## Contributors
+
+ctnicholas, pierrelevaillant, nvie, marcbouchenoire, nimeshnayaju, ofoucherot, flowflorent
+
 # Week 36 (2025-09-05)
 
 ## v3.6.0
