@@ -1,4 +1,5 @@
 import type { ThreadData, ThreadDeleteInfo } from "@liveblocks/core";
+import { describe, expect, test, vi } from "vitest";
 
 import { ThreadDB } from "../../ThreadDB";
 import { dummyThreadData } from "../_dummies";
@@ -30,7 +31,7 @@ describe("applyThreadDeltaUpdates", () => {
     deletedAt: new Date("2024-01-02"),
   };
 
-  it("should add a new thread if it doesn't exist already", () => {
+  test("should add a new thread if it doesn't exist already", () => {
     const db = new ThreadDB();
 
     db.applyDelta([thread1], []);
@@ -38,7 +39,7 @@ describe("applyThreadDeltaUpdates", () => {
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
   });
 
-  it("should update an existing thread with a newer one", () => {
+  test("should update an existing thread with a newer one", () => {
     const thread1Updated: ThreadData = {
       ...thread1,
       updatedAt: new Date("2024-01-03"), // A newer date than the original thread1
@@ -56,7 +57,7 @@ describe("applyThreadDeltaUpdates", () => {
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1Updated]);
   });
 
-  it("should mark a thread as deleted if there is deletion info associated with it", () => {
+  test("should mark a thread as deleted if there is deletion info associated with it", () => {
     const db = new ThreadDB();
     db.upsert(thread1);
 
@@ -74,7 +75,7 @@ describe("applyThreadDeltaUpdates", () => {
     });
   });
 
-  it("should ignore deletion of a non-existing thread", () => {
+  test("should ignore deletion of a non-existing thread", () => {
     const db = new ThreadDB();
     db.upsert(thread1); // Only thread1 exists
 
@@ -89,7 +90,7 @@ describe("applyThreadDeltaUpdates", () => {
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
   });
 
-  it("should correctly handle a combination of add, update, and delete operations", () => {
+  test("should correctly handle a combination of add, update, and delete operations", () => {
     const db = new ThreadDB();
     db.upsert(thread1); // Existing thread
 
@@ -110,8 +111,8 @@ describe("applyThreadDeltaUpdates", () => {
     });
   });
 
-  it("should return existing threads unchanged when no updates are provided", () => {
-    const fn = jest.fn();
+  test("should return existing threads unchanged when no updates are provided", () => {
+    const fn = vi.fn();
     const db = new ThreadDB();
     const unsub = db.signal.subscribe(fn);
 

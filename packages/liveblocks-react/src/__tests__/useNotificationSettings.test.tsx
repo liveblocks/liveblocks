@@ -1,5 +1,3 @@
-import "@testing-library/jest-dom";
-
 import {
   act,
   fireEvent,
@@ -7,9 +5,11 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
 import {
@@ -36,27 +36,25 @@ afterAll(() => server.close());
 describe("useNotificationSettings", () => {
   test("should fetch notification settings and be referentially stable", async () => {
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            email: {
-              thread: true,
-              textMention: false,
-            },
-            slack: {
-              thread: true,
-              textMention: false,
-            },
-            teams: {
-              thread: true,
-              textMention: false,
-            },
-            webPush: {
-              thread: true,
-              textMention: false,
-            },
-          })
-        );
+      mockGetNotificationSettings(() => {
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       })
     );
 
@@ -109,37 +107,33 @@ describe("useNotificationSettings", () => {
 
   test("should update notification settings partially", async () => {
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            email: {
-              thread: true,
-              textMention: false,
-            },
-            slack: {
-              thread: true,
-              textMention: false,
-            },
-            teams: {
-              thread: true,
-              textMention: false,
-            },
-            webPush: {
-              thread: true,
-              textMention: false,
-            },
-          })
-        );
+      mockGetNotificationSettings(() => {
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       }),
-      mockUpdateNotificationSettings((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            email: {
-              thread: false,
-              textMention: false,
-            },
-          })
-        );
+      mockUpdateNotificationSettings(() => {
+        return HttpResponse.json({
+          email: {
+            thread: false,
+            textMention: false,
+          },
+        });
       })
     );
 
@@ -217,30 +211,28 @@ describe("useNotificationSettings", () => {
 
   test("should update notification settings optimistically and revert the updates if error response from server", async () => {
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            email: {
-              thread: true,
-              textMention: false,
-            },
-            slack: {
-              thread: true,
-              textMention: false,
-            },
-            teams: {
-              thread: true,
-              textMention: false,
-            },
-            webPush: {
-              thread: true,
-              textMention: false,
-            },
-          })
-        );
+      mockGetNotificationSettings(() => {
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       }),
-      mockUpdateNotificationSettings((_req, res, ctx) => {
-        return res(ctx.status(500));
+      mockUpdateNotificationSettings(() => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -342,21 +334,21 @@ describe("useNotificationSettings", () => {
 
 describe("useNotificationSettings: error", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
     let getNotificationSettingsCount = 0;
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(() => {
         getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -376,20 +368,20 @@ describe("useNotificationSettings: error", () => {
     await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -400,14 +392,14 @@ describe("useNotificationSettings: error", () => {
     );
 
     // Wait for 5 second for the error to clear
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getNotificationSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
@@ -421,33 +413,31 @@ describe("useNotificationSettings: error", () => {
     let getNotificationSettingsCount = 0;
 
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(() => {
         getNotificationSettingsCount++;
         if (shouldReturnErrorResponse) {
           // Mock an error response from the server for the initial fetch
-          return res(ctx.status(500));
+          return HttpResponse.json(null, { status: 500 });
         }
 
-        return res(
-          ctx.json({
-            email: {
-              thread: true,
-              textMention: false,
-            },
-            slack: {
-              thread: true,
-              textMention: false,
-            },
-            teams: {
-              thread: true,
-              textMention: false,
-            },
-            webPush: {
-              thread: true,
-              textMention: false,
-            },
-          })
-        );
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       })
     );
 
@@ -467,20 +457,20 @@ describe("useNotificationSettings: error", () => {
     await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -491,7 +481,7 @@ describe("useNotificationSettings: error", () => {
     );
 
     // Advance by5 seconds and verify that error is cleared
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
@@ -501,7 +491,7 @@ describe("useNotificationSettings: error", () => {
     shouldReturnErrorResponse = false;
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -534,72 +524,66 @@ describe("useNotificationSettings: error", () => {
   test("should poll notification settings every 5 mins", async () => {
     let getNotificationSettingsCount = 0;
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(() => {
         getNotificationSettingsCount++;
         if (getNotificationSettingsCount === 1) {
-          return res(
-            ctx.json({
-              email: {
-                thread: false,
-                textMention: true,
-              },
-              slack: {
-                thread: false,
-                textMention: true,
-              },
-              teams: {
-                thread: false,
-                textMention: true,
-              },
-              webPush: {
-                thread: false,
-                textMention: true,
-              },
-            })
-          );
-        } else if (getNotificationSettingsCount === 2) {
-          return res(
-            ctx.json({
-              email: {
-                thread: false,
-                textMention: false,
-              },
-              slack: {
-                thread: false,
-                textMention: false,
-              },
-              teams: {
-                thread: false,
-                textMention: false,
-              },
-              webPush: {
-                thread: false,
-                textMention: false,
-              },
-            })
-          );
-        }
-
-        return res(
-          ctx.json({
+          return HttpResponse.json({
             email: {
-              thread: true,
+              thread: false,
+              textMention: true,
+            },
+            slack: {
+              thread: false,
+              textMention: true,
+            },
+            teams: {
+              thread: false,
+              textMention: true,
+            },
+            webPush: {
+              thread: false,
+              textMention: true,
+            },
+          });
+        } else if (getNotificationSettingsCount === 2) {
+          return HttpResponse.json({
+            email: {
+              thread: false,
               textMention: false,
             },
             slack: {
-              thread: true,
+              thread: false,
               textMention: false,
             },
             teams: {
-              thread: true,
+              thread: false,
               textMention: false,
             },
             webPush: {
-              thread: true,
+              thread: false,
               textMention: false,
             },
-          })
-        );
+          });
+        }
+
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       })
     );
 
@@ -643,7 +627,7 @@ describe("useNotificationSettings: error", () => {
     expect(getNotificationSettingsCount).toBe(1);
 
     // Advance by 5 minute so that and verify that the first poll is triggered
-    jest.advanceTimersByTime(60_000 * 5);
+    vi.advanceTimersByTime(60_000 * 5);
     await waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -670,7 +654,7 @@ describe("useNotificationSettings: error", () => {
     expect(getNotificationSettingsCount).toBe(2);
 
     // Advance by another 5 minute so that and verify that the second poll is triggered
-    jest.advanceTimersByTime(60_000 * 5);
+    vi.advanceTimersByTime(60_000 * 5);
     await waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -703,27 +687,25 @@ describe("useNotificationSettings: error", () => {
 describe("useNotificationSettings - Suspense", () => {
   test("should be referentially stable", async () => {
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            email: {
-              thread: true,
-              textMention: false,
-            },
-            slack: {
-              thread: true,
-              textMention: false,
-            },
-            teams: {
-              thread: true,
-              textMention: false,
-            },
-            webPush: {
-              thread: true,
-              textMention: false,
-            },
-          })
-        );
+      mockGetNotificationSettings(() => {
+        return HttpResponse.json({
+          email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
+        });
       })
     );
 
@@ -782,21 +764,21 @@ describe("useNotificationSettings - Suspense", () => {
 
 describe("useNotificationSettings - Suspense: error", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
     let getNotificationSettingsCount = 0;
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(() => {
         getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -834,20 +816,20 @@ describe("useNotificationSettings - Suspense: error", () => {
     await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -865,10 +847,10 @@ describe("useNotificationSettings - Suspense: error", () => {
   test("should retry with exponential backoff on error and clear error boundary", async () => {
     let getNotificationSettingsCount = 0;
     server.use(
-      mockGetNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(() => {
         getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -906,20 +888,20 @@ describe("useNotificationSettings - Suspense: error", () => {
     await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -932,7 +914,7 @@ describe("useNotificationSettings - Suspense: error", () => {
     );
 
     // Wait until the error boundary auto-clears
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
 
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));

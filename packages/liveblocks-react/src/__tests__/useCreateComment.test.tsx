@@ -1,8 +1,17 @@
-import type { CommentBody } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
 import {
   dummyCommentData,
@@ -36,40 +45,32 @@ describe("useCreateComment", () => {
     const initialThread = dummyThreadData({ roomId });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockCreateComment(
-        { threadId: initialThread.id },
-        async (req, res, ctx) => {
-          const json = await req.json<{ id: string; body: CommentBody }>();
+      mockCreateComment({ threadId: initialThread.id }, async ({ request }) => {
+        const json = await request.json();
 
-          const comment = dummyCommentData({
-            roomId,
-            threadId: initialThread.id,
-            body: json.body,
-            createdAt: fakeCreatedAt,
-          });
+        const comment = dummyCommentData({
+          roomId,
+          threadId: initialThread.id,
+          body: json.body,
+          createdAt: fakeCreatedAt,
+        });
 
-          return res(ctx.json(comment));
-        }
-      )
+        return HttpResponse.json(comment);
+      })
     );
 
     const {
@@ -129,41 +130,33 @@ describe("useCreateComment", () => {
     const fakeCreatedAt = addMinutes(new Date(), 5);
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [initialInboxNotification],
-            subscriptions: [initialSubscription],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [initialInboxNotification],
+          subscriptions: [initialSubscription],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockCreateComment(
-        { threadId: initialThread.id },
-        async (req, res, ctx) => {
-          const json = await req.json<{ id: string; body: CommentBody }>();
+      mockCreateComment({ threadId: initialThread.id }, async ({ request }) => {
+        const json = await request.json();
 
-          const comment = dummyCommentData({
-            roomId,
-            id: json.id,
-            body: json.body,
-            createdAt: fakeCreatedAt,
-            threadId: initialThread.id,
-          });
+        const comment = dummyCommentData({
+          roomId,
+          id: json.id,
+          body: json.body,
+          createdAt: fakeCreatedAt,
+          threadId: initialThread.id,
+        });
 
-          return res(ctx.json(comment));
-        }
-      )
+        return HttpResponse.json(comment);
+      })
     );
 
     const {
@@ -220,31 +213,23 @@ describe("useCreateComment", () => {
     const initialThread = dummyThreadData({ roomId });
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockCreateComment(
-        { threadId: initialThread.id },
-        async (_req, res, ctx) => {
-          return res(ctx.status(500));
-        }
-      )
+      mockCreateComment({ threadId: initialThread.id }, () => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
