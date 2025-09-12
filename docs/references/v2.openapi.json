@@ -393,6 +393,39 @@
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
     },
+    "/rooms/{roomId}/prewarm": {
+      "get": {
+        "summary": "Prewarm room",
+        "tags": ["Room"],
+        "operationId": "get-rooms-roomId-prewarm",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. Room has been prewarmed for faster connectivity."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "description": "This endpoint prepares a room for connectivity, making the eventual connection faster. Use this when you know you'll be loading a room but are not yet connected to it. The endpoint returns an empty response upon successful prewarming."
+      }
+    },
     "/rooms/{roomId}/upsert": {
       "post": {
         "summary": "Upsert (update or create) room",
