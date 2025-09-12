@@ -19,10 +19,10 @@
     "@react-email/components": "0.0.25",
     "@react-email/render": "1.0.1",
     "clsx": "^2.1.1",
-    "next": "^14.2.15",
+    "next": "^14.2.32",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-email": "3.0.1",
+    "react-email": "3.0.7",
     "react-error-boundary": "^4.0.11",
     "resend": "^3.2.0",
     "tailwind-merge": "^2.5.3"
