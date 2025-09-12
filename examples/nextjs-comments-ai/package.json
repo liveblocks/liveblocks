@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.3.0",
-    "@liveblocks/node": "^3.3.0",
-    "@liveblocks/react": "^3.3.0",
-    "@liveblocks/react-ui": "^3.3.0",
+    "@liveblocks/client": "^3.7.1",
+    "@liveblocks/node": "^3.7.1",
+    "@liveblocks/react": "^3.7.1",
+    "@liveblocks/react-ui": "^3.7.1",
     "eslint-config-next": "^14.2.9",
     "next": "^14.2.9",
     "openai": "^4.21.0",
