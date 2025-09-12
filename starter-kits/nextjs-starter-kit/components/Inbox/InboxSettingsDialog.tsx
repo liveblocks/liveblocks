@@ -5,11 +5,11 @@ import {
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { ReactNode, Suspense } from "react";
+import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import { Dialog } from "@/primitives/Dialog";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
 import { Switch } from "@/primitives/Switch";
-import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import styles from "./InboxSettingsDialog.module.css";
 
 function ThreadsSubscriptionSettings() {

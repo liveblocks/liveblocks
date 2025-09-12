@@ -36,8 +36,9 @@ export async function textMentionEmail(
               ? {
                   name: userData.name,
                   avatar: userData.avatar,
+                  color: userData.color,
                 }
-              : { name: "", avatar: "" }
+              : { name: "", avatar: "", color: "" }
           );
         },
         resolveRoomInfo: async ({ roomId }) => {
