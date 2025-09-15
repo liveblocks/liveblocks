@@ -18,6 +18,10 @@
       "dependsOn": ["build"],
       "cache": false
     },
+    "test:headed": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test:ui": {
       "dependsOn": ["build"],
       "cache": false
