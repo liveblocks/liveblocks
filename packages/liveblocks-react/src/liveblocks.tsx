@@ -629,9 +629,11 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 
   const queryKey = makeInboxNotificationsQueryKey(options?.query);
 
-  // Suspend until there are at least some inbox notifications
+  // Suspend until there are at least some unread inbox notifications count
   use(
-    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+    store.outputs.unreadNotificationsCount
+      .getOrCreate(queryKey)
+      .waitUntilLoaded()
   );
 
   const result = useUnreadInboxNotificationsCount_withClient(client, options);
