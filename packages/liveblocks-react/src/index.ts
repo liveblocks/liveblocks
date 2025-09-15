@@ -97,4 +97,7 @@ export {
   useAiChat,
   useAiChats,
   useAiChatMessages,
+  useAiChatStatus,
 } from "./liveblocks";
+
+export type { AiChatStatus } from "./types/ai";

@@ -34,6 +34,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  MessageId,
   NotificationSettings,
   PartialNotificationSettings,
   PartialUnless,
@@ -55,7 +56,7 @@ import type {
   ReactNode,
 } from "react";
 
-import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+import type { AiChatStatus, RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
 
 type UiChatMessage = WithNavigation<AiChatMessage>;
 
@@ -273,6 +274,8 @@ export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
 
 export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
 export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
+
+export type { AiChatStatus };
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1491,6 +1494,14 @@ export type LiveblocksContextBundle<
        */
       useAiChat(chatId: string): AiChatAsyncResult;
 
+      /**
+       * (Private beta) Returns the status of the requested chat.
+       *
+       * @example
+       * const { status, partType, toolName } = useAiChatStatus("my-chat");
+       */
+      useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1558,6 +1569,14 @@ export type LiveblocksContextBundle<
              * const { chat, error, isLoading } = useAiChat("my-chat");
              */
             useAiChat(chatId: string): AiChatAsyncSuccess;
+
+            /**
+             * (Private beta) Returns the status of the requested chat.
+             *
+             * @example
+             * const { status, partType, toolName } = useAiChatStatus("my-chat");
+             */
+            useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
           }
       >;
     }
