@@ -105,7 +105,8 @@ commit_to_git () {
 check_is_valid_version "$VERSION"
 
 # Run a fresh `npm i` to ensure the lock file isn't outdated before continuing
-npm install --no-audit
+echo "==> package install first pass"
+npm install --no-audit --force
 git is-clean -v
 
 for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
@@ -113,6 +114,7 @@ for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
 done
 
 # Update package-lock.json with newly bumped versions
+echo "==> package install second pass"
 npm install --no-audit --force
 
 # HACK/WORKAROUND:
@@ -127,8 +129,10 @@ for key in $(jq -r '.packages|keys[]' package-lock.json | grep -Ee 'liveblocks-.
 done
 
 # One final cleanup pass
-npm ci --no-audit
-npm install --no-audit
+echo "==> package install clean pass"
+npm ci --no-audit --force
+echo "==> package install final pass"
+npm install --no-audit --force
 
 # The following pattern is always indicative of a bug in this script, so let's
 # fail if this is found
