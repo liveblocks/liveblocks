@@ -891,6 +891,13 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
+#### Speed up connecting to a room [#speed-up-connecting-to-a-room]
+
+To speed up connecting to a room, you can call
+[`Liveblocks.prewarmRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId-prewarm)
+on the server, which will warm up a room for the next 10 seconds. Triggering
+this directly before a user navigates to a room is an easy to way use this API.
+
 ### Client.getRoom
 
 Gets a room by its ID. Returns `null` if [`client.enterRoom`][] has not been
