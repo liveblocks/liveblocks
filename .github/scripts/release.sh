@@ -113,7 +113,7 @@ for PKGDIR in "${PKGS_TO_RELEASE[@]}"; do
 done
 
 # Update package-lock.json with newly bumped versions
-npm install --no-audit
+npm install --no-audit --force
 
 # HACK/WORKAROUND:
 # For some reason we don't yet understand, the above npm install commands can
