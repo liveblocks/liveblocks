@@ -165,6 +165,7 @@ export { generateUrl, isUrl, sanitizeUrl, url, urljoin } from "./lib/url";
 export type {
   Brand,
   DistributiveOmit,
+  ISODateString,
   WithOptional,
   WithRequired,
 } from "./lib/utils";
