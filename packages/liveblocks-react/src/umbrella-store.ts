@@ -764,9 +764,7 @@ function createStore_forUnreadNotificationsCount() {
   }
 
   return {
-    signal: DerivedSignal.from(baseSignal, (c) =>
-      Object.fromEntries([...c].map(([queryKey, count]) => [queryKey, count]))
-    ),
+    signal: DerivedSignal.from(baseSignal, (c) => Object.fromEntries(c)),
 
     // Mutations
     update,
