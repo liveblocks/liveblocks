@@ -645,7 +645,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -662,6 +663,12 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             readAt,
             optimisticId
           );
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -682,7 +689,8 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const readAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
@@ -693,6 +701,12 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
@@ -709,7 +723,8 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -722,6 +737,12 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         () => {
           // Replace the optimistic update by the real thing
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -739,7 +760,8 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
@@ -750,6 +772,12 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.deleteAllInboxNotifications(optimisticId);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
