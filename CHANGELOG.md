@@ -1,4 +1,16 @@
-## vNEXT (not yet published)
+## v3.8.0
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useAiChatStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useAiChatStatus)
+  that offers a convenient way to get the current generation status for an AI
+  chat, indicating whether the chat is idle, currently generating contents, and,
+  if so, what type of content is currently generating.
+
+### `@liveblocks/react-ui`
+
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
 
 ## v3.7.1
 

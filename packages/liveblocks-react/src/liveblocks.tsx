@@ -60,6 +60,7 @@ import type {
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
+  AiChatStatus,
   CreateAiChatOptions,
   GroupInfoAsyncResult,
   GroupInfoAsyncSuccess,
@@ -461,6 +462,7 @@ function makeLiveblocksContextBundle<
     useAiChats,
     useAiChat,
     useAiChatMessages,
+    useAiChatStatus,
     useCreateAiChat,
     useDeleteAiChat,
     useSendAiMessage,
@@ -493,6 +495,7 @@ function makeLiveblocksContextBundle<
       useAiChats: useAiChatsSuspense,
       useAiChat: useAiChatSuspense,
       useAiChatMessages: useAiChatMessagesSuspense,
+      useAiChatStatus,
       useCreateAiChat,
       useDeleteAiChat,
       useSendAiMessage,
@@ -1405,6 +1408,89 @@ function useDeleteAiChat() {
   );
 }
 
+const LOADING = Object.freeze({ status: "loading" });
+const IDLE = Object.freeze({ status: "idle" });
+
+/**
+ * Returns the status of an AI chat, indicating whether it's idle or actively
+ * generating content. This is a convenience hook that derives its state from
+ * the latest assistant message in the chat.
+ *
+ * Re-renders whenever any of the relevant fields change.
+ *
+ * @param chatId - The ID of the chat to monitor
+ * @returns The current status of the AI chat
+ *
+ * @example
+ * ```tsx
+ * import { useAiChatStatus } from "@liveblocks/react";
+ *
+ * function ChatStatus() {
+ *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+ *   console.log(status);          // "loading" | "idle" | "generating"
+ *   console.log(status.partType); // "text" | "tool-invocation" | ...
+ *   console.log(status.toolName); // string | undefined
+ * }
+ * ```
+ */
+function useAiChatStatus(
+  chatId: string,
+  /** @internal */
+  branchId?: MessageId
+): AiChatStatus {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  useEffect(
+    () =>
+      void store.outputs.messagesByChatId
+        .getOrCreate(chatId)
+        .getOrCreate(branchId ?? null)
+        .waitUntilLoaded()
+  );
+
+  return useSignal(
+    // Signal
+    store.outputs.messagesByChatId
+      .getOrCreate(chatId)
+      .getOrCreate(branchId ?? null).signal,
+
+    // Selector
+    (result) => {
+      if (result.isLoading) return LOADING;
+      if (result.error) return IDLE;
+
+      const messages = result.messages;
+      const lastMessage = messages[messages.length - 1];
+
+      if (lastMessage?.role !== "assistant") return IDLE;
+      if (
+        lastMessage.status !== "generating" &&
+        lastMessage.status !== "awaiting-tool"
+      )
+        return IDLE;
+
+      const contentSoFar = lastMessage.contentSoFar;
+      const lastPart = contentSoFar[contentSoFar.length - 1];
+
+      if (lastPart?.type === "tool-invocation") {
+        return {
+          status: "generating",
+          partType: "tool-invocation",
+          toolName: lastPart.name,
+        };
+      } else {
+        return { status: "generating", partType: lastPart?.type };
+      }
+    },
+
+    // Consider { status: "generating", partType: "text" } and { status: "generating", partType: "text" } equal
+    shallow
+  );
+}
+
 /**
  * Returns a function to send a message in an AI chat.
  *
@@ -2234,6 +2320,7 @@ export {
   _useAiChatSuspense as useAiChatSuspense,
   _useAiChatMessages as useAiChatMessages,
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
+  useAiChatStatus,
   useCreateAiChat,
   useDeleteAiChat,
   useSendAiMessage,
