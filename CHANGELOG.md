@@ -8,6 +8,10 @@
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
 
+### `@liveblocks/react-ui`
+
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+
 ## v3.7.1
 
 ### `@liveblocks/react`
