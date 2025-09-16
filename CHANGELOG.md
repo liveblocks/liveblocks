@@ -11,6 +11,8 @@
 ### `@liveblocks/react-ui`
 
 - The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
 
 ## v3.7.1
 
