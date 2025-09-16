@@ -8,6 +8,12 @@
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
 
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
+
 ## v3.7.1
 
 ### `@liveblocks/react`
