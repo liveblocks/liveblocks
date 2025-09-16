@@ -1,6 +1,8 @@
 import type {
+  AiAssistantContentPart,
   AiKnowledgeSource,
   AiOpaqueToolDefinition,
+  Relax,
 } from "@liveblocks/core";
 
 export type RegisterAiKnowledgeProps = AiKnowledgeSource & {
@@ -31,3 +33,19 @@ export type RegisterAiToolProps = {
    */
   enabled?: boolean;
 };
+
+/**
+ * Simplified status for the requested chat.
+ * This hook offers a convenient way to update the UI while an AI chat
+ * generation is in progress.
+ */
+export type AiChatStatus = Relax<
+  | { status: "loading" }
+  | { status: "idle" }
+  | { status: "generating" } // Still generating, but there is no content yet
+  | {
+      status: "generating";
+      partType: Exclude<AiAssistantContentPart["type"], "tool-invocation">;
+    }
+  | { status: "generating"; partType: "tool-invocation"; toolName: string }
+>;
