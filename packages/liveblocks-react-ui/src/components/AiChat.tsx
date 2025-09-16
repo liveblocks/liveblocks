@@ -225,7 +225,11 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           bottomTrailingMarker?.style.removeProperty("top");
         };
 
-        const resizeObserver = new ResizeObserver((entries) => {
+        const updateTrailingSpace = (
+          updatedContainerHeight: number | null,
+          updatedFooterHeight: number | null,
+          updatedMessagesHeight: number | null
+        ) => {
           if (!trailingSpacer || !bottomTrailingMarker) {
             return;
           }
@@ -243,23 +247,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           if (container.scrollHeight === container.clientHeight) {
             resetTrailingSpace();
             return;
-          }
-
-          let updatedContainerHeight: number | null = containerHeight;
-          let updatedFooterHeight: number | null = footerHeight;
-          let updatedMessagesHeight: number | null = messagesHeight;
-
-          for (const entry of entries) {
-            const entryHeight =
-              entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
-
-            if (entry.target === container) {
-              updatedContainerHeight = entryHeight ?? null;
-            } else if (entry.target === footer) {
-              updatedFooterHeight = entryHeight ?? null;
-            } else if (entry.target === messages) {
-              updatedMessagesHeight = entryHeight ?? null;
-            }
           }
 
           // If we don't have all the heights, we can't compute the trailing space.
@@ -313,11 +300,41 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           // Offset what "the bottom" is to the "scroll at the bottom" detection logic,
           // so that it doesn't include the trailing space.
           bottomTrailingMarker.style.top = `${-trailingSpace}px`;
+        };
+
+        const resizeObserver = new ResizeObserver((entries) => {
+          let updatedContainerHeight: number | null = containerHeight;
+          let updatedFooterHeight: number | null = footerHeight;
+          let updatedMessagesHeight: number | null = messagesHeight;
+
+          for (const entry of entries) {
+            const entryHeight =
+              entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
+
+            if (entry.target === container) {
+              updatedContainerHeight = entryHeight ?? null;
+            } else if (entry.target === footer) {
+              updatedFooterHeight = entryHeight ?? null;
+            } else if (entry.target === messages) {
+              updatedMessagesHeight = entryHeight ?? null;
+            }
+          }
+
+          updateTrailingSpace(
+            updatedContainerHeight,
+            updatedFooterHeight,
+            updatedMessagesHeight
+          );
         });
 
         resizeObserver.observe(container);
         resizeObserver.observe(footer);
         resizeObserver.observe(messages);
+        updateTrailingSpace(
+          container.clientHeight,
+          footer.clientHeight,
+          messages.clientHeight
+        );
 
         return () => {
           resizeObserver.disconnect();
@@ -462,14 +479,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       (behavior: "instant" | "smooth", includeTrailingSpace = false) => {
         if (includeTrailingSpace) {
           // Scroll to the bottom marker to include the trailing space,
-          // and wait for a frame in case the trailing space hasn't
+          // but wait for the next tick in case the trailing space hasn't
           // been updated yet. (e.g. when sending a new message)
-          requestAnimationFrame(() => {
+          setTimeout(() => {
             bottomMarkerRef.current?.scrollIntoView({
               behavior,
               block: "end",
             });
-          });
+          }, 0);
         } else {
           // Scroll to the trailing space marker to only scroll to the
           // bottom of the messages, without including the trailing space.
