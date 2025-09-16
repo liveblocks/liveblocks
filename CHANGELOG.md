@@ -1,4 +1,4 @@
-## vNEXT (not yet published)
+## v3.8.0
 
 ## v3.7.1
 
