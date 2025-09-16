@@ -1495,10 +1495,26 @@ export type LiveblocksContextBundle<
       useAiChat(chatId: string): AiChatAsyncResult;
 
       /**
-       * (Private beta) Returns the status of the requested chat.
+       * Returns the status of an AI chat, indicating whether it's idle or actively
+       * generating content. This is a convenience hook that derives its state from
+       * the latest assistant message in the chat.
+       *
+       * Re-renders whenever any of the relevant fields change.
+       *
+       * @param chatId - The ID of the chat to monitor
+       * @returns The current status of the AI chat
        *
        * @example
-       * const { status, partType, toolName } = useAiChatStatus("my-chat");
+       * ```tsx
+       * import { useAiChatStatus } from "@liveblocks/react";
+       *
+       * function ChatStatus() {
+       *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+       *   console.log(status);          // "loading" | "idle" | "generating"
+       *   console.log(status.partType); // "text" | "tool-invocation" | ...
+       *   console.log(status.toolName); // string | undefined
+       * }
+       * ```
        */
       useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
 
@@ -1571,10 +1587,26 @@ export type LiveblocksContextBundle<
             useAiChat(chatId: string): AiChatAsyncSuccess;
 
             /**
-             * (Private beta) Returns the status of the requested chat.
+             * Returns the status of an AI chat, indicating whether it's idle or actively
+             * generating content. This is a convenience hook that derives its state from
+             * the latest assistant message in the chat.
+             *
+             * Re-renders whenever any of the relevant fields change.
+             *
+             * @param chatId - The ID of the chat to monitor
+             * @returns The current status of the AI chat
              *
              * @example
-             * const { status, partType, toolName } = useAiChatStatus("my-chat");
+             * ```tsx
+             * import { useAiChatStatus } from "@liveblocks/react";
+             *
+             * function ChatStatus() {
+             *   const { status, partType, toolName } = useAiChatStatus("my-chat");
+             *   console.log(status);          // "loading" | "idle" | "generating"
+             *   console.log(status.partType); // "text" | "tool-invocation" | ...
+             *   console.log(status.toolName); // string | undefined
+             * }
+             * ```
              */
             useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
           }
