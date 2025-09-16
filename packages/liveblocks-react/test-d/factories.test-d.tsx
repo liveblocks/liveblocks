@@ -6,7 +6,11 @@ import type {
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
+import {
+  createLiveblocksContext,
+  createRoomContext,
+  type AiChatStatus,
+} from "@liveblocks/react";
 import { expectAssignable, expectError, expectType } from "tsd";
 
 type MyPresence = {
@@ -1253,4 +1257,92 @@ ctx.useOthersListener(({ user, type }) => {
   expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
+// ---------------------------------------------------------
+
+// The useAiChatStatus() hook
+{
+  const status = lbctx.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense)
+{
+  const status = lbctx.suspense.useAiChatStatus("chat-123");
+  expectType<AiChatStatus>(status);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with branchId parameter
+{
+  const status = lbctx.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense) with branchId parameter
+{
+  const status = lbctx.suspense.useAiChatStatus("chat-123", "ms_branch" as any);
+  if (status.status === "generating") {
+    expectType<"generating">(status.status);
+    if (status.partType === "tool-invocation") {
+      expectType<"tool-invocation">(status.partType);
+      expectType<string>(status.toolName);
+    } else {
+      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+        status.partType
+      );
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<"loading" | "idle">(status.status);
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
 // ---------------------------------------------------------

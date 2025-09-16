@@ -1598,6 +1598,25 @@ import { useAiChatMessages } from "@liveblocks/react";
 const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 ```
 
+### useAiChatStatus
+
+Returns the status of an AI chat, indicating whether it’s idle or actively
+generating content. This is a convenience hook that derives its state from the
+latest assistant message in the chat.
+
+```tsx
+import { useAiChatStatus } from "@liveblocks/react";
+
+const { status, partType, toolName } = useAiChatStatus("my-chat-id");
+```
+
+The hook returns an object with the following properties:
+
+- `status`: The current status (`"loading"` | `"idle"` | `"generating"`)
+- `partType`: The type of content being generated (`"text"` |
+  `"tool-invocation"` | etc.)
+- `toolName`: The name of the tool being invoked (if applicable)
+
 ### RegisterAiKnowledge
 
 Adds knowledge to all AI features on the page. AI will understand the
