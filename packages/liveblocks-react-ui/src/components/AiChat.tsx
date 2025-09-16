@@ -216,9 +216,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         const trailingSpacer = trailingSpacerRef.current;
         const bottomTrailingMarker = bottomTrailingMarkerRef.current;
 
-        let containerHeight: number | null = null;
-        let footerHeight: number | null = null;
-        let messagesHeight: number | null = null;
+        let containerHeight: number | undefined = undefined;
+        let footerHeight: number | undefined = undefined;
+        let messagesHeight: number | undefined = undefined;
 
         const resetTrailingSpace = () => {
           trailingSpacer?.style.removeProperty("height");
@@ -226,9 +226,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         };
 
         const updateTrailingSpace = (
-          updatedContainerHeight: number | null,
-          updatedFooterHeight: number | null,
-          updatedMessagesHeight: number | null
+          updatedContainerHeight?: number,
+          updatedFooterHeight?: number,
+          updatedMessagesHeight?: number
         ) => {
           if (!trailingSpacer || !bottomTrailingMarker) {
             return;
@@ -237,34 +237,31 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           const lastMessage = messages.lastElementChild;
           const penultimateMessage = lastMessage?.previousElementSibling;
 
-          // If there's no last pair of messages, there's no need for any trailing space.
-          if (!lastMessage || !penultimateMessage) {
-            resetTrailingSpace();
-            return;
+          if (updatedContainerHeight === undefined) {
+            updatedContainerHeight = container.getBoundingClientRect().height;
           }
 
-          // If the container's height is based on its content, the container isn't scrollable and there's no need for any trailing space.
-          if (container.scrollHeight === container.clientHeight) {
-            resetTrailingSpace();
-            return;
+          if (updatedFooterHeight === undefined) {
+            updatedFooterHeight = footer.getBoundingClientRect().height;
           }
 
-          // If we don't have all the heights, we can't compute the trailing space.
-          if (
-            updatedContainerHeight === null ||
-            updatedFooterHeight === null ||
-            updatedMessagesHeight === null
-          ) {
-            resetTrailingSpace();
-            return;
+          if (updatedMessagesHeight === undefined) {
+            updatedMessagesHeight = messages.getBoundingClientRect().height;
           }
 
-          // If none of the heights have changed, we don't need to do anything.
+          // If the heights haven't changed, there's no need to update the trailing space.
           if (
             updatedContainerHeight === containerHeight &&
             updatedFooterHeight === footerHeight &&
             updatedMessagesHeight === messagesHeight
           ) {
+            if (
+              !lastMessage ||
+              !penultimateMessage ||
+              container.scrollHeight === container.clientHeight
+            ) {
+              resetTrailingSpace();
+            }
             return;
           }
 
@@ -272,6 +269,18 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           containerHeight = updatedContainerHeight;
           footerHeight = updatedFooterHeight;
           messagesHeight = updatedMessagesHeight;
+
+          // If there's no last pair of messages, there's no need for any trailing space.
+          if (!lastMessage || !penultimateMessage) {
+            resetTrailingSpace();
+            return;
+          }
+
+          // If the container isn't scrollable, there's no need for trailing space.
+          if (container.scrollHeight === container.clientHeight) {
+            resetTrailingSpace();
+            return;
+          }
 
           // A
           const penultimateMessageScrollMarginTop = Number.parseFloat(
@@ -303,20 +312,20 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         };
 
         const resizeObserver = new ResizeObserver((entries) => {
-          let updatedContainerHeight: number | null = containerHeight;
-          let updatedFooterHeight: number | null = footerHeight;
-          let updatedMessagesHeight: number | null = messagesHeight;
+          let updatedContainerHeight: number | undefined = containerHeight;
+          let updatedFooterHeight: number | undefined = footerHeight;
+          let updatedMessagesHeight: number | undefined = messagesHeight;
 
           for (const entry of entries) {
             const entryHeight =
               entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
 
             if (entry.target === container) {
-              updatedContainerHeight = entryHeight ?? null;
+              updatedContainerHeight = entryHeight ?? undefined;
             } else if (entry.target === footer) {
-              updatedFooterHeight = entryHeight ?? null;
+              updatedFooterHeight = entryHeight ?? undefined;
             } else if (entry.target === messages) {
-              updatedMessagesHeight = entryHeight ?? null;
+              updatedMessagesHeight = entryHeight ?? undefined;
             }
           }
 
@@ -330,11 +339,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         resizeObserver.observe(container);
         resizeObserver.observe(footer);
         resizeObserver.observe(messages);
-        updateTrailingSpace(
-          container.clientHeight,
-          footer.clientHeight,
-          messages.clientHeight
-        );
+
+        // Initialize before the first resize.
+        requestAnimationFrame(updateTrailingSpace);
 
         return () => {
           resizeObserver.disconnect();
@@ -547,6 +554,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 data-trailing-spacer=""
                 style={{
                   pointerEvents: "none",
+                  height: 0,
                 }}
                 aria-hidden
               />
