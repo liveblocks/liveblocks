@@ -321,11 +321,11 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
               entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
 
             if (entry.target === container) {
-              updatedContainerHeight = entryHeight ?? undefined;
+              updatedContainerHeight = entryHeight;
             } else if (entry.target === footer) {
-              updatedFooterHeight = entryHeight ?? undefined;
+              updatedFooterHeight = entryHeight;
             } else if (entry.target === messages) {
-              updatedMessagesHeight = entryHeight ?? undefined;
+              updatedMessagesHeight = entryHeight;
             }
           }
 
@@ -341,7 +341,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         resizeObserver.observe(messages);
 
         // Initialize before the first resize.
-        requestAnimationFrame(updateTrailingSpace);
+        requestAnimationFrame(() => updateTrailingSpace());
 
         return () => {
           resizeObserver.disconnect();
