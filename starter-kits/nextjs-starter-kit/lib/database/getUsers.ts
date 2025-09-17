@@ -1,5 +1,5 @@
 import { users } from "@/data/users";
-import { Document, User } from "@/types";
+import { User } from "@/types";
 import { getUser } from "./getUser";
 
 type Props = {

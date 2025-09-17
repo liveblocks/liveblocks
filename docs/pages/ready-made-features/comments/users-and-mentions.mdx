@@ -61,16 +61,17 @@ return the same number of users as the number of user IDs, in the same order.
 [{ name: "Marc", avatar: "https://example.com/marc.png" }, { name: "Pierre", avatar: "https://example.com/pierre.png" }]
 ```
 
-In your Liveblocks config file, you’ll find a function named
-[`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) where you
-can return this information.
+Add a property named
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to your
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+where you can return this information.
 
-```ts file="liveblocks.config.ts"
-// ...
-
-const client = createClient({
-  // ...
-  async resolveUsers({ userIds }) {
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
     // ["marc@example.com", ...]
     console.log(userIds);
 
@@ -82,8 +83,9 @@ const client = createClient({
 
     // Return a list of users
     return users;
-  },
-});
+  }}
+  // +++
+>
 ```
 
 The `name`, and `avatar` are handled by the default components, but you can also
@@ -93,7 +95,9 @@ You can retrieve these properties in your app with
 
 ```tsx
 function Component() {
+  // +++
   const { user } = useUser("marc@example.com");
+  // +++
 
   // { color: "red", name: "Marc", avatar: "https://example.com/marc.png" }
   console.log(user);
@@ -104,9 +108,10 @@ function Component() {
 
 ## Adding group information to Comments
 
-Similar to users, group information is retrieved from a list of group IDs. You
-should return the same number of groups as the number of group IDs, in the same
-order.
+You can also adds groups to Comments, allowing you to tag a team of people with
+one mention. Similar to users, group information is retrieved from a list of
+group IDs. You should return the same number of groups as the number of group
+IDs, in the same order.
 
 ```shell
 # If this is `groupIds`
@@ -116,16 +121,17 @@ order.
 [{ name: "Engineering", avatar: "https://example.com/engineering.png" }, { name: "Design", avatar: "https://example.com/design.png" }]
 ```
 
-In your Liveblocks config file, you’ll find a function named
-[`resolveGroupsInfo`](/docs/api-reference/liveblocks-client#resolveGroupsInfo)
+Add a property named
+[`resolveGroupsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo)
+to your
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
 where you can return this information.
 
-```ts file="liveblocks.config.ts"
-// ...
-
-const client = createClient({
-  // ...
-  async resolveGroupsInfo({ groupIds }) {
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveGroupsInfo={async ({ groupIds }) => {
     // ["engineering", ...]
     console.log(groupIds);
 
@@ -137,8 +143,9 @@ const client = createClient({
 
     // Return a list of groups
     return groups;
-  },
-});
+  }}
+  // +++
+>
 ```
 
 The `name` and `avatar` are handled by the default components, but you can also
@@ -182,22 +189,23 @@ a `text` property which you can use to return matching user IDs and group IDs.
 ["marc@example.com", "marissa@example.com"]
 ```
 
-You can resolve these search results by editing a function named
-[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-client#resolveMentionSuggestions)
-in your Liveblocks config file. Here's what the function might look like if the
-user has typed `"@mar"` into the input.
+You can resolve these search results by adding a
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+property to your
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+Here's what the function might look like if the user has typed `"@mar"` into the
+input.
 
 ### User mentions only
 
-```ts file="liveblocks.config.ts"
-// ...
-
-const client = createClient({
-  // ...
-  async resolveUsers({ userIds }) {
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  resolveUsers={async ({ userIds }) => {
     // ...
-  },
-  async resolveMentionSuggestions({ text, roomId }) {
+  }}
+  // +++
+  resolveMentionSuggestions={async ({ text, roomId }) => {
     // "mar"
     console.log(text);
 
@@ -215,8 +223,9 @@ const client = createClient({
     // ["marc@example.com", "marissa@example.com"]
     console.log(userIds);
     return userIds;
-  },
-});
+  }}
+  // +++
+>
 ```
 
 ### User and group mentions
@@ -225,37 +234,47 @@ To support both user and group mentions, you can return a list of mention
 objects instead of just user IDs. This allows you to suggest a mix of users and
 groups.
 
-```ts file="liveblocks.config.ts"
-// ...
-
-const client = createClient({
-  // ...
-  async resolveUsers({ userIds }) {
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  resolveUsers={async ({ userIds }) => {
     // ...
-  },
-  async resolveGroupsInfo({ groupIds }) {
+  }}
+  resolveGroupsInfo={async ({ groupIds }) => {
     // ...
-  },
-  async resolveMentionSuggestions({ text, roomId }) {
+  }}
+  // +++
+  resolveMentionSuggestions={async ({ text, roomId }) => {
     // "mar"
     console.log(text);
 
-    const dbUsers = await __findUsersFromDB__(roomId);
-    const dbGroups = await __findGroupsFromDB__(roomId);
+    let userIds;
+    let groupIds;
+
+    if (text) {
+      // If there's a query, get user and groups IDs from your back end that match
+      userIds = await __queryUserIds__(text);
+      groupIds = await __queryGroupIds__(text);
+    } else {
+      // If there's no query, get all of the room's user and group IDs
+      userIds = await __getAllUserIds__();
+      groupIds = await _getAllGroupIds__();
+    }
 
     // Show groups and users matching the text being typed
     return [
-      ...dbGroups.map((group) => ({
+      ...groupIds.map((group) => ({
         kind: "group",
         id: group.id,
       })),
-      ...dbUsers.map((user) => ({
+      ...userIds.map((user) => ({
         kind: "user",
         id: user.id,
       })),
     ];
-  },
-});
+  }}
+  // +++
+>
 ```
 
 If a user has only typed `"@"`, `text` is an empty string, and it's recommended

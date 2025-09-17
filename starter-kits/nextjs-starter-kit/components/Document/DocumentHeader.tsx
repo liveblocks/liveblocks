@@ -31,7 +31,7 @@ export function DocumentHeader({
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
-        <Link href="/" className={styles.logoLink}>
+        <Link href="/dashboard" className={styles.logoLink}>
           <Logo />
         </Link>
       </div>
