@@ -17,7 +17,6 @@ import type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
-  AiKnowledgeSource,
   AiUserMessage,
   AsyncError,
   AsyncLoading,
@@ -56,7 +55,11 @@ import type {
   ReactNode,
 } from "react";
 
-import type { AiChatStatus, RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+import type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./ai";
 
 type UiChatMessage = WithNavigation<AiChatMessage>;
 
@@ -85,11 +88,6 @@ export type UseSendAiMessageOptions = {
    * The maximum timeout for the answer to be generated.
    */
   timeout?: number;
-
-  /**
-   * @internal
-   */
-  knowledge?: AiKnowledgeSource[];
 };
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
