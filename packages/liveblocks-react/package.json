@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "3.7.1",
+  "version": "3.8.0-next2",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -61,8 +61,8 @@
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "dependencies": {
-    "@liveblocks/client": "3.7.1",
-    "@liveblocks/core": "3.7.1"
+    "@liveblocks/client": "3.8.0-next2",
+    "@liveblocks/core": "3.8.0-next2"
   },
   "peerDependencies": {
     "@types/react": "*",
