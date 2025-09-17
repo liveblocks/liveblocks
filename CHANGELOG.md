@@ -8,6 +8,9 @@
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
 
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+
 ### `@liveblocks/react-ui`
 
 - The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
