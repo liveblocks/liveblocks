@@ -984,36 +984,38 @@ export function createAi(config: AiConfig): Ai {
   };
 
   // Delta batch processing system to throttle incoming delta updates. Incoming
-  // deltas are buffered and only let through every every 25ms. This creates
-  // a ceiling of max 40 rerenders/second during streaming.
-  const DELTA_THROTTLE = 25;
-  let pendingDeltas: { id: MessageId; delta: AiAssistantDeltaUpdate }[] = [];
-  let deltaBatchTimer: ReturnType<typeof setTimeout> | null = null;
+  // deltas are buffered and only let through every every 16ms. This creates
+  // a ceiling of max 60 rerenders/second during streaming.
+  // const DELTA_THROTTLE = 16;
+  // let pendingDeltas: { id: MessageId; delta: AiAssistantDeltaUpdate }[] = [];
+  // let deltaBatchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function flushPendingDeltas() {
-    const currentQueue = pendingDeltas;
+  // function flushPendingDeltas() {
+  //   const currentQueue = pendingDeltas;
 
-    pendingDeltas = [];
-    if (deltaBatchTimer !== null) {
-      clearTimeout(deltaBatchTimer);
-      deltaBatchTimer = null;
-    }
+  //   pendingDeltas = [];
+  //   if (deltaBatchTimer !== null) {
+  //     clearTimeout(deltaBatchTimer);
+  //     deltaBatchTimer = null;
+  //   }
 
-    // Process all pending deltas in a single batch
-    batch(() => {
-      for (const { id, delta } of currentQueue) {
-        context.messagesStore.addDelta(id, delta);
-      }
-    });
-  }
+  //   // Process all pending deltas in a single batch
+  //   batch(() => {
+  //     for (const { id, delta } of currentQueue) {
+  //       console.warn("flushing delta", id, delta);
+  //       context.messagesStore.addDelta(id, delta);
+  //     }
+  //   });
+  // }
 
   function enqueueDelta(id: MessageId, delta: AiAssistantDeltaUpdate) {
-    pendingDeltas.push({ id, delta });
+    context.messagesStore.addDelta(id, delta);
+    // pendingDeltas.push({ id, delta });
 
     // If no timer is running, start one to process the batch
-    if (deltaBatchTimer === null) {
-      deltaBatchTimer = setTimeout(flushPendingDeltas, DELTA_THROTTLE);
-    }
+    // if (deltaBatchTimer === null) {
+    //   deltaBatchTimer = setTimeout(flushPendingDeltas, DELTA_THROTTLE);
+    // }
   }
 
   let lastTokenKey: string | undefined;
@@ -1064,7 +1066,7 @@ export function createAi(config: AiConfig): Ai {
 
   function onDidDisconnect() {
     // Flush any pending deltas before disconnect to prevent data loss
-    flushPendingDeltas();
+    // flushPendingDeltas();
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
@@ -1100,7 +1102,7 @@ export function createAi(config: AiConfig): Ai {
         enqueueDelta(id, delta);
       } else {
         batch(() => {
-          flushPendingDeltas();
+          // flushPendingDeltas();
 
           switch (msg.event) {
             case "cmd-failed":
