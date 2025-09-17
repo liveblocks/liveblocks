@@ -128,7 +128,7 @@ const _bundles = new WeakMap<
 function selectorFor_useUnreadInboxNotificationsCount(
   result: UnreadInboxNotificationsCountAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
-  if (!result.count) {
+  if (!("count" in result) || result.count === undefined) {
     // Can be loading or error states
     return result;
   }
