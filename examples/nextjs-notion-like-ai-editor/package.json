@@ -29,7 +29,7 @@
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
-    "ai": "^3.3.31",
+    "ai": "^5.0.45",
     "cmdk": "^1.0.0",
     "framer-motion": "^11.2.12",
     "lexical": "0.24.0",
