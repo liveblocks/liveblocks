@@ -1091,3 +1091,83 @@ declare global {
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------
+
+// The useAiChatStatus() hook
+{
+  const status = classic.useAiChatStatus("chat-id");
+  expectType<"idle" | "loading" | "generating">(status.status);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook (suspense)
+{
+  const status = suspense.useAiChatStatus("chat-id");
+  expectType<"idle" | "loading" | "generating">(status.status);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with optional branchId
+{
+  const status = classic.useAiChatStatus("chat-id", "ms_branch" as any);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// The useAiChatStatus() hook with optional branchId (suspense)
+{
+  const status = suspense.useAiChatStatus("chat-id", "ms_branch" as any);
+  if (status.status === "generating") {
+    // The partType might not exist if there's no content yet
+    expectType<
+      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+    >(status.partType);
+    if (status.partType === "tool-invocation") {
+      expectType<string>(status.toolName);
+    } else {
+      expectType<undefined>(status.toolName);
+    }
+  } else {
+    expectType<undefined>(status.partType);
+    expectType<undefined>(status.toolName);
+  }
+}
+
+// ---------------------------------------------------------

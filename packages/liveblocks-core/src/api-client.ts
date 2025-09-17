@@ -433,7 +433,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   markAllInboxNotificationsAsRead(): Promise<void>;
 
@@ -1623,10 +1629,24 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUnreadInboxNotificationsCount() {
+  async function getUnreadInboxNotificationsCount(options: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { query },
+      { signal: options?.signal }
     );
     return count;
   }
