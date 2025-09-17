@@ -1,4 +1,4 @@
-import { LiveList } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 import {
@@ -29,7 +29,13 @@ const {
   useStorage,
   useSyncStatus,
   useUndo,
-} = createRoomContext<never, { items: LiveList<string> }>(client);
+} = createRoomContext<
+  never,
+  {
+    items: LiveList<string>;
+    largies: LiveList<LiveObject<{ large: string }>>;
+  }
+>(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
@@ -37,7 +43,10 @@ export default function Home() {
     <RoomProvider
       id={roomId}
       initialPresence={{} as never}
-      initialStorage={{ items: new LiveList([]) }}
+      initialStorage={{
+        items: new LiveList([]),
+        largies: new LiveList([]),
+      }}
     >
       <Sandbox />
     </RoomProvider>
@@ -66,6 +75,21 @@ function Sandbox() {
     },
     [item]
   );
+
+  const pushLarge1 = useMutation(({ storage }) => {
+    const list = storage.get("largies");
+    const large = "x".repeat(131000); // Slightly less than 128 KB
+    // ✅ Works!
+    list.push(new LiveObject({ large }));
+  }, []);
+
+  const pushLarge2 = useMutation(({ storage }) => {
+    const list = storage.get("largies");
+    const large = "x".repeat(65522) + "ā";
+    //                       ^^^^^ One byte less than this and it works again
+    // ❌ Breaks, message gets dropped silently
+    list.push(new LiveObject({ large }));
+  }, []);
 
   const insert = useMutation(
     ({ storage }, index: number, value: string) => {
@@ -208,6 +232,22 @@ function Sandbox() {
           subtitle={`Insert at 3: ${padItem(me.connectionId, item)}`}
         >
           Insert@3
+        </Button>
+
+        <Button
+          id="push-large-1"
+          onClick={() => pushLarge1()}
+          subtitle="Large object 1"
+        >
+          Push
+        </Button>
+
+        <Button
+          id="push-large-2"
+          onClick={() => pushLarge2()}
+          subtitle="Large object 2"
+        >
+          Push
         </Button>
       </div>
       <table style={styles.dataTable}>
