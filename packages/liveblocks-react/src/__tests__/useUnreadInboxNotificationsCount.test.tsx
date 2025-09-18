@@ -1,9 +1,17 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -48,19 +56,17 @@ describe("useUnreadInboxNotificationsCount", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -117,39 +123,35 @@ describe("useUnreadInboxNotificationsCount", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        const query = _req.url.searchParams.get("query");
+      mockGetInboxNotifications(async ({ request }) => {
+        const query = new URL(request.url).searchParams.get("query");
 
         // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
         if (query) {
-          return res(
-            ctx.json({
-              threads: threads.filter((thread) => thread.roomId === roomA),
-              inboxNotifications: inboxNotifications.filter(
-                (inboxNotification) => inboxNotification.roomId === roomA
-              ),
-              subscriptions,
-              groups: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
-        }
-
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
+          return HttpResponse.json({
+            threads: threads.filter((thread) => thread.roomId === roomA),
+            inboxNotifications: inboxNotifications.filter(
+              (inboxNotification) => inboxNotification.roomId === roomA
+            ),
             subscriptions,
             groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        );
+          });
+        }
+
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       })
     );
 
@@ -219,34 +221,30 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads,
-            inboxNotifications,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          threads,
+          inboxNotifications,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-            },
-          })
-        );
+      mockGetInboxNotificationsDelta(() => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          deletedThreads: [],
+          deletedInboxNotifications: [],
+          deletedSubscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+          },
+        });
       })
     );
 

@@ -1,5 +1,3 @@
-import "@testing-library/jest-dom";
-
 import { nanoid } from "@liveblocks/core";
 import {
   act,
@@ -8,9 +6,20 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import MockWebSocket from "./_MockWebSocket";
 import {
@@ -39,13 +48,11 @@ describe("useRoomSubscriptionSettings", () => {
     const roomId = nanoid();
 
     server.use(
-      mockGetRoomSubscriptionSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: "all",
-            textMentions: "mine",
-          })
-        );
+      mockGetRoomSubscriptionSettings(() => {
+        return HttpResponse.json({
+          threads: "all",
+          textMentions: "mine",
+        });
       })
     );
 
@@ -87,17 +94,15 @@ describe("useRoomSubscriptionSettings", () => {
     const roomId = nanoid();
 
     server.use(
-      mockGetRoomSubscriptionSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: "all",
-            textMentions: "mine",
-          })
-        );
+      mockGetRoomSubscriptionSettings(() => {
+        return HttpResponse.json({
+          threads: "all",
+          textMentions: "mine",
+        });
       }),
-      mockUpdateRoomSubscriptionSettings((_req, res, ctx) =>
-        res(ctx.status(500))
-      )
+      mockUpdateRoomSubscriptionSettings(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -157,12 +162,12 @@ describe("useRoomSubscriptionSettings", () => {
 
 describe("useRoomSubscriptionSettings: error", () => {
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
@@ -170,10 +175,10 @@ describe("useRoomSubscriptionSettings: error", () => {
 
     let getRoomSubscriptionSettingsCount = 0;
     server.use(
-      mockGetRoomSubscriptionSettings((_req, res, ctx) => {
+      mockGetRoomSubscriptionSettings(() => {
         getRoomSubscriptionSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -196,20 +201,20 @@ describe("useRoomSubscriptionSettings: error", () => {
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -220,14 +225,14 @@ describe("useRoomSubscriptionSettings: error", () => {
     );
 
     // Wait for 5 second for the error to clear
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
@@ -242,18 +247,16 @@ describe("useRoomSubscriptionSettings: error", () => {
     let shouldReturnErrorResponse = true;
     let getRoomSubscriptionSettingsCount = 0;
     server.use(
-      mockGetRoomSubscriptionSettings((_req, res, ctx) => {
+      mockGetRoomSubscriptionSettings(() => {
         getRoomSubscriptionSettingsCount++;
         if (shouldReturnErrorResponse) {
           // Mock an error response from the server for the initial fetch
-          return res(ctx.status(500));
+          return HttpResponse.json(null, { status: 500 });
         } else {
-          return res(
-            ctx.json({
-              threads: "all",
-              textMentions: "mine",
-            })
-          );
+          return HttpResponse.json({
+            threads: "all",
+            textMentions: "mine",
+          });
         }
       })
     );
@@ -277,20 +280,20 @@ describe("useRoomSubscriptionSettings: error", () => {
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -301,7 +304,7 @@ describe("useRoomSubscriptionSettings: error", () => {
     );
 
     // Advance by5 seconds and verify that error is cleared
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
@@ -311,7 +314,7 @@ describe("useRoomSubscriptionSettings: error", () => {
     shouldReturnErrorResponse = false;
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -332,29 +335,23 @@ describe("useRoomSubscriptionSettings: error", () => {
 
     let getRoomSubscriptionSettingsCount = 0;
     server.use(
-      mockGetRoomSubscriptionSettings((_req, res, ctx) => {
+      mockGetRoomSubscriptionSettings(() => {
         getRoomSubscriptionSettingsCount++;
         if (getRoomSubscriptionSettingsCount === 1) {
-          return res(
-            ctx.json({
-              threads: "all",
-              textMentions: "mine",
-            })
-          );
+          return HttpResponse.json({
+            threads: "all",
+            textMentions: "mine",
+          });
         } else if (getRoomSubscriptionSettingsCount === 2) {
-          return res(
-            ctx.json({
-              threads: "none",
-              textMentions: "none",
-            })
-          );
+          return HttpResponse.json({
+            threads: "none",
+            textMentions: "none",
+          });
         } else {
-          return res(
-            ctx.json({
-              threads: "replies_and_mentions",
-              textMentions: "mine",
-            })
-          );
+          return HttpResponse.json({
+            threads: "replies_and_mentions",
+            textMentions: "mine",
+          });
         }
       })
     );
@@ -387,7 +384,7 @@ describe("useRoomSubscriptionSettings: error", () => {
     expect(getRoomSubscriptionSettingsCount).toBe(1);
 
     // Advance by 1 minute so that and verify that the first poll is triggered
-    jest.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(60_000);
     await waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -400,7 +397,7 @@ describe("useRoomSubscriptionSettings: error", () => {
     expect(getRoomSubscriptionSettingsCount).toBe(2);
 
     // Advance by another 1 minute so that and verify that the second poll is triggered
-    jest.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(60_000);
     await waitFor(() =>
       expect(result.current[0]).toEqual({
         isLoading: false,
@@ -413,7 +410,7 @@ describe("useRoomSubscriptionSettings: error", () => {
     expect(getRoomSubscriptionSettingsCount).toBe(3);
 
     // Advance by another 1 minute so that and verify that the third poll is triggered
-    jest.advanceTimersByTime(60_000);
+    vi.advanceTimersByTime(60_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(3));
     expect(result.current[0]).toEqual({
       isLoading: false,
@@ -432,13 +429,11 @@ describe("useRoomSubscriptionSettings suspense", () => {
     const roomId = nanoid();
 
     server.use(
-      mockGetRoomSubscriptionSettings(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: "all",
-            textMentions: "mine",
-          })
-        );
+      mockGetRoomSubscriptionSettings(() => {
+        return HttpResponse.json({
+          threads: "all",
+          textMentions: "mine",
+        });
       })
     );
 
@@ -483,21 +478,21 @@ describe("useRoomSubscriptionSettingsSuspense: error", () => {
   const roomId = nanoid();
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
+    vi.clearAllTimers();
+    vi.useRealTimers(); // Restores the real timers
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
     let getRoomSubscriptionSettingsCount = 0;
     server.use(
-      mockGetRoomSubscriptionSettings((_req, res, ctx) => {
+      mockGetRoomSubscriptionSettings(() => {
         getRoomSubscriptionSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -538,20 +533,20 @@ describe("useRoomSubscriptionSettingsSuspense: error", () => {
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -569,10 +564,10 @@ describe("useRoomSubscriptionSettingsSuspense: error", () => {
   test("should retry with exponential backoff on error and clear error boundary", async () => {
     let getRoomSubscriptionSettingsCount = 0;
     server.use(
-      mockGetRoomSubscriptionSettings((_req, res, ctx) => {
+      mockGetRoomSubscriptionSettings(() => {
         getRoomSubscriptionSettingsCount++;
         // Mock an error response from the server for the initial fetch
-        return res(ctx.status(500));
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 
@@ -613,20 +608,20 @@ describe("useRoomSubscriptionSettingsSuspense: error", () => {
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
+    await vi.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getRoomSubscriptionSettingsCount).toBe(5));
 
     await waitFor(() =>
@@ -639,7 +634,7 @@ describe("useRoomSubscriptionSettingsSuspense: error", () => {
     );
 
     // Wait until the error boundary auto-clears
-    await jest.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5_000);
 
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));

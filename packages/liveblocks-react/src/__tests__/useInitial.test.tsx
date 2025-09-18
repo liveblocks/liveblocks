@@ -1,4 +1,5 @@
 import { renderHook } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
 
 import { useInitial, useInitialUnlessFunction } from "../lib/use-initial";
 
@@ -36,8 +37,8 @@ describe("useInitial", () => {
   });
 
   test("freezes initial function and ignores updates", () => {
-    const fn1 = jest.fn((a: number, b: string) => `${a}-${b}`);
-    const fn2 = jest.fn((a: number, b: string) => `${b}-${a}`);
+    const fn1 = vi.fn((a: number, b: string) => `${a}-${b}`);
+    const fn2 = vi.fn((a: number, b: string) => `${b}-${a}`);
 
     const { result, rerender } = renderHook((fn) => useInitial(fn), {
       initialProps: fn1,
@@ -81,9 +82,9 @@ describe("useInitial", () => {
   });
 
   test("re-evaluates functions when roomId changes", () => {
-    const fn1 = jest.fn(() => "result1");
-    const fn2 = jest.fn(() => "result2");
-    const fn3 = jest.fn(() => "result3");
+    const fn1 = vi.fn(() => "result1");
+    const fn2 = vi.fn(() => "result2");
+    const fn3 = vi.fn(() => "result3");
 
     const { result, rerender } = renderHook(
       ({ fn, roomId }) => useInitial(fn, roomId),
@@ -126,8 +127,8 @@ describe("useInitialUnlessFunction", () => {
   });
 
   test("creates stable wrapper that calls latest function", () => {
-    const fn1 = jest.fn(() => "result1");
-    const fn2 = jest.fn(() => "result2");
+    const fn1 = vi.fn(() => "result1");
+    const fn2 = vi.fn(() => "result2");
 
     const { result, rerender } = renderHook(
       ({ fn }) => useInitialUnlessFunction(fn),
@@ -155,8 +156,8 @@ describe("useInitialUnlessFunction", () => {
   });
 
   test("passes arguments through stable wrapper to latest function", () => {
-    const fn1 = jest.fn((a: number, b: string) => `${a}-${b}`);
-    const fn2 = jest.fn((a: number, b: string) => `${b}-${a}`);
+    const fn1 = vi.fn((a: number, b: string) => `${a}-${b}`);
+    const fn2 = vi.fn((a: number, b: string) => `${b}-${a}`);
 
     const { result, rerender } = renderHook(
       ({ fn }) => useInitialUnlessFunction(fn),
@@ -178,9 +179,9 @@ describe("useInitialUnlessFunction", () => {
   });
 
   test("maintains stable wrapper despite roomId changes", () => {
-    const fn1 = jest.fn(() => "fn1");
-    const fn2 = jest.fn(() => "fn2");
-    const fn3 = jest.fn(() => "fn3");
+    const fn1 = vi.fn(() => "fn1");
+    const fn2 = vi.fn(() => "fn2");
+    const fn3 = vi.fn(() => "fn3");
 
     const { result, rerender } = renderHook(
       ({ fn, roomId }) => useInitialUnlessFunction(fn, roomId),
@@ -206,7 +207,7 @@ describe("useInitialUnlessFunction", () => {
   });
 
   test("handles type changes from function to non-function when roomId changes", () => {
-    const fn = jest.fn(() => "function result");
+    const fn = vi.fn(() => "function result");
     const nonFunction = "string value";
 
     const { result, rerender } = renderHook(
@@ -232,7 +233,7 @@ describe("useInitialUnlessFunction", () => {
 
   test("handles type changes from non-function to function when roomId changes", () => {
     const nonFunction = "string value";
-    const fn = jest.fn(() => "function result");
+    const fn = vi.fn(() => "function result");
 
     const { result, rerender } = renderHook(
       ({ value, roomId }) => useInitialUnlessFunction(value, roomId),

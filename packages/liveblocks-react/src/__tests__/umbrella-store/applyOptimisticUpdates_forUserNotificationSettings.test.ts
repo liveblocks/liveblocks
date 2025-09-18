@@ -3,6 +3,7 @@ import type {
   PartialNotificationSettings,
 } from "@liveblocks/core";
 import { createNotificationSettings, nanoid } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
 
 import { applyOptimisticUpdates_forNotificationSettings } from "../../umbrella-store";
 
@@ -30,7 +31,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     },
   });
 
-  it("should return the same object when no updates are provided", () => {
+  test("should return the same object when no updates are provided", () => {
     const result = applyOptimisticUpdates_forNotificationSettings(
       defaultSettings,
       [
@@ -44,7 +45,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result).toEqual(defaultSettings);
   });
 
-  it("should update a single property in a single channel", () => {
+  test("should update a single property in a single channel", () => {
     const updates: PartialNotificationSettings = {
       email: { thread: true },
     };
@@ -66,7 +67,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result).not.toBe(defaultSettings); // Check immutability
   });
 
-  it("should update multiple properties in a single channel", () => {
+  test("should update multiple properties in a single channel", () => {
     const updates: PartialNotificationSettings = {
       email: {
         thread: true,
@@ -90,7 +91,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result.email!.$fileUploaded).toBe(true);
   });
 
-  it("should update multiple channels simultaneously", () => {
+  test("should update multiple channels simultaneously", () => {
     const updates: PartialNotificationSettings = {
       email: { thread: true },
       slack: { textMention: false },
@@ -113,7 +114,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result.teams).toEqual(defaultSettings.teams);
   });
 
-  it("should ignore undefined values in updates", () => {
+  test("should ignore undefined values in updates", () => {
     const updates: PartialNotificationSettings = {
       email: {
         thread: true,
@@ -138,7 +139,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result.email!.$fileUploaded).toBe(false);
   });
 
-  it("should handle empty channel updates", () => {
+  test("should handle empty channel updates", () => {
     const updates: PartialNotificationSettings = {
       email: {},
     };
@@ -157,7 +158,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result).toEqual(defaultSettings);
   });
 
-  it("should preserve other channels when updating one", () => {
+  test("should preserve other channels when updating one", () => {
     const updates: PartialNotificationSettings = {
       email: { thread: true },
     };
@@ -178,7 +179,7 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
     expect(result.teams).toEqual(defaultSettings.teams);
   });
 
-  it("should handle all boolean combinations", () => {
+  test("should handle all boolean combinations", () => {
     const updates: PartialNotificationSettings = {
       email: {
         thread: true,

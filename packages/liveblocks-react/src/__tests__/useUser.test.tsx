@@ -1,10 +1,9 @@
-import "@testing-library/jest-dom";
-
 import type { ResolveUsersArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { act, createContextsForTest } from "./_utils";
 
@@ -15,11 +14,11 @@ async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {
 
 describe("useUser", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should return an error if resolveUsers is not set", async () => {
@@ -133,7 +132,7 @@ describe("useUser", () => {
   test("should cache results based on user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -179,7 +178,7 @@ describe("useUser", () => {
   test("should revalidate instantly if its cache is invalidated", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -238,7 +237,7 @@ describe("useUser", () => {
   test("should batch (and deduplicate) requests for the same user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => ({ name: userId }))
     );
     const {
@@ -390,7 +389,7 @@ describe("useUser", () => {
   test("should return an error if resolveUsers returns undefined for a specifc user ID", async () => {
     const roomId = nanoid();
 
-    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+    const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
       userIds.map((userId) => {
         if (userId === "abc") {
           return undefined;
@@ -439,11 +438,11 @@ describe("useUser", () => {
 
 describe("useUserSuspense", () => {
   beforeAll(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   test("should suspend with Suspense", async () => {

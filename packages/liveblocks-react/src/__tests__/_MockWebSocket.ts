@@ -6,6 +6,7 @@ import type {
   ServerMsg,
 } from "@liveblocks/core";
 import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
+import { expect } from "vitest";
 
 import { waitFor } from "./_utils";
 

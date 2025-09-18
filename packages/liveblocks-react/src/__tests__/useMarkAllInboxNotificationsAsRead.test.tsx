@@ -1,6 +1,16 @@
 import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import {
   dummySubscriptionData,
@@ -45,24 +55,21 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
-      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
-        res(ctx.status(200))
-      )
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
+      mockMarkAllInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -129,24 +136,21 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
-      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
-        res(ctx.status(500))
-      )
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
+      mockMarkAllInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {
@@ -193,7 +197,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
   });
 
   test("should notify error listener when useMarkAllInboxNotificationsAsRead() fails", async () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
 
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
@@ -217,29 +221,23 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            inboxNotifications,
-            threads,
-            subscriptions,
-            groups: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        )
-      ),
-      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
-        res(
-          ctx.status(500),
-          ctx.json({
-            message: "whoops, something went wrong",
-          })
-        )
-      )
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json({
+          inboxNotifications,
+          threads,
+          subscriptions,
+          groups: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
+      }),
+      mockMarkAllInboxNotificationsAsRead(() => {
+        return HttpResponse.json("whoops, something went wrong", {
+          status: 500,
+        });
+      })
     );
 
     const {

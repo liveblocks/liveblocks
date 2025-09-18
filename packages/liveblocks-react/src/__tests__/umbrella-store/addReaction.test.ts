@@ -1,8 +1,10 @@
+import { describe, expect, test } from "vitest";
+
 import { applyAddReaction } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("addReaction", () => {
-  it("should add a new reaction to a comment", () => {
+  test("should add a new reaction to a comment", () => {
     const comment = createComment({ createdAt: new Date("2024-01-01") });
     const thread = createThread({
       id: comment.threadId,
@@ -29,7 +31,7 @@ describe("addReaction", () => {
     expect(updatedThread.updatedAt).toEqual(reaction.createdAt);
   });
 
-  it("should not update updatedAt if not newer", () => {
+  test("should not update updatedAt if not newer", () => {
     const now = new Date(); // updatedAt date is latest date
     const comment = createComment({ createdAt: new Date("2024-01-01") });
     const thread = createThread({
@@ -58,7 +60,7 @@ describe("addReaction", () => {
     expect(updatedThread.updatedAt).toEqual(now); // Not changed!
   });
 
-  it("should add a new reaction to a comment with existing reactions", () => {
+  test("should add a new reaction to a comment with existing reactions", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       reactions: [
@@ -98,7 +100,7 @@ describe("addReaction", () => {
     expect(updatedThread.updatedAt).toEqual(newReaction.createdAt);
   });
 
-  it("should not add a duplicate reaction for the same user", () => {
+  test("should not add a duplicate reaction for the same user", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       reactions: [
@@ -124,7 +126,7 @@ describe("addReaction", () => {
     expect(updatedThread.comments[0]?.reactions[0]?.users).toHaveLength(1); // No additional user should be added
   });
 
-  it("should add a new user to an existing reaction", () => {
+  test("should add a new user to an existing reaction", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
       reactions: [
@@ -152,7 +154,7 @@ describe("addReaction", () => {
     );
   });
 
-  it("should not add a reaction to a deleted comment", () => {
+  test("should not add a reaction to a deleted comment", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
     });

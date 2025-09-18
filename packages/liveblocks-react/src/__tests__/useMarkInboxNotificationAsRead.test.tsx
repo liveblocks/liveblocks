@@ -1,6 +1,8 @@
 import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import {
   dummySubscriptionData,
@@ -39,10 +41,9 @@ describe("useMarkInboxNotificationAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -51,10 +52,13 @@ describe("useMarkInboxNotificationAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockMarkInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 200 });
+      })
     );
 
     const {
@@ -108,10 +112,9 @@ describe("useMarkInboxNotificationAsRead", () => {
     ];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -120,10 +123,13 @@ describe("useMarkInboxNotificationAsRead", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
+          },
+          { status: 200 }
+        );
+      }),
+      mockMarkInboxNotificationsAsRead(() => {
+        return HttpResponse.json(null, { status: 500 });
+      })
     );
 
     const {

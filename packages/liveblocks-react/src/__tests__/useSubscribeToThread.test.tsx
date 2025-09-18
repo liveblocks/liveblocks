@@ -1,6 +1,8 @@
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import {
   dummySubscriptionData,
@@ -33,39 +35,29 @@ describe("useSubscribeToThread", () => {
     let hasCalledSubscribeToThread = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications: [],
-            subscriptions: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            deletedSubscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockSubscribeToThread(
-        { threadId: initialThread.id },
-        async (_, res, ctx) => {
-          hasCalledSubscribeToThread = true;
+      mockSubscribeToThread({ threadId: initialThread.id }, () => {
+        hasCalledSubscribeToThread = true;
 
-          return res(
-            ctx.json({
-              kind: "thread",
-              subjectId: initialThread.id,
-              createdAt: Date.now(),
-            })
-          );
-        }
-      )
+        return HttpResponse.json({
+          kind: "thread",
+          subjectId: initialThread.id,
+          createdAt: Date.now(),
+        });
+      })
     );
 
     const {
@@ -118,44 +110,35 @@ describe("useSubscribeToThread", () => {
     let hasCalledSubscribeToThread = false;
 
     server.use(
-      mockGetThreads((_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [initialThread],
-            inboxNotifications,
-            subscriptions: [
-              dummySubscriptionData({
-                kind: "thread",
-                subjectId: initialThread.id,
-                createdAt: initialThread.createdAt,
-              }),
-            ],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
-            },
-          })
-        );
-      }),
-      mockSubscribeToThread(
-        { threadId: initialThread.id },
-        async (_, res, ctx) => {
-          hasCalledSubscribeToThread = true;
-
-          return res(
-            ctx.json({
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [initialThread],
+          inboxNotifications,
+          subscriptions: [
+            dummySubscriptionData({
               kind: "thread",
               subjectId: initialThread.id,
-              createdAt: Date.now(),
-            })
-          );
-        }
-      )
+              createdAt: initialThread.createdAt,
+            }),
+          ],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
+            },
+          },
+        });
+      }),
+      mockSubscribeToThread({ threadId: initialThread.id }, () => {
+        hasCalledSubscribeToThread = true;
+
+        return HttpResponse.json({
+          kind: "thread",
+          subjectId: initialThread.id,
+          createdAt: Date.now(),
+        });
+      })
     );
 
     const {
