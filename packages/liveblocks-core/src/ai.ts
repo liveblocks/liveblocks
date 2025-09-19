@@ -986,8 +986,8 @@ export function createAi(config: AiConfig): Ai {
   const messageInterpolationState = new Map<
     MessageId,
     {
-      currentDeltaCharacterIndex: number;
-      initialDeltaDate: number;
+      currentCharacterIndex: number;
+      initialDate: number;
       timeoutId: ReturnType<typeof setTimeout> | null;
       textSoFar: string;
     }
@@ -1013,9 +1013,9 @@ export function createAi(config: AiConfig): Ai {
     // If the delta is the first one, we initialize state
     if (state === undefined) {
       messageInterpolationState.set(id, {
-        currentDeltaCharacterIndex: 0,
+        currentCharacterIndex: 0,
         textSoFar: delta.textDelta,
-        initialDeltaDate: Date.now(),
+        initialDate: Date.now(),
         timeoutId: null,
       });
     } else {
@@ -1030,18 +1030,29 @@ export function createAi(config: AiConfig): Ai {
 
       const enqueueNextDelta = () => {
         if (state === undefined) return;
+
+        const interpolationChunkSize = 4;
+
+        const nextCharacterIndex = Math.min(
+          state.currentCharacterIndex + interpolationChunkSize,
+          state.textSoFar.length
+        );
+
         messagesStore.addDelta(id, {
           type: "text-delta",
-          textDelta: state.textSoFar[state.currentDeltaCharacterIndex],
+          textDelta: state.textSoFar.slice(
+            state.currentCharacterIndex,
+            nextCharacterIndex
+          ),
         });
-        window.console.log({
-          char: state.textSoFar[state.currentDeltaCharacterIndex],
-        });
-        state.currentDeltaCharacterIndex += 1;
+        state.currentCharacterIndex = nextCharacterIndex;
+
+        const timePerCharacter =
+          (currentDate - state.initialDate) / state.textSoFar.length;
 
         state.timeoutId = setTimeout(
           enqueueNextDelta,
-          (currentDate - state.initialDeltaDate) / state.textSoFar.length
+          timePerCharacter * interpolationChunkSize
         );
       };
 
