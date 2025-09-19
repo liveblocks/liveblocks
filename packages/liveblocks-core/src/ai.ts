@@ -1045,10 +1045,7 @@ export function createAi(config: AiConfig): Ai {
         );
       };
 
-      state.timeoutId = setTimeout(
-        enqueueNextDelta,
-        (currentDate - state.initialDeltaDate) / state.textSoFar.length
-      );
+      enqueueNextDelta();
     }
   }
 

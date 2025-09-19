@@ -32,6 +32,9 @@ export default function Home() {
         <Link href="/partial-markdown" className="underline">
           Partial markdown streaming
         </Link>
+        <Link href="/interpolation" className="underline">
+          Interpolation
+        </Link>
       </div>
     </main>
   );
