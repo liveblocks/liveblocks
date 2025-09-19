@@ -994,6 +994,14 @@ export function createAi(config: AiConfig): Ai {
   >();
 
   function enqueueDelta(id: MessageId, delta: AiAssistantDeltaUpdate) {
+    if (
+      context.messagesStore.getMessageById(id)?.chatId !== "with-interpolation"
+    ) {
+      context.messagesStore.addDelta(id, delta);
+
+      return;
+    }
+
     if (delta.type !== "text-delta") {
       context.messagesStore.addDelta(id, delta);
 
