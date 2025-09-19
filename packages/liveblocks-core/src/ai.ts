@@ -983,13 +983,13 @@ export function createAi(config: AiConfig): Ai {
     knowledge: new KnowledgeStack(),
   };
 
-  const interpolatedDeltasState = new Map<
+  const messageInterpolationState = new Map<
     MessageId,
     {
       currentDeltaCharacterIndex: number;
-      deltaText: string;
-      lastDeltaDate: number | null;
+      initialDeltaDate: number;
       timeoutId: ReturnType<typeof setTimeout> | null;
+      textSoFar: string;
     }
   >();
 
@@ -1000,36 +1000,48 @@ export function createAi(config: AiConfig): Ai {
       return;
     }
 
-    let state = interpolatedDeltasState.get(id);
+    const state = messageInterpolationState.get(id);
 
+    // If the delta is the first one, we initialize state
     if (state === undefined) {
-      // If the delta is the first one, we initialize state and wait for the second one
-      state = {
+      messageInterpolationState.set(id, {
         currentDeltaCharacterIndex: 0,
-        deltaText: delta.textDelta,
-        lastDeltaDate: null,
+        textSoFar: delta.textDelta,
+        initialDeltaDate: Date.now(),
         timeoutId: null,
-      };
-      interpolatedDeltasState.set(id, state);
+      });
     } else {
-      if (state.timeoutId === null) {
-        state.deltaText = delta.textDelta;
-        state.currentDeltaCharacterIndex = 0;
-      } else {
+      if (state.timeoutId !== null) {
         clearTimeout(state.timeoutId);
         state.timeoutId = null;
       }
-    }
 
-    const currentDate = Date.now();
-    if (state.lastDeltaDate !== null) {
-      state.timeoutId = setTimeout(() => {
-        // TODO: state.currentDeltaCharacterIndex += ?;
-        // TODO: context.messagesStore.addDelta(id, partialDelta);
-      }, 100);
-    }
+      state.textSoFar += delta.textDelta;
 
-    state.lastDeltaDate = currentDate;
+      const currentDate = Date.now();
+
+      const enqueueNextDelta = () => {
+        if (state === undefined) return;
+        messagesStore.addDelta(id, {
+          type: "text-delta",
+          textDelta: state.textSoFar[state.currentDeltaCharacterIndex],
+        });
+        window.console.log({
+          char: state.textSoFar[state.currentDeltaCharacterIndex],
+        });
+        state.currentDeltaCharacterIndex += 1;
+
+        state.timeoutId = setTimeout(
+          enqueueNextDelta,
+          (currentDate - state.initialDeltaDate) / state.textSoFar.length
+        );
+      };
+
+      state.timeoutId = setTimeout(
+        enqueueNextDelta,
+        (currentDate - state.initialDeltaDate) / state.textSoFar.length
+      );
+    }
   }
 
   let lastTokenKey: string | undefined;
@@ -1120,6 +1132,11 @@ export function createAi(config: AiConfig): Ai {
 
             case "settle": {
               context.messagesStore.upsert(msg.message);
+              const state = messageInterpolationState.get(msg.message.id);
+              if (state !== undefined && state.timeoutId !== null) {
+                clearTimeout(state.timeoutId);
+                state.timeoutId = null;
+              }
               break;
             }
 
