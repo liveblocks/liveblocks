@@ -1031,12 +1031,14 @@ export function createAi(config: AiConfig): Ai {
       const enqueueNextDelta = () => {
         if (state === undefined) return;
 
+        const timePerCharacter =
+          (currentDate - state.initialDate) / state.textSoFar.length;
         const interpolationChunkSize = 4;
-
         const nextCharacterIndex = Math.min(
           state.currentCharacterIndex + interpolationChunkSize,
           state.textSoFar.length
         );
+        const interpolationInterval = timePerCharacter * interpolationChunkSize;
 
         messagesStore.addDelta(id, {
           type: "text-delta",
@@ -1047,13 +1049,7 @@ export function createAi(config: AiConfig): Ai {
         });
         state.currentCharacterIndex = nextCharacterIndex;
 
-        const timePerCharacter =
-          (currentDate - state.initialDate) / state.textSoFar.length;
-
-        state.timeoutId = setTimeout(
-          enqueueNextDelta,
-          timePerCharacter * interpolationChunkSize
-        );
+        state.timeoutId = setTimeout(enqueueNextDelta, interpolationInterval);
       };
 
       enqueueNextDelta();
