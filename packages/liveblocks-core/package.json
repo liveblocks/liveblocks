@@ -55,6 +55,7 @@
     "eslint-plugin-rulesdir": "^0.2.2",
     "fast-check": "^4.3.0",
     "msw": "^2.10.4",
+    "tosti": "^0.2.0",
     "ws": "^8.17.1"
   },
   "peerDependencies": {
