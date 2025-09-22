@@ -218,7 +218,7 @@ const client = createClient({
     - `"default"` Don’t send anything, but log the error to the console and notify useErrorListener.
     - `"split"` Break the message up into chunks each of which is smaller than the maximum message size.
       Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
-    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
+    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets. This strategy is marked experimental, as it does not work with Liveblocks Storage yet.
 
   </PropertiesListItem>
   <PropertiesListItem

@@ -1755,6 +1755,11 @@ export function createRoom<
         return;
       }
 
+      // NOTE: This strategy is experimental as it will not work in all
+      // situations. It should only be used for broadcasting, presence
+      // updates, or Yjs updates, but isn't suitable for Storage updates
+      // yet (because through this channel the server does not respond
+      // with acks or rejections yet).
       case "experimental-fallback-to-http": {
         console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
         const nonce =
@@ -1762,11 +1767,16 @@ export function createRoom<
           raise("Session is not authorized to send message over HTTP");
 
         void httpClient
-          .sendMessages<P, E>({ roomId, nonce, messages })
+          .sendMessagesOverHTTP<P, E>({ roomId, nonce, messages })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
+          })
+          .catch((err) => {
+            console.error(
+              `Failed to deliver message over HTTP: ${String(err)}`
+            );
           });
         return;
       }

@@ -378,7 +378,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     roomId: string;
   }): Promise<IdTuple<SerializedCrdt>[]>;
 
-  sendMessages<P extends JsonObject, E extends Json>(options: {
+  sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -1514,7 +1514,10 @@ export function createApiClient<M extends BaseMetadata>({
     return (await result.json()) as IdTuple<SerializedCrdt>[];
   }
 
-  async function sendMessages<P extends JsonObject, E extends Json>(options: {
+  async function sendMessagesOverHTTP<
+    P extends JsonObject,
+    E extends Json,
+  >(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -1892,7 +1895,7 @@ export function createApiClient<M extends BaseMetadata>({
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessages,
+    sendMessagesOverHTTP,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
