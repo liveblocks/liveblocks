@@ -13,7 +13,6 @@ import {
   creationOpToLiveNode,
   deserialize,
   isLiveNode,
-  isLiveRegister,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
@@ -211,7 +210,7 @@ export class LiveMap<
       updates: {
         [parentKey]: {
           type: "delete",
-          deletedItem: isLiveRegister(child) ? child.data : child,
+          deletedItem: liveNodeToLson(child),
         },
       },
     };
@@ -332,7 +331,7 @@ export class LiveMap<
         updates: {
           [key]: {
             type: "delete",
-            deletedItem: isLiveRegister(item) ? item.data : item,
+            deletedItem: liveNodeToLson(item),
           },
         },
       });
