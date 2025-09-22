@@ -841,7 +841,7 @@ describe("legacy_patchImmutableObject", () => {
       {
         type: "LiveObject",
         node: root.get("subA"),
-        updates: { subsubB: { type: "delete", deletedItem: "x" } },
+        updates: { subsubB: { type: "delete", deletedItem: "<dummy>" } },
       },
       {
         type: "LiveObject",
@@ -905,7 +905,7 @@ describe("legacy_patchImmutableObject", () => {
       {
         type: "LiveMap",
         node: root.get("map"),
-        updates: { el2: { type: "delete", deletedItem: "x" } },
+        updates: { el2: { type: "delete", deletedItem: "<dummy>" } },
       },
     ];
 
