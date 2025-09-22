@@ -4,6 +4,7 @@ import {
   describe,
   expect,
   type MockInstance,
+  onTestFinished,
   test,
   vi,
 } from "vitest";
@@ -56,33 +57,37 @@ export async function prepareStorageImmutableTest<
 
   const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, actor);
 
-  subject.wss.onReceive.subscribe((data) => {
-    const messages = parseAsClientMsgs(data);
-    for (const message of messages) {
-      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        totalStorageOps += message.ops.length;
-        ref.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-        subject.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
+  onTestFinished(
+    subject.wss.onReceive.subscribe((data) => {
+      const messages = parseAsClientMsgs(data);
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          totalStorageOps += message.ops.length;
+          ref.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          subject.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        }
       }
-    }
-  });
+    })
+  );
 
   state = lsonToJson(subject.storage.root) as ToJson<S>;
   refState = lsonToJson(ref.storage.root) as ToJson<S>;
 
-  ref.room.events.storageBatch.subscribe(() => {
-    refState = lsonToJson(ref.storage.root) as ToJson<S>;
-  });
+  onTestFinished(
+    ref.room.events.storageBatch.subscribe(() => {
+      refState = lsonToJson(ref.storage.root) as ToJson<S>;
+    })
+  );
 
   function expectStorageAndStateInBothClients(
     data: ToJson<S>,

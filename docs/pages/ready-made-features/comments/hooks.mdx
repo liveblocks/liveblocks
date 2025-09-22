@@ -89,6 +89,51 @@ There are two versions of the
 [Suspense](#suspense-hooks), which we recommend by default, and
 [regular](#regular-hooks).
 
+## useGroupInfo hook [#group-hook]
+
+Similar to users, Liveblocks only stores group IDs for groups. With the
+[`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook, you
+can fetch a group’s information from their ID. This is particularly helpful when
+building primitive components, as this allows you to fetch their name, avatar, and
+any other custom data you’ve set.
+
+```tsx
+import { useGroupInfo } from "../liveblocks.config";
+
+function Component() {
+  const { group } = useGroupInfo("engineering");
+
+  // { name: "Engineering", avatar: "https://...", color: "blue" }
+  console.log(group);
+
+  return <img src={group.avatar} alt={group.name} />;
+}
+```
+
+The group data retrieved is set within the
+[`resolveGroupsInfo`](/docs/api-reference/liveblocks-client#resolveGroupsInfo)
+function in your `liveblocks.config.ts` file.
+
+```ts
+async function resolveGroupsInfo({ groupIds }) {
+  // ["engineering"]
+  console.log(groupIds);
+
+  return [
+    {
+      name: "Engineering",
+      avatar: "https://example.com/engineering.png",
+      color: "blue",
+    },
+  ];
+}
+```
+
+There are two versions of the
+[`useGroupInfo`](/docs/api-reference/liveblocks-client#useGroupInfo) hook,
+[Suspense](#suspense-hooks), which we recommend by default, and
+[regular](#regular-hooks).
+
 ## Mutation hooks [#mutation-hooks]
 
 A number of hooks can be used to mutate comment and thread data, for example:
@@ -231,6 +276,7 @@ export const {
     // Export from here to use Suspense hooks
     useThreads,
     useUser,
+    useGroupInfo,
   },
 } = createRoomContext(client, {});
 ```
@@ -271,5 +317,6 @@ export const {
   // Export from here to use regular hooks
   useThreads,
   useUser,
+  useGroupInfo,
 } = createRoomContext(client, {});
 ```

@@ -763,41 +763,6 @@
 }
 
 /*************************************
- *       Composer suggestions        *
- *************************************/
-
-.lb-composer-suggestions-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lb-composer-suggestions-list-item {
-  scroll-margin-block: $lb-elevation-padding;
-}
-
-/*************************************
- *   Composer mention suggestions    *
- *************************************/
-
-.lb-composer-mention-suggestions {
-  --lb-composer-mention-suggestion-avatar-size: 1.25rem;
-}
-
-.lb-composer-mention-suggestion {
-  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
-}
-
-.lb-composer-mention-suggestion-avatar {
-  inline-size: var(--lb-composer-mention-suggestion-avatar-size);
-  margin-inline-start: calc(-0.125 * var(--lb-spacing));
-  margin-inline-end: calc(0.5 * var(--lb-spacing));
-  margin-block: calc(0.125 * var(--lb-spacing));
-  background: var(--lb-foreground-subtle);
-  color: var(--lb-foreground-moderate);
-}
-
-/*************************************
  *                List               *
  *************************************/
 
@@ -806,6 +771,10 @@
 
   :where(:first-child) {
     @include capitalize;
+  }
+
+  :where(.lb-name) {
+    display: contents;
   }
 }
 
@@ -1165,6 +1134,7 @@
   color: var(--lb-accent);
   box-decoration-break: clone;
   font-weight: 500;
+  cursor: default;
 }
 
 :is(.lb-comment-link, .lb-composer-link) {
@@ -2406,6 +2376,61 @@
 }
 
 /*************************************
+ *       Composer suggestions        *
+ *************************************/
+
+.lb-composer-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lb-composer-suggestions-list-item {
+  scroll-margin-block: $lb-elevation-padding;
+}
+
+/*************************************
+ *   Composer mention suggestions    *
+ *************************************/
+
+.lb-composer-mention-suggestions {
+  --lb-composer-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-composer-mention-suggestion {
+  padding-inline-start: calc(0.5 * var(--lb-spacing));
+  padding-inline-end: calc(0.625 * var(--lb-spacing));
+  padding-block: calc(0.25 * var(--lb-spacing));
+}
+
+.lb-composer-mention-suggestion-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--lb-composer-mention-suggestion-avatar-size);
+  block-size: var(--lb-composer-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.5 * var(--lb-spacing));
+  margin-block: calc(0.125 * var(--lb-spacing));
+
+  &:where(.lb-avatar) {
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-moderate);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-composer-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+}
+
+/*************************************
  *            Code block             *
  *************************************/
 
@@ -2949,6 +2974,8 @@
 
 .lb-ai-tool-header-title {
   @include truncate;
+
+  user-select: auto;
 }
 
 .lb-ai-tool-header-status {

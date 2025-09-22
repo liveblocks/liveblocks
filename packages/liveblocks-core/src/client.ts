@@ -6,7 +6,7 @@ import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import type { DE, DGI, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -18,6 +18,7 @@ import type { NoInfr } from "./lib/NoInfer";
 import type { Relax } from "./lib/Relax";
 import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
+import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -30,6 +31,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type {
   NotificationSettings,
   PartialNotificationSettings,
@@ -57,7 +59,6 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { MentionData } from "./types/MentionData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -71,6 +72,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const RESOLVE_USERS_BATCH_DELAY = 50;
 const RESOLVE_ROOMS_INFO_BATCH_DELAY = 50;
+const RESOLVE_GROUPS_INFO_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
   /**
@@ -96,6 +98,13 @@ export type ResolveRoomsInfoArgs = {
    * The IDs of the rooms to resolve.
    */
   roomIds: string[];
+};
+
+export type ResolveGroupsInfoArgs = {
+  /**
+   * The IDs of the groups to resolve.
+   */
+  groupIds: string[];
 };
 
 export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
@@ -164,6 +173,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
+  readonly groupsInfoStore: BatchStore<DGI | undefined, string>;
   readonly getRoomIds: () => string[];
   readonly httpClient: LiveblocksHttpApi<M>;
   // Type-level helper
@@ -193,7 +203,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: { cursor?: string }): Promise<{
+  getInboxNotifications(options?: {
+    cursor?: string;
+    query?: { roomId?: string; kind?: string };
+  }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     subscriptions: SubscriptionData[];
@@ -226,6 +239,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getInboxNotificationsSince(options: {
     since: Date;
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
@@ -394,6 +408,19 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     invalidateRoomsInfo(roomIds?: string[]): void;
 
     /**
+     * Invalidate some or all groups info that were previously cached by `resolveGroupsInfo`.
+     *
+     * @example
+     * // Invalidate all groups
+     * client.resolvers.invalidateGroupsInfo();
+     *
+     * @example
+     * // Invalidate specific groups
+     * client.resolvers.invalidateGroupsInfo(["group-1", "group-2"]);
+     */
+    invalidateGroupsInfo(groupIds?: string[]): void;
+
+    /**
      * Invalidate all mention suggestions cached by `resolveMentionSuggestions`.
      *
      * @example
@@ -478,6 +505,14 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => Awaitable<(DRI | undefined)[] | undefined>;
 
   /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
+
+  /**
    * Prevent the current browser tab from being closed if there are any locally
    * pending Liveblocks changes that haven't been submitted to or confirmed by
    * the server yet.
@@ -495,6 +530,9 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /** @internal */
   enableDebugLogging?: boolean;
+
+  /** @internal */
+  __DANGEROUSLY_disableThrottling?: true; // for unit testing purposes only, never use this in production
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
@@ -537,7 +575,11 @@ export function createClient<U extends BaseUserMeta = DU>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;
-  const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
+  const throttleDelay =
+    process.env.NODE_ENV !== "production" &&
+    clientOptions.__DANGEROUSLY_disableThrottling
+      ? 0
+      : getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
   );
@@ -761,17 +803,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   const resolveUsers = clientOptions.resolveUsers;
-  const warnIfNoResolveUsers = createDevelopmentWarning(
-    () => !resolveUsers,
-    "Set the resolveUsers option in createClient to specify user info."
-  );
-
   const batchedResolveUsers = new Batch(
     async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
 
-      warnIfNoResolveUsers();
+      warnOnceIf(
+        !resolveUsers,
+        "Set the resolveUsers option in createClient to specify user info."
+      );
 
       return users ?? userIds.map(() => undefined);
     },
@@ -784,17 +824,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
-  const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
-    () => !resolveRoomsInfo,
-    "Set the resolveRoomsInfo option in createClient to specify room info."
-  );
-
   const batchedResolveRoomsInfo = new Batch(
     async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
-      warnIfNoResolveRoomsInfo();
+      warnOnceIf(
+        !resolveRoomsInfo,
+        "Set the resolveRoomsInfo option in createClient to specify room info."
+      );
 
       return roomsInfo ?? roomIds.map(() => undefined);
     },
@@ -804,6 +842,27 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   function invalidateResolvedRoomsInfo(roomIds?: string[]) {
     roomsInfoStore.invalidate(roomIds);
+  }
+
+  const resolveGroupsInfo = clientOptions.resolveGroupsInfo;
+  const batchedResolveGroupsInfo = new Batch(
+    async (batchedGroupIds: string[]) => {
+      const groupIds = batchedGroupIds.flat();
+      const groupsInfo = await resolveGroupsInfo?.({ groupIds });
+
+      warnOnceIf(
+        !resolveGroupsInfo,
+        "Set the resolveGroupsInfo option in createClient to specify group info."
+      );
+
+      return groupsInfo ?? groupIds.map(() => undefined);
+    },
+    { delay: RESOLVE_GROUPS_INFO_BATCH_DELAY }
+  );
+  const groupsInfoStore = createBatchStore(batchedResolveGroupsInfo);
+
+  function invalidateResolvedGroupsInfo(groupIds?: string[]) {
+    groupsInfoStore.invalidate(groupIds);
   }
 
   const mentionSuggestionsCache = new Map<string, MentionData[]>();
@@ -927,6 +986,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       resolvers: {
         invalidateUsers: invalidateResolvedUsers,
         invalidateRoomsInfo: invalidateResolvedRoomsInfo,
+        invalidateGroupsInfo: invalidateResolvedGroupsInfo,
         invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
       },
 
@@ -944,6 +1004,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,
+        groupsInfoStore,
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
@@ -1016,29 +1077,4 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
-}
-
-/**
- * Emit a warning only once if a condition is met, in development only.
- */
-function createDevelopmentWarning(
-  condition: boolean | (() => boolean),
-  ...args: Parameters<typeof console.warn>
-) {
-  let hasWarned = false;
-
-  if (process.env.NODE_ENV !== "production") {
-    return () => {
-      if (
-        !hasWarned &&
-        (typeof condition === "function" ? condition() : condition)
-      ) {
-        console.warn(...args);
-
-        hasWarned = true;
-      }
-    };
-  } else {
-    return () => {};
-  }
 }

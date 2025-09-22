@@ -370,13 +370,10 @@ export type AiTextDelta = {
   textDelta: string;
 };
 
-// NOTE: This chunk type is { type: 'reasoning', textDelta } in the Vercel AI
-// SDK, but I'm renaming it to reasoning-delta here, to distinguish it better
-// from the { type: "reasoning", text } part!
-export type AiReasoningDelta = Relax<
-  | { type: "reasoning-delta"; textDelta: string }
-  | { type: "reasoning-delta"; signature: string }
->;
+export type AiReasoningDelta = {
+  type: "reasoning-delta";
+  textDelta: string;
+};
 
 // Available since protocol V5, this is the start of a tool invocation stream
 export type AiToolInvocationStreamStart = {
@@ -609,7 +606,7 @@ export function patchContentWithDelta(
         closePart(lastPart, now);
         content.push({
           type: "reasoning",
-          text: delta.textDelta ?? "",
+          text: delta.textDelta,
           startedAt: now,
         });
       }

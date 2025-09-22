@@ -18,6 +18,139 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 37 (2025-09-12)
+
+## v3.7.1
+
+### `@liveblocks/react`
+
+- Add query filters `roomId` and `kind` on the
+  `useUnreadInboxNotificationsCount` hook.
+
+## v3.7.0
+
+This release introduces group mentions (e.g. `@engineering`) across all packages
+and first-class support for tenants. Learn more about [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+
+### `@liveblocks/client`
+
+- Add new `resolveGroupsInfo` resolver to provide information about groups (e.g.
+  `name`, `avatar`, etc) similar to `resolveUsers`.
+- Support returning group mention suggestions in `resolveMentionSuggestions`.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
+- Add query filters `roomId` and `kind` on the `getInboxNotifications` method.
+
+### `@liveblocks/react`
+
+- Add `useGroupInfo` hook to use `resolveGroupsInfo` in React, same as `useUser`
+  for `resolveUsers`.
+- Add query filters `roomId` and `kind` on the `useInboxNotifications` hook.
+
+### `@liveblocks/react-ui`
+
+- Support group mentions in default components (mentions suggestions dropdowns,
+  `Thread`, `Composer`, `InboxNotification`, etc).
+
+### `@liveblocks/react-lexical`, `@liveblocks/react-tiptap`, and `@liveblocks/node-lexical`
+
+- Support group mentions in text editors and comments-related components.
+
+### `@liveblocks/node-lexical` and `@liveblocks/node-prosemirror`
+
+- Support group mentions in text editors.
+
+### `@liveblocks/node`
+
+- Add methods to manage groups on Liveblocks (e.g. `createGroup`,
+  `getUserGroups`).
+- Add `tenantId` parameters to methods that need it when using tenants.
+- Mark `getThreadParticipants` as deprecated, use thread subscriptions or
+  `getMentionsFromCommentBody` instead.
+- Support group mentions in `stringifyCommentBody`, it now accepts a
+  `resolveGroupsInfo` option that passes the results to mentions as `group`.
+
+### `@liveblocks/emails`
+
+- Support group mentions in email notifications helpers. These functions now
+  accept a `resolveGroupsInfo` option that passes the results to mentions as
+  `group`.
+
+## 3.6.2
+
+### `@liveblocks/node`
+
+- Rename `budgetToken` to `budgetTokens` in `AnthropicProviderOptions`.
+
+## v3.6.1
+
+### `@liveblocks/client`
+
+- Fixes a bug where a specific combination of concurrent LiveList mutations
+  could break eventual consistency (two clients disagreeing on the final
+  document state).
+
+### `@liveblocks/react-ui`
+
+- Only show retrieval and reasoning durations in `AiChat` when they are 3
+  seconds or longer.
+- Make `AiTool` titles selectable.
+
+## Website
+
+- AI assistant has been added to the documentation and dashboard pages. It can answer
+  questions on anything related to Liveblocks, such as code, recommendations, bugs,
+  billing, usage, and project information. It's powered by
+  [`AiChat`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#AiChat).
+
+## Contributors
+
+ctnicholas, pierrelevaillant, nvie, marcbouchenoire, nimeshnayaju, ofoucherot, flowflorent
+
+# Week 36 (2025-09-05)
+
+## v3.6.0
+
+### `@liveblocks/client`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
+
+## v3.5.4
+
+### `@liveblocks/client`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
+
+## Dashboard
+
+- Add API reference modal to AI Copilot detail pages, with React, Node.js, and REST API snippets to get started quickly.
+
+## Contributors
+
+pierrelevaillant, nvie, jrowny, nimeshnayaju, marcbouchenoire
+
 # Week 35 (2025-08-29)
 
 ## v3.5.1

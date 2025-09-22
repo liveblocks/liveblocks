@@ -1,3 +1,4 @@
+import { assertNever, type MentionData } from "@liveblocks/core";
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
@@ -60,6 +61,16 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   };
 }
 
+export interface SerializedTiptapGroupMentionNode
+  extends SerializedTiptapBaseNode {
+  type: "liveblocksGroupMention";
+  attrs: {
+    id: string;
+    notificationId: string;
+    userIds: string | undefined;
+  };
+}
+
 export interface SerializedTiptapEmptyParagraphNode
   extends SerializedTiptapBaseNode {
   type: "paragraph";
@@ -87,6 +98,7 @@ export type SerializedTiptapNode =
   | SerializedTiptapEmptyParagraphNode
   | SerializedTiptapHardBreakNode
   | SerializedTiptapMentionNode
+  | SerializedTiptapGroupMentionNode
   | SerializedTiptapTextNode;
 
 export type SerializedTiptapRootNodeContent = Array<
@@ -154,6 +166,15 @@ export const isSerializedMentionNode = (
   );
 };
 
+export const isSerializedGroupMentionNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapGroupMentionNode => {
+  return (
+    node.type === "liveblocksGroupMention" &&
+    isMentionNodeAttributeId(node.attrs.notificationId)
+  );
+};
+
 const isSerializedParagraphNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapParagraphNode => {
@@ -200,7 +221,8 @@ export const flattenTiptapTree = (
       isSerializedEmptyParagraphNode(node) ||
       isSerializedHardBreakNode(node) ||
       isSerializedTextNode(node) ||
-      isSerializedMentionNode(node)
+      isSerializedMentionNode(node) ||
+      isSerializedGroupMentionNode(node)
     ) {
       flattenNodes = [...flattenNodes, node];
     } else if (isSerializedParagraphNode(node)) {
@@ -228,7 +250,7 @@ export const flattenTiptapTree = (
 export type TiptapMentionNodeWithContext = {
   before: SerializedTiptapNode[];
   after: SerializedTiptapNode[];
-  mention: SerializedTiptapMentionNode;
+  mention: SerializedTiptapMentionNode | SerializedTiptapGroupMentionNode;
 };
 
 /**
@@ -237,12 +259,10 @@ export type TiptapMentionNodeWithContext = {
  */
 export function findTiptapMentionNodeWithContext({
   root,
-  mentionedUserId,
-  mentionId,
+  textMentionId,
 }: {
   root: SerializedTiptapRootNode;
-  mentionedUserId: string;
-  mentionId: string;
+  textMentionId: string;
 }): TiptapMentionNodeWithContext | null {
   const nodes = flattenTiptapTree(root.content);
 
@@ -254,9 +274,8 @@ export function findTiptapMentionNodeWithContext({
 
     if (
       !isFlattenedTiptapParagraphNodeMarker(node) &&
-      isSerializedMentionNode(node) &&
-      node.attrs.notificationId === mentionId &&
-      node.attrs.id === mentionedUserId
+      (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
+      node.attrs.notificationId === textMentionId
     ) {
       mentionNodeIndex = i;
       break;
@@ -269,7 +288,9 @@ export function findTiptapMentionNodeWithContext({
   }
 
   // Collect nodes before and after
-  const mentionNode = nodes[mentionNodeIndex] as SerializedTiptapMentionNode;
+  const mentionNode = nodes[mentionNodeIndex] as
+    | SerializedTiptapMentionNode
+    | SerializedTiptapGroupMentionNode;
 
   // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or paragraph
@@ -313,4 +334,43 @@ export function findTiptapMentionNodeWithContext({
     after: afterNodes,
     mention: mentionNode,
   };
+}
+
+function deserializeGroupUserIds(
+  userIds: string | undefined
+): string[] | undefined {
+  if (typeof userIds !== "string") {
+    return undefined;
+  }
+
+  try {
+    const parsedUserIds = JSON.parse(userIds) as string[];
+
+    if (Array.isArray(parsedUserIds)) {
+      return parsedUserIds;
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getMentionDataFromTiptapNode(
+  node: SerializedTiptapMentionNode | SerializedTiptapGroupMentionNode
+): MentionData {
+  if (isSerializedMentionNode(node)) {
+    return {
+      kind: "user",
+      id: node.attrs.id,
+    };
+  } else if (isSerializedGroupMentionNode(node)) {
+    return {
+      kind: "group",
+      id: node.attrs.id,
+      userIds: deserializeGroupUserIds(node.attrs.userIds),
+    };
+  }
+
+  assertNever(node, "Unknown mention kind");
 }

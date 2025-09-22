@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.3.0",
-    "@liveblocks/node": "^3.3.0",
-    "@liveblocks/react": "^3.3.0",
-    "@liveblocks/react-ui": "^3.3.0",
+    "@liveblocks/client": "^3.7.1",
+    "@liveblocks/node": "^3.7.1",
+    "@liveblocks/react": "^3.7.1",
+    "@liveblocks/react-ui": "^3.7.1",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-toggle": "^1.1.0",
     "clsx": "^2.0.0",

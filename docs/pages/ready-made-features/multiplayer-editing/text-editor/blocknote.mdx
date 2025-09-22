@@ -25,8 +25,8 @@ to sync, scale, or maintain any infrastructure.
 
 ### Users and mentions
 
-Users can be added to your document, and you can tag others inline. You can also
-easily enable mention suggestions.
+Users and groups can be added to your document, and you can tag others inline.
+You can also easily enable mention suggestions for both users and groups.
 
 <Figure>
   <Image
@@ -37,12 +37,13 @@ easily enable mention suggestions.
   />
 </Figure>
 
-Users and mention suggestions can be added with
+Users, groups, and mention suggestions can be added with
 [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers),
+[`resolveGroupsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveGroupsInfo),
 and
 [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions).
 
-```tsx highlight="6-13"
+```tsx highlight="6-16"
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 function App() {
@@ -52,8 +53,13 @@ function App() {
         // Return user info from their `userIds`
         // ...
       }}
+      resolveGroupsInfo={async ({ groupIds }) => {
+        // Return group info from their `groupIds`
+        // ...
+      }}
       resolveMentionSuggestions={async ({ text, roomId }) => {
         // Return suggestions from the search `text`
+        // Can return user IDs or mention objects for both users and groups
         // ...
       }}
     >
@@ -232,11 +238,9 @@ Learn more about
 
 ### Version History
 
-<Banner title="Private beta">
+<Banner title="Contact support for access">
 
-Version history is currently in private beta. If you would like access to the
-beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
-hear from you.
+Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
 
 </Banner>
 

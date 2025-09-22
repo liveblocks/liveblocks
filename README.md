@@ -66,8 +66,7 @@ notifications, and more.
 
 - [Documentation](https://liveblocks.io/docs) - [`/docs`](./docs)
 - [Guides](https://liveblocks.io/docs/guides) - [`/guides`](./guides)
-- [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
-  [`/tutorial`](./tutorial)
+- [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started) - [`/tutorial`](./tutorial)
 - [Examples](https://liveblocks.io/examples) - [`/examples`](./examples)
 
 You can read our release notes

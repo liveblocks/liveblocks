@@ -5,10 +5,14 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import Router from "next/router";
 import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
-import { getUsers } from "@/lib/database";
+import { syncLiveblocksGroups } from "@/lib/actions/syncLiveblocksGroups";
+import { getGroups, getUsers } from "@/lib/database";
+
+const SYNC_LIVEBLOCKS_GROUPS_KEY = "sync-liveblocks-groups";
+const SYNC_LIVEBLOCKS_GROUPS_VALUE = "1";
 
 export function Providers({
   children,
@@ -17,6 +21,30 @@ export function Providers({
   children: ReactNode;
   session: Session | null;
 }) {
+  // Sync the starter kit's groups with Liveblocks once per
+  // session and only during development
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") {
+      return;
+    }
+
+    if (
+      sessionStorage.getItem(SYNC_LIVEBLOCKS_GROUPS_KEY) ===
+      SYNC_LIVEBLOCKS_GROUPS_VALUE
+    ) {
+      return;
+    }
+
+    sessionStorage.setItem(
+      SYNC_LIVEBLOCKS_GROUPS_KEY,
+      SYNC_LIVEBLOCKS_GROUPS_VALUE
+    );
+
+    syncLiveblocksGroups().catch(() => {
+      sessionStorage.removeItem(SYNC_LIVEBLOCKS_GROUPS_KEY);
+    });
+  }, []);
+
   return (
     <SessionProvider session={session}>
       <LiveblocksProvider
@@ -47,10 +75,10 @@ export function Providers({
           const users = await getUsers({ userIds });
           return users.map((user) => user ?? undefined);
         }}
-        // Resolve a mention suggestion into a userId e.g. `@tat` → `tatum.paolo@example.com`
-        resolveMentionSuggestions={async ({ text }) => {
-          const users = await getUsers({ search: text });
-          return users.map((user) => user?.id || "");
+        // Resolve group IDs into name/avatar/etc for Comments
+        resolveGroupsInfo={async ({ groupIds }) => {
+          const groups = await getGroups({ groupIds });
+          return groups.map((group) => group ?? undefined);
         }}
         // Resolve a room ID into room information for Notifications
         resolveRoomsInfo={async ({ roomIds }) => {
@@ -63,6 +91,29 @@ export function Providers({
               ? DOCUMENT_URL(document.type, document.id)
               : undefined,
           }));
+        }}
+        // Resolve what mentions are suggested for Comments/Text Editor
+        resolveMentionSuggestions={async ({ text }) => {
+          // Get group suggestions
+          const groups = await getGroups({ search: text });
+          const groupSuggestions = groups
+            .filter((group) => group !== null)
+            .map((group) => ({
+              kind: "group" as const,
+              id: group.id,
+            }));
+
+          // Get user suggestions
+          const users = await getUsers({ search: text });
+          const userSuggestions = users
+            .filter((user) => user !== null)
+            .map((user) => ({
+              kind: "user" as const,
+              id: user.id,
+            }));
+
+          // Return combined suggestions
+          return [...groupSuggestions, ...userSuggestions];
         }}
       >
         <TooltipProvider>{children}</TooltipProvider>

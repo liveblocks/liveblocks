@@ -1578,22 +1578,43 @@ function MentionSuggestions({
   return (
     <Composer.Suggestions>
       <Composer.SuggestionsList>
-        {mentions.map((mention) => (
-          <MentionSuggestion key={mention.id} userId={mention.id} />
-        ))}
+        {mentions.map((mention) => {
+          switch (mention.kind) {
+            case "user":
+              return (
+                <UserMentionSuggestion key={mention.id} userId={mention.id} />
+              );
+            case "group":
+              return (
+                <GroupMentionSuggestion key={mention.id} groupId={mention.id} />
+              );
+          }
+        })}
       </Composer.SuggestionsList>
     </Composer.Suggestions>
   );
 }
 
 // Render a single mention suggestion from a `userId`
-function MentionSuggestion({ userId }: { userId: string }) {
+function UserMentionSuggestion({ userId }: { userId: string }) {
   const { user } = useUser(userId);
 
   return (
     <Composer.SuggestionsListItem value={user.id}>
       <img src={user.avatar} alt={user.name} />
       {user.name}
+    </Composer.SuggestionsListItem>
+  );
+}
+
+// Render a single mention suggestion from a `groupId`
+function GroupMentionSuggestion({ groupId }: { groupId: string }) {
+  const { group } = useGroupInfo(groupId);
+
+  return (
+    <Composer.SuggestionsListItem value={group.id}>
+      <img src={group.avatar} alt={group.name} />
+      {group.name}
     </Composer.SuggestionsListItem>
   );
 }
@@ -3071,11 +3092,9 @@ All hooks for Notifications are in
 
 ## Version History
 
-<Banner title="Private beta">
+<Banner title="Contact support for access">
 
-Version history is currently in private beta. If you would like access to the
-beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
-hear from you.
+Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
 
 </Banner>
 

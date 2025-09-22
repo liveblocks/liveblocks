@@ -14,7 +14,7 @@
     "vite-plugin-solid": "^2.11.0"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.3.0",
+    "@liveblocks/client": "^3.7.1",
     "@motionone/solid": "^10.8.1",
     "@solid-primitives/keyed": "^1.0.0",
     "motion": "^10.8.1",

@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^3.2.4",
+    "@sveltejs/adapter-auto": "^6.1.0",
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "autoprefixer": "^10.4.20",
@@ -22,7 +22,7 @@
     "vite": "^5.4.14"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.3.0",
-    "@liveblocks/node": "^3.3.0"
+    "@liveblocks/client": "^3.7.1",
+    "@liveblocks/node": "^3.7.1"
   }
 }

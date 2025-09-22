@@ -3,8 +3,6 @@ import { describe, expect, test } from "vitest";
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "../liveblocks-text-editor";
 import { generateInboxNotificationId } from "./_helpers";
-import { createLexicalMentionNodeWithContext } from "./_lexical-helpers";
-import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers";
 
 describe("liveblocks text editor", () => {
   describe("transform serialized nodes into Liveblocks Text Editor nodes", () => {
@@ -12,14 +10,47 @@ describe("liveblocks text editor", () => {
       const mentionId = generateInboxNotificationId();
       const userId = "user-mina";
 
-      const mentionNodeWithContext = createLexicalMentionNodeWithContext({
-        mentionedUserId: userId,
-        mentionId,
-      });
-
       const nodes = transformAsLiveblocksTextEditorNodes({
         editor: "lexical",
-        mention: mentionNodeWithContext,
+        mention: {
+          before: [
+            {
+              type: "text",
+              group: "text",
+              attributes: {
+                __type: "text",
+                __format: 1,
+                __style: "",
+                __mode: 0,
+                __detail: 0,
+              },
+              text: "Some things to add ",
+            },
+          ],
+          mention: {
+            type: "lb-mention",
+            group: "decorator",
+            attributes: {
+              __type: "lb-mention",
+              __id: mentionId,
+              __userId: userId,
+            },
+          },
+          after: [
+            {
+              type: "text",
+              group: "text",
+              attributes: {
+                __type: "text",
+                __format: 0,
+                __style: "",
+                __mode: 0,
+                __detail: 0,
+              },
+              text: "?",
+            },
+          ],
+        },
       });
 
       const expected: LiveblocksTextEditorNode[] = [
@@ -53,14 +84,47 @@ describe("liveblocks text editor", () => {
       const mentionId = generateInboxNotificationId();
       const userId = "user-dracula";
 
-      const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionedUserId: userId,
-        mentionId,
-      });
-
       const nodes = transformAsLiveblocksTextEditorNodes({
         editor: "tiptap",
-        mention: mentionNodeWithContext,
+        mention: {
+          before: [
+            {
+              type: "text",
+              text: "Hey this a tip tap ",
+            },
+            {
+              type: "text",
+              text: "example",
+              marks: [
+                {
+                  type: "bold",
+                  attrs: {},
+                },
+                {
+                  type: "italic",
+                  attrs: {},
+                },
+              ],
+            },
+            {
+              type: "text",
+              text: " hiha! ",
+            },
+          ],
+          mention: {
+            type: "liveblocksMention",
+            attrs: {
+              id: userId,
+              notificationId: mentionId,
+            },
+          },
+          after: [
+            {
+              type: "text",
+              text: " fun right?",
+            },
+          ],
+        },
       });
 
       const expected: LiveblocksTextEditorNode[] = [

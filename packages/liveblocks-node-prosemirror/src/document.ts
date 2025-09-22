@@ -11,6 +11,7 @@ import { initProseMirrorDoc, updateYFragment } from "y-prosemirror";
 import { applyUpdate, Doc, encodeStateAsUpdate, encodeStateVector } from "yjs";
 
 import { CommentExtension } from "./comment";
+import { GroupMentionExtension } from "./group-mention";
 import { MentionExtension } from "./mention";
 
 export type LiveblocksProsemirrorOptions = {
@@ -40,7 +41,8 @@ export type LiveblocksDocumentApi = {
 const DEFAULT_SCHEMA = getSchema([
   CommentExtension,
   MentionExtension,
-  StarterKit as Extension<StarterKitOptions>, // this as shouldn't be required...
+  StarterKit,
+  GroupMentionExtension,
 ]);
 
 const getLiveblocksDocumentState = async (
