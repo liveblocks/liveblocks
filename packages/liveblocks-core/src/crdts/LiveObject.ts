@@ -458,7 +458,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       modified: {
         node: this,
         type: "LiveObject",
-        updates: { [op.key]: { type: "delete", deletedItem: oldValue } },
+        updates: {
+          [op.key]: { type: "delete", deletedItem: oldValue satisfies Lson },
+        },
       },
       reverse,
     };
@@ -497,8 +499,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   delete(key: keyof O): void {
     this._pool?.assertStorageIsWritable();
     const keyAsString = key as string;
-    const oldValue = this.#map.get(keyAsString);
 
+    const oldValue = this.#map.get(keyAsString);
     if (oldValue === undefined) {
       return;
     }
