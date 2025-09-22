@@ -13,11 +13,11 @@ import {
   type SerializedTiptapMentionData,
 } from "../types";
 
-interface MentionProps extends ReactNodeViewProps<HTMLSpanElement> {
+interface MentionProps {
   mention: MentionData;
   isSelected: boolean;
 }
-interface GroupMentionProps extends ReactNodeViewProps<HTMLSpanElement> {
+interface GroupMentionProps {
   mention: GroupMentionData;
   isSelected: boolean;
 }

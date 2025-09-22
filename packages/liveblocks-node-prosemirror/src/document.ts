@@ -1,10 +1,10 @@
 import type { Liveblocks } from "@liveblocks/node";
-import type { Extension, TextSerializer } from "@tiptap/core";
+import type { TextSerializer } from "@tiptap/core";
 import { getSchema, getText } from "@tiptap/core";
 import type { Node, Schema } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { EditorState } from "@tiptap/pm/state";
-import StarterKit, { type StarterKitOptions } from "@tiptap/starter-kit";
+import StarterKit from "@tiptap/starter-kit";
 import type { MarkdownSerializer } from "prosemirror-markdown";
 import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { initProseMirrorDoc, updateYFragment } from "y-prosemirror";
@@ -146,7 +146,7 @@ export async function withProsemirrorDocument<T>(
       );
     },
     /**
-     * Provide a callback to modify documetns with Lexical's standard api. All calls are discrete.
+     * Provide a callback to modify documetns with prosemirrors's standard api.
      */
     async update(modifyFn) {
       const { ydoc, fragment, state, mapping } = liveblocksState;
@@ -154,7 +154,10 @@ export async function withProsemirrorDocument<T>(
       const beforeVector = encodeStateVector(ydoc);
       const afterState = state.apply(modifyFn(state.doc, state.tr));
       ydoc.transact(() => {
-        updateYFragment(ydoc, fragment, afterState.doc, mapping);
+        updateYFragment(ydoc, fragment, afterState.doc, {
+          mapping,
+          isOMark: new Map(),
+        });
       });
       // grab update after diffing
       const diffUpdate = encodeStateAsUpdate(ydoc, beforeVector);
