@@ -426,7 +426,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const key = op.key;
 
     // If property does not exist, exit without notifying
-    if (this.#map.has(key) === false) {
+    const oldValue = this.#map.get(key);
+    if (oldValue === undefined) {
       return { modified: false };
     }
 
@@ -435,8 +436,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     if (!isLocal && this.#propToLastUpdate.get(key) !== undefined) {
       return { modified: false };
     }
-
-    const oldValue = this.#map.get(key);
 
     const id = nn(this._id);
     let reverse: Op[] = [];
@@ -459,7 +458,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       modified: {
         node: this,
         type: "LiveObject",
-        updates: { [op.key]: { type: "delete" } },
+        updates: { [op.key]: { type: "delete", deletedItem: oldValue } },
       },
       reverse,
     };
@@ -535,7 +534,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
-      updates: { [key]: { type: "delete" } } as {
+      updates: {
+        [key]: { type: "delete", deletedItem: oldValue } satisfies UpdateDelta,
+      } as {
         [K in keyof O]: UpdateDelta;
       },
     });

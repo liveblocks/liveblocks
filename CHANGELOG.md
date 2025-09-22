@@ -1,5 +1,10 @@
 ## v3.8.0
 
+### `@liveblocks/client`
+
+- LiveMap and LiveObject deletions now report which item got deleted in the
+  update notifications. LiveLists already did this.
+
 ### `@liveblocks/react`
 
 - Add new hook

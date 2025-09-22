@@ -13,6 +13,7 @@ import {
   creationOpToLiveNode,
   deserialize,
   isLiveNode,
+  isLiveRegister,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
@@ -207,7 +208,12 @@ export class LiveMap<
     const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
-      updates: { [parentKey]: { type: "delete" } },
+      updates: {
+        [parentKey]: {
+          type: "delete",
+          deletedItem: isLiveRegister(child) ? child.data : child,
+        },
+      },
     };
 
     return { modified: storageUpdate, reverse };
@@ -323,7 +329,12 @@ export class LiveMap<
       storageUpdates.set(thisId, {
         node: this,
         type: "LiveMap",
-        updates: { [key]: { type: "delete" } },
+        updates: {
+          [key]: {
+            type: "delete",
+            deletedItem: isLiveRegister(item) ? item.data : item,
+          },
+        },
       });
       this._pool.dispatch(
         [
