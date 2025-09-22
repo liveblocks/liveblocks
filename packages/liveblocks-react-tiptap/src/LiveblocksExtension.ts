@@ -253,7 +253,9 @@ export const useLiveblocksExtension = (
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
-  return Extension.create<{}, LiveblocksExtensionStorage>({
+  // Tiptap has options default as any, in tiptap2, we could use never, but now we must use any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return Extension.create<any, LiveblocksExtensionStorage>({
     name: "liveblocksExtension",
 
     onCreate() {
@@ -400,7 +402,7 @@ export const useLiveblocksExtension = (
           },
           document: this.storage.doc,
           field: options.field,
-        }) as Extension<CollaborationOptions, CollaborationStorage>, // I don't really think this is needed...
+        }), // I don't really think this is needed...
         CollaborationCursor.configure({
           provider: this.storage.provider,
         }) as Extension<CollaborationCaretOptions>,
