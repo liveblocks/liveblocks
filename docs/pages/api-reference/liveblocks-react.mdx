@@ -2876,15 +2876,15 @@ updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 
 ### useUpdateMyPresence [@badge=RoomProvider]
 
-Returns a setter function to update the current user’s presence.
+Returns a setter function to update the current user's presence.
 
-Use this if you don’t need the current user’s presence in your component, but
-you need to update it (e.g. live cursor). It’s better to use
-`useUpdateMyPresence` because it won’t subscribe your component to get
+Use this if you don't need the current user's presence in your component, but
+you need to update it (e.g. live cursor). It's better to use
+`useUpdateMyPresence` because it won't subscribe your component to get
 rerendered when the presence updates.
 
 Note that the `updateMyPresence` setter function is different to the setter
-function returned by React’s `useState` hook. Instead, you can pass a partial
+function returned by React's `useState` hook. Instead, you can pass a partial
 presence object to `updateMyPresence`, and any changes will be merged into the
 current presence. It will not replace the entire presence object.
 
@@ -2902,6 +2902,10 @@ undo/redo stack. See [`room.history`][] for more information.
 ```ts
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
+
+#### Arguments
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### Returns
 
@@ -3234,6 +3238,10 @@ useEventListener(({ event, user, connectionId }) => {
   }
 });
 ```
+
+#### Arguments
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### Returns
 
