@@ -1755,11 +1755,11 @@ export function createRoom<
         return;
       }
 
-      // NOTE: This strategy is experimental as it will not work in all
-      // situations. It should only be used for broadcasting, presence
-      // updates, or Yjs updates, but isn't suitable for Storage updates
-      // yet (because through this channel the server does not respond
-      // with acks or rejections yet).
+      // NOTE: This strategy is experimental as it will not work in all situations.
+      // It should only be used for broadcasting, presence updates, but isn't suitable
+      // for Storage or Yjs updates yet (because through this channel the server does
+      // not respond with acks or rejections, causing the client's reported status to
+      // be stuck in "synchronizing" forever).
       case "experimental-fallback-to-http": {
         console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
         const nonce =
