@@ -1143,13 +1143,9 @@ import { useClient } from "@liveblocks/react/suspense";
 const client = useClient();
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="client" type="Client">
     The Liveblocks client instance from the nearest LiveblocksProvider.
   </PropertiesListItem>
@@ -1257,9 +1253,7 @@ notifications are not part of rooms, and errors for these will show. See the
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="callback" type="(error: LiveblocksError) => void">
     A callback function that will be called when a Liveblocks error occurs. The error object contains a message and context with error-specific information.
   </PropertiesListItem>
@@ -1463,25 +1457,13 @@ function Inbox() {
 return a loading state and will throw error to the nearest `ErrorBoundary` if
 initial load failed.
 
-#### Arguments
-
-<PropertiesList>
-  <PropertiesListItem name="options" type="UseAiChatsOptions">
-    Optional configuration object for filtering and querying AI chats.
-  </PropertiesListItem>
-</PropertiesList>
-
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="query" type="AiChatsQuery">
     Optional query to filter chats by metadata values or absence of metadata keys.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="chats" type="AiChat[]">
     An array of AI chats created by the current user.
   </PropertiesListItem>
@@ -1543,17 +1525,13 @@ function ChatTitle() {
 }
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="chatId" type="string">
     The ID of the AI chat to retrieve information for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="chat" type="AiChat | null">
     The AI chat object containing title, metadata, and other properties.
   </PropertiesListItem>
@@ -1596,13 +1574,9 @@ createAiChat({
 });
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="createAiChat" type="(chatIdOrOptions: string | CreateAiChatOptions) => AiChat">
     A function that creates an AI chat. Can be called with either a string ID or an options object containing `id`, optional `title`, and optional `metadata`.
   </PropertiesListItem>
@@ -1622,13 +1596,9 @@ const deleteAiChat = useDeleteAiChat();
 deleteAiChat("my-chat-id");
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="deleteAiChat" type="(chatId: string) => void">
     A function that deletes an AI chat by its ID.
   </PropertiesListItem>
@@ -1695,9 +1665,7 @@ const sendAiMessage = useSendAiMessage("my-chat-id");
 const message = sendAiMessage("Hello!");
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="chatId" type="string">
     Optional. The ID of the AI chat to send messages to. Can also be provided when calling the returned function.
   </PropertiesListItem>
@@ -1706,17 +1674,13 @@ const message = sendAiMessage("Hello!");
   </PropertiesListItem>
 </PropertiesList>
 
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="copilotId" type="string">
     Optional. The ID of the copilot to use for sending the message.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="sendAiMessage" type="(messageOrOptions: string | SendAiMessageOptions) => AiChatMessage">
     A function that sends a message to an AI chat. Can be called with either a string message or an options object containing `text`, optional `chatId`, and optional `copilotId`.
   </PropertiesListItem>
@@ -1733,17 +1697,13 @@ import { useAiChatMessages } from "@liveblocks/react";
 const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="chatId" type="string">
     The ID of the AI chat to retrieve messages from.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="messages" type="AiChatMessage[]">
     An array of messages in the AI chat.
   </PropertiesListItem>
@@ -2492,25 +2452,13 @@ import { useRoom } from "@liveblocks/react/suspense";
 const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
 ```
 
-#### Arguments
-
-<PropertiesList>
-  <PropertiesListItem name="options" type="UseRoomOptions">
-    Optional configuration object.
-  </PropertiesListItem>
-</PropertiesList>
-
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="allowOutsideRoom" type="boolean" defaultValue="false">
     Whether the hook should return `null` instead of throwing when used outside of a RoomProvider context.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="room" type="Room">
     The Room instance from the nearest RoomProvider. Returns `null` if `allowOutsideRoom` is `true` and the hook is used outside of a RoomProvider.
   </PropertiesListItem>
@@ -2581,13 +2529,9 @@ contexts.
 <Header />
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="isInsideRoom" type="boolean">
     `true` if the hook was called inside a RoomProvider context, `false` otherwise.
   </PropertiesListItem>
@@ -2607,13 +2551,9 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="status" type="'initial' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected'">
     The current WebSocket connection status of the room.
   </PropertiesListItem>
@@ -2700,25 +2640,19 @@ More specifically, this option triggers when:
 Internally, this option uses the
 [beforeunload event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event).
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="options" type="UseSyncStatusOptions">
     Optional configuration object.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="smooth" type="boolean" defaultValue="false">
     When `true`, prevents quick changes between states by delaying the transition from "synchronizing" to "synchronized" until 1 second has passed after the final change.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="syncStatus" type="'synchronizing' | 'synchronized'">
     The current synchronization status of Liveblocks.
   </PropertiesListItem>
@@ -2760,9 +2694,7 @@ function App() {
 }
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="callback" type="(event: OthersEvent) => void">
     A callback function that is called when an "others" event occurs. The event object contains `type`, `user`, and `others` properties.
   </PropertiesListItem>
@@ -2812,9 +2744,7 @@ Automatically unsubscribes when the component is unmounted.
 
 For a demonstration of this behavior, see our [connection status example][].
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="callback" type="(event: 'lost' | 'restored' | 'failed') => void">
     A callback function that is called when a connection loss event occurs. The event can be "lost", "restored", or "failed".
   </PropertiesListItem>
@@ -2863,9 +2793,7 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="myPresence" type="Presence">
     The current user's presence data.
   </PropertiesListItem>
@@ -2903,13 +2831,9 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="updateMyPresence" type="(patch: Partial<Presence>, options?: { addToHistory?: boolean }) => void">
     A function to update the current user's presence. Accepts a partial presence object and optional history options.
   </PropertiesListItem>
@@ -2939,17 +2863,13 @@ that particular selection changes. For full details, see [how selectors work][].
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(me: User) => T">
     Optional selector function to extract specific data from the current user. If not provided, returns the entire user object.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="currentUser" type="User | T | null">
     The current user object or the selected data from the user. Returns `null` if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3017,9 +2937,7 @@ arguments.
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(others: readonly User[]) => T">
     Optional selector function to extract specific data from the others array. If not provided, returns the entire others array.
   </PropertiesListItem>
@@ -3028,9 +2946,7 @@ arguments.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="others" type="readonly User[] | T | null">
     The others array or the selected data from the others array. Returns `null` if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3087,9 +3003,7 @@ return (
 );
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(other: User) => T">
     A selector function to extract specific data from each user in the others array.
   </PropertiesListItem>
@@ -3098,9 +3012,7 @@ return (
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="others" type="readonly [connectionId: number, data: T][] | null">
     An array of tuples where each item is a pair of `[connectionId, selectedData]`. Returns `null` if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3126,9 +3038,7 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 
 👉 A [Suspense version][] of this hook is also available.
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="connectionIds" type="readonly number[] | null">
     An array of connection IDs for all other users in the room. Returns `null` if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3192,9 +3102,7 @@ function Cursor({ connectionId }) {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="connectionId" type="number">
     The connection ID of the specific user to extract data from.
   </PropertiesListItem>
@@ -3206,9 +3114,7 @@ return `null`.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="data" type="T | null">
     The selected data from the specified user. Returns `null` if the user is not found or not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3239,13 +3145,9 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="broadcast" type="(event: TBroadcastEvent) => void">
     A function that broadcasts custom events to other users in the room.
   </PropertiesListItem>
@@ -3284,9 +3186,7 @@ will typically be equal to one of the others in the room, but it can also be
 
 Automatically unsubscribes when the component is unmounted.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="callback" type="(event: { event: TBroadcastEvent; user: User | null; connectionId: number }) => void">
     A callback function that is called when a custom event is received. The callback receives an object with the event data, user information, and connection ID.
   </PropertiesListItem>
@@ -3521,9 +3421,7 @@ const myTodos = useStorage(
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(root: ToImmutable<TStorage>) => T">
     A selector function to extract specific data from the storage root. The root is an immutable copy of your entire Liveblocks Storage tree.
   </PropertiesListItem>
@@ -3532,9 +3430,7 @@ const myTodos = useStorage(
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="data" type="T | null">
     The selected data from storage. Returns `null` while storage is still loading (in non-Suspense version).
   </PropertiesListItem>
@@ -3550,13 +3446,9 @@ import { useHistory } from "@liveblocks/react/suspense";
 const { undo, redo, pause, resume } = useHistory();
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="history" type="History">
     The room's history object containing methods for undo, redo, pause, and resume operations.
   </PropertiesListItem>
@@ -3573,13 +3465,9 @@ import { useUndo } from "@liveblocks/react/suspense";
 const undo = useUndo();
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="undo" type="() => void">
     A function that undoes the last operation executed by the current client.
   </PropertiesListItem>
@@ -3596,13 +3484,9 @@ import { useRedo } from "@liveblocks/react/suspense";
 const redo = useRedo();
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="redo" type="() => void">
     A function that redoes the last operation executed by the current client.
   </PropertiesListItem>
@@ -3623,13 +3507,9 @@ updateMyPresence({ y: 0 });
 // At the next render, "canUndo" will be true
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="canUndo" type="boolean">
     Whether there are any operations to undo.
   </PropertiesListItem>
@@ -3656,13 +3536,9 @@ undo();
 // At the next render, "canRedo" will be true
 ```
 
-#### Arguments
-
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="canRedo" type="boolean">
     Whether there are any operations to redo.
   </PropertiesListItem>
@@ -3806,9 +3682,7 @@ the dependency arrays of your `useMutation` calls:
 }
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="mutationFn" type="(context: MutationContext, ...args: TArgs) => void">
     A function that performs mutations on Liveblocks state. The context provides access to `storage`, `setMyPresence`, `self`, and `others`.
   </PropertiesListItem>
@@ -3817,9 +3691,7 @@ the dependency arrays of your `useMutation` calls:
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="mutate" type="(...args: TArgs) => void">
     A memoized callback function that executes the mutation. Can accept additional arguments that are passed to the mutation function.
   </PropertiesListItem>
@@ -4014,17 +3886,13 @@ const { threads } = useThreads({ scrollOnLoad: false });
 return a loading state and will throw error to the nearest `ErrorBoundary` if
 initial load failed.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="options" type="UseThreadsOptions">
     Optional configuration object.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="query" type="ThreadsQuery">
     Optional query to filter threads by resolved status and metadata values.
   </PropertiesListItem>
@@ -4033,9 +3901,7 @@ initial load failed.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="threads" type="ThreadData[]">
     An array of threads within the current room.
   </PropertiesListItem>
@@ -4086,9 +3952,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="createThread" type="(options: CreateThreadOptions) => ThreadData">
     A function that creates a thread with an initial comment and optional metadata. Returns the optimistic thread object.
   </PropertiesListItem>
@@ -4121,9 +3985,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="deleteThread" type="(threadId: string) => void">
     A function that deletes a thread and all its associated comments by ID.
   </PropertiesListItem>
@@ -4162,9 +4024,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="editThreadMetadata" type="(options: { threadId: string; metadata: ThreadMetadata }) => void">
     A function that edits a thread's metadata. To delete an existing metadata property, set its value to `null`.
   </PropertiesListItem>
@@ -4196,9 +4056,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="markThreadAsResolved" type="(threadId: string) => void">
     A function that marks a thread as resolved.
   </PropertiesListItem>
@@ -4230,9 +4088,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="markThreadAsUnresolved" type="(threadId: string) => void">
     A function that marks a thread as unresolved.
   </PropertiesListItem>
@@ -4249,9 +4105,7 @@ const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="markThreadAsRead" type="(threadId: string) => void">
     A function that marks a thread as read.
   </PropertiesListItem>
@@ -4275,17 +4129,13 @@ const { status, subscribe, unsubscribe, unreadSince } =
 [`useUnsubscribeFromThread`](#useUnsubscribeFromThread), but they only affect
 the current thread.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="threadId" type="string">
     The ID of the thread to get subscription status for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="status" type="ThreadSubscriptionStatus">
     The subscription status of the thread ('subscribed', 'unsubscribed', or 'not_subscribed').
   </PropertiesListItem>
@@ -4349,9 +4199,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="subscribeToThread" type="(threadId: string) => void">
     A function that subscribes the current user to a thread for inbox notifications.
   </PropertiesListItem>
@@ -4406,9 +4254,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="unsubscribeFromThread" type="(threadId: string) => void">
     A function that unsubscribes the current user from a thread, stopping inbox notifications.
   </PropertiesListItem>
@@ -4444,9 +4290,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="createComment" type="(options: CreateCommentOptions) => CommentData">
     A function that adds a comment to a thread. Returns the optimistic comment object.
   </PropertiesListItem>
@@ -4483,9 +4327,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="editComment" type="(options: EditCommentOptions) => void">
     A function that edits a comment's body and attachments.
   </PropertiesListItem>
@@ -4518,9 +4360,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="deleteComment" type="(options: { threadId: string; commentId: string }) => void">
     A function that deletes a comment. If it is the last non-deleted comment, the thread also gets deleted.
   </PropertiesListItem>
@@ -4554,9 +4394,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="addReaction" type="(options: { threadId: string; commentId: string; emoji: string }) => void">
     A function that adds a reaction to a comment.
   </PropertiesListItem>
@@ -4590,9 +4428,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="removeReaction" type="(options: { threadId: string; commentId: string; emoji: string }) => void">
     A function that removes a reaction from a comment.
   </PropertiesListItem>
@@ -4611,17 +4447,13 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there's an error.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="attachmentId" type="string">
     The ID of the attachment to get a presigned URL for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="url" type="string | null">
     The presigned URL for the attachment, or null if not yet loaded.
   </PropertiesListItem>
@@ -4816,25 +4648,19 @@ function Inbox() {
 return a loading state and will throw error to the nearest ErrorBoundary if
 initial load failed.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="options" type="UseInboxNotificationsOptions">
     Optional configuration object.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="query" type="InboxNotificationsQuery">
     Optional query to filter notifications by room ID or kind.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
     An array of inbox notifications for the current user.
   </PropertiesListItem>
@@ -4889,25 +4715,19 @@ const { count } = useUnreadInboxNotificationsCount({
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw when there's an error.
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="options" type="UseUnreadInboxNotificationsCountOptions">
     Optional configuration object.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="query" type="InboxNotificationsQuery">
     Optional query to filter notifications count by room ID or kind.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="count" type="number">
     The number of unread inbox notifications for the current user.
   </PropertiesListItem>
@@ -4946,9 +4766,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="markInboxNotificationAsRead" type="(inboxNotificationId: string) => void">
     A function that marks an inbox notification as read for the current user.
   </PropertiesListItem>
@@ -4980,9 +4798,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="markAllInboxNotificationsAsRead" type="() => void">
     A function that marks all of the current user's inbox notifications as read.
   </PropertiesListItem>
@@ -5014,9 +4830,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="deleteInboxNotification" type="(inboxNotificationId: string) => void">
     A function that deletes an inbox notification for the current user.
   </PropertiesListItem>
@@ -5047,9 +4861,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="deleteAllInboxNotifications" type="() => void">
     A function that deletes all of the current user's inbox notifications.
   </PropertiesListItem>
@@ -5079,17 +4891,13 @@ notification ID you passed to it, without any fetching or waterfalls.
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="inboxNotificationId" type="string">
     The ID of the inbox notification to get the associated thread for. Must be a "thread" type notification.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="thread" type="ThreadData | null">
     The thread associated with the inbox notification, or null if not found.
   </PropertiesListItem>
@@ -5128,9 +4936,7 @@ For `"textMentions"`, these are the two possible values that can be set:
 - `"mine"` Receive notifications for mentions of you.
 - `"none"` No notifications are received.
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="settings" type="RoomSubscriptionSettings">
     The current subscription settings for the room.
   </PropertiesListItem>
@@ -5206,9 +5012,7 @@ useErrorListener((error) => {
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="updateRoomSubscriptionSettings" type="(settings: Partial<RoomSubscriptionSettings>) => void">
     A function that updates the user's notification settings for the current room.
   </PropertiesListItem>
@@ -5339,9 +5143,7 @@ if (error) {
 return a loading state and will throw and error to the nearest `ErrorBoundary`
 if initial load failed.
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="settings" type="NotificationSettings | null">
     The current notification settings for the user, or null if no settings are configured.
   </PropertiesListItem>
@@ -5415,9 +5217,7 @@ updateSettings({
 });
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="updateNotificationSettings" type="(settings: Partial<NotificationSettings>) => void">
     A function that updates the user's notification settings for the current project.
   </PropertiesListItem>
@@ -5443,9 +5243,7 @@ import { useHistoryVersions } from "@liveblocks/react";
 const { versions, error, isLoading } = useHistoryVersions();
 ```
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="versions" type="HistoryVersion[]">
     An array of history versions for the room.
   </PropertiesListItem>
@@ -5479,17 +5277,13 @@ To use `useUser`, you should provide a resolver function to the
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="userId" type="string">
     The ID of the user to get information for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="user" type="User | null">
     The user information, or null if not found.
   </PropertiesListItem>
@@ -5521,17 +5315,13 @@ To use `useRoomInfo`, you should provide a resolver function to the
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="roomId" type="string">
     The ID of the room to get information for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="info" type="RoomInfo | null">
     The room information, or null if not found.
   </PropertiesListItem>
@@ -5564,17 +5354,13 @@ To use `useGroupInfo`, you should provide a resolver function to the
 
 </Banner>
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="groupId" type="string">
     The ID of the group to get information for.
   </PropertiesListItem>
 </PropertiesList>
 
-#### Returns
-
-<PropertiesList>
+<PropertiesList title="Returns">
   <PropertiesListItem name="info" type="GroupInfo | null">
     The group information, or null if not found.
   </PropertiesListItem>

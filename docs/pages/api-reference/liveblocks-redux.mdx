@@ -32,17 +32,7 @@ const store = configureStore({
 });
 ```
 
-#### Arguments
-
-<PropertiesList>
-  <PropertiesListItem name="options" type="LiveblocksEnhancerOptions">
-    Configuration object for the Liveblocks enhancer.
-  </PropertiesListItem>
-</PropertiesList>
-
-#### Options
-
-<PropertiesList>
+<PropertiesList title="Options">
   <PropertiesListItem name="client" type="Client">
     The Liveblocks client instance created with `createClient()`.
   </PropertiesListItem>
@@ -154,9 +144,7 @@ const dispatch = useDispatch();
 dispatch(actions.enterRoom("roomId"));
 ```
 
-#### Arguments
-
-<PropertiesList>
+<PropertiesList title="Arguments">
   <PropertiesListItem name="roomId" type="string">
     The ID of the room to enter.
   </PropertiesListItem>
@@ -175,8 +163,6 @@ const dispatch = useDispatch();
 
 dispatch(actions.leaveRoom());
 ```
-
-#### Arguments
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
