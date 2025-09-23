@@ -18,10 +18,7 @@ import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
-import Collaboration, {
-  type CollaborationOptions,
-  type CollaborationStorage,
-} from "@tiptap/extension-collaboration";
+import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor, {
   type CollaborationCaretOptions,
 } from "@tiptap/extension-collaboration-caret";
