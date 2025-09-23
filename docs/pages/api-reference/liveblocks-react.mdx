@@ -4202,7 +4202,7 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   if (error.context.case === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
-    const { inboxNotificationId } = error.context;
+    const { inboxNotificationId, roomId } = error.context;
     console.log(`Problem marking notification as read ${inboxNotificationId}`);
   }
 });
@@ -4369,7 +4369,7 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
-    const { roomId, settings } = error.context;
+    const { roomId } = error.context;
     console.log(`Problem updating subscription settings for room ${roomId}`);
   }
 });
