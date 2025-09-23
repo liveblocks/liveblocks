@@ -626,13 +626,7 @@
       },
       {
         "title": "Schema validation",
-        "path": "/platform/schema-validation",
-        "routes": [
-          {
-            "title": "Syntax",
-            "path": "/platform/schema-validation/syntax"
-          }
-        ]
+        "path": "/platform/schema-validation"
       },
       {
         "title": "Account management",

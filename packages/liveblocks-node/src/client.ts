@@ -1092,7 +1092,7 @@ export class Liveblocks {
   /**
    * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
    * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the Liveblocks schema syntax.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created schema.
    */
@@ -1151,7 +1151,7 @@ export class Liveblocks {
   /**
    * Updates the body for the schema. A schema can only be updated if it is not used by any room.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the Liveblocks schema syntax.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated schema. The version of the schema will be incremented.
    */
