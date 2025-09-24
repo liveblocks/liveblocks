@@ -3,6 +3,8 @@ import { defaultLiveblocksVitestConfig } from "@liveblocks/vitest-config";
 
 export default defaultLiveblocksVitestConfig({
   test: {
+    silent: "passed-only",
+
     // Only run e2e/* tests, not the "normal" tests in src/*
     include: ["e2e/**/*.test.*"],
 
