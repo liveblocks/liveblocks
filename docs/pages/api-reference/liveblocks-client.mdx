@@ -2876,6 +2876,37 @@ const threads = await room.getThreads({
 });
 ```
 
+You can also filter for metadata using numeric operators.
+
+```ts
+// Creating a thread with `{ posX: 87, level: 5 } metadata
+await room.createThread({
+  body: {
+    // ...
+  },
+  // +++
+  metadata: { posX: 87, level: 5 },
+  // +++
+});
+
+// Filtering for threads with `posX` greater than 50 and lower than 100, and level greater than or equal to 5
+const threads = await room.getThreads({
+  query: {
+    // +++
+    metadata: {
+      posX: {
+        greaterThan: 50,
+        lowerThan: 100,
+      },
+      level: {
+        greaterThanOrEqual: 5,
+      },
+    },
+    // +++
+  },
+});
+```
+
 ### Room.getThreadsSince
 
 Returns threads, and their associated inbox notifications and subscriptions,

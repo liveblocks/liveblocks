@@ -3416,7 +3416,9 @@ function Component() {
 It’s possible to return threads that match a certain query with the `query`
 option. You can filter threads based on their resolved status, and metadata.
 Additionally, you can filter for metadata strings that being with certain
-characters using `startsWith`. Returned threads match the entire query.
+characters using `startsWith` and you can filter for metadata numbers using
+`greaterThan`, `lowerThan`, `greaterThanOrEqual`, and `lowerThanOrEqual`.
+Returned threads match the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -3434,6 +3436,17 @@ const { threads } = useThreads({
       // Filter for threads with string metadata that starts with a certain value
       organization: {
         startsWith: "liveblocks:",
+      },
+
+      // Filter for threads with number metadata that is greater than 50 and lower than 100
+      posX: {
+        greaterThan: 50,
+        lowerThan: 100,
+      },
+
+      // Filter for threads with number metadata that is greater than or equal to 5
+      level: {
+        greaterThanOrEqual: 5,
       },
     },
   },
