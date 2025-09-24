@@ -1,4 +1,5 @@
-import { expect, test } from "vitest";
+import { assertEq } from "tosti";
+import { test } from "vitest";
 
 import { LiveMap } from "../src/crdts/LiveMap";
 import type { Immutable } from "../src/types/Immutable";
@@ -20,7 +21,7 @@ test(
       root.get("map").set("key", "b");
 
       await flushSocketMessages();
-      expect(states).toEqual([
+      assertEq(states, [
         { map: new Map([["key", "a"]]) },
         { map: new Map([["key", "b"]]) },
       ]);

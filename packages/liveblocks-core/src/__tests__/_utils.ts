@@ -1,3 +1,4 @@
+import { assertEq, assertSame } from "tosti";
 import { expect, onTestFinished, vi } from "vitest";
 
 import { createApiClient } from "../api-client";
@@ -246,12 +247,12 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     wss,
 
     expectStorage: (data: ToImmutable<S>) =>
-      expect(storage.root.toImmutable()).toEqual(data),
+      expect(storage.root.toImmutable()).toEqual(data), // XXX Support Map in tosti
 
     expectMessagesSent: (
       messages: (ClientMsg<JsonObject, Json> | ClientMsg<JsonObject, Json>[])[]
     ) => {
-      expect(wss.receivedMessages).toEqual(messages);
+      assertEq(wss.receivedMessages, messages);
     },
 
     applyRemoteOperations: (ops: Op[]) =>
@@ -359,9 +360,10 @@ export async function prepareStorageTest<
   const states: ToImmutable<S>[] = [];
 
   function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
-    expect(subject.storage.root.toImmutable()).toEqual(data);
-    expect(ref.storage.root.toImmutable()).toEqual(data);
-    expect(subject.room[kInternal].nodeCount).toBe(
+    expect(subject.storage.root.toImmutable()).toEqual(data); // XXX Support Map in tosti
+    expect(ref.storage.root.toImmutable()).toEqual(data); // XXX Support Map in tosti
+    assertSame(
+      subject.room[kInternal].nodeCount,
       ref.room[kInternal].nodeCount
     );
   }
@@ -400,7 +402,7 @@ export async function prepareStorageTest<
     );
 
     // It should be identical before/after
-    expect(before).toEqual(after);
+    assertEq(before, after);
 
     for (let i = 0; i < states.length - 1; i++) {
       subject.room.history.undo();
@@ -528,8 +530,8 @@ export async function prepareStorageUpdateTest<
   );
 
   function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
-    expect(jsonUpdates).toEqual(updates);
-    expect(refJsonUpdates).toEqual(updates);
+    assertEq(jsonUpdates, updates);
+    assertEq(refJsonUpdates, updates);
   }
 
   return {
@@ -565,7 +567,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   );
 
   function expectUpdates(updates: JsonStorageUpdate[][]) {
-    expect(receivedUpdates).toEqual(updates);
+    assertEq(receivedUpdates, updates);
   }
 
   return {

@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { assertEq } from "tosti";
+import { describe, test } from "vitest";
 
 import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
@@ -39,7 +40,7 @@ describe("getTreesDiffOperations", () => {
 
     const ops = getTreesDiffOperations(currentItems, newItems);
 
-    expect(ops).toEqual([
+    assertEq(ops, [
       {
         type: OpCode.CREATE_REGISTER,
         id: "1:1",
@@ -79,7 +80,7 @@ describe("getTreesDiffOperations", () => {
 
     const ops = getTreesDiffOperations(currentItems, newItems);
 
-    expect(ops).toEqual([
+    assertEq(ops, [
       {
         type: OpCode.DELETE_CRDT,
         id: "0:2",
@@ -136,7 +137,7 @@ describe("getTreesDiffOperations", () => {
 
     const ops = getTreesDiffOperations(currentItems, newItems);
 
-    expect(ops).toEqual([
+    assertEq(ops, [
       {
         type: OpCode.DELETE_CRDT,
         id: "0:2",
@@ -224,7 +225,7 @@ describe("getTreesDiffOperations", () => {
 
     const ops = getTreesDiffOperations(currentItems, newItems);
 
-    expect(ops).toEqual([
+    assertEq(ops, [
       {
         type: OpCode.UPDATE_OBJECT,
         id: "0:1",
@@ -257,9 +258,9 @@ describe("findNonSerializableValue", () => {
     ]) {
       const result = findNonSerializableValue(value);
       if (result) {
-        expect(result.path).toEqual(expectedPath);
+        assertEq(result.path, expectedPath);
       } else {
-        expect(result).toEqual(false);
+        assertEq(result, false);
       }
     }
   });
@@ -271,7 +272,7 @@ describe("toPlainLson", () => {
       fruits: ["strawberry", "apple", "mango"],
       vegetables: { broccoli: "delicious", spinach: "also tasty" },
     };
-    expect(toPlainLson(mockPlainObject)).toEqual(mockPlainObject);
+    assertEq(toPlainLson(mockPlainObject), mockPlainObject);
   });
 
   test("toPlainLson with a liveStructure object should return plain lson object", () => {
@@ -298,7 +299,7 @@ describe("toPlainLson", () => {
       },
     };
 
-    expect(toPlainLson(mockLsonObject)).toEqual(plainLsonValue);
+    assertEq(toPlainLson(mockLsonObject), plainLsonValue);
   });
 
   // See https://github.com/liveblocks/liveblocks/issues/1304
@@ -320,6 +321,6 @@ describe("toPlainLson", () => {
       },
     };
 
-    expect(toPlainLson(mockLsonObject)).toEqual(plainLsonValue);
+    assertEq(toPlainLson(mockLsonObject), plainLsonValue);
   });
 });

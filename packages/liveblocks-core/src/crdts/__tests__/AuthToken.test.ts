@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { assertEq, assertThrows } from "tosti";
+import { describe, test } from "vitest";
 
 import { parseAuthToken } from "../../protocol/AuthToken";
 
@@ -17,7 +18,7 @@ describe("parseRoomAuthToken", () => {
 
   test("should parse a valid (legacy) token", () => {
     const { parsed } = parseAuthToken(exampleLegacyToken);
-    expect(parsed).toEqual({
+    assertEq(parsed, {
       k: "sec-legacy",
       actor: 1,
       appId: "6241cb95ed687d5de5aaa132",
@@ -32,7 +33,7 @@ describe("parseRoomAuthToken", () => {
 
   test("should parse a valid (id) token", () => {
     const { parsed } = parseAuthToken(exampleIdToken);
-    expect(parsed).toEqual({
+    assertEq(parsed, {
       exp: 1690033619,
       gids: [],
       iat: 1690033614,
@@ -45,7 +46,7 @@ describe("parseRoomAuthToken", () => {
 
   test("should parse a valid (access) token", () => {
     const { parsed } = parseAuthToken(exampleAccessToken);
-    expect(parsed).toEqual({
+    assertEq(parsed, {
       k: "acc",
       exp: 1690033526,
       iat: 1690033521,
@@ -59,14 +60,9 @@ describe("parseRoomAuthToken", () => {
   });
 
   test("should throw if token is not a valid token", () => {
-    try {
-      parseAuthToken(exampleInvalidJwtToken);
-    } catch (error) {
-      expect(error).toEqual(
-        new Error(
-          "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
-        )
-      );
-    }
+    assertThrows(
+      () => parseAuthToken(exampleInvalidJwtToken),
+      "Authentication error: expected a valid token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
+    );
   });
 });

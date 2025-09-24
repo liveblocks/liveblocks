@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { assertEq, assertSame, assertThrows, literally } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import {
   createSerializedList,
@@ -23,73 +24,73 @@ describe("LiveMap", () => {
   describe("not attached", () => {
     test("basic operations with LiveObjects", () => {
       const map = new LiveMap([["first" as string, new LiveObject({ a: 0 })]]);
-      expect(map.get("first")?.get("a")).toBe(0);
+      assertSame(map.get("first")?.get("a"), 0);
 
       map.set("second", new LiveObject({ a: 1 }));
       map.set("third", new LiveObject({ a: 2 }));
-      expect(map.get("second")?.get("a")).toBe(1);
+      assertSame(map.get("second")?.get("a"), 1);
 
-      expect(map.delete("first")).toBe(true);
-      expect(map.delete("unknown")).toBe(false);
+      assertSame(map.delete("first"), true);
+      assertSame(map.delete("unknown"), false);
 
-      expect(map.has("first")).toBe(false);
-      expect(map.has("second")).toBe(true);
+      assertSame(map.has("first"), false);
+      assertSame(map.has("second"), true);
 
-      expect(map.size).toBe(2);
+      assertSame(map.size, 2);
 
       const entries = Array.from(map.entries());
-      expect(entries.length).toBe(2);
-      expect(entries[0][0]).toBe("second");
-      expect(entries[0][1].get("a")).toBe(1);
-      expect(entries[1][0]).toBe("third");
-      expect(entries[1][1].get("a")).toBe(2);
+      assertSame(entries.length, 2);
+      assertSame(entries[0][0], "second");
+      assertSame(entries[0][1].get("a"), 1);
+      assertSame(entries[1][0], "third");
+      assertSame(entries[1][1].get("a"), 2);
 
       const keys = Array.from(map.keys());
-      expect(keys).toEqual(["second", "third"]);
+      assertEq(keys, ["second", "third"]);
 
       const values = Array.from(map.values());
-      expect(values.length).toBe(2);
-      expect(values[0].get("a")).toBe(1);
-      expect(values[1].get("a")).toBe(2);
+      assertSame(values.length, 2);
+      assertSame(values[0].get("a"), 1);
+      assertSame(values[1].get("a"), 2);
 
       const asArray = Array.from(map);
-      expect(asArray.length).toBe(2);
-      expect(asArray[0][0]).toBe("second");
-      expect(asArray[0][1].get("a")).toBe(1);
-      expect(asArray[1][0]).toBe("third");
-      expect(asArray[1][1].get("a")).toBe(2);
+      assertSame(asArray.length, 2);
+      assertSame(asArray[0][0], "second");
+      assertSame(asArray[0][1].get("a"), 1);
+      assertSame(asArray[1][0], "third");
+      assertSame(asArray[1][1].get("a"), 2);
     });
 
     test("basic operations with native objects", () => {
       const map = new LiveMap<string, { a: number }>([["first", { a: 0 }]]);
-      expect(map.get("first")).toEqual({ a: 0 });
+      assertEq(map.get("first"), { a: 0 });
 
       map.set("second", { a: 1 });
       map.set("third", { a: 2 });
-      expect(map.get("second")?.a).toBe(1);
+      assertSame(map.get("second")?.a, 1);
 
-      expect(map.delete("first")).toBe(true);
-      expect(map.delete("unknown")).toBe(false);
+      assertSame(map.delete("first"), true);
+      assertSame(map.delete("unknown"), false);
 
-      expect(map.has("first")).toBe(false);
-      expect(map.has("second")).toBe(true);
+      assertSame(map.has("first"), false);
+      assertSame(map.has("second"), true);
 
-      expect(map.size).toBe(2);
+      assertSame(map.size, 2);
 
       const entries = Array.from(map.entries());
-      expect(entries).toEqual([
+      assertEq(entries, [
         ["second", { a: 1 }],
         ["third", { a: 2 }],
       ]);
 
       const keys = Array.from(map.keys());
-      expect(keys).toEqual(["second", "third"]);
+      assertEq(keys, ["second", "third"]);
 
       const values = Array.from(map.values());
-      expect(values).toEqual([{ a: 1 }, { a: 2 }]);
+      assertEq(values, [{ a: 1 }, { a: 2 }]);
 
       const asArray = Array.from(map);
-      expect(asArray).toEqual([
+      assertEq(asArray, [
         ["second", { a: 1 }],
         ["third", { a: 2 }],
       ]);
@@ -106,7 +107,7 @@ describe("LiveMap", () => {
 
     const root = storage.root;
     const map = root.toObject().map;
-    expect(Array.from(map.entries())).toEqual([]);
+    assertEq(Array.from(map.entries()), []);
     expectStorage({ map: new Map() });
   });
 
@@ -123,7 +124,8 @@ describe("LiveMap", () => {
     );
 
     const map = storage.root.get("map");
-    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrow(
+    assertThrows(
+      () => map.set("key", new LiveObject({ a: 0 })),
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -142,13 +144,19 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.get("map");
 
-    expect(
-      Array.from(map.entries()).map((entry) => [entry[0], entry[1].toObject()])
-    ).toMatchObject([
-      ["first", { a: 0 }],
-      ["second", { a: 1 }],
-      ["third", { a: 2 }],
-    ]);
+    assertEq(
+      Object.fromEntries(
+        Array.from(map.entries()).map((entry) => [
+          entry[0],
+          entry[1].toObject(),
+        ])
+      ),
+      {
+        first: { a: 0 },
+        second: { a: 1 },
+        third: { a: 2 },
+      }
+    );
 
     expectStorage({
       map: new Map([
@@ -215,7 +223,8 @@ describe("LiveMap", () => {
       );
 
       const map = storage.root.get("map");
-      expect(() => map.delete("key")).toThrow(
+      assertThrows(
+        () => map.delete("key"),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -284,9 +293,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(room[kInternal].nodeCount).toBe(3);
-      expect(map.delete("first")).toBe(true);
-      expect(room[kInternal].nodeCount).toBe(2);
+      assertSame(room[kInternal].nodeCount, 3);
+      assertSame(map.delete("first"), true);
+      assertSame(room[kInternal].nodeCount, 2);
 
       expectStorage({
         map: new Map(),
@@ -314,9 +323,9 @@ describe("LiveMap", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      expect(room[kInternal].nodeCount).toBe(4);
-      expect(map.delete("first")).toBe(true);
-      expect(room[kInternal].nodeCount).toBe(2);
+      assertSame(room[kInternal].nodeCount, 4);
+      assertSame(map.delete("first"), true);
+      assertSame(room[kInternal].nodeCount, 2);
 
       expectStorage({
         map: new Map(),
@@ -347,7 +356,7 @@ describe("LiveMap", () => {
 
       map.delete("first");
 
-      expect(keys).toEqual(["second"]);
+      assertEq(keys, ["second"]);
     });
 
     test("should call subscribe when key is deleted", async () => {
@@ -371,8 +380,8 @@ describe("LiveMap", () => {
 
       map.delete("first");
 
-      expect(fn).toHaveBeenCalledTimes(1);
-      expect(fn.mock.calls[0][0]).toBe(map);
+      assertEq(fn.mock.calls.length, 1);
+      assertSame(fn.mock.calls[0][0], map);
     });
 
     test("should not call subscribe when key is not deleted", async () => {
@@ -396,7 +405,7 @@ describe("LiveMap", () => {
 
       map.delete("unknown");
 
-      expect(fn).toHaveBeenCalledTimes(0);
+      assertEq(fn.mock.calls.length, 0);
     });
   });
 
@@ -441,7 +450,10 @@ describe("LiveMap", () => {
     const object = new LiveObject({ a: 0 });
 
     map.set("first", object);
-    expect(() => map.set("second", object)).toThrow();
+    assertThrows(
+      () => map.set("second", object),
+      "Cannot attach node: already attached"
+    );
   });
 
   test("new Map with already attached live object should throw", async () => {
@@ -454,7 +466,10 @@ describe("LiveMap", () => {
     const child = new LiveObject({ a: 0 });
     root.update({ child });
 
-    expect(() => new LiveMap([["first", child]])).toThrow();
+    assertThrows(
+      () => new LiveMap([["first", child]]),
+      "Cannot set parent: node already has a parent"
+    );
   });
 
   test("map.set live object on existing key", async () => {
@@ -607,8 +622,7 @@ describe("LiveMap", () => {
 
       liveMap.set("a", "av");
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(liveMap);
+      assertEq(callback.mock.calls, [[literally(liveMap)]]);
     });
 
     test("deep subscribe", async () => {
@@ -638,13 +652,18 @@ describe("LiveMap", () => {
 
       mapElement?.set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: mapElement,
-          updates: { a: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: mapElement,
+              updates: { a: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
   });
@@ -706,17 +725,21 @@ describe("LiveMap", () => {
         ]),
       });
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
-
-      expect(rootDeepCallback).toHaveBeenCalledWith([
-        {
-          type: "LiveMap",
-          node: listItems,
-          updates: { second: { type: "update" } },
-        },
+      assertEq(rootDeepCallback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveMap",
+              node: listItems,
+              updates: { second: { type: "update" } },
+            },
+          ],
+        ],
       ]);
 
-      expect(mapCallback).toHaveBeenCalledTimes(1);
+      assertEq(mapCallback.mock.calls.length, 1);
     });
   });
 
@@ -739,7 +762,7 @@ describe("LiveMap", () => {
 
       const applyResult = map._detachChild(secondItem!);
 
-      expect(applyResult).toEqual({
+      assertEq(applyResult, {
         modified: {
           node: map,
           type: "LiveMap",

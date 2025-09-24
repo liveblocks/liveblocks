@@ -1,3 +1,4 @@
+import { assertEq, assertSame } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import { AiChatDB } from "../../AiChatDB";
@@ -40,7 +41,7 @@ describe("AiChatDB", () => {
     db.upsert(c);
 
     const ids = db.findMany({}).map((ch) => ch.id);
-    expect(ids).toEqual(["c", "b", "a"]);
+    assertEq(ids, ["c", "b", "a"]);
   });
 
   test("tie-breaker: same timestamps are ordered by id (descending)", () => {
@@ -59,7 +60,7 @@ describe("AiChatDB", () => {
 
     const ids = db.findMany({}).map((ch) => ch.id);
     // With equal createdAt, comparator places higher id first
-    expect(ids).toEqual(["b", "a"]);
+    assertEq(ids, ["b", "a"]);
   });
 
   test("markDeleted removes from sorted list but keeps in map (getEvenIfDeleted)", () => {
@@ -67,19 +68,22 @@ describe("AiChatDB", () => {
     const x = dummyAiChatData({ id: "x" });
     db.upsert(x);
 
-    expect(db.findMany({}).map((c) => c.id)).toEqual(["x"]);
+    assertEq(
+      db.findMany({}).map((c) => c.id),
+      ["x"]
+    );
 
     db.markDeleted("x");
 
-    expect(db.findMany({})).toEqual([]);
+    assertEq(db.findMany({}), []);
     const stored = db.getEvenIfDeleted("x");
-    expect(stored?.id).toBe("x");
+    assertSame(stored?.id, "x");
     expect(stored?.deletedAt).toBeDefined();
 
     // Re-marking a deleted chat is a no-op
     const deletedAt = stored!.deletedAt;
     db.markDeleted("x");
-    expect(db.getEvenIfDeleted("x")?.deletedAt).toBe(deletedAt);
+    assertSame(db.getEvenIfDeleted("x")?.deletedAt, deletedAt);
   });
 
   test("upsert of a previously deleted chat id is ignored", () => {
@@ -96,10 +100,10 @@ describe("AiChatDB", () => {
       dummyAiChatData({ id: "y", createdAt: iso("2025-01-01T00:00:00Z") })
     );
 
-    expect(db.findMany({})).toEqual([]); // still excluded from list
+    assertEq(db.findMany({}), []); // still excluded from list
     const stored = db.getEvenIfDeleted("y");
     expect(stored?.deletedAt).toBeDefined();
-    expect(stored?.createdAt).toBe(iso("2024-01-01T00:00:00Z"));
+    assertSame(stored?.createdAt, iso("2024-01-01T00:00:00Z"));
   });
 
   test("upserting a chat already deleted (incoming deletedAt) stores in map but not in list", () => {
@@ -110,7 +114,7 @@ describe("AiChatDB", () => {
     });
     db.upsert(z);
 
-    expect(db.findMany({})).toEqual([]);
+    assertEq(db.findMany({}), []);
     expect(db.getEvenIfDeleted("z")?.deletedAt).toBeDefined();
   });
 
@@ -129,7 +133,7 @@ describe("AiChatDB", () => {
       );
 
       const ids = db.findMany({}).map((c) => c.id);
-      expect(ids.sort()).toEqual(["m1", "m2", "m3"].sort());
+      assertEq(ids.sort(), ["m1", "m2", "m3"].sort());
     });
 
     test("string exact match for single metadata key", () => {
@@ -143,7 +147,7 @@ describe("AiChatDB", () => {
 
       const ids = db.findMany({ metadata: { tag: "urgent" } }).map((c) => c.id);
       // Only s1 matches exactly; s4 has array and should NOT match string
-      expect(ids).toEqual(["s1"]);
+      assertEq(ids, ["s1"]);
     });
 
     test("array requires all values present and metadata value must be an array", () => {
@@ -164,7 +168,7 @@ describe("AiChatDB", () => {
         .findMany({ metadata: { tag: ["urgent", "p1"] } })
         .map((c) => c.id)
         .sort();
-      expect(ids).toEqual(["a1"].sort());
+      assertEq(ids, ["a1"].sort());
     });
 
     test("null means key must be absent", () => {
@@ -176,7 +180,7 @@ describe("AiChatDB", () => {
       const ids = db
         .findMany({ metadata: { archived: null } })
         .map((c) => c.id);
-      expect(ids.sort()).toEqual(["n1"].sort());
+      assertEq(ids.sort(), ["n1"].sort());
     });
 
     test("multiple metadata keys are AND-ed", () => {
@@ -203,7 +207,7 @@ describe("AiChatDB", () => {
       const ids = db
         .findMany({ metadata: { team: "alpha", tag: ["urgent", "p1"] } })
         .map((c) => c.id);
-      expect(ids).toEqual(["m1"]);
+      assertEq(ids, ["m1"]);
     });
 
     test("filter respects sorting order of results", () => {
@@ -232,7 +236,7 @@ describe("AiChatDB", () => {
       db.upsert(dummyAiChatData({ id: "r4", metadata: { tag: ["y"] } }));
 
       const ids = db.findMany({ metadata: { tag: ["x"] } }).map((c) => c.id);
-      expect(ids).toEqual(["r2", "r3", "r1"]);
+      assertEq(ids, ["r2", "r3", "r1"]);
     });
   });
 });

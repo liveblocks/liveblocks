@@ -1,14 +1,15 @@
-import { describe, expect, test } from "vitest";
+import { assertEq, assertThrows } from "tosti";
+import { describe, test } from "vitest";
 
 import { freeze } from "../freeze";
 
 describe("freeze", () => {
   test("freezes objects", () => {
     const x = freeze({ a: 1 }) as Record<string, unknown>;
-    expect(() => {
+    assertThrows(() => {
       x.b = 2;
-    }).toThrow();
-    expect(x.a).toEqual(1);
-    expect(x.b).toBeUndefined();
+    }, "Cannot add property b, object is not extensible");
+    assertEq(x.a, 1);
+    assertEq(x.b, undefined);
   });
 });

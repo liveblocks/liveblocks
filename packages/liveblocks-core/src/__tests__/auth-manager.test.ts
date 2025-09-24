@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { assertEq, assertSame } from "tosti";
 import {
   afterAll,
   afterEach,
@@ -27,8 +28,8 @@ describe("auth-manager - public api key", () => {
       roomId: "room1",
     })) as { type: "public"; publicApiKey: string };
 
-    expect(authValue.type).toEqual("public");
-    expect(authValue.publicApiKey).toEqual("pk_123");
+    assertEq(authValue.type, "public");
+    assertEq(authValue.publicApiKey, "pk_123");
   });
 });
 
@@ -126,9 +127,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValue.type).toEqual("secret");
-    expect(authValue.token.raw).toEqual(legacyTokens[0]);
-    expect(requestCount).toBe(1);
+    assertEq(authValue.type, "secret");
+    assertEq(authValue.token.raw, legacyTokens[0]);
+    assertSame(requestCount, 1);
   });
 
   test("should deduplicate concurrent requests on same room", async () => {
@@ -147,9 +148,9 @@ describe("auth-manager - secret auth", () => {
       }),
     ]);
 
-    expect(results[0].type).toEqual("secret");
-    expect(results[1].type).toEqual("secret");
-    expect(requestCount).toBe(1);
+    assertEq(results[0].type, "secret");
+    assertEq(results[1].type, "secret");
+    assertSame(requestCount, 1);
   });
 
   test("should not deduplicate concurrent requests on different room", async () => {
@@ -168,9 +169,9 @@ describe("auth-manager - secret auth", () => {
       }),
     ]);
 
-    expect(results[0].type).toEqual("secret");
-    expect(results[1].type).toEqual("secret");
-    expect(requestCount).toBe(2);
+    assertEq(results[0].type, "secret");
+    assertEq(results[1].type, "secret");
+    assertSame(requestCount, 2);
   });
 
   test("should never use cache when using legacy token", async () => {
@@ -188,9 +189,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
-    expect(authValueReq2.token.raw).toEqual(legacyTokens[1]);
-    expect(requestCount).toBe(2);
+    assertEq(authValueReq1.token.raw, legacyTokens[0]);
+    assertEq(authValueReq2.token.raw, legacyTokens[1]);
+    assertSame(requestCount, 2);
   });
 
   test("should throw if legacy token is expired but the next fetch from the backend returns the same (expired) token", async () => {
@@ -203,13 +204,14 @@ describe("auth-manager - secret auth", () => {
       roomId: "room1",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(legacyTokens[0]);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, legacyTokens[0]);
+    assertSame(requestCount, 1);
 
     // Five hours later, this token should be expired. For ID and access tokens, that mweans
     vi.useFakeTimers();
     vi.setSystemTime(Date.now() + 5 * HOURS);
     try {
+      // XXX Figure out how to support .rejects.toThrow() with assertThrows
       const $promise = expect(
         authManager.getAuthValue({
           requestedScope: "room:read",
@@ -223,7 +225,7 @@ describe("auth-manager - secret auth", () => {
       await $promise;
 
       // This made a new HTTP request
-      expect(requestCount).toBe(2);
+      assertSame(requestCount, 2);
     } finally {
       vi.useRealTimers();
     }
@@ -244,9 +246,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room2",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, accessToken);
+    assertEq(authValueReq2.token.raw, accessToken);
+    assertSame(requestCount, 1);
   });
 
   test("when no roomId, should use cache when access token has correct permissions", async () => {
@@ -262,9 +264,9 @@ describe("auth-manager - secret auth", () => {
       requestedScope: "comments:read",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(accessTokenWildcardCommentsRead);
-    expect(authValueReq2.token.raw).toEqual(accessTokenWildcardCommentsRead);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, accessTokenWildcardCommentsRead);
+    assertEq(authValueReq2.token.raw, accessTokenWildcardCommentsRead);
+    assertSame(requestCount, 1);
   });
 
   test("when no roomId, should use cache when access token has correct permissions (higher level)", async () => {
@@ -280,9 +282,9 @@ describe("auth-manager - secret auth", () => {
       requestedScope: "comments:read",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, accessToken);
+    assertEq(authValueReq2.token.raw, accessToken);
+    assertSame(requestCount, 1);
   });
 
   test("when no roomId, should use cache when access token has no permission", async () => {
@@ -298,9 +300,9 @@ describe("auth-manager - secret auth", () => {
       requestedScope: "comments:read",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(accessTokenWithNoPermission);
-    expect(authValueReq2.token.raw).toEqual(accessTokenWithNoPermission);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, accessTokenWithNoPermission);
+    assertEq(authValueReq2.token.raw, accessTokenWithNoPermission);
+    assertSame(requestCount, 1);
   });
 
   test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {
@@ -318,9 +320,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "org1.room2",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(accessToken);
-    expect(authValueReq2.token.raw).toEqual(accessToken);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, accessToken);
+    assertEq(authValueReq2.token.raw, accessToken);
+    assertSame(requestCount, 1);
 
     // Five hours later, this token should be expired and no longer be served
     // from cache...
@@ -328,6 +330,7 @@ describe("auth-manager - secret auth", () => {
     vi.setSystemTime(Date.now() + 5 * HOURS);
     try {
       // Should throw because this mock will return the exact same (expired) token
+      // XXX Figure out how to support .rejects.toThrow() with assertThrows
       const $promise = expect(
         authManager.getAuthValue({
           requestedScope: "room:read",
@@ -341,7 +344,7 @@ describe("auth-manager - secret auth", () => {
       await $promise;
 
       // This made a new HTTP request
-      expect(requestCount).toBe(2);
+      assertSame(requestCount, 2);
     } finally {
       vi.useRealTimers();
     }
@@ -362,9 +365,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "room2",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(idToken);
-    expect(authValueReq2.token.raw).toEqual(idToken);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, idToken);
+    assertEq(authValueReq2.token.raw, idToken);
+    assertSame(requestCount, 1);
   });
 
   test("should throw if ID token is expired but the next fetch from the backend returns the same (expired) token", async () => {
@@ -382,9 +385,9 @@ describe("auth-manager - secret auth", () => {
       roomId: "room2",
     })) as { type: "secret"; token: ParsedAuthToken };
 
-    expect(authValueReq1.token.raw).toEqual(idToken);
-    expect(authValueReq2.token.raw).toEqual(idToken);
-    expect(requestCount).toBe(1);
+    assertEq(authValueReq1.token.raw, idToken);
+    assertEq(authValueReq2.token.raw, idToken);
+    assertSame(requestCount, 1);
 
     // Five hours later, this token should be expired and no longer be served
     // from cache...
@@ -392,6 +395,7 @@ describe("auth-manager - secret auth", () => {
     vi.setSystemTime(Date.now() + 5 * HOURS);
     try {
       // Should throw because this mock will return the exact same (expired) token
+      // XXX Figure out how to support .rejects.toThrow() with assertThrows
       const $promise = expect(
         authManager.getAuthValue({
           requestedScope: "room:read",
@@ -405,7 +409,7 @@ describe("auth-manager - secret auth", () => {
       await $promise;
 
       // This made a new HTTP request
-      expect(requestCount).toBe(2);
+      assertSame(requestCount, 2);
     } finally {
       vi.useRealTimers();
     }
@@ -422,6 +426,7 @@ describe("auth-manager - secret auth", () => {
           }),
       });
 
+      // XXX Figure out how to support .rejects.toThrow() with assertThrows
       await expect(
         authManager.getAuthValue({
           requestedScope: "room:read",
@@ -439,6 +444,7 @@ describe("auth-manager - secret auth", () => {
         Promise.resolve({ error: "forbidden", reason: "Nope" }),
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",
@@ -452,6 +458,7 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: (_roomId) => Promise.reject(new Error("Huh?")),
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",
@@ -465,6 +472,7 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/api/403",
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",
@@ -480,6 +488,7 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/api/401-with-details",
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",
@@ -495,6 +504,7 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/api/not-json",
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",
@@ -510,6 +520,7 @@ describe("auth-manager - secret auth", () => {
       authEndpoint: "/api/missing-token",
     });
 
+    // XXX Figure out how to support .rejects.toThrow() with assertThrows
     await expect(
       authManager.getAuthValue({
         requestedScope: "room:read",

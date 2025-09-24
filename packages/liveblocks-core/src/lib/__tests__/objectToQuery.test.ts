@@ -1,7 +1,8 @@
 /* eslint-disable quotes */
 import { QueryParser } from "@liveblocks/query-parser";
 import * as fc from "fast-check";
-import { describe, expect, test } from "vitest";
+import { assertEq } from "tosti";
+import { describe, test } from "vitest";
 
 import { objectToQuery, quote } from "../objectToQuery";
 
@@ -11,7 +12,7 @@ describe("objectToQuery", () => {
       org: "liveblocks:engineering",
     });
 
-    expect(query).toEqual("org:'liveblocks:engineering'");
+    assertEq(query, "org:'liveblocks:engineering'");
   });
 
   test("should convert a nested object with operator to a query", () => {
@@ -21,7 +22,7 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual("org^'liveblocks:'");
+    assertEq(query, "org^'liveblocks:'");
   });
 
   test("should convert an indexed field object to a query", () => {
@@ -36,7 +37,8 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual(
+    assertEq(
+      query,
       "metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
     );
   });
@@ -57,7 +59,8 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual(
+    assertEq(
+      query,
       "resolved:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
     );
   });
@@ -79,9 +82,7 @@ describe("objectToQuery", () => {
 
     const expectedValue = quote(value);
 
-    expect(query).toEqual(
-      `org:${expectedValue} metadata['org']:${expectedValue}`
-    );
+    assertEq(query, `org:${expectedValue} metadata['org']:${expectedValue}`);
   });
 
   test("will only generate syntactically valid queries", () =>
@@ -124,7 +125,7 @@ describe("objectToQuery", () => {
           });
 
           ctx.log(`Generated query that did not parse was: →${query}←`);
-          expect(() => parser.parse(query)).not.toThrow();
+          parser.parse(query);
         }
       )
     ));
@@ -134,65 +135,65 @@ describe("objectToQuery", () => {
     const SQ = "'";
     const DQ = '"';
     const NEWLINE = "\n";
-    expect(BS.length).toEqual(1);
-    expect(NEWLINE.length).toEqual(1);
-    expect(SQ.length).toEqual(1);
-    expect(DQ.length).toEqual(1);
+    assertEq(BS.length, 1);
+    assertEq(NEWLINE.length, 1);
+    assertEq(SQ.length, 1);
+    assertEq(DQ.length, 1);
 
     {
       const query = objectToQuery({
         metadata: { foo: BS },
       });
-      expect(query).toEqual(`metadata['foo']:'${BS}${BS}'`);
+      assertEq(query, `metadata['foo']:'${BS}${BS}'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: BS + NEWLINE },
       });
-      expect(query).toEqual(`metadata['foo']:'${BS}${BS}${BS}n'`);
+      assertEq(query, `metadata['foo']:'${BS}${BS}${BS}n'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: BS + "n" },
       });
-      expect(query).toEqual(`metadata['foo']:'${BS}${BS}n'`);
+      assertEq(query, `metadata['foo']:'${BS}${BS}n'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: BS + "x" },
       });
-      expect(query).toEqual(`metadata['foo']:'${BS}${BS}x'`);
+      assertEq(query, `metadata['foo']:'${BS}${BS}x'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: DQ },
       });
-      expect(query).toEqual(`metadata['foo']:'"'`);
+      assertEq(query, `metadata['foo']:'"'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: BS + SQ },
       });
-      expect(query).toEqual(`metadata['foo']:"${BS}${BS}'"`);
+      assertEq(query, `metadata['foo']:"${BS}${BS}'"`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: BS + DQ },
       });
-      expect(query).toEqual(`metadata['foo']:'${BS}${BS}"'`);
+      assertEq(query, `metadata['foo']:'${BS}${BS}"'`);
     }
 
     {
       const query = objectToQuery({
         metadata: { foo: SQ },
       });
-      expect(query).toEqual(`metadata['foo']:"'"`);
+      assertEq(query, `metadata['foo']:"'"`);
     }
   });
 
@@ -208,7 +209,7 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual(`metadata[${quote(key)}]:'value'`);
+    assertEq(query, `metadata[${quote(key)}]:'value'`);
   });
 
   test("should avoid injections", () => {
@@ -218,7 +219,7 @@ describe("objectToQuery", () => {
     const query2 = objectToQuery({ foo: "' OR evil:'" });
     //                                  ^^^^^^^^^^^^^ Injection attack with single-quoted strings
 
-    expect(query1).toEqual("foo:'\" OR evil:\"'");
-    expect(query2).toEqual("foo:\"' OR evil:'\"");
+    assertEq(query1, "foo:'\" OR evil:\"'");
+    assertEq(query2, "foo:\"' OR evil:'\"");
   });
 });

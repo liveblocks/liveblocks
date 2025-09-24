@@ -1,5 +1,7 @@
+import { assertEq, assertSame, assertThrows } from "tosti";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
+import { assertDoesntThrow } from "../../__tests__/_tostiHelpers";
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
@@ -21,7 +23,7 @@ import { LiveObject } from "../LiveObject";
 describe("LiveObject", () => {
   describe("roomId", () => {
     test("should be null for orphan", () => {
-      expect(new LiveObject().roomId).toBeNull();
+      assertEq(new LiveObject().roomId, null);
     });
 
     test("should be the associated room id if attached", async () => {
@@ -30,7 +32,7 @@ describe("LiveObject", () => {
         1
       );
 
-      expect(root.roomId).toBe("room-id");
+      assertSame(root.roomId, "room-id");
     });
 
     test("should be null after being detached", async () => {
@@ -46,11 +48,11 @@ describe("LiveObject", () => {
 
       const child = root.get("child");
 
-      expect(child.roomId).toBe("room-id");
+      assertSame(child.roomId, "room-id");
 
       root.set("child", new LiveObject({ a: 1 }));
 
-      expect(child.roomId).toBe(null);
+      assertSame(child.roomId, null);
     });
   });
 
@@ -91,7 +93,8 @@ describe("LiveObject", () => {
       [Permission.Read, Permission.PresenceWrite]
     );
 
-    expect(() => storage.root.update({ a: 1 })).toThrow(
+    assertThrows(
+      () => storage.root.update({ a: 1 }),
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -156,7 +159,8 @@ describe("LiveObject", () => {
       [Permission.Read, Permission.PresenceWrite]
     );
 
-    expect(() => storage.root.set("a", 1)).toThrow(
+    assertThrows(
+      () => storage.root.set("a", 1),
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -181,7 +185,7 @@ describe("LiveObject", () => {
         a: 0,
       },
     });
-    expect(room[kInternal].undoStack[0]).toEqual([
+    assertEq(room[kInternal].undoStack[0], [
       {
         type: OpCode.UPDATE_OBJECT,
         id: "0:0",
@@ -191,8 +195,8 @@ describe("LiveObject", () => {
       },
     ]);
 
-    expect(operations.length).toEqual(1);
-    expect(operations).toEqual([
+    assertEq(operations.length, 1);
+    assertEq(operations, [
       {
         type: OpCode.CREATE_OBJECT,
         id: "1:0",
@@ -208,7 +212,7 @@ describe("LiveObject", () => {
     expectStorage({
       child: null,
     });
-    expect(room[kInternal].undoStack[1]).toEqual([
+    assertEq(room[kInternal].undoStack[1], [
       {
         type: OpCode.CREATE_OBJECT,
         id: "1:0",
@@ -251,7 +255,7 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(room[kInternal].nodeCount).toBe(1);
+    assertSame(room[kInternal].nodeCount, 1);
 
     assertUndoRedo();
   });
@@ -279,7 +283,7 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(room[kInternal].nodeCount).toBe(1);
+    assertSame(room[kInternal].nodeCount, 1);
 
     assertUndoRedo();
   });
@@ -300,7 +304,7 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(room[kInternal].nodeCount).toBe(2);
+    assertSame(room[kInternal].nodeCount, 2);
 
     assertUndoRedo();
   });
@@ -331,7 +335,7 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(room[kInternal].nodeCount).toBe(2);
+    assertSame(room[kInternal].nodeCount, 2);
 
     assertUndoRedo();
   });
@@ -427,7 +431,7 @@ describe("LiveObject", () => {
         items.set("b", "A");
       });
 
-      expect(items.toObject()).toEqual({ a: "A", b: "A" });
+      assertEq(items.toObject(), { a: "A", b: "A" });
       expectUpdates([
         [
           objectUpdate(
@@ -439,7 +443,7 @@ describe("LiveObject", () => {
 
       room.history.undo();
 
-      expect(items.toObject()).toEqual({ a: "B" });
+      assertEq(items.toObject(), { a: "B" });
       expectUpdates([
         [
           objectUpdate(
@@ -562,7 +566,8 @@ describe("LiveObject", () => {
         [Permission.Read, Permission.PresenceWrite]
       );
 
-      expect(() => storage.root.get("child").delete("a")).toThrow(
+      assertThrows(
+        () => storage.root.get("child").delete("a"),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -570,7 +575,7 @@ describe("LiveObject", () => {
     test("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");
-      expect(liveObject.get("a")).toBe(undefined);
+      assertSame(liveObject.get("a"), undefined);
     });
 
     test("should delete property from the object", async () => {
@@ -613,7 +618,7 @@ describe("LiveObject", () => {
 
       root.delete("a");
 
-      expect(callback).toHaveBeenCalledTimes(0);
+      assertEq(callback.mock.calls.length, 0);
     });
 
     test("should notify if property has been deleted", async () => {
@@ -626,7 +631,7 @@ describe("LiveObject", () => {
 
       root.delete("a");
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
     });
   });
 
@@ -644,7 +649,7 @@ describe("LiveObject", () => {
         { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
       ]);
 
-      expect(callback).toHaveBeenCalledTimes(0);
+      assertEq(callback.mock.calls.length, 0);
     });
 
     test("should notify if property has been deleted", async () => {
@@ -660,7 +665,7 @@ describe("LiveObject", () => {
         { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
       ]);
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
     });
   });
 
@@ -679,7 +684,7 @@ describe("LiveObject", () => {
 
       root.set("a", 1);
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith(storage.root);
     });
 
@@ -710,7 +715,7 @@ describe("LiveObject", () => {
 
       root.get("child").set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith(root.get("child"));
     });
 
@@ -739,7 +744,7 @@ describe("LiveObject", () => {
 
       root.get("child").set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(2);
+      assertEq(callback.mock.calls.length, 2);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
@@ -793,7 +798,7 @@ describe("LiveObject", () => {
 
       root.get("child").set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(2);
+      assertEq(callback.mock.calls.length, 2);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
@@ -853,7 +858,7 @@ describe("LiveObject", () => {
 
       root.get("child").get("subchild").set("b", 2);
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith(root.get("child").get("subchild"));
     });
 
@@ -888,7 +893,7 @@ describe("LiveObject", () => {
 
       unsubscribe();
 
-      expect(callback).toHaveBeenCalledTimes(2);
+      assertEq(callback.mock.calls.length, 2);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
@@ -947,7 +952,7 @@ describe("LiveObject", () => {
         obj: { a: 2 },
       });
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+      assertEq(rootDeepCallback.mock.calls.length, 1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
@@ -957,7 +962,7 @@ describe("LiveObject", () => {
         },
       ]);
 
-      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
+      assertEq(liveObjectCallback.mock.calls.length, 1);
     });
 
     test("LiveObject updated nested", async () => {
@@ -1009,7 +1014,7 @@ describe("LiveObject", () => {
         obj: { a: 1, subObj: { b: 1 } },
       });
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+      assertEq(rootDeepCallback.mock.calls.length, 1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
@@ -1021,7 +1026,7 @@ describe("LiveObject", () => {
         },
       ]);
 
-      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
+      assertEq(liveObjectCallback.mock.calls.length, 1);
     });
   });
 
@@ -1069,7 +1074,7 @@ describe("LiveObject", () => {
 
       const applyResult = obj._detachChild(secondItem);
 
-      expect(applyResult).toEqual({
+      assertEq(applyResult, {
         modified: {
           node: obj,
           type: "LiveObject",
@@ -1122,9 +1127,9 @@ describe("LiveObject", () => {
       const largeData = createLargeData(150 * 1024); // 150KB - exceeds 128KB limit
 
       // This should NOT throw since LiveObject.detectLargeObjects property is disabled
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("largeString", largeData);
-      }).not.toThrow();
+      });
     });
 
     test("should throw when LiveObject.detectLargeObjects property is enabled and size exceeds 128KB", () => {
@@ -1135,9 +1140,9 @@ describe("LiveObject", () => {
       const largeData = createLargeData(150 * 1024); // 150KB - exceeds 128KB limit
 
       // This should throw since LiveObject.detectLargeObjects property is enabled and data exceeds limit
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("largeString", largeData);
-      }).toThrow(/LiveObject size exceeded limit.*bytes/);
+      }, /LiveObject size exceeded limit.*bytes/);
     });
 
     test("should NOT throw when LiveObject.detectLargeObjects property is enabled but size is within limit", () => {
@@ -1148,9 +1153,9 @@ describe("LiveObject", () => {
       const smallData = createLargeData(50 * 1024); // 50KB - within 128KB limit
 
       // This should NOT throw since data is within limit
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("smallString", smallData);
-      }).not.toThrow();
+      });
     });
 
     test("should exclude Live structure references from size calculation", () => {
@@ -1168,9 +1173,9 @@ describe("LiveObject", () => {
       liveObject.set("liveList", liveList);
 
       // Now set large static data - should still throw because static data exceeds limit
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("largeString", largeData);
-      }).toThrow(/LiveObject size exceeded limit/);
+      }, /LiveObject size exceeded limit/);
 
       // But if we only have the Live structure and small static data, it should be fine
       const liveObject2 = new LiveObject<{
@@ -1180,9 +1185,9 @@ describe("LiveObject", () => {
       const liveList2 = new LiveList<string>([]);
       liveObject2.set("liveList", liveList2);
 
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject2.set("smallString", "small data");
-      }).not.toThrow();
+      });
     });
 
     test("should throw when accumulating many small properties exceeds 128KB limit", () => {
@@ -1200,14 +1205,14 @@ describe("LiveObject", () => {
       }
 
       // This should still work (total ~120KB)
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("stillOk", "small");
-      }).not.toThrow();
+      });
 
       // Now add one more 10KB property that pushes us over 128KB
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("finalProp", smallData); // This should push us over the limit
-      }).toThrow(/LiveObject size exceeded limit/);
+      }, /LiveObject size exceeded limit/);
     });
 
     test("should correctly handle mixed small properties and Live structures", () => {
@@ -1232,14 +1237,14 @@ describe("LiveObject", () => {
 
       // Add another Live structure - should still be fine
       const liveList3 = new LiveList<boolean>([]);
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("list3", liveList3);
-      }).not.toThrow();
+      });
 
       // Now add static data that pushes us over the limit
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("finalData", mediumData); // 20KB more = 140KB total
-      }).toThrow(/LiveObject size exceeded limit/);
+      }, /LiveObject size exceeded limit/);
     });
 
     test("should handle the exact boundary case at 128KB", () => {
@@ -1253,14 +1258,14 @@ describe("LiveObject", () => {
       const exactData = createLargeData(128 * 1024 - 100); // Slightly under 128KB to account for JSON structure
 
       // This should work (just under limit)
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("almostFull", exactData);
-      }).not.toThrow();
+      });
 
       // Now try to add even a tiny bit more
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("overflow", "x".repeat(200)); // Small amount that pushes over
-      }).toThrow(/LiveObject size exceeded limit/);
+      }, /LiveObject size exceeded limit/);
     });
 
     test("should allow many small properties when total stays under limit", () => {
@@ -1274,15 +1279,15 @@ describe("LiveObject", () => {
 
       // Add 100 properties of 1KB each = 100KB total (well under limit)
       for (let i = 0; i < 100; i++) {
-        expect(() => {
+        assertDoesntThrow(() => {
           liveObject.set(`tiny${i}`, tinyData);
-        }).not.toThrow();
+        });
       }
 
       // Should still have room for more
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("moreTiny", tinyData);
-      }).not.toThrow();
+      });
     });
 
     test("should handle performance optimization boundary correctly", () => {
@@ -1296,15 +1301,15 @@ describe("LiveObject", () => {
       const asciiData = "a".repeat(33000); // 33KB of ASCII (when multiplied by 4 = 132KB > 128KB)
 
       // This should NOT throw because actual UTF-8 encoding is much smaller than the upper bound
-      expect(() => {
+      assertDoesntThrow(() => {
         liveObject.set("asciiTest", asciiData);
-      }).not.toThrow();
+      });
 
       // But if we have actual large data that exceeds the limit, it should throw
       const reallyLargeData = createLargeData(140 * 1024); // 140KB
-      expect(() => {
+      assertThrows(() => {
         liveObject.set("reallyLarge", reallyLargeData);
-      }).toThrow(/LiveObject size exceeded limit/);
+      }, /LiveObject size exceeded limit/);
     });
   });
 });

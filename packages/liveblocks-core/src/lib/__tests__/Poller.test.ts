@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { assertEq } from "tosti";
+import { afterEach, beforeEach, describe, test, vi } from "vitest";
 
 import { makePoller } from "../Poller";
 
@@ -22,7 +23,7 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(1000);
 
     // Expect the callback to be called after the interval
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
   });
 
   test("should stop the poller when condition is false", async () => {
@@ -36,7 +37,7 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(3000);
 
     // Expect the callback not to be called since the poller was stopped
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
   });
 
   test("should also stop the poller when visibility state is false", async () => {
@@ -50,7 +51,7 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(3000);
 
     // Expect the callback not to be called since the poller was stopped
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
   });
 
   test("should trigger a poll as soon as visibility state is toggled before stale time", async () => {
@@ -59,12 +60,12 @@ describe("Poller", () => {
 
     poller.inc();
     poller.setInForeground(false);
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     await vi.advanceTimersByTimeAsync(400);
     poller.setInForeground(true); // Becoming visible should instantly trigger a poll
 
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     poller.dec();
   });
@@ -75,12 +76,12 @@ describe("Poller", () => {
 
     poller.inc();
     poller.setInForeground(false);
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     await vi.advanceTimersByTimeAsync(600);
     poller.setInForeground(true); // Becoming visible should instantly trigger a poll
 
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     poller.dec();
   });
@@ -104,14 +105,14 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(2000); // Move from 0s -> 2s on the timeline
 
     // The async callback should have been called (even though it hasn't finished yet)
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     // Fast-forward another 2000ms, the callback should be invoked again
     await vi.advanceTimersByTimeAsync(1000); // Move from 2s -> 3s
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     await vi.advanceTimersByTimeAsync(1000); // Move from 3s -> 4s (where Poll 2 should happen)
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
   });
 
   test("should not start polling if already running", async () => {
@@ -125,7 +126,7 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(3000);
 
     // Expect callback to be called only 3 times (once per interval)
-    expect(callback).toHaveBeenCalledTimes(3);
+    assertEq(callback.mock.calls.length, 3);
   });
 
   test("should handle enable/disable toggle", async () => {
@@ -136,13 +137,13 @@ describe("Poller", () => {
 
     // Fast-forward 1500ms (should call callback once after 1000ms)
     await vi.advanceTimersByTimeAsync(1500);
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     poller.dec(); // Stop polling
 
     // Fast-forward another 1500ms (no more polling)
     await vi.advanceTimersByTimeAsync(1500);
-    expect(callback).toHaveBeenCalledTimes(1); // No more calls
+    assertEq(callback.mock.calls.length, 1); // No more calls
   });
 
   test("should keep the original polling schedule, even when disabled half-way", async () => {
@@ -159,7 +160,7 @@ describe("Poller", () => {
     await vi.advanceTimersByTimeAsync(3000);
     poller.inc();
     poller.dec();
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // Forward 6s -> 11s and start the poller
     await vi.advanceTimersByTimeAsync(5000);
@@ -168,7 +169,7 @@ describe("Poller", () => {
 
     // A poll should now immediately happen (because it's been past 10 seconds
     // mark since the poller was originally started)
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
   });
 
   test("should not allow explicit poll when disabled", async () => {
@@ -180,7 +181,7 @@ describe("Poller", () => {
 
     // Fast-forward well beyond when the first poll is triggered
     await vi.advanceTimersByTimeAsync(100_000);
-    expect(callback).toHaveBeenCalledTimes(0); // Should not poll, since polling is disabled
+    assertEq(callback.mock.calls.length, 0); // Should not poll, since polling is disabled
   });
 
   test("should poll immediately if stale (when called before first poll, short stale time)", async () => {
@@ -194,16 +195,16 @@ describe("Poller", () => {
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
     poller.inc(); // Start polling
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // We're still before the first poll here
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // Bring to foreground to trigger a poll right now
     poller.setInForeground(true);
 
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     // 0s        2s                         7s
     // |---------|--------------------------|
@@ -213,16 +214,16 @@ describe("Poller", () => {
 
     // Advance to what originally was the time the 1st poll
     await vi.advanceTimersByTimeAsync(3000); // Move from 2s -> 5s
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     await vi.advanceTimersByTimeAsync(2000); // Move from 5s -> 7s
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     await vi.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     await vi.advanceTimersByTimeAsync(2000); // Move from 10s -> 12s
-    expect(callback).toHaveBeenCalledTimes(3);
+    assertEq(callback.mock.calls.length, 3);
   });
 
   test("should poll immediately if stale (when called before first poll, but with larger stale time)", async () => {
@@ -236,17 +237,17 @@ describe("Poller", () => {
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 3000 });
 
     poller.inc(); // Start polling
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // We're still before the first poll here
     await vi.advanceTimersByTimeAsync(4000);
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // Bring to foreground to trigger a poll right now
     // Since we're currently at 4s (= beyond the stale time of 3s), a poll should happen
     poller.setInForeground(true);
 
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     // 0s            4s                                 9s
     // |--------------|---------------------------------|
@@ -256,16 +257,16 @@ describe("Poller", () => {
 
     // Advance to what originally was the time the 1st poll
     await vi.advanceTimersByTimeAsync(1000); // Move from 4s -> 5s
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     await vi.advanceTimersByTimeAsync(2000); // Move from 5s -> 7s
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     await vi.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s (crosses the 9s mark, so polls)
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     await vi.advanceTimersByTimeAsync(2000); // Move from 10s -> 12s
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
   });
 
   test("should poll immediately if stale (when called between two polls)", async () => {
@@ -279,16 +280,16 @@ describe("Poller", () => {
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
     poller.inc(); // Start polling
-    expect(callback).toHaveBeenCalledTimes(0);
+    assertEq(callback.mock.calls.length, 0);
 
     // Advance to beyond the 1st and 2nd poll
     await vi.advanceTimersByTimeAsync(7000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1 has happened
+    assertEq(callback.mock.calls.length, 1); // Poll 1 has happened
 
     // Bring to foreground to trigger a poll right now
     poller.setInForeground(true);
 
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     // 0s                         5s        7s                         12s
     // |--------------------------|---------|--------------------------|
@@ -298,10 +299,10 @@ describe("Poller", () => {
 
     // Advance to what originally was the time the second poll should happen
     await vi.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     await vi.advanceTimersByTimeAsync(3000); // Move from 10s -> 12s
-    expect(callback).toHaveBeenCalledTimes(3);
+    assertEq(callback.mock.calls.length, 3);
   });
 
   test("should not poll if a poll is already in progress", async () => {
@@ -323,20 +324,20 @@ describe("Poller", () => {
 
     // Fast-forward to 5s on the timeline (to trigger Poll 1)
     await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).toHaveBeenCalledTimes(1); // Only one call since the poll is still in progress
+    assertEq(callback.mock.calls.length, 1); // Only one call since the poll is still in progress
 
     // Bring to foreground to trigger a poll right now
     poller.setInForeground(true);
 
-    expect(callback).toHaveBeenCalledTimes(1); // Still only one call
+    assertEq(callback.mock.calls.length, 1); // Still only one call
 
     // Since no forced poll happened, the original natural polling schedule is intact
     // Forward to 11s to verify
     await vi.advanceTimersByTimeAsync(5000); // Forward from 5s -> 10s
-    expect(callback).toHaveBeenCalledTimes(1); // Still only one call
+    assertEq(callback.mock.calls.length, 1); // Still only one call
 
     await vi.advanceTimersByTimeAsync(1000); // Forward from 10s -> 11s (when Poll 2 should happen)
-    expect(callback).toHaveBeenCalledTimes(2); // Still only one call
+    assertEq(callback.mock.calls.length, 2); // Still only one call
   });
 
   test("should not poll if not stale", async () => {
@@ -356,7 +357,7 @@ describe("Poller", () => {
 
     // Fast-forward to 5s
     await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+    assertEq(callback.mock.calls.length, 1); // Poll 1
 
     // Fast-forward from 5s -> 6s
     await vi.advanceTimersByTimeAsync(1000);
@@ -366,7 +367,7 @@ describe("Poller", () => {
 
     // Fast-forward from 6s -> 10s
     await vi.advanceTimersByTimeAsync(4000);
-    expect(callback).toHaveBeenCalledTimes(2); // Poll 2
+    assertEq(callback.mock.calls.length, 2); // Poll 2
   });
 
   test("should force an immediate poll after markAsStale is called", async () => {
@@ -387,7 +388,7 @@ describe("Poller", () => {
 
     // Fast-forward to 5s
     await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+    assertEq(callback.mock.calls.length, 1); // Poll 1
 
     // Fast-forward from 5s -> 6s
     await vi.advanceTimersByTimeAsync(1000);
@@ -395,11 +396,11 @@ describe("Poller", () => {
     // Mark as stale and poll
     poller.markAsStale();
     poller.pollNowIfStale(); // Should force a poll, ignoring maxStaleTimeMs since it was marked as stale
-    expect(callback).toHaveBeenCalledTimes(2); // Forced poll 2
+    assertEq(callback.mock.calls.length, 2); // Forced poll 2
 
     // Fast-forward from 6s -> 11s
     await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).toHaveBeenCalledTimes(3); // Poll 3
+    assertEq(callback.mock.calls.length, 3); // Poll 3
   });
 
   test("should allow new polls when re-enabled, but not schedule extra polls after completion of an in-progress poll", async () => {
@@ -414,7 +415,7 @@ describe("Poller", () => {
 
     // Fast-forward to 1s when the first poll is triggered
     await vi.advanceTimersByTimeAsync(1000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1 starts
+    assertEq(callback.mock.calls.length, 1); // Poll 1 starts
     await vi.advanceTimersByTimeAsync(1000); // Poll 1 still in progress
 
     // Disable and enable while Poll 1 is still in progress
@@ -422,16 +423,16 @@ describe("Poller", () => {
     poller.inc();
 
     await vi.advanceTimersByTimeAsync(1000); // Poll 1 finished
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     await vi.advanceTimersByTimeAsync(1000); // Poll 2 starts
     poller.dec();
     await vi.advanceTimersByTimeAsync(2000); // Poll 2 finishes
 
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     await vi.advanceTimersByTimeAsync(10000);
-    expect(callback).toHaveBeenCalledTimes(2); // No new polls are getting scheduled
+    assertEq(callback.mock.calls.length, 2); // No new polls are getting scheduled
   });
 
   test("should abort long running ongoing poll", async () => {
@@ -447,12 +448,12 @@ describe("Poller", () => {
 
     // Fast-forward to 5s (polling interval)
     await vi.advanceTimersByTimeAsync(5000);
-    expect(callback).toHaveBeenCalledTimes(1);
+    assertEq(callback.mock.calls.length, 1);
 
     // Advance by 30s (which is longer than the time the poller callback takes to complete) and verify the signal was aborted
     await vi.advanceTimersByTimeAsync(30_000);
     const [signal] = callback.mock.calls[0];
-    expect(signal.aborted).toBe(true);
+    assertEq(signal.aborted, true);
   });
 
   test("should poll with exponential backoff on error", async () => {
@@ -466,35 +467,35 @@ describe("Poller", () => {
 
     // Fast-forward to 2s
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+    assertEq(callback.mock.calls.length, 1); // Poll 1
 
     // Advance by 1s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(1000);
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     // Advance by 2s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(3);
+    assertEq(callback.mock.calls.length, 3);
 
     // Advance by 4s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(4000);
-    expect(callback).toHaveBeenCalledTimes(4);
+    assertEq(callback.mock.calls.length, 4);
 
     // Advance by 8s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(8000);
-    expect(callback).toHaveBeenCalledTimes(5);
+    assertEq(callback.mock.calls.length, 5);
 
     // Advance by 10s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(10000);
-    expect(callback).toHaveBeenCalledTimes(6);
+    assertEq(callback.mock.calls.length, 6);
 
     // Advance by 10s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(10000);
-    expect(callback).toHaveBeenCalledTimes(7);
+    assertEq(callback.mock.calls.length, 7);
 
     // Advance by 10s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(10000);
-    expect(callback).toHaveBeenCalledTimes(8);
+    assertEq(callback.mock.calls.length, 8);
   });
 
   test("should poll with exponential backoff on error and use normal interval once successful", async () => {
@@ -522,31 +523,31 @@ describe("Poller", () => {
 
     // Fast-forward to 2s
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+    assertEq(callback.mock.calls.length, 1); // Poll 1
 
     // Advance by 1s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(1000);
-    expect(callback).toHaveBeenCalledTimes(2);
+    assertEq(callback.mock.calls.length, 2);
 
     // Advance by 2s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(3);
+    assertEq(callback.mock.calls.length, 3);
 
     // Advance by 4s and verify that a new poll takes place
     await vi.advanceTimersByTimeAsync(4000);
-    expect(callback).toHaveBeenCalledTimes(4);
+    assertEq(callback.mock.calls.length, 4);
 
     // At this point, callback succeeds, so normal interval resumes
     await vi.advanceTimersByTimeAsync(2000); // Normal interval after success
-    expect(callback).toHaveBeenCalledTimes(5);
+    assertEq(callback.mock.calls.length, 5);
 
     // Advance again by the normal interval and verify callback is called
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(6);
+    assertEq(callback.mock.calls.length, 6);
 
     // Confirm normal interval persists on further calls
     await vi.advanceTimersByTimeAsync(2000);
-    expect(callback).toHaveBeenCalledTimes(7);
+    assertEq(callback.mock.calls.length, 7);
 
     // and so on
   });

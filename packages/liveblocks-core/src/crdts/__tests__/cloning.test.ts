@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { assertEq } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -80,7 +81,7 @@ describe("cloning LiveStructures", () => {
           root.set("b", data.clone());
 
           const imm = root.toImmutable();
-          expect(imm.a).toEqual(imm.b);
+          expect(imm.a).toEqual(imm.b); // XXX Support Map in tosti
         }
       )
     ));
@@ -101,7 +102,7 @@ describe("cloning LiveStructures", () => {
           //                        ^^^^^^^^ Deliberately cloning twice in this test
 
           const imm = root.toImmutable();
-          expect(imm.a).toEqual(imm.b);
+          expect(imm.a).toEqual(imm.b); // XXX Support Map in tosti
         }
       )
     ));
@@ -124,7 +125,7 @@ describe("cloning LiveStructures", () => {
           //                      a JSON value
 
           const imm = root.toImmutable();
-          expect(imm.a).toEqual(imm.b);
+          expect(imm.a).toEqual(imm.b); // XXX Support Map in tosti
         }
       )
     ));

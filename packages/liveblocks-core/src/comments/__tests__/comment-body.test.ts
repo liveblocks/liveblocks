@@ -1,4 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { anything } from "decoders";
+import { assertEq } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
@@ -230,7 +232,7 @@ function resolveGroupsInfo({ groupIds }: ResolveGroupsInfoArgs) {
 
 describe("getMentionsFromCommentBody", () => {
   test("returns an array of all mentions", () => {
-    expect(getMentionsFromCommentBody(commentBodyWithMentions)).toEqual([
+    assertEq(getMentionsFromCommentBody(commentBodyWithMentions), [
       { type: "mention", kind: "user", id: "chris" },
       { type: "mention", kind: "user", id: "vincent" },
       { type: "mention", kind: "user", id: "$unknownUser" },
@@ -265,7 +267,7 @@ describe("getMentionsFromCommentBody", () => {
       ],
     };
 
-    expect(getMentionsFromCommentBody(commentBodyWithoutMentions)).toEqual([]);
+    assertEq(getMentionsFromCommentBody(commentBodyWithoutMentions), []);
   });
 });
 
@@ -310,27 +312,27 @@ describe("stringifyCommentBody", () => {
   test.each(commentBodyFixturesStringifiedPlain)(
     "stringifies %s as plain text",
     async (_, commentBody, stringified) => {
-      await expect(stringifyCommentBody(commentBody)).resolves.toBe(
-        stringified
-      );
+      await assertEq(stringifyCommentBody(commentBody), stringified);
     }
   );
 
   test.each(commentBodyFixturesStringifiedHtml)(
     "stringifies %s as HTML",
     async (_, commentBody, stringified) => {
-      await expect(
-        stringifyCommentBody(commentBody, { format: "html" })
-      ).resolves.toBe(stringified);
+      await assertEq(
+        stringifyCommentBody(commentBody, { format: "html" }),
+        stringified
+      );
     }
   );
 
   test.each(commentBodyFixturesStringifiedMarkdown)(
     "stringifies %s as Markdown",
     async (_, commentBody, stringified) => {
-      await expect(
-        stringifyCommentBody(commentBody, { format: "markdown" })
-      ).resolves.toBe(stringified);
+      await assertEq(
+        stringifyCommentBody(commentBody, { format: "markdown" }),
+        stringified
+      );
     }
   );
 
@@ -345,9 +347,10 @@ describe("stringifyCommentBody", () => {
       ],
     };
 
-    await expect(
-      stringifyCommentBody(commentBodyHtml, { format: "html" })
-    ).resolves.toBe("<p>Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>");
+    await assertEq(
+      stringifyCommentBody(commentBodyHtml, { format: "html" }),
+      "<p>Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>"
+    );
   });
 
   test("should escape html entities - link w/ text", async () => {
@@ -368,9 +371,8 @@ describe("stringifyCommentBody", () => {
         },
       ],
     };
-    await expect(
-      stringifyCommentBody(commentBodyHtml, { format: "html" })
-    ).resolves.toBe(
+    await assertEq(
+      stringifyCommentBody(commentBodyHtml, { format: "html" }),
       '<p>Trying with <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">&lt;script&gt;injected script&lt;/script&gt;</a> !</p>'
     );
   });
@@ -392,7 +394,7 @@ describe("stringifyCommentBody", () => {
       ],
     };
 
-    await expect(
+    await assertEq(
       stringifyCommentBody(commentBodyHtml, {
         format: "html",
         resolveUsers: ({ userIds }) => {
@@ -403,8 +405,7 @@ describe("stringifyCommentBody", () => {
             };
           });
         },
-      })
-    ).resolves.toBe(
+      }),
       "<p>Hello <span data-mention>@&lt;style&gt;injected style&lt;/style&gt;</span> !</p>"
     );
   });
@@ -428,9 +429,8 @@ describe("stringifyCommentBody", () => {
       ],
     };
 
-    await expect(
-      stringifyCommentBody(commentBodyHtml, { format: "html" })
-    ).resolves.toBe(
+    await assertEq(
+      stringifyCommentBody(commentBodyHtml, { format: "html" }),
       '<p>Hello <em><strong>&lt;strong&gt;world&lt;/strong&gt;</strong></em> and <a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>'
     );
   });
@@ -454,39 +454,40 @@ describe("stringifyCommentBody", () => {
       ],
     };
 
-    await expect(
-      stringifyCommentBody(commentBodyMarkdown, { format: "markdown" })
-    ).resolves.toBe(
+    await assertEq(
+      stringifyCommentBody(commentBodyMarkdown, { format: "markdown" }),
       "Hello _**\\*\\*world\\*\\***_ and [https://liveblocks.io](https://liveblocks.io)"
     );
   });
 
   test("should preserve valid URLs", async () => {
-    await expect(
-      stringifyCommentBody(commentBodyWihValidUrls, { format: "html" })
-    ).resolves.toBe(
+    await assertEq(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "html" }),
       '<p>This is a <a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">link</a> and <a href="https://www.liveblocks.io/docs?query=123#hash" target="_blank" rel="noopener noreferrer">www.liveblocks.io/docs?query=123#hash</a></p>'
     );
-    await expect(
-      stringifyCommentBody(commentBodyWihValidUrls, { format: "markdown" })
-    ).resolves.toBe(
+    await assertEq(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "markdown" }),
       "This is a [link](https://liveblocks.io) and [www.liveblocks.io/docs?query=123\\#hash](https://www.liveblocks.io/docs?query=123\\#hash)"
     );
-    await expect(
-      stringifyCommentBody(commentBodyWihValidUrls, { format: "plain" })
-    ).resolves.toBe("This is a link and www.liveblocks.io/docs?query=123#hash");
+    await assertEq(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "plain" }),
+      "This is a link and www.liveblocks.io/docs?query=123#hash"
+    );
   });
 
   test("should replace invalid URLs with plain text", async () => {
-    await expect(
-      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "html" })
-    ).resolves.toBe("<p>This is a link and another one</p>");
-    await expect(
-      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "markdown" })
-    ).resolves.toBe("This is a link and another one");
-    await expect(
-      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "plain" })
-    ).resolves.toBe("This is a link and another one");
+    await assertEq(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "html" }),
+      "<p>This is a link and another one</p>"
+    );
+    await assertEq(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "markdown" }),
+      "This is a link and another one"
+    );
+    await assertEq(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "plain" }),
+      "This is a link and another one"
+    );
   });
 
   const resolveInfoExpected = [
@@ -510,28 +511,28 @@ describe("stringifyCommentBody", () => {
   test.each(resolveInfoExpected)(
     "resolves users and groups as %s",
     async (_, format, stringified) => {
-      await expect(
+      await assertEq(
         stringifyCommentBody(commentBodyWithMentions, {
           format,
           resolveUsers,
           resolveGroupsInfo,
-        })
-      ).resolves.toBe(stringified);
+        }),
+        stringified
+      );
     }
   );
 
   test("accepts a custom separator between blocks", async () => {
-    await expect(
+    await assertEq(
       stringifyCommentBody(commentBodyWithMultipleParagraphs, {
         separator: "\n\n\n",
-      })
-    ).resolves.toBe(
+      }),
       "Hello world, @vincent and @engineering\n\n\nhttps://liveblocks.io\n\n\nLiveblocks"
     );
   });
 
   test("accepts custom elements", async () => {
-    await expect(
+    await assertEq(
       stringifyCommentBody(commentBodyWithMultipleParagraphs, {
         elements: {
           paragraph: ({ children }) => {
@@ -550,8 +551,7 @@ describe("stringifyCommentBody", () => {
             return `<Mention>@${element.id}</Mention>`;
           },
         },
-      })
-    ).resolves.toBe(
+      }),
       '<Paragraph>Hello world, <Mention>@vincent</Mention> and <Mention>@engineering</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">Liveblocks</Link></Paragraph>'
     );
   });
@@ -576,74 +576,44 @@ describe("stringifyCommentBody", () => {
     const firstParagraph = commentBodyWithMultipleParagraphs.content[0];
     const secondParagraph = commentBodyWithMultipleParagraphs.content[1];
 
-    expect(paragraph).toHaveBeenNthCalledWith(
-      1,
-      {
-        children: "",
-        element: firstParagraph,
-      },
-      0
-    );
-    expect(paragraph).toHaveBeenNthCalledWith(
-      2,
-      {
-        children: "",
-        element: secondParagraph,
-      },
-      1
-    );
+    assertEq(paragraph.mock.calls, [
+      [{ children: "", element: firstParagraph }, 0],
+      [{ children: "", element: secondParagraph }, 1],
+      anything, // XXX This 3rd call wasn't asserted before, should we?
+    ]);
 
-    expect(text).toHaveBeenNthCalledWith(
-      1,
-      {
-        element: firstParagraph.children[0],
-      },
-      0
-    );
-    expect(text).toHaveBeenNthCalledWith(
-      2,
-      {
-        element: firstParagraph.children[1],
-      },
-      1
-    );
-    expect(text).toHaveBeenNthCalledWith(
-      3,
-      {
-        element: firstParagraph.children[2],
-      },
-      2
-    );
+    assertEq(text.mock.calls, [
+      [{ element: firstParagraph.children[0] }, 0],
+      [{ element: firstParagraph.children[1] }, 1],
+      [{ element: firstParagraph.children[2] }, 2],
+      anything, // XXX This 4th call wasn't asserted before, should we?
+    ]);
 
-    expect(link).toHaveBeenNthCalledWith(
-      1,
-      {
-        element: secondParagraph.children[0],
-        href: "https://liveblocks.io",
-      },
-      0
-    );
+    assertEq(link.mock.calls, [
+      [
+        { element: secondParagraph.children[0], href: "https://liveblocks.io" },
+        0,
+      ],
+      anything, // XXX This 2nd call wasn't asserted before, should we?
+    ]);
 
-    expect(mention).toHaveBeenNthCalledWith(
-      1,
-      {
-        element: firstParagraph.children[3],
-        user: {
-          name: "Vincent",
+    assertEq(mention.mock.calls, [
+      [
+        {
+          element: firstParagraph.children[3],
+          user: { name: "Vincent" },
+          group: undefined,
         },
-      },
-      3
-    );
-
-    expect(mention).toHaveBeenNthCalledWith(
-      2,
-      {
-        element: firstParagraph.children[5],
-        group: {
-          name: "Engineering",
+        3,
+      ],
+      [
+        {
+          element: firstParagraph.children[5],
+          user: undefined,
+          group: { name: "Engineering" },
         },
-      },
-      5
-    );
+        5,
+      ],
+    ]);
   });
 });

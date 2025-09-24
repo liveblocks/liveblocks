@@ -1,14 +1,16 @@
 import "dotenv/config";
 
 import fetch from "node-fetch";
+import { assertEq } from "tosti";
 import type { URL } from "url";
-import { expect, onTestFinished } from "vitest";
+import { onTestFinished } from "vitest";
 import WebSocket from "ws";
 
 import type { BaseMetadata, NoInfr } from "../src";
 import { nanoid } from "../src";
 import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
+import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
@@ -17,7 +19,6 @@ import type { Json, JsonObject } from "../src/lib/Json";
 import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
-import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -255,8 +256,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
     let immutableStorage2 = root2.toImmutable();
 
     // Initial storage should be equal at the start of the test
-    expect(immutableStorage1).toEqual(expectedStorage);
-    expect(immutableStorage2).toEqual(immutableStorage1);
+    assertEq(immutableStorage1, expectedStorage);
+    assertEq(immutableStorage2, immutableStorage1);
 
     actor1.room.subscribe(
       root1,
@@ -278,10 +279,10 @@ export function prepareTestsConflicts<S extends LsonObject>(
       immRoot2: ToImmutable<S> = immRoot1
     ) {
       try {
-        expect({ root1: root1.toImmutable() }).toEqual({ root1: immRoot1 });
-        expect(immutableStorage1).toEqual(immRoot1);
-        expect({ root2: root2.toImmutable() }).toEqual({ root2: immRoot2 });
-        expect(immutableStorage2).toEqual(immRoot2);
+        assertEq({ root1: root1.toImmutable() }, { root1: immRoot1 });
+        assertEq(immutableStorage1, immRoot1);
+        assertEq({ root2: root2.toImmutable() }, { root2: immRoot2 });
+        assertEq(immutableStorage2, immRoot2);
       } catch (error) {
         // Better stack trace (point to where assert is called instead)
         Error.captureStackTrace(error as Error, assert);

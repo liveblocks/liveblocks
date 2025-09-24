@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { assertEq } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import { ManagedSocket } from "../connection";
 import {
@@ -25,7 +26,7 @@ describe("ManagedSocket", () => {
     await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).not.toHaveBeenCalled();
+    assertEq(didConnect.mock.calls, []);
   });
 
   test("authenticate + websocket connection are successes but no ROOM_STATE still means not connected", async () => {
@@ -45,7 +46,7 @@ describe("ManagedSocket", () => {
     await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).not.toHaveBeenCalled();
+    assertEq(didConnect.mock.calls, []);
   });
 
   test("authenticate + websocket connection + ROOM_STATE = connected", async () => {
@@ -65,6 +66,6 @@ describe("ManagedSocket", () => {
     await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).toHaveBeenCalledTimes(1);
+    assertEq(didConnect.mock.calls, [[undefined]]);
   });
 });

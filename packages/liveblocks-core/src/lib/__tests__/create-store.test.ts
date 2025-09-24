@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { assertEq } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import { batch, Signal } from "../signals";
 
@@ -9,7 +10,7 @@ describe("Signals (previously createStore)", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(0);
+    assertEq(fn.mock.calls, []);
   });
 
   test("should notify subscriber when state is updated via callback", () => {
@@ -18,11 +19,11 @@ describe("Signals (previously createStore)", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(0);
+    assertEq(fn.mock.calls, []);
 
     store.set((state) => ({ ...state }));
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    assertEq(fn.mock.calls, [[undefined]]);
   });
 
   test("should only notify subscriber if state reference changes", () => {
@@ -31,7 +32,7 @@ describe("Signals (previously createStore)", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(0);
+    assertEq(fn.mock.calls, []);
 
     store.set((state) => state);
     store.set((state) => state);
@@ -45,7 +46,7 @@ describe("Signals (previously createStore)", () => {
     store.set((state) => state);
     store.set((state) => state);
 
-    expect(fn).toHaveBeenCalledTimes(3);
+    assertEq(fn.mock.calls, [[undefined], [undefined], [undefined]]);
   });
 
   test("batching will only notify once", () => {
@@ -54,7 +55,7 @@ describe("Signals (previously createStore)", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(0);
+    assertEq(fn.mock.calls, []);
 
     batch(() => {
       store.set((state) => state);
@@ -70,7 +71,7 @@ describe("Signals (previously createStore)", () => {
       store.set((state) => state);
     });
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    assertEq(fn.mock.calls, [[undefined]]);
   });
 
   test("nesting batches has no effect (only the outer batch counts)", () => {
@@ -79,7 +80,7 @@ describe("Signals (previously createStore)", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(0);
+    assertEq(fn.mock.calls, []);
 
     batch(() => {
       store.set((state) => state);
@@ -99,6 +100,6 @@ describe("Signals (previously createStore)", () => {
       });
     });
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    assertEq(fn.mock.calls, [[undefined]]);
   });
 });

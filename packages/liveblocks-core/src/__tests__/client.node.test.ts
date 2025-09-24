@@ -4,12 +4,22 @@
 
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response as NodeFetchResponse } from "node-fetch";
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { assertEq, assertSame, assertThrows } from "tosti";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  onTestFinished,
+  test,
+  vi,
+} from "vitest";
 
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
 import * as console from "../lib/fancy-console";
 import { MockWebSocket } from "./_MockWebSocketServer";
+import { assertDoesntThrow } from "./_tostiHelpers";
 import { waitUntilStatus } from "./_waitUtils";
 
 const token =
@@ -74,19 +84,21 @@ describe("createClient", () => {
   ])(
     "should throw if publicApiKey & authEndpoint are misconfigured",
     (publicApiKey, authEndpoint, errorMessage) => {
-      expect(() =>
-        enterAndLeave({
-          // @ts-expect-error: publicApiKey could be anything for a non-typescript user so we want to allow for this test
-          publicApiKey,
-          // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
-          authEndpoint,
-          polyfills: {
-            WebSocket: MockWebSocket,
-            fetch: fetchMock,
-            atob: atobPolyfillMock,
-          },
-        })
-      ).toThrow(errorMessage);
+      assertThrows(
+        () =>
+          enterAndLeave({
+            // @ts-expect-error: publicApiKey could be anything for a non-typescript user so we want to allow for this test
+            publicApiKey,
+            // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
+            authEndpoint,
+            polyfills: {
+              WebSocket: MockWebSocket,
+              fetch: fetchMock,
+              atob: atobPolyfillMock,
+            },
+          }),
+        errorMessage
+      );
     }
   );
 
@@ -104,11 +116,9 @@ describe("createClient", () => {
       initialPresence: {},
       autoConnect: false,
     });
-    try {
-      expect(authMock).not.toHaveBeenCalled();
-    } finally {
-      leave();
-    }
+    onTestFinished(() => leave());
+
+    assertEq(authMock.mock.calls, []);
   });
 
   test("entering twice returns the same room (new style)", () => {
@@ -126,14 +136,14 @@ describe("createClient", () => {
     const view2 = client.enterRoom("room", options);
 
     // The returned room instance is the same one...
-    expect(view1.room).toBe(view2.room);
+    assertSame(view1.room, view2.room);
 
     // Leaving once is not enough to tear down the room instance!
     view1.leave();
 
     // So entering it again will return the same room instance!
     const view3 = client.enterRoom("room", options);
-    expect(view1.room).toBe(view3.room);
+    assertSame(view1.room, view3.room);
 
     // Only once all the leave functions are called, the room is released
     view1.leave();
@@ -143,6 +153,7 @@ describe("createClient", () => {
 
     // Meaning entering it again will create a new room instance
     const view4 = client.enterRoom("room", options);
+    // XXX Support not() in tosti?
     expect(view1.room).not.toBe(view4.room);
 
     // Clean things up nicely before ending the test
@@ -150,7 +161,7 @@ describe("createClient", () => {
   });
 
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
-    expect(() =>
+    assertDoesntThrow(() =>
       enterAndLeave({
         authEndpoint: "/api/auth",
         polyfills: {
@@ -159,11 +170,11 @@ describe("createClient", () => {
           atob: atobPolyfillMock,
         },
       })
-    ).not.toThrow();
+    );
   });
 
   test("should not throw if public key is used and fetch polyfill is defined", () => {
-    expect(() =>
+    assertDoesntThrow(() =>
       enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
@@ -172,19 +183,19 @@ describe("createClient", () => {
           atob: atobPolyfillMock,
         },
       })
-    ).not.toThrow();
+    );
   });
 
   test("should not throw if WebSocketPolyfill is set", () => {
-    expect(() => {
+    assertDoesntThrow(() =>
       enterAndLeave({
         authEndpoint: authEndpointCallback,
         polyfills: {
           WebSocket: MockWebSocket,
           atob: atobPolyfillMock,
         },
-      });
-    }).not.toThrow();
+      })
+    );
   });
 
   test("should throw if authEndpoint is string and fetch polyfill is not defined", async () => {
@@ -199,17 +210,17 @@ describe("createClient", () => {
     });
 
     const { room, leave } = client.enterRoom("room");
-    try {
-      // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
-      await waitUntilStatus(room, "disconnected");
+    onTestFinished(() => leave());
 
-      expect(spy).toHaveBeenCalledWith(
-        "To use Liveblocks client in a non-DOM environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    } finally {
-      // Clean things up
-      leave();
-    }
+    // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
+    await waitUntilStatus(room, "disconnected");
+
+    assertEq(spy.mock.calls, [
+      [
+        "To use Liveblocks client in a non-DOM environment with a url as auth endpoint, you need to provide a fetch polyfill.",
+      ],
+      [/Connection to websocket server closed. Reason: .*/],
+    ]);
   });
 
   test("should fail to connect and stop retrying if WebSocketPolyfill is not set", async () => {
@@ -220,16 +231,20 @@ describe("createClient", () => {
 
     const client = createClient({ authEndpoint: authEndpointCallback });
     const { room, leave } = client.enterRoom("room");
+    onTestFinished(() => leave());
+
     try {
       // Room will fail to connect, and move to "closed" state, basically giving up reconnecting
       await waitUntilStatus(room, "disconnected");
 
-      expect(spy).toHaveBeenCalledWith(
-        "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill."
-      );
+      assertEq(spy.mock.calls, [
+        [
+          "To use Liveblocks client in a non-DOM environment, you need to provide a WebSocket polyfill.",
+        ],
+        [/Connection to websocket server closed. Reason: .*/],
+      ]);
     } finally {
       // Clean things up
-      leave();
       globalThis.WebSocket = ws;
     }
   });
@@ -242,123 +257,137 @@ describe("createClient bounds checks", () => {
   };
 
   test("should throw if throttle is not a number", () => {
-    expect(() =>
-      enterAndLeave({
-        ...defaults,
-        throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-      })
-    ).toThrow("throttle should be between 16 and 1000.");
+    assertThrows(
+      () =>
+        enterAndLeave({
+          ...defaults,
+          throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
+        }),
+      "throttle should be between 16 and 1000."
+    );
   });
 
   test("should check bounds correctly for throttle option", () => {
-    expect(() => enterAndLeave({ ...defaults, throttle: -5_000 })).toThrow(
+    assertThrows(
+      () => enterAndLeave({ ...defaults, throttle: -5_000 }),
       "throttle should be between 16 and 1000."
     );
 
-    expect(() => enterAndLeave({ ...defaults, throttle: 0 })).toThrow(
+    assertThrows(
+      () => enterAndLeave({ ...defaults, throttle: 0 }),
       "throttle should be between 16 and 1000."
     );
 
-    expect(() => enterAndLeave({ ...defaults, throttle: Math.PI })).toThrow(
+    assertThrows(
+      () => enterAndLeave({ ...defaults, throttle: Math.PI }),
       "throttle should be between 16 and 1000."
     );
 
-    expect(() => enterAndLeave({ ...defaults, throttle: 15 })).toThrow(
+    assertThrows(
+      () => enterAndLeave({ ...defaults, throttle: 15 }),
       "throttle should be between 16 and 1000."
     );
 
-    expect(() => enterAndLeave({ ...defaults, throttle: 16 })).not.toThrow();
-
-    expect(() => enterAndLeave({ ...defaults, throttle: 1_000 })).not.toThrow();
-
-    expect(() => enterAndLeave({ ...defaults, throttle: 1_001 })).toThrow(
+    assertDoesntThrow(() => enterAndLeave({ ...defaults, throttle: 16 }));
+    assertDoesntThrow(() => enterAndLeave({ ...defaults, throttle: 1_000 }));
+    assertThrows(
+      () => enterAndLeave({ ...defaults, throttle: 1_001 }),
       "throttle should be between 16 and 1000."
     );
   });
 
   test("should throw if lostConnectionTimeout is not a number", () => {
-    expect(() =>
-      enterAndLeave({
-        ...defaults,
-        lostConnectionTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-      })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () =>
+        enterAndLeave({
+          ...defaults,
+          lostConnectionTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
+        }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
   });
 
   test("should check bounds correctly for lostConnectionTimeout option", () => {
-    expect(() =>
-      enterAndLeave({ ...defaults, lostConnectionTimeout: -5_000 })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, lostConnectionTimeout: -5_000 }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, lostConnectionTimeout: 0 })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, lostConnectionTimeout: 0 }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, lostConnectionTimeout: Math.PI })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, lostConnectionTimeout: Math.PI }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, lostConnectionTimeout: 199 })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, lostConnectionTimeout: 199 }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
 
     // There is a soft cap on the lower bound of lostConnectionTimeout. We
     // recommend setting a 1_000 minimum, but the real 200 minimum only exists
     // for unit testing purposes.
-    expect(() =>
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, lostConnectionTimeout: 200 })
-    ).not.toThrow();
-
-    expect(() =>
+    );
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, lostConnectionTimeout: 1_000 })
-    ).not.toThrow();
-
-    expect(() =>
+    );
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, lostConnectionTimeout: 30_000 })
-    ).not.toThrow();
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, lostConnectionTimeout: 30_001 })
-    ).toThrow("lostConnectionTimeout should be between 1000 and 30000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, lostConnectionTimeout: 30_001 }),
+      "lostConnectionTimeout should be between 1000 and 30000."
+    );
   });
 
   test("should throw if backgroundKeepAliveTimeout is not a number", () => {
-    expect(() =>
-      enterAndLeave({
-        ...defaults,
-        backgroundKeepAliveTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
-      })
-    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+    assertThrows(
+      () =>
+        enterAndLeave({
+          ...defaults,
+          backgroundKeepAliveTimeout: "invalid" as unknown as number, // Deliberately use wrong type at runtime
+        }),
+      "backgroundKeepAliveTimeout should be at least 15000."
+    );
   });
 
   test("should check bounds correctly for backgroundKeepAliveTimeout option", () => {
-    expect(() =>
-      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: -5_000 })
-    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: -5_000 }),
+      "backgroundKeepAliveTimeout should be at least 15000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 0 })
-    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 0 }),
+      "backgroundKeepAliveTimeout should be at least 15000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: Math.PI })
-    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: Math.PI }),
+      "backgroundKeepAliveTimeout should be at least 15000."
+    );
 
-    expect(() =>
-      enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 14_999 })
-    ).toThrow("backgroundKeepAliveTimeout should be at least 15000.");
+    assertThrows(
+      () => enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 14_999 }),
+      "backgroundKeepAliveTimeout should be at least 15000."
+    );
 
-    expect(() =>
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_000 })
-    ).not.toThrow();
-
-    expect(() =>
+    );
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 15_001 })
-    ).not.toThrow();
-
-    expect(() =>
+    );
+    assertDoesntThrow(() =>
       enterAndLeave({ ...defaults, backgroundKeepAliveTimeout: 60_000 })
-    ).not.toThrow();
+    );
   });
 });
 
@@ -375,7 +404,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
   });
 
   test("should throw error if atob polyfill is not set", () => {
-    expect(() => {
+    assertThrows(() => {
       enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
@@ -384,13 +413,11 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
           atob: undefined,
         },
       });
-    }).toThrow(
-      "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
-    );
+    }, "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill");
   });
 
   test("should not throw error if atob polyfill option is set", () => {
-    expect(() => {
+    assertDoesntThrow(() => {
       enterAndLeave({
         publicApiKey: "pk_xxx",
         polyfills: {
@@ -399,6 +426,6 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
           atob: atobPolyfillMock,
         },
       });
-    }).not.toThrow();
+    });
   });
 });

@@ -1,4 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { anything, iso8601, tuple } from "decoders";
+import { assertEq, assertSame, partially } from "tosti";
+import { describe, test } from "vitest";
 
 import { KnowledgeStack } from "../ai";
 import { iso } from "../lib/utils";
@@ -19,12 +21,12 @@ import {
 
 describe("KnowledgeStack", () => {
   test("should be empty by default", () => {
-    expect(new KnowledgeStack().get()).toEqual([]);
+    assertEq(new KnowledgeStack().get(), []);
   });
 
   test("should be ref equal when called multiple times", () => {
     const stack = new KnowledgeStack();
-    expect(stack.get()).toBe(stack.get());
+    assertSame(stack.get(), stack.get());
   });
 
   test("multiple knowledge registrations", () => {
@@ -38,7 +40,7 @@ describe("KnowledgeStack", () => {
       description: "Another random value",
       value: "bar",
     });
-    expect(stack.get()).toEqual([
+    assertEq(stack.get(), [
       { description: "Some random value", value: "foo" },
       { description: "Another random value", value: "bar" },
     ]);
@@ -56,7 +58,7 @@ describe("KnowledgeStack", () => {
       description: "Another random value",
       value: "bar",
     });
-    expect(stack.get()).toEqual([
+    assertEq(stack.get(), [
       // { description: "Some random value", value: "foo" }, // <-- No longer present! Overwritten!
       { description: "Another random value", value: "bar" },
     ]);
@@ -71,12 +73,10 @@ describe("KnowledgeStack", () => {
       value: "foo",
     });
     stack.updateKnowledge(key2, "abc", null);
-    expect(stack.get()).toEqual([]);
+    assertEq(stack.get(), []);
 
     stack.deregisterLayer(key2);
-    expect(stack.get()).toEqual([
-      { description: "Some random value", value: "foo" },
-    ]);
+    assertEq(stack.get(), [{ description: "Some random value", value: "foo" }]);
   });
 
   test("registering exact same knowledge twice just overrides it", () => {
@@ -86,22 +86,18 @@ describe("KnowledgeStack", () => {
       description: "Some random value",
       value: "foo",
     });
-    expect(stack.get()).toEqual([
-      { description: "Some random value", value: "foo" },
-    ]);
+    assertEq(stack.get(), [{ description: "Some random value", value: "foo" }]);
 
     // Setting a new value just overrides the previous value in this layer
     stack.updateKnowledge(key1, "abc", {
       description: "Something else",
       value: "bar",
     });
-    expect(stack.get()).toEqual([
-      { description: "Something else", value: "bar" },
-    ]);
+    assertEq(stack.get(), [{ description: "Something else", value: "bar" }]);
 
     // Overwriting with `null` wipes the entry
     stack.updateKnowledge(key1, "abc", null);
-    expect(stack.get()).toEqual([]);
+    assertEq(stack.get(), []);
   });
 
   test("deregistering layer 1", () => {
@@ -118,7 +114,7 @@ describe("KnowledgeStack", () => {
     });
 
     stack.deregisterLayer(key1);
-    expect(stack.get()).toEqual([
+    assertEq(stack.get(), [
       { description: "Another random value", value: "bar" },
     ]);
   });
@@ -137,9 +133,7 @@ describe("KnowledgeStack", () => {
     });
 
     stack.deregisterLayer(key2);
-    expect(stack.get()).toEqual([
-      { description: "Some random value", value: "foo" },
-    ]);
+    assertEq(stack.get(), [{ description: "Some random value", value: "foo" }]);
   });
 
   test("deregistering both layers", () => {
@@ -157,7 +151,7 @@ describe("KnowledgeStack", () => {
 
     stack.deregisterLayer(key2);
     stack.deregisterLayer(key1);
-    expect(stack.get()).toEqual([]);
+    assertEq(stack.get(), []);
   });
 });
 
@@ -165,12 +159,12 @@ describe("createReceivingToolInvocation", () => {
   test("creates receiving tool invocation with empty args", () => {
     const tool = createReceivingToolInvocation("inv-test", "testTool");
 
-    expect(tool.type).toBe("tool-invocation");
-    expect(tool.stage).toBe("receiving");
-    expect(tool.invocationId).toBe("inv-test");
-    expect(tool.name).toBe("testTool");
-    expect(tool.partialArgsText).toBe("");
-    expect(tool.partialArgs).toEqual({});
+    assertEq(tool.type, "tool-invocation");
+    assertEq(tool.stage, "receiving");
+    assertEq(tool.invocationId, "inv-test");
+    assertEq(tool.name, "testTool");
+    assertEq(tool.partialArgsText, "");
+    assertEq(tool.partialArgs, {});
   });
 
   test("creates receiving tool invocation with partial args", () => {
@@ -180,8 +174,8 @@ describe("createReceivingToolInvocation", () => {
       '{"query": "test"}'
     );
 
-    expect(tool.partialArgsText).toBe('{"query": "test"}');
-    expect(tool.partialArgs).toEqual({ query: "test" });
+    assertEq(tool.partialArgsText, '{"query": "test"}');
+    assertEq(tool.partialArgs, { query: "test" });
   });
 
   test("allows appending deltas via __appendDelta", () => {
@@ -191,12 +185,12 @@ describe("createReceivingToolInvocation", () => {
       '{"expr": "2+'
     );
 
-    expect(tool.partialArgs).toEqual({ expr: "2+" });
+    assertEq(tool.partialArgs, { expr: "2+" });
 
     tool.__appendDelta?.('2"}');
 
-    expect(tool.partialArgsText).toBe('{"expr": "2+2"}');
-    expect(tool.partialArgs).toEqual({ expr: "2+2" });
+    assertEq(tool.partialArgsText, '{"expr": "2+2"}');
+    assertEq(tool.partialArgs, { expr: "2+2" });
   });
 });
 
@@ -210,7 +204,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([{ type: "text", text: "Hello world!" }]);
+      assertEq(content, [{ type: "text", text: "Hello world!" }]);
     });
 
     test("creates new text part when last part is not text", () => {
@@ -225,12 +219,12 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "Some reasoning",
           startedAt: iso("2025-09-28"),
-          endedAt: expect.any(String), // Date when text delta was added
+          endedAt: iso8601,
         },
         { type: "text", text: "Hello" },
       ]);
@@ -242,7 +236,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([{ type: "text", text: "Hello" }]);
+      assertEq(content, [{ type: "text", text: "Hello" }]);
     });
 
     test("creates new text part when last part is tool-invocation", () => {
@@ -260,8 +254,8 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toHaveLength(2);
-      expect(content[1]).toEqual({ type: "text", text: "Done!" });
+      assertEq(content, tuple(anything, anything));
+      assertEq(content[1], { type: "text", text: "Done!" });
     });
   });
 
@@ -281,7 +275,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "Let me think about this...",
@@ -301,12 +295,12 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         { type: "text", text: "Some text" },
         {
           type: "reasoning",
           text: "Thinking",
-          startedAt: expect.any(String),
+          startedAt: iso8601,
         },
       ]);
     });
@@ -320,11 +314,11 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "Starting to analyze...",
-          startedAt: expect.any(String),
+          startedAt: iso8601,
         },
       ]);
     });
@@ -338,11 +332,11 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "",
-          startedAt: expect.any(String),
+          startedAt: iso8601,
         },
       ]);
     });
@@ -358,8 +352,8 @@ describe("patchContentWithDelta", () => {
         name: "testTool",
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           type: "tool-invocation",
           stage: "receiving",
           invocationId: "inv-test",
@@ -381,14 +375,17 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toHaveLength(2);
-      expect(content[1]).toMatchObject({
-        type: "tool-invocation",
-        stage: "receiving",
-        invocationId: "inv-456",
-        name: "calculator",
-        partialArgs: {},
-      });
+      assertEq(content, tuple(anything, anything));
+      assertEq(
+        content[1],
+        partially({
+          type: "tool-invocation",
+          stage: "receiving",
+          invocationId: "inv-456",
+          name: "calculator",
+          partialArgs: {},
+        })
+      );
     });
 
     test("allows multiple tool-streams with different invocationIds", () => {
@@ -406,15 +403,21 @@ describe("patchContentWithDelta", () => {
         name: "calculator",
       });
 
-      expect(content).toHaveLength(2);
-      expect(content[0]).toMatchObject({
-        invocationId: "inv-1",
-        name: "search",
-      });
-      expect(content[1]).toMatchObject({
-        invocationId: "inv-2",
-        name: "calculator",
-      });
+      assertEq(content, tuple(anything, anything));
+      assertEq(
+        content[0],
+        partially({
+          invocationId: "inv-1",
+          name: "search",
+        })
+      );
+      assertEq(
+        content[1],
+        partially({
+          invocationId: "inv-2",
+          name: "calculator",
+        })
+      );
     });
 
     test("caches partialArgs computation between accesses", () => {
@@ -434,8 +437,8 @@ describe("patchContentWithDelta", () => {
       // Actual test
       // ===========
 
-      expect(tool1.partialArgs).toEqual({});
-      expect(tool1.partialArgs).toBe(tool1.partialArgs);
+      assertEq(tool1.partialArgs, {});
+      assertSame(tool1.partialArgs, tool1.partialArgs);
       //                                 ^^^^ Referentially equal
 
       // Add some partial args text
@@ -445,12 +448,12 @@ describe("patchContentWithDelta", () => {
       });
 
       // Multiple accesses doesn't change the value...
-      expect(tool1.partialArgs).toEqual({ query: "tes" });
-      expect(tool1.partialArgs).toEqual({ query: "tes" });
+      assertEq(tool1.partialArgs, { query: "tes" });
+      assertEq(tool1.partialArgs, { query: "tes" });
 
       // ...in fact it returns the same value
       const result1 = tool1.partialArgs;
-      expect(tool1.partialArgs).toBe(tool1.partialArgs);
+      assertSame(tool1.partialArgs, tool1.partialArgs);
       //                                 ^^^^ Referentially equal
 
       // Second tool invocation to test that each has its own cache
@@ -469,11 +472,11 @@ describe("patchContentWithDelta", () => {
       // Each tool should have its own cached values
       tool2.partialArgs;
 
-      expect(tool2.partialArgs).toEqual({ different: "value" });
-      expect(tool2.partialArgs).toBe(tool2.partialArgs);
+      assertEq(tool2.partialArgs, { different: "value" });
+      assertSame(tool2.partialArgs, tool2.partialArgs);
 
       // First tool should still have its original cached value
-      expect(tool1.partialArgs).toBe(result1); // Still the same cached object
+      assertSame(tool1.partialArgs, result1); // Still the same cached object
     });
   });
 
@@ -487,7 +490,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([]);
+      assertEq(content, []);
     });
 
     test("ignores delta when last part is text", () => {
@@ -501,7 +504,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([{ type: "text", text: "Some text" }]);
+      assertEq(content, [{ type: "text", text: "Some text" }]);
     });
 
     test("ignores delta when last part is reasoning", () => {
@@ -519,7 +522,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "Thinking...",
@@ -545,7 +548,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "tool-invocation",
           stage: "executing",
@@ -574,10 +577,13 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content[0]).toMatchObject({
-        stage: "executed",
-        invocationId: "inv-123",
-      });
+      assertEq(
+        content[0],
+        partially({
+          stage: "executed",
+          invocationId: "inv-123",
+        })
+      );
     });
 
     test("appends delta to receiving tool invocation", () => {
@@ -596,8 +602,8 @@ describe("patchContentWithDelta", () => {
         delta: '{"query": "test"}',
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           type: "tool-invocation",
           stage: "receiving",
           invocationId: "inv-1",
@@ -637,7 +643,7 @@ describe("patchContentWithDelta", () => {
       }
 
       const tool = content[0] as AiReceivingToolInvocationPart;
-      expect(tool.partialArgs).toEqual({
+      assertEq(tool.partialArgs, {
         method: "GET",
         url: "https://api.example.com",
         headers: { Accept: "application/json" },
@@ -670,15 +676,16 @@ describe("patchContentWithDelta", () => {
         delta: '{"expr": "2+2"}',
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        {
           type: "tool-invocation",
           stage: "executed",
           invocationId: "inv-1",
           name: "search",
           args: { query: "first" },
-        }),
-        expect.objectContaining({
+          result: anything,
+        },
+        partially({
           type: "tool-invocation",
           stage: "receiving",
           invocationId: "inv-2",
@@ -702,7 +709,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([delta]);
+      assertEq(content, [delta]);
     });
 
     test("replaces receiving tool with executing tool (same invocationId)", () => {
@@ -720,7 +727,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([delta]);
+      assertEq(content, [delta]);
     });
 
     test("replaces executing tool with executed tool (same invocationId)", () => {
@@ -744,7 +751,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([delta]);
+      assertEq(content, [delta]);
     });
 
     test("replaces tool in middle of content array", () => {
@@ -764,7 +771,7 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([
+      assertEq(content, [
         { type: "text", text: "Before" },
         delta,
         { type: "text", text: "After" },
@@ -789,9 +796,9 @@ describe("patchContentWithDelta", () => {
       patchContentWithDelta(content, delta);
 
       // Should replace the LAST one (index 2)
-      expect(content[0]).toMatchObject({ name: "first" });
-      expect(content[1]).toEqual({ type: "text", text: "Middle" });
-      expect(content[2]).toEqual(delta);
+      assertEq(content[0], partially({ name: "first" }));
+      assertEq(content[1], { type: "text", text: "Middle" });
+      assertEq(content[2], delta);
     });
 
     test("does not affect tools with different invocationIds", () => {
@@ -816,10 +823,14 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toHaveLength(3);
-      expect(content[0]).toMatchObject({ invocationId: "inv-1" });
-      expect(content[1]).toMatchObject({ invocationId: "inv-2" });
-      expect(content[2]).toMatchObject({ invocationId: "inv-3" });
+      assertEq(
+        content,
+        tuple(
+          partially({ invocationId: "inv-1" }),
+          partially({ invocationId: "inv-2" }),
+          partially({ invocationId: "inv-3" })
+        )
+      );
     });
   });
 
@@ -833,8 +844,8 @@ describe("patchContentWithDelta", () => {
         textDelta: "Hello",
       });
 
-      expect(content).toBe(originalContent);
-      expect(content).toEqual([{ type: "text", text: "Hello" }]);
+      assertSame(content, originalContent);
+      assertEq(content, [{ type: "text", text: "Hello" }]);
     });
 
     test("handles mixed content flow: reasoning -> text -> tool", () => {
@@ -871,15 +882,15 @@ describe("patchContentWithDelta", () => {
         name: "search",
       });
 
-      expect(content).toEqual([
+      assertEq(content, [
         {
           type: "reasoning",
           text: "Let me analyze this problem",
-          startedAt: expect.any(String),
-          endedAt: expect.any(String),
+          startedAt: iso8601,
+          endedAt: iso8601,
         },
         { type: "text", text: "I'll search for information" },
-        expect.objectContaining({
+        partially({
           type: "tool-invocation",
           stage: "receiving",
           invocationId: "inv-1",
@@ -901,8 +912,8 @@ describe("patchContentWithDelta", () => {
         patchContentWithDelta(content, delta);
       }
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           type: "tool-invocation",
           stage: "receiving",
           invocationId: "inv-123",
@@ -943,18 +954,24 @@ describe("patchContentWithDelta", () => {
         delta: '{"expr": "2+2"}',
       });
 
-      expect(content).toHaveLength(3);
-      expect(content[0]).toMatchObject({
-        type: "tool-invocation",
-        invocationId: "inv-1",
-        partialArgs: { q: "test" },
-      });
-      expect(content[1]).toEqual({ type: "text", text: "Now calculating..." });
-      expect(content[2]).toMatchObject({
-        type: "tool-invocation",
-        invocationId: "inv-2",
-        partialArgs: { expr: "2+2" },
-      });
+      assertEq(content, tuple(anything, anything, anything));
+      assertEq(
+        content[0],
+        partially({
+          type: "tool-invocation",
+          invocationId: "inv-1",
+          partialArgs: { q: "test" },
+        })
+      );
+      assertEq(content[1], { type: "text", text: "Now calculating..." });
+      assertEq(
+        content[2],
+        partially({
+          type: "tool-invocation",
+          invocationId: "inv-2",
+          partialArgs: { expr: "2+2" },
+        })
+      );
     });
 
     test("tool lifecycle: receiving -> executing", () => {
@@ -973,8 +990,8 @@ describe("patchContentWithDelta", () => {
         delta: '{"endpoint": "/users", ',
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           stage: "receiving",
           partialArgs: { endpoint: "/users" },
         }),
@@ -985,8 +1002,8 @@ describe("patchContentWithDelta", () => {
         delta: '"method":"GET"}',
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           stage: "receiving",
           partialArgs: { endpoint: "/users", method: "GET" },
         }),
@@ -1001,8 +1018,8 @@ describe("patchContentWithDelta", () => {
         args: { endpoint: "/users", method: "GET" },
       });
 
-      expect(content).toEqual([
-        expect.objectContaining({
+      assertEq(content, [
+        partially({
           stage: "executing",
           args: { endpoint: "/users", method: "GET" },
         }),

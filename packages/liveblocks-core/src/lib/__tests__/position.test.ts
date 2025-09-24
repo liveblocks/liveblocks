@@ -1,5 +1,6 @@
 import * as fc from "fast-check";
-import { describe, expect, test } from "vitest";
+import { assertSame, assertThrows } from "tosti";
+import { describe, test } from "vitest";
 
 import type { Pos } from "../position";
 import {
@@ -94,23 +95,23 @@ function genPosRange() {
 
 describe("digits", () => {
   test("alphabet is correct", () => {
-    expect(ALPHABET.length).toBe(NUM_DIGITS);
+    assertSame(ALPHABET.length, NUM_DIGITS);
   });
 
   test("basic digits", () => {
-    expect(nthDigit(0)).toBe(" ");
-    expect(nthDigit(1)).toBe("!");
-    expect(nthDigit(3)).toBe("#");
-    expect(nthDigit(47)).toBe("O");
-    expect(nthDigit(94)).toBe("~");
+    assertSame(nthDigit(0), " ");
+    assertSame(nthDigit(1), "!");
+    assertSame(nthDigit(3), "#");
+    assertSame(nthDigit(47), "O");
+    assertSame(nthDigit(94), "~");
 
-    expect(nthDigit(-1)).toBe("~");
-    expect(nthDigit(-2)).toBe("}");
-    expect(nthDigit(-94)).toBe("!");
-    expect(nthDigit(-95)).toBe(" ");
+    assertSame(nthDigit(-1), "~");
+    assertSame(nthDigit(-2), "}");
+    assertSame(nthDigit(-94), "!");
+    assertSame(nthDigit(-95), " ");
 
-    expect(() => nthDigit(95)).toThrow();
-    expect(() => nthDigit(-96)).toThrow();
+    assertThrows(() => nthDigit(95), "Invalid n value: 95");
+    assertThrows(() => nthDigit(-96), "Invalid n value: -96");
   });
 
   test("matches entire alphabet", () => {
@@ -120,9 +121,10 @@ describe("digits", () => {
 
         (n) => {
           if (n >= 0) {
-            expect(nthDigit(n)).toBe(ALPHABET.charAt(n));
+            assertSame(nthDigit(n), ALPHABET.charAt(n));
           } else {
-            expect(nthDigit(n)).toBe(
+            assertSame(
+              nthDigit(n),
               ALPHABET.split("")
                 .reverse()
                 .join("")
@@ -142,7 +144,7 @@ describe("position datastructure", () => {
         genZeroes(),
 
         (strOfZeroes) => {
-          expect(asPos(strOfZeroes)).toBe(ONE);
+          assertSame(asPos(strOfZeroes), ONE);
         }
       )
     );
@@ -154,7 +156,7 @@ describe("position datastructure", () => {
         genPos(),
 
         (s) => {
-          expect(asPos(s)).toBe(s);
+          assertSame(asPos(s), s);
         }
       )
     );
@@ -166,8 +168,8 @@ describe("position datastructure", () => {
         fc.string(),
 
         (s) => {
-          expect(asPos(s)).toBe(asPos(asPos(s)));
-          expect(asPos(s)).toBe(asPos(asPos(asPos(asPos(s)))));
+          assertSame(asPos(s), asPos(asPos(s)));
+          assertSame(asPos(s), asPos(asPos(asPos(asPos(s)))));
         }
       )
     );
@@ -176,21 +178,22 @@ describe("position datastructure", () => {
 
 describe("after / before", () => {
   test("after hops to next major digit when possible", () => {
-    expect(after(ONE)).toBe(TWO);
-    expect(after(TWO)).toBe(THREE);
-    expect(after(THREE)).toBe(FOUR);
-    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ONE);
-    expect(after(ONE)).toBe(TWO);
-    expect(after(asPos(ONE + ZERO + ONE))).toBe(TWO);
-    expect(after(TWO)).toBe(THREE);
-    expect(after(THREE)).toBe(FOUR);
-    expect(after(EIGHT)).toBe(NINE);
-    expect(after(NINE)).toBe(NINE + ONE);
-    expect(after(asPos(NINE + ONE))).toBe(NINE + TWO);
-    expect(after(asPos(NINE + ONE + TWO + THREE))).toBe(NINE + TWO);
-    expect(after(asPos(NINE + EIGHT))).toBe(NINE + NINE);
-    expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ONE);
-    expect(after(asPos(NINE + NINE + NINE + NINE))).toBe(
+    assertSame(after(ONE), TWO);
+    assertSame(after(TWO), THREE);
+    assertSame(after(THREE), FOUR);
+    assertSame(after(asPos(ZERO + ZERO + ONE)), ONE);
+    assertSame(after(ONE), TWO);
+    assertSame(after(asPos(ONE + ZERO + ONE)), TWO);
+    assertSame(after(TWO), THREE);
+    assertSame(after(THREE), FOUR);
+    assertSame(after(EIGHT), NINE);
+    assertSame(after(NINE), NINE + ONE);
+    assertSame(after(asPos(NINE + ONE)), NINE + TWO);
+    assertSame(after(asPos(NINE + ONE + TWO + THREE)), NINE + TWO);
+    assertSame(after(asPos(NINE + EIGHT)), NINE + NINE);
+    assertSame(after(asPos(NINE + NINE)), NINE + NINE + ONE);
+    assertSame(
+      after(asPos(NINE + NINE + NINE + NINE)),
       NINE + NINE + NINE + NINE + ONE
     );
 
@@ -202,7 +205,7 @@ describe("after / before", () => {
 
         (pos) => {
           if (pos[0] !== NINE) {
-            expect(after(pos).length).toBe(1); // Always generates a single-digit
+            assertSame(after(pos).length, 1); // Always generates a single-digit
           }
         }
       )
@@ -210,37 +213,39 @@ describe("after / before", () => {
   });
 
   test("before hops to prior major digit when possible", () => {
-    expect(before(NINE)).toBe(EIGHT);
-    expect(before(FOUR)).toBe(THREE);
-    expect(before(THREE)).toBe(TWO);
-    expect(before(TWO)).toBe(ONE);
+    assertSame(before(NINE), EIGHT);
+    assertSame(before(FOUR), THREE);
+    assertSame(before(THREE), TWO);
+    assertSame(before(TWO), ONE);
 
     // Not possible when reading the "left edge" of .1, .01, .001, .0001, etc.
-    expect(before(ONE)).toBe(ZERO + NINE); // e.g. before(.1) => .09
+    assertSame(before(ONE), ZERO + NINE); // e.g. before(.1) => .09
 
-    expect(before(asPos(ONE + ONE))).toBe(ONE);
-    expect(before(asPos(ONE + ONE))).toBe(ONE);
-    expect(before(TWO)).toBe(ONE);
-    expect(before(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(TWO);
-    expect(before(THREE)).toBe(TWO);
-    expect(before(NINE)).toBe(EIGHT);
-    expect(before(asPos(NINE + ONE))).toBe(NINE);
-    expect(before(asPos(NINE + TWO))).toBe(NINE);
-    expect(before(asPos(NINE + THREE))).toBe(NINE);
-    expect(before(asPos(NINE + EIGHT))).toBe(NINE);
-    expect(before(asPos(NINE + NINE))).toBe(NINE);
-    expect(before(asPos(ZERO + ONE))).toBe(ZERO + ZERO + NINE);
-    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE);
-    expect(before(asPos(ONE + ZERO + ZERO + ONE))).toBe(ONE); // e.g. before(.1001) => .1
+    assertSame(before(asPos(ONE + ONE)), ONE);
+    assertSame(before(asPos(ONE + ONE)), ONE);
+    assertSame(before(TWO), ONE);
+    assertSame(before(asPos(TWO + THREE + ONE + ZERO + ONE)), TWO);
+    assertSame(before(THREE), TWO);
+    assertSame(before(NINE), EIGHT);
+    assertSame(before(asPos(NINE + ONE)), NINE);
+    assertSame(before(asPos(NINE + TWO)), NINE);
+    assertSame(before(asPos(NINE + THREE)), NINE);
+    assertSame(before(asPos(NINE + EIGHT)), NINE);
+    assertSame(before(asPos(NINE + NINE)), NINE);
+    assertSame(before(asPos(ZERO + ONE)), ZERO + ZERO + NINE);
+    assertSame(before(asPos(ZERO + ZERO + ONE)), ZERO + ZERO + ZERO + NINE);
+    assertSame(before(asPos(ONE + ZERO + ZERO + ONE)), ONE); // e.g. before(.1001) => .1
 
-    expect(before(asPos(NINE + THREE))).toBe(NINE); // e.g. before(.93) => .9
-    expect(before(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(TWO); // e.g. before(.23101) => .2
+    assertSame(before(asPos(NINE + THREE)), NINE); // e.g. before(.93) => .9
+    assertSame(before(asPos(TWO + THREE + ONE + ZERO + ONE)), TWO); // e.g. before(.23101) => .2
 
-    expect(before(asPos(ZERO + ZERO + TWO))).toBe(ZERO + ZERO + ONE);
-    expect(before(asPos(ZERO + ZERO + TWO + EIGHT + THREE))).toBe(
+    assertSame(before(asPos(ZERO + ZERO + TWO)), ZERO + ZERO + ONE);
+    assertSame(
+      before(asPos(ZERO + ZERO + TWO + EIGHT + THREE)),
       ZERO + ZERO + TWO
     );
-    expect(before(asPos(ZERO + ZERO + TWO + ZERO + THREE))).toBe(
+    assertSame(
+      before(asPos(ZERO + ZERO + TWO + ZERO + THREE)),
       ZERO + ZERO + TWO
     );
 
@@ -252,7 +257,7 @@ describe("after / before", () => {
 
         (pos) => {
           if (!(pos === ONE || asPos(pos)[0] === ZERO)) {
-            expect(before(pos).length).toBe(1); // Always generates a single-digit
+            assertSame(before(pos).length, 1); // Always generates a single-digit
           }
         }
       ),
@@ -265,19 +270,20 @@ describe("after / before", () => {
   });
 
   test("hops to next subdigit at edges", () => {
-    expect(after(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(THREE); // e.g. after(.23101) => .3
-    expect(after(asPos(EIGHT + NINE + NINE + EIGHT))).toBe(NINE); // e.g. after(.8998) => .9
-    expect(after(asPos(NINE + NINE + NINE + EIGHT))).toBe(
+    assertSame(after(asPos(TWO + THREE + ONE + ZERO + ONE)), THREE); // e.g. after(.23101) => .3
+    assertSame(after(asPos(EIGHT + NINE + NINE + EIGHT)), NINE); // e.g. after(.8998) => .9
+    assertSame(
+      after(asPos(NINE + NINE + NINE + EIGHT)),
       NINE + NINE + NINE + NINE
     ); // e.g. after(.9998) => .9999
-    expect(after(asPos(ONE + ZERO + ZERO + ONE))).toBe(TWO); // e.g. after(.1001) => .2
-    expect(after(NINE)).toBe(NINE + ONE); // e.g. after(.9) => .91
-    expect(after(asPos(NINE + NINE + NINE))).toBe(NINE + NINE + NINE + ONE); // e.g. after(.999) => .9991
+    assertSame(after(asPos(ONE + ZERO + ZERO + ONE)), TWO); // e.g. after(.1001) => .2
+    assertSame(after(NINE), NINE + ONE); // e.g. after(.9) => .91
+    assertSame(after(asPos(NINE + NINE + NINE)), NINE + NINE + NINE + ONE); // e.g. after(.999) => .9991
 
-    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE); // e.g. before(.001) => .0009
+    assertSame(before(asPos(ZERO + ZERO + ONE)), ZERO + ZERO + ZERO + NINE); // e.g. before(.001) => .0009
 
-    expect(after(asPos(EIGHT + THREE))).toBe(NINE); // e.g. after(.83) => .9
-    expect(after(asPos(NINE + THREE))).toBe(NINE + FOUR); // e.g. after(.93) => .99
+    assertSame(after(asPos(EIGHT + THREE)), NINE); // e.g. after(.83) => .9
+    assertSame(after(asPos(NINE + THREE)), NINE + FOUR); // e.g. after(.93) => .99
   });
 
   test("always outputs valid Pos values", () => {
@@ -286,8 +292,8 @@ describe("after / before", () => {
         genPos(),
 
         (pos) => {
-          expect(isPos(after(pos))).toBe(true);
-          expect(isPos(before(pos))).toBe(true);
+          assertSame(isPos(after(pos)), true);
+          assertSame(isPos(before(pos)), true);
         }
       )
     );
@@ -299,8 +305,8 @@ describe("after / before", () => {
         genUnverifiedPos(),
 
         (pos) => {
-          expect(after(pos) > pos).toBe(true);
-          expect(pos < after(pos)).toBe(true);
+          assertSame(after(pos) > pos, true);
+          assertSame(pos < after(pos), true);
         }
       )
     );
@@ -312,8 +318,8 @@ describe("after / before", () => {
         genPos(),
 
         (pos) => {
-          expect(before(pos) < pos).toBe(true);
-          expect(pos > before(pos)).toBe(true);
+          assertSame(before(pos) < pos, true);
+          assertSame(pos > before(pos), true);
         }
       )
     );
@@ -322,15 +328,24 @@ describe("after / before", () => {
 
 describe("between", () => {
   test("throws for equal values", () => {
-    expect(() => between(asPos("x"), asPos("x"))).toThrow();
-    expect(() => between(asPos("x"), asPos("x        "))).toThrow();
+    assertThrows(
+      () => between(asPos("x"), asPos("x")),
+      "Cannot compute value between two equal positions"
+    );
+    assertThrows(
+      () => between(asPos("x"), asPos("x        ")),
+      "Cannot compute value between two equal positions"
+    );
 
     fc.assert(
       fc.property(
         genUnverifiedPos(),
 
         (pos) => {
-          expect(() => between(pos, pos)).toThrow();
+          assertThrows(
+            () => between(pos, pos),
+            "Cannot compute value between two equal positions"
+          );
         }
       )
     );
@@ -342,7 +357,7 @@ describe("between", () => {
         genPosRange(),
 
         ([lo, hi]) => {
-          expect(isPos(between(lo, hi))).toBe(true);
+          assertSame(isPos(between(lo, hi)), true);
         }
       )
     );
@@ -356,7 +371,7 @@ describe("between", () => {
 
         (pos1, pos2) => {
           if (pos1 !== pos2) {
-            expect(between(pos1, pos2)).toBe(between(pos2, pos1));
+            assertSame(between(pos1, pos2), between(pos2, pos1));
           }
         }
       )
@@ -369,8 +384,8 @@ describe("between", () => {
         genPosRange(),
 
         ([lo, hi]) => {
-          expect(between(lo, hi) > lo).toBe(true);
-          expect(between(lo, hi) < hi).toBe(true);
+          assertSame(between(lo, hi) > lo, true);
+          assertSame(between(lo, hi) < hi, true);
         }
       )
     );
@@ -379,105 +394,113 @@ describe("between", () => {
 
 describe("makePosition", () => {
   test("default/first position is .1", () =>
-    expect(makePosition(undefined, undefined)).toBe(ONE));
+    assertSame(makePosition(undefined, undefined), ONE));
 
-  test("after .1 lies .2", () =>
-    expect(makePosition(ONE, undefined)).toBe(TWO));
+  test("after .1 lies .2", () => assertSame(makePosition(ONE, undefined), TWO));
 
   test("before .9 lies .8", () =>
-    expect(makePosition(undefined, NINE)).toBe(EIGHT));
+    assertSame(makePosition(undefined, NINE), EIGHT));
 
   test("after .9 lies .91", () =>
-    expect(makePosition(NINE, undefined)).toBe(NINE + ONE));
+    assertSame(makePosition(NINE, undefined), NINE + ONE));
 
   test("before .1 lies .09", () =>
-    expect(makePosition(undefined, ONE)).toBe(ZERO + NINE));
+    assertSame(makePosition(undefined, ONE), ZERO + NINE));
 
   test("between .1 and .11 lies .105", () =>
-    expect(makePosition(ONE, asPos(ONE + ONE))).toBe(ONE + ZERO + MID));
+    assertSame(makePosition(ONE, asPos(ONE + ONE)), ONE + ZERO + MID));
 
   test("between .1 and .3 lies .2", () =>
-    expect(makePosition(ONE, THREE)).toBe(TWO));
+    assertSame(makePosition(ONE, THREE), TWO));
 
   test("between .1 and .5 lies .3", () =>
-    expect(makePosition(ONE, FIVE)).toBe(THREE));
+    assertSame(makePosition(ONE, FIVE), THREE));
 
   test("between .1 and .4 lies .2", () =>
-    expect(makePosition(ONE, FOUR)).toBe(TWO));
+    assertSame(makePosition(ONE, FOUR), TWO));
 
   test("between .1 and .2 lies .15", () =>
-    expect(makePosition(ONE, TWO)).toBe(ONE + MID));
+    assertSame(makePosition(ONE, TWO), ONE + MID));
 
   test("between .1 and .12 lies .11", () =>
-    expect(makePosition(asPos(ONE), asPos(ONE + TWO))).toBe(ONE + ONE));
+    assertSame(makePosition(asPos(ONE), asPos(ONE + TWO)), ONE + ONE));
 
   test("between .1 and .102 lies .101", () =>
-    expect(makePosition(asPos(ONE), asPos(ONE + ZERO + TWO))).toBe(
+    assertSame(
+      makePosition(asPos(ONE), asPos(ONE + ZERO + TWO)),
       ONE + ZERO + ONE
     ));
 
   test("between .1 and .1003 lies .1001", () =>
-    expect(makePosition(asPos(ONE), asPos(ONE + ZERO + ZERO + THREE))).toBe(
+    assertSame(
+      makePosition(asPos(ONE), asPos(ONE + ZERO + ZERO + THREE)),
       ONE + ZERO + ZERO + ONE
     ));
 
   test("between .11 and .12 lies .115", () =>
-    expect(makePosition(asPos(ONE + ONE), asPos(ONE + TWO))).toBe(
+    assertSame(
+      makePosition(asPos(ONE + ONE), asPos(ONE + TWO)),
       ONE + ONE + MID
     ));
 
   test("between .09 and .1 should .095", () =>
-    expect(makePosition(asPos(ZERO + NINE), ONE)).toBe(ZERO + NINE + MID));
+    assertSame(makePosition(asPos(ZERO + NINE), ONE), ZERO + NINE + MID));
 
   test("between .19 and .21 should be .195", () =>
-    expect(makePosition(asPos(ONE + NINE), asPos(TWO + ONE))).toBe(
+    assertSame(
+      makePosition(asPos(ONE + NINE), asPos(TWO + ONE)),
       ONE + NINE + MID
     ));
 
   test("between .177 and .21 should be .18", () =>
-    expect(makePosition(asPos(ONE + SEVEN + SEVEN), asPos(TWO + ONE))).toBe(
+    assertSame(
+      makePosition(asPos(ONE + SEVEN + SEVEN), asPos(TWO + ONE)),
       ONE + EIGHT
     ));
 
   test("between .188 and .21 should be .19", () =>
-    expect(makePosition(asPos(ONE + EIGHT + EIGHT), asPos(TWO + ONE))).toBe(
+    assertSame(
+      makePosition(asPos(ONE + EIGHT + EIGHT), asPos(TWO + ONE)),
       ONE + EIGHT + EIGHT + MID
     ));
 
   test("between .199009 and .21 should be .1995", () =>
-    expect(
+    assertSame(
       makePosition(
         asPos(ONE + NINE + NINE + ZERO + ZERO + NINE),
         asPos(TWO + ONE)
-      )
-    ).toBe(ONE + NINE + NINE + MID));
+      ),
+      ONE + NINE + NINE + MID
+    ));
 
   test("between .1901 and .2188 should be .195", () =>
-    expect(
+    assertSame(
       makePosition(
         asPos(ONE + NINE + ZERO + ONE),
         asPos(TWO + ONE + EIGHT + EIGHT)
-      )
-    ).toBe(ONE + NINE + MID));
+      ),
+      ONE + NINE + MID
+    ));
 
   test("between .19 and .210001 should also be .195", () => {
-    expect(
+    assertSame(
       makePosition(
         asPos(ONE + NINE),
         asPos(TWO + ONE + ZERO + ZERO + ZERO + ONE)
-      )
-    ).toBe(ONE + NINE + MID);
+      ),
+      ONE + NINE + MID
+    );
   });
 
   test("between .11 and .21 should be .15", () =>
-    expect(makePosition(asPos(ONE + ONE), asPos(TWO + ONE))).toBe(ONE + MID));
+    assertSame(makePosition(asPos(ONE + ONE), asPos(TWO + ONE)), ONE + MID));
 });
 
 describe("comparePosition", () => {
   test("basics", () => {
-    expect(asPos("1") < asPos("2")).toBe(true);
-    expect(asPos("!") < asPos("~~")).toBe(true);
-    expect(asPos("11111") > asPos("11")).toBe(true);
+    assertSame(asPos("1") < asPos("2"), true);
+    assertSame(asPos("!") < asPos("~~"), true);
+    assertSame(asPos("11111") > asPos("11"), true);
   });
 
   test("correct compares output of before/after", () => {
@@ -486,10 +509,10 @@ describe("comparePosition", () => {
         genPos(),
 
         (pos) => {
-          expect(pos < after(pos)).toBe(true);
-          expect(before(pos) < pos).toBe(true);
-          expect(after(pos) > pos).toBe(true);
-          expect(pos > before(pos)).toBe(true);
+          assertSame(pos < after(pos), true);
+          assertSame(before(pos) < pos, true);
+          assertSame(after(pos) > pos, true);
+          assertSame(pos > before(pos), true);
         }
       )
     );
@@ -502,10 +525,10 @@ describe("comparePosition", () => {
 
         ([lo, hi]) => {
           const mid = between(lo, hi);
-          expect(lo < mid).toBe(true);
-          expect(mid < hi).toBe(true);
-          expect(mid > lo).toBe(true);
-          expect(hi > mid).toBe(true);
+          assertSame(lo < mid, true);
+          assertSame(mid < hi, true);
+          assertSame(mid > lo, true);
+          assertSame(hi > mid, true);
         }
       ),
 
