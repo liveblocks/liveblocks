@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { assertEq, assertThrows } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import {
   createSerializedList,
@@ -29,13 +30,18 @@ describe("Storage", () => {
 
       storage.root.set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
 
@@ -60,13 +66,18 @@ describe("Storage", () => {
         { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
       ]);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
 
@@ -92,13 +103,18 @@ describe("Storage", () => {
         { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
       ]);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" }, b: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" }, b: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
 
@@ -126,13 +142,18 @@ describe("Storage", () => {
         root.set("b", 2);
       });
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" }, b: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" }, b: { type: "update" } },
+            },
+          ],
+        ],
       ]);
 
       assertUndoRedo();
@@ -161,18 +182,23 @@ describe("Storage", () => {
         root.get("child").set("b", 1);
       });
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" } },
-        },
-        {
-          type: "LiveObject",
-          node: root.get("child"),
-          updates: { b: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" } },
+            },
+            {
+              type: "LiveObject",
+              node: root.get("child"),
+              updates: { b: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
 
@@ -205,28 +231,33 @@ describe("Storage", () => {
         root.get("childMap").set("el1", "v1");
       });
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-          updates: { a: { type: "update" } },
-        },
-        {
-          type: "LiveObject",
-          node: root.get("childObj"),
-          updates: { b: { type: "update" } },
-        },
-        {
-          type: "LiveList",
-          node: root.get("childList"),
-          updates: [{ index: 0, item: "item1", type: "insert" }],
-        },
-        {
-          type: "LiveMap",
-          node: root.get("childMap"),
-          updates: { el1: { type: "update" } },
-        },
+      assertEq(callback.mock.calls, [
+        // First call
+        [
+          // First argument is a list of changes
+          [
+            {
+              type: "LiveObject",
+              node: storage.root,
+              updates: { a: { type: "update" } },
+            },
+            {
+              type: "LiveObject",
+              node: root.get("childObj"),
+              updates: { b: { type: "update" } },
+            },
+            {
+              type: "LiveList",
+              node: root.get("childList"),
+              updates: [{ index: 0, item: "item1", type: "insert" }],
+            },
+            {
+              type: "LiveMap",
+              node: root.get("childMap"),
+              updates: { el1: { type: "update" } },
+            },
+          ],
+        ],
       ]);
     });
   });
@@ -339,7 +370,7 @@ describe("Storage", () => {
         return items.length - before;
       });
 
-      expect(numInserted).toEqual(3);
+      assertEq(numInserted, 3);
     });
 
     test("calling undo during a batch should throw", async () => {
@@ -349,7 +380,10 @@ describe("Storage", () => {
       );
 
       room.batch(() => {
-        expect(() => room.history.undo()).toThrow();
+        assertThrows(
+          () => room.history.undo(),
+          "undo is not allowed during a batch"
+        );
       });
     });
 
@@ -360,7 +394,10 @@ describe("Storage", () => {
       );
 
       room.batch(() => {
-        expect(() => room.history.redo()).toThrow();
+        assertThrows(
+          () => room.history.redo(),
+          "redo is not allowed during a batch"
+        );
       });
     });
   });

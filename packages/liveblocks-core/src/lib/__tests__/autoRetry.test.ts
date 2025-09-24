@@ -1,3 +1,4 @@
+import { assertEq } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import { autoRetry } from "../autoRetry";
@@ -31,13 +32,9 @@ describe("auto-retry logic", () => {
     );
 
     failThreeTimes = makeFailThreeTimes();
-    await expect(autoRetry(failThreeTimes, 4, [])).resolves.toEqual(
-      "Success 4"
-    );
+    await assertEq(autoRetry(failThreeTimes, 4, []), "Success 4");
 
     failThreeTimes = makeFailThreeTimes();
-    await expect(autoRetry(failThreeTimes, 10, [])).resolves.toEqual(
-      "Success 4"
-    );
+    await assertEq(autoRetry(failThreeTimes, 10, []), "Success 4");
   });
 });

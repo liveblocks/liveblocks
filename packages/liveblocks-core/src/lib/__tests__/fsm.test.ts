@@ -1,5 +1,7 @@
+import { assertEq, assertSame, assertThrows } from "tosti";
 import { describe, expect, test, vi } from "vitest";
 
+import { assertDoesntThrow } from "../../__tests__/_tostiHelpers";
 import { distance, FSM, patterns } from "../fsm";
 import { wait } from "../utils";
 
@@ -13,48 +15,40 @@ async function failAfter(ms: number): Promise<void> {
 
 describe("helper functions", () => {
   test("distance", () => {
-    expect(distance("foo.bar.baz", "foo.bar.baz")).toEqual([0, 0]);
-    expect(distance("foo.bar.baz", "foo.bar.qux")).toEqual([1, 1]);
-    expect(distance("foo.bar.baz", "foo.bar.qux.bla")).toEqual([1, 2]);
-    expect(distance("foo.bar.baz", "foo.baz")).toEqual([2, 1]);
-    expect(distance("foo.bar.baz", "yo")).toEqual([3, 1]);
-    expect(distance("yo", "foo.bar.baz")).toEqual([1, 3]);
-    expect(distance("yo", "hey")).toEqual([1, 1]);
+    assertEq(distance("foo.bar.baz", "foo.bar.baz"), [0, 0]);
+    assertEq(distance("foo.bar.baz", "foo.bar.qux"), [1, 1]);
+    assertEq(distance("foo.bar.baz", "foo.bar.qux.bla"), [1, 2]);
+    assertEq(distance("foo.bar.baz", "foo.baz"), [2, 1]);
+    assertEq(distance("foo.bar.baz", "yo"), [3, 1]);
+    assertEq(distance("yo", "foo.bar.baz"), [1, 3]);
+    assertEq(distance("yo", "hey"), [1, 1]);
   });
 
   test("patterns", () => {
-    expect(patterns("a.b.c.d.e.f", 3)).toEqual([
+    assertEq(patterns("a.b.c.d.e.f", 3), [
       "a.b.c.d.*",
       "a.b.c.d.e.*",
       "a.b.c.d.e.f",
     ]);
-    expect(patterns("initial", 1)).toEqual(["initial"]);
-    expect(patterns("foo.bar.baz", 1)).toEqual(["foo.bar.baz"]);
-    expect(patterns("foo.bar.baz", 2)).toEqual(["foo.bar.*", "foo.bar.baz"]);
-    expect(patterns("foo.bar.baz", 3)).toEqual([
-      "foo.*",
-      "foo.bar.*",
-      "foo.bar.baz",
-    ]);
-    expect(patterns("foo.bar.baz", 4)).toEqual([
+    assertEq(patterns("initial", 1), ["initial"]);
+    assertEq(patterns("foo.bar.baz", 1), ["foo.bar.baz"]);
+    assertEq(patterns("foo.bar.baz", 2), ["foo.bar.*", "foo.bar.baz"]);
+    assertEq(patterns("foo.bar.baz", 3), ["foo.*", "foo.bar.*", "foo.bar.baz"]);
+    assertEq(patterns("foo.bar.baz", 4), [
       "*",
       "foo.*",
       "foo.bar.*",
       "foo.bar.baz",
     ]);
-    expect(() => patterns("foo.bar.baz", 0)).toThrow(
-      "Invalid number of levels"
-    );
-    expect(() => patterns("foo.bar.baz", 5)).toThrow(
-      "Invalid number of levels"
-    );
+    assertThrows(() => patterns("foo.bar.baz", 0), "Invalid number of levels");
+    assertThrows(() => patterns("foo.bar.baz", 5), "Invalid number of levels");
   });
 });
 
 describe("finite state machine", () => {
   test("cannot start before there is at least an initial state", () => {
     const fsm = new FSM({});
-    expect(() => fsm.start()).toThrow("No states defined yet");
+    assertThrows(() => fsm.start(), "No states defined yet");
   });
 
   test("cannot use FSM when it hasn't started yet", () => {
@@ -64,12 +58,13 @@ describe("finite state machine", () => {
       .addTransitions("one", { GO: "two" });
 
     // Events sent before starting the machine will throw
-    expect(() => fsm.send({ type: "GO" })).toThrow("Not started yet");
+    assertThrows(() => fsm.send({ type: "GO" }), "Not started yet");
   });
 
   test("stopping a machine that hasn't started yet will throw", () => {
     const fsm = new FSM({}).addState("one");
-    expect(() => fsm.stop()).toThrow(
+    assertThrows(
+      () => fsm.stop(),
       "Cannot stop a state machine that hasn't started yet"
     );
   });
@@ -82,14 +77,15 @@ describe("finite state machine", () => {
     fsm.start();
     fsm.stop();
     // Events sent after stopping the machine will get ignored (but will NOT throw)
-    expect(() => fsm.send({ type: "GO" })).not.toThrow();
+    assertDoesntThrow(() => fsm.send({ type: "GO" }));
   });
 
   test("sending *unknown* events after the FSM has stopped will still throw", () => {
     const fsm = new FSM({}).addState("initial");
     fsm.start();
     fsm.stop();
-    expect(() => fsm.send({ type: "UNKNOWN" })).toThrow(
+    assertThrows(
+      () => fsm.send({ type: "UNKNOWN" }),
       'Invalid event "UNKNOWN"'
     );
   });
@@ -100,7 +96,7 @@ describe("finite state machine", () => {
       .addState("yellow")
       .addState("green");
 
-    expect(() => fsm.currentState).toThrow("Not started yet");
+    assertThrows(() => fsm.currentState, "Not started yet");
   });
 
   test("error when there is an nonexisting target state", () => {
@@ -111,25 +107,29 @@ describe("finite state machine", () => {
       })
       .start();
 
-    expect(() => {
+    assertThrows(() => {
       fsm.send({ type: "SOME_EVENT" });
-    }).toThrow('Invalid next state name: "i-am-not-a-valid-state-name"');
+    }, 'Invalid next state name: "i-am-not-a-valid-state-name"');
   });
 
   test("error when a state name matches no state", () => {
-    expect(() =>
-      new FSM({}).addTransitions("foo", {
-        /* not important */
-      })
-    ).toThrow('No states match "foo"');
+    assertThrows(
+      () =>
+        new FSM({}).addTransitions("foo", {
+          /* not important */
+        }),
+      'No states match "foo"'
+    );
   });
 
   test("error when a state pattern matches no state", () => {
-    expect(() =>
-      new FSM({}).addState("initial").addTransitions("initial.*", {
-        /* not important */
-      })
-    ).toThrow('No states match "initial.*"');
+    assertThrows(
+      () =>
+        new FSM({}).addState("initial").addTransitions("initial.*", {
+          /* not important */
+        }),
+      'No states match "initial.*"'
+    );
   });
 
   test("initial state", () => {
@@ -139,7 +139,7 @@ describe("finite state machine", () => {
       .addState("green")
       .start();
 
-    expect(fsm.currentState).toBe("red");
+    assertSame(fsm.currentState, "red");
   });
 
   test("sendIfPossible never errors when target state does not exist", () => {
@@ -158,27 +158,30 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(() => fsm.send({ type: "UNKNOWN_EVENT" })).toThrow(
+    assertThrows(
+      () => fsm.send({ type: "UNKNOWN_EVENT" }),
       'Invalid event "UNKNOWN_EVENT"'
     );
 
-    expect(() => fsm.send({ type: "INVALID" })).toThrow(
+    assertThrows(
+      () => fsm.send({ type: "INVALID" }),
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
 
-    expect(fsm.currentState).toBe("red");
+    assertSame(fsm.currentState, "red");
 
     fsm.send({ type: "ONLY_WHEN_GREEN" }); // Event not handled, should be a no-op...
-    expect(fsm.currentState).toBe("red"); // ...so it doesn't change the state
+    assertSame(fsm.currentState, "red"); // ...so it doesn't change the state
 
     fsm.send({ type: "ONLY_WHEN_RED" });
-    expect(fsm.currentState).toBe("green");
+    assertSame(fsm.currentState, "green");
 
     fsm.send({ type: "ONLY_WHEN_GREEN" });
 
     // However... .send() fails if this is a completely unknown
     // event (because that's a configuration error)
-    expect(() => fsm.send({ type: "INVALID" })).toThrow(
+    assertThrows(
+      () => fsm.send({ type: "INVALID" }),
       'Invalid next state name: "i-am-not-a-valid-state-name"'
     );
   });
@@ -198,15 +201,15 @@ describe("finite state machine", () => {
         .onEnter("yellow", onEnterYellow)
         .onEnter("green", onEnterGreen);
 
-      expect(onEnterRed).not.toHaveBeenCalled();
-      expect(onEnterYellow).not.toHaveBeenCalled();
-      expect(onEnterGreen).not.toHaveBeenCalled();
+      assertEq(onEnterRed.mock.calls, []);
+      assertEq(onEnterYellow.mock.calls, []);
+      assertEq(onEnterGreen.mock.calls, []);
 
       fsm.start();
 
-      expect(onEnterRed).toHaveBeenCalledTimes(1);
-      expect(onEnterYellow).not.toHaveBeenCalled();
-      expect(onEnterGreen).not.toHaveBeenCalled();
+      assertEq(onEnterRed.mock.calls.length, 1);
+      assertEq(onEnterYellow.mock.calls, []);
+      assertEq(onEnterGreen.mock.calls, []);
     });
 
     test("does not execute onExit/onEnter events when explicitly staying in the same state", () => {
@@ -230,13 +233,13 @@ describe("finite state machine", () => {
 
         .start();
 
-      expect(fsm.currentState).toEqual("green");
-      expect(calls).toEqual(["entered green"]);
+      assertEq(fsm.currentState, "green");
+      assertEq(calls, ["entered green"]);
 
       fsm.send({ type: "DO_NOTHING" });
 
-      expect(fsm.currentState).toEqual("green");
-      expect(calls).toEqual(["entered green"]);
+      assertEq(fsm.currentState, "green");
+      assertEq(calls, ["entered green"]);
     });
 
     test("executes cleanup functions when leaving state", () => {
@@ -265,23 +268,23 @@ describe("finite state machine", () => {
 
         .start();
 
-      expect(fsm.currentState).toEqual("off");
-      expect(calls).toEqual([]);
+      assertEq(fsm.currentState, "off");
+      assertEq(calls, []);
 
       fsm.send({ type: "TOGGLE" });
-      expect(fsm.currentState).toEqual("on");
-      expect(calls).toEqual(["light!"]);
+      assertEq(fsm.currentState, "on");
+      assertEq(calls, ["light!"]);
 
       fsm.send({ type: "TOGGLE" });
-      expect(fsm.currentState).toEqual("off");
-      expect(calls).toEqual(["light!", "darkness!"]);
+      assertEq(fsm.currentState, "off");
+      assertEq(calls, ["light!", "darkness!"]);
 
       fsm.send({ type: "TOGGLE" });
-      expect(fsm.currentState).toEqual("on");
-      expect(calls).toEqual(["light!", "darkness!", "light!"]);
+      assertEq(fsm.currentState, "on");
+      assertEq(calls, ["light!", "darkness!", "light!"]);
 
       fsm.stop();
-      expect(calls).toEqual(["light!", "darkness!", "light!", "darkness!"]);
+      assertEq(calls, ["light!", "darkness!", "light!", "darkness!"]);
     });
 
     test("executes group-based enter/exit handlers correctly", () => {
@@ -323,34 +326,34 @@ describe("finite state machine", () => {
         .onEnter("group.red", enterRed);
 
       fsm.start();
-      expect(fsm.currentState).toEqual("initial");
-      expect(calls).toEqual(["entered machine"]);
+      assertEq(fsm.currentState, "initial");
+      assertEq(calls, ["entered machine"]);
       calls.length = 0;
 
       fsm.send({ type: "START" });
-      expect(fsm.currentState).toEqual("group.red");
-      expect(calls).toEqual(["entered group", "entered red"]);
+      assertEq(fsm.currentState, "group.red");
+      assertEq(calls, ["entered group", "entered red"]);
       calls.length = 0;
 
       fsm.send({ type: "NEXT" });
-      expect(fsm.currentState).toEqual("group.yellow");
-      expect(calls).toEqual(["exited red"]);
+      assertEq(fsm.currentState, "group.yellow");
+      assertEq(calls, ["exited red"]);
       calls.length = 0;
 
       fsm.send({ type: "NEXT" });
-      expect(calls).toEqual([]);
+      assertEq(calls, []);
       calls.length = 0;
 
       fsm.send({ type: "NEXT" });
-      expect(calls).toEqual(["entered red"]);
+      assertEq(calls, ["entered red"]);
       calls.length = 0;
 
       fsm.send({ type: "ERROR" });
-      expect(calls).toEqual(["exited red", "exited group"]);
+      assertEq(calls, ["exited red", "exited group"]);
       calls.length = 0;
 
       fsm.stop();
-      expect(calls).toEqual(["exited machine"]);
+      assertEq(calls, ["exited machine"]);
     });
   });
 
@@ -370,19 +373,19 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentState).toEqual("foo.one");
+    assertEq(fsm.currentState, "foo.one");
     fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.two");
+    assertEq(fsm.currentState, "foo.two");
     fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.two");
+    assertEq(fsm.currentState, "foo.two");
     fsm.send({ type: "FROM_FOO_ONLY" });
-    expect(fsm.currentState).toEqual("bar.three");
+    assertEq(fsm.currentState, "bar.three");
 
     fsm.send({ type: "FROM_FOO_ONLY" }); // This event is not handled by this state, it's a no-op
-    expect(fsm.currentState).toEqual("bar.three");
+    assertEq(fsm.currentState, "bar.three");
 
     fsm.send({ type: "FROM_ANYWHERE" });
-    expect(fsm.currentState).toEqual("foo.two");
+    assertEq(fsm.currentState, "foo.two");
   });
 
   test("patching context", () => {
@@ -407,29 +410,29 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentState).toEqual("one");
+    assertEq(fsm.currentState, "one");
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two");
-    expect(fsm.context).toEqual({ x: 3 });
+    assertEq(fsm.currentState, "two");
+    assertEq(fsm.context, { x: 3 });
 
     fsm.send({ type: "BACK" });
-    expect(fsm.currentState).toEqual("one");
-    expect(fsm.context).toEqual({ x: 3 }); // Still at 3!
+    assertEq(fsm.currentState, "one");
+    assertEq(fsm.context, { x: 3 }); // Still at 3!
 
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two");
-    expect(fsm.context).toEqual({ x: 0 }); // Reset to 0!
+    assertEq(fsm.currentState, "two");
+    assertEq(fsm.context, { x: 0 }); // Reset to 0!
 
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two");
-    expect(fsm.context).toEqual({ x: 5 });
+    assertEq(fsm.currentState, "two");
+    assertEq(fsm.context, { x: 5 });
   });
 
   test("patching context (prevents patching old/stale contexts)", () => {
@@ -450,13 +453,14 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentState).toEqual("one");
-    expect(fsm.context).toEqual({ x: 0 });
+    assertEq(fsm.currentState, "one");
+    assertEq(fsm.context, { x: 0 });
     fsm.send({ type: "GO" });
-    expect(fsm.context).toEqual({ x: 13 });
+    assertEq(fsm.context, { x: 13 });
 
     // Leaving "two" state will trigger onExit handler which contains the bug
-    expect(() => fsm.send({ type: "GO" })).toThrow(
+    assertThrows(
+      () => fsm.send({ type: "GO" }),
       "Can no longer patch stale context"
     );
   });
@@ -484,12 +488,12 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentState).toEqual("one");
-    expect(fsm.context).toEqual({ x: 0 });
+    assertEq(fsm.currentState, "one");
+    assertEq(fsm.context, { x: 0 });
     fsm.send({ type: "GO" });
-    expect(fsm.context).toEqual({ x: 13 });
+    assertEq(fsm.context, { x: 13 });
     fsm.send({ type: "GO" });
-    expect(fsm.context).toEqual({ x: 7 });
+    assertEq(fsm.context, { x: 7 });
   });
 
   test("side effects", () => {
@@ -517,31 +521,31 @@ describe("finite state machine", () => {
 
       .start();
 
-    expect(fsm.currentState).toEqual("one");
-    expect(reset).not.toHaveBeenCalled();
-    expect(inced).not.toHaveBeenCalled();
+    assertEq(fsm.currentState, "one");
+    assertEq(reset.mock.calls, []);
+    assertEq(inced.mock.calls, []);
     fsm.send({ type: "GO" });
-    expect(reset).toHaveBeenCalledTimes(1);
-    expect(inced).not.toHaveBeenCalled();
+    assertEq(reset.mock.calls.length, 1);
+    assertEq(inced.mock.calls, []);
     fsm.send({ type: "GO" });
-    expect(reset).toHaveBeenCalledTimes(1);
+    assertEq(reset.mock.calls.length, 1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 1, y: 13, patch: expect.any(Function) },
       { type: "GO" }
     );
     fsm.send({ type: "GO" });
-    expect(reset).toHaveBeenCalledTimes(1);
+    assertEq(reset.mock.calls.length, 1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 2, y: 13, patch: expect.any(Function) },
       { type: "GO" }
     );
     fsm.send({ type: "GO" });
-    expect(reset).toHaveBeenCalledTimes(1);
+    assertEq(reset.mock.calls.length, 1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 3, y: 13, patch: expect.any(Function) },
       { type: "GO" }
     );
-    expect(fsm.context).toEqual({ x: 3, y: 13 });
+    assertEq(fsm.context, { x: 3, y: 13 });
   });
 
   test("explicitly *not* transitioning", () => {
@@ -559,17 +563,17 @@ describe("finite state machine", () => {
       })
       .start();
 
-    expect(fsm.currentState).toEqual("one");
+    assertEq(fsm.currentState, "one");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two");
+    assertEq(fsm.currentState, "two");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("one");
+    assertEq(fsm.currentState, "one");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two");
+    assertEq(fsm.currentState, "two");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("two"); // Did *not* transition!
+    assertEq(fsm.currentState, "two"); // Did *not* transition!
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("one");
+    assertEq(fsm.currentState, "one");
   });
 
   describe("time-based transitions", () => {
@@ -591,14 +595,14 @@ describe("finite state machine", () => {
         .start();
 
       // Staying within the "start" group won't cancel
-      expect(fsm.currentState).toEqual("start.one");
+      assertEq(fsm.currentState, "start.one");
       fsm.send({ type: "GO" });
       fsm.send({ type: "GO" });
       fsm.send({ type: "GO" });
-      expect(fsm.currentState).toEqual("start.two");
+      assertEq(fsm.currentState, "start.two");
 
       vi.runAllTimers(); // Make the timer go off...
-      expect(fsm.currentState).toEqual("timed-out"); // ...the timer causes the machine to move to "timed-out" state
+      assertEq(fsm.currentState, "timed-out"); // ...the timer causes the machine to move to "timed-out" state
     });
 
     test("time-based transitions get cancelled", () => {
@@ -621,17 +625,17 @@ describe("finite state machine", () => {
       vi.advanceTimersByTime(5000); // Not far enough yet
 
       // Staying within the "start" group won't cancel
-      expect(fsm.currentState).toEqual("start.one");
+      assertEq(fsm.currentState, "start.one");
       fsm.send({ type: "GO" });
       fsm.send({ type: "GO" });
       fsm.send({ type: "GO" });
-      expect(fsm.currentState).toEqual("start.two");
+      assertEq(fsm.currentState, "start.two");
 
       fsm.send({ type: "END" });
-      expect(fsm.currentState).toEqual("end");
+      assertEq(fsm.currentState, "end");
 
       vi.runAllTimers(); // Make the timer go off...
-      expect(fsm.currentState).toEqual("end"); // ...it should _NOT_ move to timed-out state anymore
+      assertEq(fsm.currentState, "end"); // ...it should _NOT_ move to timed-out state anymore
     });
   });
 
@@ -662,11 +666,11 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("good");
+      assertEq(fsm.currentState, "good");
 
       fsm.stop();
     });
@@ -677,9 +681,9 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(fsm.currentState, "bad");
 
       fsm.stop();
     });
@@ -691,9 +695,9 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => wait(30_001));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(fsm.currentState, "bad");
 
       fsm.stop();
     });
@@ -704,13 +708,13 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       fsm.send({ type: "FAIL" }); // Manually failing first...
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(fsm.currentState, "bad");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+      assertEq(fsm.currentState, "bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort successfully (on failure)", async () => {
@@ -719,13 +723,13 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       fsm.send({ type: "OK" }); // Manually failing first...
-      expect(fsm.currentState).toEqual("good");
+      assertEq(fsm.currentState, "good");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
+      assertEq(fsm.currentState, "good"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions won't abort within group", async () => {
@@ -734,21 +738,21 @@ describe("finite state machine", () => {
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       fsm.send({ type: "JUMP" });
-      expect(fsm.currentState).toEqual("waiting.two");
+      assertEq(fsm.currentState, "waiting.two");
       fsm.send({ type: "JUMP" });
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
 
       // We can keep jumping between waiting.* states without the promise
       // getting cancelled (unlike jumping to "good" or "bad")
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       fsm.send({ type: "JUMP" });
-      expect(fsm.currentState).toEqual("waiting.two");
+      assertEq(fsm.currentState, "waiting.two");
 
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+      assertEq(fsm.currentState, "bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort with signal handler (when aborted)", async () => {
@@ -770,16 +774,16 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
-      expect(gotAborted).toEqual(false);
+      assertEq(fsm.currentState, "waiting.one");
+      assertEq(gotAborted, false);
       fsm.send({ type: "FAIL" }); // Manually failing first...
-      expect(gotAborted).toEqual(true);
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(gotAborted, true);
+      assertEq(fsm.currentState, "bad");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
-      expect(gotAborted).toEqual(true);
+      assertEq(fsm.currentState, "bad"); // ...will ignore the returned promise transition
+      assertEq(gotAborted, true);
     });
 
     test("promise-based transitions abort with signal handler (when timed out)", async () => {
@@ -801,11 +805,11 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
-      expect(gotAborted).toEqual(false);
+      assertEq(fsm.currentState, "waiting.one");
+      assertEq(gotAborted, false);
       await vi.runAllTimersAsync();
-      expect(gotAborted).toEqual(true); // Got aborted by timeout
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(gotAborted, true); // Got aborted by timeout
+      assertEq(fsm.currentState, "bad");
 
       fsm.stop();
     });
@@ -821,10 +825,10 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("good");
-      expect(hijackedSignal?.aborted).toEqual(false);
+      assertEq(fsm.currentState, "good");
+      assertEq(hijackedSignal?.aborted, false);
     });
 
     test("promise-based transitions abort with signal inspection (when aborted)", async () => {
@@ -839,16 +843,16 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
-      expect(gotAborted).toEqual(false);
+      assertEq(fsm.currentState, "waiting.one");
+      assertEq(gotAborted, false);
       fsm.send({ type: "FAIL" }); // Manually failing first...
-      expect(gotAborted).toEqual(false); // not yet visible before promise has run
-      expect(fsm.currentState).toEqual("bad");
+      assertEq(gotAborted, false); // not yet visible before promise has run
+      assertEq(fsm.currentState, "bad");
       await vi.runAllTimersAsync();
-      expect(gotAborted).toEqual(true);
-      expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
+      assertEq(gotAborted, true);
+      assertEq(fsm.currentState, "bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort with signal inspection (when not aborted)", async () => {
@@ -863,10 +867,10 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("good");
-      expect(hijackedSignal?.aborted).toEqual(false);
+      assertEq(fsm.currentState, "good");
+      assertEq(hijackedSignal?.aborted, false);
     });
 
     test("promise-based transitions abort failing promise with signal handler (when aborted)", async () => {
@@ -888,16 +892,16 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
-      expect(gotAborted).toEqual(false);
+      assertEq(fsm.currentState, "waiting.one");
+      assertEq(gotAborted, false);
       fsm.send({ type: "OK" }); // Manually move to good...
-      expect(gotAborted).toEqual(true);
-      expect(fsm.currentState).toEqual("good");
+      assertEq(gotAborted, true);
+      assertEq(fsm.currentState, "good");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
-      expect(gotAborted).toEqual(true);
+      assertEq(fsm.currentState, "good"); // ...will ignore the returned promise transition
+      assertEq(gotAborted, true);
     });
 
     test("promise-based transitions abort failing promise with signal handler (when not aborted)", async () => {
@@ -919,10 +923,10 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad");
-      expect(gotAborted).toEqual(false);
+      assertEq(fsm.currentState, "bad");
+      assertEq(gotAborted, false);
     });
 
     test("promise-based transitions abort failing promise with signal inspection (when aborted)", async () => {
@@ -937,14 +941,14 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.advanceTimersByTimeAsync(1000);
-      expect(fsm.currentState).toEqual("waiting.one");
-      expect(hijackedSignal?.aborted).toEqual(false);
+      assertEq(fsm.currentState, "waiting.one");
+      assertEq(hijackedSignal?.aborted, false);
       fsm.send({ type: "OK" }); // Manually move to good...
-      expect(hijackedSignal?.aborted).toEqual(true);
-      expect(fsm.currentState).toEqual("good");
-      expect(hijackedSignal?.aborted).toEqual(true);
+      assertEq(hijackedSignal?.aborted, true);
+      assertEq(fsm.currentState, "good");
+      assertEq(hijackedSignal?.aborted, true);
     });
 
     test("promise-based transitions abort failing promise with signal inspection (when not aborted)", async () => {
@@ -959,10 +963,10 @@ describe("finite state machine", () => {
 
       fsm.start();
 
-      expect(fsm.currentState).toEqual("waiting.one");
+      assertEq(fsm.currentState, "waiting.one");
       await vi.runAllTimersAsync();
-      expect(fsm.currentState).toEqual("bad");
-      expect(hijackedSignal?.aborted).toEqual(false);
+      assertEq(fsm.currentState, "bad");
+      assertEq(hijackedSignal?.aborted, false);
     });
   });
 
@@ -978,33 +982,33 @@ describe("finite state machine", () => {
       .addTransitions("*", { TO_START: "start" })
       .addTransitions("*", { TO_END: "end" });
 
-    expect(() =>
-      fsm
-        // This wildcard transition should _not_ be allowed, as it would
-        // override/conflict with the existing start->GO transition defined
-        // earlier
-        .addTransitions("*", { GO: "start" })
-    ).toThrow(
+    assertThrows(
+      () =>
+        fsm
+          // This wildcard transition should _not_ be allowed, as it would
+          // override/conflict with the existing start->GO transition defined
+          // earlier
+          .addTransitions("*", { GO: "start" }),
       'Trying to set transition "GO" on "start" (via "*"), but a transition already exists there.'
     );
 
     fsm.start();
 
-    expect(fsm.currentState).toEqual("start");
+    assertEq(fsm.currentState, "start");
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("end");
+    assertEq(fsm.currentState, "end");
     fsm.send({ type: "GO" });
     fsm.send({ type: "GO" });
-    expect(fsm.currentState).toEqual("end");
+    assertEq(fsm.currentState, "end");
 
     fsm.send({ type: "TO_START" });
-    expect(fsm.currentState).toEqual("start");
+    assertEq(fsm.currentState, "start");
     fsm.send({ type: "TO_START" });
-    expect(fsm.currentState).toEqual("start");
+    assertEq(fsm.currentState, "start");
 
     fsm.send({ type: "TO_END" });
-    expect(fsm.currentState).toEqual("end");
+    assertEq(fsm.currentState, "end");
     fsm.send({ type: "TO_END" });
-    expect(fsm.currentState).toEqual("end");
+    assertEq(fsm.currentState, "end");
   });
 });

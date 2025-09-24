@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { assertEq, assertThrows } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import { DefaultMap } from "../DefaultMap";
@@ -14,7 +15,8 @@ describe("DefaultMap", () => {
     // Just happens to work because "apple" was already created
     map.getOrCreate("apple").add("world");
 
-    expect(() => map.getOrCreate("banana")).toThrow(
+    assertThrows(
+      () => map.getOrCreate("banana"),
       /used without a factory function/
     );
   });
@@ -24,6 +26,8 @@ describe("DefaultMap", () => {
     map1.getOrCreate("foo").add("hello");
     map1.getOrCreate("foo").add("world");
     map1.getOrCreate("bar").add("bye");
+
+    // XXX Support Map in tosti
     expect(new Map(map1)).toEqual(
       new Map([
         ["foo", new Set(["hello", "world"])],
@@ -35,6 +39,8 @@ describe("DefaultMap", () => {
     map2.getOrCreate("foo").push("hello");
     map2.getOrCreate("foo").push("world");
     map2.getOrCreate("bar").push("bye");
+
+    // XXX Support Map in tosti
     expect(new Map(map2)).toEqual(
       new Map([
         ["foo", ["foo!", "hello", "world"]],
@@ -52,13 +58,15 @@ describe("DefaultMap", () => {
     map.set("bar", null);
 
     // Basic assertions that it's just like a normal Map
-    expect(map.has("foo")).toEqual(true);
-    expect(map.get("foo")).toEqual(undefined);
-    expect(map.has("bar")).toEqual(true);
-    expect(map.get("bar")).toEqual(null);
+    assertEq(map.has("foo"), true);
+    assertEq(map.get("foo"), undefined);
+    assertEq(map.has("bar"), true);
+    assertEq(map.get("bar"), null);
 
-    expect(map.getOrCreate("foo")).toEqual(undefined); // Not a Set!
-    expect(map.getOrCreate("bar")).toEqual(null); // Not a Set!
+    assertEq(map.getOrCreate("foo"), undefined); // Not a Set!
+    assertEq(map.getOrCreate("bar"), null); // Not a Set!
+
+    // XXX Support Set in tosti
     expect(map.getOrCreate("qux")).toEqual(new Set());
   });
 
@@ -70,6 +78,7 @@ describe("DefaultMap", () => {
     // Using a custom factory function, just for this "bar" key
     map.getOrCreate("bar", () => new Set()).add("bye");
 
+    // XXX Support Map in tosti
     expect(new Map(map)).toEqual(
       new Map([
         ["foo", new Set(["foo", "hello", "world"])],
@@ -88,6 +97,8 @@ describe("DefaultMap (properties)", () => {
         (tuples) => {
           const expected = new Map(tuples);
           const actual = new DefaultMap(() => 0, tuples);
+
+          // XXX Support Map in tosti
           expect(new Map(actual)).toEqual(expected);
         }
       )
@@ -106,9 +117,10 @@ describe("DefaultMap (properties)", () => {
           for (const [key, value] of tuples) {
             expected.set(key, value);
             actual.set(key, value);
-            expect(actual.getOrCreate(key)).toEqual(expected.get(key));
+            assertEq(actual.getOrCreate(key), expected.get(key));
           }
 
+          // XXX Support Map in tosti
           expect(new Map(actual)).toEqual(expected);
         }
       )
@@ -130,6 +142,7 @@ describe("DefaultMap (properties)", () => {
             actual.delete(key);
           }
 
+          // XXX Support Map in tosti
           expect(new Map(actual)).toEqual(expected);
         }
       )

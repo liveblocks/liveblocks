@@ -1,3 +1,4 @@
+import { assertEq, assertSame } from "tosti";
 import {
   afterEach,
   beforeAll,
@@ -97,20 +98,20 @@ export async function prepareStorageImmutableTest<
     expectStorageInBothClients(data);
 
     if (itemsCount !== undefined) {
-      expect(subject.room[kInternal].nodeCount).toBe(itemsCount);
+      assertSame(subject.room[kInternal].nodeCount, itemsCount);
     }
-    expect(state).toEqual(refState);
-    expect(state).toEqual(data);
+    assertEq(state, refState);
+    assertEq(state, data);
 
     if (storageOpsCount !== undefined) {
-      expect(totalStorageOps).toEqual(storageOpsCount);
+      assertEq(totalStorageOps, storageOpsCount);
     }
   }
 
   function expectStorageInBothClients(data: ToJson<S>) {
     const json = lsonToJson(subject.storage.root);
-    expect(json).toEqual(data);
-    expect(lsonToJson(ref.storage.root)).toEqual(data);
+    assertEq(json, data);
+    assertEq(lsonToJson(ref.storage.root), data);
   }
 
   return {
@@ -136,27 +137,27 @@ describe("patchLiveObjectKey", () => {
   test("should set string", () => {
     const liveObject = new LiveObject();
     patchLiveObjectKey(liveObject, "key", undefined, "value");
-    expect(liveObject.get("key")).toBe("value");
+    assertSame(liveObject.get("key"), "value");
   });
 
   test("should set number", () => {
     const liveObject = new LiveObject();
     patchLiveObjectKey(liveObject, "key", undefined, 0);
-    expect(liveObject.get("key")).toBe(0);
+    assertSame(liveObject.get("key"), 0);
   });
 
   test("should set LiveObject if next is object", () => {
     const liveObject = new LiveObject<{ key: LiveObject<{ a: number }> }>();
     patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
     const value = liveObject.get("key");
-    expect(value instanceof LiveObject).toBe(true);
-    expect(value.toObject()).toEqual({ a: 0 });
+    assertSame(value instanceof LiveObject, true);
+    assertEq(value.toObject(), { a: 0 });
   });
 
   test("should delete key if next is undefined", () => {
     const liveObject = new LiveObject({ key: "value" });
     patchLiveObjectKey(liveObject, "key", "value", undefined);
-    expect(liveObject.toObject()).toEqual({});
+    assertEq(liveObject.toObject(), {});
   });
 });
 
@@ -168,7 +169,7 @@ describe("2 ways tests with two clients", () => {
           syncObj: { a: number };
         }>([createSerializedObject("0:0", {})], 1);
 
-      expect(state).toEqual({});
+      assertEq(state, {});
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncObj = { a: 1 };
@@ -196,7 +197,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
+      assertEq(state, { syncObj: { a: 0 } });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncObj.a = 1;
@@ -224,7 +225,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
+      assertEq(state, { syncObj: { a: 0 } });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.syncObj.a = { subA: "ok" };
@@ -252,7 +253,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ doc: {} });
+      assertEq(state, { doc: {} });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.doc = { sub: [0] };
@@ -275,7 +276,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ doc: {} });
+      assertEq(state, { doc: {} });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.doc = { sub: { subSub: [{ a: 1 }] } };
@@ -298,7 +299,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ doc: {} });
+      assertEq(state, { doc: {} });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         state.doc = { pos: { a: { b: 1 } } };
@@ -321,7 +322,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
+      assertEq(state, { syncObj: { a: 0 } });
 
       const { oldState, newState } = applyStateChanges(state, () => {
         delete state.syncObj.a;
@@ -694,7 +695,7 @@ describe("2 ways tests with two clients", () => {
           1
         );
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
+      assertEq(state, { syncObj: { a: 0 } });
 
       const oldState = JSON.parse(JSON.stringify(state));
 
@@ -707,7 +708,7 @@ describe("2 ways tests with two clients", () => {
         state["syncObj"]
       );
 
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      assertEq(consoleErrorSpy.mock.calls.length, 1);
 
       expectStorage({ syncObj: { a: 0 } });
     });
@@ -723,7 +724,7 @@ describe("2 ways tests with two clients", () => {
         1
       );
 
-      expect(state).toEqual({ syncObj: { a: 0 } });
+      assertEq(state, { syncObj: { a: 0 } });
 
       process.env = {
         ...originalEnv,
@@ -741,7 +742,7 @@ describe("2 ways tests with two clients", () => {
         state["syncObj"]
       );
 
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
+      assertEq(consoleErrorSpy.mock.calls.length, 0);
     });
   });
 });
@@ -765,8 +766,8 @@ describe("legacy_patchImmutableObject", () => {
     const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.subB === state.subB).toBeFalsy();
-    expect(newState.subA === state.subA).toBeTruthy();
-    expect(newState).toEqual({ subA: { subsubA: { a: 1 } }, subB: { b: 2 } });
+    assertSame(newState.subA, state.subA);
+    assertEq(newState, { subA: { subsubA: { a: 1 } }, subB: { b: 2 } });
   });
 
   test("update one sub object of sub object", () => {
@@ -801,11 +802,11 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.subB === state.subB).toBeTruthy();
+    assertSame(newState.subB, state.subB);
     expect(newState.subA === state.subA).toBeFalsy();
-    expect(newState.subA.subsubB === state.subA.subsubB).toBeTruthy();
+    assertSame(newState.subA.subsubB, state.subA.subsubB);
     expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
-    expect(newState).toEqual({
+    assertEq(newState, {
       subA: { subsubA: { a: 2 }, subsubB: { b: 1 } },
       subB: { b: 1 },
     });
@@ -855,7 +856,7 @@ describe("legacy_patchImmutableObject", () => {
     expect(newState.subB === state.subB).toBeFalsy();
     expect(newState.subA === state.subA).toBeFalsy();
     expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
-    expect(newState).toEqual({
+    assertEq(newState, {
       subA: { subsubA: { a: 2 } },
       subB: { b: 2 },
     });
@@ -883,9 +884,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+    assertSame(newState.map.el1, state.map.el1);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       map: { el1: { a: 1 }, el2: { a: 2 } },
     });
   });
@@ -911,9 +912,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+    assertSame(newState.map.el1, state.map.el1);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       map: { el1: { a: 1 } },
     });
   });
@@ -944,11 +945,11 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    assertSame(newState.list[0], state.list[0]);
     expect(newState.list[1] === state.list[1]).toBeFalsy();
-    expect(newState.list[2] === state.list[2]).toBeTruthy();
+    assertSame(newState.list[2], state.list[2]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 1 }, { a: 4 }, { a: 3 }],
     });
   });
@@ -978,10 +979,10 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[0]).toBeTruthy();
-    expect(newState.list[1] === state.list[1]).toBeTruthy();
+    assertSame(newState.list[0], state.list[0]);
+    assertSame(newState.list[1], state.list[1]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 1 }, { a: 2 }, { a: 3 }],
     });
   });
@@ -1013,7 +1014,7 @@ describe("legacy_patchImmutableObject", () => {
     expect(newState.list[0] === state.list[0]).toBeFalsy();
     expect(newState.list[1] === state.list[1]).toBeFalsy();
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 0 }, { a: 1 }],
     });
   });
@@ -1047,9 +1048,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[2] === state.list[0]).toBeTruthy();
+    assertSame(newState.list[2], state.list[0]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 3 }, { a: 2 }, { a: 1 }],
     });
   });
@@ -1083,9 +1084,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    assertSame(newState.list[0], state.list[0]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 1 }, { a: 2 }, { a: 3 }],
     });
   });
@@ -1113,10 +1114,10 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[0]).toBeTruthy();
-    expect(newState.list[2] === state.list[1]).toBeTruthy();
+    assertSame(newState.list[0], state.list[0]);
+    assertSame(newState.list[2], state.list[1]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 1 }, { a: 15 }, { a: 2 }],
     });
   });
@@ -1142,9 +1143,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    assertSame(newState.list[0], state.list[0]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 1 }],
     });
   });
@@ -1171,9 +1172,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[1]).toBeTruthy();
+    assertSame(newState.list[0], state.list[1]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 2 }],
     });
   });
@@ -1207,9 +1208,9 @@ describe("legacy_patchImmutableObject", () => {
 
     const newState = legacy_patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[2]).toBeTruthy();
+    assertSame(newState.list[0], state.list[2]);
 
-    expect(newState).toEqual({
+    assertEq(newState, {
       list: [{ a: 3 }],
     });
   });
@@ -1242,11 +1243,11 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[1] === state.list[0]).toBeTruthy();
-      expect(newState.list[2] === state.list[1]).toBeTruthy();
-      expect(newState.list[3] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[1], state.list[0]);
+      assertSame(newState.list[2], state.list[1]);
+      assertSame(newState.list[3], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "c" }, { i: "a" }, { i: "b" }, { i: "d" }],
       });
     });
@@ -1278,11 +1279,11 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[0] === state.list[1]).toBeTruthy();
-      expect(newState.list[1] === state.list[2]).toBeTruthy();
-      expect(newState.list[2] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[0], state.list[1]);
+      assertSame(newState.list[1], state.list[2]);
+      assertSame(newState.list[2], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "b" }, { i: "c" }, { i: "d" }, { i: "a" }],
       });
     });
@@ -1314,11 +1315,11 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[0] === state.list[0]).toBeTruthy();
-      expect(newState.list[1] === state.list[2]).toBeTruthy();
-      expect(newState.list[2] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[0], state.list[0]);
+      assertSame(newState.list[1], state.list[2]);
+      assertSame(newState.list[2], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "a" }, { i: "c" }, { i: "d" }, { i: "b" }],
       });
     });
@@ -1350,11 +1351,11 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[0] === state.list[0]).toBeTruthy();
-      expect(newState.list[1] === state.list[2]).toBeTruthy();
-      expect(newState.list[3] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[0], state.list[0]);
+      assertSame(newState.list[1], state.list[2]);
+      assertSame(newState.list[3], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "a" }, { i: "c" }, { i: "b" }, { i: "d" }],
       });
     });
@@ -1391,10 +1392,10 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[0] === state.list[1]).toBeTruthy();
-      expect(newState.list[2] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[0], state.list[1]);
+      assertSame(newState.list[2], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "b" }, { i: "a" }, { i: "d" }, { i: "c" }],
       });
     });
@@ -1431,10 +1432,10 @@ describe("legacy_patchImmutableObject", () => {
 
       const newState = legacy_patchImmutableObject(state, updates);
 
-      expect(newState.list[2] === state.list[0]).toBeTruthy();
-      expect(newState.list[3] === state.list[3]).toBeTruthy();
+      assertSame(newState.list[2], state.list[0]);
+      assertSame(newState.list[3], state.list[3]);
 
-      expect(newState).toEqual({
+      assertEq(newState, {
         list: [{ i: "c" }, { i: "b" }, { i: "a" }, { i: "d" }],
       });
     });

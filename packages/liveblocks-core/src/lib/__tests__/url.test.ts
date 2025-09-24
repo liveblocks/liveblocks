@@ -1,111 +1,124 @@
-import { describe, expect, test } from "vitest";
+import { assertSame } from "tosti";
+import { describe, test } from "vitest";
 
 import { generateUrl, sanitizeUrl } from "../url";
 
 describe("sanitizeUrl", () => {
   test("should return valid URLs as-is", () => {
-    expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
-    expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
+    assertSame(sanitizeUrl("https://liveblocks.io"), "https://liveblocks.io");
+    assertSame(
+      sanitizeUrl("https://liveblocks.io/docs"),
       "https://liveblocks.io/docs"
     );
-    expect(sanitizeUrl("http://blog.liveblocks.io/")).toBe(
+    assertSame(
+      sanitizeUrl("http://blog.liveblocks.io/"),
       "http://blog.liveblocks.io/"
     );
-    expect(sanitizeUrl("/examples")).toBe("/examples");
-    expect(sanitizeUrl("#anchor")).toBe("#anchor");
+    assertSame(sanitizeUrl("/examples"), "/examples");
+    assertSame(sanitizeUrl("#anchor"), "#anchor");
   });
 
   test("should normalize relative URLs", () => {
-    expect(sanitizeUrl("./docs")).toBe("/docs");
-    expect(sanitizeUrl("../docs")).toBe("/docs");
+    assertSame(sanitizeUrl("./docs"), "/docs");
+    assertSame(sanitizeUrl("../docs"), "/docs");
   });
 
   test("should normalize www URLs to HTTPS", () => {
-    expect(sanitizeUrl("www.liveblocks.io")).toBe("https://www.liveblocks.io");
-    expect(sanitizeUrl("www.liveblocks.io/docs/get-started")).toBe(
+    assertSame(sanitizeUrl("www.liveblocks.io"), "https://www.liveblocks.io");
+    assertSame(
+      sanitizeUrl("www.liveblocks.io/docs/get-started"),
       "https://www.liveblocks.io/docs/get-started"
     );
   });
 
   test("should support hash-only URLs", () => {
-    expect(sanitizeUrl("#")).toBe("#");
-    expect(sanitizeUrl("#hash")).toBe("#hash");
+    assertSame(sanitizeUrl("#"), "#");
+    assertSame(sanitizeUrl("#hash"), "#hash");
   });
 
   test("should support ports, query params, and a hash", () => {
-    expect(sanitizeUrl("https://localhost:3000/docs?query=value#hash")).toBe(
+    assertSame(
+      sanitizeUrl("https://localhost:3000/docs?query=value#hash"),
       "https://localhost:3000/docs?query=value#hash"
     );
-    expect(sanitizeUrl("/examples?query=2&query=10")).toBe(
+    assertSame(
+      sanitizeUrl("/examples?query=2&query=10"),
       "/examples?query=2&query=10"
     );
   });
 
   test("should preserve the presence/absence of trailing slashes", () => {
-    expect(sanitizeUrl("https://liveblocks.io/")).toBe(
-      "https://liveblocks.io/"
-    );
-    expect(sanitizeUrl("https://liveblocks.io/docs/")).toBe(
+    assertSame(sanitizeUrl("https://liveblocks.io/"), "https://liveblocks.io/");
+    assertSame(
+      sanitizeUrl("https://liveblocks.io/docs/"),
       "https://liveblocks.io/docs/"
     );
-    expect(sanitizeUrl("http://blog.liveblocks.io/?query=value")).toBe(
+    assertSame(
+      sanitizeUrl("http://blog.liveblocks.io/?query=value"),
       "http://blog.liveblocks.io/?query=value"
     );
-    expect(sanitizeUrl("http://blog.liveblocks.io/?query=value#hash")).toBe(
+    assertSame(
+      sanitizeUrl("http://blog.liveblocks.io/?query=value#hash"),
       "http://blog.liveblocks.io/?query=value#hash"
     );
 
-    expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
-    expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
+    assertSame(sanitizeUrl("https://liveblocks.io"), "https://liveblocks.io");
+    assertSame(
+      sanitizeUrl("https://liveblocks.io/docs"),
       "https://liveblocks.io/docs"
     );
-    expect(sanitizeUrl("http://blog.liveblocks.io?query=value")).toBe(
+    assertSame(
+      sanitizeUrl("http://blog.liveblocks.io?query=value"),
       "http://blog.liveblocks.io?query=value"
     );
-    expect(sanitizeUrl("http://blog.liveblocks.io?query=value#hash")).toBe(
+    assertSame(
+      sanitizeUrl("http://blog.liveblocks.io?query=value#hash"),
       "http://blog.liveblocks.io?query=value#hash"
     );
   });
 
   test("should reject non-HTTP(S) protocols and other invalid URLs", () => {
-    expect(sanitizeUrl("javascript:alert('xss')")).toBe(null);
-    expect(sanitizeUrl("data:text/html,<script>alert('xss')</script>")).toBe(
+    assertSame(sanitizeUrl("javascript:alert('xss')"), null);
+    assertSame(
+      sanitizeUrl("data:text/html,<script>alert('xss')</script>"),
       null
     );
-    expect(sanitizeUrl("vbscript:alert('xss')")).toBe(null);
-    expect(sanitizeUrl("file:///etc/passwd")).toBe(null);
-    expect(sanitizeUrl("//liveblocks.io")).toBe(null);
-    expect(sanitizeUrl("")).toBe(null);
+    assertSame(sanitizeUrl("vbscript:alert('xss')"), null);
+    assertSame(sanitizeUrl("file:///etc/passwd"), null);
+    assertSame(sanitizeUrl("//liveblocks.io"), null);
+    assertSame(sanitizeUrl(""), null);
   });
 });
 
 describe("generateUrl", () => {
   test("should generate absolute URLs", () => {
-    expect(generateUrl("https://liveblocks.io/examples")).toBe(
+    assertSame(
+      generateUrl("https://liveblocks.io/examples"),
       "https://liveblocks.io/examples"
     );
-    expect(
+    assertSame(
       generateUrl("https://liveblocks.io/examples", {
         query: "value",
-      })
-    ).toBe("https://liveblocks.io/examples?query=value");
-    expect(
+      }),
+      "https://liveblocks.io/examples?query=value"
+    );
+    assertSame(
       generateUrl(
         "https://liveblocks.io/examples",
         {
           query: 2,
         },
         "hash"
-      )
-    ).toBe("https://liveblocks.io/examples?query=2#hash");
+      ),
+      "https://liveblocks.io/examples?query=2#hash"
+    );
   });
 
   test("should preserve any existing query params and hash", () => {
-    expect(
+    assertSame(
       generateUrl("https://liveblocks.io/examples?existing=1#existinghash", {
         query: "value",
-      })
-    ).toBe(
+      }),
       "https://liveblocks.io/examples?existing=1&query=value#existinghash"
     );
   });

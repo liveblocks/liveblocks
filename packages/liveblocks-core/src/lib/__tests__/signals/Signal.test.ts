@@ -1,15 +1,16 @@
 import fc from "fast-check";
+import { assertEq, assertSame, assertThrows } from "tosti";
 import { expect, test, vi } from "vitest";
 
 import { shallow } from "../../../lib/shallow";
 import { batch, Signal } from "../../signals";
 
 test("empty", () => {
-  expect(new Signal({}).get()).toStrictEqual({});
-  expect(new Signal([1, 2, 3]).get()).toStrictEqual([1, 2, 3]);
-  expect(new Signal(123).get()).toBe(123);
-  expect(new Signal(undefined).get()).toBe(undefined);
-  expect(new Signal(null).get()).toBe(null);
+  assertEq(new Signal({}).get(), {});
+  assertEq(new Signal([1, 2, 3]).get(), [1, 2, 3]);
+  assertSame(new Signal(123).get(), 123);
+  assertSame(new Signal(undefined).get(), undefined);
+  assertSame(new Signal(null).get(), null);
 });
 
 test("with custom equals function", () => {
@@ -18,17 +19,17 @@ test("with custom equals function", () => {
 
   {
     const signal = new Signal(x);
-    expect(signal.get()).toBe(x);
+    assertSame(signal.get(), x);
     signal.set(y);
-    expect(signal.get()).toBe(y);
+    assertSame(signal.get(), y);
   }
 
   {
     const signal = new Signal(x, shallow);
     //                           ^^^^^^^
-    expect(signal.get()).toBe(x);
+    assertSame(signal.get(), x);
     signal.set(y);
-    expect(signal.get()).toBe(x);
+    assertSame(signal.get(), x);
     //                        ^ Not y!
   }
 });
@@ -39,14 +40,14 @@ test("signals only notify watchers when their value changes", () => {
   const counter = new Signal(0);
 
   const unsub = counter.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
-  expect(counter.get()).toEqual(0);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(counter.get(), 0);
+  assertEq(fn.mock.calls, []);
 
   counter.set(0);
   counter.get();
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   counter.set((n) => n + 1);
 
@@ -58,17 +59,17 @@ test("without batching three signal updates will lead to three notifications", (
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
-  expect(x.get()).toEqual(1);
+  assertEq(x.get(), 1);
 
   x.set(2);
   x.set(3);
   x.set(7);
 
-  expect(x.get()).toEqual(7);
+  assertEq(x.get(), 7);
 
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(fn.mock.calls.length, 3);
   unsub();
 });
 
@@ -77,9 +78,9 @@ test("batched signal updates notify only once", () => {
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
-  expect(x.get()).toEqual(1);
+  assertEq(x.get(), 1);
 
   batch(() => {
     x.set(2);
@@ -87,9 +88,9 @@ test("batched signal updates notify only once", () => {
     x.set(7);
   });
 
-  expect(x.get()).toEqual(7);
+  assertEq(x.get(), 7);
 
-  expect(fn).toHaveBeenCalledTimes(1); // Not 3 (!)
+  assertEq(fn.mock.calls.length, 1); // Not 3 (!)
   unsub();
 });
 
@@ -100,7 +101,7 @@ test("[prop] whatever value you initialize it with is what comes out", () => {
 
       (value) => {
         const signal = new Signal(value);
-        expect(signal.get()).toBe(value);
+        assertSame(signal.get(), value);
       }
     )
   );
@@ -114,10 +115,10 @@ test("[prop] setting works with any value", () => {
 
       (init, newVal) => {
         const signal = new Signal(init);
-        expect(signal.get()).toBe(init);
+        assertSame(signal.get(), init);
 
         signal.set(newVal);
-        expect(signal.get()).toBe(newVal);
+        assertSame(signal.get(), newVal);
       }
     )
   );
@@ -132,27 +133,27 @@ test("[prop] will freeze all given values", () => {
       (init, newVal) => {
         // Freezes in constructor
         const signal = new Signal(init);
-        expect(signal.get()).toBe(init);
+        assertSame(signal.get(), init);
 
         /* eslint-disable @typescript-eslint/no-unsafe-return */
-        expect(() => {
+        assertThrows(() => {
           // @ts-expect-error - deliberately set invalid prop
           signal.get().abc = 123;
-        }).toThrow(TypeError);
+        }, /Cannot/); // XXX This used to test for TypeError, add capability to do that to assertThrows too
 
         // @ts-expect-error - get prop
-        expect(signal.get().abc).toBe(undefined);
+        assertSame(signal.get().abc, undefined);
 
         // Freezes in setter
         signal.set(newVal);
 
-        expect(() => {
+        assertThrows(() => {
           // @ts-expect-error - deliberately set invalid prop
           signal.get().xyz = 456;
-        }).toThrow(TypeError);
+        }, /Cannot/); // XXX This used to test for TypeError, add capability to do that to assertThrows too
 
         // @ts-expect-error - get prop
-        expect(signal.get().xyz).toBe(undefined);
+        assertSame(signal.get().xyz, undefined);
         /* eslint-enable @typescript-eslint/no-unsafe-return */
       }
     )

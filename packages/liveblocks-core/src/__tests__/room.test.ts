@@ -1,3 +1,4 @@
+import { assertEq, assertSame } from "tosti";
 import {
   afterEach,
   beforeEach,
@@ -185,8 +186,8 @@ describe("room / auth", () => {
 
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
-    expect(err.message).toEqual("Unauthorized: No access");
-    expect(err.context.code).toEqual(-1); // Not a WebSocket close code
+    assertEq(err.message, "Unauthorized: No access");
+    assertEq(err.context.code, -1); // Not a WebSocket close code
     room.destroy();
   });
 });
@@ -194,33 +195,33 @@ describe("room / auth", () => {
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { room, delegates } = createTestableRoom({});
-    expect(delegates.authenticate).not.toHaveBeenCalled();
+    assertEq(delegates.authenticate.mock.calls, []);
     room.connect();
-    expect(room.getStatus()).toEqual("connecting");
-    expect(delegates.authenticate).toHaveBeenCalled();
-    expect(delegates.createSocket).not.toHaveBeenCalled();
+    assertEq(room.getStatus(), "connecting");
+    assertEq(delegates.authenticate.mock.calls, [[]]);
+    assertEq(delegates.createSocket.mock.calls, []);
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { room, delegates } = createTestableRoom({});
     room.connect();
-    expect(room.getStatus()).toEqual("connecting");
+    assertEq(room.getStatus(), "connecting");
     room.connect();
     room.connect();
     room.connect();
-    expect(room.getStatus()).toEqual("connecting");
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
-    expect(delegates.createSocket).not.toHaveBeenCalled();
+    assertEq(room.getStatus(), "connecting");
+    assertEq(delegates.authenticate.mock.calls, [[]]);
+    assertEq(delegates.createSocket.mock.calls, []);
   });
 
   test("authentication success should transition to connecting", async () => {
     const { room } = createTestableRoom({});
-    expect(room.getStatus()).toEqual("initial");
+    assertEq(room.getStatus(), "initial");
 
     room.connect();
-    expect(room.getStatus()).toEqual("connecting");
+    assertEq(room.getStatus(), "connecting");
     await waitUntilStatus(room, "connected");
-    expect(room.getStatus()).toEqual("connected");
+    assertEq(room.getStatus(), "connected");
   });
 
   test("should fall back to get a new token if socket cannot connect (initially)", async () => {
@@ -237,8 +238,8 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "connected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    assertEq(delegates.authenticate.mock.calls.length, 2); // It re-authed!
+    assertEq(delegates.createSocket.mock.calls.length, 2);
   });
 
   test("should fall back to get a new token if socket cannot connect (when reconnecting)", async () => {
@@ -274,8 +275,8 @@ describe("room", () => {
     // assume we have to. Once the backend starts to refuse (aka
     // accept-then-immediately-close) WebSocket connections, then we would be
     // able to know.
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(3);
+    assertEq(delegates.authenticate.mock.calls.length, 2); // It re-authed!
+    assertEq(delegates.createSocket.mock.calls.length, 3);
   });
 
   test("should not reauth when getting an unknown server response in the 42xx range (as refusal)", async () => {
@@ -293,8 +294,8 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "connected", 4000);
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // No reauth!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    assertEq(delegates.authenticate.mock.calls.length, 1); // No reauth!
+    assertEq(delegates.createSocket.mock.calls.length, 2);
   });
 
   test("should reauth when getting an unknown server response in the 43xx range (as refusal)", async () => {
@@ -312,8 +313,8 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "connected", 4000);
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2); // Reauth!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    assertEq(delegates.authenticate.mock.calls.length, 2); // Reauth!
+    assertEq(delegates.createSocket.mock.calls.length, 2);
   });
 
   test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
@@ -332,9 +333,9 @@ describe("room", () => {
 
     await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
-    expect(err.message).toEqual("room full");
+    assertEq(delegates.authenticate.mock.calls.length, 1);
+    assertEq(delegates.createSocket.mock.calls.length, 1);
+    assertEq(err.message, "room full");
     expect(err.context.code).toEqual(
       4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
     );
@@ -364,9 +365,9 @@ describe("room", () => {
 
     await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
-    expect(err.message).toEqual("room full");
+    assertEq(delegates.authenticate.mock.calls.length, 1);
+    assertEq(delegates.createSocket.mock.calls.length, 1);
+    assertEq(err.message, "room full");
     expect(err.context.code).toEqual(
       4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
     );
@@ -386,8 +387,8 @@ describe("room", () => {
     await waitUntilStatus(room, "connected");
 
     // First connection attempt was rejected, but second worked
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    assertEq(delegates.authenticate.mock.calls.length, 2);
+    assertEq(delegates.createSocket.mock.calls.length, 2);
   });
 
   test("should reauth immediately when told by server that token is expired (while connected)", async () => {
@@ -400,8 +401,8 @@ describe("room", () => {
 
     await waitUntilStatus(room, "connected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1);
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    assertEq(delegates.authenticate.mock.calls.length, 1);
+    assertEq(delegates.createSocket.mock.calls.length, 1);
 
     // Closing this connection will trigger a reconnection...
     wss.last.close(
@@ -414,8 +415,8 @@ describe("room", () => {
     await waitUntilStatus(room, "reconnecting");
     await waitUntilStatus(room, "connected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(2);
-    expect(delegates.createSocket).toHaveBeenCalledTimes(2);
+    assertEq(delegates.authenticate.mock.calls.length, 2);
+    assertEq(delegates.createSocket.mock.calls.length, 2);
   });
 
   test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
@@ -432,10 +433,10 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
+    assertEq(delegates.authenticate.mock.calls.length, 1); // Only once!
+    assertEq(delegates.createSocket.mock.calls.length, 1);
 
-    expect(err.message).toEqual("whatever");
+    assertEq(err.message, "whatever");
     expect(err.context.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
@@ -463,9 +464,9 @@ describe("room", () => {
 
     await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
-    expect(err.message).toEqual("whatever");
+    assertEq(delegates.authenticate.mock.calls.length, 1); // Only once!
+    assertEq(delegates.createSocket.mock.calls.length, 1);
+    assertEq(err.message, "whatever");
     expect(err.context.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
@@ -487,9 +488,9 @@ describe("room", () => {
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "disconnected", 4000);
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
-    expect(err.message).toEqual("whaever");
+    assertEq(delegates.authenticate.mock.calls.length, 1); // Only once!
+    assertEq(delegates.createSocket.mock.calls.length, 1);
+    assertEq(err.message, "whaever");
     expect(err.context.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
@@ -517,9 +518,9 @@ describe("room", () => {
 
     await waitUntilStatus(room, "disconnected");
 
-    expect(delegates.authenticate).toHaveBeenCalledTimes(1); // It re-authed!
-    expect(delegates.createSocket).toHaveBeenCalledTimes(1);
-    expect(err.message).toEqual("wha'er");
+    assertEq(delegates.authenticate.mock.calls.length, 1); // It re-authed!
+    assertEq(delegates.createSocket.mock.calls.length, 1);
+    assertEq(err.message, "wha'er");
     expect(err.context.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
@@ -528,10 +529,10 @@ describe("room", () => {
 
     room.connect();
     await waitUntilStatus(room, "connecting");
-    expect(wss.receivedMessages).toEqual([]);
+    assertEq(wss.receivedMessages, []);
 
     await waitUntilStatus(room, "connected");
-    expect(wss.receivedMessages).toEqual([
+    assertEq(wss.receivedMessages, [
       [
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -548,7 +549,7 @@ describe("room", () => {
     room.connect();
 
     await waitUntilStatus(room, "connected");
-    expect(wss.receivedMessages).toEqual([
+    assertEq(wss.receivedMessages, [
       [
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -564,7 +565,7 @@ describe("room", () => {
     room.connect();
 
     await waitUntilStatus(room, "connected");
-    expect(wss.receivedMessages).toEqual([
+    assertEq(wss.receivedMessages, [
       [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
     ]);
   });
@@ -573,11 +574,11 @@ describe("room", () => {
     const { room, wss } = createTestableRoom({ x: 0 });
     room.connect();
 
-    expect(wss.receivedMessages).toEqual([]);
+    assertEq(wss.receivedMessages, []);
     await waitUntilStatus(room, "connected");
 
-    expect(wss.receivedMessages.length).toBe(1);
-    expect(wss.receivedMessages[0]).toEqual([
+    assertSame(wss.receivedMessages.length, 1);
+    assertEq(wss.receivedMessages[0], [
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
 
@@ -592,14 +593,14 @@ describe("room", () => {
       room.updatePresence({ x: 2 }); // These calls should get batched and flushed later
 
       await vi.advanceTimersByTimeAsync(0);
-      expect(wss.receivedMessages.length).toBe(1); // Still no new data received
-      expect(room[kInternal].presenceBuffer).toEqual({ x: 2 });
+      assertSame(wss.receivedMessages.length, 1); // Still no new data received
+      assertEq(room[kInternal].presenceBuffer, { x: 2 });
 
       // Forwarding time by the flush threshold will trigger the future flush
       await vi.advanceTimersByTimeAsync(THROTTLE_DELAY);
 
-      expect(wss.receivedMessages.length).toBe(2);
-      expect(wss.receivedMessages[1]).toEqual([
+      assertSame(wss.receivedMessages.length, 2);
+      assertEq(wss.receivedMessages[1], [
         { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 2 } },
       ]);
     } finally {
@@ -612,8 +613,8 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 });
 
-    expect(room.getPresence()).toStrictEqual({ x: 0 });
-    expect(room[kInternal].presenceBuffer).toStrictEqual({ x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -621,12 +622,12 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 });
 
-    expect(room.getPresence()).toStrictEqual({ x: 0 });
-    expect(room[kInternal].presenceBuffer).toStrictEqual({ x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
 
     room.updatePresence({ y: 0 });
-    expect(room.getPresence()).toStrictEqual({ x: 0, y: 0 });
-    expect(room[kInternal].presenceBuffer).toStrictEqual({ x: 0, y: 0 });
+    assertEq(room.getPresence(), { x: 0, y: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0, y: 0 });
   });
 
   test("others should be iterable", async () => {
@@ -662,7 +663,7 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
 
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -706,7 +707,7 @@ describe("room", () => {
 
     await waitUntilOthersEvent(room);
 
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -751,7 +752,7 @@ describe("room", () => {
 
     await waitUntilStatus(room, "connected");
     await waitUntilOthersEvent(room);
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -771,7 +772,7 @@ describe("room", () => {
     );
 
     // Not immediately cleared
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -783,7 +784,7 @@ describe("room", () => {
 
     // But it will clear eventually (after lostConnectionTimeout milliseconds)
     await waitUntilOthersEvent(room);
-    expect(room.getOthers()).toEqual([]);
+    assertEq(room.getOthers(), []);
   });
 
   test("should clear users not present in server message ROOM_STATE", async () => {
@@ -841,7 +842,7 @@ describe("room", () => {
     });
 
     await waitUntilOthersEvent(room);
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -863,7 +864,7 @@ describe("room", () => {
     // -----
 
     // Client reconnects to the room, and receives a new ROOM_STATE msg from the server.
-    expect(wss.connections.size).toBe(1);
+    assertSame(wss.connections.size, 1);
     wss.last.send(
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
@@ -877,7 +878,7 @@ describe("room", () => {
     );
 
     // Only Client B is part of others.
-    expect(room.getOthers()).toEqual([
+    assertEq(room.getOthers(), [
       {
         connectionId: 1,
         presence: { x: 2 },
@@ -894,7 +895,7 @@ describe("room", () => {
       room.connect();
 
       await waitUntilStatus(room, "connected");
-      expect(wss.receivedMessages).toEqual([
+      assertEq(wss.receivedMessages, [
         [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
       ]);
 
@@ -914,16 +915,16 @@ describe("room", () => {
         vi.useRealTimers();
       }
 
-      expect(wss.receivedMessages[1]).toEqual([
+      assertEq(wss.receivedMessages[1], [
         { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
       ]);
-      expect(wss.receivedMessages[2]).toEqual([
+      assertEq(wss.receivedMessages[2], [
         { type: ClientMsgCode.BROADCAST_EVENT, event: [1, 2, 3] },
       ]);
-      expect(wss.receivedMessages[3]).toEqual([
+      assertEq(wss.receivedMessages[3], [
         { type: ClientMsgCode.BROADCAST_EVENT, event: 42 },
       ]);
-      expect(wss.receivedMessages[4]).toEqual([
+      assertEq(wss.receivedMessages[4], [
         { type: ClientMsgCode.BROADCAST_EVENT, event: "hi" },
       ]);
     });
@@ -932,12 +933,12 @@ describe("room", () => {
       const { room, wss } = createTestableRoom({});
 
       room.broadcastEvent({ type: "EVENT" });
-      expect(wss.receivedMessages).toEqual([]);
+      assertEq(wss.receivedMessages, []);
 
       room.connect();
       await waitUntilStatus(room, "connected");
 
-      expect(wss.receivedMessages).toEqual([
+      assertEq(wss.receivedMessages, [
         [{ type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} }],
       ]);
     });
@@ -949,12 +950,12 @@ describe("room", () => {
         { type: "EVENT" },
         { shouldQueueEventIfNotReady: true }
       );
-      expect(wss.receivedMessages).toEqual([]);
+      assertEq(wss.receivedMessages, []);
 
       room.connect();
       await waitUntilStatus(room, "connected");
 
-      expect(wss.receivedMessages).toEqual([
+      assertEq(wss.receivedMessages, [
         [
           { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
           { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
@@ -985,9 +986,9 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ foo: 1234 });
+    assertEq(storage.root.toObject(), { foo: 1234 });
     //                                        ^^^ Added by the client, from initialStorage
-    expect(room.history.canUndo()).toBe(false);
+    assertSame(room.history.canUndo(), false);
   });
 
   test("missing storage keys are properly initialized using initialStorage, even when they are already part of the storage tree", async () => {
@@ -1023,6 +1024,7 @@ describe("room", () => {
       room.connect();
       try {
         const { root } = await room.getStorage();
+        // XXX Support Map in tosti
         expect(root.toImmutable()).toEqual({
           list: [13, 42],
           map: new Map([["a", 1]]),
@@ -1054,7 +1056,7 @@ describe("room", () => {
 
     room.connect();
     const storage = await room.getStorage();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    assertEq(storage.root.toObject(), { x: 0 });
   });
 
   test("undo redo with presence", async () => {
@@ -1062,21 +1064,21 @@ describe("room", () => {
     room.connect();
 
     await waitUntilStatus(room, "connected");
-    expect(room[kInternal].presenceBuffer).toEqual(null); // Buffer was flushed
+    assertEq(room[kInternal].presenceBuffer, null); // Buffer was flushed
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
+    assertEq(room[kInternal].presenceBuffer, { x: 1 });
 
     room.history.undo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
-    expect(room.getPresence()).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
 
     room.history.redo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
-    expect(room.getPresence()).toEqual({ x: 1 });
+    assertEq(room[kInternal].presenceBuffer, { x: 1 });
+    assertEq(room.getPresence(), { x: 1 });
   });
 
   test("pausing history twice is a no-op", async () => {
@@ -1098,19 +1100,19 @@ describe("room", () => {
     room.history.resume();
     room.history.resume(); // Resuming again should also be a no-op!
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
-    expect(room.history.canUndo()).toBe(true);
-    expect(room.history.canRedo()).toBe(false);
+    assertEq(items.toImmutable(), [{ a: 1, b: 2 }]);
+    assertSame(room.history.canUndo(), true);
+    assertSame(room.history.canRedo(), false);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
-    expect(room.history.canUndo()).toBe(false);
-    expect(room.history.canRedo()).toBe(true);
+    assertEq(items.toImmutable(), [{}]);
+    assertSame(room.history.canUndo(), false);
+    assertSame(room.history.canRedo(), true);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 1, b: 2 }]);
-    expect(room.history.canUndo()).toBe(true);
-    expect(room.history.canRedo()).toBe(false);
+    assertEq(items.toImmutable(), [{ a: 1, b: 2 }]);
+    assertSame(room.history.canUndo(), true);
+    assertSame(room.history.canRedo(), false);
   });
 
   test("undo redo batch", async () => {
@@ -1129,13 +1131,13 @@ describe("room", () => {
       items.set(0, new LiveObject({ a: 2 }));
     });
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    assertEq(items.toImmutable(), [{ a: 2 }]);
     room.history.undo();
 
-    expect(items.toImmutable()).toEqual([{}]);
+    assertEq(items.toImmutable(), [{}]);
     room.history.redo();
 
-    expect(items.toImmutable()).toEqual([{ a: 2 }]);
+    assertEq(items.toImmutable(), [{ a: 2 }]);
     expectUpdates([
       [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
       [listUpdate([{}], [listUpdateSet(0, {})])],
@@ -1167,8 +1169,8 @@ describe("room", () => {
 
     room.history.undo();
 
-    expect(room.getPresence()).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    assertEq(room.getPresence(), { x: 1 });
+    assertEq(storage.root.toObject(), { x: 0 });
 
     room.history.redo();
   });
@@ -1179,15 +1181,15 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
+    assertEq(room[kInternal].presenceBuffer, { x: 1 });
 
     room.history.pause();
     room.history.resume();
 
     room.history.undo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
-    expect(room.getPresence()).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
   });
 
   test("undo redo with presence that do not impact presence", () => {
@@ -1199,7 +1201,7 @@ describe("room", () => {
 
     room.history.undo();
 
-    expect(room.getPresence()).toEqual({ x: 1 });
+    assertEq(room.getPresence(), { x: 1 });
   });
 
   test("pause / resume history", () => {
@@ -1207,29 +1209,29 @@ describe("room", () => {
     // room.connect();  // Seems not even needed?
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
 
     room.history.pause();
 
     for (let i = 1; i <= 10; i++) {
       room.updatePresence({ x: i }, { addToHistory: true });
-      expect(room[kInternal].presenceBuffer).toEqual({ x: i });
+      assertEq(room[kInternal].presenceBuffer, { x: i });
     }
 
-    expect(room.getPresence()).toEqual({ x: 10 });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 10 });
+    assertEq(room.getPresence(), { x: 10 });
+    assertEq(room[kInternal].presenceBuffer, { x: 10 });
 
     room.history.resume();
 
     room.history.undo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
-    expect(room.getPresence()).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
 
     room.history.redo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 10 });
-    expect(room.getPresence()).toEqual({ x: 10 });
+    assertEq(room[kInternal].presenceBuffer, { x: 10 });
+    assertEq(room.getPresence(), { x: 10 });
   });
 
   test("undo while history is paused", () => {
@@ -1247,8 +1249,8 @@ describe("room", () => {
 
     room.history.undo();
 
-    expect(room.getPresence()).toEqual({ x: 0 });
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {
@@ -1274,19 +1276,19 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
+    assertEq(room[kInternal].presenceBuffer, { x: 1 });
 
     room.history.undo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 0 });
-    expect(room.getPresence()).toEqual({ x: 0 });
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    assertEq(room[kInternal].presenceBuffer, { x: 0 });
+    assertEq(room.getPresence(), { x: 0 });
+    assertEq(storage.root.toObject(), { x: 0 });
 
     room.history.redo();
 
-    expect(room[kInternal].presenceBuffer).toEqual({ x: 1 });
-    expect(storage.root.toObject()).toEqual({ x: 1 });
-    expect(room.getPresence()).toEqual({ x: 1 });
+    assertEq(room[kInternal].presenceBuffer, { x: 1 });
+    assertEq(storage.root.toObject(), { x: 1 });
+    assertEq(room.getPresence(), { x: 1 });
   });
 
   test("batch without changes should not erase redo stack", async () => {
@@ -1306,12 +1308,12 @@ describe("room", () => {
 
     storage.root.set("x", 1);
     room.history.undo();
-    expect(storage.root.toObject()).toEqual({ x: 0 });
+    assertEq(storage.root.toObject(), { x: 0 });
 
     room.batch(() => {});
     room.history.redo();
 
-    expect(storage.root.toObject()).toEqual({ x: 1 });
+    assertEq(storage.root.toObject(), { x: 1 });
   });
 
   test("canUndo / canRedo", async () => {
@@ -1319,16 +1321,16 @@ describe("room", () => {
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(room.history.canUndo()).toBe(false);
-    expect(room.history.canRedo()).toBe(false);
+    assertSame(room.history.canUndo(), false);
+    assertSame(room.history.canRedo(), false);
 
     storage.root.set("a", 2);
 
-    expect(room.history.canUndo()).toBe(true);
+    assertSame(room.history.canUndo(), true);
 
     room.history.undo();
 
-    expect(room.history.canRedo()).toBe(true);
+    assertSame(room.history.canRedo(), true);
   });
 
   test("clearing undo/redo stack", async () => {
@@ -1336,24 +1338,24 @@ describe("room", () => {
       a: number;
     }>([createSerializedObject("0:0", { a: 1 })], 1);
 
-    expect(room.history.canUndo()).toBe(false);
-    expect(room.history.canRedo()).toBe(false);
+    assertSame(room.history.canUndo(), false);
+    assertSame(room.history.canRedo(), false);
 
     storage.root.set("a", 2);
     storage.root.set("a", 3);
     storage.root.set("a", 4);
     room.history.undo();
 
-    expect(room.history.canUndo()).toBe(true);
-    expect(room.history.canRedo()).toBe(true);
+    assertSame(room.history.canUndo(), true);
+    assertSame(room.history.canRedo(), true);
 
     room.history.clear();
-    expect(room.history.canUndo()).toBe(false);
-    expect(room.history.canRedo()).toBe(false);
+    assertSame(room.history.canUndo(), false);
+    assertSame(room.history.canRedo(), false);
 
     room.history.undo(); // won't do anything now
 
-    expect(storage.root.toObject()).toEqual({ a: 3 });
+    assertEq(storage.root.toObject(), { a: 3 });
   });
 
   describe("subscription", () => {
@@ -1369,7 +1371,7 @@ describe("room", () => {
         room.updatePresence({ y: 1 });
       });
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith({ x: 0, y: 1 });
     });
 
@@ -1398,14 +1400,14 @@ describe("room", () => {
         room.updatePresence({ x: 0 });
         storage.root.set("x", 1);
 
-        expect(presenceSubscriber).not.toHaveBeenCalled();
-        expect(storageRootSubscriber).not.toHaveBeenCalled();
+        assertEq(presenceSubscriber.mock.calls, []);
+        assertEq(storageRootSubscriber.mock.calls, []);
       });
 
-      expect(presenceSubscriber).toHaveBeenCalledTimes(1);
+      assertEq(presenceSubscriber.mock.calls.length, 1);
       expect(presenceSubscriber).toHaveBeenCalledWith({ x: 0 });
 
-      expect(storageRootSubscriber).toHaveBeenCalledTimes(1);
+      assertEq(storageRootSubscriber.mock.calls.length, 1);
       expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
     });
 
@@ -1500,7 +1502,7 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
 
-      expect(refOthers).toEqual([
+      assertEq(refOthers, [
         {
           connectionId: 1,
           isReadOnly: false,
@@ -1574,7 +1576,7 @@ describe("room", () => {
         immutableState,
         receivedUpdates
       );
-      expect(newImmutableState).toEqual(root.toImmutable());
+      assertEq(newImmutableState, root.toImmutable());
     });
 
     test("batch history", () => {
@@ -1588,7 +1590,7 @@ describe("room", () => {
         room.updatePresence({ y: 1 }, { addToHistory: true });
       });
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
     });
 
@@ -1605,7 +1607,7 @@ describe("room", () => {
 
       room.updatePresence({ x: 1 });
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith({ x: 0 });
     });
 
@@ -1658,7 +1660,7 @@ describe("room", () => {
         })
       );
 
-      expect(others).toEqual([
+      assertEq(others, [
         {
           connectionId: 1,
           isReadOnly: false,
@@ -1801,7 +1803,7 @@ describe("room", () => {
 
       room.updatePresence({ x: 2 }, { addToHistory: true });
 
-      expect(callback).toHaveBeenCalledTimes(3);
+      assertEq(callback.mock.calls.length, 3);
     });
   });
 
@@ -1840,9 +1842,9 @@ describe("room", () => {
       refStorage.root.get("items").delete(1);
 
       const storageJson = lsonToJson(storage.root);
-      expect(storageJson).toEqual({ items: ["A", "C", "B"] });
+      assertEq(storageJson, { items: ["A", "C", "B"] });
       const refStorageJson = lsonToJson(refStorage.root);
-      expect(refStorageJson).toEqual({ items: ["A"] });
+      assertEq(refStorageJson, { items: ["A"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
@@ -1938,7 +1940,7 @@ describe("room", () => {
 
       await refWss.waitUntilMessageReceived();
       const refRoomOthers = refRoom.getOthers();
-      expect(refRoomOthers).toEqual([
+      assertEq(refRoomOthers, [
         {
           connectionId: 1,
           id: undefined,
@@ -1969,7 +1971,7 @@ describe("room", () => {
 
       expectStorage({ x: 0 });
 
-      expect(room.getStorageStatus()).toBe("synchronized");
+      assertSame(room.getStorageStatus(), "synchronized");
 
       const storageStatusCallback = vi.fn();
 
@@ -1987,12 +1989,12 @@ describe("room", () => {
       storage.root.set("x", 1);
 
       expect(storageStatusCallback).toHaveBeenCalledWith("synchronizing");
-      expect(room.getStorageStatus()).toBe("synchronizing");
+      assertSame(room.getStorageStatus(), "synchronizing");
 
       const storageJson = lsonToJson(storage.root);
-      expect(storageJson).toEqual({ x: 1 });
+      assertEq(storageJson, { x: 1 });
       const refStorageJson = lsonToJson(refStorage.root);
-      expect(refStorageJson).toEqual({ x: 0 });
+      assertEq(refStorageJson, { x: 0 });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
         createSerializedObject("0:0", { x: 0 }),
@@ -2002,10 +2004,10 @@ describe("room", () => {
 
       await waitUntilStorageUpdate(room);
       expectStorage({ x: 1 });
-      expect(room.getStorageStatus()).toBe("synchronized");
+      assertSame(room.getStorageStatus(), "synchronized");
       expect(storageStatusCallback).toHaveBeenCalledWith("synchronized");
 
-      expect(storageStatusCallback).toHaveBeenCalledTimes(2);
+      assertEq(storageStatusCallback.mock.calls.length, 2);
     });
   });
 
@@ -2042,11 +2044,11 @@ describe("room", () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 1006). Retrying in 250ms."
         );
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a short backoff delay
         await vi.advanceTimersByTimeAsync(250);
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2078,11 +2080,11 @@ describe("room", () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
         );
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a short backoff delay
         await vi.advanceTimersByTimeAsync(250);
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2111,9 +2113,9 @@ describe("room", () => {
       try {
         await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "disconnected");
-        expect(wss.connections.size).toBe(1);
-        expect(err.message).toEqual("whatever");
-        expect(err.context.code).toEqual(4042);
+        assertSame(wss.connections.size, 1);
+        assertEq(err.message, "whatever");
+        assertEq(err.context.code, 4042);
       } finally {
         vi.useRealTimers();
       }
@@ -2148,9 +2150,9 @@ describe("room", () => {
         await vi.advanceTimersByTimeAsync(1111);
 
         await waitUntilStatus(room, "disconnected");
-        expect(wss.connections.size).toBe(1);
-        expect(err.message).toEqual("whatever");
-        expect(err.context.code).toEqual(4042);
+        assertSame(wss.connections.size, 1);
+        assertEq(err.message, "whatever");
+        assertEq(err.context.code, 4042);
       } finally {
         vi.useRealTimers();
       }
@@ -2178,13 +2180,13 @@ describe("room", () => {
           "Connection to Liveblocks websocket server closed prematurely (code: 1013). Retrying in 2000ms."
         );
 
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a longer backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
         await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2216,13 +2218,13 @@ describe("room", () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1013). Retrying in 2000ms."
         );
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a LONG backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
         await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2250,11 +2252,11 @@ describe("room", () => {
           "Connection to Liveblocks websocket server closed prematurely (code: 4142). Retrying in 250ms."
         );
 
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a normal backoff delay
         await vi.advanceTimersByTimeAsync(250);
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2286,11 +2288,11 @@ describe("room", () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4142). Retrying in 250ms."
         );
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a normal backoff delay
         await vi.advanceTimersByTimeAsync(250);
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2314,7 +2316,7 @@ describe("room", () => {
       vi.useFakeTimers();
       try {
         await vi.advanceTimersByTimeAsync(0);
-        expect(wss.connections.size).toBe(2); // Instantly gets a new token, no backoff
+        assertSame(wss.connections.size, 2); // Instantly gets a new token, no backoff
       } finally {
         vi.useRealTimers();
       }
@@ -2345,7 +2347,7 @@ describe("room", () => {
         await vi.advanceTimersByTimeAsync(1111);
 
         // Instantly gets a new token (no backoff)
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2373,13 +2375,13 @@ describe("room", () => {
           "Connection to Liveblocks websocket server closed prematurely (code: 4242). Retrying in 2000ms."
         );
 
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a longer backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
         await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2411,13 +2413,13 @@ describe("room", () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4242). Retrying in 2000ms."
         );
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
 
         // A new connection attempt will be made after a LONG backoff delay
         await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
-        expect(wss.connections.size).toBe(1);
+        assertSame(wss.connections.size, 1);
         await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
-        expect(wss.connections.size).toBe(2);
+        assertSame(wss.connections.size, 2);
       } finally {
         vi.useRealTimers();
       }
@@ -2431,10 +2433,10 @@ describe("room", () => {
           AUTH_SUCCESS,
           SOCKET_NO_BEHAVIOR // ⚠️  This will let us programmatically control opening the sockets
         );
-        expect(room.getStatus()).toEqual("initial");
+        assertEq(room.getStatus(), "initial");
 
         room.connect();
-        expect(room.getStatus()).toEqual("connecting");
+        assertEq(room.getStatus(), "connecting");
         await vi.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
 
         const ws1 = wss.last;
@@ -2449,14 +2451,14 @@ describe("room", () => {
           })
         );
         await waitUntilStatus(room, "connected");
-        expect(room.getStatus()).toEqual("connected");
+        assertEq(room.getStatus(), "connected");
 
         room.reconnect();
-        expect(room.getStatus()).toEqual("connecting");
+        assertEq(room.getStatus(), "connecting");
         await vi.advanceTimersByTimeAsync(0); // There's a backoff delay here!
-        expect(room.getStatus()).toEqual("connecting");
+        assertEq(room.getStatus(), "connecting");
         await vi.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
-        expect(room.getStatus()).toEqual("connecting");
+        assertEq(room.getStatus(), "connecting");
 
         const ws2 = wss.last;
         ws2.accept();
@@ -2471,10 +2473,10 @@ describe("room", () => {
         );
 
         // This "last" one is a new/different socket instance!
-        expect(ws1 === ws2).toBe(false);
+        assertSame(ws1 === ws2, false);
 
         await waitUntilStatus(room, "connected");
-        expect(room.getStatus()).toEqual("connected");
+        assertEq(room.getStatus(), "connected");
       } finally {
         vi.useRealTimers();
       }
@@ -2525,7 +2527,7 @@ describe("room", () => {
       );
 
       await waitUntilOthersEvent(room);
-      expect(others).toEqual([
+      assertEq(others, [
         // User not yet publicly visible
       ]);
 
@@ -2539,7 +2541,7 @@ describe("room", () => {
         })
       );
 
-      expect(others).toEqual([
+      assertEq(others, [
         {
           connectionId: 1,
           id: undefined,
@@ -2565,7 +2567,7 @@ describe("room", () => {
         items: [],
       });
 
-      expect(wss.receivedMessages).toEqual([
+      assertEq(wss.receivedMessages, [
         [
           { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
           { type: ClientMsgCode.FETCH_STORAGE },
@@ -2597,22 +2599,22 @@ describe("room", () => {
 
       const p1 = room.waitUntilPresenceReady();
       const p2 = room.waitUntilPresenceReady();
-      expect(p1).toBe(p2); // Promises must be exactly equal
+      assertEq(p1 === p2, true); // Promises must be exactly equal
 
-      expect(room.isPresenceReady()).toEqual(false);
+      assertEq(room.isPresenceReady(), false);
 
       room.connect();
 
-      expect(room.isPresenceReady()).toEqual(false);
+      assertEq(room.isPresenceReady(), false);
       await room.waitUntilPresenceReady();
-      expect(room.isPresenceReady()).toEqual(true);
+      assertEq(room.isPresenceReady(), true);
 
       room.disconnect();
-      expect(room.isPresenceReady()).toEqual(true);
+      assertEq(room.isPresenceReady(), true);
 
       room.connect();
       await room.waitUntilPresenceReady();
-      expect(room.isPresenceReady()).toEqual(true);
+      assertEq(room.isPresenceReady(), true);
     });
 
     test("storage-ready promise", async () => {
@@ -2626,28 +2628,28 @@ describe("room", () => {
 
       const p1 = room.waitUntilStorageReady();
       const p2 = room.waitUntilStorageReady();
-      expect(p1).toBe(p2); // Promises must be exactly equal
+      assertEq(p1 === p2, true); // Promises must be exactly equal
 
-      expect(room.isStorageReady()).toEqual(false);
+      assertEq(room.isStorageReady(), false);
 
       room.connect();
 
-      expect(room.isStorageReady()).toEqual(false);
+      assertEq(room.isStorageReady(), false);
 
       // Waiting for *Presence* will not lead to *Storage* being ready
       await room.waitUntilPresenceReady();
-      expect(room.isStorageReady()).toEqual(false);
+      assertEq(room.isStorageReady(), false);
 
       // Waiting for *Storage* to be ready will, though
       await room.waitUntilStorageReady();
-      expect(room.isStorageReady()).toEqual(true);
+      assertEq(room.isStorageReady(), true);
 
       room.disconnect();
-      expect(room.isStorageReady()).toEqual(true);
+      assertEq(room.isStorageReady(), true);
 
       room.connect();
       await room.waitUntilStorageReady();
-      expect(room.isStorageReady()).toEqual(true);
+      assertEq(room.isStorageReady(), true);
     });
   });
 });

@@ -1,81 +1,82 @@
 import * as fc from "fast-check";
-import { describe, expect, test } from "vitest";
+import { assertEq } from "tosti";
+import { describe, test } from "vitest";
 
 import { Deque } from "../Deque";
 
 describe("Deque", () => {
   test("empty", () => {
     const deque = new Deque<string>();
-    expect(deque.length).toEqual(0);
-    expect(Array.from(deque)).toEqual([]);
+    assertEq(deque.length, 0);
+    assertEq(Array.from(deque), []);
   });
 
   test("one push & pop", () => {
     const deque = new Deque<string>();
     deque.push("A");
-    expect(deque.pop()).toEqual("A");
+    assertEq(deque.pop(), "A");
   });
 
   test("push & pop multiple times", () => {
     const deque = new Deque<string>();
     deque.push("A");
     deque.push("B");
-    expect(deque.pop()).toEqual("B");
-    expect(deque.pop()).toEqual("A");
+    assertEq(deque.pop(), "B");
+    assertEq(deque.pop(), "A");
   });
 
   test("one pushLeft & popLeft", () => {
     const deque = new Deque<string>();
     deque.pushLeft("A");
-    expect(deque.popLeft()).toEqual("A");
+    assertEq(deque.popLeft(), "A");
   });
 
   test("pushLeft & popLeft multiple times", () => {
     const deque = new Deque<string>();
     deque.pushLeft("A");
     deque.pushLeft("B");
-    expect(deque.popLeft()).toEqual("B");
-    expect(deque.popLeft()).toEqual("A");
+    assertEq(deque.popLeft(), "B");
+    assertEq(deque.popLeft(), "A");
   });
 
   test("pushLeft & popRight is like a queue", () => {
     const deque = new Deque<string>();
     deque.pushLeft("A");
     deque.pushLeft("B");
-    expect(deque.pop()).toEqual("A");
-    expect(deque.pop()).toEqual("B");
+    assertEq(deque.pop(), "A");
+    assertEq(deque.pop(), "B");
   });
 
   test("push & pop", () => {
     const deque = new Deque<string>();
-    expect(deque.length).toEqual(0);
+    assertEq(deque.length, 0);
 
     deque.push("hello");
-    expect(deque.length).toEqual(1);
+    assertEq(deque.length, 1);
 
     deque.push("foo");
-    expect(deque.length).toEqual(2);
+    assertEq(deque.length, 2);
 
     deque.push("bar");
-    expect(deque.length).toEqual(3);
+    assertEq(deque.length, 3);
 
-    expect(deque.pop()).toEqual("bar");
-    expect(deque.length).toEqual(2);
+    assertEq(deque.pop(), "bar");
+    assertEq(deque.length, 2);
 
     deque.push("baz");
-    expect(deque.length).toEqual(3);
+    assertEq(deque.length, 3);
 
-    expect(deque.pop()).toEqual("baz");
-    expect(deque.length).toEqual(2);
+    assertEq(deque.pop(), "baz");
+    assertEq(deque.length, 2);
 
-    expect(deque.pop()).toEqual("foo");
-    expect(deque.length).toEqual(1);
+    assertEq(deque.pop(), "foo");
+    assertEq(deque.length, 1);
 
-    expect(deque.pop()).toEqual("hello");
-    expect(deque.length).toEqual(0);
+    assertEq(deque.pop(), "hello");
+    assertEq(deque.length, 0);
 
-    expect(deque.pop()).toEqual(undefined);
-    expect(deque.length).toEqual(0);
+    assertEq(deque.pop(), undefined);
+    assertEq(deque.length, 0);
   });
 
   test("iteration", () => {
@@ -83,13 +84,13 @@ describe("Deque", () => {
     deque.push("one");
     deque.push("two");
     deque.push("three");
-    expect(Array.from(deque)).toEqual(["one", "two", "three"]);
+    assertEq(Array.from(deque), ["one", "two", "three"]);
   });
 
   test("push, pop, then iterate", () => {
     const deque = new Deque<string>();
 
-    expect(deque.length).toEqual(0);
+    assertEq(deque.length, 0);
     deque.push("hello");
     deque.push("foo");
     deque.push("bar");
@@ -105,16 +106,16 @@ describe("Deque", () => {
     deque.push("foo");
     deque.push("bar");
 
-    expect(deque.length).toEqual(3);
-    expect(Array.from(deque)).toEqual(["hello", "foo", "bar"]);
+    assertEq(deque.length, 3);
+    assertEq(Array.from(deque), ["hello", "foo", "bar"]);
 
     deque.pop();
     deque.pop();
     deque.pop();
     deque.pop();
 
-    expect(deque.length).toEqual(0);
-    expect(Array.from(deque)).toEqual([]);
+    assertEq(deque.length, 0);
+    assertEq(Array.from(deque), []);
   });
 
   test("push many values", () => {
@@ -124,7 +125,7 @@ describe("Deque", () => {
     deque1.push("bar");
     const deque2 = new Deque<string>();
     deque2.push(["hello", "foo", "bar"]);
-    expect(Array.from(deque1)).toEqual(Array.from(deque2));
+    assertEq(Array.from(deque1), Array.from(deque2));
   });
 
   test("pushLeft many values", () => {
@@ -134,7 +135,7 @@ describe("Deque", () => {
     deque1.pushLeft("bar");
     const deque2 = new Deque<string>();
     deque2.pushLeft(["bar", "foo", "hello"]);
-    expect(Array.from(deque1)).toEqual(Array.from(deque2));
+    assertEq(Array.from(deque1), Array.from(deque2));
   });
 });
 
@@ -170,12 +171,12 @@ describe("Deque properties", () => {
               expected.push(...values);
               deque.push(values);
             } else {
-              expect(expected.pop()).toEqual(deque.pop());
+              assertEq(expected.pop(), deque.pop());
             }
           }
 
           const actual = Array.from(deque);
-          expect(actual).toEqual(expected);
+          assertEq(actual, expected);
         }
       )
     );
@@ -195,12 +196,12 @@ describe("Deque properties", () => {
               expected.unshift(...values);
               deque.pushLeft(values);
             } else {
-              expect(expected.shift()).toEqual(deque.popLeft());
+              assertEq(expected.shift(), deque.popLeft());
             }
           }
 
           const actual = Array.from(deque);
-          expect(actual).toEqual(expected);
+          assertEq(actual, expected);
         }
       )
     );
@@ -220,11 +221,11 @@ describe("Deque properties", () => {
               deque1.push(values);
               deque2.pushLeft(values.reverse());
             } else {
-              expect(deque1.pop()).toEqual(deque2.popLeft());
+              assertEq(deque1.pop(), deque2.popLeft());
             }
           }
 
-          expect(Array.from(deque1)).toEqual(Array.from(deque2).reverse());
+          assertEq(Array.from(deque1), Array.from(deque2).reverse());
         }
       )
     );

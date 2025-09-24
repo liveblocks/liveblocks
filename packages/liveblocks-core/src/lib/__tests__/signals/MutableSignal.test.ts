@@ -1,5 +1,6 @@
 import fc from "fast-check";
-import { expect, test, vi } from "vitest";
+import { assertEq, assertSame, assertThrows } from "tosti";
+import { test, vi } from "vitest";
 
 import { batch, DerivedSignal, MutableSignal, Signal } from "../../signals";
 
@@ -8,8 +9,8 @@ const anyObject = fc
   .filter((x): x is object => x !== null && typeof x === "object");
 
 test("empty", () => {
-  expect(new MutableSignal({}).get()).toStrictEqual({});
-  expect(new MutableSignal([1, 2, 3]).get()).toStrictEqual([1, 2, 3]);
+  assertEq(new MutableSignal({}).get(), {});
+  assertEq(new MutableSignal([1, 2, 3]).get(), [1, 2, 3]);
 });
 
 test("signals always notify watchers whenever mutated (because we cannot tell if their value has changed)", () => {
@@ -31,30 +32,30 @@ test("signals always notify watchers whenever mutated (because we cannot tell if
   };
 
   const unsub = counter.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
-  expect(counter.get()).toEqual({ counter: 0 });
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(counter.get(), { counter: 0 });
+  assertEq(fn.mock.calls, []);
 
   counter.mutate(inc);
-  expect(counter.get()).toEqual({ counter: 1 });
-  expect(fn).toHaveBeenCalledTimes(1);
+  assertEq(counter.get(), { counter: 1 });
+  assertEq(fn.mock.calls.length, 1);
 
   counter.mutate(makeOdd); // Won't update the state
-  expect(counter.get()).toEqual({ counter: 1 });
-  expect(fn).toHaveBeenCalledTimes(1);
+  assertEq(counter.get(), { counter: 1 });
+  assertEq(fn.mock.calls.length, 1);
 
   counter.mutate(inc);
-  expect(counter.get()).toEqual({ counter: 2 });
-  expect(fn).toHaveBeenCalledTimes(2);
+  assertEq(counter.get(), { counter: 2 });
+  assertEq(fn.mock.calls.length, 2);
 
   counter.mutate(makeOdd); // Not it _will_ update the state
-  expect(counter.get()).toEqual({ counter: 3 });
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(counter.get(), { counter: 3 });
+  assertEq(fn.mock.calls.length, 3);
 
   counter.mutate(makeOdd); // Won't update the state
-  expect(counter.get()).toEqual({ counter: 3 });
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(counter.get(), { counter: 3 });
+  assertEq(fn.mock.calls.length, 3);
 
   unsub();
 });
@@ -63,8 +64,9 @@ test("signals throw when used with an async mutation function", () => {
   type S = { counter: 0 };
   const counter = new MutableSignal<S>({ counter: 0 });
   const asyncInc = (state: S) => Promise.resolve(state.counter++);
-  // @ts-expect-error deliberately pass an async function
-  expect(() => counter.mutate(asyncInc)).toThrow(
+  assertThrows(
+    // @ts-expect-error deliberately pass an async function
+    () => counter.mutate(asyncInc),
     "does not support async callbacks"
   );
 });
@@ -74,12 +76,12 @@ test("when chained, derived signals will think the value changed", () => {
   const count = DerivedSignal.from(fruits, (fruits) => fruits.length);
   const str = DerivedSignal.from(fruits, (fruits) => fruits.join(","));
 
-  expect(count.isDirty).toEqual(true);
-  expect(str.isDirty).toEqual(true);
-  expect(count.get()).toEqual(0);
-  expect(str.get()).toEqual("");
-  expect(count.isDirty).toEqual(false);
-  expect(str.isDirty).toEqual(false);
+  assertEq(count.isDirty, true);
+  assertEq(str.isDirty, true);
+  assertEq(count.get(), 0);
+  assertEq(str.get(), "");
+  assertEq(count.isDirty, false);
+  assertEq(str.isDirty, false);
 
   fruits.mutate((s) => {
     s.push("cherry");
@@ -87,15 +89,15 @@ test("when chained, derived signals will think the value changed", () => {
     s.push("banana");
   });
 
-  expect(count.isDirty).toEqual(true);
-  expect(str.isDirty).toEqual(true);
-  expect(count.get()).toEqual(3);
-  expect(str.get()).toEqual("cherry,apple,banana");
+  assertEq(count.isDirty, true);
+  assertEq(str.isDirty, true);
+  assertEq(count.get(), 3);
+  assertEq(str.get(), "cherry,apple,banana");
 
   fruits.mutate((arr) => void arr.sort());
 
-  expect(count.get()).toEqual(3);
-  expect(str.get()).toEqual("apple,banana,cherry");
+  assertEq(count.get(), 3);
+  assertEq(str.get(), "apple,banana,cherry");
 });
 
 test("when batched, derived signals will only update the value changed", () => {
@@ -109,12 +111,12 @@ test("when batched, derived signals will only update the value changed", () => {
     return arr.flatMap((x) => Array<string>(n).fill(x));
   });
 
-  expect(list.isDirty).toEqual(true);
-  expect(evaled).toHaveBeenCalledTimes(0);
+  assertEq(list.isDirty, true);
+  assertEq(evaled.mock.calls.length, 0);
 
-  expect(list.get()).toEqual([]);
+  assertEq(list.get(), []);
 
-  expect(evaled).toHaveBeenCalledTimes(1);
+  assertEq(evaled.mock.calls.length, 1);
   evaled.mockClear();
 
   const unsub = list.subscribe(watcher);
@@ -123,8 +125,8 @@ test("when batched, derived signals will only update the value changed", () => {
   fruits.mutate((f) => void f.push("🍎"));
   count.set(3);
 
-  expect(evaled).toHaveBeenCalledTimes(2); // ...it's called 2 times
-  expect(list.get()).toEqual(["🍎", "🍎", "🍎"]);
+  assertEq(evaled.mock.calls.length, 2); // ...it's called 2 times
+  assertEq(list.get(), ["🍎", "🍎", "🍎"]);
 
   evaled.mockClear();
 
@@ -134,8 +136,8 @@ test("when batched, derived signals will only update the value changed", () => {
     count.set(2);
   });
 
-  expect(evaled).toHaveBeenCalledTimes(1); // ...it's called only once
-  expect(list.get()).toEqual(["🍎", "🍎", "🍍", "🍍"]);
+  assertEq(evaled.mock.calls.length, 1); // ...it's called only once
+  assertEq(list.get(), ["🍎", "🍎", "🍍", "🍍"]);
 
   unsub();
 });
@@ -173,8 +175,8 @@ test("nesting of mutations", () => {
 
   // Despite being two .mutate() calls, because of the nesting, only the
   // outermost will trigger the update / re-evaluation
-  expect(list.get()).toEqual(["🍎", "🍐", "🍌", "🍉"]);
-  expect(evaled).toHaveBeenCalledTimes(1); // ...it's called only once
+  assertEq(list.get(), ["🍎", "🍐", "🍌", "🍉"]);
+  assertEq(evaled.mock.calls.length, 1); // ...it's called only once
 
   unsub();
 });
@@ -186,7 +188,7 @@ test("[prop] whatever value you initialize it with is what comes out", () => {
 
       (value) => {
         const signal = new MutableSignal(value);
-        expect(signal.get()).toBe(value);
+        assertSame(signal.get(), value);
       }
     )
   );
@@ -200,19 +202,20 @@ test("[prop] mutating works with any value", () => {
 
       (init, newVal) => {
         const signal = new MutableSignal(init);
-        expect(signal.get()).toBe(init);
+        assertSame(signal.get(), init);
 
         signal.mutate((x) => {
           // @ts-expect-error deliberately mutate
           x.whatever = newVal;
         });
-        expect(signal.get()).toBe(init);
+        assertSame(signal.get(), init);
 
         // But the mutation happened
-        expect(
+        assertSame(
           // @ts-expect-error deliberately access
-          signal.get().whatever
-        ).toBe(newVal);
+          signal.get().whatever,
+          newVal
+        );
       }
     )
   );

@@ -1,3 +1,4 @@
+import { assertEq } from "tosti";
 import { describe, expect, test, vi } from "vitest";
 
 import type {
@@ -39,18 +40,18 @@ describe("resolvers", () => {
         client[kInternal].usersStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"', '"b"']);
+      assertEq(client[kInternal].usersStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating all users.
       client.resolvers.invalidateUsers();
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual([]);
+      assertEq(client[kInternal].usersStore._cacheKeys(), []);
 
       await client[kInternal].usersStore.enqueue("a");
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].usersStore._cacheKeys(), ['"a"']);
 
-      expect(resolveUsers).toHaveBeenCalledTimes(2);
+      assertEq(resolveUsers.mock.calls.length, 2);
       expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["a", "b"] });
       expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["a"] });
     });
@@ -68,12 +69,12 @@ describe("resolvers", () => {
         client[kInternal].usersStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"', '"b"']);
+      assertEq(client[kInternal].usersStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating "b" and "c" even though "c" is not in the cache.
       client.resolvers.invalidateUsers(["b", "c"]);
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].usersStore._cacheKeys(), ['"a"']);
 
       await Promise.all([
         client[kInternal].usersStore.enqueue("a"),
@@ -81,13 +82,13 @@ describe("resolvers", () => {
         client[kInternal].usersStore.enqueue("c"),
       ]);
 
-      expect(client[kInternal].usersStore._cacheKeys()).toEqual([
+      assertEq(client[kInternal].usersStore._cacheKeys(), [
         '"a"',
         '"b"',
         '"c"',
       ]);
 
-      expect(resolveUsers).toHaveBeenCalledTimes(2);
+      assertEq(resolveUsers.mock.calls.length, 2);
       expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["a", "b"] });
       expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["b", "c"] });
     });
@@ -107,21 +108,18 @@ describe("resolvers", () => {
         client[kInternal].roomsInfoStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
-        '"a"',
-        '"b"',
-      ]);
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating all rooms.
       client.resolvers.invalidateRoomsInfo();
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([]);
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), []);
 
       await client[kInternal].roomsInfoStore.enqueue("a");
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), ['"a"']);
 
-      expect(resolveRoomsInfo).toHaveBeenCalledTimes(2);
+      assertEq(resolveRoomsInfo.mock.calls.length, 2);
       expect(resolveRoomsInfo).toHaveBeenNthCalledWith(1, {
         roomIds: ["a", "b"],
       });
@@ -141,15 +139,12 @@ describe("resolvers", () => {
         client[kInternal].roomsInfoStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
-        '"a"',
-        '"b"',
-      ]);
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating "b" and "c" even though "c" is not in the cache.
       client.resolvers.invalidateRoomsInfo(["b", "c"]);
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), ['"a"']);
 
       await Promise.all([
         client[kInternal].roomsInfoStore.enqueue("a"),
@@ -157,13 +152,13 @@ describe("resolvers", () => {
         client[kInternal].roomsInfoStore.enqueue("c"),
       ]);
 
-      expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
+      assertEq(client[kInternal].roomsInfoStore._cacheKeys(), [
         '"a"',
         '"b"',
         '"c"',
       ]);
 
-      expect(resolveRoomsInfo).toHaveBeenCalledTimes(2);
+      assertEq(resolveRoomsInfo.mock.calls.length, 2);
       expect(resolveRoomsInfo).toHaveBeenNthCalledWith(1, {
         roomIds: ["a", "b"],
       });
@@ -187,21 +182,18 @@ describe("resolvers", () => {
         client[kInternal].groupsInfoStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
-        '"a"',
-        '"b"',
-      ]);
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating all groups.
       client.resolvers.invalidateGroupsInfo();
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([]);
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), []);
 
       await client[kInternal].groupsInfoStore.enqueue("a");
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), ['"a"']);
 
-      expect(resolveGroupsInfo).toHaveBeenCalledTimes(2);
+      assertEq(resolveGroupsInfo.mock.calls.length, 2);
       expect(resolveGroupsInfo).toHaveBeenNthCalledWith(1, {
         groupIds: ["a", "b"],
       });
@@ -221,15 +213,12 @@ describe("resolvers", () => {
         client[kInternal].groupsInfoStore.enqueue("b"),
       ]);
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
-        '"a"',
-        '"b"',
-      ]);
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), ['"a"', '"b"']);
 
       // Invalidating "b" and "c" even though "c" is not in the cache.
       client.resolvers.invalidateGroupsInfo(["b", "c"]);
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual(['"a"']);
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), ['"a"']);
 
       await Promise.all([
         client[kInternal].groupsInfoStore.enqueue("a"),
@@ -237,13 +226,13 @@ describe("resolvers", () => {
         client[kInternal].groupsInfoStore.enqueue("c"),
       ]);
 
-      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
+      assertEq(client[kInternal].groupsInfoStore._cacheKeys(), [
         '"a"',
         '"b"',
         '"c"',
       ]);
 
-      expect(resolveGroupsInfo).toHaveBeenCalledTimes(2);
+      assertEq(resolveGroupsInfo.mock.calls.length, 2);
       expect(resolveGroupsInfo).toHaveBeenNthCalledWith(1, {
         groupIds: ["a", "b"],
       });

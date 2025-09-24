@@ -1,5 +1,6 @@
 import fc from "fast-check";
-import { describe, expect, test } from "vitest";
+import { assertSame } from "tosti";
+import { describe, test } from "vitest";
 
 import { shallow } from "../shallow";
 
@@ -38,77 +39,77 @@ const nonpojo = () =>
 
 describe("shallow", () => {
   test("scalar values", () => {
-    expect(shallow(0, 0)).toBe(true);
-    expect(shallow("", "")).toBe(true);
-    expect(shallow("hi", "hi")).toBe(true);
-    expect(shallow(false, false)).toBe(true);
-    expect(shallow(true, true)).toBe(true);
+    assertSame(shallow(0, 0), true);
+    assertSame(shallow("", ""), true);
+    assertSame(shallow("hi", "hi"), true);
+    assertSame(shallow(false, false), true);
+    assertSame(shallow(true, true), true);
 
-    expect(shallow(0, 1)).toBe(false);
-    expect(shallow(false, true)).toBe(false);
-    expect(shallow(true, false)).toBe(false);
+    assertSame(shallow(0, 1), false);
+    assertSame(shallow(false, true), false);
+    assertSame(shallow(true, false), false);
 
     // Weird exceptions
-    expect(shallow(NaN, NaN)).toBe(true);
-    expect(shallow(-0, +0)).toBe(false);
+    assertSame(shallow(NaN, NaN), true);
+    assertSame(shallow(-0, +0), false);
   });
 
   test("scalar values wrapped in list", () => {
-    expect(shallow([0], [0])).toBe(true);
-    expect(shallow([""], [""])).toBe(true);
-    expect(shallow(["hi"], ["hi"])).toBe(true);
-    expect(shallow([false], [false])).toBe(true);
-    expect(shallow([true], [true])).toBe(true);
+    assertSame(shallow([0], [0]), true);
+    assertSame(shallow([""], [""]), true);
+    assertSame(shallow(["hi"], ["hi"]), true);
+    assertSame(shallow([false], [false]), true);
+    assertSame(shallow([true], [true]), true);
 
-    expect(shallow([0], [1])).toBe(false);
-    expect(shallow([false], [true])).toBe(false);
-    expect(shallow([true], [false])).toBe(false);
+    assertSame(shallow([0], [1]), false);
+    assertSame(shallow([false], [true]), false);
+    assertSame(shallow([true], [false]), false);
 
     // Weird exceptions   ],[
-    expect(shallow([NaN], [NaN])).toBe(true);
-    expect(shallow([-0], [+0])).toBe(false);
+    assertSame(shallow([NaN], [NaN]), true);
+    assertSame(shallow([-0], [+0]), false);
   });
 
   test("scalar values wrapped in objs", () => {
-    expect(shallow({ k: 0 }, { k: 0 })).toBe(true);
-    expect(shallow({ k: "" }, { k: "" })).toBe(true);
-    expect(shallow({ k: "hi" }, { k: "hi" })).toBe(true);
-    expect(shallow({ k: false }, { k: false })).toBe(true);
-    expect(shallow({ k: true }, { k: true })).toBe(true);
+    assertSame(shallow({ k: 0 }, { k: 0 }), true);
+    assertSame(shallow({ k: "" }, { k: "" }), true);
+    assertSame(shallow({ k: "hi" }, { k: "hi" }), true);
+    assertSame(shallow({ k: false }, { k: false }), true);
+    assertSame(shallow({ k: true }, { k: true }), true);
 
-    expect(shallow({ k: 0 }, { k: 1 })).toBe(false);
-    expect(shallow({ k: false }, { k: true })).toBe(false);
-    expect(shallow({ k: true }, { k: false })).toBe(false);
+    assertSame(shallow({ k: 0 }, { k: 1 }), false);
+    assertSame(shallow({ k: false }, { k: true }), false);
+    assertSame(shallow({ k: true }, { k: false }), false);
 
     // Weird exceptions
-    expect(shallow({ k: NaN }, { k: NaN })).toBe(true);
-    expect(shallow({ k: -0 }, { k: +0 })).toBe(false);
+    assertSame(shallow({ k: NaN }, { k: NaN }), true);
+    assertSame(shallow({ k: -0 }, { k: +0 }), false);
   });
 
   test("different outer types are never equal", () => {
-    expect(shallow({}, [])).toBe(false);
-    expect(shallow([], {})).toBe(false);
-    expect(shallow(new Date(), new Date())).toBe(false);
-    expect(shallow(new Date("1970-01-01"), new Date())).toBe(false);
-    expect(shallow(new Date(), [])).toBe(false);
-    expect(shallow({}, new Date())).toBe(false);
+    assertSame(shallow({}, []), false);
+    assertSame(shallow([], {}), false);
+    assertSame(shallow(new Date(), new Date()), false);
+    assertSame(shallow(new Date("1970-01-01"), new Date()), false);
+    assertSame(shallow(new Date(), []), false);
+    assertSame(shallow({}, new Date()), false);
   });
 
   test("key order does not matter", () => {
-    expect(shallow({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
+    assertSame(shallow({ a: 1, b: 2 }, { b: 2, a: 1 }), true);
   });
 
   test("different key counts are never equal", () => {
-    expect(shallow({ a: undefined, b: 1 }, { b: 1 })).toBe(false);
+    assertSame(shallow({ a: undefined, b: 1 }, { b: 1 }), false);
   });
 
   test("sparse arrays", () => {
     // Sparse arrays should not break
     /* eslint-disable no-sparse-arrays */
-    expect(shallow([,], ["oops", 1])).toBe(false);
-    expect(shallow(["oops", 1], [,])).toBe(false);
-    expect(shallow([, , ,], [, , ,])).toBe(true);
-    expect(shallow([, , , "hi"], [, , , "hi"])).toBe(true);
+    assertSame(shallow([,], ["oops", 1]), false);
+    assertSame(shallow(["oops", 1], [,]), false);
+    assertSame(shallow([, , ,], [, , ,]), true);
+    assertSame(shallow([, , , "hi"], [, , , "hi"]), true);
     /* eslint-enable no-sparse-arrays */
   });
 });
@@ -122,24 +123,26 @@ describe("shallow (properties)", () => {
 
         // Unit test
         ([scalar1, scalar2]) => {
-          expect(shallow(scalar1, scalar2)).toBe(true);
+          assertSame(shallow(scalar1, scalar2), true);
 
           // If two values are shallowly equal, then those values wrapped in an
           // array (one level) should _also_ be considered shallowly equal
-          expect(shallow([scalar1], [scalar2])).toBe(true);
-          expect(shallow([scalar1, scalar1], [scalar2, scalar2])).toBe(true);
+          assertSame(shallow([scalar1], [scalar2]), true);
+          assertSame(shallow([scalar1, scalar1], [scalar2, scalar2]), true);
 
           // ...but wrapping twice is _never_ going to be equal
-          expect(shallow([[scalar1]], [[scalar2]])).toBe(false);
+          assertSame(shallow([[scalar1]], [[scalar2]]), false);
 
           // Ditto for objects
-          expect(shallow({ a: scalar1 }, { a: scalar2 })).toBe(true);
-          expect(
-            shallow({ a: scalar1, b: scalar1 }, { a: scalar2, b: scalar2 })
-          ).toBe(true);
+          assertSame(shallow({ a: scalar1 }, { a: scalar2 }), true);
+          assertSame(
+            shallow({ a: scalar1, b: scalar1 }, { a: scalar2, b: scalar2 }),
+            true
+          );
 
           // ...but nesting twice is _never_ going to be equal
-          expect(shallow({ a: { b: scalar1 } }, { a: { b: scalar2 } })).toBe(
+          assertSame(
+            shallow({ a: { b: scalar1 } }, { a: { b: scalar2 } }),
             false
           );
         }
@@ -155,14 +158,14 @@ describe("shallow (properties)", () => {
 
         // Unit test
         ([scalar1, scalar2]) => {
-          expect(shallow(scalar1, scalar2)).toBe(false);
+          assertSame(shallow(scalar1, scalar2), false);
 
           // If two values are shallowly unequal, then wrapping those in an
           // array (one level) should also always be shallowly unequal
-          expect(shallow([scalar1], [scalar2])).toBe(false);
+          assertSame(shallow([scalar1], [scalar2]), false);
 
           // Ditto for objects
-          expect(shallow({ k: scalar1 }, { k: scalar2 })).toBe(false);
+          assertSame(shallow({ k: scalar1 }, { k: scalar2 }), false);
         }
       )
     );
@@ -180,12 +183,12 @@ describe("shallow (properties)", () => {
           // then wrapping them in an array (one level) will guarantee they're
           // not shallowly equal
           if (shallow(complex1, complex2)) {
-            expect(shallow([complex1], [complex2])).toBe(false);
+            assertSame(shallow([complex1], [complex2]), false);
           }
 
           // Ditto for objects
           if (shallow(complex1, complex2)) {
-            expect(shallow({ k: complex1 }, { k: complex2 })).toBe(false);
+            assertSame(shallow({ k: complex1 }, { k: complex2 }), false);
           }
         }
       )
@@ -208,11 +211,11 @@ describe("shallow (properties)", () => {
           // _If_ sticking these values in an array makes them shallow-equal,
           // then they should also always be equal without the array wrappers
           if (shallow([value1], [value2])) {
-            expect(shallow(value1, value2)).toBe(true);
+            assertSame(shallow(value1, value2), true);
           }
 
           if (shallow({ k: value1 }, { k: value2 })) {
-            expect(shallow(value1, value2)).toBe(true);
+            assertSame(shallow(value1, value2), true);
           }
         }
       )
@@ -233,7 +236,7 @@ describe("shallow (properties)", () => {
         // Unit test
         ([value1, value2]) => {
           // Order doesn't matter when comparing
-          expect(shallow(value1, value2)).toBe(shallow(value2, value1));
+          assertSame(shallow(value1, value2), shallow(value2, value1));
         }
       )
     );
@@ -252,9 +255,9 @@ describe("shallow (properties)", () => {
 
         // Unit test
         ([v1, v2]) => {
-          expect(shallow(v1, v2)).toBe(false);
-          expect(shallow([v1], [v2])).toBe(false);
-          expect(shallow({ k: v1 }, { k: v2 })).toBe(false);
+          assertSame(shallow(v1, v2), false);
+          assertSame(shallow([v1], [v2]), false);
+          assertSame(shallow({ k: v1 }, { k: v2 }), false);
         }
       )
     );

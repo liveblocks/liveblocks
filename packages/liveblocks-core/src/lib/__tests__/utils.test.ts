@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { assertEq, assertSame, assertThrows } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import { isPlainObject } from "../guards";
@@ -27,21 +28,21 @@ const objectWithoutProto = () =>
 
 describe("TypeScript wrapper utils", () => {
   test("keys (alias of Object.keys)", () => {
-    expect(keys({})).toEqual([]);
-    expect(keys({ a: 1 })).toEqual(["a"]);
-    expect(keys({ [1]: 1, [2]: 2 })).toEqual(["1", "2"]);
+    assertEq(keys({}), []);
+    assertEq(keys({ a: 1 }), ["a"]);
+    assertEq(keys({ [1]: 1, [2]: 2 }), ["1", "2"]);
   });
 
   test("values (alias of Object.values)", () => {
-    expect(values({})).toEqual([]);
-    expect(values({ a: 1 })).toEqual([1]);
-    expect(values({ [1]: 1, [2]: 2 })).toEqual([1, 2]);
+    assertEq(values({}), []);
+    assertEq(values({ a: 1 }), [1]);
+    assertEq(values({ [1]: 1, [2]: 2 }), [1, 2]);
   });
 
   test("entries (alias of Object.entries)", () => {
-    expect(entries({})).toEqual([]);
-    expect(entries({ a: 1 })).toEqual([["a", 1]]);
-    expect(entries({ [1]: 1, [2]: 2 })).toEqual([
+    assertEq(entries({}), []);
+    assertEq(entries({ a: 1 }), [["a", 1]]);
+    assertEq(entries({ [1]: 1, [2]: 2 }), [
       ["1", 1],
       ["2", 2],
     ]);
@@ -50,24 +51,20 @@ describe("TypeScript wrapper utils", () => {
 
 describe("compact", () => {
   test("compact w/ empty list", () => {
-    expect(compact([])).toEqual([]);
+    assertEq(compact([]), []);
   });
 
   test("compact removes nulls and undefined values", () => {
-    expect(compact(["a", "b", "c"])).toEqual(["a", "b", "c"]);
-    expect(compact(["x", undefined])).toEqual(["x"]);
-    expect(compact([0, null, undefined, NaN, Infinity])).toEqual([
-      0,
-      NaN,
-      Infinity,
-    ]);
+    assertEq(compact(["a", "b", "c"]), ["a", "b", "c"]);
+    assertEq(compact(["x", undefined]), ["x"]);
+    assertEq(compact([0, null, undefined, NaN, Infinity]), [0, NaN, Infinity]);
   });
 });
 
 describe("compactObject", () => {
   test("compactObject w/ empty object", () => {
-    expect(compactObject({})).toStrictEqual({});
-    expect(
+    assertEq(compactObject({}), {});
+    assertEq(
       compactObject({
         a: 1,
         b: undefined,
@@ -76,33 +73,38 @@ describe("compactObject", () => {
         e: "",
         f: 0,
         g: false,
-      })
-    ).toStrictEqual({
-      a: 1,
-      // b: undefined  👈 Not present in the result!
-      c: "hi",
-      d: null,
-      e: "",
-      f: 0,
-      g: false,
-    });
-    expect(
-      compactObject({ a: undefined, b: undefined, c: undefined })
-    ).toStrictEqual({});
+      }),
+      {
+        a: 1,
+        // b: undefined  👈 Not present in the result!
+        c: "hi",
+        d: null,
+        e: "",
+        f: 0,
+        g: false,
+      }
+    );
+    assertEq(compactObject({ a: undefined, b: undefined, c: undefined }), {});
   });
 });
 
 describe("mapValues", () => {
   test("empty object", () => {
-    expect(mapValues({}, (x) => x)).toStrictEqual({});
+    assertEq(
+      mapValues({}, (x) => x),
+      {}
+    );
   });
 
   test("maps values, not keys", () => {
-    expect(mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2)).toStrictEqual({
-      a: 26,
-      b: 0,
-      c: -14,
-    });
+    assertEq(
+      mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2),
+      {
+        a: 26,
+        b: 0,
+        c: -14,
+      }
+    );
   });
 
   test("keys don't change", () => {
@@ -112,29 +114,48 @@ describe("mapValues", () => {
 
         (obj) => {
           const result = mapValues(obj, () => Math.random());
-          expect(Object.keys(result)).toStrictEqual(Object.keys(obj));
+          assertEq(Object.keys(result), Object.keys(obj));
         }
       )
     );
   });
 
   test("will skip copying dangerous keys", () => {
-    expect(mapValues({ __proto__: null }, (x) => x)).toStrictEqual({});
-    expect(mapValues({ ["__proto__"]: null }, (x) => x)).toStrictEqual({});
-    expect(mapValues({ __proto__: {} }, (x) => x)).toStrictEqual({});
-    expect(mapValues({ ["__proto__"]: {} }, (x) => x)).toStrictEqual({});
-    expect(mapValues({ __proto__: {}, b: 42 }, (x) => x)).toStrictEqual({
-      b: 42,
-    });
-    expect(mapValues({ ["__proto__"]: {}, b: 42 }, (x) => x)).toStrictEqual({
-      b: 42,
-    });
+    assertEq(
+      mapValues({ __proto__: null }, (x) => x),
+      {}
+    );
+    assertEq(
+      mapValues({ ["__proto__"]: null }, (x) => x),
+      {}
+    );
+    assertEq(
+      mapValues({ __proto__: {} }, (x) => x),
+      {}
+    );
+    assertEq(
+      mapValues({ ["__proto__"]: {} }, (x) => x),
+      {}
+    );
+    assertEq(
+      mapValues({ __proto__: {}, b: 42 }, (x) => x),
+      {
+        b: 42,
+      }
+    );
+    assertEq(
+      mapValues({ ["__proto__"]: {}, b: 42 }, (x) => x),
+      {
+        b: 42,
+      }
+    );
   });
 
   test("using keys in mapper", () => {
-    expect(
-      mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n))
-    ).toStrictEqual({ a: "aaaaa", b: "", c: "ccc" });
+    assertEq(
+      mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n)),
+      { a: "aaaaa", b: "", c: "ccc" }
+    );
 
     fc.assert(
       fc.property(
@@ -142,11 +163,11 @@ describe("mapValues", () => {
 
         (input) => {
           const output1 = mapValues(input, (x) => x);
-          expect(output1).toStrictEqual(input);
+          assertEq(output1, input);
 
           const output2 = mapValues(input, (_, k) => k);
-          expect(Object.keys(output2)).toStrictEqual(Object.keys(input));
-          expect(Object.values(output2)).toStrictEqual(Object.keys(input));
+          assertEq(Object.keys(output2), Object.keys(input));
+          assertEq(Object.values(output2), Object.keys(input));
         }
       )
     );
@@ -155,40 +176,43 @@ describe("mapValues", () => {
 
 describe("isPlainObject", () => {
   test("isPlainObject", () => {
-    expect(isPlainObject(undefined)).toBe(false);
-    expect(isPlainObject(null)).toBe(false);
-    expect(isPlainObject(false)).toBe(false);
-    expect(isPlainObject(0)).toBe(false);
-    expect(isPlainObject(1)).toBe(false);
-    expect(isPlainObject("")).toBe(false);
-    expect(isPlainObject("hi")).toBe(false);
-    expect(isPlainObject([])).toBe(false);
-    expect(isPlainObject(["hi"])).toBe(false);
-    expect(isPlainObject(new Date())).toBe(false);
-    expect(isPlainObject(new Error("hi"))).toBe(false);
-    expect(isPlainObject(() => "a function")).toBe(false);
+    assertSame(isPlainObject(undefined), false);
+    assertSame(isPlainObject(null), false);
+    assertSame(isPlainObject(false), false);
+    assertSame(isPlainObject(0), false);
+    assertSame(isPlainObject(1), false);
+    assertSame(isPlainObject(""), false);
+    assertSame(isPlainObject("hi"), false);
+    assertSame(isPlainObject([]), false);
+    assertSame(isPlainObject(["hi"]), false);
+    assertSame(isPlainObject(new Date()), false);
+    assertSame(isPlainObject(new Error("hi")), false);
+    assertSame(
+      isPlainObject(() => "a function"),
+      false
+    );
 
-    expect(isPlainObject({})).toBe(true);
-    expect(isPlainObject({ a: 1 })).toBe(true);
+    assertSame(isPlainObject({}), true);
+    assertSame(isPlainObject({ a: 1 }), true);
 
-    expect(isPlainObject(Object.create(null))).toBe(true);
-    expect(isPlainObject(new Object())).toBe(true);
+    assertSame(isPlainObject(Object.create(null)), true);
+    assertSame(isPlainObject(new Object()), true);
   });
 });
 
 describe("tryParseJson", () => {
   test("works like JSON.parse() on legal JSON inputs", () => {
-    expect(tryParseJson("true")).toEqual(true);
-    expect(tryParseJson("false")).toEqual(false);
-    expect(tryParseJson("null")).toEqual(null);
-    expect(tryParseJson('"hi"')).toEqual("hi");
-    expect(tryParseJson('["hi", {"a": 1}]')).toEqual(["hi", { a: 1 }]);
+    assertEq(tryParseJson("true"), true);
+    assertEq(tryParseJson("false"), false);
+    assertEq(tryParseJson("null"), null);
+    assertEq(tryParseJson('"hi"'), "hi");
+    assertEq(tryParseJson('["hi", {"a": 1}]'), ["hi", { a: 1 }]);
   });
 
   test("returns undefined for invalid JSON inputs", () => {
-    expect(tryParseJson("i am not a JSON value")).toBeUndefined();
-    expect(tryParseJson("'single quotes'")).toBeUndefined();
-    expect(tryParseJson("[[]")).toBeUndefined();
+    assertEq(tryParseJson("i am not a JSON value"), undefined);
+    assertEq(tryParseJson("'single quotes'"), undefined);
+    assertEq(tryParseJson("[[]"), undefined);
   });
 });
 
@@ -198,7 +222,7 @@ describe("b64decode", () => {
       "eyJyb29tSWQiOiJNaDNtTGQ1OUxWSjdLQTJlVWIwTWUiLCJhcHBJZCI6IjYxNDBlMzMyMjliY2ExNWQxNDYxMzBhOSIsImFjdG9yIjo5LCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSIsIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIl0sImluZm8iOnsibmFtZSI6IkNoYXJsacOpIExheW5lIiwicGljdHVyZSI6Ii9hdmF0YXJzLzcucG5nIn0sImlhdCI6MTY1MzUxNjA4NiwiZXhwIjoxNjUzNTE5Njg2fQ";
     const json = tryParseJson(b64decode(tokenPayload));
 
-    expect(json).toEqual({
+    assertEq(json, {
       actor: 9,
       appId: "6140e33229bca15d146130a9",
       exp: 1653519686,
@@ -218,8 +242,11 @@ describe("b64decode", () => {
   });
 
   test("payload contains characters with accents", () => {
-    expect(() => b64decode("i contain `invalid` chars")).toThrow();
-    expect(() => b64decode("---")).toThrow();
+    assertThrows(
+      () => b64decode("i contain `invalid` chars"),
+      "Invalid character"
+    );
+    assertThrows(() => b64decode("---"), "Invalid character");
   });
 });
 
@@ -227,12 +254,12 @@ describe("remove", () => {
   test("empty", () => {
     const arr: string[] = [];
     remove(arr, "something");
-    expect(arr).toEqual([]);
+    assertEq(arr, []);
   });
 
   test("removes only the first occurrence", () => {
     const arr: number[] = [1, 2, 3, 1, 2, 3];
     remove(arr, 2);
-    expect(arr).toEqual([1, 3, 1, 2, 3]);
+    assertEq(arr, [1, 3, 1, 2, 3]);
   });
 });

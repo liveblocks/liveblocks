@@ -1,3 +1,4 @@
+import { assertEq, assertSame } from "tosti";
 import { expect, test, vi } from "vitest";
 
 import { shallow } from "../../../lib/shallow";
@@ -13,18 +14,18 @@ test("compute signal from other signals", () => {
     (x, y) => `${x.repeat(y)}!`
   );
 
-  expect(derived.get()).toEqual("hihihi!");
-  expect(derived.get()).toEqual("hihihi!");
-  expect(derived.isDirty).toEqual(false);
+  assertEq(derived.get(), "hihihi!");
+  assertEq(derived.get(), "hihihi!");
+  assertEq(derived.isDirty, false);
   count.set(5);
-  expect(derived.isDirty).toEqual(true);
-  expect(derived.get()).toEqual("hihihihihi!");
+  assertEq(derived.isDirty, true);
+  assertEq(derived.get(), "hihihihihi!");
 
   greeting.set("ha");
-  expect(derived.get()).toEqual("hahahahaha!");
+  assertEq(derived.get(), "hahahahaha!");
 
   count.set(0);
-  expect(derived.get()).toEqual("!");
+  assertEq(derived.get(), "!");
 });
 
 test("compute signal from many other signals", () => {
@@ -46,11 +47,11 @@ test("compute signal from many other signals", () => {
       allGreat ? laughs.map((laugh) => laugh.toUpperCase()) : laughs
   );
 
-  expect(laughsSignal.get()).toEqual(["ha", "ha"]);
+  assertEq(laughsSignal.get(), ["ha", "ha"]);
   multiplierSignal.set(3);
-  expect(greatLaughsSignal.get()).toEqual(["ha", "ha", "ha", "ha", "ha", "ha"]);
+  assertEq(greatLaughsSignal.get(), ["ha", "ha", "ha", "ha", "ha", "ha"]);
   allGreatSignal.set(true);
-  expect(greatLaughsSignal.get()).toEqual(["HA", "HA", "HA", "HA", "HA", "HA"]);
+  assertEq(greatLaughsSignal.get(), ["HA", "HA", "HA", "HA", "HA", "HA"]);
 });
 
 test("derived signal chaining", () => {
@@ -58,22 +59,22 @@ test("derived signal chaining", () => {
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
 
-  expect(parity.isDirty).toEqual(true);
-  expect(parity.get()).toEqual("even");
-  expect(parity.isDirty).toEqual(false);
+  assertEq(parity.isDirty, true);
+  assertEq(parity.get(), "even");
+  assertEq(parity.isDirty, false);
 
   counter.set((n) => n + 1);
 
-  expect(parity.isDirty).toEqual(true);
-  expect(parity.get()).toEqual("odd");
-  expect(parity.isDirty).toEqual(false);
+  assertEq(parity.isDirty, true);
+  assertEq(parity.get(), "odd");
+  assertEq(parity.isDirty, false);
 
   counter.set((n) => n + 1);
   counter.set((n) => n + 1);
 
-  expect(parity.isDirty).toEqual(true);
-  expect(parity.get()).toEqual("odd");
-  expect(parity.isDirty).toEqual(false);
+  assertEq(parity.isDirty, true);
+  assertEq(parity.get(), "odd");
+  assertEq(parity.isDirty, false);
 });
 
 test("derived signals re-evaluate when sources change (without listeners)", () => {
@@ -81,7 +82,7 @@ test("derived signals re-evaluate when sources change (without listeners)", () =
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
 
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to the same value does not trigger notification on parity
   counter.set(0);
@@ -93,7 +94,7 @@ test("derived signals re-evaluate when sources change (without listeners)", () =
 
   // Setting to an odd value however does trigger
   counter.set(13);
-  expect(parity.get()).toEqual("odd");
+  assertEq(parity.get(), "odd");
 });
 
 test("derived signals re-evaluate when sources change (with listeners)", () => {
@@ -103,19 +104,19 @@ test("derived signals re-evaluate when sources change (with listeners)", () => {
 
   const unsub = parity.subscribe(() => {});
 
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to the same value does not trigger notification on parity
   counter.set(0);
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to another even value also does not trigger
   counter.set(37642);
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to an odd value however does trigger
   counter.set(13);
-  expect(parity.get()).toEqual("odd");
+  assertEq(parity.get(), "odd");
 
   unsub();
 });
@@ -127,7 +128,7 @@ test("derived signals re-evaluate when sources change (with listeners in parent)
 
   const unsub = isEven.subscribe(() => {});
 
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to the same value does not trigger notification on parity
   counter.set(0);
@@ -139,7 +140,7 @@ test("derived signals re-evaluate when sources change (with listeners in parent)
 
   // Setting to an odd value however does trigger
   counter.set(13);
-  expect(parity.get()).toEqual("odd");
+  assertEq(parity.get(), "odd");
 
   unsub();
 });
@@ -151,7 +152,7 @@ test("derived signals re-evaluate when sources change (with listeners in grandpa
 
   const unsub = counter.subscribe(() => {});
 
-  expect(parity.get()).toEqual("even");
+  assertEq(parity.get(), "even");
 
   // Setting to the same value does not trigger notification on parity
   counter.set(0);
@@ -163,7 +164,7 @@ test("derived signals re-evaluate when sources change (with listeners in grandpa
 
   // Setting to an odd value however does trigger
   counter.set(13);
-  expect(parity.get()).toEqual("odd");
+  assertEq(parity.get(), "odd");
 
   unsub();
 });
@@ -176,25 +177,25 @@ test("signals only notify watchers when their value changes", () => {
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
 
   const unsub = parity.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
-  expect(parity.get()).toEqual("even");
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(parity.get(), "even");
+  assertEq(fn.mock.calls, []);
 
   // Setting to the same value does not trigger notification on parity
   counter.set(0);
   parity.get();
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   // Setting to another even value also does not trigger
   counter.set(37642);
   parity.get();
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   // Setting to an odd value however does trigger
   counter.set(13);
-  expect(parity.get()).toEqual("odd");
-  expect(fn).toHaveBeenCalledTimes(1);
+  assertEq(parity.get(), "odd");
+  assertEq(fn.mock.calls.length, 1);
 
   unsub();
 });
@@ -216,34 +217,34 @@ test("signals only notify watchers when their value changes (with shallow)", () 
   const renderCounter = DerivedSignal.from(result, (_) => ++numEvals);
 
   const unsub = renderCounter.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   const value1 = result.get();
   const value2 = result.get();
-  expect(value1).toBe(value2);
+  assertSame(value1, value2);
 
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   uppercase.set(true);
   const value3 = result.get();
-  expect(value3).toEqual([]); // Still empty, but should not have a new value
-  expect(value1).toBe(value3);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(value3, []); // Still empty, but should not have a new value
+  assertSame(value1, value3);
+  assertEq(fn.mock.calls, []);
 
-  expect(numEvals).toEqual(1);
+  assertEq(numEvals, 1);
 
   // Toggling uppercase has no effect when the list is still empty
   uppercase.set(false);
   uppercase.set(true);
-  expect(numEvals).toEqual(1);
+  assertEq(numEvals, 1);
 
   // Toggling uppercase has no effect
   fruits.set(["apple", "banana"]);
-  expect(numEvals).toEqual(2);
+  assertEq(numEvals, 2);
   uppercase.set(true); // Was already true, so has no effect
-  expect(numEvals).toEqual(2);
+  assertEq(numEvals, 2);
   uppercase.set(false);
-  expect(numEvals).toEqual(3);
+  assertEq(numEvals, 3);
 
   unsub();
 });
@@ -259,21 +260,21 @@ test("batch signal updates so derived signals will only be notified once", () =>
 
   const unsub1 = z.subscribe(fn1);
   const unsub2 = zz.subscribe(fn2);
-  expect(fn1).not.toHaveBeenCalled();
+  assertEq(fn1.mock.calls, []);
 
-  expect(z.get()).toEqual(2);
-  expect(zz.get()).toEqual(-19);
+  assertEq(z.get(), 2);
+  assertEq(zz.get(), -19);
 
   batch(() => {
     x.set(7);
     y.set(3);
   });
 
-  expect(z.get()).toEqual(21);
-  expect(zz.get()).toEqual(-203);
+  assertEq(z.get(), 21);
+  assertEq(zz.get(), -203);
 
-  expect(fn1).toHaveBeenCalledTimes(1); // Not 2 (!)
-  expect(fn2).toHaveBeenCalledTimes(1); // Not 3 (!)
+  assertEq(fn1.mock.calls.length, 1); // Not 2 (!)
+  assertEq(fn2.mock.calls.length, 1); // Not 3 (!)
 
   unsub1();
   unsub2();
@@ -286,9 +287,9 @@ test("batch signal notifications and re-evaluations are as efficient as possible
   const abc = DerivedSignal.from(x, y, z, (x, y, z) => [x, y, z], shallow);
   const sorted = DerivedSignal.from(abc, (abc) => abc.sort(), shallow);
 
-  expect(sorted.isDirty).toEqual(true);
-  expect(sorted.get()).toEqual([1, 2, 3]);
-  expect(sorted.isDirty).toEqual(false);
+  assertEq(sorted.isDirty, true);
+  assertEq(sorted.get(), [1, 2, 3]);
+  assertEq(sorted.isDirty, false);
 
   batch(() => {
     x.set(7);
@@ -296,9 +297,9 @@ test("batch signal notifications and re-evaluations are as efficient as possible
     z.set(0);
   });
 
-  expect(sorted.isDirty).toEqual(true);
-  expect(sorted.get()).toEqual([0, 3, 7]);
-  expect(sorted.isDirty).toEqual(false);
+  assertEq(sorted.isDirty, true);
+  assertEq(sorted.get(), [0, 3, 7]);
+  assertEq(sorted.isDirty, false);
 
   const before = sorted.get();
   batch(() => {
@@ -309,7 +310,7 @@ test("batch signal notifications and re-evaluations are as efficient as possible
 
   // Value did not change, so reference did not change either
   const after = sorted.get();
-  expect(after).toBe(before);
+  assertSame(after, before);
 
   batch(() => {
     // Same values, but in different signals
@@ -320,11 +321,11 @@ test("batch signal notifications and re-evaluations are as efficient as possible
 
   // Derived value still did not change, since sorted result is the same
   const after2 = sorted.get();
-  expect(after2).toBe(before);
+  assertSame(after2, before);
 
   const fn = vi.fn(); // Callback when sorted changes
   const unsub = sorted.subscribe(fn);
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   batch(() => {
     x.set(0);
@@ -333,7 +334,7 @@ test("batch signal notifications and re-evaluations are as efficient as possible
   });
 
   // Also, it does not notify watchers
-  expect(fn).not.toHaveBeenCalled();
+  assertEq(fn.mock.calls, []);
 
   batch(() => {
     x.set(0);
@@ -344,8 +345,8 @@ test("batch signal notifications and re-evaluations are as efficient as possible
   });
 
   // However, if we make an actual change, it will
-  expect(fn).toHaveBeenCalledTimes(1);
-  expect(sorted.get()).toEqual([1, 2, 3]);
+  assertEq(fn.mock.calls.length, 1);
+  assertEq(sorted.get(), [1, 2, 3]);
 
   unsub();
 });
@@ -361,29 +362,29 @@ test("conditionally read from other signal", () => {
 
   const derived = DerivedSignal.from(index, (idx) => signals[idx].get());
 
-  expect(derived.isDirty).toEqual(true);
-  expect(derived.get()).toEqual("hi");
-  expect(derived.get()).toEqual("hi");
-  expect(derived.isDirty).toEqual(false);
+  assertEq(derived.isDirty, true);
+  assertEq(derived.get(), "hi");
+  assertEq(derived.get(), "hi");
+  assertEq(derived.isDirty, false);
 
   signals[2].set("lol"); // 'bar' -> 'lol'
 
   // Isn't dirty, because derived did not depend on this value
-  expect(derived.isDirty).toEqual(false);
+  assertEq(derived.isDirty, false);
 
-  expect(derived.get()).toEqual("hi");
+  assertEq(derived.get(), "hi");
 
   index.set(1); // Change to depend on different signal
 
-  expect(derived.get()).toEqual("foo");
-  expect(derived.isDirty).toEqual(false);
+  assertEq(derived.get(), "foo");
+  assertEq(derived.isDirty, false);
 
   signals[1].set("baz"); // 'foo' -> 'baz'
 
   // Now it _is_ dirty, because it depends on this signal now
-  expect(derived.isDirty).toEqual(true);
-  expect(derived.get()).toEqual("baz");
-  expect(derived.isDirty).toEqual(false);
+  assertEq(derived.isDirty, true);
+  assertEq(derived.get(), "baz");
+  assertEq(derived.isDirty, false);
 });
 
 test("conditionally read nested signals", () => {
@@ -407,38 +408,38 @@ test("conditionally read nested signals", () => {
     return idx;
   });
 
-  expect(derived.get()).toEqual(7); // 0 -> 7
+  assertEq(derived.get(), 7); // 0 -> 7
 
   start.set(11);
-  expect(derived.get()).toEqual(11); // 11
+  assertEq(derived.get(), 11); // 11
 
   start.set(2);
-  expect(derived.get()).toEqual(8); // 2 -> 1 -> 3 -> 8
+  assertEq(derived.get(), 8); // 2 -> 1 -> 3 -> 8
 
   map.getOrCreate(1).set(7);
   map.getOrCreate(7).set(9);
   map.getOrCreate(9).set(999);
-  expect(derived.get()).toEqual(999); // 2 -> 1 -> 7 -> 9 -> 999
+  assertEq(derived.get(), 999); // 2 -> 1 -> 7 -> 9 -> 999
 
   start.set(1);
-  expect(derived.get()).toEqual(999); // 1 -> 7 -> 9 -> 999
+  assertEq(derived.get(), 999); // 1 -> 7 -> 9 -> 999
 
   fn.mockClear();
-  expect(fn).toHaveBeenCalledTimes(0);
+  assertEq(fn.mock.calls.length, 0);
 
   map.clear(); // No signal is explicitly invalidated, so it won't re-evaluate
   start.set(1); // Setting start to same value also does not re-evaluate
-  expect(derived.get()).toEqual(999);
+  assertEq(derived.get(), 999);
 
-  expect(fn).toHaveBeenCalledTimes(0);
+  assertEq(fn.mock.calls.length, 0);
 
   // However, triggering an update resets it
   start.set(0);
-  expect(derived.get()).toEqual(0);
-  expect(fn).toHaveBeenCalledTimes(1);
+  assertEq(derived.get(), 0);
+  assertEq(fn.mock.calls.length, 1);
 
   start.set(1234);
-  expect(derived.get()).toEqual(1234);
+  assertEq(derived.get(), 1234);
 });
 
 test("conditionally reading signals won't unregister old sinks (when using static syntax)", () => {
@@ -452,28 +453,28 @@ test("conditionally reading signals won't unregister old sinks (when using stati
     return cond ? x : y;
   });
 
-  expect(evalFn).toHaveBeenCalledTimes(0);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(evalFn.mock.calls.length, 0);
+  assertEq(notificationFn.mock.calls.length, 0);
 
   const unsub = z.subscribe(notificationFn);
-  expect(evalFn).toHaveBeenCalledTimes(1);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(evalFn.mock.calls.length, 1);
+  assertEq(notificationFn.mock.calls.length, 0);
 
-  expect(z.get()).toEqual(42);
-  expect(evalFn).toHaveBeenCalledTimes(1);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(z.get(), 42);
+  assertEq(evalFn.mock.calls.length, 1);
+  assertEq(notificationFn.mock.calls.length, 0);
 
   cond.set(true);
-  expect(evalFn).toHaveBeenCalledTimes(2);
-  expect(notificationFn).toHaveBeenCalledTimes(1);
+  assertEq(evalFn.mock.calls.length, 2);
+  assertEq(notificationFn.mock.calls.length, 1);
 
   y.set(43);
-  expect(evalFn).toHaveBeenCalledTimes(3); // Re-evaluation, because static!
-  expect(notificationFn).toHaveBeenCalledTimes(1); // However, since the value did not change, no notification
+  assertEq(evalFn.mock.calls.length, 3); // Re-evaluation, because static!
+  assertEq(notificationFn.mock.calls.length, 1); // However, since the value did not change, no notification
 
   x.set(99);
-  expect(evalFn).toHaveBeenCalledTimes(4);
-  expect(notificationFn).toHaveBeenCalledTimes(2);
+  assertEq(evalFn.mock.calls.length, 4);
+  assertEq(notificationFn.mock.calls.length, 2);
 
   unsub();
 });
@@ -489,29 +490,29 @@ test("conditionally reading signals will unregister old sinks (when using dynami
     return cond.get() ? x.get() : y.get();
   });
 
-  expect(evalFn).toHaveBeenCalledTimes(0);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(evalFn.mock.calls.length, 0);
+  assertEq(notificationFn.mock.calls.length, 0);
 
   const unsub = z.subscribe(notificationFn);
 
-  expect(evalFn).toHaveBeenCalledTimes(1);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(evalFn.mock.calls.length, 1);
+  assertEq(notificationFn.mock.calls.length, 0);
 
-  expect(z.get()).toEqual(42);
-  expect(evalFn).toHaveBeenCalledTimes(1);
-  expect(notificationFn).toHaveBeenCalledTimes(0);
+  assertEq(z.get(), 42);
+  assertEq(evalFn.mock.calls.length, 1);
+  assertEq(notificationFn.mock.calls.length, 0);
 
   cond.set(true);
-  expect(evalFn).toHaveBeenCalledTimes(2);
-  expect(notificationFn).toHaveBeenCalledTimes(1);
+  assertEq(evalFn.mock.calls.length, 2);
+  assertEq(notificationFn.mock.calls.length, 1);
 
   y.set(43);
-  expect(evalFn).toHaveBeenCalledTimes(2); // No re-evaluation, because we're no longer a sink of y!
-  expect(notificationFn).toHaveBeenCalledTimes(1);
+  assertEq(evalFn.mock.calls.length, 2); // No re-evaluation, because we're no longer a sink of y!
+  assertEq(notificationFn.mock.calls.length, 1);
 
   x.set(99);
-  expect(evalFn).toHaveBeenCalledTimes(3);
-  expect(notificationFn).toHaveBeenCalledTimes(2);
+  assertEq(evalFn.mock.calls.length, 3);
+  assertEq(notificationFn.mock.calls.length, 2);
 
   unsub();
 });
@@ -541,43 +542,43 @@ test("conditionally read from nested signals", () => {
     map.getOrCreate("pre" + i);
   }
 
-  expect(derived.get().length).toEqual(10_000);
-  expect(fn).toHaveBeenCalledTimes(1);
+  assertEq(derived.get().length, 10_000);
+  assertEq(fn.mock.calls.length, 1);
   prefix.set("pre444");
 
-  expect(derived.get().toString()).toEqual("0,0,0,0,0,0,0,0,0,0,0");
+  assertEq(derived.get().toString(), "0,0,0,0,0,0,0,0,0,0,0");
 
-  expect(fn).toHaveBeenCalledTimes(2);
+  assertEq(fn.mock.calls.length, 2);
 
   // Changing unrelated signals does not trigger re-evaluation
   map.getOrCreate("pre1234").set(927);
   map.getOrCreate("pre7623").set(28179);
   map.getOrCreate("foobar123").set(238);
-  expect(fn).toHaveBeenCalledTimes(2);
+  assertEq(fn.mock.calls.length, 2);
 
-  expect(derived.get().toString()).toEqual("0,0,0,0,0,0,0,0,0,0,0");
-  expect(fn).toHaveBeenCalledTimes(2);
+  assertEq(derived.get().toString(), "0,0,0,0,0,0,0,0,0,0,0");
+  assertEq(fn.mock.calls.length, 2);
 
   // But changing related signals *does* trigger re-evaluation
   map.getOrCreate("pre4440").set(908);
   map.getOrCreate("pre4441").set(1313);
   map.getOrCreate("pre444").set(43);
-  expect(fn).toHaveBeenCalledTimes(2);
+  assertEq(fn.mock.calls.length, 2);
 
-  expect(derived.get().toString()).toEqual("43,908,1313,0,0,0,0,0,0,0,0");
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(derived.get().toString(), "43,908,1313,0,0,0,0,0,0,0,0");
+  assertEq(fn.mock.calls.length, 3);
 
   // Deletion is tricky though! It's not an explicit value change, just
   // a reference removal, so this won't be detectable.
   map.delete("pre4441");
   map.getOrCreate("another");
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(fn.mock.calls.length, 3);
 
-  expect(derived.get().toString()).toEqual("43,908,1313,0,0,0,0,0,0,0,0");
-  expect(fn).toHaveBeenCalledTimes(3);
+  assertEq(derived.get().toString(), "43,908,1313,0,0,0,0,0,0,0,0");
+  assertEq(fn.mock.calls.length, 3);
 
   // In order to detect the deletion, any of the other signals must change to trigger re-evaluation
   map.getOrCreate("pre4447").set(18);
-  expect(derived.get().toString()).toEqual("43,908,0,0,0,0,0,18,0,0");
-  expect(fn).toHaveBeenCalledTimes(4);
+  assertEq(derived.get().toString(), "43,908,0,0,0,0,0,18,0,0");
+  assertEq(fn.mock.calls.length, 4);
 });

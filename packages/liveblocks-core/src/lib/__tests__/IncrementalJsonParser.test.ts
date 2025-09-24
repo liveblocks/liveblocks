@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { assertEq, assertSame } from "tosti";
 import { describe, expect, test } from "vitest";
 
 import { IncrementalJsonParser } from "../IncrementalJsonParser";
@@ -11,19 +12,19 @@ function parse(input: string) {
 describe("IncrementalJsonParser", () => {
   test("constructor with initial value", () => {
     const parser = new IncrementalJsonParser('{"key":"value"}');
-    expect(parser.source).toBe('{"key":"value"}');
-    expect(parser.json).toEqual({ key: "value" });
+    assertSame(parser.source, '{"key":"value"}');
+    assertEq(parser.json, { key: "value" });
   });
 
   test("basic functionality", () => {
     const parser = new IncrementalJsonParser();
 
-    expect(parser.source).toBe("");
-    expect(parser.json).toEqual({});
+    assertSame(parser.source, "");
+    assertEq(parser.json, {});
 
     parser.append('{"key":"value"}');
-    expect(parser.source).toBe('{"key":"value"}');
-    expect(parser.json).toEqual({ key: "value" });
+    assertSame(parser.source, '{"key":"value"}');
+    assertEq(parser.json, { key: "value" });
   });
 
   test("trims leading whitespace only once", () => {
@@ -31,28 +32,28 @@ describe("IncrementalJsonParser", () => {
 
     // First append with leading whitespace should be trimmed
     parser.append("   {");
-    expect(parser.source).toBe("{");
+    assertSame(parser.source, "{");
 
     // Subsequent appends should not be trimmed
     parser.append('   "key"');
-    expect(parser.source).toBe('{   "key"');
+    assertSame(parser.source, '{   "key"');
 
     parser.append(': "value"}');
-    expect(parser.source).toBe('{   "key": "value"}');
-    expect(parser.json).toEqual({ key: "value" });
+    assertSame(parser.source, '{   "key": "value"}');
+    assertEq(parser.json, { key: "value" });
   });
 
   test("incremental parsing", () => {
     const parser = new IncrementalJsonParser();
 
     parser.append('{"k');
-    expect(parser.json).toEqual({});
+    assertEq(parser.json, {});
 
     parser.append('ey":"val');
-    expect(parser.json).toEqual({ key: "val" });
+    assertEq(parser.json, { key: "val" });
 
     parser.append('ue"}');
-    expect(parser.json).toEqual({ key: "value" });
+    assertEq(parser.json, { key: "value" });
   });
 
   test("bulk append produces same result as character-by-character", () => {
@@ -70,7 +71,7 @@ describe("IncrementalJsonParser", () => {
     }
     const result2 = parser2.json;
 
-    expect(result1).toEqual(result2);
+    assertEq(result1, result2);
   });
 });
 
@@ -79,7 +80,7 @@ describe("caching behavior", () => {
     const parser = new IncrementalJsonParser('{"test":12');
     const result1 = parser.json;
     const result2 = parser.json;
-    expect(result1).toBe(result2);
+    assertSame(result1, result2);
   });
 
   test("cache is invalidated when text is appended", () => {
@@ -92,165 +93,165 @@ describe("caching behavior", () => {
 
 describe("parsing basic inputs", () => {
   test("basic cases", () => {
-    expect(parse("")).toEqual({});
-    expect(parse(" ")).toEqual({});
-    expect(parse("{")).toEqual({});
-    expect(parse('{"key"')).toEqual({});
-    expect(parse('{"key')).toEqual({});
-    expect(parse('{"key":')).toEqual({});
-    expect(parse('{"key":""')).toEqual({ key: "" });
-    expect(parse('{"key":"')).toEqual({ key: "" });
-    expect(parse('{"key":0')).toEqual({ key: 0 });
-    expect(parse('{"key":"hi')).toEqual({ key: "hi" });
-    expect(parse('{"key":"value"')).toEqual({ key: "value" });
-    expect(parse('{"key":"value"}')).toEqual({ key: "value" });
+    assertEq(parse(""), {});
+    assertEq(parse(" "), {});
+    assertEq(parse("{"), {});
+    assertEq(parse('{"key"'), {});
+    assertEq(parse('{"key'), {});
+    assertEq(parse('{"key":'), {});
+    assertEq(parse('{"key":""'), { key: "" });
+    assertEq(parse('{"key":"'), { key: "" });
+    assertEq(parse('{"key":0'), { key: 0 });
+    assertEq(parse('{"key":"hi'), { key: "hi" });
+    assertEq(parse('{"key":"value"'), { key: "value" });
+    assertEq(parse('{"key":"value"}'), { key: "value" });
   });
 
   test("arrays", () => {
-    expect(parse('{"arr":[')).toEqual({ arr: [] });
-    expect(parse('{"arr":[1')).toEqual({ arr: [1] });
-    expect(parse('{"arr":[1,')).toEqual({ arr: [1] });
-    expect(parse('{"arr":["hi')).toEqual({ arr: ["hi"] });
-    expect(parse('{"arr":["hi"')).toEqual({ arr: ["hi"] });
-    expect(parse('{"arr":["hi"]')).toEqual({ arr: ["hi"] });
-    expect(parse('{"arr":[1,2,3')).toEqual({ arr: [1, 2, 3] });
+    assertEq(parse('{"arr":['), { arr: [] });
+    assertEq(parse('{"arr":[1'), { arr: [1] });
+    assertEq(parse('{"arr":[1,'), { arr: [1] });
+    assertEq(parse('{"arr":["hi'), { arr: ["hi"] });
+    assertEq(parse('{"arr":["hi"'), { arr: ["hi"] });
+    assertEq(parse('{"arr":["hi"]'), { arr: ["hi"] });
+    assertEq(parse('{"arr":[1,2,3'), { arr: [1, 2, 3] });
   });
 
   test("nested structures", () => {
-    expect(parse('{"arr":[')).toEqual({ arr: [] });
-    expect(parse('{"arr":[{')).toEqual({ arr: [{}] });
-    expect(parse('{"arr":[{"nested"')).toEqual({ arr: [{}] });
-    expect(parse('{"arr":[{"nested":')).toEqual({ arr: [{}] });
-    expect(parse('{"arr":[{"nested":42')).toEqual({ arr: [{ nested: 42 }] });
+    assertEq(parse('{"arr":['), { arr: [] });
+    assertEq(parse('{"arr":[{'), { arr: [{}] });
+    assertEq(parse('{"arr":[{"nested"'), { arr: [{}] });
+    assertEq(parse('{"arr":[{"nested":'), { arr: [{}] });
+    assertEq(parse('{"arr":[{"nested":42'), { arr: [{ nested: 42 }] });
   });
 
   test("mixed nesting", () => {
-    expect(parse('{"a":[1,{"b":')).toEqual({ a: [1, {}] });
-    expect(parse('{"a":[1,{"b":[')).toEqual({ a: [1, { b: [] }] });
-    expect(parse('{"a":{"b":["c"')).toEqual({ a: { b: ["c"] } });
+    assertEq(parse('{"a":[1,{"b":'), { a: [1, {}] });
+    assertEq(parse('{"a":[1,{"b":['), { a: [1, { b: [] }] });
+    assertEq(parse('{"a":{"b":["c"'), { a: { b: ["c"] } });
   });
 
   test("strings with special characters", () => {
-    expect(parse('{"key":"val\\n')).toEqual({ key: "val\n" });
-    expect(parse('{"key":"val\\"')).toEqual({ key: 'val"' });
-    expect(parse('{"key":"val w/ spaces')).toEqual({ key: "val w/ spaces" });
-    expect(parse('{"unicode":"café')).toEqual({ unicode: "café" });
-    expect(parse('{"key":"val\\\\n')).toEqual(parse('{"key":"val\\\\n'));
+    assertEq(parse('{"key":"val\\n'), { key: "val\n" });
+    assertEq(parse('{"key":"val\\"'), { key: 'val"' });
+    assertEq(parse('{"key":"val w/ spaces'), { key: "val w/ spaces" });
+    assertEq(parse('{"unicode":"café'), { unicode: "café" });
+    assertEq(parse('{"key":"val\\\\n'), parse('{"key":"val\\\\n'));
   });
 
   test("numbers", () => {
-    expect(parse('{"num":123')).toEqual({ num: 123 });
-    expect(parse('{"num":123.')).toEqual({ num: 123 });
-    expect(parse('{"num":-42')).toEqual({ num: -42 });
-    expect(parse('{"pi":3.')).toEqual({ pi: 3 });
-    expect(parse('{"pi":3.14')).toEqual({ pi: 3.14 });
+    assertEq(parse('{"num":123'), { num: 123 });
+    assertEq(parse('{"num":123.'), { num: 123 });
+    assertEq(parse('{"num":-42'), { num: -42 });
+    assertEq(parse('{"pi":3.'), { pi: 3 });
+    assertEq(parse('{"pi":3.14'), { pi: 3.14 });
   });
 
   test("complex real-world examples", () => {
-    expect(parse('{"users":[{"id":1,"name":"John')).toEqual({
+    assertEq(parse('{"users":[{"id":1,"name":"John'), {
       users: [{ id: 1, name: "John" }],
     });
-    expect(parse('{"config":{"debug":true,"timeout":')).toEqual({
+    assertEq(parse('{"config":{"debug":true,"timeout":'), {
       config: { debug: true },
     });
-    expect(parse('{"data":[{"items":[{"type":"text","content":')).toEqual({
+    assertEq(parse('{"data":[{"items":[{"type":"text","content":'), {
       data: [{ items: [{ type: "text" }] }],
     });
   });
 
   test("edge cases for coverage", () => {
     // Test properly closed nested objects to trigger stack.pop for '}'
-    expect(parse('{"a":{"b":{}}')).toEqual({ a: { b: {} } });
-    expect(parse('{"nested":{"deep":{"obj":{}}}}')).toEqual({
+    assertEq(parse('{"a":{"b":{}}'), { a: { b: {} } });
+    assertEq(parse('{"nested":{"deep":{"obj":{}}}}'), {
       nested: { deep: { obj: {} } },
     });
 
     // Test escaped characters at end of incomplete strings
-    expect(parse('{"key":"val\\"')).toEqual({ key: 'val"' });
-    expect(parse('{"key":"val\\\\"')).toEqual({ key: "val\\" });
-    expect(parse('{"esc":"test\\\\')).toEqual({ esc: "test\\" });
+    assertEq(parse('{"key":"val\\"'), { key: 'val"' });
+    assertEq(parse('{"key":"val\\\\"'), { key: "val\\" });
+    assertEq(parse('{"esc":"test\\\\'), { esc: "test\\" });
 
     // Test combination of escapes and incomplete structure
-    expect(parse('{"a":"b\\\\","c":')).toEqual({ a: "b\\" });
+    assertEq(parse('{"a":"b\\\\","c":'), { a: "b\\" });
 
     // Test escape handling in string backtracking
-    expect(parse('{"a":"test\\\\value:')).toEqual({ a: "test\\value:" });
-    expect(parse('{"a":"test\\\\value":')).toEqual({});
+    assertEq(parse('{"a":"test\\\\value:'), { a: "test\\value:" });
+    assertEq(parse('{"a":"test\\\\value":'), {});
 
     // Test handling of input ending with colon after numeric value
-    expect(parse('{"a":1:')).toEqual({ a: 1 });
+    assertEq(parse('{"a":1:'), { a: 1 });
 
     // Cover escaped characters inside strings
-    expect(parse('{"msg":"Say \\"hello\\"')).toEqual({ msg: 'Say "hello"' });
-    expect(parse('{"path":"C:\\\\Users')).toEqual({ path: "C:\\Users" });
+    assertEq(parse('{"msg":"Say \\"hello\\"'), { msg: 'Say "hello"' });
+    assertEq(parse('{"path":"C:\\\\Users'), { path: "C:\\Users" });
 
     // Escape char at the end of input
-    expect(parse('{"a":"e\\')).toEqual({ a: "e" });
+    assertEq(parse('{"a":"e\\'), { a: "e" });
 
     // Cover array closing bracket stack operations
-    expect(parse('{"arr":[1,2]}')).toEqual({ arr: [1, 2] });
-    expect(parse('{"nested":[[[]]]}')).toEqual({ nested: [[[]]] });
-    expect(parse('{"mixed":[{"a":1}]}')).toEqual({ mixed: [{ a: 1 }] });
+    assertEq(parse('{"arr":[1,2]}'), { arr: [1, 2] });
+    assertEq(parse('{"nested":[[[]]]}'), { nested: [[[]]] });
+    assertEq(parse('{"mixed":[{"a":1}]}'), { mixed: [{ a: 1 }] });
 
     // Cover error recovery logic for malformed JSON
 
     // Test colon removal for incomplete key-value pairs
-    expect(parse('{"a":1,"incomplete":')).toEqual({ a: 1 });
+    assertEq(parse('{"a":1,"incomplete":'), { a: 1 });
 
     // Test handling of unmatched quotes
-    expect(parse('{"a":1,"bad":"incomplete')).toEqual({
+    assertEq(parse('{"a":1,"bad":"incomplete'), {
       a: 1,
       bad: "incomplete",
     });
 
     // Test comma removal for trailing commas
-    expect(parse('{"a":1,"b":2,')).toEqual({ a: 1, b: 2 });
-    expect(parse('{"foo": "bar", ')).toEqual({ foo: "bar" });
+    assertEq(parse('{"a":1,"b":2,'), { a: 1, b: 2 });
+    assertEq(parse('{"foo": "bar", '), { foo: "bar" });
 
     // Test fallback to {} for completely malformed input
-    expect(parse("not json at all")).toEqual({});
-    expect(parse('{"completely broken syntax",}')).toEqual({});
-    expect(parse('{"key":"completely broken syntax",}')).toEqual({});
-    expect(parse('{"key","completely broken syntax",}')).toEqual({});
+    assertEq(parse("not json at all"), {});
+    assertEq(parse('{"completely broken syntax",}'), {});
+    assertEq(parse('{"key":"completely broken syntax",}'), {});
+    assertEq(parse('{"key","completely broken syntax",}'), {});
   });
 
   test("handles trailing whitespace", () => {
-    expect(parse('{"key":"value"}  \n\t')).toEqual({ key: "value" });
-    expect(parse('{"key":"value"}   ')).toEqual({ key: "value" });
-    expect(parse('{"a":1,"b":2} \n ')).toEqual({ a: 1, b: 2 });
-    expect(parse('{"nested":{"obj":{}}}  ')).toEqual({ nested: { obj: {} } });
+    assertEq(parse('{"key":"value"}  \n\t'), { key: "value" });
+    assertEq(parse('{"key":"value"}   '), { key: "value" });
+    assertEq(parse('{"a":1,"b":2} \n '), { a: 1, b: 2 });
+    assertEq(parse('{"nested":{"obj":{}}}  '), { nested: { obj: {} } });
   });
 
   test("handles emojis and newlines", () => {
     // Complete emojis in strings
-    expect(parse('{"message":"Hello 👋 world')).toEqual({
+    assertEq(parse('{"message":"Hello 👋 world'), {
       message: "Hello 👋 world",
     });
-    expect(parse('{"reaction":"🎉","status":"complete')).toEqual({
+    assertEq(parse('{"reaction":"🎉","status":"complete'), {
       reaction: "🎉",
       status: "complete",
     });
 
     // Partial/incomplete emojis (multi-byte sequences)
-    expect(parse('{"partial":"test 👋')).toEqual({ partial: "test 👋" });
-    expect(parse('{"emoji":"🎉🎊')).toEqual({ emoji: "🎉🎊" });
+    assertEq(parse('{"partial":"test 👋'), { partial: "test 👋" });
+    assertEq(parse('{"emoji":"🎉🎊'), { emoji: "🎉🎊" });
 
     // Newlines and whitespace in strings
-    expect(parse('{"text":"line1\\nline2')).toEqual({ text: "line1\nline2" });
-    expect(parse('{"multiline":"first line\\nsecond')).toEqual({
+    assertEq(parse('{"text":"line1\\nline2'), { text: "line1\nline2" });
+    assertEq(parse('{"multiline":"first line\\nsecond'), {
       multiline: "first line\nsecond",
     });
 
     // Mixed emojis, newlines, and regular content
-    expect(parse('{"log":"User clicked 👆\\nAction: success ✅')).toEqual({
+    assertEq(parse('{"log":"User clicked 👆\\nAction: success ✅'), {
       log: "User clicked 👆\nAction: success ✅",
     });
 
     // Emojis with arrays and objects
-    expect(parse('{"reactions":["👍","👎","❤️')).toEqual({
+    assertEq(parse('{"reactions":["👍","👎","❤️'), {
       reactions: ["👍", "👎", "❤️"],
     });
-    expect(parse('{"user":{"name":"Alice","status":"🟢 online')).toEqual({
+    assertEq(parse('{"user":{"name":"Alice","status":"🟢 online'), {
       user: { name: "Alice", status: "🟢 online" },
     });
   });
@@ -258,38 +259,38 @@ describe("parsing basic inputs", () => {
 
 describe("partial keyword recognition", () => {
   test("recognizes partial null keyword", () => {
-    expect(parse('{"key":n')).toEqual({ key: null });
-    expect(parse('{"key":nu')).toEqual({ key: null });
-    expect(parse('{"key":nul')).toEqual({ key: null });
+    assertEq(parse('{"key":n'), { key: null });
+    assertEq(parse('{"key":nu'), { key: null });
+    assertEq(parse('{"key":nul'), { key: null });
   });
 
   test("recognizes partial true keyword", () => {
-    expect(parse('{"key":t')).toEqual({ key: true });
-    expect(parse('{"key":tr')).toEqual({ key: true });
-    expect(parse('{"key":tru')).toEqual({ key: true });
+    assertEq(parse('{"key":t'), { key: true });
+    assertEq(parse('{"key":tr'), { key: true });
+    assertEq(parse('{"key":tru'), { key: true });
   });
 
   test("recognizes partial false keyword", () => {
-    expect(parse('{"key":f')).toEqual({ key: false });
-    expect(parse('{"key":fa')).toEqual({ key: false });
-    expect(parse('{"key":fal')).toEqual({ key: false });
-    expect(parse('{"key":fals')).toEqual({ key: false });
+    assertEq(parse('{"key":f'), { key: false });
+    assertEq(parse('{"key":fa'), { key: false });
+    assertEq(parse('{"key":fal'), { key: false });
+    assertEq(parse('{"key":fals'), { key: false });
   });
 
   test("recognizes partial keywords in arrays", () => {
-    expect(parse('{"arr":[t')).toEqual({ arr: [true] });
-    expect(parse('{"arr":[n')).toEqual({ arr: [null] });
-    expect(parse('{"arr":[f')).toEqual({ arr: [false] });
+    assertEq(parse('{"arr":[t'), { arr: [true] });
+    assertEq(parse('{"arr":[n'), { arr: [null] });
+    assertEq(parse('{"arr":[f'), { arr: [false] });
   });
 
   test("recognizes partial keywords after commas", () => {
-    expect(parse('{"arr":[true,f')).toEqual({ arr: [true, false] });
-    expect(parse('{"a":1,"b":n')).toEqual({ a: 1, b: null });
+    assertEq(parse('{"arr":[true,f'), { arr: [true, false] });
+    assertEq(parse('{"a":1,"b":n'), { a: 1, b: null });
   });
 
   test("does not complete keywords in strings", () => {
     // This should not complete "n" to "null" because it's inside a string
-    expect(parse('{"key":"n')).toEqual({ key: "n" });
+    assertEq(parse('{"key":"n'), { key: "n" });
   });
 
   test("fixes the original counterexample", () => {
@@ -309,50 +310,50 @@ describe("partial keyword recognition", () => {
     }
 
     // The final result should be correct
-    expect(parser.json).toEqual({ "": false, " ": null });
+    assertEq(parser.json, { "": false, " ": null });
   });
 });
 
 describe("property-based testing", () => {
   test("regression: escaped chars in keys", () => {
     const parser = new IncrementalJsonParser('{"\\"":1');
-    expect(parser.json).toEqual({ '"': 1 });
+    assertEq(parser.json, { '"': 1 });
   });
 
   test("regression: escaped chars in keys when appended", () => {
     const parser = new IncrementalJsonParser('{"\\"');
-    expect(parser.json).toEqual({});
+    assertEq(parser.json, {});
     parser.append('":1');
-    expect(parser.json).toEqual({ '"': 1 });
+    assertEq(parser.json, { '"': 1 });
   });
 
   test("regression: parsing positive decimal numbers", () => {
     const parser = new IncrementalJsonParser('{" ":');
-    expect(parser.json).toEqual({});
+    assertEq(parser.json, {});
     parser.append("0.007");
-    expect(parser.json).toEqual({ " ": 0.007 });
+    assertEq(parser.json, { " ": 0.007 });
   });
 
   test("regression: parsing negative decimal numbers", () => {
     const parser = new IncrementalJsonParser('{"x":');
-    expect(parser.json).toEqual({});
+    assertEq(parser.json, {});
     parser.append("-0.007");
-    expect(parser.json).toEqual({ x: -0.007 });
+    assertEq(parser.json, { x: -0.007 });
   });
 
   test("regression: incomplete negative number (minus only)", () => {
     const parser = new IncrementalJsonParser('{"x":');
-    expect(parser.json).toEqual({});
+    assertEq(parser.json, {});
     parser.append("-");
-    expect(parser.json).toEqual({ x: -0 });
+    assertEq(parser.json, { x: -0 });
     parser.append("0");
-    expect(parser.json).toEqual({ x: -0 });
+    assertEq(parser.json, { x: -0 });
     parser.append(".");
-    expect(parser.json).toEqual({ x: -0 });
+    assertEq(parser.json, { x: -0 });
     parser.append("00");
-    expect(parser.json).toEqual({ x: -0 });
+    assertEq(parser.json, { x: -0 });
     parser.append("7");
-    expect(parser.json).toEqual({ x: -0.007 });
+    assertEq(parser.json, { x: -0.007 });
   });
 
   test("parsing left-to-right should only ever increment output", () => {

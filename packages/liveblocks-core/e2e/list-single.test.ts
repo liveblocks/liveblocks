@@ -1,4 +1,5 @@
-import { expect, test } from "vitest";
+import { assertEq } from "tosti";
+import { test } from "vitest";
 
 import { LiveList } from "../src/crdts/LiveList";
 import { lsonToJson } from "../src/immutable";
@@ -21,7 +22,7 @@ test(
       root.get("list").set(0, "c");
 
       await flushSocketMessages();
-      expect(states).toEqual([{ list: ["b"] }, { list: ["c"] }]);
+      assertEq(states, [{ list: ["b"] }, { list: ["c"] }]);
     }
   )
 );
@@ -44,7 +45,7 @@ test(
       liveList.set(0, "b");
 
       await flushSocketMessages();
-      expect(states).toEqual([{ list: ["a"] }, { list: ["b"] }]);
+      assertEq(states, [{ list: ["a"] }, { list: ["b"] }]);
     }
   )
 );

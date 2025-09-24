@@ -1,3 +1,4 @@
+import { assertEq, assertSame, assertThrows } from "tosti";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
@@ -38,39 +39,44 @@ describe("LiveList", () => {
   describe("not attached", () => {
     test("basic operations with native objects", () => {
       const list = new LiveList<string>(["first", "second", "third"]);
-      expect(list.get(0)).toEqual("first");
-      expect(list.length).toBe(3);
+      assertEq(list.get(0), "first");
+      assertSame(list.length, 3);
 
-      expect(list.toArray()).toEqual(["first", "second", "third"]);
+      assertEq(list.toArray(), ["first", "second", "third"]);
 
-      expect(Array.from(list)).toEqual(["first", "second", "third"]);
+      assertEq(Array.from(list), ["first", "second", "third"]);
 
-      expect(list.map((item) => item.toUpperCase())).toEqual([
-        "FIRST",
-        "SECOND",
-        "THIRD",
-      ]);
+      assertEq(
+        list.map((item) => item.toUpperCase()),
+        ["FIRST", "SECOND", "THIRD"]
+      );
 
-      expect(list.filter((item) => item.endsWith("d"))).toEqual([
-        "second",
-        "third",
-      ]);
+      assertEq(
+        list.filter((item) => item.endsWith("d")),
+        ["second", "third"]
+      );
 
-      expect(list.findIndex((item) => item.startsWith("s"))).toEqual(1);
+      assertEq(
+        list.findIndex((item) => item.startsWith("s")),
+        1
+      );
 
-      expect(list.some((item) => item.startsWith("x"))).toEqual(false);
+      assertEq(
+        list.some((item) => item.startsWith("x")),
+        false
+      );
 
-      expect(list.indexOf("quatre")).toEqual(-1);
-      expect(list.indexOf("third")).toEqual(2);
+      assertEq(list.indexOf("quatre"), -1);
+      assertEq(list.indexOf("third"), 2);
 
       list.delete(0);
 
-      expect(list.toArray()).toEqual(["second", "third"]);
-      expect(list.get(2)).toBe(undefined);
-      expect(list.length).toBe(2);
+      assertEq(list.toArray(), ["second", "third"]);
+      assertSame(list.get(2), undefined);
+      assertSame(list.length, 2);
 
       list.clear();
-      expect(list.toArray()).toEqual([]);
+      assertEq(list.toArray(), []);
     });
   });
 
@@ -121,7 +127,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.push("first")).toThrow(
+      assertThrows(
+        () => items.push("first"),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -238,7 +245,10 @@ describe("LiveList", () => {
       const object = new LiveObject({ a: 0 });
 
       items.push(object);
-      expect(() => items.push(object)).toThrow();
+      assertThrows(
+        () => items.push(object),
+        "Cannot attach node: already attached"
+      );
     });
   });
 
@@ -258,7 +268,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.insert("first", 0)).toThrow(
+      assertThrows(
+        () => items.insert("first", 0),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -330,7 +341,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.delete(0)).toThrow(
+      assertThrows(
+        () => items.delete(0),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -406,7 +418,7 @@ describe("LiveList", () => {
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(room[kInternal].nodeCount).toBe(2);
+      assertSame(room[kInternal].nodeCount, 2);
 
       assertUndoRedo();
     });
@@ -428,7 +440,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.move(0, 1)).toThrow(
+      assertThrows(
+        () => items.move(0, 1),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -552,7 +565,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.clear()).toThrow(
+      assertThrows(
+        () => items.clear(),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -672,7 +686,8 @@ describe("LiveList", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      expect(() => items.set(0, "A")).toThrow(
+      assertThrows(
+        () => items.set(0, "A"),
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
@@ -680,15 +695,17 @@ describe("LiveList", () => {
     test("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
-      expect(list.toArray()).toEqual(["D", "B", "C"]);
+      assertEq(list.toArray(), ["D", "B", "C"]);
     });
 
     test("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
-      expect(() => list.set(-1, "D")).toThrow(
+      assertThrows(
+        () => list.set(-1, "D"),
         'Cannot set list item at index "-1". index should be between 0 and 2'
       );
-      expect(() => list.set(3, "D")).toThrow(
+      assertThrows(
+        () => list.set(3, "D"),
         'Cannot set list item at index "3". index should be between 0 and 2'
       );
     });
@@ -1163,7 +1180,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b", "c"] });
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
       expect(callback).toHaveBeenCalledWith([
         {
           node: liveList,
@@ -1201,7 +1218,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b", "c"] });
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      assertEq(callback.mock.calls.length, 1);
     });
   });
 
@@ -1267,9 +1284,9 @@ describe("LiveList", () => {
         items: ["a", "b", "c"],
       });
 
-      expect(rootCallback).toHaveBeenCalledTimes(0);
+      assertEq(rootCallback.mock.calls.length, 0);
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(2);
+      assertEq(rootDeepCallback.mock.calls.length, 2);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
@@ -1285,7 +1302,7 @@ describe("LiveList", () => {
           updates: [{ index: 2, item: "c", type: "insert" }],
         },
       ]);
-      expect(listCallback).toHaveBeenCalledTimes(2);
+      assertEq(listCallback.mock.calls.length, 2);
     });
 
     test("register moved in list", async () => {
@@ -1344,9 +1361,9 @@ describe("LiveList", () => {
         items: ["b", "a"],
       });
 
-      expect(rootCallback).toHaveBeenCalledTimes(0);
+      assertEq(rootCallback.mock.calls.length, 0);
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+      assertEq(rootDeepCallback.mock.calls.length, 1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
@@ -1356,7 +1373,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      expect(listCallback).toHaveBeenCalledTimes(1);
+      assertEq(listCallback.mock.calls.length, 1);
     });
 
     test("register deleted from list", async () => {
@@ -1406,9 +1423,9 @@ describe("LiveList", () => {
         items: ["a"],
       });
 
-      expect(rootCallback).toHaveBeenCalledTimes(0);
+      assertEq(rootCallback.mock.calls.length, 0);
 
-      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+      assertEq(rootDeepCallback.mock.calls.length, 1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
@@ -1418,7 +1435,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      expect(listCallback).toHaveBeenCalledTimes(1);
+      assertEq(listCallback.mock.calls.length, 1);
     });
   });
 
@@ -1441,7 +1458,7 @@ describe("LiveList", () => {
 
       const applyResult = items._detachChild(secondItem!);
 
-      expect(applyResult).toEqual({
+      assertEq(applyResult, {
         modified: {
           type: "LiveList",
           node: items,

@@ -1,5 +1,6 @@
 import fc from "fast-check";
-import { describe, expect, test, vi } from "vitest";
+import { assertEq, assertSame } from "tosti";
+import { describe, test, vi } from "vitest";
 
 import { makeBufferableEventSource, makeEventSource } from "../EventSource";
 
@@ -31,9 +32,9 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback).toHaveBeenCalledTimes(3);
+          assertEq(callback.mock.calls.length, 3);
           for (const [arg] of callback.mock.calls) {
-            expect(arg).toBe(payload);
+            assertSame(arg, payload);
           }
         }
       )
@@ -57,14 +58,14 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(3);
+          assertEq(callback1.mock.calls.length, 3);
           for (const [arg] of callback1.mock.calls) {
-            expect(arg).toBe(payload);
+            assertSame(arg, payload);
           }
 
-          expect(callback2).toHaveBeenCalledTimes(2);
+          assertEq(callback2.mock.calls.length, 2);
           for (const [arg] of callback2.mock.calls) {
-            expect(arg).toBe(payload);
+            assertSame(arg, payload);
           }
         }
       )
@@ -78,36 +79,36 @@ describe("EventSource", () => {
     const hub = makeEventSource();
 
     // No callbacks registered yet
-    expect(hub.count()).toBe(0);
+    assertSame(hub.count(), 0);
 
     const unsub1 = hub.observable.subscribe(callback1);
-    expect(hub.count()).toBe(1);
+    assertSame(hub.count(), 1);
 
     const unsub2a = hub.observable.subscribe(callback2);
-    expect(hub.count()).toBe(2);
+    assertSame(hub.count(), 2);
 
     // Registering the same exact callback multiple times has no effect
     // on the count
     const unsub2b = hub.observable.subscribe(callback2);
-    expect(hub.count()).toBe(2);
+    assertSame(hub.count(), 2);
 
     const unsub3 = hub.observable.subscribeOnce(callback3);
-    expect(hub.count()).toBe(3);
+    assertSame(hub.count(), 3);
 
     unsub1();
     unsub2a();
     unsub2b();
-    expect(hub.count()).toBe(1);
+    assertSame(hub.count(), 1);
 
     unsub3();
-    expect(hub.count()).toBe(0);
+    assertSame(hub.count(), 0);
 
     // Calling unsub more often will not have an effect
     unsub1();
     unsub2a();
     unsub2b();
     unsub3();
-    expect(hub.count()).toBe(0);
+    assertSame(hub.count(), 0);
   });
 
   test("detecting if notifications were sent", () => {
@@ -115,18 +116,18 @@ describe("EventSource", () => {
     const callback2 = vi.fn();
     const hub = makeEventSource();
 
-    expect(hub.notify("hi")).toBe(false); // No callbacks were invoked
+    assertSame(hub.notify("hi"), false); // No callbacks were invoked
 
     const unsub1 = hub.observable.subscribe(callback1);
     const unsub2 = hub.observable.subscribe(callback2);
 
-    expect(hub.notify("hi")).toBe(true); // At least one callback was invoked
+    assertSame(hub.notify("hi"), true); // At least one callback was invoked
 
     unsub1();
-    expect(hub.notify("hi")).toBe(true);
+    assertSame(hub.notify("hi"), true);
 
     unsub2();
-    expect(hub.notify("hi")).toBe(false);
+    assertSame(hub.notify("hi"), false);
   });
 
   test("subscribing once", () => {
@@ -143,15 +144,15 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
+          assertEq(callback.mock.calls.length, 1); // Called only once, not three times
           for (const [arg] of callback.mock.calls) {
-            expect(arg).toBe(payload);
+            assertSame(arg, payload);
           }
 
           // Deregistering has no effect
           dereg1();
           hub.notify(payload);
-          expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
+          assertEq(callback.mock.calls.length, 1); // Called only once, not three times
         }
       )
     );
@@ -177,8 +178,8 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Both get updates
-          expect(callback2).toHaveBeenCalledTimes(2);
+          assertEq(callback1.mock.calls.length, 2); // Both get updates
+          assertEq(callback2.mock.calls.length, 2);
 
           // Deregister callback1
           dereg1();
@@ -187,8 +188,8 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 stopped getting updates
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 still receives updates
+          assertEq(callback1.mock.calls.length, 2); // Callback1 stopped getting updates
+          assertEq(callback2.mock.calls.length, 5); // Callback2 still receives updates
 
           // Deregister callback2
           dereg2a();
@@ -197,8 +198,8 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 now also stopped getting them
+          assertEq(callback1.mock.calls.length, 2); // Callback1 already stopped getting updates before
+          assertEq(callback2.mock.calls.length, 5); // Callback2 now also stopped getting them
 
           // Deregister callback2 again (has no effect)
           dereg2b();
@@ -207,8 +208,8 @@ describe("EventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 already stopped getting updates before
+          assertEq(callback1.mock.calls.length, 2); // Callback1 already stopped getting updates before
+          assertEq(callback2.mock.calls.length, 5); // Callback2 already stopped getting updates before
         }
       )
     );
@@ -223,7 +224,7 @@ describe("EventSource", () => {
     src.notify(1);
     src.notify(2);
 
-    await expect(promise$).resolves.toBe(0);
+    await assertEq(promise$, 0);
   });
 
   test("awaiting events conditionally", async () => {
@@ -237,7 +238,7 @@ describe("EventSource", () => {
     src.notify(7); // First odd number, so we'll wait until this one!
     src.notify(8);
 
-    await expect(promise$).resolves.toBe(7);
+    await assertEq(promise$, 7);
   });
 });
 
@@ -247,25 +248,25 @@ describe("BufferableEventSource", () => {
     const callback2 = vi.fn();
     const src = makeBufferableEventSource();
 
-    expect(src.notify("hi")).toBe(false); // No callbacks were invoked
+    assertSame(src.notify("hi"), false); // No callbacks were invoked
 
     const unsub1 = src.observable.subscribe(callback1);
     const unsub2 = src.observable.subscribe(callback2);
 
-    expect(src.notify("hi")).toBe(true); // At least one callback was invoked
+    assertSame(src.notify("hi"), true); // At least one callback was invoked
 
     unsub1();
-    expect(src.notify("hi")).toBe(true);
+    assertSame(src.notify("hi"), true);
 
     // Start buffering
     src.pause();
-    expect(src.notify("hi")).toBe(false);
-    expect(src.notify("hi")).toBe(false);
+    assertSame(src.notify("hi"), false);
+    assertSame(src.notify("hi"), false);
     src.unpause();
-    expect(src.notify("hi")).toBe(true);
+    assertSame(src.notify("hi"), true);
 
     unsub2();
-    expect(src.notify("hi")).toBe(false);
+    assertSame(src.notify("hi"), false);
   });
 
   test("pausing/continuing event delivery", () => {
@@ -284,10 +285,10 @@ describe("BufferableEventSource", () => {
           hub.notify(payload);
           hub.notify(payload);
 
-          expect(callback).not.toHaveBeenCalled(); // No events get delivered until unpaused
+          assertEq(callback.mock.calls.length, 0); // No events get delivered until unpaused
 
           hub.unpause();
-          expect(callback).toHaveBeenCalledTimes(3); // Buffered events get delivered
+          assertEq(callback.mock.calls.length, 3); // Buffered events get delivered
 
           // Deregister callback
           unsub();
