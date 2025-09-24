@@ -8,8 +8,16 @@
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
 
+- Support numerical operators `greaterThan`, `lowerThan`, `greaterThanOrEqual`,
+  and `lowerThanOrEqual` in `useThreads` metadata query filters.
+
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
+
+### `@liveblocks/client`
+
+- Support numerical operators `greaterThan`, `lowerThan`, `greaterThanOrEqual`,
+  and `lowerThanOrEqual` in `room.getThreads` metadata query filters.
 
 ### `@liveblocks/react-ui`
 
