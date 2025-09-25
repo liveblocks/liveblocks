@@ -4,6 +4,10 @@
     "test": {
       "cache": false
     },
+    "test:watch": {
+      "persistent": true,
+      "cache": false
+    },
     "test:e2e": {
       "cache": false,
       "dependsOn": ["build"],
