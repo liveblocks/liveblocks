@@ -1,4 +1,4 @@
-import { expect, onTestFinished } from "vitest";
+import { expect, onTestFinished, vi } from "vitest";
 
 import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
@@ -664,4 +664,36 @@ export function serverMessage(
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });
+}
+
+/**
+ * Installs a console spy for the duration of this test.
+ */
+export function captureConsole() {
+  const any = vi.fn();
+
+  /* eslint-disable @typescript-eslint/unbound-method */
+  const log = vi.spyOn(console, "log").mockImplementation(any);
+  onTestFinished(log.mockRestore);
+
+  const info = vi.spyOn(console, "info").mockImplementation(any);
+  onTestFinished(info.mockRestore);
+
+  const warn = vi.spyOn(console, "warn").mockImplementation(any);
+  onTestFinished(warn.mockRestore);
+
+  const error = vi.spyOn(console, "error").mockImplementation(any);
+  onTestFinished(error.mockRestore);
+  /* eslint-enable @typescript-eslint/unbound-method */
+
+  return { log, info, warn, error, any };
+}
+
+/**
+ * Disables the console for the duration of this test. Similar to
+ * `captureConsole()`, but its puropse is different: we're not interested in
+ * any console output here.
+ */
+export function disableConsole() {
+  captureConsole();
 }
