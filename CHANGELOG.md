@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Add `timeout` property to `<AiChat>` to allow customization of the default 30
+  second timeout.
+
 ## v3.7.1
 
 ### `@liveblocks/react`
@@ -1395,7 +1400,9 @@ for more information about this change please read our
 
 ### Version History
 
-This release adds some new hooks for Version History in text documents. If you're interested in getting access, please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)
