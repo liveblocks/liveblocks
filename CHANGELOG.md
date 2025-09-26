@@ -20,6 +20,12 @@
 
 - The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
 
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
+
 ## v3.7.1
 
 ### `@liveblocks/react`
