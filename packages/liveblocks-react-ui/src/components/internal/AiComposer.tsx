@@ -98,6 +98,11 @@ export interface AiComposerProps
    * @internal
    */
   stream?: boolean;
+
+  /**
+   * The timeout for the AI response
+   */
+  timeout?: number;
 }
 
 function AiComposerAction({
@@ -158,6 +163,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
       knowledge: localKnowledge,
       branchId,
       copilotId,
+      timeout,
       stream = true,
       onComposerSubmitted,
       ...props
@@ -168,7 +174,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
     const sendAiMessage = useSendAiMessage(chatId, {
       stream,
       copilotId,
-
+      timeout,
       // TODO: We shouldn't need to pass knowledge from AiChat to AiComposer
       //       to useSendAiMessage, ideally it would be attached to a chat ID
       //       behind the scenes inside AiChat.
