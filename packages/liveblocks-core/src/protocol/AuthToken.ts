@@ -65,7 +65,6 @@ export type AccessToken = {
   uid: string; // user id
   perms: LiveblocksPermissions; // permissions
   ui?: IUserInfo; // user info
-  ai?: boolean; // is AI Copilots enabled for this user?
 } & JwtMeta;
 
 /**
