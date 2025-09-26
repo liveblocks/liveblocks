@@ -1,9 +1,17 @@
-import type { CommentBody, ThreadData } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
-import type { ResponseComposition, RestContext, RestRequest } from "msw";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -31,51 +39,40 @@ describe("useCreateThread", () => {
     const fakeCreatedAt = addMinutes(new Date(), 5);
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockCreateThread(
-        async (
-          req: RestRequest,
-          res: ResponseComposition<ThreadData<any>>,
-          ctx: RestContext
-        ) => {
-          const json = await req.json<{
-            id: string;
-            comment: { id: string; body: CommentBody };
-          }>();
+      mockCreateThread(async ({ request }) => {
+        const json = await request.json();
 
-          const comment = dummyCommentData({
-            roomId,
-            threadId: json.id,
-            id: json.comment.id,
-            body: json.comment.body,
-            createdAt: fakeCreatedAt,
-          });
+        const comment = dummyCommentData({
+          roomId,
+          threadId: json.id,
+          id: json.comment.id,
+          body: json.comment.body,
+          createdAt: fakeCreatedAt,
+        });
 
-          const thread = dummyThreadData({
-            roomId,
-            id: json.id,
-            comments: [comment],
-            createdAt: fakeCreatedAt,
-          });
+        const thread = dummyThreadData({
+          roomId,
+          id: json.id,
+          comments: [comment],
+          createdAt: fakeCreatedAt,
+        });
 
-          return res(ctx.json(thread));
-        }
-      )
+        return HttpResponse.json(thread);
+      })
     );
 
     const {
@@ -132,24 +129,22 @@ describe("useCreateThread", () => {
     const roomId = nanoid();
 
     server.use(
-      mockGetThreads(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            data: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-              permissionHints: {
-                [roomId]: [Permission.Write],
-              },
+      mockGetThreads(() => {
+        return HttpResponse.json({
+          data: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+            permissionHints: {
+              [roomId]: [Permission.Write],
             },
-          })
-        );
+          },
+        });
       }),
-      mockCreateThread((_req, res, ctx) => {
-        return res(ctx.status(500));
+      mockCreateThread(() => {
+        return HttpResponse.json(null, { status: 500 });
       })
     );
 

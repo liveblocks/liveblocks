@@ -1,6 +1,8 @@
 import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import {
   dummyCommentData,
@@ -52,10 +54,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -64,12 +65,15 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(204))
+        () => {
+          return HttpResponse.json(null, { status: 204 });
+        }
       )
     );
 
@@ -138,10 +142,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -150,12 +153,15 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       )
     );
 
@@ -232,10 +238,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -244,12 +249,15 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       )
     );
 
@@ -329,10 +337,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription1, subscription2];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -341,15 +348,18 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification1.id },
-        (_req, res, ctx) => res(ctx.status(500))
+        () => {
+          return HttpResponse.json(null, { status: 500 });
+        }
       ),
-      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
-        return res(ctx.status(204));
+      mockDeleteThread({ threadId: threads[0]!.id }, () => {
+        return HttpResponse.json(null, { status: 204 });
       })
     );
 
@@ -429,10 +439,9 @@ describe("useDeleteInboxNotification", () => {
     const subscriptions = [subscription];
 
     server.use(
-      mockGetInboxNotifications((_req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
+      mockGetInboxNotifications(() => {
+        return HttpResponse.json(
+          {
             inboxNotifications,
             threads,
             subscriptions,
@@ -441,19 +450,19 @@ describe("useDeleteInboxNotification", () => {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
             },
-          })
-        )
-      ),
+          },
+          { status: 200 }
+        );
+      }),
       mockDeleteInboxNotification(
         { inboxNotificationId: notification.id },
-        (_req, res, ctx) => res(ctx.status(500))
-      ),
-      mockDeleteComment(
-        { threadId: thread.id, commentId: comment.id },
-        async (_req, res, ctx) => {
-          return res(ctx.status(204));
+        () => {
+          return HttpResponse.json(null, { status: 500 });
         }
-      )
+      ),
+      mockDeleteComment({ threadId: thread.id, commentId: comment.id }, () => {
+        return HttpResponse.json(null, { status: 204 });
+      })
     );
 
     const {

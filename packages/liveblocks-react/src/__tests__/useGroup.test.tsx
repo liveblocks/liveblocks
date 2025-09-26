@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { useGroup } from "../use-group";
@@ -40,24 +41,22 @@ describe("useGroup", () => {
     } = createContextsForTest();
 
     server.use(
-      mockFindGroups(async (req, res, ctx) => {
-        const { groupIds } = await req.json();
+      mockFindGroups(async ({ request }) => {
+        const { groupIds } = await request.json();
 
-        return res(
-          ctx.json({
-            groups: (groupIds as string[]).map((groupId) =>
-              dummyGroupData({
-                id: groupId,
-                members: [
-                  {
-                    id: "user-0",
-                    addedAt: new Date(),
-                  },
-                ],
-              })
-            ),
-          })
-        );
+        return HttpResponse.json({
+          groups: groupIds.map((groupId) =>
+            dummyGroupData({
+              id: groupId,
+              members: [
+                {
+                  id: "user-0",
+                  addedAt: new Date(),
+                },
+              ],
+            })
+          ),
+        });
       })
     );
 
@@ -105,12 +104,10 @@ describe("useGroup", () => {
     } = createContextsForTest();
 
     server.use(
-      mockFindGroups(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            groups: [],
-          })
-        );
+      mockFindGroups(async () => {
+        return HttpResponse.json({
+          groups: [],
+        });
       })
     );
 
@@ -145,22 +142,20 @@ describe("useGroup", () => {
     } = createContextsForTest();
 
     server.use(
-      mockFindGroups(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            groups: [
-              dummyGroupData({
-                id: "engineering",
-                members: [
-                  {
-                    id: "user-0",
-                    addedAt: new Date(),
-                  },
-                ],
-              }),
-            ],
-          })
-        );
+      mockFindGroups(async () => {
+        return HttpResponse.json({
+          groups: [
+            dummyGroupData({
+              id: "engineering",
+              members: [
+                {
+                  id: "user-0",
+                  addedAt: new Date(),
+                },
+              ],
+            }),
+          ],
+        });
       })
     );
 
@@ -222,26 +217,24 @@ describe("useGroup", () => {
     const mockFindGroupsObserver = jest.fn<void, [string[]]>();
 
     server.use(
-      mockFindGroups(async (req, res, ctx) => {
-        const { groupIds } = await req.json();
+      mockFindGroups(async ({ request }) => {
+        const { groupIds } = await request.json();
 
         mockFindGroupsObserver(groupIds);
 
-        return res(
-          ctx.json({
-            groups: (groupIds as string[]).map((groupId) =>
-              dummyGroupData({
-                id: groupId,
-                members: [
-                  {
-                    id: "user-0",
-                    addedAt: new Date(),
-                  },
-                ],
-              })
-            ),
-          })
-        );
+        return HttpResponse.json({
+          groups: groupIds.map((groupId) =>
+            dummyGroupData({
+              id: groupId,
+              members: [
+                {
+                  id: "user-0",
+                  addedAt: new Date(),
+                },
+              ],
+            })
+          ),
+        });
       })
     );
 
@@ -335,45 +328,41 @@ describe("useGroup", () => {
     const mockFindGroupsObserver = jest.fn<void, [string[]]>();
 
     server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        return res(
-          ctx.json({
-            threads: [],
-            inboxNotifications: [],
-            subscriptions: [],
-            groups: [
-              dummyGroupData({
-                id: "engineering",
-                members: [{ id: "user-0", addedAt: new Date() }],
-              }),
-            ],
-            meta: {
-              requestedAt: new Date().toISOString(),
-              nextCursor: null,
-            },
-          })
-        );
+      mockGetInboxNotifications(async () => {
+        return HttpResponse.json({
+          threads: [],
+          inboxNotifications: [],
+          subscriptions: [],
+          groups: [
+            dummyGroupData({
+              id: "engineering",
+              members: [{ id: "user-0", addedAt: new Date() }],
+            }),
+          ],
+          meta: {
+            requestedAt: new Date().toISOString(),
+            nextCursor: null,
+          },
+        });
       }),
-      mockFindGroups(async (req, res, ctx) => {
-        const { groupIds } = await req.json();
+      mockFindGroups(async ({ request }) => {
+        const { groupIds } = await request.json();
 
         mockFindGroupsObserver(groupIds);
 
-        return res(
-          ctx.json({
-            groups: (groupIds as string[]).map((groupId) =>
-              dummyGroupData({
-                id: groupId,
-                members: [
-                  {
-                    id: "user-0",
-                    addedAt: new Date(),
-                  },
-                ],
-              })
-            ),
-          })
-        );
+        return HttpResponse.json({
+          groups: groupIds.map((groupId) =>
+            dummyGroupData({
+              id: groupId,
+              members: [
+                {
+                  id: "user-0",
+                  addedAt: new Date(),
+                },
+              ],
+            })
+          ),
+        });
       })
     );
 
