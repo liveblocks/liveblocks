@@ -213,10 +213,10 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  knowledge: KnowledgeStack;
+  knowledgeStore: ReturnType<typeof createStore_forKnowledge>;
 };
 
-type LayerKey = Brand<string, "LayerKey">;
+export type LayerKey = Brand<string, "LayerKey">;
 
 export class KnowledgeStack {
   #_layers: Set<LayerKey>;
@@ -285,6 +285,27 @@ export class KnowledgeStack {
     this.#stack.getOrCreate(key).set(layerKey, data);
     this.invalidate();
   }
+}
+
+function createStore_forKnowledge() {
+  const knowledgeByChatId = new DefaultMap(
+    (_chatId: string | typeof kWILDCARD) => new KnowledgeStack()
+  );
+
+  function getKnowledgeStack(chatId?: string): KnowledgeStack {
+    return knowledgeByChatId.getOrCreate(chatId ?? kWILDCARD);
+  }
+
+  function getKnowledgeForChat(chatId: string): AiKnowledgeSource[] {
+    const globalKnowledge = knowledgeByChatId.getOrCreate(kWILDCARD).get();
+    const scopedKnowledge = knowledgeByChatId.get(chatId)?.get() ?? [];
+    return [...globalKnowledge, ...scopedKnowledge];
+  }
+
+  return {
+    getKnowledgeStack,
+    getKnowledgeForChat,
+  };
 }
 
 export type GetOrCreateChatOptions = {
@@ -934,14 +955,16 @@ export type Ai = {
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getLastUsedCopilotId: (chatId: string) => CopilotId | undefined;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
+  registerKnowledgeLayer: (
+    uniqueLayerId: string,
+    chatId?: string
+  ) => () => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   updateKnowledge: (
     layerKey: LayerKey,
     data: AiKnowledgeSource,
-    key?: string
+    key?: string,
+    chatId?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerTool: (
@@ -972,6 +995,7 @@ export function createAi(config: AiConfig): Ai {
 
   const chatsStore = createStore_forUserAiChats();
   const toolsStore = createStore_forTools();
+  const knowledgeStore = createStore_forKnowledge();
   const messagesStore = createStore_forChatMessages(toolsStore, setToolResult);
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
@@ -980,7 +1004,7 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    knowledge: new KnowledgeStack(),
+    knowledgeStore,
   };
 
   // Delta batch processing system to throttle incoming delta updates. Incoming
@@ -1294,22 +1318,6 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerKnowledgeLayer(uniqueLayerId: string): LayerKey {
-    return context.knowledge.registerLayer(uniqueLayerId);
-  }
-
-  function deregisterKnowledgeLayer(layerKey: LayerKey): void {
-    context.knowledge.deregisterLayer(layerKey);
-  }
-
-  function updateKnowledge(
-    layerKey: LayerKey,
-    data: AiKnowledgeSource,
-    key: string = nanoid()
-  ) {
-    context.knowledge.updateKnowledge(layerKey, key, data);
-  }
-
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
@@ -1317,7 +1325,7 @@ export function createAi(config: AiConfig): Ai {
     result: ToolResultResponse,
     options?: SetToolResultOptions
   ): Promise<void> {
-    const knowledge = context.knowledge.get();
+    const knowledge = context.knowledgeStore.getKnowledgeForChat(chatId);
     const tools = context.toolsStore.getToolDescriptions(chatId);
 
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
@@ -1390,9 +1398,9 @@ export function createAi(config: AiConfig): Ai {
         targetMessageId: MessageId,
         options?: AskUserMessageInChatOptions
       ): Promise<AskInChatResponse> => {
-        const globalKnowledge = context.knowledge.get();
+        const knowledge = context.knowledgeStore.getKnowledgeForChat(chatId);
         const requestKnowledge = options?.knowledge || [];
-        const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
+        const combinedKnowledge = [...knowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
         messagesStore.markMine(targetMessageId);
@@ -1431,9 +1439,24 @@ export function createAi(config: AiConfig): Ai {
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
       getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
-      registerKnowledgeLayer,
-      deregisterKnowledgeLayer,
-      updateKnowledge,
+      registerKnowledgeLayer: (
+        uniqueLayerId: string,
+        chatId?: string
+      ): (() => void) => {
+        const stack = context.knowledgeStore.getKnowledgeStack(chatId);
+        const layerKey = stack.registerLayer(uniqueLayerId);
+        return () => stack.deregisterLayer(layerKey);
+      },
+      updateKnowledge: (
+        layerKey: LayerKey,
+        data: AiKnowledgeSource,
+        key?: string,
+        chatId?: string
+      ) => {
+        context.knowledgeStore
+          .getKnowledgeStack(chatId)
+          .updateKnowledge(layerKey, key ?? nanoid(), data);
+      },
 
       registerTool: context.toolsStore.registerTool,
     } satisfies Ai,

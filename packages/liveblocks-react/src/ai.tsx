@@ -1,3 +1,4 @@
+import type { LayerKey } from "@liveblocks/core";
 import { kInternal, nanoid } from "@liveblocks/core";
 import { memo, useEffect, useId, useState } from "react";
 
@@ -22,9 +23,12 @@ function useRandom() {
  *        description="The current mode of my application"
  *        value="dark" />
  *
+ * Or scoped to a specific chat:
+ *
  *     <RegisterAiKnowledge
  *        description="The current list of todos"
- *        value={todos} />
+ *        value={todos}
+ *        chatId="chat-1234" />
  *
  * By mounting this component, the AI will get access to this knwoledge.
  * By unmounting this component, the AI will no longer have access to it.
@@ -35,30 +39,24 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 ) {
   const layerId = useId();
   const ai = useAi();
-  const { description, value } = props;
-
-  const [layerKey, setLayerKey] = useState<
-    ReturnType<typeof ai.registerKnowledgeLayer> | undefined
-  >();
+  const { description, value, chatId } = props;
 
   // Executes at mount / unmount
   useEffect(() => {
-    const layerKey = ai.registerKnowledgeLayer(layerId);
-    setLayerKey(layerKey);
-    return () => {
-      ai.deregisterKnowledgeLayer(layerKey);
-      setLayerKey(undefined);
-    };
-  }, [ai, layerId]);
+    return ai.registerKnowledgeLayer(layerId, chatId);
+  }, [ai, layerId, chatId]);
 
   // Executes every render (if the props have changed)
   const randomKey = useRandom();
   const knowledgeKey = props.id ?? randomKey;
   useEffect(() => {
-    if (layerKey !== undefined) {
-      ai.updateKnowledge(layerKey, { description, value }, knowledgeKey);
-    }
-  }, [ai, layerKey, knowledgeKey, description, value]);
+    ai.updateKnowledge(
+      layerId as LayerKey,
+      { description, value },
+      knowledgeKey,
+      chatId
+    );
+  }, [ai, layerId, knowledgeKey, description, value, chatId]);
 
   return null;
 });

@@ -1640,20 +1640,12 @@ function useSendAiMessage(
           stream: messageOptions.stream ?? options?.stream,
           copilotId: resolvedCopilotId,
           timeout: messageOptions.timeout ?? options?.timeout,
-          knowledge: messageOptions.knowledge ?? options?.knowledge,
         }
       );
 
       return newMessage;
     },
-    [
-      client,
-      chatId,
-      options?.copilotId,
-      options?.stream,
-      options?.timeout,
-      options?.knowledge,
-    ]
+    [client, chatId, options?.copilotId, options?.stream, options?.timeout]
   );
 }
 

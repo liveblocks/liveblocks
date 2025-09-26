@@ -24,6 +24,7 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
+  LayerKey,
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
