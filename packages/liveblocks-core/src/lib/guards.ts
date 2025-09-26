@@ -22,3 +22,15 @@ export function isStartsWithOperator(
 ): blob is { startsWith: string } {
   return isPlainObject(blob) && typeof blob.startsWith === "string";
 }
+
+export function isNumberOperator(
+  blob: unknown
+): blob is { lowerThan?: number; greaterThan?: number } {
+  return (
+    isPlainObject(blob) &&
+    (typeof blob.lowerThan === "number" ||
+      typeof blob.greaterThan === "number" ||
+      typeof blob.lowerThanOrEqual === "number" ||
+      typeof blob.greaterThanOrEqual === "number")
+  );
+}

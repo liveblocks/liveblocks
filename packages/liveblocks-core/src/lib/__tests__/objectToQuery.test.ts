@@ -62,6 +62,32 @@ describe("objectToQuery", () => {
     );
   });
 
+  test("should convert an indexed field object with number operators to a query", () => {
+    const query = objectToQuery({
+      metadata: {
+        priority: 3,
+        posX: {
+          greaterThan: 100,
+          lowerThan: 200,
+        },
+        level: {
+          greaterThan: 25,
+        },
+        volume: {
+          lowerThan: 50,
+        },
+        age: {
+          greaterThanOrEqual: 18,
+          lowerThanOrEqual: 65,
+        },
+      },
+    });
+
+    expect(query).toEqual(
+      "metadata['priority']:3 metadata['posX']<200 metadata['posX']>100 metadata['level']>25 metadata['volume']<50 metadata['age']>=18 metadata['age']<=65"
+    );
+  });
+
   test.each([
     "string",
     "string with spaces",

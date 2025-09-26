@@ -196,6 +196,15 @@ type StringOperators<T> =
       startsWith: string;
     };
 
+type NumberOperators<T> =
+  | T
+  | {
+      lowerThan?: number;
+      greaterThan?: number;
+      lowerThanOrEqual?: number;
+      greaterThanOrEqual?: number;
+    };
+
 /**
  * This type can be used to build a metadata query string (compatible
  * with `@liveblocks/query-parser`) through a type-safe API.
@@ -205,5 +214,8 @@ type StringOperators<T> =
  *  - `startsWith` (`^` in query string)
  */
 export type QueryMetadata<M extends BaseMetadata> = {
-  [K in keyof M]: (string extends M[K] ? StringOperators<M[K]> : M[K]) | null;
+  [K in keyof M]:
+    | (string extends M[K] ? StringOperators<M[K]> : M[K])
+    | (number extends M[K] ? NumberOperators<M[K]> : M[K])
+    | null;
 };

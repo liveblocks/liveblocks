@@ -1,4 +1,8 @@
-import { isPlainObject, isStartsWithOperator } from "./guards";
+import {
+  isNumberOperator,
+  isPlainObject,
+  isStartsWithOperator,
+} from "./guards";
 
 /**
  * Converts an object to a query string
@@ -12,15 +16,31 @@ import { isPlainObject, isStartsWithOperator } from "./guards";
  *     org: {
  *       startsWith: "liveblocks:",
  *     },
+ *     posX: {
+ *       greaterThan: 100,
+ *       lowerThan: 200,
+ *     },
+ *     posY: {
+ *       greaterThanOrEqual: 50,
+ *       lowerThanOrEqual: 300,
+ *     },
  *   },
  * });
  *
  * console.log(query);
- * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
+ * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:" AND metadata["posX"]>100 AND metadata["posX"]<200 AND metadata["posY"]>=50 AND metadata["posY"]<=300
  * ```
  */
 type SimpleFilterValue = string | number | boolean | null;
-type OperatorFilterValue = { startsWith: string };
+type OperatorFilterValue =
+  | { startsWith: string; lowerThan?: never; greaterThan?: never }
+  | {
+      lowerThan?: number;
+      greaterThan?: number;
+      greaterThanOrEqual?: number;
+      lowerThanOrEqual?: number;
+      startsWith?: never;
+    };
 
 type FilterValue = SimpleFilterValue | OperatorFilterValue;
 
@@ -28,7 +48,7 @@ type Filter = NumberFilter | StringFilter | BooleanFilter | NullFilter;
 
 type NumberFilter = {
   key: string;
-  operator: ":";
+  operator: ":" | "<" | ">" | "<=" | ">=";
   value: number;
 };
 
@@ -92,8 +112,7 @@ export function objectToQuery(obj: {
   const entries = Object.entries(obj);
 
   const keyValuePairs: [string, string | number | boolean | null][] = [];
-  const keyValuePairsWithOperator: [string, Record<"startsWith", string>][] =
-    [];
+  const keyValuePairsWithOperator: [string, OperatorFilterValue][] = [];
   const indexedKeys: [string, Record<string, FilterValue | undefined>][] = [];
 
   entries.forEach(([key, value]) => {
@@ -104,7 +123,7 @@ export function objectToQuery(obj: {
     if (isSimpleValue(value)) {
       keyValuePairs.push([key, value]);
     } else if (isPlainObject(value)) {
-      if (isStartsWithOperator(value)) {
+      if (isStartsWithOperator(value) || isNumberOperator(value)) {
         keyValuePairsWithOperator.push([key, value]);
       } else {
         indexedKeys.push([key, value]);
@@ -128,7 +147,10 @@ export function objectToQuery(obj: {
 
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
-      } else if (isStartsWithOperator(nestedValue)) {
+      } else if (
+        isStartsWithOperator(nestedValue) ||
+        isNumberOperator(nestedValue)
+      ) {
         nKeyValuePairsWithOperator.push([
           formatFilterKey(key, nestedKey),
           nestedValue,
@@ -163,7 +185,7 @@ const getFiltersFromKeyValuePairs = (
 };
 
 const getFiltersFromKeyValuePairsWithOperator = (
-  keyValuePairsWithOperator: [string, { startsWith: string }][]
+  keyValuePairsWithOperator: [string, OperatorFilterValue][]
 ): Filter[] => {
   const filters: Filter[] = [];
   keyValuePairsWithOperator.forEach(([key, value]) => {
@@ -172,6 +194,40 @@ const getFiltersFromKeyValuePairsWithOperator = (
         key,
         operator: "^",
         value: value.startsWith,
+      });
+    }
+    if ("lowerThan" in value && typeof value.lowerThan === "number") {
+      filters.push({
+        key,
+        operator: "<",
+        value: value.lowerThan,
+      });
+    }
+    if ("greaterThan" in value && typeof value.greaterThan === "number") {
+      filters.push({
+        key,
+        operator: ">",
+        value: value.greaterThan,
+      });
+    }
+    if (
+      "greaterThanOrEqual" in value &&
+      typeof value.greaterThanOrEqual === "number"
+    ) {
+      filters.push({
+        key,
+        operator: ">=",
+        value: value.greaterThanOrEqual,
+      });
+    }
+    if (
+      "lowerThanOrEqual" in value &&
+      typeof value.lowerThanOrEqual === "number"
+    ) {
+      filters.push({
+        key,
+        operator: "<=",
+        value: value.lowerThanOrEqual,
       });
     }
   });
