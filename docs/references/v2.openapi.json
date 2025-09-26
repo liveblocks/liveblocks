@@ -369,13 +369,88 @@
             "description": "Success. The room was deleted"
           },
           "401": {
-            "$ref": "#/components/responses/401"
+            "description": "Missing or wrong credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "WRONG_KEY_USED": {
+                    "value": {
+                      "error": "WRONG_KEY_USED",
+                      "message": "Public key instead of the secret key.",
+                      "suggestion": "Please use your secret key instead of the public key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
+                      "docs": ""
+                    }
+                  },
+                  "MISSING_SECRET_KEY": {
+                    "value": {
+                      "error": "MISSING_SECRET_KEY",
+                      "message": "Missing secret key in authentication header",
+                      "suggestion": "Please use a secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
           },
           "403": {
-            "$ref": "#/components/responses/403"
+            "description": "Unauthorized access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_SECRET_KEY": {
+                    "value": {
+                      "error": "INVALID_SECRET_KEY",
+                      "message": "Invalid secret key.",
+                      "suggestion": "Please use a valid secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
+                      "docs": ""
+                    }
+                  },
+                  "INVALID_PUBLIC_KEY": {
+                    "value": {
+                      "error": "INVALID_PUBLIC_KEY",
+                      "message": "Invalid public key",
+                      "suggestion": "Please use a valid public key, the public key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
+                      "docs": ""
+                    }
+                  },
+                  "UNAUTHORIZED_ROOM_ACCESS": {
+                    "value": {
+                      "error": "UNAUTHORIZED_ROOM_ACCESS",
+                      "message": "The user does not have permission to access the room.",
+                      "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
           },
           "422": {
-            "$ref": "#/components/responses/422"
+            "description": "Unprocessable entity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "UNPROCESSABLE_ENTITY": {
+                    "value": {
+                      "error": "UNPROCESSABLE_ENTITY",
+                      "message": "Missing key: 'defaultAccesses'.",
+                      "suggestion": "Please ensure the data follows the correct format.",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -423,7 +498,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint prepares a room for connectivity, making the eventual connection faster. Use this when you know you'll be loading a room but are not yet connected to it. The endpoint returns an empty response upon successful prewarming."
+        "description": "Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker."
       }
     },
     "/rooms/{roomId}/upsert": {

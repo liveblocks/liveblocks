@@ -2186,6 +2186,51 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
+#### Speed up connecting to a room [#speed-up-connecting-to-a-room]
+
+To speed up connecting to a room, you can call
+[`Liveblocks.prewarmRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId-prewarm)
+on the server, which will warm up a room for the next 10 seconds. Triggering
+this directly before a user navigates to a room is an easy to way use this API.
+Here’s a Next.js server actions example, showing how to trigger prewarming with
+`onPointerDown`.
+
+```ts title="actions.ts"
+"use server";
+
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export function prewarmRoom(roomId: string) {
+  // +++
+  liveblocks.prewarmRoom(roomId);
+  // +++
+}
+```
+
+```tsx title="RoomLink.tsx"
+"use client";
+
+import { prewarmRoom } from "../actions";
+import Link from "next/link";
+
+export function JoinButton({ roomId }: { roomId: string }) {
+  return (
+    // +++
+    <Link href={`/rooms/${roomId}`} onPointerDown={() => prewarmRoom(roomId)}>
+      // +++
+      {roomId}
+    </Link>
+  );
+}
+```
+
+`onPointerDown` is slightly quicker than `onClick` because it triggers before
+the user releases their pointer.
+
 ### createRoomContext
 
 <Banner>
