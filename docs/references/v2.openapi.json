@@ -1136,7 +1136,7 @@
     "/schemas": {
       "post": {
         "summary": "Create schema",
-        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. Corresponds to [`liveblocks.createSchema`](/docs/api-reference/liveblocks-node#post-create-new-schema). \n\nThe schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
+        "description": "This endpoint creates a new schema which can be referenced later to enforce a room's Storage data structure. Corresponds to [`liveblocks.createSchema`](/docs/api-reference/liveblocks-node#post-create-new-schema). \n\nThe schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room.",",
         "tags": ["Schema validation"],
         "parameters": [],
         "operationId": "post-create-new-schema",
