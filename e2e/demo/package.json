@@ -10,6 +10,6 @@
   "devDependencies": {
     "jest": "^27.4.7",
     "jest-environment-node": "^27.4.6",
-    "puppeteer": "^13.1.3"
+    "puppeteer": "^24.22.3"
   }
 }
