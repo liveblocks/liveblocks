@@ -3,7 +3,6 @@ import {
   type ContextualPromptResponse,
   HttpError,
 } from "@liveblocks/core";
-import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
@@ -28,7 +27,6 @@ import {
   type AiExtensionOptions,
   type AiExtensionStorage,
   type AiToolbarState,
-  type LiveblocksExtensionStorage,
   type ResolveContextualPromptResponse,
   type YSyncPluginState,
 } from "../types";
@@ -46,12 +44,7 @@ function getYjsBinding(editor: Editor) {
 }
 
 function getLiveblocksYjsProvider(editor: Editor) {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  return (
-    editor.extensionStorage.liveblocksExtension as
-      | LiveblocksExtensionStorage
-      | undefined
-  )?.provider as LiveblocksYjsProvider | undefined;
+  return editor.extensionStorage.liveblocksExtension?.provider;
 }
 
 export function isContextualPromptDiffResponse(

@@ -10,8 +10,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@blocknote/core": "^0.25.1",
-    "@blocknote/mantine": "^0.25.1",
+    "@blocknote/core": "^0.39.1",
+    "@blocknote/mantine": "^0.39.1",
     "@liveblocks/client": "^3.7.1",
     "@liveblocks/node": "^3.7.1",
     "@liveblocks/react": "^3.7.1",
@@ -19,9 +19,9 @@
     "@liveblocks/react-ui": "^3.7.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.7",
-    "@tiptap/pm": "^2.6.6",
-    "@tiptap/react": "^2.6.6",
-    "@tiptap/starter-kit": "^2.6.6",
+    "@tiptap/pm": "^3.4.2",
+    "@tiptap/react": "^3.4.2",
+    "@tiptap/starter-kit": "^3.4.2",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
