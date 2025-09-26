@@ -743,7 +743,7 @@ describe("LiveMap", () => {
         modified: {
           node: map,
           type: "LiveMap",
-          updates: { el2: { type: "delete" } },
+          updates: { el2: { type: "delete", deletedItem: secondItem } },
         },
         reverse: [
           {

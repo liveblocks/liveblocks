@@ -378,7 +378,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     roomId: string;
   }): Promise<IdTuple<SerializedCrdt>[]>;
 
-  sendMessages<P extends JsonObject, E extends Json>(options: {
+  sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -433,7 +433,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   markAllInboxNotificationsAsRead(): Promise<void>;
 
@@ -1508,7 +1514,10 @@ export function createApiClient<M extends BaseMetadata>({
     return (await result.json()) as IdTuple<SerializedCrdt>[];
   }
 
-  async function sendMessages<P extends JsonObject, E extends Json>(options: {
+  async function sendMessagesOverHTTP<
+    P extends JsonObject,
+    E extends Json,
+  >(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -1623,10 +1632,24 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUnreadInboxNotificationsCount() {
+  async function getUnreadInboxNotificationsCount(options: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { query },
+      { signal: options?.signal }
     );
     return count;
   }
@@ -1872,7 +1895,7 @@ export function createApiClient<M extends BaseMetadata>({
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessages,
+    sendMessagesOverHTTP,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,

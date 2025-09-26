@@ -418,20 +418,20 @@ describe("LiveObject", () => {
           items: LiveObject<{ b?: string; a?: string }>;
         }>([
           createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: "B" }, "0:0", "items"),
+          createSerializedObject("0:1", { a: "initial" }, "0:0", "items"),
         ]);
 
       const items = root.get("items");
       room.batch(() => {
         items.set("a", "A");
-        items.set("b", "A");
+        items.set("b", "B");
       });
 
-      expect(items.toObject()).toEqual({ a: "A", b: "A" });
+      expect(items.toObject()).toEqual({ a: "A", b: "B" });
       expectUpdates([
         [
           objectUpdate(
-            { a: "A", b: "A" },
+            { a: "A", b: "B" },
             { a: { type: "update" }, b: { type: "update" } }
           ),
         ],
@@ -439,18 +439,18 @@ describe("LiveObject", () => {
 
       room.history.undo();
 
-      expect(items.toObject()).toEqual({ a: "B" });
+      expect(items.toObject()).toEqual({ a: "initial" });
       expectUpdates([
         [
           objectUpdate(
-            { a: "A", b: "A" },
+            { a: "A", b: "B" },
             { a: { type: "update" }, b: { type: "update" } }
           ),
         ],
         [
           objectUpdate<{ a?: string; b?: string }>(
-            { a: "B" },
-            { a: { type: "update" }, b: { type: "delete" } }
+            { a: "initial" },
+            { a: { type: "update" }, b: { type: "delete", deletedItem: "B" } }
           ),
         ],
       ]);
@@ -864,7 +864,7 @@ describe("LiveObject", () => {
         }>(
           [
             createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0, b: 0 }, "0:0", "child"),
+            createSerializedObject("0:1", { a: -1, b: -2 }, "0:0", "child"),
           ],
           1
         );
@@ -875,6 +875,7 @@ describe("LiveObject", () => {
 
       const unsubscribe = room.subscribe(root, callback, { isDeep: true });
 
+      // Remote deletion
       applyRemoteOperations([
         {
           type: OpCode.DELETE_OBJECT_KEY,
@@ -884,23 +885,24 @@ describe("LiveObject", () => {
         },
       ]);
 
+      // Local deletion
       root.get("child").delete("b");
 
       unsubscribe();
 
       expect(callback).toHaveBeenCalledTimes(2);
-      expect(callback).toHaveBeenCalledWith([
+      expect(callback).toHaveBeenNthCalledWith(1, [
         {
           type: "LiveObject",
           node: root.get("child"),
-          updates: { a: { type: "delete" } },
+          updates: { a: { type: "delete", deletedItem: -1 } },
         },
       ]);
-      expect(callback).toHaveBeenCalledWith([
+      expect(callback).toHaveBeenNthCalledWith(2, [
         {
           type: "LiveObject",
           node: root.get("child"),
-          updates: { b: { type: "delete" } },
+          updates: { b: { type: "delete", deletedItem: -2 } },
         },
       ]);
     });

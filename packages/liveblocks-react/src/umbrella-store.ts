@@ -66,6 +66,7 @@ import type {
   RoomSubscriptionSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
+  UnreadInboxNotificationsCountAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -578,6 +579,11 @@ type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
 type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
+ * A lookup table (LUT) for all the unread inbox notifications count.
+ */
+type UnreadInboxNotificationsCountLUT = Map<string, number>;
+
+/**
  * A lookup table (LUT) for all the subscriptions.
  */
 type SubscriptionsLUT = Map<SubscriptionKey, SubscriptionData>;
@@ -743,6 +749,25 @@ function createStore_forNotifications() {
     clear,
     updateAssociatedNotification,
     upsert,
+  };
+}
+
+function createStore_forUnreadNotificationsCount() {
+  const baseSignal = new MutableSignal<UnreadInboxNotificationsCountLUT>(
+    new Map()
+  );
+
+  function update(queryKey: InboxNotificationsQueryKey, count: number): void {
+    baseSignal.mutate((lut) => {
+      lut.set(queryKey, count);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (c) => Object.fromEntries(c)),
+
+    // Mutations
+    update,
   };
 }
 
@@ -994,6 +1019,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly subscriptions: ReturnType<typeof createStore_forSubscriptions>;
   readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
+  readonly unreadNotificationsCount: ReturnType<
+    typeof createStore_forUnreadNotificationsCount
+  >;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly notificationSettings: ReturnType<
     typeof createStore_forNotificationSettings
@@ -1025,6 +1053,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly loadingNotifications: DefaultMap<
       InboxNotificationsQueryKey,
       LoadableResource<InboxNotificationsAsyncResult>
+    >;
+    readonly unreadNotificationsCount: DefaultMap<
+      InboxNotificationsQueryKey,
+      LoadableResource<UnreadInboxNotificationsCountAsyncResult>
     >;
     readonly roomSubscriptionSettingsByRoomId: DefaultMap<
       RoomId,
@@ -1095,6 +1127,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
+    this.unreadNotificationsCount = createStore_forUnreadNotificationsCount();
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1310,6 +1343,42 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
+    const unreadNotificationsCount = new DefaultMap(
+      (
+        queryKey: InboxNotificationsQueryKey
+      ): LoadableResource<UnreadInboxNotificationsCountAsyncResult> => {
+        const query = JSON.parse(queryKey) as InboxNotificationsQuery;
+
+        const resource = new SinglePageResource(async () => {
+          const result = await this.#client.getUnreadInboxNotificationsCount({
+            query,
+          });
+
+          this.unreadNotificationsCount.update(queryKey, result);
+        });
+
+        const signal = DerivedSignal.from(
+          (): UnreadInboxNotificationsCountAsyncResult => {
+            const result = resource.get();
+            if (result.isLoading || result.error) {
+              return result;
+            } else {
+              return ASYNC_OK(
+                "count",
+                nn(this.unreadNotificationsCount.signal.get()[queryKey])
+              );
+            }
+          },
+          shallow
+        );
+
+        return {
+          signal,
+          waitUntilLoaded: resource.waitUntilLoaded,
+        };
+      }
+    );
+
     const roomSubscriptionSettingsByRoomId = new DefaultMap(
       (roomId: RoomId) => {
         const resource = new SinglePageResource(async () => {
@@ -1491,6 +1560,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingUserThreads,
       notifications,
       loadingNotifications,
+      unreadNotificationsCount,
       roomSubscriptionSettingsByRoomId,
       versionsByRoomId,
       notificationSettings,
@@ -1798,6 +1868,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
+  }
+
+  public async fetchUnreadNotificationsCount(
+    queryKey: InboxNotificationsQueryKey,
+    signal: AbortSignal
+  ) {
+    const query = JSON.parse(queryKey) as InboxNotificationsQuery;
+
+    const result = await this.#client.getUnreadInboxNotificationsCount({
+      query,
+      signal,
+    });
+
+    this.unreadNotificationsCount.update(queryKey, result);
   }
 
   public async fetchRoomThreadsDeltaUpdate(

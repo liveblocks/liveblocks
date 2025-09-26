@@ -29,7 +29,8 @@ describe("cloning LiveStructures", () => {
     list1.push("a");
     list1.push("b");
     list1.push("c");
-    root.set("list2", list1.clone());
+    const clonedList = list1.clone();
+    root.set("list2", clonedList);
 
     room.history.undo();
     room.history.redo();
@@ -51,7 +52,7 @@ describe("cloning LiveStructures", () => {
       // Undo
       [
         objectUpdate({ list1: ["a", "b", "c"] }, {
-          list2: { type: "delete" },
+          list2: { type: "delete", deletedItem: clonedList },
         } as any),
       ],
 
@@ -65,7 +66,7 @@ describe("cloning LiveStructures", () => {
     ]);
   });
 
-  test("deep cloning of LiveStructures", () =>
+  test("[property] deep cloning of LiveStructures", () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
@@ -85,7 +86,7 @@ describe("cloning LiveStructures", () => {
       )
     ));
 
-  test("deep cloning of LiveStructures (twice)", () =>
+  test("[property] deep cloning of LiveStructures (twice)", () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
@@ -106,7 +107,7 @@ describe("cloning LiveStructures", () => {
       )
     ));
 
-  test("deep cloning of LSON data (= LiveStructures or JSON)", () =>
+  test("[property] deep cloning of LSON data (= LiveStructures or JSON)", () =>
     fc.assert(
       fc.asyncProperty(
         lson,

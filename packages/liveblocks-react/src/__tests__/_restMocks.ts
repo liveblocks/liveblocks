@@ -191,6 +191,21 @@ export function mockGetInboxNotifications(
   );
 }
 
+export function mockGetUnreadInboxNotificationsCount(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    {
+      count: number;
+    }
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/inbox-notifications/count",
+    resolver
+  );
+}
+
 export function mockGetInboxNotificationsDelta(
   resolver: ResponseResolver<
     RestRequest<never, never>,
