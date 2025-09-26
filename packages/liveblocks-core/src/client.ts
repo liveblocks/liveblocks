@@ -263,7 +263,13 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * @example
    * const count = await client.getUnreadInboxNotificationsCount();
    */
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   /**
    * Marks all inbox notifications as read.
