@@ -11,7 +11,7 @@
 import { vi } from "vitest";
 
 import type { AuthValue } from "../auth-manager";
-import type { Delegates } from "../connection";
+import type { BaseAuthResult, Delegates } from "../connection";
 import { StopRetrying } from "../connection";
 import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
 import { ServerMsgCode } from "../protocol/ServerMsg";
@@ -35,6 +35,12 @@ function makeParsed(authToken: AuthToken): ParsedAuthToken {
   };
 }
 
+export type MockedDelegates<T extends BaseAuthResult> = Delegates<T> & {
+  authenticate: ReturnType<typeof vi.fn>;
+  createSocket: ReturnType<typeof vi.fn>;
+  canZombie: ReturnType<typeof vi.fn>;
+};
+
 /**
  * Configures how the "backend" will behave in unit tests.
  *
@@ -49,7 +55,7 @@ export function defineBehavior(
   socketBehavior: SocketBehavior
 ): {
   wss: MockWebSocketServer;
-  delegates: Delegates<AuthValue>;
+  delegates: MockedDelegates<AuthValue>;
 } {
   const authenticate = () => {
     try {
@@ -63,7 +69,7 @@ export function defineBehavior(
   const createSocket = () => socketBehavior(wss);
   const canZombie = () => false;
 
-  const delegates: Delegates<AuthValue> = {
+  const delegates: MockedDelegates<AuthValue> = {
     authenticate: vi.fn(authenticate),
     createSocket: vi.fn(createSocket),
     canZombie: vi.fn(canZombie),
