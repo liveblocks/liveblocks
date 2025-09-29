@@ -2204,9 +2204,9 @@ const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
 });
 
-export function prewarmRoom(roomId: string) {
+export async function prewarmRoom(roomId: string) {
   // +++
-  liveblocks.prewarmRoom(roomId);
+  await liveblocks.prewarmRoom(roomId);
   // +++
 }
 ```
