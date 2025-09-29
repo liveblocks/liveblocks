@@ -111,6 +111,11 @@ export interface AiChatProps extends ComponentProps<"div"> {
   layout?: "inset" | "compact";
 
   /**
+   * The time, in milliseconds, before an AI response will timeout.
+   */
+  responseTimeout?: number;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -449,6 +454,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       layout = "inset",
       components,
       className,
+      responseTimeout,
       ...props
     },
     forwardedRef
@@ -587,6 +593,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             overrides={overrides}
             autoFocus={autoFocus}
             knowledge={localKnowledge}
+            responseTimeout={responseTimeout}
             onComposerSubmit={onComposerSubmit}
             onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
             className={cn(

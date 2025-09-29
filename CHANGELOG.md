@@ -12,7 +12,6 @@
   that offers a convenient way to get the current generation status for an AI
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
-
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
 
@@ -27,6 +26,11 @@
 - Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
   prewarm a room from your backend, preparing it for connectivity and making the
   eventual connection from the frontend faster.
+
+### `@liveblocks/react-ui`
+
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
 
 ## v3.7.1
 
@@ -1423,7 +1427,9 @@ for more information about this change please read our
 
 ### Version History
 
-This release adds some new hooks for Version History in text documents. If you're interested in getting access, please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)
