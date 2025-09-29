@@ -1,4 +1,8 @@
-import { isPlainObject, isStartsWithOperator } from "./guards";
+import {
+  isNumberOperator,
+  isPlainObject,
+  isStartsWithOperator,
+} from "./guards";
 
 /**
  * Converts an object to a query string
@@ -12,15 +16,31 @@ import { isPlainObject, isStartsWithOperator } from "./guards";
  *     org: {
  *       startsWith: "liveblocks:",
  *     },
+ *     posX: {
+ *       gt: 100,
+ *       lt: 200,
+ *     },
+ *     posY: {
+ *       gte: 50,
+ *       lte: 300,
+ *     },
  *   },
  * });
  *
  * console.log(query);
- * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
+ * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:" AND metadata["posX"]>100 AND metadata["posX"]<200 AND metadata["posY"]>=50 AND metadata["posY"]<=300
  * ```
  */
 type SimpleFilterValue = string | number | boolean | null;
-type OperatorFilterValue = { startsWith: string };
+type OperatorFilterValue =
+  | { startsWith: string; gt?: never; lt?: never; gte?: never; lte?: never }
+  | {
+      lt?: number;
+      gt?: number;
+      lte?: number;
+      gte?: number;
+      startsWith?: never;
+    };
 
 type FilterValue = SimpleFilterValue | OperatorFilterValue;
 
@@ -28,7 +48,7 @@ type Filter = NumberFilter | StringFilter | BooleanFilter | NullFilter;
 
 type NumberFilter = {
   key: string;
-  operator: ":";
+  operator: ":" | "<" | ">" | "<=" | ">=";
   value: number;
 };
 
@@ -92,8 +112,7 @@ export function objectToQuery(obj: {
   const entries = Object.entries(obj);
 
   const keyValuePairs: [string, string | number | boolean | null][] = [];
-  const keyValuePairsWithOperator: [string, Record<"startsWith", string>][] =
-    [];
+  const keyValuePairsWithOperator: [string, OperatorFilterValue][] = [];
   const indexedKeys: [string, Record<string, FilterValue | undefined>][] = [];
 
   entries.forEach(([key, value]) => {
@@ -104,7 +123,7 @@ export function objectToQuery(obj: {
     if (isSimpleValue(value)) {
       keyValuePairs.push([key, value]);
     } else if (isPlainObject(value)) {
-      if (isStartsWithOperator(value)) {
+      if (isStartsWithOperator(value) || isNumberOperator(value)) {
         keyValuePairsWithOperator.push([key, value]);
       } else {
         indexedKeys.push([key, value]);
@@ -128,7 +147,10 @@ export function objectToQuery(obj: {
 
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
-      } else if (isStartsWithOperator(nestedValue)) {
+      } else if (
+        isStartsWithOperator(nestedValue) ||
+        isNumberOperator(nestedValue)
+      ) {
         nKeyValuePairsWithOperator.push([
           formatFilterKey(key, nestedKey),
           nestedValue,
@@ -163,7 +185,7 @@ const getFiltersFromKeyValuePairs = (
 };
 
 const getFiltersFromKeyValuePairsWithOperator = (
-  keyValuePairsWithOperator: [string, { startsWith: string }][]
+  keyValuePairsWithOperator: [string, OperatorFilterValue][]
 ): Filter[] => {
   const filters: Filter[] = [];
   keyValuePairsWithOperator.forEach(([key, value]) => {
@@ -172,6 +194,34 @@ const getFiltersFromKeyValuePairsWithOperator = (
         key,
         operator: "^",
         value: value.startsWith,
+      });
+    }
+    if ("lt" in value && typeof value.lt === "number") {
+      filters.push({
+        key,
+        operator: "<",
+        value: value.lt,
+      });
+    }
+    if ("gt" in value && typeof value.gt === "number") {
+      filters.push({
+        key,
+        operator: ">",
+        value: value.gt,
+      });
+    }
+    if ("gte" in value && typeof value.gte === "number") {
+      filters.push({
+        key,
+        operator: ">=",
+        value: value.gte,
+      });
+    }
+    if ("lte" in value && typeof value.lte === "number") {
+      filters.push({
+        key,
+        operator: "<=",
+        value: value.lte,
       });
     }
   });
