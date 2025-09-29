@@ -1416,11 +1416,9 @@ for more information about this change please read our
 - Fix bug where some combinations of `query` criteria could over-select threads
   in `useThreads`
 
-### Version History (private beta)
+### Version History
 
-This release adds some new hooks for Version History in text documents, which is
-now available in private beta. If you’re interested in joining the private beta,
-please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If you're interested in getting access, please [contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)
