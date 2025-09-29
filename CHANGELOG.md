@@ -17,6 +17,8 @@
 
 ### `@liveblocks/react-ui`
 
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
 - The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
 - Fix a bug where `AiChat` would not always scroll in the same way when sending
   new messages.
@@ -26,11 +28,6 @@
 - Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
   prewarm a room from your backend, preparing it for connectivity and making the
   eventual connection from the frontend faster.
-
-### `@liveblocks/react-ui`
-
-- Add `responseTimeout` property to `AiChat` to allow customization of the
-  default 30 seconds timeout.
 
 ## v3.7.1
 
