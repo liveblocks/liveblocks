@@ -1598,6 +1598,25 @@ import { useAiChatMessages } from "@liveblocks/react";
 const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 ```
 
+### useAiChatStatus
+
+Returns the status of an AI chat, indicating whether it’s idle or actively
+generating content. This is a convenience hook that derives its state from the
+latest assistant message in the chat.
+
+```tsx
+import { useAiChatStatus } from "@liveblocks/react";
+
+const { status, partType, toolName } = useAiChatStatus("my-chat-id");
+```
+
+The hook returns an object with the following properties:
+
+- `status`: The current status (`"loading"` | `"idle"` | `"generating"`)
+- `partType`: The type of content being generated (`"text"` |
+  `"tool-invocation"` | etc.)
+- `toolName`: The name of the tool being invoked (if applicable)
+
 ### RegisterAiKnowledge
 
 Adds knowledge to all AI features on the page. AI will understand the
@@ -2166,6 +2185,51 @@ connects, the new property will be created. Other properties will be unaffected.
 Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
+
+#### Speed up connecting to a room [#speed-up-connecting-to-a-room]
+
+To speed up connecting to a room, you can call
+[`Liveblocks.prewarmRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId-prewarm)
+on the server, which will warm up a room for the next 10 seconds. Triggering
+this directly before a user navigates to a room is an easy to way use this API.
+Here’s a Next.js server actions example, showing how to trigger prewarming with
+`onPointerDown`.
+
+```ts title="actions.ts"
+"use server";
+
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function prewarmRoom(roomId: string) {
+  // +++
+  await liveblocks.prewarmRoom(roomId);
+  // +++
+}
+```
+
+```tsx title="RoomLink.tsx"
+"use client";
+
+import { prewarmRoom } from "../actions";
+import Link from "next/link";
+
+export function JoinButton({ roomId }: { roomId: string }) {
+  return (
+    // +++
+    <Link href={`/rooms/${roomId}`} onPointerDown={() => prewarmRoom(roomId)}>
+      // +++
+      {roomId}
+    </Link>
+  );
+}
+```
+
+`onPointerDown` is slightly quicker than `onClick` because it triggers before
+the user releases their pointer.
 
 ### createRoomContext
 

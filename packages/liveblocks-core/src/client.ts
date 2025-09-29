@@ -263,7 +263,13 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * @example
    * const count = await client.getUnreadInboxNotificationsCount();
    */
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   /**
    * Marks all inbox notifications as read.
@@ -635,12 +641,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           );
         } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
           throw new StopRetrying("AI Copilots requires an ID or Access token");
-        } else {
-          if (!resp.token.parsed.ai) {
-            throw new StopRetrying(
-              "AI Copilots is not yet enabled for this account. To get started, see https://liveblocks.io/docs/get-started/ai-copilots#Quickstart"
-            );
-          }
         }
         return resp;
       },

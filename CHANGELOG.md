@@ -1,4 +1,32 @@
-## vNEXT (not yet published)
+## v3.8.0
+
+### `@liveblocks/client`
+
+- LiveMap and LiveObject deletions now report which item got deleted in the
+  update notifications. LiveLists already did this.
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useAiChatStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useAiChatStatus)
+  that offers a convenient way to get the current generation status for an AI
+  chat, indicating whether the chat is idle, currently generating contents, and,
+  if so, what type of content is currently generating.
+
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+
+### `@liveblocks/react-ui`
+
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
+
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
 
 ### `@liveblocks/react-ui`
 
