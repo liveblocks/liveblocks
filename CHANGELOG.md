@@ -12,7 +12,6 @@
   that offers a convenient way to get the current generation status for an AI
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
-
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
 
@@ -30,8 +29,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Add `timeout` property to `<AiChat>` to allow customization of the default 30
-  second timeout.
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
 
 ## v3.7.1
 
