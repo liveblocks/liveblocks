@@ -114,6 +114,9 @@ describe("client", () => {
       return HttpResponse.json({
         data: activeUsers,
       });
+    }),
+    http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/prewarm`, () => {
+      return new HttpResponse(null, { status: 204 });
     })
   );
 
@@ -475,6 +478,19 @@ describe("client", () => {
       } catch (err) {
         expect(err instanceof LiveblocksError).toBe(false);
       }
+    });
+  });
+
+  describe("prewarm room", () => {
+    test("should successfully prewarm a room when prewarmRoom receives a successful response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/prewarm`, () => {
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(client.prewarmRoom("123")).resolves.toBeUndefined();
     });
   });
 
