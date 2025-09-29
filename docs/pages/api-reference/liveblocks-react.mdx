@@ -3461,7 +3461,8 @@ function Component() {
 It’s possible to return threads that match a certain query with the `query`
 option. You can filter threads based on their resolved status, and metadata.
 Additionally, you can filter for metadata strings that being with certain
-characters using `startsWith`. Returned threads match the entire query.
+characters using `startsWith` and you can filter for metadata numbers using
+`gt`, `lt`, `gte`, and `lte`. Returned threads match the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -3479,6 +3480,17 @@ const { threads } = useThreads({
       // Filter for threads with string metadata that starts with a certain value
       organization: {
         startsWith: "liveblocks:",
+      },
+
+      // Filter for threads with number metadata that is greater than 50 and lower than 100
+      posX: {
+        gt: 50,
+        lt: 100,
+      },
+
+      // Filter for threads with number metadata that is greater than or equal to 5
+      level: {
+        gte: 5,
       },
     },
   },
@@ -3622,7 +3634,10 @@ const thread = createThread({ body: {}, attachments: [], metadata: {} });
 
 #### Error handling [#useCreateThread-error-handling]
 
-`useCreateThread` creates threads optimistically, meaning that a thread object is returned instantly, before Liveblocks has confirmed a successful thread creation. To catch any errors that occur, add [`useErrorListener`][] and look for the `CREATE_THREAD_ERROR` type.
+`useCreateThread` creates threads optimistically, meaning that a thread object
+is returned instantly, before Liveblocks has confirmed a successful thread
+creation. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `CREATE_THREAD_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3649,7 +3664,10 @@ deleteThread("th_xxx");
 
 #### Error handling [#useDeleteThread-error-handling]
 
-`useDeleteThread` deletes threads optimistically, meaning that the thread appears deleted instantly, before Liveblocks has confirmed a successful thread deletion. To catch any errors that occur, add [`useErrorListener`][] and look for the `DELETE_THREAD_ERROR` type.
+`useDeleteThread` deletes threads optimistically, meaning that the thread
+appears deleted instantly, before Liveblocks has confirmed a successful thread
+deletion. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `DELETE_THREAD_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3682,7 +3700,10 @@ editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 
 #### Error handling [#useEditThreadMetadata-error-handling]
 
-`useEditThreadMetadata` edits thread metadata optimistically, meaning that the metadata appears updated instantly, before Liveblocks has confirmed a successful metadata update. To catch any errors that occur, add [`useErrorListener`][] and look for the `EDIT_THREAD_METADATA_ERROR` type.
+`useEditThreadMetadata` edits thread metadata optimistically, meaning that the
+metadata appears updated instantly, before Liveblocks has confirmed a successful
+metadata update. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `EDIT_THREAD_METADATA_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3708,7 +3729,10 @@ markThreadAsResolved("th_xxx");
 
 #### Error handling [#useMarkThreadAsResolved-error-handling]
 
-`useMarkThreadAsResolved` marks threads as resolved optimistically, meaning that the thread appears resolved instantly, before Liveblocks has confirmed the successful status change. To catch any errors that occur, add [`useErrorListener`][] and look for the `MARK_THREAD_AS_RESOLVED_ERROR` type.
+`useMarkThreadAsResolved` marks threads as resolved optimistically, meaning that
+the thread appears resolved instantly, before Liveblocks has confirmed the
+successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_THREAD_AS_RESOLVED_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3734,7 +3758,10 @@ markThreadAsUnresolved("th_xxx");
 
 #### Error handling [#useMarkThreadAsUnresolved-error-handling]
 
-`useMarkThreadAsUnresolved` marks threads as unresolved optimistically, meaning that the thread appears unresolved instantly, before Liveblocks has confirmed the successful status change. To catch any errors that occur, add [`useErrorListener`][] and look for the `MARK_THREAD_AS_UNRESOLVED_ERROR` type.
+`useMarkThreadAsUnresolved` marks threads as unresolved optimistically, meaning
+that the thread appears unresolved instantly, before Liveblocks has confirmed
+the successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_THREAD_AS_UNRESOLVED_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3790,7 +3817,10 @@ subscribeToThread("th_xxx");
 
 #### Error handling [#useSubscribeToThread-error-handling]
 
-`useSubscribeToThread` subscribes to threads optimistically, meaning that the subscription appears active instantly, before Liveblocks has confirmed a successful subscription. To catch any errors that occur, add [`useErrorListener`][] and look for the `SUBSCRIBE_TO_THREAD_ERROR` type.
+`useSubscribeToThread` subscribes to threads optimistically, meaning that the
+subscription appears active instantly, before Liveblocks has confirmed a
+successful subscription. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `SUBSCRIBE_TO_THREAD_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3839,7 +3869,10 @@ unsubscribeFromThread("th_xxx");
 
 #### Error handling [#useUnsubscribeFromThread-error-handling]
 
-`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning that the subscription appears inactive instantly, before Liveblocks has confirmed a successful unsubscription. To catch any errors that occur, add [`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
+`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
+that the subscription appears inactive instantly, before Liveblocks has
+confirmed a successful unsubscription. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3891,7 +3924,10 @@ const comment = createComment({
 
 #### Error handling [#useCreateComment-error-handling]
 
-`useCreateComment` creates comments optimistically, meaning that a comment object is returned instantly, before Liveblocks has confirmed a successful comment creation. To catch any errors that occur, add [`useErrorListener`][] and look for the `CREATE_COMMENT_ERROR` type.
+`useCreateComment` creates comments optimistically, meaning that a comment
+object is returned instantly, before Liveblocks has confirmed a successful
+comment creation. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `CREATE_COMMENT_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3922,7 +3958,10 @@ editComment({
 
 #### Error handling [#useEditComment-error-handling]
 
-`useEditComment` edits comments optimistically, meaning that the comment appears updated instantly, before Liveblocks has confirmed a successful comment edit. To catch any errors that occur, add [`useErrorListener`][] and look for the `EDIT_COMMENT_ERROR` type.
+`useEditComment` edits comments optimistically, meaning that the comment appears
+updated instantly, before Liveblocks has confirmed a successful comment edit. To
+catch any errors that occur, add [`useErrorListener`][] and look for the
+`EDIT_COMMENT_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3949,7 +3988,10 @@ deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 
 #### Error handling [#useDeleteComment-error-handling]
 
-`useDeleteComment` deletes comments optimistically, meaning that the comment appears deleted instantly, before Liveblocks has confirmed a successful comment deletion. To catch any errors that occur, add [`useErrorListener`][] and look for the `DELETE_COMMENT_ERROR` type.
+`useDeleteComment` deletes comments optimistically, meaning that the comment
+appears deleted instantly, before Liveblocks has confirmed a successful comment
+deletion. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `DELETE_COMMENT_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -3977,7 +4019,10 @@ addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 
 #### Error handling [#useAddReaction-error-handling]
 
-`useAddReaction` adds reactions optimistically, meaning that the reaction appears instantly, before Liveblocks has confirmed a successful reaction addition. To catch any errors that occur, add [`useErrorListener`][] and look for the `ADD_REACTION_ERROR` type.
+`useAddReaction` adds reactions optimistically, meaning that the reaction
+appears instantly, before Liveblocks has confirmed a successful reaction
+addition. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `ADD_REACTION_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4005,7 +4050,10 @@ removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 
 #### Error handling [#useRemoveReaction-error-handling]
 
-`useRemoveReaction` removes reactions optimistically, meaning that the reaction disappears instantly, before Liveblocks has confirmed a successful reaction removal. To catch any errors that occur, add [`useErrorListener`][] and look for the `REMOVE_REACTION_ERROR` type.
+`useRemoveReaction` removes reactions optimistically, meaning that the reaction
+disappears instantly, before Liveblocks has confirmed a successful reaction
+removal. To catch any errors that occur, add [`useErrorListener`][] and look for
+the `REMOVE_REACTION_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4259,7 +4307,11 @@ markInboxNotificationAsRead("in_xxx");
 
 #### Error handling [#useMarkInboxNotificationAsRead-error-handling]
 
-`useMarkInboxNotificationAsRead` marks notifications as read optimistically, meaning that the notification appears read instantly, before Liveblocks has confirmed a successful status change. To catch any errors that occur, add [`useErrorListener`][] and look for the `MARK_INBOX_NOTIFICATION_AS_READ_ERROR` type.
+`useMarkInboxNotificationAsRead` marks notifications as read optimistically,
+meaning that the notification appears read instantly, before Liveblocks has
+confirmed a successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_INBOX_NOTIFICATION_AS_READ_ERROR`
+type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4286,7 +4338,11 @@ markAllInboxNotificationsAsRead();
 
 #### Error handling [#useMarkAllInboxNotificationsAsRead-error-handling]
 
-`useMarkAllInboxNotificationsAsRead` marks all notifications as read optimistically, meaning that the notifications appear read instantly, before Liveblocks has confirmed a successful status change. To catch any errors that occur, add [`useErrorListener`][] and look for the `MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR` type.
+`useMarkAllInboxNotificationsAsRead` marks all notifications as read
+optimistically, meaning that the notifications appear read instantly, before
+Liveblocks has confirmed a successful status change. To catch any errors that
+occur, add [`useErrorListener`][] and look for the
+`MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4311,7 +4367,10 @@ deleteInboxNotification("in_xxx");
 
 #### Error handling [#useDeleteInboxNotification-error-handling]
 
-`useDeleteInboxNotification` deletes notifications optimistically, meaning that the notification appears deleted instantly, before Liveblocks has confirmed a successful deletion. To catch any errors that occur, add [`useErrorListener`][] and look for the `DELETE_INBOX_NOTIFICATION_ERROR` type.
+`useDeleteInboxNotification` deletes notifications optimistically, meaning that
+the notification appears deleted instantly, before Liveblocks has confirmed a
+successful deletion. To catch any errors that occur, add [`useErrorListener`][]
+and look for the `DELETE_INBOX_NOTIFICATION_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4337,7 +4396,11 @@ deleteAllInboxNotifications();
 
 #### Error handling [#useDeleteAllInboxNotifications-error-handling]
 
-`useDeleteAllInboxNotifications` deletes all notifications optimistically, meaning that the notifications appear deleted instantly, before Liveblocks has confirmed a successful deletion. To catch any errors that occur, add [`useErrorListener`][] and look for the `DELETE_ALL_INBOX_NOTIFICATIONS_ERROR` type.
+`useDeleteAllInboxNotifications` deletes all notifications optimistically,
+meaning that the notifications appear deleted instantly, before Liveblocks has
+confirmed a successful deletion. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `DELETE_ALL_INBOX_NOTIFICATIONS_ERROR`
+type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4426,7 +4489,11 @@ updateSettings({
 
 #### Error handling [#useUpdateRoomSubscriptionSettings-error-handling]
 
-`useUpdateRoomSubscriptionSettings` updates subscription settings optimistically, meaning that the settings appear updated instantly, before Liveblocks has confirmed a successful update. To catch any errors that occur, add [`useErrorListener`][] and look for the `UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR` type.
+`useUpdateRoomSubscriptionSettings` updates subscription settings
+optimistically, meaning that the settings appear updated instantly, before
+Liveblocks has confirmed a successful update. To catch any errors that occur,
+add [`useErrorListener`][] and look for the
+`UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR` type.
 
 ```tsx
 import { useErrorListener } from "@liveblocks/react/suspense";
@@ -4661,7 +4728,9 @@ updateSettings({
 
 <Banner title="Contact support for access">
 
-Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
+Version History is an add-on feature, available by contacting support. Please
+[contact us](https://liveblocks.io/contact/sales) and we'd love to help you get
+started.
 
 </Banner>
 
