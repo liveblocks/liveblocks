@@ -8,7 +8,7 @@ err () {
 }
 
 usage () {
-    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] <pkgdir> [<pkgdir>...]"
+    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] [-f] <pkgdir> [<pkgdir>...]"
     err
     err "Prepare a release by updating files in this repo."
     err "Run this prior to publishing to NPM (or elsewhere, e.g. DevTools)."
@@ -16,17 +16,20 @@ usage () {
     err "    -V   the new NPM version"
     err "    -p   push the bump commit (no need if publish.sh is called afterwards)"
     err "    -m   improve the commit message by specifying what was bumped"
+    err "    -f   force version update (use --force flag with npm version)"
     err ""
 }
 
 VERSION=
 PUSH_COMMIT="false"
 COMMIT_MESSAGE="Bump to "
-while getopts V:p:m:h flag; do
+FORCE_FLAG=""
+while getopts V:p:m:fh flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         p) PUSH_COMMIT="true";;
         m) COMMIT_MESSAGE=$OPTARG;;
+        f) FORCE_FLAG="--force";;
         *) usage; exit 2;;
     esac
 done
@@ -77,7 +80,7 @@ update_package_version () {
     PKGNAME="$( get_package_name_from_dir "$PKGDIR" )"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$VERSION" --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
+    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
 }
 
 commit_to_git () {
