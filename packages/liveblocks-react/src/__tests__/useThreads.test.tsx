@@ -398,7 +398,7 @@ describe("useThreads", () => {
               },
               posY: {
                 gt: 20,
-                lowerThan: 250,
+                lt: 250,
               },
             },
           },
