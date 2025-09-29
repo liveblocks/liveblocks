@@ -393,11 +393,11 @@ describe("useThreads", () => {
           query: {
             metadata: {
               posX: {
-                greaterThan: 1,
-                lowerThan: 300,
+                gt: 1,
+                lt: 300,
               },
               posY: {
-                greaterThan: 20,
+                gt: 20,
                 lowerThan: 250,
               },
             },

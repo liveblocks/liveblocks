@@ -25,12 +25,12 @@ export function isStartsWithOperator(
 
 export function isNumberOperator(
   blob: unknown
-): blob is { lowerThan?: number; greaterThan?: number } {
+): blob is { lt?: number; gt?: number; lte?: number; gte?: number } {
   return (
     isPlainObject(blob) &&
-    (typeof blob.lowerThan === "number" ||
-      typeof blob.greaterThan === "number" ||
-      typeof blob.lowerThanOrEqual === "number" ||
-      typeof blob.greaterThanOrEqual === "number")
+    (typeof blob.lt === "number" ||
+      typeof blob.gt === "number" ||
+      typeof blob.lte === "number" ||
+      typeof blob.gte === "number")
   );
 }

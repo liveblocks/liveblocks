@@ -49,10 +49,10 @@ function matchesOperator(
     | Exclude<BaseMetadata[string], undefined>
     | { startsWith: string }
     | {
-        lowerThan?: number;
-        greaterThan?: number;
-        lowerThanOrEqual?: number;
-        greaterThanOrEqual?: number;
+        lt?: number;
+        gt?: number;
+        lte?: number;
+        gte?: number;
       }
     | null
 ) {
@@ -71,17 +71,17 @@ function matchesOperator(
 function matchesNumberOperator(
   value: number,
   op: {
-    lowerThan?: number;
-    greaterThan?: number;
-    lowerThanOrEqual?: number;
-    greaterThanOrEqual?: number;
+    lt?: number;
+    gt?: number;
+    lte?: number;
+    gte?: number;
   }
 ) {
   return (
-    (op.lowerThan === undefined || value < op.lowerThan) &&
-    (op.greaterThan === undefined || value > op.greaterThan) &&
-    (op.lowerThanOrEqual === undefined || value <= op.lowerThanOrEqual) &&
-    (op.greaterThanOrEqual === undefined || value >= op.greaterThanOrEqual)
+    (op.lt === undefined || value < op.lt) &&
+    (op.gt === undefined || value > op.gt) &&
+    (op.lte === undefined || value <= op.lte) &&
+    (op.gte === undefined || value >= op.gte)
   );
 }
 

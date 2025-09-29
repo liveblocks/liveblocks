@@ -8,16 +8,16 @@
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
 
-- Support numerical operators `greaterThan`, `lowerThan`, `greaterThanOrEqual`,
-  and `lowerThanOrEqual` in `useThreads` metadata query filters.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
+  metadata query filters.
 
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
 
 ### `@liveblocks/client`
 
-- Support numerical operators `greaterThan`, `lowerThan`, `greaterThanOrEqual`,
-  and `lowerThanOrEqual` in `room.getThreads` metadata query filters.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
 
 ### `@liveblocks/react-ui`
 
@@ -1418,7 +1418,9 @@ for more information about this change please read our
 
 ### Version History
 
-This release adds some new hooks for Version History in text documents. If you're interested in getting access, please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)

@@ -67,18 +67,18 @@ describe("objectToQuery", () => {
       metadata: {
         priority: 3,
         posX: {
-          greaterThan: 100,
-          lowerThan: 200,
+          gt: 100,
+          lt: 200,
         },
         level: {
-          greaterThan: 25,
+          gt: 25,
         },
         volume: {
-          lowerThan: 50,
+          lt: 50,
         },
         age: {
-          greaterThanOrEqual: 18,
-          lowerThanOrEqual: 65,
+          gte: 18,
+          lte: 65,
         },
       },
     });

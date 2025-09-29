@@ -199,10 +199,10 @@ type StringOperators<T> =
 type NumberOperators<T> =
   | T
   | {
-      lowerThan?: number;
-      greaterThan?: number;
-      lowerThanOrEqual?: number;
-      greaterThanOrEqual?: number;
+      lt?: number;
+      gt?: number;
+      lte?: number;
+      gte?: number;
     };
 
 /**

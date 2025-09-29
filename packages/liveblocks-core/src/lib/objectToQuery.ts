@@ -17,12 +17,12 @@ import {
  *       startsWith: "liveblocks:",
  *     },
  *     posX: {
- *       greaterThan: 100,
- *       lowerThan: 200,
+ *       gt: 100,
+ *       lt: 200,
  *     },
  *     posY: {
- *       greaterThanOrEqual: 50,
- *       lowerThanOrEqual: 300,
+ *       gte: 50,
+ *       lte: 300,
  *     },
  *   },
  * });
@@ -33,12 +33,12 @@ import {
  */
 type SimpleFilterValue = string | number | boolean | null;
 type OperatorFilterValue =
-  | { startsWith: string; lowerThan?: never; greaterThan?: never }
+  | { startsWith: string; gt?: never; lt?: never; gte?: never; lte?: never }
   | {
-      lowerThan?: number;
-      greaterThan?: number;
-      greaterThanOrEqual?: number;
-      lowerThanOrEqual?: number;
+      lt?: number;
+      gt?: number;
+      lte?: number;
+      gte?: number;
       startsWith?: never;
     };
 
@@ -196,38 +196,32 @@ const getFiltersFromKeyValuePairsWithOperator = (
         value: value.startsWith,
       });
     }
-    if ("lowerThan" in value && typeof value.lowerThan === "number") {
+    if ("lt" in value && typeof value.lt === "number") {
       filters.push({
         key,
         operator: "<",
-        value: value.lowerThan,
+        value: value.lt,
       });
     }
-    if ("greaterThan" in value && typeof value.greaterThan === "number") {
+    if ("gt" in value && typeof value.gt === "number") {
       filters.push({
         key,
         operator: ">",
-        value: value.greaterThan,
+        value: value.gt,
       });
     }
-    if (
-      "greaterThanOrEqual" in value &&
-      typeof value.greaterThanOrEqual === "number"
-    ) {
+    if ("gte" in value && typeof value.gte === "number") {
       filters.push({
         key,
         operator: ">=",
-        value: value.greaterThanOrEqual,
+        value: value.gte,
       });
     }
-    if (
-      "lowerThanOrEqual" in value &&
-      typeof value.lowerThanOrEqual === "number"
-    ) {
+    if ("lte" in value && typeof value.lte === "number") {
       filters.push({
         key,
         operator: "<=",
-        value: value.lowerThanOrEqual,
+        value: value.lte,
       });
     }
   });
