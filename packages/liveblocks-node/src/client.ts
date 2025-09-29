@@ -1102,6 +1102,26 @@ export class Liveblocks {
   }
 
   /**
+   * Prepares a room for connectivity, making the eventual connection faster. Use this when you know you'll be loading a room but are not yet connected to it.
+   * @param roomId The id of the room to prewarm.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async prewarmRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/prewarm`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
    * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
    * @param roomId The id of the room to get the users from.
    * @param options.signal (optional) An abort signal to cancel the request.
