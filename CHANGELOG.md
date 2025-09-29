@@ -15,11 +15,6 @@
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
 
-### `@liveblocks/client`
-
-- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
-  metadata query filters.
-
 ### `@liveblocks/react-ui`
 
 - Add `responseTimeout` property to `AiChat` to allow customization of the
