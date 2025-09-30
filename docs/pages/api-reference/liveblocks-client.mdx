@@ -2808,6 +2808,9 @@ console.log(inboxNotifications);
   <PropertiesListItem name="resolved" type="boolean">
     Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
+  <PropertiesListItem name="subscribed" type="boolean">
+    Only return `subscribed` or `unsubscribed` threads. [Learn more](#filtering-subscribed-status).
+  </PropertiesListItem>
   <PropertiesListItem name="metadata" type="Partial<ThreadMetadata>">
     Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`. [Learn more](#filtering-metadata).
   </PropertiesListItem>
@@ -2824,6 +2827,22 @@ const threads = await room.getThreads({
   query: {
     // +++
     resolved: false,
+    // +++
+  },
+});
+```
+
+#### Filtering subscribed [#filtering-subscribed-status]
+
+You can filter threads by those that the user is subscribed to, or not, by
+passing a `boolean` to `query.subscribed`.
+
+```ts
+// Filtering for threads that the user is subscribed to
+const threads = await room.getThreads({
+  query: {
+    // +++
+    subscribed: true,
     // +++
   },
 });
