@@ -450,8 +450,8 @@ describe("useThreads", () => {
     });
     const subscriptions = [
       dummySubscriptionData({ subjectId: bluePinnedThread.id }),
-      dummySubscriptionData({ subjectId: blueUnpinnedThread.id }),
-      dummySubscriptionData({ subjectId: redPinnedThread.id }),
+      // dummySubscriptionData({ subjectId: blueUnpinnedThread.id }),
+      // dummySubscriptionData({ subjectId: redPinnedThread.id }),
       dummySubscriptionData({ subjectId: redUnpinnedThread.id }),
       dummySubscriptionData({ subjectId: uncoloredPinnedThread.id }),
     ];
@@ -795,6 +795,93 @@ describe("useThreads", () => {
         expect(result.current).toEqual({
           isLoading: false,
           threads: [uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 11: query with subscribed: true
+      const { result, unmount } = renderHook(
+        () => useThreads({ query: { subscribed: true } }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [bluePinnedThread, redUnpinnedThread, uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 12: query with subscribed: false
+      const { result, unmount } = renderHook(
+        () => useThreads({ query: { subscribed: false } }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [blueUnpinnedThread, redPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 13: query with subscribed: true and metadata
+      const { result, unmount } = renderHook(
+        () =>
+          useThreads({
+            query: {
+              subscribed: true,
+              metadata: { color: "red" },
+            },
+          }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [redUnpinnedThread],
           fetchMore: expect.any(Function),
           isFetchingMore: false,
           hasFetchedAll: true,

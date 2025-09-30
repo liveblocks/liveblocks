@@ -8,6 +8,7 @@ import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
+import type { SubscriptionsByKey } from "./umbrella-store";
 
 function sanitizeThread<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>
@@ -178,12 +179,15 @@ export class ThreadDB<M extends BaseMetadata> {
    *   'desc' means by updatedAt DESC
    *
    * Will never return deleted threads in the result.
+   *
+   * Subscriptions are needed to filter threads based on the user's subscriptions.
    */
   public findMany(
     // TODO: Implement caching here
     roomId: string | undefined,
     query: ThreadsQuery<M> | undefined,
-    direction: "asc" | "desc"
+    direction: "asc" | "desc",
+    subscriptions: SubscriptionsByKey | undefined
   ): ThreadData<M>[] {
     const index = direction === "desc" ? this.#desc : this.#asc;
     const crit: ((thread: ThreadData<M>) => boolean)[] = [];
@@ -191,7 +195,7 @@ export class ThreadDB<M extends BaseMetadata> {
       crit.push((t) => t.roomId === roomId);
     }
     if (query !== undefined) {
-      crit.push(makeThreadsFilter(query));
+      crit.push(makeThreadsFilter(query, subscriptions));
     }
     return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
   }

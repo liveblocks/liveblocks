@@ -56,7 +56,11 @@ import type {
   ReactNode,
 } from "react";
 
-import type { AiChatStatus, RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+import type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./ai";
 
 type UiChatMessage = WithNavigation<AiChatMessage>;
 
@@ -124,6 +128,13 @@ export type ThreadsQuery<M extends BaseMetadata> = {
    * all threads will be returned.
    */
   resolved?: boolean;
+
+  /**
+   * Whether to only return threads that the user is subscribed to or not. If not provided,
+   * all threads will be returned.
+   */
+  subscribed?: boolean;
+
   /**
    * The metadata to filter the threads by. If provided, only threads with metadata that matches
    * the provided metadata will be returned. If not provided, all threads will be returned.
