@@ -41,22 +41,31 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
   const ai = useAi();
   const { description, value, chatId } = props;
 
+  const [layerKey, setLayerKey] = useState<LayerKey | undefined>();
+
   // Executes at mount / unmount
   useEffect(() => {
-    return ai.registerKnowledgeLayer(layerId, chatId);
+    const { layerKey, deregister } = ai.registerKnowledgeLayer(layerId, chatId);
+    setLayerKey(layerKey);
+    return () => {
+      deregister();
+      setLayerKey(undefined);
+    };
   }, [ai, layerId, chatId]);
 
   // Executes every render (if the props have changed)
   const randomKey = useRandom();
   const knowledgeKey = props.id ?? randomKey;
   useEffect(() => {
-    ai.updateKnowledge(
-      layerId as LayerKey,
-      { description, value },
-      knowledgeKey,
-      chatId
-    );
-  }, [ai, layerId, knowledgeKey, description, value, chatId]);
+    if (layerKey !== undefined) {
+      ai.updateKnowledge(
+        layerKey,
+        { description, value },
+        knowledgeKey,
+        chatId
+      );
+    }
+  }, [ai, layerKey, knowledgeKey, description, value, chatId]);
 
   return null;
 });

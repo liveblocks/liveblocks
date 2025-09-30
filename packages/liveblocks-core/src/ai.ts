@@ -958,7 +958,10 @@ export type Ai = {
   registerKnowledgeLayer: (
     uniqueLayerId: string,
     chatId?: string
-  ) => () => void;
+  ) => {
+    layerKey: LayerKey;
+    deregister: () => void;
+  };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   updateKnowledge: (
     layerKey: LayerKey,
@@ -1439,13 +1442,14 @@ export function createAi(config: AiConfig): Ai {
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
       getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
-      registerKnowledgeLayer: (
-        uniqueLayerId: string,
-        chatId?: string
-      ): (() => void) => {
+      registerKnowledgeLayer: (uniqueLayerId: string, chatId?: string) => {
         const stack = context.knowledgeStore.getKnowledgeStack(chatId);
         const layerKey = stack.registerLayer(uniqueLayerId);
-        return () => stack.deregisterLayer(layerKey);
+        const deregister = () => stack.deregisterLayer(layerKey);
+        return {
+          layerKey,
+          deregister,
+        };
       },
       updateKnowledge: (
         layerKey: LayerKey,
