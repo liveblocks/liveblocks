@@ -360,6 +360,22 @@
           {
             "title": "Default components",
             "path": "/ready-made-features/ai-copilots/default-components"
+          },
+          {
+            "title": "Hooks",
+            "path": "/ready-made-features/ai-copilots/hooks"
+          },
+          {
+            "title": "Knowledge",
+            "path": "/ready-made-features/ai-copilots/knowledge"
+          },
+          {
+            "title": "Tools",
+            "path": "/ready-made-features/ai-copilots/tools"
+          },
+          {
+            "title": "Styling and customization",
+            "path": "/ready-made-features/ai-copilots/styling-and-customization"
           }
         ]
       },

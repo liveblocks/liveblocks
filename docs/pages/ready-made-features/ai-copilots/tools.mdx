@@ -1,0 +1,478 @@
+---
+meta:
+  title: "Tools"
+  parentTitle: "AI Copilots"
+  description: "Allow AI to interact with your application"
+---
+
+TODO (ai generated below but there are a few good ideas)
+
+Tools are a way to allow AI to make actions, modify your application state,
+interact with your front end, or render custom content with your own components.
+You can use them to extend the capabilities of AI Copilots beyond simple
+text-based interactions.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/document-changes.png"
+    alt="An example of a document with a chat app in the corner. The chat has run a tool, and has edited the document."
+    width={768}
+    height={512}
+  />
+</Figure>
+
+## What are tools?
+
+Tools are functions that the AI can call to perform actions in your application.
+They allow the AI to:
+
+- Modify your application state
+- Interact with external APIs
+- Render custom components
+- Perform complex operations
+- Integrate with other Liveblocks features
+
+## Creating tools
+
+### Basic tool definition
+
+```tsx
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool } from "@liveblocks/react-ui";
+
+function App() {
+  return (
+    <RegisterAiTool
+      name="get-weather"
+      tool={defineAiTool({
+        description: "Get current weather information for a location",
+        parameters: {
+          type: "object",
+          properties: {
+            location: {
+              type: "string",
+              description: "The city name to get weather for",
+            },
+          },
+          required: ["location"],
+          additionalProperties: false,
+        },
+        execute: async (args) => {
+          const weather = await fetchWeather(args.location);
+          return {
+            data: {
+              temperature: weather.temp,
+              condition: weather.condition,
+              location: args.location,
+            },
+          };
+        },
+      })}
+    />
+  );
+}
+```
+
+### Tool with custom rendering
+
+```tsx
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiTool } from "@liveblocks/react-ui";
+
+function WeatherTool() {
+  return (
+    <RegisterAiTool
+      name="get-weather"
+      tool={defineAiTool({
+        description: "Get current weather information",
+        parameters: {
+          type: "object",
+          properties: {
+            location: { type: "string", description: "City name" },
+          },
+          required: ["location"],
+        },
+        execute: async (args) => {
+          const weather = await fetchWeather(args.location);
+          return { data: weather };
+        },
+        render: ({ result, args }) => (
+          <AiTool>
+            <div className="weather-card">
+              <h3>Weather in {args.location}</h3>
+              <p>Temperature: {result.data.temperature}°F</p>
+              <p>Condition: {result.data.condition}</p>
+            </div>
+          </AiTool>
+        ),
+      })}
+    />
+  );
+}
+```
+
+## Tool types
+
+### State modification tools
+
+Tools that modify your application state:
+
+```tsx
+import { useStorage } from "@liveblocks/react";
+
+function DocumentTools({ chatId }) {
+  const [documents, setDocuments] = useStorage((root) => root.documents);
+
+  return (
+    <RegisterAiTool
+      name="create-document"
+      tool={defineAiTool({
+        description: "Create a new document",
+        parameters: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Document title" },
+            content: { type: "string", description: "Initial content" },
+          },
+          required: ["title"],
+        },
+        execute: async (args) => {
+          const newDoc = {
+            id: generateId(),
+            title: args.title,
+            content: args.content || "",
+            createdAt: new Date().toISOString(),
+          };
+
+          setDocuments((docs) => [...docs, newDoc]);
+
+          return {
+            data: { document: newDoc },
+            message: `Created document "${args.title}"`,
+          };
+        },
+      })}
+    />
+  );
+}
+```
+
+### API integration tools
+
+Tools that interact with external APIs:
+
+```tsx
+function ApiTools() {
+  return (
+    <RegisterAiTool
+      name="search-web"
+      tool={defineAiTool({
+        description: "Search the web for information",
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search query" },
+            limit: { type: "number", description: "Number of results" },
+          },
+          required: ["query"],
+        },
+        execute: async (args) => {
+          const results = await searchWeb(args.query, args.limit || 5);
+          return {
+            data: { results },
+            message: `Found ${results.length} results for "${args.query}"`,
+          };
+        },
+      })}
+    />
+  );
+}
+```
+
+### Component rendering tools
+
+Tools that render custom React components:
+
+```tsx
+function ChartTool() {
+  return (
+    <RegisterAiTool
+      name="create-chart"
+      tool={defineAiTool({
+        description: "Create a data visualization chart",
+        parameters: {
+          type: "object",
+          properties: {
+            data: { type: "array", description: "Chart data" },
+            type: { type: "string", description: "Chart type" },
+          },
+          required: ["data", "type"],
+        },
+        execute: async (args) => {
+          return { data: { chartData: args.data, chartType: args.type } };
+        },
+        render: ({ result }) => (
+          <AiTool>
+            <ChartComponent
+              data={result.data.chartData}
+              type={result.data.chartType}
+            />
+          </AiTool>
+        ),
+      })}
+    />
+  );
+}
+```
+
+## Tool execution lifecycle
+
+### Execution stages
+
+Tools go through several stages during execution:
+
+1. **Pending**: Tool is queued for execution
+2. **Executing**: Tool is currently running
+3. **Completed**: Tool finished successfully
+4. **Failed**: Tool encountered an error
+
+```tsx
+function ToolStatus({ toolName, status }) {
+  const getStatusIcon = () => {
+    switch (status) {
+      case "pending":
+        return "⏳";
+      case "executing":
+        return "🔄";
+      case "completed":
+        return "✅";
+      case "failed":
+        return "❌";
+      default:
+        return "❓";
+    }
+  };
+
+  return (
+    <div className="tool-status">
+      <span>{getStatusIcon()}</span>
+      <span>{toolName}</span>
+    </div>
+  );
+}
+```
+
+### Error handling
+
+Handle errors gracefully in your tools:
+
+```tsx
+function RobustTool() {
+  return (
+    <RegisterAiTool
+      name="safe-api-call"
+      tool={defineAiTool({
+        description: "Make a safe API call",
+        parameters: {
+          type: "object",
+          properties: {
+            url: { type: "string", description: "API endpoint" },
+          },
+          required: ["url"],
+        },
+        execute: async (args) => {
+          try {
+            const response = await fetch(args.url);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            return { data };
+          } catch (error) {
+            return {
+              error: error.message,
+              message: `Failed to fetch from ${args.url}`,
+            };
+          }
+        },
+      })}
+    />
+  );
+}
+```
+
+## Advanced tool patterns
+
+### Tool composition
+
+Combine multiple tools for complex operations:
+
+```tsx
+function DocumentWorkflow() {
+  return (
+    <>
+      <RegisterAiTool
+        name="analyze-document"
+        tool={defineAiTool({
+          description: "Analyze document content",
+          parameters: {
+            type: "object",
+            properties: {
+              content: { type: "string", description: "Document content" },
+            },
+            required: ["content"],
+          },
+          execute: async (args) => {
+            const analysis = await analyzeText(args.content);
+            return { data: analysis };
+          },
+        })}
+      />
+      <RegisterAiTool
+        name="suggest-improvements"
+        tool={defineAiTool({
+          description: "Suggest improvements based on analysis",
+          parameters: {
+            type: "object",
+            properties: {
+              analysis: { type: "object", description: "Analysis results" },
+            },
+            required: ["analysis"],
+          },
+          execute: async (args) => {
+            const suggestions = await generateSuggestions(args.analysis);
+            return { data: suggestions };
+          },
+        })}
+      />
+    </>
+  );
+}
+```
+
+### Conditional tool execution
+
+Tools that adapt based on context:
+
+```tsx
+function ContextualTool() {
+  return (
+    <RegisterAiTool
+      name="smart-action"
+      tool={defineAiTool({
+        description: "Perform a smart action based on context",
+        parameters: {
+          type: "object",
+          properties: {
+            action: { type: "string", description: "Action to perform" },
+            context: { type: "object", description: "Current context" },
+          },
+          required: ["action"],
+        },
+        execute: async (args) => {
+          // Analyze context to determine best approach
+          const strategy = await determineStrategy(args.context);
+
+          switch (strategy) {
+            case "simple":
+              return await performSimpleAction(args.action);
+            case "complex":
+              return await performComplexAction(args.action, args.context);
+            default:
+              return { error: "Unknown strategy" };
+          }
+        },
+      })}
+    />
+  );
+}
+```
+
+## Tool best practices
+
+### Clear descriptions
+
+Write clear, actionable descriptions for your tools:
+
+```tsx
+// Good: Clear and specific
+description: "Create a new task in the project management system";
+
+// Bad: Vague and unclear
+description: "Do something with tasks";
+```
+
+### Proper parameter validation
+
+Define clear parameter schemas:
+
+```tsx
+parameters: {
+  type: "object",
+  properties: {
+    title: {
+      type: "string",
+      description: "The title of the task",
+      minLength: 1,
+      maxLength: 100,
+    },
+    priority: {
+      type: "string",
+      enum: ["low", "medium", "high"],
+      description: "Task priority level",
+    },
+  },
+  required: ["title"],
+  additionalProperties: false,
+}
+```
+
+### Meaningful return values
+
+Return structured, useful data:
+
+```tsx
+execute: async (args) => {
+  const result = await performAction(args);
+
+  return {
+    data: {
+      id: result.id,
+      status: result.status,
+      message: result.message,
+    },
+    metadata: {
+      timestamp: new Date().toISOString(),
+      version: "1.0",
+    },
+  };
+};
+```
+
+### Error handling
+
+Always handle errors gracefully:
+
+```tsx
+execute: async (args) => {
+  try {
+    const result = await riskyOperation(args);
+    return { data: result };
+  } catch (error) {
+    return {
+      error: error.message,
+      message: "Operation failed",
+      details: error.details || null,
+    };
+  }
+};
+```
+
+## Tool limitations
+
+- Maximum execution time: 30 seconds
+- Maximum parameter size: 1MB
+- Maximum return data size: 10MB
+- Maximum concurrent tools per chat: 5
+
+These limits ensure reliable tool execution while maintaining good performance.
