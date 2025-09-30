@@ -2795,29 +2795,35 @@ collaborative experiences as you build them, in realtime.
 ### useMyPresence [@badge=RoomProvider]
 
 Return the presence of the current user, and a function to update it.
-Automatically subscribes to updates to the current user’s presence.
-
-Note that the `updateMyPresence` setter function is different to the setter
-function returned by React’s `useState` hook. Instead, you can pass a partial
-presence object to `updateMyPresence`, and any changes will be merged into the
-current presence. It will not replace the entire presence object.
+Automatically subscribes to updates to the current user’s presence. Setting a
+property will not replace the whole state, but will instead merge the property
+into the existing state.
 
 ```ts
 import { useMyPresence } from "@liveblocks/react/suspense";
 
 const [myPresence, updateMyPresence] = useMyPresence();
+
 updateMyPresence({ x: 0 });
 updateMyPresence({ y: 0 });
 
 // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
 ```
 
-This is roughly equal to:
+<PropertiesList title="Returns">
+  <PropertiesListItem name="myPresence" type="TPresence">
+    The current user’s presence data.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="updateMyPresence"
+    type="(patch: Partial<Presence>, options?: { addToHistory?: boolean }) => void"
+  >
+    A function to update the current user’s presence. Accepts a partial presence
+    object and optional history options.
+  </PropertiesListItem>
+</PropertiesList>
 
-```tsx
-const myPresence = useSelf((me) => me.presence);
-const updateMyPresence = useUpdateMyPresence();
-```
+#### Adding presence to history
 
 `updateMyPresence` accepts an optional argument to add a new item to the
 undo/redo stack. See [`room.history`][] for more information.
@@ -2826,32 +2832,22 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem name="myPresence" type="Presence">
-    The current user's presence data.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="updateMyPresence"
-    type="(patch: Partial<Presence>, options?: { addToHistory?: boolean }) => void"
-  >
-    A function to update the current user's presence. Accepts a partial presence
-    object and optional history options.
-  </PropertiesListItem>
-</PropertiesList>
+#### Other ways to use presence
+
+`useMyPresence` is a more convenient way to update and view presence, reather
+than using [`useSelf`][] and [`useUpdateMyPresence`][] in combination.
+
+```tsx
+const myPresence = useSelf((me) => me.presence);
+const updateMyPresence = useUpdateMyPresence();
+```
 
 ### useUpdateMyPresence [@badge=RoomProvider]
 
-Returns a setter function to update the current user's presence.
-
-Use this if you don't need the current user's presence in your component, but
-you need to update it (e.g. live cursor). It's better to use
-`useUpdateMyPresence` because it won't subscribe your component to get
-rerendered when the presence updates.
-
-Note that the `updateMyPresence` setter function is different to the setter
-function returned by React's `useState` hook. Instead, you can pass a partial
-presence object to `updateMyPresence`, and any changes will be merged into the
-current presence. It will not replace the entire presence object.
+Returns a setter function to update the current user’s presence. Setting a
+property will not replace the whole state, but will instead merge the property
+into the existing state. Will trigger fewer renders than [`useMyPresence`][], as
+it doesn’t update when presence changes.
 
 ```ts
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
@@ -2859,13 +2855,9 @@ import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
-```
+updateMyPresence({ x: 0 });
 
-`updateMyPresence` accepts an optional argument to add a new item to the
-undo/redo stack. See [`room.history`][] for more information.
-
-```ts
-updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+// Presence will be { x: 0, y: 0 }
 ```
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
@@ -2880,10 +2872,22 @@ updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
   </PropertiesListItem>
 </PropertiesList>
 
+#### Adding presence to history
+
+`updateMyPresence` accepts an optional argument to add a new item to the
+undo/redo stack. See [`room.history`][] for more information.
+
+```ts
+updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
+```
+
 ### useSelf [@badge=RoomProvider]
 
 Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```ts
 import { useSelf } from "@liveblocks/react/suspense";
@@ -2900,9 +2904,6 @@ const currentUser = useSelf((me) => me.presence.cursor);
 
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="selector" type="(me: User) => T">
@@ -2923,6 +2924,9 @@ return `null`.
 Extracts data from the list of other users currently in the same Room, and
 automatically subscribes to updates on the selected data. For full details, see
 [how selectors work][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 The `others` argument to the `useOthers` selector function is an _immutable_
 array of Users.
@@ -2942,9 +2946,6 @@ const typingUsers = useOthers(
   shallow // 👈
 );
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -2992,7 +2993,7 @@ arguments.
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="others" type="readonly User[] | T | null">
+  <PropertiesListItem name="others" type="readonly TUser[] | null">
     The others array or the selected data from the others array. Returns `null`
     if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
@@ -3002,11 +3003,9 @@ arguments.
 
 Extract data using a [selector][] for every user in the room, and subscribe to
 all changes to the selected data. A [Suspense version][] of this hook is also
-available.
-
-The key difference with [`useOthers`][] is that the selector (and the optional
-comparison function) work at the _item_ level, like doing a `.map()` over the
-others array.
+available. The key difference with [`useOthers`][] is that the selector (and the
+optional comparison function) work at the _item_ level, like doing a `.map()`
+over the others array.
 
 ```tsx
 // Example 1
@@ -3078,18 +3077,16 @@ users join or leave. This hook is useful in particular in combination with the
 [`useOther`][] (singular) hook, to implement high-frequency rerendering of
 components for each user in the room, e.g. cursors. See the [`useOther`][]
 (singular) documentation below for a full usage example.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
-useOthersConnectionIds(); // [2, 4, 7]
+import { useOthersConnectionIds } from "@liveblocks/react/suspense";
+
+// [2, 4, 7]
+const connectionIds = useOthersConnectionIds();
 ```
-
-Roughly equivalent to:
-
-```tsx
-useOthers((others) => others.map((other) => other.connectionId), shallow);
-```
-
-👉 A [Suspense version][] of this hook is also available.
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="connectionIds" type="readonly number[] | null">
@@ -3098,13 +3095,32 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
   </PropertiesListItem>
 </PropertiesList>
 
+#### Another way to fetch connection IDs
+
+This hook is similar to using [`useOthers`][] and calling `.map()` on the
+result.
+
+```tsx
+import { useOthers, shallow } from "@liveblocks/react/suspense";
+
+// [2, 4, 7]
+const connectionIds = useOthers(
+  (others) => others.map((other) => other.connectionId),
+  shallow
+);
+```
+
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this
-hook is also available.
+subscribe to all changes to the selected data.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
+import { useOther } from "@liveblocks/react/suspense";
+
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
 const isTyping = useOther(
   3, // User with connectionId 3
@@ -6102,9 +6118,12 @@ current room.
   /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
+[`useupdatemypresence`]:
+  /docs/api-reference/liveblocks-react#useUpdateMyPresence
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
 [`useinboxnotifications`]:
   /docs/api-reference/liveblocks-react#useInboxNotifications
+[`usemypresence`]: /docs/api-reference/liveblocks-react#useMyPresence
 [`usesyncstatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
 [`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
 [`room`]: /docs/api-reference/liveblocks-client#Room
