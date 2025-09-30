@@ -5452,23 +5452,18 @@ const { versions, error, isLoading } = useHistoryVersions();
 
 ### useUser [@badge=Both]
 
-Returns user info from a given user ID.
+Returns user info from a given user ID. To use `useUser`, you should provide a
+resolver function to the [`resolveUsers`][] option in [`createClient`][] or
+[`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useUser } from "@liveblocks/react/suspense";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
-
-<Banner title="Providing a resolver function">
-
-To use `useUser`, you should provide a resolver function to the
-[`resolveUsers`][] option in [`createClient`][] or [`LiveblocksProvider`][].
-
-</Banner>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="userId" type="string">
@@ -5480,33 +5475,22 @@ To use `useUser`, you should provide a resolver function to the
   <PropertiesListItem name="user" type="User | null">
     The user information, or null if not found.
   </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the user information is currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the user information.
-  </PropertiesListItem>
 </PropertiesList>
 
 ### useRoomInfo [@badge=Both]
 
-Returns room info from a given room ID.
+Returns room info from a given room ID. To use `useRoomInfo`, you should provide
+a resolver function to the [`resolveRoomsInfo`][] option in [`createClient`][]
+or [`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useRoomInfo } from "@liveblocks/react/suspense";
 
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
-
-<Banner title="Providing a resolver function">
-
-To use `useRoomInfo`, you should provide a resolver function to the
-[`resolveRoomsInfo`][] option in [`createClient`][] or [`LiveblocksProvider`][].
-
-</Banner>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="roomId" type="string">
@@ -5518,34 +5502,22 @@ To use `useRoomInfo`, you should provide a resolver function to the
   <PropertiesListItem name="info" type="RoomInfo | null">
     The room information, or null if not found.
   </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the room information is currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the room information.
-  </PropertiesListItem>
 </PropertiesList>
 
 ### useGroupInfo [@badge=Both]
 
-Returns group info from a given group ID.
+Returns group info from a given group ID. To use `useGroupInfo`, you should
+provide a resolver function to the [`resolveGroupsInfo`][] option in
+[`createClient`][] or [`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useGroupInfo } from "@liveblocks/react/suspense";
 
 const { info, error, isLoading } = useGroupInfo("group-id");
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
-
-<Banner title="Providing a resolver function">
-
-To use `useGroupInfo`, you should provide a resolver function to the
-[`resolveGroupsInfo`][] option in [`createClient`][] or
-[`LiveblocksProvider`][].
-
-</Banner>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="groupId" type="string">
@@ -5556,12 +5528,6 @@ To use `useGroupInfo`, you should provide a resolver function to the
 <PropertiesList title="Returns">
   <PropertiesListItem name="info" type="GroupInfo | null">
     The group information, or null if not found.
-  </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the group information is currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the group information.
   </PropertiesListItem>
 </PropertiesList>
 
