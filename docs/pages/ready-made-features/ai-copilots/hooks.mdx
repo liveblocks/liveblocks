@@ -12,12 +12,13 @@ Chats are stored permanently and the infrastructure is handled for you. All
 hooks work optimsitically, meaning they update immediately, before the server
 has synched.
 
-## List all chats
+## List a user’s chats
 
 Each [authenticated user](/docs/authentication) has their own private set of
 chats, and the [`useAiChats`](/docs/api-reference/liveblocks-react#useAiChats)
-hook fetches all AI chats created by the current user. It’s simple to create a
-list of links to each chat.
+hook fetches all AI chats created by the current user. It’s easy to
+[create a list of chats](/docs/api-reference/liveblocks-react#List-the-user's-chats-and-switch-between-them),
+with links or buttons that take you to each.
 
 ```tsx
 import { useAiChats } from "@liveblocks/react/suspense";
@@ -43,18 +44,18 @@ function ListChats() {
 
 Chats are
 [paginated](/docs/api-reference/liveblocks-react#useAiChats-pagination),
-returning 50 at a time, and you can filter for chats with
-[specific metadata](/docs/api-reference/liveblocks-react#useAiChats-query).
+returning 50 at a time, and you can
+[filter chats by metadata](/docs/api-reference/liveblocks-react#useAiChats-query).
 There are also ways to
 [handle errors](/docs/api-reference/liveblocks-react#useAiChats-error-handling).
 
-## Create and delete chats
+## Create & delete chats
 
 The [`useCreateAiChat`](/docs/api-reference/liveblocks-react#useCreateAiChat)
 and [`useDeleteAiChat`](/docs/api-reference/liveblocks-react#useDeleteAiChat)
 hooks allow you to create and delete AI chats. When used in combination with the
 [`useAiChats`](/docs/api-reference/liveblocks-react#useAiChats) hook, you can
-create a list of chats and delete them.
+add “New Chat” and “Delete Chat” buttons to your listing.
 
 ```tsx
 import {
@@ -73,7 +74,7 @@ function ListChats() {
   return (
     <nav>
       // +++
-      <button onClick={() => createAiChat("my-ai-chat")}>💬 Create Chat</button>
+      <button onClick={() => createAiChat("my-ai-chat")}>💬 New Chat</button>
       // +++
       {chats.map((chat) => (
         <a key={chat.id} href={`/chats/${chat.id}`}>
@@ -105,32 +106,158 @@ createAiChat({
 });
 ```
 
-## List all chat messages
+## List a chat’s messages
 
 The
 [`useAiChatMessages`](/docs/api-reference/liveblocks-react#useAiChatMessages)
 hook allows you to fetch all messages in a specific chat. Use this to display
-the main content of a chat.
+the main content of a chat. User and assistant messages can be rendered
+differently, below we‘re returning different UI for user and assistant messages.
+Other types of message can be rendered too, for example tool calls, knowledge
+calls, custom components.
 
 ```tsx
 import { useAiChatMessages } from "@liveblocks/react/suspense";
 
 function ChatMessages({ chatId }: { chatId: string }) {
+  // +++
   const { messages } = useAiChatMessages(chatId);
+  // +++
 
-  return <div>{messages.map((message) => message.text).join("\n")}</div>;
+  return (
+    <div>
+      {messages.map((message) => {
+        // +++
+        if (message.role === "user") {
+          // +++
+          return (
+            // +++
+            <div key={message.id}>
+              {message.content.map((part) => (
+                <p>👤 You: {part.text}</p>
+              ))}
+            </div>
+            // +++
+          );
+        }
+
+        return (
+          // +++
+          <div key={message.id}>
+            {(message.contentSoFar ?? message.content).map((part) => (
+              <p>🤖 Assistant: {part.text}</p>
+            ))}
+          </div>
+          // +++
+        );
+      })}
+    </div>
+  );
 }
 ```
 
-[TODO add better API info about this]
-
 Note that if you’re using our default
 [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) component, you don’t
-need to use this hook, as the messages are fetched for you. This is only needed
-for building custom chat interfaces.
+need to `useAiChatMessages`, as the messages are fetched for you. This hook is
+only required for building custom chat interfaces.
 
 ## Send messages to a chat
 
+The [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage)
+hook allows you to send messages directly to a chat, as if from a user. This
+works really well in combination with buttons in your UI, for example you may
+have a “Explain with AI” button.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react/suspense";
+
+function ExplainWithAi() {
+  // +++
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    copilotId: "co_h7GBa3...",
+  });
+  // +++
+
+  return (
+    // +++
+    <button onClick={() => sendAiMessage("Explain how this page works")}>
+      Explain with AI
+    </button>
+    // +++
+  );
+}
+```
+
+Additionally, when using
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) you can use the hook
+to display suggestion buttons in the
+[empty state](/docs/api-reference/liveblocks-react-ui#AiChat-placeholder).
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react/suspense";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  // +++
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    copilotId: "co_h7GBa3...",
+  });
+  // +++
+
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      copilotId="co_h7GBa3..."
+      components={{
+        Empty: (
+          <div>
+            <div>How can I help you?</div>
+            // +++
+            <button onClick={() => sendAiMessage("What's new?")}>
+              Update me
+            </button>
+            <button onClick={() => sendAiMessage("Create a new document")}>
+              Draft a document
+            </button>
+            // +++
+          </div>
+        ),
+      }}
+    />
+  );
+}
+```
+
 ## Get a chat’s information
 
+The [`useAiChat`](/docs/api-reference/liveblocks-react#useAiChat) hook allows
+you to fetch a
+[chat’s title](/docs/api-reference/liveblocks-react#Displaying-a-default-title)
+and custom metadata.
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+function ChatTitle({ chatId }: { chatId: string }) {
+  const { chat } = useAiChat(chatId);
+
+  return <h1>{chat.title || "Untitled chat"}</div>;
+}
+```
+
 ## Get chat status
+
+The [`useAiChatStatus`](/docs/api-reference/liveblocks-react#useAiChatStatus)
+hook allows you to fetch the status of an AI chat, indicating whether it’s idle
+or actively generating content. This is helpful for displaying a loading state
+or freezing part of your app while content isgenerating.
+
+```tsx
+import { useAiChatStatus } from "@liveblocks/react/suspense";
+
+function ChatStatus({ chatId }: { chatId: string }) {
+  const { status } = useAiChatStatus(chatId);
+
+  return status === "idle" ? <div>🟢 Ready</div> : <div>🟡 Generating…</div>;
+}
+```
