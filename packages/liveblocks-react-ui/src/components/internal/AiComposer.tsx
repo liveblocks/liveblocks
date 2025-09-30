@@ -81,6 +81,11 @@ export interface AiComposerProps
   copilotId?: CopilotId;
 
   /**
+   * The time, in milliseconds, before an AI response will timeout.
+   */
+  responseTimeout?: number;
+
+  /**
    * @internal
    */
   branchId?: MessageId;
@@ -148,6 +153,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
       chatId,
       branchId,
       copilotId,
+      responseTimeout,
       stream = true,
       onComposerSubmitted,
       ...props
@@ -158,6 +164,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
     const sendAiMessage = useSendAiMessage(chatId, {
       stream,
       copilotId,
+      timeout: responseTimeout,
     });
 
     const handleComposerSubmit = useCallback(

@@ -1,5 +1,10 @@
 ## v3.8.0
 
+### `@liveblocks/client`
+
+- LiveMap and LiveObject deletions now report which item got deleted in the
+  update notifications. LiveLists already did this.
+
 ### `@liveblocks/react`
 
 - Add new hook
@@ -7,10 +12,30 @@
   that offers a convenient way to get the current generation status for an AI
   chat, indicating whether the chat is idle, currently generating contents, and,
   if so, what type of content is currently generating.
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
+  metadata query filters.
+
+### `@liveblocks/client`
+
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
 
 ### `@liveblocks/react-ui`
 
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
 - The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
+
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
 
 ## v3.7.1
 
@@ -1405,11 +1430,11 @@ for more information about this change please read our
 - Fix bug where some combinations of `query` criteria could over-select threads
   in `useThreads`
 
-### Version History (private beta)
+### Version History
 
-This release adds some new hooks for Version History in text documents, which is
-now available in private beta. If you’re interested in joining the private beta,
-please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)

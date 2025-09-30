@@ -3,7 +3,7 @@ import type {
   InboxNotificationData,
   ThreadData,
 } from "@liveblocks/client";
-import { isStartsWithOperator } from "@liveblocks/core";
+import { isNumberOperator, isStartsWithOperator } from "@liveblocks/core";
 
 import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
 
@@ -45,16 +45,44 @@ function matchesMetadata(
 
 function matchesOperator(
   value: BaseMetadata[string],
-  op: Exclude<BaseMetadata[string], undefined> | { startsWith: string } | null
+  op:
+    | Exclude<BaseMetadata[string], undefined>
+    | { startsWith: string }
+    | {
+        lt?: number;
+        gt?: number;
+        lte?: number;
+        gte?: number;
+      }
+    | null
 ) {
   if (op === null) {
     // If the operator is `null`, we're doing an explicit query for absence
     return value === undefined;
   } else if (isStartsWithOperator(op)) {
     return typeof value === "string" && value.startsWith(op.startsWith);
+  } else if (isNumberOperator(op)) {
+    return typeof value === "number" && matchesNumberOperator(value, op);
   } else {
     return value === op;
   }
+}
+
+function matchesNumberOperator(
+  value: number,
+  op: {
+    lt?: number;
+    gt?: number;
+    lte?: number;
+    gte?: number;
+  }
+) {
+  return (
+    (op.lt === undefined || value < op.lt) &&
+    (op.gt === undefined || value > op.gt) &&
+    (op.lte === undefined || value <= op.lte) &&
+    (op.gte === undefined || value >= op.gte)
+  );
 }
 
 export function makeInboxNotificationsFilter(

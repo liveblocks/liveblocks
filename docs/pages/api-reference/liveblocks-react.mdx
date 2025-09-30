@@ -2186,6 +2186,51 @@ Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
 
+#### Speed up connecting to a room [#speed-up-connecting-to-a-room]
+
+To speed up connecting to a room, you can call
+[`Liveblocks.prewarmRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId-prewarm)
+on the server, which will warm up a room for the next 10 seconds. Triggering
+this directly before a user navigates to a room is an easy to way use this API.
+Here’s a Next.js server actions example, showing how to trigger prewarming with
+`onPointerDown`.
+
+```ts title="actions.ts"
+"use server";
+
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function prewarmRoom(roomId: string) {
+  // +++
+  await liveblocks.prewarmRoom(roomId);
+  // +++
+}
+```
+
+```tsx title="RoomLink.tsx"
+"use client";
+
+import { prewarmRoom } from "../actions";
+import Link from "next/link";
+
+export function JoinButton({ roomId }: { roomId: string }) {
+  return (
+    // +++
+    <Link href={`/rooms/${roomId}`} onPointerDown={() => prewarmRoom(roomId)}>
+      // +++
+      {roomId}
+    </Link>
+  );
+}
+```
+
+`onPointerDown` is slightly quicker than `onClick` because it triggers before
+the user releases their pointer.
+
 ### createRoomContext
 
 <Banner>
@@ -3416,7 +3461,8 @@ function Component() {
 It’s possible to return threads that match a certain query with the `query`
 option. You can filter threads based on their resolved status, and metadata.
 Additionally, you can filter for metadata strings that being with certain
-characters using `startsWith`. Returned threads match the entire query.
+characters using `startsWith` and you can filter for metadata numbers using
+`gt`, `lt`, `gte`, and `lte`. Returned threads match the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -3434,6 +3480,17 @@ const { threads } = useThreads({
       // Filter for threads with string metadata that starts with a certain value
       organization: {
         startsWith: "liveblocks:",
+      },
+
+      // Filter for threads with number metadata that is greater than 50 and lower than 100
+      posX: {
+        gt: 50,
+        lt: 100,
+      },
+
+      // Filter for threads with number metadata that is greater than or equal to 5
+      level: {
+        gte: 5,
       },
     },
   },
@@ -3575,6 +3632,24 @@ const createThread = useCreateThread();
 const thread = createThread({ body: {}, attachments: [], metadata: {} });
 ```
 
+#### Error handling [#useCreateThread-error-handling]
+
+`useCreateThread` creates threads optimistically, meaning that a thread object
+is returned instantly, before Liveblocks has confirmed a successful thread
+creation. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `CREATE_THREAD_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "CREATE_THREAD_ERROR") {
+    const { roomId, threadId, commentId, body, metadata } = error.context;
+    console.log(`Problem creating thread ${threadId}`);
+  }
+});
+```
+
 ### useDeleteThread [@badge=RoomProvider]
 
 Returns a function that deletes a thread and all its associated comments by ID.
@@ -3585,6 +3660,24 @@ import { useDeleteThread } from "@liveblocks/react/suspense";
 
 const deleteThread = useDeleteThread();
 deleteThread("th_xxx");
+```
+
+#### Error handling [#useDeleteThread-error-handling]
+
+`useDeleteThread` deletes threads optimistically, meaning that the thread
+appears deleted instantly, before Liveblocks has confirmed a successful thread
+deletion. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `DELETE_THREAD_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "DELETE_THREAD_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem deleting thread ${threadId}`);
+  }
+});
 ```
 
 ### useEditThreadMetadata [@badge=RoomProvider]
@@ -3605,6 +3698,24 @@ const editThreadMetadata = useEditThreadMetadata();
 editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
 
+#### Error handling [#useEditThreadMetadata-error-handling]
+
+`useEditThreadMetadata` edits thread metadata optimistically, meaning that the
+metadata appears updated instantly, before Liveblocks has confirmed a successful
+metadata update. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `EDIT_THREAD_METADATA_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "EDIT_THREAD_METADATA_ERROR") {
+    const { roomId, threadId, metadata } = error.context;
+    console.log(`Problem editing thread metadata ${threadId}`);
+  }
+});
+```
+
 ### useMarkThreadAsResolved [@badge=RoomProvider]
 
 Returns a function that marks a thread as resolved.
@@ -3616,6 +3727,24 @@ const markThreadAsResolved = useMarkThreadAsResolved();
 markThreadAsResolved("th_xxx");
 ```
 
+#### Error handling [#useMarkThreadAsResolved-error-handling]
+
+`useMarkThreadAsResolved` marks threads as resolved optimistically, meaning that
+the thread appears resolved instantly, before Liveblocks has confirmed the
+successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_THREAD_AS_RESOLVED_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "MARK_THREAD_AS_RESOLVED_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem marking thread as resolved ${threadId}`);
+  }
+});
+```
+
 ### useMarkThreadAsUnresolved [@badge=RoomProvider]
 
 Returns a function that marks a thread as unresolved.
@@ -3625,6 +3754,24 @@ import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
 
 const markThreadAsUnresolved = useMarkThreadAsUnresolved();
 markThreadAsUnresolved("th_xxx");
+```
+
+#### Error handling [#useMarkThreadAsUnresolved-error-handling]
+
+`useMarkThreadAsUnresolved` marks threads as unresolved optimistically, meaning
+that the thread appears unresolved instantly, before Liveblocks has confirmed
+the successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_THREAD_AS_UNRESOLVED_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "MARK_THREAD_AS_UNRESOLVED_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem marking thread as unresolved ${threadId}`);
+  }
+});
 ```
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
@@ -3668,6 +3815,24 @@ const subscribeToThread = useSubscribeToThread();
 subscribeToThread("th_xxx");
 ```
 
+#### Error handling [#useSubscribeToThread-error-handling]
+
+`useSubscribeToThread` subscribes to threads optimistically, meaning that the
+subscription appears active instantly, before Liveblocks has confirmed a
+successful subscription. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `SUBSCRIBE_TO_THREAD_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem subscribing to thread ${threadId}`);
+  }
+});
+```
+
 Subscribing will replace any existing subscription for the current thread
 [set at room-level](#useRoomSubscriptionSettings). This value can also be
 overridden by a room-level call that is run afterwards.
@@ -3700,6 +3865,24 @@ import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
 
 const unsubscribeFromThread = useUnsubscribeFromThread();
 unsubscribeFromThread("th_xxx");
+```
+
+#### Error handling [#useUnsubscribeFromThread-error-handling]
+
+`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
+that the subscription appears inactive instantly, before Liveblocks has
+confirmed a successful unsubscription. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem unsubscribing from thread ${threadId}`);
+  }
+});
 ```
 
 Unsubscribing will replace any existing subscription for the current thread
@@ -3739,6 +3922,24 @@ const comment = createComment({
 });
 ```
 
+#### Error handling [#useCreateComment-error-handling]
+
+`useCreateComment` creates comments optimistically, meaning that a comment
+object is returned instantly, before Liveblocks has confirmed a successful
+comment creation. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `CREATE_COMMENT_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "CREATE_COMMENT_ERROR") {
+    const { roomId, threadId, commentId, body } = error.context;
+    console.log(`Problem creating comment ${commentId}`);
+  }
+});
+```
+
 ### useEditComment[@badge=RoomProvider]
 
 Returns a function that edits a comment’s body.
@@ -3755,6 +3956,24 @@ editComment({
 });
 ```
 
+#### Error handling [#useEditComment-error-handling]
+
+`useEditComment` edits comments optimistically, meaning that the comment appears
+updated instantly, before Liveblocks has confirmed a successful comment edit. To
+catch any errors that occur, add [`useErrorListener`][] and look for the
+`EDIT_COMMENT_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "EDIT_COMMENT_ERROR") {
+    const { roomId, threadId, commentId, body } = error.context;
+    console.log(`Problem editing comment ${commentId}`);
+  }
+});
+```
+
 ### useDeleteComment [@badge=RoomProvider]
 
 Returns a function that deletes a comment. If it is the last non-deleted
@@ -3765,6 +3984,24 @@ import { useDeleteComment } from "@liveblocks/react/suspense";
 
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
+```
+
+#### Error handling [#useDeleteComment-error-handling]
+
+`useDeleteComment` deletes comments optimistically, meaning that the comment
+appears deleted instantly, before Liveblocks has confirmed a successful comment
+deletion. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `DELETE_COMMENT_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "DELETE_COMMENT_ERROR") {
+    const { roomId, threadId, commentId } = error.context;
+    console.log(`Problem deleting comment ${commentId}`);
+  }
+});
 ```
 
 ### useAddReaction [@badge=RoomProvider]
@@ -3780,6 +4017,24 @@ const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+#### Error handling [#useAddReaction-error-handling]
+
+`useAddReaction` adds reactions optimistically, meaning that the reaction
+appears instantly, before Liveblocks has confirmed a successful reaction
+addition. To catch any errors that occur, add [`useErrorListener`][] and look
+for the `ADD_REACTION_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "ADD_REACTION_ERROR") {
+    const { roomId, threadId, commentId, emoji } = error.context;
+    console.log(`Problem adding reaction ${emoji} to comment ${commentId}`);
+  }
+});
+```
+
 ### useRemoveReaction [@badge=RoomProvider]
 
 Returns a function that removes a reaction from a comment. Can be used to create
@@ -3791,6 +4046,24 @@ import { useRemoveReaction } from "@liveblocks/react/suspense";
 
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
+```
+
+#### Error handling [#useRemoveReaction-error-handling]
+
+`useRemoveReaction` removes reactions optimistically, meaning that the reaction
+disappears instantly, before Liveblocks has confirmed a successful reaction
+removal. To catch any errors that occur, add [`useErrorListener`][] and look for
+the `REMOVE_REACTION_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "REMOVE_REACTION_ERROR") {
+    const { roomId, threadId, commentId, emoji } = error.context;
+    console.log(`Problem removing reaction ${emoji} from comment ${commentId}`);
+  }
+});
 ```
 
 ### useAttachmentUrl [@badge=RoomProvider]
@@ -4032,6 +4305,25 @@ const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
 
+#### Error handling [#useMarkInboxNotificationAsRead-error-handling]
+
+`useMarkInboxNotificationAsRead` marks notifications as read optimistically,
+meaning that the notification appears read instantly, before Liveblocks has
+confirmed a successful status change. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `MARK_INBOX_NOTIFICATION_AS_READ_ERROR`
+type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
+    const { inboxNotificationId, roomId } = error.context;
+    console.log(`Problem marking notification as read ${inboxNotificationId}`);
+  }
+});
+```
+
 ### useMarkAllInboxNotificationsAsRead [@badge=LiveblocksProvider]
 
 Returns a function that marks all of the current user‘s inbox notifications as
@@ -4042,6 +4334,24 @@ import { useMarkAllInboxNotificationsAsRead } from "@liveblocks/react/suspense";
 
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
+```
+
+#### Error handling [#useMarkAllInboxNotificationsAsRead-error-handling]
+
+`useMarkAllInboxNotificationsAsRead` marks all notifications as read
+optimistically, meaning that the notifications appear read instantly, before
+Liveblocks has confirmed a successful status change. To catch any errors that
+occur, add [`useErrorListener`][] and look for the
+`MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR") {
+    console.log("Problem marking all notifications as read");
+  }
+});
 ```
 
 ### useDeleteInboxNotification [@badge=LiveblocksProvider]
@@ -4055,6 +4365,24 @@ const deleteInboxNotification = useDeleteInboxNotification();
 deleteInboxNotification("in_xxx");
 ```
 
+#### Error handling [#useDeleteInboxNotification-error-handling]
+
+`useDeleteInboxNotification` deletes notifications optimistically, meaning that
+the notification appears deleted instantly, before Liveblocks has confirmed a
+successful deletion. To catch any errors that occur, add [`useErrorListener`][]
+and look for the `DELETE_INBOX_NOTIFICATION_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "DELETE_INBOX_NOTIFICATION_ERROR") {
+    const { inboxNotificationId } = error.context;
+    console.log(`Problem deleting notification ${inboxNotificationId}`);
+  }
+});
+```
+
 ### useDeleteAllInboxNotifications [@badge=LiveblocksProvider]
 
 Returns a function that deletes all of the current user‘s inbox notifications.
@@ -4064,6 +4392,24 @@ import { useDeleteAllInboxNotifications } from "@liveblocks/react/suspense";
 
 const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
 deleteAllInboxNotifications();
+```
+
+#### Error handling [#useDeleteAllInboxNotifications-error-handling]
+
+`useDeleteAllInboxNotifications` deletes all notifications optimistically,
+meaning that the notifications appear deleted instantly, before Liveblocks has
+confirmed a successful deletion. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `DELETE_ALL_INBOX_NOTIFICATIONS_ERROR`
+type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR") {
+    console.log("Problem deleting all notifications");
+  }
+});
 ```
 
 ### useInboxNotificationThread [@badge=LiveblocksProvider]
@@ -4138,6 +4484,25 @@ const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
 // No longer receive thread notifications in this room
 updateSettings({
   threads: "none",
+});
+```
+
+#### Error handling [#useUpdateRoomSubscriptionSettings-error-handling]
+
+`useUpdateRoomSubscriptionSettings` updates subscription settings
+optimistically, meaning that the settings appear updated instantly, before
+Liveblocks has confirmed a successful update. To catch any errors that occur,
+add [`useErrorListener`][] and look for the
+`UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+    const { roomId } = error.context;
+    console.log(`Problem updating subscription settings for room ${roomId}`);
+  }
 });
 ```
 
@@ -4361,11 +4726,11 @@ updateSettings({
 
 ## Version History
 
-<Banner title="Private beta">
+<Banner title="Contact support for access">
 
-Version history is currently in private beta. If you would like access to the
-beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
-hear from you.
+Version History is an add-on feature, available by contacting support. Please
+[contact us](https://liveblocks.io/contact/sales) and we'd love to help you get
+started.
 
 </Banner>
 

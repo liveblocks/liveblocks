@@ -647,6 +647,62 @@ and returns no response.
 await liveblocks.deleteRoom("my-room-id");
 ```
 
+#### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
+
+Speeds up connecting to a room for the next 10 seconds. Use this when you know a
+user will be connecting to a room with
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
+[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10
+seconds, and the room will load quicker. This is a wrapper around the
+[Prewarm Room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-prewarm)
+and returns no response.
+
+```ts
+await liveblocks.prewarmRoom("my-room-id");
+```
+
+##### Warm a room before navigating
+
+Triggering a room directly before a user navigates to a room is an easy to way
+use this API. Here’s a Next.js server actions example, showing how to trigger
+prewarming with `onPointerDown`.
+
+```ts title="actions.ts"
+"use server";
+
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function prewarmRoom(roomId: string) {
+  // +++
+  await liveblocks.prewarmRoom(roomId);
+  // +++
+}
+```
+
+```tsx title="RoomLink.tsx"
+"use client";
+
+import { prewarmRoom } from "../actions";
+import Link from "next/link";
+
+export function JoinButton({ roomId }: { roomId: string }) {
+  return (
+    // +++
+    <Link href={`/rooms/${roomId}`} onPointerDown={() => prewarmRoom(roomId)}>
+      // +++
+      {roomId}
+    </Link>
+  );
+}
+```
+
+`onPointerDown` is slightly quicker than `onClick` because it triggers before
+the user releases their pointer.
+
 #### Liveblocks.updateRoomId [#post-rooms-update-roomId]
 
 Permanently updates a room’s ID. `newRoomId` will replace `currentRoomId`. Note

@@ -24,6 +24,7 @@ import {
   assert,
   console,
   createClient,
+  DefaultMap,
   HttpError,
   kInternal,
   makePoller,
@@ -48,7 +49,6 @@ import {
   useIsInsideRoom,
 } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
-import { count } from "./lib/itertools";
 import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -126,20 +126,14 @@ const _bundles = new WeakMap<
 >();
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  result: InboxNotificationsAsyncResult
+  result: UnreadInboxNotificationsCountAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
-  if (!result.inboxNotifications) {
+  if (!("count" in result) || result.count === undefined) {
     // Can be loading or error states
     return result;
   }
 
-  return ASYNC_OK(
-    "count",
-    count(
-      result.inboxNotifications,
-      (n) => n.readAt === null || n.readAt < n.notifiedAt
-    )
-  );
+  return ASYNC_OK("count", result.count);
 }
 
 function selectorFor_useUser<U extends BaseUserMeta>(
@@ -353,6 +347,24 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
   );
 
+  const unreadNotificationsCountPollersByQueryKey = new DefaultMap(
+    (queryKey: string) =>
+      makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchUnreadNotificationsCount(queryKey, signal);
+          } catch (err) {
+            console.warn(
+              `Polling unread inbox notifications countfailed: ${String(err)}`
+            );
+            throw err;
+          }
+        },
+        config.NOTIFICATIONS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
+      )
+  );
+
   const userThreadsPoller = makePoller(
     async (signal) => {
       try {
@@ -386,6 +398,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     notificationsPoller,
     userThreadsPoller,
     notificationSettingsPoller,
+    unreadNotificationsCountPollersByQueryKey,
   };
 }
 
@@ -570,11 +583,41 @@ function useUnreadInboxNotificationsCount_withClient(
   client: OpaqueClient,
   options?: UseInboxNotificationsOptions
 ) {
-  return useInboxNotifications_withClient(
-    client,
+  const { store, unreadNotificationsCountPollersByQueryKey: pollers } =
+    getLiveblocksExtrasForClient(client);
+
+  const queryKey = makeInboxNotificationsQueryKey(options?.query);
+
+  const poller = pollers.getOrCreate(queryKey);
+
+  useEffect(
+    () =>
+      void store.outputs.unreadNotificationsCount
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  return useSignal(
+    store.outputs.unreadNotificationsCount.getOrCreate(queryKey).signal,
     selectorFor_useUnreadInboxNotificationsCount,
-    shallow,
-    options
+    shallow
   );
 }
 
@@ -589,9 +632,11 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 
   const queryKey = makeInboxNotificationsQueryKey(options?.query);
 
-  // Suspend until there are at least some inbox notifications
+  // Suspend until there are at least some unread inbox notifications count
   use(
-    store.outputs.loadingNotifications.getOrCreate(queryKey).waitUntilLoaded()
+    store.outputs.unreadNotificationsCount
+      .getOrCreate(queryKey)
+      .waitUntilLoaded()
   );
 
   const result = useUnreadInboxNotificationsCount_withClient(client, options);
@@ -603,7 +648,8 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -620,6 +666,12 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             readAt,
             optimisticId
           );
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -640,7 +692,8 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const readAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
@@ -651,6 +704,12 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
@@ -667,7 +726,8 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getLiveblocksExtrasForClient(client);
+      const { store, unreadNotificationsCountPollersByQueryKey } =
+        getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
       const optimisticId = store.optimisticUpdates.add({
@@ -680,6 +740,12 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         () => {
           // Replace the optimistic update by the real thing
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
+
+          // Force a re-fetch of the unread notifications count
+          for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+            poller.markAsStale();
+            poller.pollNowIfStale();
+          }
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
@@ -697,7 +763,8 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getLiveblocksExtrasForClient(client);
+    const { store, unreadNotificationsCountPollersByQueryKey } =
+      getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
     const optimisticId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
@@ -708,6 +775,12 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       () => {
         // Replace the optimistic update by the real thing
         store.deleteAllInboxNotifications(optimisticId);
+
+        // Force a re-fetch of the unread notifications count
+        for (const poller of unreadNotificationsCountPollersByQueryKey.values()) {
+          poller.markAsStale();
+          poller.pollNowIfStale();
+        }
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
