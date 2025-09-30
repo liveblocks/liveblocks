@@ -1134,14 +1134,23 @@ export const {
 
 ### useClient [@badge=LiveblocksProvider]
 
-Returns the [`client`](/docs/api-reference/liveblocks-client#Client) of the
-nearest [`LiveblocksProvider`][] above in the React component tree.
+Returns the [`client`](/docs/api-reference/liveblocks-client#createClient) of
+the nearest [`LiveblocksProvider`][] above in the React component tree.
 
 ```ts
 import { useClient } from "@liveblocks/react/suspense";
 
 const client = useClient();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="client" type="Client">
+    The [Liveblocks client](/docs/api-reference/liveblocks-client#createClient)
+    instance from the nearest [`LiveblocksProvider`][].
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useErrorListener [@badge=LiveblocksProvider]
 
@@ -1234,16 +1243,12 @@ useErrorListener((error) => {
 });
 ```
 
-<Banner title="Hook changes in 2.16">
-
-The behavior of this hook changed in 2.16. Previously, this hook had to be in a
-[`RoomProvider`][] context, and would only trigger for connection errors in the
-current room. Since 2.16, this hook only requires a [`LiveblocksProvider`][]
-context, and will notify about any errors, and for any room. For example,
-notifications are not part of rooms, and errors for these will show. See the
-[upgrade guide for 2.16](/docs/platform/upgrading/2.16) for more details.
-
-</Banner>
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="callback" type="(error: LiveblocksError) => void">
+    A callback function that will be called when a Liveblocks error occurs. The
+    error object contains a message and context with error-specific information.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## AI Copilots
 
@@ -1251,6 +1256,9 @@ notifications are not part of rooms, and errors for these will show. See the
 
 Returns a paginated list of AI chats created by the current user. Initially
 fetches the latest 50 chats.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useAiChats } from "@liveblocks/react";
@@ -1258,11 +1266,47 @@ import { useAiChats } from "@liveblocks/react";
 const { chats, error, isLoading } = useAiChats();
 ```
 
-##### List the user’s chats and switch between them
+<PropertiesList title="Options">
+  <PropertiesListItem name="query" type="AiChatsQuery">
+    Optional query to filter chats by metadata values or absence of metadata
+    keys. [Learn more](/docs/api-reference/liveblocks-react#useAiChats-query)
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="chats" type="AiChat[]">
+    An array of AI chats created by the current user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the chats are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the chats. [Learn
+    more](/docs/api-reference/liveblocks-react#useAiChats-error-handling).
+  </PropertiesListItem>
+  <PropertiesListItem name="hasFetchedAll" type="boolean">
+    Whether all available chats have been fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMore" type="() => void">
+    A function to fetch more chats. [Learn
+    more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="isFetchingMore" type="boolean">
+    Whether more chats are currently being fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMoreError" type="Error | null">
+    Any error that occurred while fetching more chats. [Learn
+    more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
+  </PropertiesListItem>
+</PropertiesList>
+
+##### List the user's chats and switch between them
 
 You can use the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
 component alongside the hook to create an AI chat switcher. Below, each button
-displays the chat’s automatically generated title, and chats can be deleted with
+displays the chat's automatically generated title, and chats can be deleted with
 [`useDeleteAiChat`](#useDeleteAiChat).
 
 ```tsx
@@ -1439,15 +1483,14 @@ function Inbox() {
 }
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest `ErrorBoundary` if
-initial load failed.
-
 ### useAiChat
 
 Returns information about an AI chat, for example its title and metadata. Titles
 are automatically generated from the content of the first user message in a
 chat, and the AI’s response.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useAiChat } from "@liveblocks/react/suspense";
@@ -1455,9 +1498,23 @@ import { useAiChat } from "@liveblocks/react/suspense";
 const { chat, error, isLoading } = useAiChat("my-chat-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="chatId" type="string">
+    The ID of the AI chat to retrieve information for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="chat" type="AiChat | null">
+    The AI chat object containing title, metadata, and other properties.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the chat information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the chat information.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Displaying a default title
 
@@ -1492,9 +1549,24 @@ const createAiChat = useCreateAiChat();
 createAiChat("my-ai-chat");
 ```
 
-You can optionally set a `title`, which prevents the AI auto-generating a title
-from the first messages. Additionally, you can choose to set custom `metadata`
-for the chat, strings or arrays of strings.
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="createAiChat"
+    type="(chatIdOrOptions: string | CreateAiChatOptions) => AiChat"
+  >
+    A function that creates an AI chat. Can be called with either a string ID or
+    an options object containing `id`, optional `title`, and optional
+    `metadata`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Create a chat with a custom title and metadata
+
+You can optionally set a `title` with `useCreateAiChat`, which prevents the AI
+auto-generating a title from the first messages. Additionally, you can choose to
+set custom `metadata` for the chat, strings or arrays of strings.
 
 ```tsx
 import { useCreateAiChat } from "@liveblocks/react/suspense";
@@ -1526,9 +1598,17 @@ const deleteAiChat = useDeleteAiChat();
 deleteAiChat("my-chat-id");
 ```
 
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteAiChat" type="(chatId: string) => void">
+    A function that deletes an AI chat by its ID.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useSendAiMessage
 
-Returns a function that sends a message to an AI chat, indentified by its ID.
+Returns a function that sends a message to an AI chat, identified by its ID.
 Useful for
 [creating suggestions in empty inside chats](/docs/api-reference/liveblocks-react-ui#AiChat-placeholder)
 and sending messages on behalf of the user.
@@ -1540,51 +1620,97 @@ const sendAiMessage = useSendAiMessage("my-chat-id");
 sendAiMessage("Hello!");
 ```
 
-You can set options related to the message being sent, such as the copilot ID to
-use. Alternatively, you can also override or complete the hook’s options when
-calling the function by passing an object to it.
+Remember to [set your copilot ID]() otherwise the default copilot will be used.
 
 ```tsx
-import { useSendAiMessage } from "@liveblocks/react";
-
-const sendAiMessage = useSendAiMessage("my-chat-id", { copilotId: "co_xxx" });
-
-sendAiMessage("Hello!");
-
-// Use another copilot ID dynamically
-sendAiMessage({ text: "Hello!", copilotId: "co_yyy" });
-
-// Use another chat ID dynamically
-sendAiMessage({ text: "Hello!", chatId: "my-other-chat-id" });
+const sendAiMessage = useSendAiMessage("my-chat-id", {
+  // +++
+  copilotId: "co_h7GBa3...",
+  // +++
+});
 ```
 
-You can also pass the chat ID in the function rather than the hook. This is
-particularly helpful in dynamic scenarios where the chat ID might not be known
-when calling the hook.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="chatId" type="string">
+    Optional. The ID of the AI chat to send messages to. Can also be provided
+    when calling the returned function.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.copilotId" type="string">
+    Optional. The ID of the copilot to use for sending the message.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="sendAiMessage"
+    type="(messageOrOptions: string | SendAiMessageOptions) => AiChatMessage"
+  >
+    A function that sends a message to an AI chat. Can be called with either a
+    string message or an options object containing `text`, optional `chatId`,
+    and optional `copilotId`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting options when sending a message
+
+Optionally you can set options when sending a message, instead of when creating
+the hook. Alternatively, you can also override or complete the hook’s options
+when calling the function by passing an object to it.
 
 ```tsx
 import { useSendAiMessage } from "@liveblocks/react";
 
+// Setting a `chatId` and `copilotId`
+const sendAiMessage = useSendAiMessage("my-chat-id", {
+  copilotId: "co_shSm8f...",
+});
+
+// Sends to initial `chatId` and `copilotId`
+sendAiMessage("Hello!");
+
+// Overwrites the `copilotId` just for this message
+sendAiMessage({
+  text: "Hello world",
+  // +++
+  copilotId: "co_Xpksa9...",
+  // +++
+});
+
+// Overwrites the `chatId` just for this message
+sendAiMessage({
+  text: "Hello world",
+  // +++
+  chatId: "my-other-chat-id",
+  // +++
+});
+```
+
+You can even skip setting the `chatId` and `copilotId` in the hook, and just
+pass them in the function.
+
+```tsx
+// +++
 const sendAiMessage = useSendAiMessage();
+// +++
 
-// Because `useSendAiMessage` didn't receive a chat ID, `sendAiMessage`
-// needs to receive one or it will throw an error.
-sendAiMessage({ text: "Hello!", chatId: "my-chat-id" });
-
-// The following calls would result in both TypeScript and runtime errors.
-sendAiMessage("Hello!");
-sendAiMessage({ text: "Hello!" });
-sendAiMessage({ text: "Hello!", copilotId: "co_xxx" });
+sendAiMessage({
+  text: "Hello world",
+  chatId: "my-other-chat-id",
+});
 ```
 
-If needed (e.g. using the message’s ID), you can also access the newly created
-message.
+#### Get the created message object
+
+If necessary, you can also access the newly created message object.
 
 ```tsx
 import { useSendAiMessage } from "@liveblocks/react";
 
 const sendAiMessage = useSendAiMessage("my-chat-id");
-const message = sendAiMessage("Hello!");
+const message = sendAiMessage("Hello world");
 ```
 
 ### useAiChatMessages
@@ -1598,6 +1724,24 @@ import { useAiChatMessages } from "@liveblocks/react";
 const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="chatId" type="string">
+    The ID of the AI chat to retrieve messages from.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="messages" type="AiChatMessage[]">
+    An array of messages in the AI chat.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the messages are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the messages.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useAiChatStatus
 
 Returns the status of an AI chat, indicating whether it’s idle or actively
@@ -1610,12 +1754,24 @@ import { useAiChatStatus } from "@liveblocks/react";
 const { status, partType, toolName } = useAiChatStatus("my-chat-id");
 ```
 
-The hook returns an object with the following properties:
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="chatId" type="string">
+    The ID of the AI chat.
+  </PropertiesListItem>
+</PropertiesList>
 
-- `status`: The current status (`"loading"` | `"idle"` | `"generating"`)
-- `partType`: The type of content being generated (`"text"` |
-  `"tool-invocation"` | etc.)
-- `toolName`: The name of the tool being invoked (if applicable)
+<PropertiesList title="Returns">
+  <PropertiesListItem name="status" type={`"loading" | "idle" | "generating"`}>
+    The current synchronization status of the chat.
+  </PropertiesListItem>
+  <PropertiesListItem name="partType" type={`"text" | "tool-invocation"`}>
+    The type of content being generated.
+  </PropertiesListItem>
+  <PropertiesListItem name="toolName" type="string | undefined">
+    The name of the tool being invoked. If no tool is currently being called,
+    returns `undefined`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### RegisterAiKnowledge
 
@@ -1913,7 +2069,7 @@ create a tool definition, and you can supply `parameters` as a
 [JSON Schema](https://json-schema.org/) that the AI can fill in. If you supply
 an `execute` function the AI will call it. `render` is used to show UI inside
 the chat. Below is an example of a tool that lets AI get the current weather in
-a given location, then renders a compoennt in the chat.
+a given location, then renders a component in the chat.
 
 {/* TODO this all needs to be explained better */}
 
@@ -2399,17 +2555,43 @@ import { useRoom } from "@liveblocks/react/suspense";
 const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
 ```
 
+<PropertiesList title="Options">
+  <PropertiesListItem
+    name="allowOutsideRoom"
+    type="boolean"
+    defaultValue="false"
+  >
+    Whether the hook should return `null` instead of throwing when used outside
+    of a [`RoomProvider`][] context.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="room" type="Room">
+    The Room instance from the nearest [`RoomProvider`][]. Returns `null` if
+    `allowOutsideRoom` is `true` and the hook is used outside of a room.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useIsInsideRoom [@badge=Both]
 
-Returns a boolean, `true` if the hook was called inside a
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) context, and
-`false` otherwise.
+Returns a boolean, `true` if the hook was called inside a [`RoomProvider`][]
+context, and `false` otherwise.
 
 ```ts
 import { useIsInsideRoom } from "@liveblocks/react/suspense";
 
 const isInsideRoom = useIsInsideRoom();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="isInsideRoom" type="boolean">
+    `true` if the hook was called inside a [`RoomProvider`][] context, `false`
+    otherwise.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Displaying different components inside rooms
 
@@ -2475,8 +2657,16 @@ import { useStatus } from "@liveblocks/react/suspense";
 const status = useStatus();
 ```
 
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="status"
+    type="'initial' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected'"
+  >
+    The current WebSocket connection status of the room.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useSyncStatus [@badge=Both]
 
@@ -2488,22 +2678,33 @@ Storage, text editors, threads, or notifications.
 A `{ smooth: true }` option is also available, which prevents quick changes
 between states, making it ideal for
 [rendering a synchronization badge in your app](#display-synchronization-badge).
-
-```ts
-import { useSyncStatus } from "@liveblocks/react";
-
-const syncStatus = useSyncStatus();
-// "synchronizing" | "synchronized"
-```
-
-👉 A [Suspense version][] of this hook is also available.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```ts
 import { useSyncStatus } from "@liveblocks/react/suspense";
 
-const syncStatus = useSyncStatus();
 // "synchronizing" | "synchronized"
+const syncStatus = useSyncStatus();
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.smooth" type="boolean" defaultValue="false">
+    When `true`, prevents quick changes between states by delaying the
+    transition from "synchronizing" to "synchronized" until 1 second has passed
+    after the final change.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="syncStatus" type="'synchronizing' | 'synchronized'">
+    The current synchronization status of Liveblocks.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Display a synchronization badge [#display-synchronization-badge]
 
@@ -2561,15 +2762,8 @@ Internally, this option uses the
 
 ### useOthersListener [@badge=RoomProvider]
 
-Calls the given callback when an “others” event occurs. Possible event types
-are:
-
-- `enter` – A user has entered the room.
-- `leave` – A user has left the room.
-- `reset` – The others list has been emptied. This is the first event that
-  occurs when the room is entered. It also occurs when you’ve lost connection to
-  the room.
-- `update` – A user’s presence data has been updated.
+Calls the given callback when an “others” event occurs, when a user enters,
+leaves, or updates their presence.
 
 ```ts
 function App() {
@@ -2594,6 +2788,23 @@ function App() {
   });
 }
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="callback" type="(event: OthersEvent) => void">
+    A callback function that is called when an "others" event occurs. The event
+    object contains the error `type`,  the `user` that triggered it, and the current
+    `others` in the room. Possible event types are:
+
+      - `enter` – A user has entered the room.
+      - `leave` – A user has left the room.
+      - `reset` – The others list has been emptied. This is the first event that
+        occurs when the room is entered. It also occurs when you’ve lost connection to
+        the room.
+      - `update` – A user’s presence data has been updated.
+
+    </PropertiesListItem>
+
+</PropertiesList>
 
 ### useLostConnectionListener [@badge=RoomProvider]
 
@@ -2635,9 +2846,18 @@ function App() {
 }
 ```
 
-Automatically unsubscribes when the component is unmounted.
+Automatically unsubscribes when the component is unmounted. For a demonstration
+of this behavior, see our [connection status example][].
 
-For a demonstration of this behavior, see our [connection status example][].
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(event: 'lost' | 'restored' | 'failed') => void"
+  >
+    A callback function that is called when a connection loss event occurs. The
+    event can be "lost", "restored", or "failed".
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Presence
 
@@ -2651,29 +2871,35 @@ collaborative experiences as you build them, in realtime.
 ### useMyPresence [@badge=RoomProvider]
 
 Return the presence of the current user, and a function to update it.
-Automatically subscribes to updates to the current user’s presence.
-
-Note that the `updateMyPresence` setter function is different to the setter
-function returned by React’s `useState` hook. Instead, you can pass a partial
-presence object to `updateMyPresence`, and any changes will be merged into the
-current presence. It will not replace the entire presence object.
+Automatically subscribes to updates to the current user’s presence. Setting a
+property will not replace the whole state, but will instead merge the property
+into the existing state.
 
 ```ts
 import { useMyPresence } from "@liveblocks/react/suspense";
 
 const [myPresence, updateMyPresence] = useMyPresence();
+
 updateMyPresence({ x: 0 });
 updateMyPresence({ y: 0 });
 
 // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
 ```
 
-This is roughly equal to:
+<PropertiesList title="Returns">
+  <PropertiesListItem name="myPresence" type="TPresence">
+    The current user’s presence data.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="updateMyPresence"
+    type="(patch: Partial<Presence>, options?: { addToHistory?: boolean }) => void"
+  >
+    A function to update the current user’s presence. Accepts a partial presence
+    object and optional history options.
+  </PropertiesListItem>
+</PropertiesList>
 
-```tsx
-const myPresence = useSelf((me) => me.presence);
-const updateMyPresence = useUpdateMyPresence();
-```
+#### Adding presence to history
 
 `updateMyPresence` accepts an optional argument to add a new item to the
 undo/redo stack. See [`room.history`][] for more information.
@@ -2682,19 +2908,22 @@ undo/redo stack. See [`room.history`][] for more information.
 updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 ```
 
+#### Other ways to use presence
+
+`useMyPresence` is a more convenient way to update and view presence, reather
+than using [`useSelf`][] and [`useUpdateMyPresence`][] in combination.
+
+```tsx
+const myPresence = useSelf((me) => me.presence);
+const updateMyPresence = useUpdateMyPresence();
+```
+
 ### useUpdateMyPresence [@badge=RoomProvider]
 
-Returns a setter function to update the current user’s presence.
-
-Use this if you don’t need the current user’s presence in your component, but
-you need to update it (e.g. live cursor). It’s better to use
-`useUpdateMyPresence` because it won’t subscribe your component to get
-rerendered when the presence updates.
-
-Note that the `updateMyPresence` setter function is different to the setter
-function returned by React’s `useState` hook. Instead, you can pass a partial
-presence object to `updateMyPresence`, and any changes will be merged into the
-current presence. It will not replace the entire presence object.
+Returns a setter function to update the current user’s presence. Setting a
+property will not replace the whole state, but will instead merge the property
+into the existing state. Will trigger fewer renders than [`useMyPresence`][], as
+it doesn’t update when presence changes.
 
 ```ts
 import { useUpdateMyPresence } from "@liveblocks/react/suspense";
@@ -2702,7 +2931,24 @@ import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 const updateMyPresence = useUpdateMyPresence();
 
 updateMyPresence({ y: 0 });
+updateMyPresence({ x: 0 });
+
+// Presence will be { x: 0, y: 0 }
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="updateMyPresence"
+    type="(patch: Partial<Presence>, options?: { addToHistory?: boolean }) => void"
+  >
+    A function to update the current user's presence. Accepts a partial presence
+    object and optional history options.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Adding presence to history
 
 `updateMyPresence` accepts an optional argument to add a new item to the
 undo/redo stack. See [`room.history`][] for more information.
@@ -2715,6 +2961,9 @@ updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 
 Returns the current user once it is connected to the room, and automatically
 subscribes to updates to the current user.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```ts
 import { useSelf } from "@liveblocks/react/suspense";
@@ -2732,14 +2981,28 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="selector" type="(me: User) => T">
+    Optional selector function to extract specific data from the current user.
+    If not provided, returns the entire user object.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="currentUser" type="User | T | null">
+    The current user object or the selected data from the user. Returns `null`
+    if not connected to the room (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useOthers [@badge=RoomProvider]
 
 Extracts data from the list of other users currently in the same Room, and
 automatically subscribes to updates on the selected data. For full details, see
 [how selectors work][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 The `others` argument to the `useOthers` selector function is an _immutable_
 array of Users.
@@ -2759,9 +3022,6 @@ const typingUsers = useOthers(
   shallow // 👈
 );
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -2797,15 +3057,31 @@ arguments.
 
 </Banner>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="selector" type="(others: readonly User[]) => T">
+    Optional selector function to extract specific data from the others array.
+    If not provided, returns the entire others array.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEqual" type="(prev: T, curr: T) => boolean">
+    Optional equality function to determine if the selected data has changed.
+    Defaults to strict equality comparison.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="others" type="readonly TUser[] | null">
+    The others array or the selected data from the others array. Returns `null`
+    if not connected to the room (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
 all changes to the selected data. A [Suspense version][] of this hook is also
-available.
-
-The key difference with [`useOthers`][] is that the selector (and the optional
-comparison function) work at the _item_ level, like doing a `.map()` over the
-others array.
+available. The key difference with [`useOthers`][] is that the selector (and the
+optional comparison function) work at the _item_ level, like doing a `.map()`
+over the others array.
 
 ```tsx
 // Example 1
@@ -2848,6 +3124,28 @@ return (
 );
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="selector" type="(other: User) => T">
+    A selector function to extract specific data from each user in the others
+    array.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEqual" type="(prev: T, curr: T) => boolean">
+    Optional equality function to determine if the selected data for a user has
+    changed. Defaults to strict equality comparison.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="others"
+    type="readonly [connectionId: number, data: T][] | null"
+  >
+    An array of tuples where each item is a pair of `[connectionId,
+    selectedData]`. Returns `null` if not connected to the room (in non-Suspense
+    version).
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useOthersConnectionIds [@badge=RoomProvider]
 
 Returns an array of connection IDs (numbers), and rerenders automatically when
@@ -2855,26 +3153,50 @@ users join or leave. This hook is useful in particular in combination with the
 [`useOther`][] (singular) hook, to implement high-frequency rerendering of
 components for each user in the room, e.g. cursors. See the [`useOther`][]
 (singular) documentation below for a full usage example.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
-useOthersConnectionIds(); // [2, 4, 7]
+import { useOthersConnectionIds } from "@liveblocks/react/suspense";
+
+// [2, 4, 7]
+const connectionIds = useOthersConnectionIds();
 ```
 
-Roughly equivalent to:
+<PropertiesList title="Returns">
+  <PropertiesListItem name="connectionIds" type="readonly number[] | null">
+    An array of connection IDs for all other users in the room. Returns `null`
+    if not connected to the room (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Another way to fetch connection IDs
+
+This hook is similar to using [`useOthers`][] and calling `.map()` on the
+result.
 
 ```tsx
-useOthers((others) => others.map((other) => other.connectionId), shallow);
-```
+import { useOthers, shallow } from "@liveblocks/react/suspense";
 
-👉 A [Suspense version][] of this hook is also available.
+// [2, 4, 7]
+const connectionIds = useOthers(
+  (others) => others.map((other) => other.connectionId),
+  shallow
+);
+```
 
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this
-hook is also available.
+subscribe to all changes to the selected data.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
+import { useOther } from "@liveblocks/react/suspense";
+
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
 const isTyping = useOther(
   3, // User with connectionId 3
@@ -2926,6 +3248,26 @@ function Cursor({ connectionId }) {
 👉 A [Suspense version][] of this hook is also available, which will never
 return `null`.
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="connectionId" type="number">
+    The connection ID of the specific user to extract data from.
+  </PropertiesListItem>
+  <PropertiesListItem name="selector" type="(other: User) => T">
+    A selector function to extract specific data from the user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEqual" type="(prev: T, curr: T) => boolean">
+    Optional equality function to determine if the selected data has changed.
+    Defaults to strict equality comparison.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="T | null">
+    The selected data from the specified user. Returns `null` if the user is not
+    found or not connected to the room (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Broadcast
 
 ### useBroadcastEvent [@badge=RoomProvider]
@@ -2950,6 +3292,14 @@ useEventListener(({ event, user, connectionId }) => {
   }
 });
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="broadcast" type="(event: TBroadcastEvent) => void">
+    A function that broadcasts custom events to other users in the room.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useEventListener [@badge=RoomProvider]
 
@@ -2983,6 +3333,18 @@ will typically be equal to one of the others in the room, but it can also be
 [Broadcast Event API](https://liveblocks.io/docs/api-reference/rest-api-endpoints#post-broadcast-event).
 
 Automatically unsubscribes when the component is unmounted.
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(event: { event: TBroadcastEvent; user: User | null; connectionId: number }) => void"
+  >
+    A callback function that is called when a custom event is received. The
+    callback receives an object with the event data, user information, and
+    connection ID. Connection ID is always `-1` when receiving an event sent
+    from the server.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Storage
 
@@ -3213,6 +3575,24 @@ const myTodos = useStorage(
 
 </Banner>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="selector" type="(root: ToImmutable<TStorage>) => T">
+    A selector function to extract specific data from the storage root. The root
+    is an immutable copy of your entire Liveblocks Storage tree.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEqual" type="(prev: T, curr: T) => boolean">
+    Optional equality function to determine if the selected data has changed.
+    Defaults to strict equality comparison.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="data" type="T | null">
+    The selected data from storage. Returns `null` while storage is still
+    loading (in non-Suspense version).
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useHistory [@badge=RoomProvider]
 
 Returns the room’s history. See [`Room.history`][] for more information.
@@ -3222,6 +3602,15 @@ import { useHistory } from "@liveblocks/react/suspense";
 
 const { undo, redo, pause, resume } = useHistory();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="history" type="History">
+    The room's history object containing methods for undo, redo, pause, and
+    resume operations.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useUndo [@badge=RoomProvider]
 
@@ -3234,6 +3623,14 @@ import { useUndo } from "@liveblocks/react/suspense";
 const undo = useUndo();
 ```
 
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="undo" type="() => void">
+    A function that undoes the last operation executed by the current client.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useRedo [@badge=RoomProvider]
 
 Returns a function that redoes the last operation executed by the current
@@ -3244,6 +3641,14 @@ import { useRedo } from "@liveblocks/react/suspense";
 
 const redo = useRedo();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="redo" type="() => void">
+    A function that redoes the last operation executed by the current client.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useCanUndo [@badge=RoomProvider]
 
@@ -3259,6 +3664,14 @@ updateMyPresence({ y: 0 });
 
 // At the next render, "canUndo" will be true
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canUndo" type="boolean">
+    Whether there are any operations to undo.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useCanRedo [@badge=RoomProvider]
 
@@ -3280,6 +3693,14 @@ undo();
 
 // At the next render, "canRedo" will be true
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="canRedo" type="boolean">
+    Whether there are any operations to redo.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useMutation [@badge=RoomProvider]
 
@@ -3313,6 +3734,20 @@ options:
 2. Have it take [an extra callback parameter](#useMutation-extra-params).
 
 Both are equally fine, just a matter of preference.
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="mutationFn"
+    type="(context: MutationContext, ...args: TArgs) => void"
+  >
+    A function that performs mutations on Liveblocks state. The context provides
+    access to `storage`, `setMyPresence`, `self`, and `others`.
+  </PropertiesListItem>
+  <PropertiesListItem name="deps" type="React.DependencyList">
+    A dependency array that determines when the mutation function should be
+    recreated, similar to `useCallback`.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### With dependency arrays [#useMutation-dep-arrays]
 
@@ -3419,12 +3854,22 @@ the dependency arrays of your `useMutation` calls:
 }
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="mutate" type="(...args: TArgs) => void">
+    A memoized callback function that executes the mutation. Can accept
+    additional arguments that are passed to the mutation function.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Comments
 
 ### useThreads [@badge=RoomProvider]
 
 Returns a paginated list of threads within the current room. Initially fetches
 the latest 50 threads.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
@@ -3455,6 +3900,49 @@ function Component() {
   );
 }
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.query" type="ThreadsQuery">
+    Optional query to filter threads by resolved status and metadata values.
+    [Learn more](/docs/api-reference/liveblocks-react#useThreads-query).
+  </PropertiesListItem>
+  <PropertiesListItem name="option.scrollOnLoad" type="boolean">
+    Whether to scroll to a comment if the URL's hash is set to a comment ID.
+    Defaults to `true`. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-scroll).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="threads" type="ThreadData[]">
+    An array of threads within the current room.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the threads are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="hasFetchedAll" type="boolean">
+    Whether all available threads have been fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMore" type="() => void">
+    A function to fetch more threads. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="isFetchingMore" type="boolean">
+    Whether more threads are currently being fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMoreError" type="Error | null">
+    Any error that occurred while fetching more threads. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Querying threads [#useThreads-query]
 
@@ -3616,14 +4104,10 @@ comment once the threads are loaded. To avoid scrolling to a comment, set
 const { threads } = useThreads({ scrollOnLoad: false });
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest `ErrorBoundary` if
-initial load failed.
-
 ### useCreateThread [@badge=RoomProvider]
 
-Returns a function that creates a thread with an initial comment, and optionally
-some metadata.
+Returns a function that optimistically creates a thread with an initial comment,
+and optionally some metadata.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
@@ -3631,6 +4115,16 @@ import { useCreateThread } from "@liveblocks/react/suspense";
 const createThread = useCreateThread();
 const thread = createThread({ body: {}, attachments: [], metadata: {} });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="createThread"
+    type="(options: CreateThreadOptions) => ThreadData"
+  >
+    A function that creates a thread with an initial comment and optional
+    metadata. Returns the optimistic thread object.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useCreateThread-error-handling]
 
@@ -3662,6 +4156,12 @@ const deleteThread = useDeleteThread();
 deleteThread("th_xxx");
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteThread" type="(threadId: string) => void">
+    A function that deletes a thread and all its associated comments by ID.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useDeleteThread-error-handling]
 
 `useDeleteThread` deletes threads optimistically, meaning that the thread
@@ -3682,14 +4182,9 @@ useErrorListener((error) => {
 
 ### useEditThreadMetadata [@badge=RoomProvider]
 
-Returns a function that edits a thread’s metadata.
-
-<Banner title="Deleting properties">
-
-To delete an existing metadata property, set its value to `null`. Passing
-`undefined` for a metadata property will ignore it.
-
-</Banner>
+Returns a function that edits a thread’s metadata. To delete an existing
+metadata property, set its value to `null`. Passing `undefined` for a metadata
+property will ignore it.
 
 ```tsx
 import { useEditThreadMetadata } from "@liveblocks/react/suspense";
@@ -3697,6 +4192,16 @@ import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 const editThreadMetadata = useEditThreadMetadata();
 editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editThreadMetadata"
+    type="(options: { threadId: string; metadata: ThreadMetadata }) => void"
+  >
+    A function that edits a thread’s metadata. To delete an existing metadata
+    property, set its value to `null`.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useEditThreadMetadata-error-handling]
 
@@ -3727,6 +4232,15 @@ const markThreadAsResolved = useMarkThreadAsResolved();
 markThreadAsResolved("th_xxx");
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markThreadAsResolved"
+    type="(threadId: string) => void"
+  >
+    A function that marks a thread as resolved.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useMarkThreadAsResolved-error-handling]
 
 `useMarkThreadAsResolved` marks threads as resolved optimistically, meaning that
@@ -3755,6 +4269,15 @@ import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
 const markThreadAsUnresolved = useMarkThreadAsUnresolved();
 markThreadAsUnresolved("th_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markThreadAsUnresolved"
+    type="(threadId: string) => void"
+  >
+    A function that marks a thread as unresolved.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkThreadAsUnresolved-error-handling]
 
@@ -3785,6 +4308,12 @@ const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="markThreadAsRead" type="(threadId: string) => void">
+    A function that marks a thread as read.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useThreadSubscription [@badge=RoomProvider]
 
 Returns the subscription status of a thread, methods to update it, and when the
@@ -3802,6 +4331,28 @@ const { status, subscribe, unsubscribe, unreadSince } =
 [`useSubscribeToThread`](#useSubscribeToThread) and
 [`useUnsubscribeFromThread`](#useUnsubscribeFromThread), but they only affect
 the current thread.
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string">
+    The ID of the thread to get subscription status for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="status" type="ThreadSubscriptionStatus">
+    The subscription status of the thread ('subscribed', 'unsubscribed', or
+    'not_subscribed').
+  </PropertiesListItem>
+  <PropertiesListItem name="subscribe" type="() => void">
+    A function to subscribe to the thread.
+  </PropertiesListItem>
+  <PropertiesListItem name="unsubscribe" type="() => void">
+    A function to unsubscribe from the thread.
+  </PropertiesListItem>
+  <PropertiesListItem name="unreadSince" type="Date | null">
+    The date when the thread was last read, or null if it has been read.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useSubscribeToThread [@badge=RoomProvider]
 
@@ -3855,19 +4406,17 @@ updateSettings({
 });
 ```
 
-### useUnsubscribeFromThread [@badge=RoomProvider]
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="subscribeToThread"
+    type="(threadId: string) => void"
+  >
+    A function that subscribes the current user to a thread for inbox
+    notifications.
+  </PropertiesListItem>
+</PropertiesList>
 
-Returns a function that unsubscribes the current user from a thread, meaning
-they will no longer receive inbox notifications when new comments are posted.
-
-```tsx
-import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
-
-const unsubscribeFromThread = useUnsubscribeFromThread();
-unsubscribeFromThread("th_xxx");
-```
-
-#### Error handling [#useUnsubscribeFromThread-error-handling]
+#### Error handling [#useSubscribeToThread-error-handling]
 
 `useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
 that the subscription appears inactive instantly, before Liveblocks has
@@ -3878,11 +4427,23 @@ confirmed a successful unsubscription. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
+  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
-    console.log(`Problem unsubscribing from thread ${threadId}`);
+    console.log(`Problem subscribing to thread ${threadId}`);
   }
 });
+```
+
+### useUnsubscribeFromThread [@badge=RoomProvider]
+
+Returns a function that unsubscribes the current user from a thread, meaning
+they will no longer receive inbox notifications when new comments are posted.
+
+```tsx
+import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
+
+const unsubscribeFromThread = useUnsubscribeFromThread();
+unsubscribeFromThread("th_xxx");
 ```
 
 Unsubscribing will replace any existing subscription for the current thread
@@ -3907,6 +4468,34 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="unsubscribeFromThread"
+    type="(threadId: string) => void"
+  >
+    A function that unsubscribes the current user from a thread, stopping inbox
+    notifications.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Error handling [#useUnsubscribeFromThread-error-handling]
+
+`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
+that the subscription appears inactive instantly, before Liveblocks has
+confirmed a successful unsubscription. To catch any errors that occur, add
+[`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
+    const { roomId, threadId } = error.context;
+    console.log(`Problem unsubscribing from thread ${threadId}`);
+  }
+});
+```
+
 ### useCreateComment [@badge=RoomProvider]
 
 Returns a function that adds a comment to a thread.
@@ -3921,6 +4510,16 @@ const comment = createComment({
   attachments: [],
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="createComment"
+    type="(options: CreateCommentOptions) => CommentData"
+  >
+    A function that adds a comment to a thread. Returns the optimistic comment
+    object.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useCreateComment-error-handling]
 
@@ -3956,6 +4555,15 @@ editComment({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editComment"
+    type="(options: EditCommentOptions) => void"
+  >
+    A function that edits a comment’s body and attachments.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useEditComment-error-handling]
 
 `useEditComment` edits comments optimistically, meaning that the comment appears
@@ -3985,6 +4593,16 @@ import { useDeleteComment } from "@liveblocks/react/suspense";
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteComment"
+    type="(options: { threadId: string; commentId: string }) => void"
+  >
+    A function that deletes a comment. If it is the last non-deleted comment,
+    the thread also gets deleted.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteComment-error-handling]
 
@@ -4017,6 +4635,15 @@ const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="addReaction"
+    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
+  >
+    A function that adds a reaction to a comment.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useAddReaction-error-handling]
 
 `useAddReaction` adds reactions optimistically, meaning that the reaction
@@ -4048,6 +4675,15 @@ const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="removeReaction"
+    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
+  >
+    A function that removes a reaction from a comment.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useRemoveReaction-error-handling]
 
 `useRemoveReaction` removes reactions optimistically, meaning that the reaction
@@ -4069,6 +4705,9 @@ useErrorListener((error) => {
 ### useAttachmentUrl [@badge=RoomProvider]
 
 Returns a presigned URL for an attachment by its ID.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useAttachmentUrl } from "@liveblocks/react/suspense";
@@ -4076,8 +4715,23 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="attachmentId" type="string">
+    The ID of the attachment to get a presigned URL for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="url" type="string | null">
+    The presigned URL for the attachment, or null if not yet loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the URL is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the URL.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Notifications
 
@@ -4121,6 +4775,44 @@ function Inbox() {
   );
 }
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.query" type="InboxNotificationsQuery">
+    Optional query to filter notifications by room ID or kind. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-query).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
+    An array of inbox notifications for the current user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the notifications are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the notifications.
+  </PropertiesListItem>
+  <PropertiesListItem name="hasFetchedAll" type="boolean">
+    Whether all available notifications have been fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMore" type="() => void">
+    A function to fetch more notifications. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="isFetchingMore" type="boolean">
+    Whether more notifications are currently being fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMoreError" type="Error | null">
+    Any error that occurred while fetching more notifications. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Querying inbox notifications [#useInboxNotifications-query]
 
@@ -4258,19 +4950,39 @@ function Inbox() {
 }
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
-
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
 Returns the number of unread inbox notifications for the current user.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="options"
+    type="UseUnreadInboxNotificationsCountOptions"
+  >
+    Optional configuration object.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="query" type="InboxNotificationsQuery">
+    Optional query to filter notifications count by room ID or kind.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="count" type="number">
+    The number of unread inbox notifications for the current user.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Querying unread inbox notifications count
 
@@ -4290,9 +5002,6 @@ const { count } = useUnreadInboxNotificationsCount({
 });
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
-
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
 Returns a function that marks an inbox notification as read for the current
@@ -4304,6 +5013,15 @@ import { useMarkInboxNotificationAsRead } from "@liveblocks/react/suspense";
 const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markInboxNotificationAsRead"
+    type="(inboxNotificationId: string) => void"
+  >
+    A function that marks an inbox notification as read for the current user.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkInboxNotificationAsRead-error-handling]
 
@@ -4336,6 +5054,12 @@ const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="markAllInboxNotificationsAsRead" type="() => void">
+    A function that marks all of the current user's inbox notifications as read.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useMarkAllInboxNotificationsAsRead-error-handling]
 
 `useMarkAllInboxNotificationsAsRead` marks all notifications as read
@@ -4365,6 +5089,15 @@ const deleteInboxNotification = useDeleteInboxNotification();
 deleteInboxNotification("in_xxx");
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteInboxNotification"
+    type="(inboxNotificationId: string) => void"
+  >
+    A function that deletes an inbox notification for the current user.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useDeleteInboxNotification-error-handling]
 
 `useDeleteInboxNotification` deletes notifications optimistically, meaning that
@@ -4393,6 +5126,12 @@ import { useDeleteAllInboxNotifications } from "@liveblocks/react/suspense";
 const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
 deleteAllInboxNotifications();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteAllInboxNotifications" type="() => void">
+    A function that deletes all of the current user’s inbox notifications.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteAllInboxNotifications-error-handling]
 
@@ -4436,6 +5175,19 @@ notification ID you passed to it, without any fetching or waterfalls.
 
 </Banner>
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="inboxNotificationId" type="string">
+    The ID of the inbox notification to get the associated thread for. Must be a
+    "thread" type notification.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="thread" type="ThreadData | null">
+    The thread associated with the inbox notification, or null if not found.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useRoomSubscriptionSettings [@badge=RoomProvider]
 
 Returns the user’s subscription settings for the current room and a function to
@@ -4468,6 +5220,18 @@ For `"textMentions"`, these are the two possible values that can be set:
 
 - `"mine"` Receive notifications for mentions of you.
 - `"none"` No notifications are received.
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="RoomSubscriptionSettings">
+    The current subscription settings for the room.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="updateSettings"
+    type="(settings: Partial<RoomSubscriptionSettings>) => void"
+  >
+    A function to update the subscription settings.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useUpdateRoomSubscriptionSettings [@badge=RoomProvider]
 
@@ -4509,7 +5273,7 @@ useErrorListener((error) => {
 For `"threads"`, these are the three possible values that can be set:
 
 - `"all"` Receive notifications for every activity in every thread.
-- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+- `"replies_and_mentions"` Receive notifications for mentions and threads you're
   participating in.
 - `"none"` No notifications are received.
 
@@ -4520,6 +5284,16 @@ For `"textMentions"`, these are the two possible values that can be set:
 
 Works the same as `updateSettings` in
 [`useRoomSubscriptionSettings`](#useRoomSubscriptionSettings).
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="updateRoomSubscriptionSettings"
+    type="(settings: Partial<RoomSubscriptionSettings>) => void"
+  >
+    A function that updates the user's notification settings for the current
+    room.
+  </PropertiesListItem>
+</PropertiesList>
 
 ##### Replacing individual thread subscriptions
 
@@ -4537,6 +5311,25 @@ subscribeToThread("th_d75sF3...");
 // 2. Disables notifications for all threads, including "th_d75sF3..."
 updateSettings({
   threads: "none",
+});
+```
+
+#### Error handling [#useUpdateRoomSubscriptionSettings-error-handling]
+
+`useUpdateRoomSubscriptionSettings` updates subscription settings
+optimistically, meaning that the settings appear updated instantly, before
+Liveblocks has confirmed a successful update. To catch any errors that occur,
+add [`useErrorListener`][] and look for the
+`UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+    const { roomId } = error.context;
+    console.log(`Problem updating subscription settings for room ${roomId}`);
+  }
 });
 ```
 
@@ -4591,6 +5384,9 @@ The `updateSettings` function can be used to update the current user’s
 notification settings, changing their settings for every room in the project.
 Each notification `kind` must first be enabled on your project’s notification
 dashboard page before settings can be used.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 // You only need to pass partials
@@ -4637,6 +5433,25 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="NotificationSettings | null">
+    The current notification settings for the user, or null if no settings are
+    configured.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="updateSettings"
+    type="(settings: Partial<NotificationSettings>) => void"
+  >
+    A function to update the notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the notification settings are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useNotificationSettings-error-handling]
 
 Error handling is an important aspect to consider when using the
@@ -4660,10 +5475,6 @@ if (error) {
   );
 }
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw and error to the nearest `ErrorBoundary`
-if initial load failed.
 
 ### useUpdateNotificationSettings [@badge=LiveblocksProvider]
 
@@ -4724,6 +5535,16 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="updateNotificationSettings"
+    type="(settings: Partial<NotificationSettings>) => void"
+  >
+    A function that updates the user's notification settings for the current
+    project.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Version History
 
 <Banner title="Contact support for access">
@@ -4746,11 +5567,22 @@ import { useHistoryVersions } from "@liveblocks/react";
 const { versions, error, isLoading } = useHistoryVersions();
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="versions" type="HistoryVersion[]">
+    An array of history versions for the room.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Miscellaneous
 
 ### useUser [@badge=Both]
 
-Returns user info from a given user ID.
+Returns user info from a given user ID. To use `useUser`, you should provide a
+resolver function to the [`resolveUsers`][] option in [`createClient`][] or
+[`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useUser } from "@liveblocks/react/suspense";
@@ -4758,19 +5590,26 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="userId" type="string">
+    The ID of the user to get information for.
+  </PropertiesListItem>
+</PropertiesList>
 
-<Banner title="Providing a resolver function">
-
-To use `useUser`, you should provide a resolver function to the
-[`resolveUsers`][] option in [`createClient`][] or [`LiveblocksProvider`][].
-
-</Banner>
+<PropertiesList title="Returns">
+  <PropertiesListItem name="user" type="User | null">
+    The user information, or null if not found.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useRoomInfo [@badge=Both]
 
-Returns room info from a given room ID.
+Returns room info from a given room ID. To use `useRoomInfo`, you should provide
+a resolver function to the [`resolveRoomsInfo`][] option in [`createClient`][]
+or [`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useRoomInfo } from "@liveblocks/react/suspense";
@@ -4778,19 +5617,26 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string">
+    The ID of the room to get information for.
+  </PropertiesListItem>
+</PropertiesList>
 
-<Banner title="Providing a resolver function">
-
-To use `useRoomInfo`, you should provide a resolver function to the
-[`resolveRoomsInfo`][] option in [`createClient`][] or [`LiveblocksProvider`][].
-
-</Banner>
+<PropertiesList title="Returns">
+  <PropertiesListItem name="info" type="RoomInfo | null">
+    The room information, or null if not found.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### useGroupInfo [@badge=Both]
 
-Returns group info from a given group ID.
+Returns group info from a given group ID. To use `useGroupInfo`, you should
+provide a resolver function to the [`resolveGroupsInfo`][] option in
+[`createClient`][] or [`LiveblocksProvider`][].
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useGroupInfo } from "@liveblocks/react/suspense";
@@ -4798,16 +5644,17 @@ import { useGroupInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useGroupInfo("group-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="groupId" type="string">
+    The ID of the group to get information for.
+  </PropertiesListItem>
+</PropertiesList>
 
-<Banner title="Providing a resolver function">
-
-To use `useGroupInfo`, you should provide a resolver function to the
-[`resolveGroupsInfo`][] option in [`createClient`][] or
-[`LiveblocksProvider`][].
-
-</Banner>
+<PropertiesList title="Returns">
+  <PropertiesListItem name="info" type="GroupInfo | null">
+    The group information, or null if not found.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## TypeScript
 
@@ -5345,9 +6192,12 @@ current room.
   /docs/api-reference/liveblocks-react#useLostConnectionListener
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
+[`useupdatemypresence`]:
+  /docs/api-reference/liveblocks-react#useUpdateMyPresence
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
 [`useinboxnotifications`]:
   /docs/api-reference/liveblocks-react#useInboxNotifications
+[`usemypresence`]: /docs/api-reference/liveblocks-react#useMyPresence
 [`usesyncstatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
 [`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
 [`room`]: /docs/api-reference/liveblocks-client#Room

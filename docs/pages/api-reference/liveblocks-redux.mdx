@@ -32,6 +32,18 @@ const store = configureStore({
 });
 ```
 
+<PropertiesList title="Options">
+  <PropertiesListItem name="client" type="Client">
+    The Liveblocks client instance created with `createClient()`.
+  </PropertiesListItem>
+  <PropertiesListItem name="presenceMapping" type="PresenceMapping">
+    Optional mapping to synchronize Redux state with Liveblocks presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="storageMapping" type="StorageMapping">
+    Optional mapping to synchronize Redux state with Liveblocks storage.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### client [#enhancer-option-client]
 
 See different authentication methods in the [`createClient`][] method.
@@ -132,6 +144,12 @@ const dispatch = useDispatch();
 dispatch(actions.enterRoom("roomId"));
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string">
+    The ID of the room to enter.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### LEAVE [#actions-leave]
 
 Dispatch `leaveRoom` action to leave the current room and stop syncing it with
@@ -145,6 +163,8 @@ const dispatch = useDispatch();
 
 dispatch(actions.leaveRoom());
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ## state.liveblocks [#liveblocks-state]
 
