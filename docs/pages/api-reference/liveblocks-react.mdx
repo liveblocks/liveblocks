@@ -3851,16 +3851,20 @@ function Component() {
     Any error that occurred while loading the threads.
   </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
-    Whether all available threads have been fetched.
+    Whether all available threads have been fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
   <PropertiesListItem name="fetchMore" type="() => void">
-    A function to fetch more threads.
+    A function to fetch more threads. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
   <PropertiesListItem name="isFetchingMore" type="boolean">
-    Whether more threads are currently being fetched.
+    Whether more threads are currently being fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
   <PropertiesListItem name="fetchMoreError" type="Error | null">
-    Any error that occurred while fetching more threads.
+    Any error that occurred while fetching more threads. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4666,6 +4670,44 @@ function Inbox() {
 }
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.query" type="InboxNotificationsQuery">
+    Optional query to filter notifications by room ID or kind. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-query).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
+    An array of inbox notifications for the current user.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the notifications are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the notifications.
+  </PropertiesListItem>
+  <PropertiesListItem name="hasFetchedAll" type="boolean">
+    Whether all available notifications have been fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMore" type="() => void">
+    A function to fetch more notifications. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="isFetchingMore" type="boolean">
+    Whether more notifications are currently being fetched. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMoreError" type="Error | null">
+    Any error that occurred while fetching more notifications. [Learn
+    more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Querying inbox notifications [#useInboxNotifications-query]
 
 It’s possible to return inbox notifications that match a certain query with the
@@ -4802,76 +4844,18 @@ function Inbox() {
 }
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="options" type="UseInboxNotificationsOptions">
-    Optional configuration object.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Options">
-  <PropertiesListItem name="query" type="InboxNotificationsQuery">
-    Optional query to filter notifications by room ID or kind.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
-    An array of inbox notifications for the current user.
-  </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the notifications are currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the notifications.
-  </PropertiesListItem>
-  <PropertiesListItem name="hasFetchedAll" type="boolean">
-    Whether all available notifications have been fetched.
-  </PropertiesListItem>
-  <PropertiesListItem name="fetchMore" type="() => void">
-    A function to fetch more notifications.
-  </PropertiesListItem>
-  <PropertiesListItem name="isFetchingMore" type="boolean">
-    Whether more notifications are currently being fetched.
-  </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
-    Any error that occurred while fetching more notifications.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
 Returns the number of unread inbox notifications for the current user.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
-
-#### Querying unread inbox notifications count
-
-It’s possible to return the count of unread inbox notifications that match a
-certain query with the `query` option. You can filter unread inbox notifications
-count based on their associated room ID or kind.
-
-```tsx
-// Returns the count that match the entire `query`, e.g. { roomId: "room1", ... }
-const { count } = useUnreadInboxNotificationsCount({
-  query: {
-    // Filter for roomId
-    roomId: "room1",
-    // Filter for kind
-    kind: "thread",
-  },
-});
-```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem
@@ -4892,13 +4876,25 @@ return a loading state and will throw when there's an error.
   <PropertiesListItem name="count" type="number">
     The number of unread inbox notifications for the current user.
   </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the count is currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the count.
-  </PropertiesListItem>
 </PropertiesList>
+
+#### Querying unread inbox notifications count
+
+It’s possible to return the count of unread inbox notifications that match a
+certain query with the `query` option. You can filter unread inbox notifications
+count based on their associated room ID or kind.
+
+```tsx
+// Returns the count that match the entire `query`, e.g. { roomId: "room1", ... }
+const { count } = useUnreadInboxNotificationsCount({
+  query: {
+    // Filter for roomId
+    roomId: "room1",
+    // Filter for kind
+    kind: "thread",
+  },
+});
+```
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -4911,6 +4907,15 @@ import { useMarkInboxNotificationAsRead } from "@liveblocks/react/suspense";
 const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
 markInboxNotificationAsRead("in_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markInboxNotificationAsRead"
+    type="(inboxNotificationId: string) => void"
+  >
+    A function that marks an inbox notification as read for the current user.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkInboxNotificationAsRead-error-handling]
 
@@ -4931,15 +4936,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="markInboxNotificationAsRead"
-    type="(inboxNotificationId: string) => void"
-  >
-    A function that marks an inbox notification as read for the current user.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useMarkAllInboxNotificationsAsRead [@badge=LiveblocksProvider]
 
 Returns a function that marks all of the current user‘s inbox notifications as
@@ -4951,6 +4947,12 @@ import { useMarkAllInboxNotificationsAsRead } from "@liveblocks/react/suspense";
 const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
 markAllInboxNotificationsAsRead();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="markAllInboxNotificationsAsRead" type="() => void">
+    A function that marks all of the current user's inbox notifications as read.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkAllInboxNotificationsAsRead-error-handling]
 
@@ -4970,12 +4972,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem name="markAllInboxNotificationsAsRead" type="() => void">
-    A function that marks all of the current user's inbox notifications as read.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useDeleteInboxNotification [@badge=LiveblocksProvider]
 
 Returns a function that deletes an inbox notification for the current user.
@@ -4986,6 +4982,15 @@ import { useDeleteInboxNotification } from "@liveblocks/react/suspense";
 const deleteInboxNotification = useDeleteInboxNotification();
 deleteInboxNotification("in_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteInboxNotification"
+    type="(inboxNotificationId: string) => void"
+  >
+    A function that deletes an inbox notification for the current user.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteInboxNotification-error-handling]
 
@@ -5005,15 +5010,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="deleteInboxNotification"
-    type="(inboxNotificationId: string) => void"
-  >
-    A function that deletes an inbox notification for the current user.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useDeleteAllInboxNotifications [@badge=LiveblocksProvider]
 
 Returns a function that deletes all of the current user‘s inbox notifications.
@@ -5024,6 +5020,12 @@ import { useDeleteAllInboxNotifications } from "@liveblocks/react/suspense";
 const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
 deleteAllInboxNotifications();
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteAllInboxNotifications" type="() => void">
+    A function that deletes all of the current user’s inbox notifications.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteAllInboxNotifications-error-handling]
 
@@ -5042,12 +5044,6 @@ useErrorListener((error) => {
   }
 });
 ```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="deleteAllInboxNotifications" type="() => void">
-    A function that deletes all of the current user's inbox notifications.
-  </PropertiesListItem>
-</PropertiesList>
 
 ### useInboxNotificationThread [@badge=LiveblocksProvider]
 
@@ -5164,6 +5160,16 @@ For `"textMentions"`, these are the two possible values that can be set:
 Works the same as `updateSettings` in
 [`useRoomSubscriptionSettings`](#useRoomSubscriptionSettings).
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="updateRoomSubscriptionSettings"
+    type="(settings: Partial<RoomSubscriptionSettings>) => void"
+  >
+    A function that updates the user's notification settings for the current
+    room.
+  </PropertiesListItem>
+</PropertiesList>
+
 ##### Replacing individual thread subscriptions
 
 Subscribing will replace any
@@ -5201,16 +5207,6 @@ useErrorListener((error) => {
   }
 });
 ```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="updateRoomSubscriptionSettings"
-    type="(settings: Partial<RoomSubscriptionSettings>) => void"
-  >
-    A function that updates the user's notification settings for the current
-    room.
-  </PropertiesListItem>
-</PropertiesList>
 
 ### useNotificationSettings [@badge=LiveblocksProvider]
 
@@ -5263,6 +5259,9 @@ The `updateSettings` function can be used to update the current user’s
 notification settings, changing their settings for every room in the project.
 Each notification `kind` must first be enabled on your project’s notification
 dashboard page before settings can be used.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 // You only need to pass partials
@@ -5309,6 +5308,25 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="NotificationSettings | null">
+    The current notification settings for the user, or null if no settings are
+    configured.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="updateSettings"
+    type="(settings: Partial<NotificationSettings>) => void"
+  >
+    A function to update the notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the notification settings are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useNotificationSettings-error-handling]
 
 Error handling is an important aspect to consider when using the
@@ -5332,29 +5350,6 @@ if (error) {
   );
 }
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw and error to the nearest `ErrorBoundary`
-if initial load failed.
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="NotificationSettings | null">
-    The current notification settings for the user, or null if no settings are
-    configured.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="updateSettings"
-    type="(settings: Partial<NotificationSettings>) => void"
-  >
-    A function to update the notification settings.
-  </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the notification settings are currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the notification settings.
-  </PropertiesListItem>
-</PropertiesList>
 
 ### useUpdateNotificationSettings [@badge=LiveblocksProvider]
 
@@ -5430,7 +5425,7 @@ updateSettings({
 <Banner title="Contact support for access">
 
 Version History is an add-on feature, available by contacting support. Please
-[contact us](https://liveblocks.io/contact/sales) and we'd love to help you get
+[contact us](https://liveblocks.io/contact/sales) and we’d love to help you get
 started.
 
 </Banner>
@@ -5450,12 +5445,6 @@ const { versions, error, isLoading } = useHistoryVersions();
 <PropertiesList title="Returns">
   <PropertiesListItem name="versions" type="HistoryVersion[]">
     An array of history versions for the room.
-  </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the versions are currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the versions.
   </PropertiesListItem>
 </PropertiesList>
 
