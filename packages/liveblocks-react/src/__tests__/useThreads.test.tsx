@@ -450,10 +450,10 @@ describe("useThreads", () => {
     });
     const subscriptions = [
       dummySubscriptionData({ subjectId: bluePinnedThread.id }),
-      // dummySubscriptionData({ subjectId: blueUnpinnedThread.id }),
-      // dummySubscriptionData({ subjectId: redPinnedThread.id }),
       dummySubscriptionData({ subjectId: redUnpinnedThread.id }),
       dummySubscriptionData({ subjectId: uncoloredPinnedThread.id }),
+      // not subscribed to "blueUnpinnedThread"
+      // not subscribed to "redPinnedThread"
     ];
 
     server.use(

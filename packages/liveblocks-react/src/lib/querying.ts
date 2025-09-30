@@ -30,8 +30,10 @@ function matchesThreadsQuery(
   q: ThreadsQuery<BaseMetadata>,
   subscriptions: SubscriptionsByKey | undefined
 ) {
-  // Boolean logic: query.resolved? => q.resolved === t.resolved
-  const subscription = subscriptions?.[getSubscriptionKey("thread", thread.id)];
+  let subscription = undefined;
+  if (subscriptions) {
+    subscription = subscriptions?.[getSubscriptionKey("thread", thread.id)];
+  }
 
   return (
     (q.resolved === undefined || thread.resolved === q.resolved) &&
