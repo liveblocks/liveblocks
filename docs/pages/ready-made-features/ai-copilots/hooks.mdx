@@ -233,15 +233,20 @@ function Chat() {
 The [`useAiChat`](/docs/api-reference/liveblocks-react#useAiChat) hook allows
 you to fetch a
 [chat’s title](/docs/api-reference/liveblocks-react#Displaying-a-default-title)
-and custom metadata.
+and
+[custom metadata](/docs/api-reference/liveblocks-react#Create-a-chat-with-a-custom-title-and-metadata).
 
 ```tsx
 import { useAiChat } from "@liveblocks/react/suspense";
 
 function ChatTitle({ chatId }: { chatId: string }) {
+  // +++
   const { chat } = useAiChat(chatId);
+  // +++
 
-  return <h1>{chat.title || "Untitled chat"}</div>;
+  // +++
+  return <h1>{chat.title || "Untitled chat"}</h1>;
+  // +++
 }
 ```
 
@@ -256,11 +261,21 @@ or freezing part of your app while content isgenerating.
 import { useAiChatStatus } from "@liveblocks/react/suspense";
 
 function ChatStatus({ chatId }: { chatId: string }) {
+  // +++
   const { status } = useAiChatStatus(chatId);
+  // +++
 
+  // +++
   return status === "idle" ? <div>🟢 Ready</div> : <div>🟡 Generating…</div>;
+  // +++
 }
 ```
+
+## Hook types [#hook-types]
+
+There are two different ways to use many Liveblocks hooks; with
+[React Suspense](https://react.dev/reference/react/Suspense), and without it. We
+recommend using the Suspense versions, as they often result in simpler code.
 
 ### Suspense hooks [#suspense-hooks]
 
