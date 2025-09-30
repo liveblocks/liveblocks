@@ -3659,6 +3659,20 @@ options:
 
 Both are equally fine, just a matter of preference.
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="mutationFn"
+    type="(context: MutationContext, ...args: TArgs) => void"
+  >
+    A function that performs mutations on Liveblocks state. The context provides
+    access to `storage`, `setMyPresence`, `self`, and `others`.
+  </PropertiesListItem>
+  <PropertiesListItem name="deps" type="React.DependencyList">
+    A dependency array that determines when the mutation function should be
+    recreated, similar to `useCallback`.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### With dependency arrays [#useMutation-dep-arrays]
 
 ```tsx
@@ -3763,20 +3777,6 @@ the dependency arrays of your `useMutation` calls:
   }
 }
 ```
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem
-    name="mutationFn"
-    type="(context: MutationContext, ...args: TArgs) => void"
-  >
-    A function that performs mutations on Liveblocks state. The context provides
-    access to `storage`, `setMyPresence`, `self`, and `others`.
-  </PropertiesListItem>
-  <PropertiesListItem name="deps" type="React.DependencyList">
-    A dependency array that determines when the mutation function should be
-    recreated, similar to `useCallback`.
-  </PropertiesListItem>
-</PropertiesList>
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="mutate" type="(...args: TArgs) => void">
