@@ -3791,6 +3791,9 @@ the dependency arrays of your `useMutation` calls:
 
 Returns a paginated list of threads within the current room. Initially fetches
 the latest 50 threads.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
@@ -3821,6 +3824,45 @@ function Component() {
   );
 }
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.query" type="ThreadsQuery">
+    Optional query to filter threads by resolved status and metadata values.
+    [Learn more](/docs/api-reference/liveblocks-react#useThreads-query).
+  </PropertiesListItem>
+  <PropertiesListItem name="option.scrollOnLoad" type="boolean">
+    Whether to scroll to a comment if the URL's hash is set to a comment ID.
+    Defaults to `true`. [Learn
+    more](/docs/api-reference/liveblocks-react#useThreads-scroll).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="threads" type="ThreadData[]">
+    An array of threads within the current room.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the threads are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while loading the threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="hasFetchedAll" type="boolean">
+    Whether all available threads have been fetched.
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMore" type="() => void">
+    A function to fetch more threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="isFetchingMore" type="boolean">
+    Whether more threads are currently being fetched.
+  </PropertiesListItem>
+  <PropertiesListItem name="fetchMoreError" type="Error | null">
+    Any error that occurred while fetching more threads.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Querying threads [#useThreads-query]
 
@@ -3970,54 +4012,10 @@ comment once the threads are loaded. To avoid scrolling to a comment, set
 const { threads } = useThreads({ scrollOnLoad: false });
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest `ErrorBoundary` if
-initial load failed.
-
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="options" type="UseThreadsOptions">
-    Optional configuration object.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Options">
-  <PropertiesListItem name="query" type="ThreadsQuery">
-    Optional query to filter threads by resolved status and metadata values.
-  </PropertiesListItem>
-  <PropertiesListItem name="scrollOnLoad" type="boolean">
-    Whether to scroll to a comment if the URL's hash is set to a comment ID.
-    Defaults to `true`.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="threads" type="ThreadData[]">
-    An array of threads within the current room.
-  </PropertiesListItem>
-  <PropertiesListItem name="isLoading" type="boolean">
-    Whether the threads are currently being loaded.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
-    Any error that occurred while loading the threads.
-  </PropertiesListItem>
-  <PropertiesListItem name="hasFetchedAll" type="boolean">
-    Whether all available threads have been fetched.
-  </PropertiesListItem>
-  <PropertiesListItem name="fetchMore" type="() => void">
-    A function to fetch more threads.
-  </PropertiesListItem>
-  <PropertiesListItem name="isFetchingMore" type="boolean">
-    Whether more threads are currently being fetched.
-  </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
-    Any error that occurred while fetching more threads.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useCreateThread [@badge=RoomProvider]
 
-Returns a function that creates a thread with an initial comment, and optionally
-some metadata.
+Returns a function that optimistically creates a thread with an initial comment,
+and optionally some metadata.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
@@ -4025,6 +4023,16 @@ import { useCreateThread } from "@liveblocks/react/suspense";
 const createThread = useCreateThread();
 const thread = createThread({ body: {}, attachments: [], metadata: {} });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="createThread"
+    type="(options: CreateThreadOptions) => ThreadData"
+  >
+    A function that creates a thread with an initial comment and optional
+    metadata. Returns the optimistic thread object.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useCreateThread-error-handling]
 
@@ -4044,16 +4052,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="createThread"
-    type="(options: CreateThreadOptions) => ThreadData"
-  >
-    A function that creates a thread with an initial comment and optional
-    metadata. Returns the optimistic thread object.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useDeleteThread [@badge=RoomProvider]
 
 Returns a function that deletes a thread and all its associated comments by ID.
@@ -4065,6 +4063,12 @@ import { useDeleteThread } from "@liveblocks/react/suspense";
 const deleteThread = useDeleteThread();
 deleteThread("th_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="deleteThread" type="(threadId: string) => void">
+    A function that deletes a thread and all its associated comments by ID.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteThread-error-handling]
 
@@ -4084,22 +4088,11 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem name="deleteThread" type="(threadId: string) => void">
-    A function that deletes a thread and all its associated comments by ID.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useEditThreadMetadata [@badge=RoomProvider]
 
-Returns a function that edits a thread’s metadata.
-
-<Banner title="Deleting properties">
-
-To delete an existing metadata property, set its value to `null`. Passing
-`undefined` for a metadata property will ignore it.
-
-</Banner>
+Returns a function that edits a thread’s metadata. To delete an existing
+metadata property, set its value to `null`. Passing `undefined` for a metadata
+property will ignore it.
 
 ```tsx
 import { useEditThreadMetadata } from "@liveblocks/react/suspense";
@@ -4107,6 +4100,16 @@ import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 const editThreadMetadata = useEditThreadMetadata();
 editThreadMetadata({ threadId: "th_xxx", metadata: {} });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editThreadMetadata"
+    type="(options: { threadId: string; metadata: ThreadMetadata }) => void"
+  >
+    A function that edits a thread’s metadata. To delete an existing metadata
+    property, set its value to `null`.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useEditThreadMetadata-error-handling]
 
@@ -4126,16 +4129,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="editThreadMetadata"
-    type="(options: { threadId: string; metadata: ThreadMetadata }) => void"
-  >
-    A function that edits a thread's metadata. To delete an existing metadata
-    property, set its value to `null`.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useMarkThreadAsResolved [@badge=RoomProvider]
 
 Returns a function that marks a thread as resolved.
@@ -4146,6 +4139,15 @@ import { useMarkThreadAsResolved } from "@liveblocks/react/suspense";
 const markThreadAsResolved = useMarkThreadAsResolved();
 markThreadAsResolved("th_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markThreadAsResolved"
+    type="(threadId: string) => void"
+  >
+    A function that marks a thread as resolved.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkThreadAsResolved-error-handling]
 
@@ -4165,15 +4167,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="markThreadAsResolved"
-    type="(threadId: string) => void"
-  >
-    A function that marks a thread as resolved.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useMarkThreadAsUnresolved [@badge=RoomProvider]
 
 Returns a function that marks a thread as unresolved.
@@ -4184,6 +4177,15 @@ import { useMarkThreadAsUnresolved } from "@liveblocks/react/suspense";
 const markThreadAsUnresolved = useMarkThreadAsUnresolved();
 markThreadAsUnresolved("th_xxx");
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="markThreadAsUnresolved"
+    type="(threadId: string) => void"
+  >
+    A function that marks a thread as unresolved.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useMarkThreadAsUnresolved-error-handling]
 
@@ -4202,15 +4204,6 @@ useErrorListener((error) => {
   }
 });
 ```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="markThreadAsUnresolved"
-    type="(threadId: string) => void"
-  >
-    A function that marks a thread as unresolved.
-  </PropertiesListItem>
-</PropertiesList>
 
 ### useMarkThreadAsRead [@badge=RoomProvider]
 
@@ -4303,6 +4296,16 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="subscribeToThread"
+    type="(threadId: string) => void"
+  >
+    A function that subscribes the current user to a thread for inbox
+    notifications.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useSubscribeToThread-error-handling]
 
 `useSubscribeToThread` subscribes to threads optimistically, meaning that the
@@ -4320,16 +4323,6 @@ useErrorListener((error) => {
   }
 });
 ```
-
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="subscribeToThread"
-    type="(threadId: string) => void"
-  >
-    A function that subscribes the current user to a thread for inbox
-    notifications.
-  </PropertiesListItem>
-</PropertiesList>
 
 ### useUnsubscribeFromThread [@badge=RoomProvider]
 
@@ -4365,6 +4358,16 @@ updateSettings({
 });
 ```
 
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="unsubscribeFromThread"
+    type="(threadId: string) => void"
+  >
+    A function that unsubscribes the current user from a thread, stopping inbox
+    notifications.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Error handling [#useUnsubscribeFromThread-error-handling]
 
 `useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
@@ -4383,16 +4386,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="unsubscribeFromThread"
-    type="(threadId: string) => void"
-  >
-    A function that unsubscribes the current user from a thread, stopping inbox
-    notifications.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useCreateComment [@badge=RoomProvider]
 
 Returns a function that adds a comment to a thread.
@@ -4407,6 +4400,16 @@ const comment = createComment({
   attachments: [],
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="createComment"
+    type="(options: CreateCommentOptions) => CommentData"
+  >
+    A function that adds a comment to a thread. Returns the optimistic comment
+    object.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useCreateComment-error-handling]
 
@@ -4426,16 +4429,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="createComment"
-    type="(options: CreateCommentOptions) => CommentData"
-  >
-    A function that adds a comment to a thread. Returns the optimistic comment
-    object.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useEditComment[@badge=RoomProvider]
 
 Returns a function that edits a comment’s body.
@@ -4451,6 +4444,15 @@ editComment({
   attachments: [],
 });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editComment"
+    type="(options: EditCommentOptions) => void"
+  >
+    A function that edits a comment’s body and attachments.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useEditComment-error-handling]
 
@@ -4470,15 +4472,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="editComment"
-    type="(options: EditCommentOptions) => void"
-  >
-    A function that edits a comment's body and attachments.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useDeleteComment [@badge=RoomProvider]
 
 Returns a function that deletes a comment. If it is the last non-deleted
@@ -4490,6 +4483,16 @@ import { useDeleteComment } from "@liveblocks/react/suspense";
 const deleteComment = useDeleteComment();
 deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="deleteComment"
+    type="(options: { threadId: string; commentId: string }) => void"
+  >
+    A function that deletes a comment. If it is the last non-deleted comment,
+    the thread also gets deleted.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useDeleteComment-error-handling]
 
@@ -4509,16 +4512,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="deleteComment"
-    type="(options: { threadId: string; commentId: string }) => void"
-  >
-    A function that deletes a comment. If it is the last non-deleted comment,
-    the thread also gets deleted.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useAddReaction [@badge=RoomProvider]
 
 Returns a function that adds a reaction to a comment. Can be used to create an
@@ -4531,6 +4524,15 @@ import { useAddReaction } from "@liveblocks/react/suspense";
 const addReaction = useAddReaction();
 addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="addReaction"
+    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
+  >
+    A function that adds a reaction to a comment.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useAddReaction-error-handling]
 
@@ -4550,15 +4552,6 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="addReaction"
-    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
-  >
-    A function that adds a reaction to a comment.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useRemoveReaction [@badge=RoomProvider]
 
 Returns a function that removes a reaction from a comment. Can be used to create
@@ -4571,6 +4564,15 @@ import { useRemoveReaction } from "@liveblocks/react/suspense";
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="removeReaction"
+    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
+  >
+    A function that removes a reaction from a comment.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Error handling [#useRemoveReaction-error-handling]
 
@@ -4590,27 +4592,18 @@ useErrorListener((error) => {
 });
 ```
 
-<PropertiesList title="Returns">
-  <PropertiesListItem
-    name="removeReaction"
-    type="(options: { threadId: string; commentId: string; emoji: string }) => void"
-  >
-    A function that removes a reaction from a comment.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useAttachmentUrl [@badge=RoomProvider]
 
 Returns a presigned URL for an attachment by its ID.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```tsx
 import { useAttachmentUrl } from "@liveblocks/react/suspense";
 
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
-
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there's an error.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="attachmentId" type="string">
