@@ -1635,7 +1635,7 @@ const sendAiMessage = useSendAiMessage("my-chat-id", {
     Optional. The ID of the AI chat to send messages to. Can also be provided
     when calling the returned function.
   </PropertiesListItem>
-  <PropertiesListItem name="options" type="UseSendAiMessageOptions">
+  <PropertiesListItem name="options" type="object">
     Optional configuration object.
   </PropertiesListItem>
   <PropertiesListItem name="options.copilotId" type="string">
@@ -2486,28 +2486,36 @@ const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
     defaultValue="false"
   >
     Whether the hook should return `null` instead of throwing when used outside
-    of a RoomProvider context.
+    of a [`RoomProvider`][] context.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="room" type="Room">
-    The Room instance from the nearest RoomProvider. Returns `null` if
-    `allowOutsideRoom` is `true` and the hook is used outside of a RoomProvider.
+    The Room instance from the nearest [`RoomProvider`][]. Returns `null` if
+    `allowOutsideRoom` is `true` and the hook is used outside of a room.
   </PropertiesListItem>
 </PropertiesList>
 
 ### useIsInsideRoom [@badge=Both]
 
-Returns a boolean, `true` if the hook was called inside a
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) context, and
-`false` otherwise.
+Returns a boolean, `true` if the hook was called inside a [`RoomProvider`][]
+context, and `false` otherwise.
 
 ```ts
 import { useIsInsideRoom } from "@liveblocks/react/suspense";
 
 const isInsideRoom = useIsInsideRoom();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="isInsideRoom" type="boolean">
+    `true` if the hook was called inside a [`RoomProvider`][] context, `false`
+    otherwise.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Displaying different components inside rooms
 
@@ -2562,15 +2570,6 @@ contexts.
 <Header />
 ```
 
-<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="isInsideRoom" type="boolean">
-    `true` if the hook was called inside a RoomProvider context, `false`
-    otherwise.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useStatus [@badge=RoomProvider]
 
 Returns the current WebSocket connection status of the room, and will re-render
@@ -2581,9 +2580,6 @@ import { useStatus } from "@liveblocks/react/suspense";
 
 const status = useStatus();
 ```
-
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
@@ -2606,22 +2602,33 @@ Storage, text editors, threads, or notifications.
 A `{ smooth: true }` option is also available, which prevents quick changes
 between states, making it ideal for
 [rendering a synchronization badge in your app](#display-synchronization-badge).
-
-```ts
-import { useSyncStatus } from "@liveblocks/react";
-
-const syncStatus = useSyncStatus();
-// "synchronizing" | "synchronized"
-```
-
-👉 A [Suspense version][] of this hook is also available.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
 
 ```ts
 import { useSyncStatus } from "@liveblocks/react/suspense";
 
-const syncStatus = useSyncStatus();
 // "synchronizing" | "synchronized"
+const syncStatus = useSyncStatus();
 ```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Optional configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.smooth" type="boolean" defaultValue="false">
+    When `true`, prevents quick changes between states by delaying the
+    transition from "synchronizing" to "synchronized" until 1 second has passed
+    after the final change.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="syncStatus" type="'synchronizing' | 'synchronized'">
+    The current synchronization status of Liveblocks.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Display a synchronization badge [#display-synchronization-badge]
 
@@ -2677,37 +2684,10 @@ More specifically, this option triggers when:
 Internally, this option uses the
 [beforeunload event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event).
 
-<PropertiesList title="Arguments">
-  <PropertiesListItem name="options" type="UseSyncStatusOptions">
-    Optional configuration object.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Options">
-  <PropertiesListItem name="smooth" type="boolean" defaultValue="false">
-    When `true`, prevents quick changes between states by delaying the
-    transition from "synchronizing" to "synchronized" until 1 second has passed
-    after the final change.
-  </PropertiesListItem>
-</PropertiesList>
-
-<PropertiesList title="Returns">
-  <PropertiesListItem name="syncStatus" type="'synchronizing' | 'synchronized'">
-    The current synchronization status of Liveblocks.
-  </PropertiesListItem>
-</PropertiesList>
-
 ### useOthersListener [@badge=RoomProvider]
 
-Calls the given callback when an “others” event occurs. Possible event types
-are:
-
-- `enter` – A user has entered the room.
-- `leave` – A user has left the room.
-- `reset` – The others list has been emptied. This is the first event that
-  occurs when the room is entered. It also occurs when you’ve lost connection to
-  the room.
-- `update` – A user’s presence data has been updated.
+Calls the given callback when an “others” event occurs, when a user enters,
+leaves, or updates their presence.
 
 ```ts
 function App() {
@@ -2736,8 +2716,18 @@ function App() {
 <PropertiesList title="Arguments">
   <PropertiesListItem name="callback" type="(event: OthersEvent) => void">
     A callback function that is called when an "others" event occurs. The event
-    object contains `type`, `user`, and `others` properties.
-  </PropertiesListItem>
+    object contains the error `type`,  the `user` that triggered it, and the current
+    `others` in the room. Possible event types are:
+
+      - `enter` – A user has entered the room.
+      - `leave` – A user has left the room.
+      - `reset` – The others list has been emptied. This is the first event that
+        occurs when the room is entered. It also occurs when you’ve lost connection to
+        the room.
+      - `update` – A user’s presence data has been updated.
+
+    </PropertiesListItem>
+
 </PropertiesList>
 
 ### useLostConnectionListener [@badge=RoomProvider]
@@ -2780,9 +2770,8 @@ function App() {
 }
 ```
 
-Automatically unsubscribes when the component is unmounted.
-
-For a demonstration of this behavior, see our [connection status example][].
+Automatically unsubscribes when the component is unmounted. For a demonstration
+of this behavior, see our [connection status example][].
 
 <PropertiesList title="Arguments">
   <PropertiesListItem
