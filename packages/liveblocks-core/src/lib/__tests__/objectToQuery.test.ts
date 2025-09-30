@@ -86,7 +86,8 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual(
+    assertEq(
+      query,
       "metadata['priority']:3 metadata['posX']<200 metadata['posX']>100 metadata['level']>25 metadata['volume']<50 metadata['age']>=18 metadata['age']<=65"
     );
   });
