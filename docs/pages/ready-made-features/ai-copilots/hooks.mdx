@@ -261,3 +261,84 @@ function ChatStatus({ chatId }: { chatId: string }) {
   return status === "idle" ? <div>🟢 Ready</div> : <div>🟡 Generating…</div>;
 }
 ```
+
+### Suspense hooks [#suspense-hooks]
+
+Using Suspense hooks means that any data retrieved, for example `chats` from
+`useAiChats`, will never be `undefined`, and your component will never see an
+error.
+
+```tsx
+import { useAiChats } from "@liveblocks/react/suspense";
+
+// Suspense: `chats` is always defined
+function MyAiChats() {
+  const { chats } = useAiChats();
+
+  // [{ id: "th_sf8s6sh...", title: "...", ... }, ...]
+  console.log(chats);
+}
+```
+
+To catch errors and display a loading screen, you can use
+[`ErrorBoundary`](https://www.npmjs.com/package/react-error-boundary) and
+[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
+
+```tsx highlight="7-11"
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Handle errors and loading state in the component above
+function Component() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        <MyAiChats />
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+To use Suspense, make sure you’re exporting your hooks from
+`@liveblocks/react/suspense`.
+
+```tsx
+// Suspense version of hooks
+import { useAiChats, useAiChatMessages } from "@liveblocks/react/suspense";
+//                                                               ^^^^^^^^
+```
+
+### Regular hooks [#regular-hooks]
+
+The regular versions of Liveblocks hooks require you to check for `error` and
+`isLoading` properties. You can then handle these states in the same component.
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+// Handle errors and loading state in the same component
+function MyAiChats() {
+  const { chats, error, isLoading } = useAiChats();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Non-Suspense: `chats` is only defined AFTER the `if` checks
+  // [{ id: "th_sf8s6sh...", title: "...", ... }, ...]
+  console.log(chats);
+}
+```
+
+To use the regular hooks, make sure you’re exporting from `@liveblocks/react`.
+
+```tsx
+// Regular version of hooks
+import { useAiChats, useAiChatMessages } from "@liveblocks/react";
+//                                             ^^^^^^^^^^^^^^^^^
+```
