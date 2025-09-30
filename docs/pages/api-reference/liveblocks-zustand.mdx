@@ -33,6 +33,27 @@ const useStore = create(
 );
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="stateCreator" type="StateCreator">
+    The Zustand state creator function.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="LiveblocksMiddlewareOptions">
+    Configuration object for the Liveblocks middleware.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="client" type="Client">
+    The Liveblocks client instance created with `createClient()`.
+  </PropertiesListItem>
+  <PropertiesListItem name="presenceMapping" type="PresenceMapping">
+    Optional mapping to synchronize Zustand state with Liveblocks presence.
+  </PropertiesListItem>
+  <PropertiesListItem name="storageMapping" type="StorageMapping">
+    Optional mapping to synchronize Zustand state with Liveblocks storage.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### client [#middleware-option-client]
 
 See different authentication methods in the [`createClient`][] method.
@@ -104,7 +125,13 @@ const {
 enterRoom("roomId");
 ```
 
-If this is the first time you’re entering the room, the room is initialized from
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="roomId" type="string">
+    The ID of the room to enter.
+  </PropertiesListItem>
+</PropertiesList>
+
+If this is the first time you're entering the room, the room is initialized fromom
 your local Zustand state (only for the keys mentioned in your `storageMapping`
 configuration).
 
@@ -119,6 +146,8 @@ const {
 
 leaveRoom();
 ```
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 ### room [#liveblocks-state-room]
 

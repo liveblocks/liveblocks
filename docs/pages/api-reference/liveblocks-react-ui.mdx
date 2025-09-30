@@ -487,6 +487,10 @@ the `components` prop. A full list is [available here](#AiChat-components).
     Inline styles to apply to the chat container. Useful for setting CSS custom
     properties.
   </PropertiesListItem>
+  <PropertiesListItem name="responseTimeout" type="number">
+    The time, in milliseconds, before an AI response will timeout. Defaults to
+    30_000.
+  </PropertiesListItem>
 </PropertiesList>
 
 ###### components [#AiChat-components]
@@ -656,7 +660,7 @@ render: () => (
 ##### Props [#AiTool-props]
 
 <PropertiesList>
-  <PropertiesListItem name="title" type="string">
+  <PropertiesListItem name="title" type="ReactNode">
     The title to display for the tool. If not provided, the tool name will be
     formatted as a human-readable string.
   </PropertiesListItem>
@@ -3094,7 +3098,9 @@ All hooks for Notifications are in
 
 <Banner title="Contact support for access">
 
-Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
+Version History is an add-on feature, available by contacting support. Please
+[contact us](https://liveblocks.io/contact/sales) and we'd love to help you get
+started.
 
 </Banner>
 

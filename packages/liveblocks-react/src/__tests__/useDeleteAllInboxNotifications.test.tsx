@@ -13,6 +13,7 @@ import {
   mockDeleteComment,
   mockDeleteThread,
   mockGetInboxNotifications,
+  mockGetUnreadInboxNotificationsCount,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
@@ -188,9 +189,11 @@ describe("useDeleteAllInboxNotifications", () => {
     unmount();
   });
 
-  test("should affect the number of unread notifications even optimistically", async () => {
+  test("should not affect the number of unread notifications even optimistically when failing to delete", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
+
+    let unreadInboxNotificationsCountCalls = 0;
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
@@ -226,6 +229,14 @@ describe("useDeleteAllInboxNotifications", () => {
           })
         )
       ),
+      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+        unreadInboxNotificationsCountCalls++;
+        if (unreadInboxNotificationsCountCalls === 1) {
+          return res(ctx.json({ count: 2 }));
+        } else {
+          return res(ctx.json({ count: 0 }));
+        }
+      }),
       mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(500)))
     );
 
@@ -265,8 +276,6 @@ describe("useDeleteAllInboxNotifications", () => {
     // We delete the notifications optimitiscally
     expect(result.current.inboxNotifications).toEqual([]);
 
-    expect(result.current.unreadInboxNotificationsCount).toEqual(0);
-
     await waitFor(() => {
       // The optimistic update is reverted because of the error response
       expect(result.current.inboxNotifications).toEqual(
@@ -276,6 +285,103 @@ describe("useDeleteAllInboxNotifications", () => {
 
     expect(result.current.unreadInboxNotificationsCount).toEqual(2);
 
+    unmount();
+  });
+
+  test("should affect the number of unread notifications when deleting successfully", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
+
+    let unreadInboxNotificationsCountCalls = 0;
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0]!.id,
+        readAt: null,
+        notifiedAt: new Date(2024, 3, 6),
+      }),
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads?.[1]?.id,
+        readAt: null,
+        notifiedAt: new Date(2024, 3, 5),
+      }),
+    ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
+
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) =>
+        res(
+          ctx.status(200),
+          ctx.json({
+            inboxNotifications,
+            threads,
+            subscriptions,
+            groups: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        )
+      ),
+      mockGetUnreadInboxNotificationsCount(async (_req, res, ctx) => {
+        unreadInboxNotificationsCountCalls++;
+        if (unreadInboxNotificationsCountCalls === 1) {
+          return res(ctx.json({ count: 2 }));
+        } else {
+          return res(ctx.json({ count: 0 }));
+        }
+      }),
+      mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204)))
+    );
+
+    const {
+      liveblocks: {
+        LiveblocksProvider,
+        useInboxNotifications,
+        useDeleteAllInboxNotifications,
+        useUnreadInboxNotificationsCount,
+      },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        deleteAllInboxNotifications: useDeleteAllInboxNotifications(),
+        inboxNotifications: useInboxNotifications().inboxNotifications,
+        unreadInboxNotificationsCount: useUnreadInboxNotificationsCount().count,
+      }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
+      expect(result.current.unreadInboxNotificationsCount).toEqual(2);
+    });
+
+    act(() => {
+      result.current.deleteAllInboxNotifications();
+    });
+
+    // We delete the notifications optimitiscally
+    expect(result.current.inboxNotifications).toEqual([]);
+
+    await waitFor(() => {
+      expect(result.current.inboxNotifications).toEqual([]);
+    });
+
+    await waitFor(() => {
+      expect(result.current.unreadInboxNotificationsCount).toEqual(0);
+    });
     unmount();
   });
 
