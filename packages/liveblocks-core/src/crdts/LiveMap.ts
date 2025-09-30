@@ -207,7 +207,12 @@ export class LiveMap<
     const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
-      updates: { [parentKey]: { type: "delete" } },
+      updates: {
+        [parentKey]: {
+          type: "delete",
+          deletedItem: liveNodeToLson(child),
+        },
+      },
     };
 
     return { modified: storageUpdate, reverse };
@@ -323,7 +328,12 @@ export class LiveMap<
       storageUpdates.set(thisId, {
         node: this,
         type: "LiveMap",
-        updates: { [key]: { type: "delete" } },
+        updates: {
+          [key]: {
+            type: "delete",
+            deletedItem: liveNodeToLson(item),
+          },
+        },
       });
       this._pool.dispatch(
         [
