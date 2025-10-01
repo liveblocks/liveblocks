@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { CopilotId } from "@liveblocks/core";
 import { defineAiTool } from "@liveblocks/client";
 import {
   ClientSideSuspense,
@@ -238,6 +239,9 @@ export default function Page({
 }) {
   const { chatId } = use(params);
   const [selectedTab, setSelectedTab] = useState(1);
+  const copilotId =
+    (process.env.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+    undefined;
   return (
     <LiveblocksProvider
       authEndpoint="/api/auth/liveblocks"
@@ -322,7 +326,11 @@ export default function Page({
                 className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14] rounded-xl"
               >
                 <ClientSideSuspense fallback={null}>
-                  <AiChat chatId={chatId} className="rounded-xl" />
+                  <AiChat
+                    chatId={chatId}
+                    className="rounded-xl"
+                    copilotId={copilotId}
+                  />
                 </ClientSideSuspense>
               </Popover.Content>
             </Popover.Portal>

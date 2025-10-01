@@ -1,5 +1,6 @@
 "use client";
 
+import type { CopilotId, MessageId } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   useAiChat,
@@ -8,7 +9,6 @@ import {
 
 import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Select } from "radix-ui";
-import { CopilotId, MessageId } from "@liveblocks/core";
 import { AssistantMessage } from "./assistant-message";
 import { ChatComposer } from "./chat-composer";
 import { ArrowDownIcon } from "../../icons/arrow-down-icon";
@@ -56,7 +56,10 @@ function Chat({ chatId }: { chatId: string }) {
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
   const [lastSubmittedMessageId, setLastSubmittedMessageId] =
     useState<MessageId | null>(null);
-  const [copilotId, setCopilotId] = useState<CopilotId | "default">("default");
+  const [copilotId, setCopilotId] = useState<CopilotId | undefined>(
+    (process.env.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+      undefined
+  );
   const [branchId, setBranchId] = useState<MessageId | null>(null);
   // @ts-ignore 'branchId' is an internal property of the useAiChatMessages hook
   const { messages } = useAiChatMessages(chatId, { branchId });
@@ -149,7 +152,7 @@ function Chat({ chatId }: { chatId: string }) {
                 <UserMessage
                   key={message.id}
                   message={message}
-                  copilotId={copilotId === "default" ? undefined : copilotId}
+                  copilotId={copilotId}
                   onBranchChange={setBranchId}
                 />
               );
@@ -158,7 +161,7 @@ function Chat({ chatId }: { chatId: string }) {
                 <AssistantMessage
                   key={message.id}
                   message={message}
-                  copilotId={copilotId === "default" ? undefined : copilotId}
+                  copilotId={copilotId}
                   onBranchChange={setBranchId}
                 />
               );
@@ -193,7 +196,7 @@ function Chat({ chatId }: { chatId: string }) {
 
           <ChatComposer
             chatId={chatId}
-            copilotId={copilotId === "default" ? undefined : copilotId}
+            copilotId={copilotId}
             lastMessageId={messages[messages.length - 1]?.id ?? null}
             abortableMessageId={
               messages.find(
@@ -217,11 +220,16 @@ function CopilotSelect({
   copilotId,
   onCopilotIdChange,
 }: {
-  copilotId: CopilotId | "default";
-  onCopilotIdChange: (id: CopilotId | "default") => void;
+  copilotId: CopilotId | undefined;
+  onCopilotIdChange: (id: CopilotId | undefined) => void;
 }) {
   return (
-    <Select.Root value={copilotId} onValueChange={onCopilotIdChange}>
+    <Select.Root
+      value={copilotId || ""}
+      onValueChange={(value) =>
+        onCopilotIdChange((value as CopilotId) || undefined)
+      }
+    >
       <Select.Trigger className="inline-flex text-sm items-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 outline-none px-3 py-2 gap-1">
         <Select.Value placeholder="Select a copilot…" />
         <Select.Icon>
@@ -245,10 +253,9 @@ function CopilotSelect({
         <Select.Content className="rounded-md shadow-sm bg-white dark:bg-neutral-900 ring-1 ring-neutral-950/10 dark:ring-neutral-100/10">
           <Select.Viewport className="p-1 flex flex-col">
             <Select.Item
-              value="default"
+              value=""
               className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-800 outline-none rounded-sm"
             >
-              {/* Default copilot */}
               <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
