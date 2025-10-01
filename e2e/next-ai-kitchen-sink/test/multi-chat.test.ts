@@ -26,7 +26,7 @@ async function setupChatComposer(page: Page) {
 }
 
 test.describe("Multi Chat", () => {
-  test("should create multiple chats, get responses, auto-generate titles, and cleanup", async ({
+  test("should create multiple chats, get responses, and cleanup", async ({
     page,
   }) => {
     // Start at the chats index page
@@ -103,32 +103,8 @@ test.describe("Multi Chat", () => {
       { timeout: 30000 }
     );
 
-    // Go back to index page to check auto-generated titles
+    // Go back to index page for cleanup
     await page.goto("/chats", { waitUntil: "networkidle" });
-
-    // Wait for titles to be generated (they should no longer be "Untitled")
-    // Look for links that are not "Untitled" and contain our chat IDs
-    await expect(
-      page
-        .locator(`a[href="/chats/${firstChatId}"]`)
-        .filter({ hasNotText: "Untitled" })
-    ).toBeVisible({ timeout: 30000 });
-    await expect(
-      page
-        .locator(`a[href="/chats/${secondChatId}"]`)
-        .filter({ hasNotText: "Untitled" })
-    ).toBeVisible({ timeout: 30000 });
-
-    // Verify the titles are related to the content
-    const firstChatLink = page.locator(`a[href="/chats/${firstChatId}"]`);
-    const secondChatLink = page.locator(`a[href="/chats/${secondChatId}"]`);
-
-    const firstTitle = await firstChatLink.textContent();
-    const secondTitle = await secondChatLink.textContent();
-
-    // Titles should be meaningful and related to the questions asked
-    expect(firstTitle?.toLowerCase()).toMatch(/machine|learning|ml/);
-    expect(secondTitle?.toLowerCase()).toMatch(/quantum|computing/);
 
     // Clean up: delete both chats
     // Find and click delete buttons for our chats
@@ -151,5 +127,78 @@ test.describe("Multi Chat", () => {
     await expect(
       page.locator(`a[href="/chats/${secondChatId}"]`)
     ).not.toBeVisible();
+  });
+
+  test("should auto-generate meaningful chat titles", async ({ page }) => {
+    // Start at the chats index page
+    await page.goto("/chats", { waitUntil: "networkidle" });
+
+    // Wait for the page to load
+    await expect(page.locator("h1")).toHaveText("List of all chats");
+
+    // Create a new chat
+    await page.click('button:has-text("Start a new AI chat")');
+
+    // We should be redirected to a new chat page
+    await expect(page).toHaveURL(/\/chats\/[a-zA-Z0-9_-]+/);
+    const chatUrl = page.url();
+    const chatId = chatUrl.split("/").pop();
+
+    // Initially the title should be "Untitled"
+    await expect(page.locator('[data-testid="chat-title"]')).toHaveText(
+      "Untitled"
+    );
+
+    // Send a message about a specific topic
+    const { textInput, sendButton } = await setupChatComposer(page);
+    await textInput.fill(
+      "Tell me about artificial intelligence and neural networks. Be brief."
+    );
+    await sendButton.click();
+
+    // Verify the message was sent (optimistically created)
+    await expect(
+      page.locator(
+        "text=Tell me about artificial intelligence and neural networks. Be brief."
+      )
+    ).toBeVisible();
+
+    // Wait for assistant response
+    await page.waitForFunction(
+      () => {
+        const messages = document.querySelectorAll("p"); // Messages are in <p> tags
+        return messages.length >= 2; // At least user message + assistant response
+      },
+      { timeout: 30000 }
+    );
+
+    // Wait for title to be auto-generated (should change from "Untitled")
+    await expect(page.locator('[data-testid="chat-title"]')).not.toHaveText(
+      "Untitled",
+      { timeout: 30000 }
+    );
+
+    // Get the generated title
+    const generatedTitle = await page
+      .locator('[data-testid="chat-title"]')
+      .textContent();
+
+    // Verify the title is meaningful and related to the content
+    expect(generatedTitle?.toLowerCase()).toMatch(
+      /artificial|intelligence|neural|network|ai/
+    );
+
+    // Clean up: delete the chat
+    await page.goto("/chats", { waitUntil: "networkidle" });
+
+    const deleteButton = page
+      .locator(`a[href="/chats/${chatId}"]`)
+      .locator("..")
+      .locator('button:has-text("Delete")');
+
+    await deleteButton.click();
+
+    // Verify the chat is no longer in the list
+    await expect(page.locator(`a[href="/chats/${chatId}"]`)).not.toBeVisible();
   });
 });
