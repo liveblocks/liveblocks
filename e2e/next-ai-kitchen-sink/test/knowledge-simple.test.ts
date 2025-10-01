@@ -53,12 +53,14 @@ test.describe("Knowledge Registration - Simple", () => {
 
     // Clear any existing text and send a simple message
     await textInput.clear();
-    await textInput.fill("What is the current view in the app?");
+    await textInput.fill("What is the current view in the app? Be brief.");
     await sendButton.click({ timeout: 5000 });
 
     // Verify the message was sent (appears in the chat) - use first() to handle duplicate messages
     await expect(
-      page.locator("text=What is the current view in the app?").first()
+      page
+        .locator("text=What is the current view in the app? Be brief.")
+        .first()
     ).toBeVisible();
 
     // Wait for any AI response to appear

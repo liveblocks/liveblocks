@@ -81,6 +81,7 @@ jobs:
       - name: Run public NPM packaging lint checks
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
+  # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
     runs-on: ubuntu-latest
 
@@ -124,6 +125,7 @@ jobs:
           path: e2e/next-sandbox/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/next-ai-kitchen-sink package
   e2e-next-ai-sandbox:
     runs-on: ubuntu-latest
 
@@ -136,6 +138,8 @@ jobs:
     env:
       NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
       NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: ${{ vars.E2E_TEST_LIVEBLOCKS_BASE_URL }}
+      NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID:
+        ${{ vars.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID }}
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
 
     steps:
@@ -165,6 +169,7 @@ jobs:
           path: e2e/next-ai-kitchen-sink/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/node-sandbox package
   e2e-node-sandbox:
     runs-on: ubuntu-latest
 
@@ -199,6 +204,7 @@ jobs:
       - name: Run node-sandbox tests
         run: npm run test -- --filter node-sandbox
 
+  # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
     runs-on: ubuntu-latest
 

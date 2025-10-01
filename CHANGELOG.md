@@ -1,3 +1,8 @@
+## v3.8.1 (not released yet)
+
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
 ## v3.8.0
 
 ### `@liveblocks/client`
