@@ -227,7 +227,9 @@ function CopilotSelect({
     <Select.Root
       value={copilotId || ""}
       onValueChange={(value) =>
-        onCopilotIdChange((value as CopilotId) || undefined)
+        onCopilotIdChange(
+          !value || value === "default" ? undefined : (value as CopilotId)
+        )
       }
     >
       <Select.Trigger className="inline-flex text-sm items-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 outline-none px-3 py-2 gap-1">
@@ -253,7 +255,11 @@ function CopilotSelect({
         <Select.Content className="rounded-md shadow-sm bg-white dark:bg-neutral-900 ring-1 ring-neutral-950/10 dark:ring-neutral-100/10">
           <Select.Viewport className="p-1 flex flex-col">
             <Select.Item
-              value=""
+              value={
+                (process.env
+                  .NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+                "default" // Cannot use undefined or empty string here, as Select.Item requires a value
+              }
               className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-800 outline-none rounded-sm"
             >
               <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
