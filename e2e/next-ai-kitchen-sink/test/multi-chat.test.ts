@@ -46,11 +46,13 @@ test.describe("Multi Chat", () => {
     // Send a message in the first chat
     const { textInput: firstTextInput, sendButton: firstSendButton } =
       await setupChatComposer(page);
-    await firstTextInput.fill("What is machine learning?");
+    await firstTextInput.fill("What is machine learning? Be brief.");
     await firstSendButton.click();
 
     // Verify the message was sent (optimistically created)
-    await expect(page.locator("text=What is machine learning?")).toBeVisible();
+    await expect(
+      page.locator("text=What is machine learning? Be brief.")
+    ).toBeVisible();
 
     // Go back to chats index and create second chat
     await page.goto("/chats", { waitUntil: "networkidle" });
@@ -67,11 +69,13 @@ test.describe("Multi Chat", () => {
     // Send a message in the second chat
     const { textInput: secondTextInput, sendButton: secondSendButton } =
       await setupChatComposer(page);
-    await secondTextInput.fill("Explain quantum computing.");
+    await secondTextInput.fill("Explain quantum computing. Be brief.");
     await secondSendButton.click();
 
     // Verify the message was sent
-    await expect(page.locator("text=Explain quantum computing.")).toBeVisible();
+    await expect(
+      page.locator("text=Explain quantum computing. Be brief.")
+    ).toBeVisible();
 
     // Go back to first chat and wait for assistant response
     await page.goto(firstChatUrl, { waitUntil: "networkidle" });

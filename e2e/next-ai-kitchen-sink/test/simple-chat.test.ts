@@ -41,7 +41,7 @@ test.describe("Simple Chat", () => {
 
     await test.step("Send ping message", async () => {
       // Perform the ping-pong interaction
-      await textInput.fill("ping");
+      await textInput.fill("ping.");
       await sendButton.click();
     });
 
