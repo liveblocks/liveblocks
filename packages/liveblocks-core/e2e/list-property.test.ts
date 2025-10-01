@@ -270,6 +270,151 @@ const allCommands = [
 ];
 
 test(
+  "Regression: specific LiveList mutation sequence that causes inconsistency",
+  prepareTestsConflicts(
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, room1, room2, control }) => {
+      const listA = root1.get("list");
+      const listB = root2.get("list");
+
+      // Clear initial state
+      listA.clear();
+      listB.clear();
+      room1.history.clear();
+      room2.history.clear();
+      await control.flushA();
+      await control.flushB();
+
+      // Execute the exact sequence that caused the bug
+
+      // Initial undo/redo with no effect
+      room1.history.undo();
+      room1.history.redo();
+
+      // B creates initial content
+      listB.push("Fi");
+      await control.flushB();
+
+      // B modifies while A undoes
+      listB.insert("tw", 0);
+      room1.history.undo();
+
+      // Both clients modify
+      listA.set(0, "kh");
+      listB.set(1, "iO");
+
+      // More modifications
+      listA.push("Nu");
+      listB.insert("WN", 1);
+      listA.push("KT");
+
+      await control.flushA();
+
+      // A rearranges its list
+      listA.move(0, 2);
+      listA.insert("UF", 1);
+      listA.push("XV");
+
+      await control.flushB();
+
+      // More modifications
+      listA.insert("Bw", 0);
+      listB.move(0, 3);
+
+      await control.flushA();
+
+      listA.push("cE");
+      listB.insert("fa", 3);
+      listB.push("Pc");
+      listA.delete(4);
+
+      // Multiple flushes
+      await control.flushA();
+      await control.flushA();
+
+      listB.push("ng");
+
+      await control.flushA();
+
+      // More insertions
+      listA.insert("Hb", 5);
+      listA.push("Pn");
+      listB.push("SM");
+      listB.delete(2);
+
+      // Undo/redo operations
+      room1.history.redo();
+      listA.set(1, "WV");
+      room2.history.undo();
+      listB.push("GK");
+      room1.history.redo();
+      room1.history.undo();
+
+      listA.push("ew");
+      room2.history.undo();
+
+      await control.flushB();
+
+      // Final modifications
+      listB.insert("Yg", 1);
+      listA.delete(1);
+
+      await control.flushA();
+
+      listA.set(5, "wU");
+      listB.push("iP");
+      listB.insert("ou", 5);
+      listA.set(4, "Jb");
+      listB.delete(3);
+      listB.push("iX");
+      listB.set(2, "zR");
+
+      // Final sync
+      await control.flushA();
+      await control.flushB();
+
+      // Check final states
+      const finalA = listA.toImmutable();
+      const finalB = listB.toImmutable();
+
+      // Expected consistent state based on the logs
+      const expected = [
+        "Bw",
+        "Yg",
+        "zR",
+        "fa",
+        "ou",
+        "Jb",
+        "wU",
+        "KT",
+        "kh",
+        "XV",
+        "cE",
+        "Pc",
+        "Pn",
+        "ng",
+        "ew",
+        "SM",
+        "iP",
+        "iX",
+      ];
+
+      // Verify both clients reach the same state
+      expect(finalA).toEqual(finalB);
+
+      // The bug: one client has an extra "kh" element
+      // Client A: ["Bw","Yg","zR","fa","ou","Jb","wU","KT","kh","XV","cE","Pc","Pn","ng","ew","SM","iP","iX"]
+      // Client B: ["Bw","Yg","zR","fa","ou","Jb","wU","KT","XV","cE","Pc","Pn","ng","ew","SM","iP","iX"]
+
+      // This test should fail with the current implementation, demonstrating the bug
+      expect(finalA).toEqual(expected);
+      expect(finalB).toEqual(expected);
+    }
+  )
+);
+
+test(
   "LiveList operations maintain eventual consistency across clients",
   prepareTestsConflicts(
     { list: new LiveList<string>([]) },
