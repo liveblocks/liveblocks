@@ -110,7 +110,7 @@ test.describe("Concurrent Operations", () => {
     // Send a message that should take some time to process
     await sendMessage(
       page,
-      "Write a detailed explanation of quantum mechanics with examples."
+      "Write a brief explanation of quantum mechanics with one example."
     );
 
     // Wait for abort button to appear
@@ -138,9 +138,7 @@ test.describe("Concurrent Operations", () => {
     );
 
     // Verify both user messages are present
-    await expect(
-      page.locator("text=Write a detailed explanation")
-    ).toBeVisible();
+    await expect(page.locator("text=Write a brief explanation")).toBeVisible();
     await expect(
       page.locator("text=What is the capital of France?")
     ).toBeVisible();
