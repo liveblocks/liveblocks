@@ -81,6 +81,7 @@ jobs:
       - name: Run public NPM packaging lint checks
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
+  # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
     runs-on: ubuntu-latest
 
@@ -124,6 +125,7 @@ jobs:
           path: e2e/next-sandbox/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/next-ai-kitchen-sink package
   e2e-next-ai-sandbox:
     runs-on: ubuntu-latest
 
@@ -165,6 +167,7 @@ jobs:
           path: e2e/next-ai-kitchen-sink/playwright-report
           retention-days: 14
 
+  # E2E tests defined in e2e/node-sandbox package
   e2e-node-sandbox:
     runs-on: ubuntu-latest
 
@@ -199,6 +202,7 @@ jobs:
       - name: Run node-sandbox tests
         run: npm run test -- --filter node-sandbox
 
+  # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
     runs-on: ubuntu-latest
 
