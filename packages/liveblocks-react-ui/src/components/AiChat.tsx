@@ -530,9 +530,9 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         ))}
 
         {localKnowledge
-          ? localKnowledge.map((knowledge) => (
+          ? localKnowledge.map((knowledge, index) => (
               <RegisterAiKnowledge
-                key={knowledge.description}
+                key={`${index}:${knowledge.description}`}
                 chatId={chatId}
                 {...knowledge}
               />
