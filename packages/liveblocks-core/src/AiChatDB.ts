@@ -22,6 +22,7 @@ export class AiChatDB {
   }
 
   public getEvenIfDeleted(chatId: string): AiChat | undefined {
+    this.signal.get(); // Access signal to establish dependency tracking for any derived signals
     return this.#byId.get(chatId);
   }
 
