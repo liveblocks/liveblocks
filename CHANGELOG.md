@@ -5,6 +5,8 @@
 - Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
   chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
   prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
 
 ## v3.8.0
 
