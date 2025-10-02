@@ -415,6 +415,66 @@ test(
 );
 
 test(
+  "Minimized regression: specific LiveList mutation sequence that causes inconsistency",
+  prepareTestsConflicts(
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, control, assert }) => {
+      const listA = root1.get("list");
+      const listB = root2.get("list");
+      assert({ list: [] });
+
+      // Minimal bug reproduction in 9 steps.
+      // This sequence causes client A to have an extra element that client B doesn't have.
+
+      listB.push("a"); // Step 1
+      assert({ list: [] }, { list: ["a"] });
+
+      await control.flushB(); // Step 2
+      assert({ list: ["a"] });
+
+      listB.insert("b", 0); // Step 3
+      assert({ list: ["a"] }, { list: ["b", "a"] });
+
+      listA.set(0, "x"); // Step 4
+      assert({ list: ["x"] }, { list: ["b", "a"] });
+
+      listB.set(1, "y"); // Step 5
+      assert({ list: ["x"] }, { list: ["b", "y"] });
+
+      listA.push("c"); // Step 6
+      assert({ list: ["x", "c"] }, { list: ["b", "y"] });
+
+      await control.flushA(); // Step 7
+      assert({ list: ["x", "c"] }, { list: ["b", "x", "c"] });
+
+      listA.move(0, 1); // Step 8
+      assert({ list: ["c", "x"] }, { list: ["b", "x", "c"] });
+
+      // Final sync (for this bug to manifest, it's important to flush B before A!)
+      await control.flushB(); // Step 9
+      assert({ list: ["b", "y", "c", "x"] }, { list: ["b", "y", "c"] });
+
+      // Final sync
+      await control.flushA();
+      assert({ list: ["b", "y", "c", "x"] }, { list: ["b", "y", "c"] });
+      await control.flushB();
+      assert({ list: ["b", "y", "c", "x"] }, { list: ["b", "y", "c"] });
+
+      // Check final states
+      const finalA = listA.toImmutable();
+      const finalB = listB.toImmutable();
+
+      // The bug: A has an extra "x" element
+      // Client A: ["b", "y", "c", "x"]
+      // Client B: ["b", "y", "c"]
+
+      expect(finalA).toEqual(finalB);
+    }
+  )
+);
+
+test(
   "LiveList operations maintain eventual consistency across clients",
   prepareTestsConflicts(
     { list: new LiveList<string>([]) },
