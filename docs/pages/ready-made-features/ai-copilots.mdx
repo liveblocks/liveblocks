@@ -11,15 +11,15 @@ can understand and modify your application state.
 
 ## Overview
 
+{/* TODO make more icons */}
+
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Features"
     href="/docs/ready-made-features/ai-copilots/features"
     description="Learn about chats, actions, integrations"
-    visual={
-      <DocsDefaultComponentsIcon className="fill-product-icon-brand h-auto w-6" />
-    }
+    visual={<DocsRobotIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
@@ -29,6 +29,36 @@ can understand and modify your application state.
     visual={
       <DocsDefaultComponentsIcon className="fill-product-icon-brand h-auto w-6" />
     }
+  />
+  <DocsCard
+    type="technology"
+    title="Hooks"
+    href="/docs/ready-made-features/ai-copilots/hooks"
+    description="Fetch, create, & modify AI chats"
+    visual={<DocsHooksIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Knowledge"
+    href="/docs/ready-made-features/ai-copilots/knowledge"
+    description="Provide AI with a knowledge base & context"
+    visual={
+      <DocsKnowledgeIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Tools"
+    href="/docs/ready-made-features/ai-copilots/tools"
+    description="Allow AI to interact with your application"
+    visual={<DocsToolIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Styling and customization"
+    href="/docs/ready-made-features/ai-copilots/styling-and-customization"
+    description="CSS variables, dark mode, localization"
+    visual={<DocsStylingIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
@@ -55,6 +85,20 @@ can understand and modify your application state.
     href="/docs/api-reference/liveblocks-client#AI-Copilots"
     description="@liveblocks/client"
     visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node#AI-Copilots"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints#AI"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
