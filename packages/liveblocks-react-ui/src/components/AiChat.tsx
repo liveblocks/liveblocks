@@ -4,7 +4,11 @@ import type {
   CopilotId,
   MessageId,
 } from "@liveblocks/core";
-import { RegisterAiTool, useAiChatMessages } from "@liveblocks/react";
+import {
+  RegisterAiKnowledge,
+  RegisterAiTool,
+  useAiChatMessages,
+} from "@liveblocks/react";
 import { useLatest } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
@@ -525,6 +529,16 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           <RegisterAiTool key={name} chatId={chatId} name={name} tool={tool} />
         ))}
 
+        {localKnowledge
+          ? localKnowledge.map((knowledge, index) => (
+              <RegisterAiKnowledge
+                key={`${index}:${knowledge.description}`}
+                chatId={chatId}
+                {...knowledge}
+              />
+            ))
+          : null}
+
         <div className="lb-ai-chat-content">
           {isLoading ? (
             <Loading />
@@ -592,7 +606,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
-            knowledge={localKnowledge}
             responseTimeout={responseTimeout}
             onComposerSubmit={onComposerSubmit}
             onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
