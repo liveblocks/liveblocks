@@ -1,0 +1,152 @@
+---
+meta:
+  title: "Copilots"
+  parentTitle: "AI Copilots"
+  description: "Customizable AI copilots"
+---
+
+AI Copilots provides a default copilot for testing, but you should define a
+custom copilot in the [Liveblocks dashboard](/dashboard) for further development
+and production, This allows you to configure your AI model, system prompt,
+back-end knowledge, and more.
+
+## Creating a copilot
+
+To create a copilot, open the [Liveblocks dashboard](/dashboard), select a
+project and click on the “AI Copilots” page. Click on the “Create copilot”
+button, and fill in the required fields.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/create-copilot.png"
+    alt="Screenshot of the Liveblocks dashboard with the AI Copilots page and the Create copilot button"
+    width={720}
+    height={409}
+    quality={100}
+  />
+</Figure>
+
+### Get your API key
+
+Copilots use API keys provided by your AI provider, which can be created and
+copied on their respective websites. Out of the box, we support
+[OpenAI](https://platform.openai.com/api-keys),
+[Anthropic](https://console.anthropic.com/settings/keys), and
+[Google](https://aistudio.google.com/app/api-keys), but, you can use other
+OpenAI-compatible APIs, such as [Groq](https://groq.com/api-keys) and
+[OpenRouter](https://openrouter.ai/settings/keys).
+
+## Add the copilot to your application
+
+To use the new copilot in your application, copy your copilot ID from the
+dashboard.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/assets/ai-copilots/create-copilot-2.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+Paste the copilot ID into
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage) to
+start using it.
+
+```tsx
+<AiChat
+  chatId="my-chat-id"
+  // +++
+  copilotId="co_tUYtNctLAtUIAAIZBc1Zk"
+  // +++
+/>
+```
+
+```tsx
+useSendAiMessage("my-chat-id", {
+  // +++
+  copilotId: "co_tUYtNctLAtUIAAIZBc1Zk",
+  // +++
+});
+```
+
+## Configuring your copilot
+
+Within the “General” tab you can configure a number of settings for your
+copilot. Setting slightly differ between providers though the “system prompt” is
+always the most important setting:
+
+### System prompt
+
+The system prompt defines the behavior of the copilot, for example:
+
+```text title="System prompt"
+You're a helpful assistant that can answer questions and help with tasks.
+```
+
+You can create more complex system prompts by using
+[Markdown formatting](https://www.markdownguide.org/basic-syntax/).
+
+```text title="System prompt"
+# Role and objective
+
+You're a helpful assistant that can answer questions and help with tasks.
+
+## Instructions
+
+- Always help the user as best you can.
+- Always use markdown formatting in your responses.
+- If you don't know the answer, tell the user to contact support.
+
+## Examples
+
+User: How do I log in?
+Assistant: Navigate to the [login page](/login) and enter your email.
+
+User: What's the weather in Tokyo?
+Assistant: I don't know the answer to that question, please contact support.
+```
+
+### When should AI use knowledge?
+
+This setting determines when AI will search back-end knowledge before
+responding.
+
+```text title="When should AI use knowledge?"
+Whenever the user asks a question about code.
+```
+
+You can also write a more complex prompt, giving knowledge a name, which then
+allows you to refer to it in your system prompt. This can help reinforce AI
+behavior.
+
+```text title="When should AI use knowledge?"
+Whenever the user asks a question about code.
+
+// +++
+This is your "knowledge base".
+// +++
+```
+
+```text title="System prompt"
+## Instructions
+
+// +++
+- When a user asks about React, searching your "knowledge base" is required.
+// +++
+...
+```
+
+## Adding back-end knowledge
+
+### Knowledge prompt
+
+## Creating copilots programmatically
+
+You can create copilots programmatically using the
+[Liveblocks Node.js client](/docs/api-reference/liveblocks-node).
+
+```ts
+TODO;
+```
+
+TODO
