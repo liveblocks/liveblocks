@@ -358,6 +358,10 @@
             "path": "/ready-made-features/ai-copilots/features"
           },
           {
+            "title": "Copilots",
+            "path": "/ready-made-features/ai-copilots/copilots"
+          },
+          {
             "title": "Default components",
             "path": "/ready-made-features/ai-copilots/default-components"
           },
