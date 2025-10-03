@@ -17,6 +17,7 @@ function wrap(
 // export const log = wrap("log");
 export const warn = wrap("warn");
 export const error = wrap("error");
+export const log = console.log;
 
 function wrapWithTitle(
   method: "log" | "warn" | "error"

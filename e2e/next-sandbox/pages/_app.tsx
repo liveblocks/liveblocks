@@ -2,6 +2,7 @@ import "./styles.css";
 import "@liveblocks/react-ui/styles.css";
 
 import type { AppProps } from "next/app";
+import dynamic from "next/dynamic";
 import { StrictMode, useEffect } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -22,4 +23,8 @@ function MyApp({ Component, pageProps }: AppProps) {
     </StrictMode>
   );
 }
-export default MyApp;
+
+export default dynamic(() => Promise.resolve(MyApp), {
+  ssr: false,
+});
+// https://stackoverflow.com/questions/53139884/next-js-disable-server-side-rendering-on-some-pages
