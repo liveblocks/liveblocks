@@ -67,7 +67,7 @@ ofoucherot, nvie, jrowny, marcbouchenoire, ctnicholas, nimeshnayaju
 
 ## Website
 
-- Blog post: [What's the best vector database for building AI products?] (https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
+- Blog post: [What's the best vector database for building AI products?](https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
 - Blog post: [What's new in Liveblocks: August 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2025).
 
 ## Contributors
