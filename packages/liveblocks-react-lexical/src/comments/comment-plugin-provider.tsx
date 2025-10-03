@@ -114,7 +114,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     useCallback(
       (state) =>
         state
-          .findMany(roomId, { resolved: false }, "asc")
+          .findMany(roomId, { resolved: false }, "asc", undefined)
           .map((thread) => thread.id),
       [roomId]
     ),
@@ -220,7 +220,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const threadIds = $getThreadIds(selection).filter((id) => {
         return store.outputs.threads
           .get()
-          .findMany(roomId, { resolved: false }, "asc")
+          .findMany(roomId, { resolved: false }, "asc", undefined)
           .some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
