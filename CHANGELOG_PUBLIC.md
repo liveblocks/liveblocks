@@ -55,9 +55,24 @@ list and feel free to give them credit at the end of a line, e.g.:
   prewarm a room from your backend, preparing it for connectivity and making the
   eventual connection from the frontend faster.
 
+## Website
+
+- Blog post: [Why we built our AI agents on WebSockets instead of HTTP](https://liveblocks.io/blog/why-we-built-our-ai-agents-on-websockets-instead-of-http).
+
 ## Contributors
 
-ofoucherot, nvie, jrowny, marcbouchenoire
+ofoucherot, nvie, jrowny, marcbouchenoire, ctnicholas, nimeshnayaju
+
+# Week 38 (2025-09-19)
+
+## Website
+
+- Blog post: [What's the best vector database for building AI products?] (https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
+- Blog post: [What's new in Liveblocks: August 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2025).
+
+## Contributors
+
+jrowny, ctnicholas
 
 # Week 37 (2025-09-12)
 
