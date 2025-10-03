@@ -24,8 +24,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/client`
 
-- LiveMap and LiveObject deletions now report which item got deleted in the
-  update notifications. LiveLists already did this.
+- `LiveMap` and `LiveObject` deletions now report which item got deleted in the
+  update notifications. `LiveLists` already did this.
 - Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
   metadata query filters.
 
