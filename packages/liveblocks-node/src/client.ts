@@ -157,7 +157,9 @@ export type RoomPermission =
   | ["room:read", "room:presence:write"];
 export type RoomAccesses = Record<
   string,
-  ["room:write"] | ["room:read", "room:presence:write"]
+  | ["room:write"]
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"]
 >;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
