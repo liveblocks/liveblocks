@@ -481,6 +481,66 @@ describe("client", () => {
     });
   });
 
+  describe("create room", () => {
+    test("should pass tenantId to the request when createRoom is called with tenantId", async () => {
+      const roomId = "test-room";
+      const tenantId = "test-tenant";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        tenantId,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId,
+        metadata: undefined,
+      });
+    });
+
+    test("should not include tenantId in the request when createRoom is called without tenantId", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId: undefined,
+        metadata: undefined,
+      });
+    });
+  });
+
   describe("prewarm room", () => {
     test("should successfully prewarm a room when prewarmRoom receives a successful response", async () => {
       server.use(
