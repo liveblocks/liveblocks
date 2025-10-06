@@ -1,10 +1,11 @@
 "use client";
 
-import { Timestamp } from "@liveblocks/react-ui/primitives";
-import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import Link from "next/link";
 import { ComponentProps, useMemo, useState } from "react";
+
 import { nanoid } from "@liveblocks/core";
+import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
+import { Timestamp } from "@liveblocks/react-ui/primitives";
 
 export default function Chats() {
   const { chats } = useAiChats();
