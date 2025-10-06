@@ -1354,7 +1354,7 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
  * Returns metadata for a given URL.
  *
  * @example
- * const { metadata, error, isLoading } = useUrlMetadata("https://example.com");
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
  */
 function useUrlMetadata(url: string): UrlMetadataAsyncResult {
   const client = useClient();
@@ -1380,7 +1380,7 @@ function useUrlMetadata(url: string): UrlMetadataAsyncResult {
  * Returns metadata for a given URL.
  *
  * @example
- * const { metadata } = useUrlMetadata("https://example.com");
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
  */
 function useUrlMetadataSuspense(url: string): UrlMetadataAsyncSuccess {
   // Throw error if we're calling this hook server side
@@ -2249,7 +2249,7 @@ const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
  * Returns metadata for a given URL.
  *
  * @example
- * const { metadata, error, isLoading } = useUrlMetadata("https://example.com");
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
  */
 const _useUrlMetadata: TypedBundle["useUrlMetadata"] = useUrlMetadata;
 
@@ -2257,7 +2257,7 @@ const _useUrlMetadata: TypedBundle["useUrlMetadata"] = useUrlMetadata;
  * Returns metadata for a given URL.
  *
  * @example
- * const { metadata } = useUrlMetadata("https://example.com");
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
  */
 const _useUrlMetadataSuspense: TypedBundle["suspense"]["useUrlMetadata"] =
   useUrlMetadataSuspense;

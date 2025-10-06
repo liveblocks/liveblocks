@@ -1524,7 +1524,7 @@ export type LiveblocksContextBundle<
        * Returns metadata for a given URL.
        *
        * @example
-       * const { metadata, error, isLoading } = useUrlMetadata("https://example.com");
+       * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
        */
       useUrlMetadata(url: string): UrlMetadataAsyncResult;
 
@@ -1624,7 +1624,7 @@ export type LiveblocksContextBundle<
              * Returns metadata for a given URL.
              *
              * @example
-             * const { metadata } = useUrlMetadata("https://example.com");
+             * const { metadata } = useUrlMetadata("https://liveblocks.io");
              */
             useUrlMetadata(url: string): UrlMetadataAsyncSuccess;
           }
