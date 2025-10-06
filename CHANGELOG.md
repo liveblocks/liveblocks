@@ -13,6 +13,8 @@
 - Fix issue where `tenantId` was not being passed to the request when using
   `Liveblocks.createRoom()`.
 
+- Add `comments:write` to the list of possible room permissions.
+
 ## v3.8.0
 
 ### `@liveblocks/client`
