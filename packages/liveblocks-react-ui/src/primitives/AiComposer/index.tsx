@@ -5,7 +5,11 @@ import {
   type WithNavigation,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
+import {
+  useAiWebSocketStatus,
+  useLayoutEffect,
+  useSignal,
+} from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import type { FocusEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
@@ -102,6 +106,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
   ) => {
     const Component = asChild ? Slot : "form";
     const client = useClient();
+    const status = useAiWebSocketStatus();
     const formRef = useRef<HTMLFormElement | null>(null);
     const editor = useInitial(() =>
       withNormalize(withHistory(withReact(createEditor())))
@@ -115,7 +120,8 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
 
-    const isDisabled = isSubmitting || disabled === true;
+    const isDisabled = status === "disconnected";
+    isSubmitting || disabled === true;
     const canAbort = abortableMessageId !== undefined;
     const canSubmit = !isEditorEmpty && !canAbort;
 
