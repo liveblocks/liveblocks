@@ -3,7 +3,7 @@
 export { useClientOrNull } from "./contexts";
 export { useLatest } from "./lib/use-latest";
 export { useLayoutEffect } from "./lib/use-layout-effect";
-export { getUmbrellaStoreForClient } from "./liveblocks";
+export { getUmbrellaStoreForClient, useAiWebSocketStatus } from "./liveblocks";
 export {
   useAddRoomCommentReaction,
   useCreateRoomComment,

@@ -17,6 +17,7 @@ import type {
   MessageId,
   OpaqueClient,
   PartialNotificationSettings,
+  Status,
   SyncStatus,
   WithRequired,
 } from "@liveblocks/core";
@@ -1190,6 +1191,21 @@ function useGroupInfoSuspense_withClient(
     info: state.data,
     error: undefined,
   } as const;
+}
+
+/** @private
+ * Internal API, do not rely on it.
+ *
+ * Gets the status of the AI WebSocket connection.
+ * */
+export function useAiWebSocketStatus(): Status {
+  const client = useClient();
+
+  const subscribe = client[kInternal].ai.events.status.subscribe;
+  const getSnapshot = client[kInternal].ai.getStatus;
+  const getServerSnapshot = client[kInternal].ai.getStatus;
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
