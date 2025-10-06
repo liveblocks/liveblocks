@@ -2245,6 +2245,23 @@ const _useAiChatMessages: TypedBundle["useAiChatMessages"] = useAiChatMessages;
 const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
   useAiChatMessagesSuspense;
 
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://example.com");
+ */
+const _useUrlMetadata: TypedBundle["useUrlMetadata"] = useUrlMetadata;
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://example.com");
+ */
+const _useUrlMetadataSuspense: TypedBundle["suspense"]["useUrlMetadata"] =
+  useUrlMetadataSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -2369,6 +2386,6 @@ export {
   useCreateAiChat,
   useDeleteAiChat,
   useSendAiMessage,
-  useUrlMetadata,
-  useUrlMetadataSuspense,
+  _useUrlMetadata as useUrlMetadata,
+  _useUrlMetadataSuspense as useUrlMetadataSuspense,
 };
