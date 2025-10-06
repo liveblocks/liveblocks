@@ -951,7 +951,13 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const {
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+      tenantId,
+    } = params;
 
     const res = await this.#post(
       options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
@@ -960,6 +966,7 @@ export class Liveblocks {
         defaultAccesses,
         groupsAccesses,
         usersAccesses,
+        tenantId,
         metadata,
       },
       options
