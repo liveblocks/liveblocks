@@ -66,6 +66,7 @@ import type {
   SubscriptionDeleteInfo,
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
+import type { UrlMetadata } from "./protocol/UrlMetadata";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -461,6 +462,8 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 export interface LiveblocksHttpApi<M extends BaseMetadata>
   extends RoomHttpApi<M>,
     NotificationHttpApi<M> {
+  getUrlMetadata(url: string): Promise<UrlMetadata>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1856,6 +1859,20 @@ export function createApiClient<M extends BaseMetadata>({
     return batchedGetGroups.get(groupId);
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * URL metadata
+   * -------------------------------------------------------------------------------------------------
+   */
+  async function getUrlMetadata(_url: string) {
+    const result = await httpClient.get<UrlMetadata>(
+      url`/v2/c/url-metadata`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { url: _url }
+    );
+
+    return result;
+  }
+
   return {
     // Room threads
     getThreads,
@@ -1914,6 +1931,8 @@ export function createApiClient<M extends BaseMetadata>({
     getGroup,
     // AI
     executeContextualPrompt,
+    // URL metadata
+    getUrlMetadata,
   };
 }
 
