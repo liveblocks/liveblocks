@@ -75,6 +75,8 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
+  UrlMetadataAsyncSuccess,
   UseAiChatsOptions,
   UseInboxNotificationsOptions,
   UserAsyncResult,
@@ -467,6 +469,8 @@ function makeLiveblocksContextBundle<
     useDeleteAiChat,
     useSendAiMessage,
 
+    useUrlMetadata,
+
     ...shared.classic,
 
     suspense: {
@@ -499,6 +503,8 @@ function makeLiveblocksContextBundle<
       useCreateAiChat,
       useDeleteAiChat,
       useSendAiMessage,
+
+      useUrlMetadata: useUrlMetadataSuspense,
 
       ...shared.suspense,
     },
@@ -1339,6 +1345,53 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
   use(store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded());
 
   const result = useAiChat(chatId);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://example.com");
+ */
+function useUrlMetadata(url: string): UrlMetadataAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () => void store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.urlMetadataByUrl.getOrCreate(url).signal);
+}
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://example.com");
+ */
+function useUrlMetadataSuspense(url: string): UrlMetadataAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded());
+
+  const result = useUrlMetadata(url);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -2316,4 +2369,6 @@ export {
   useCreateAiChat,
   useDeleteAiChat,
   useSendAiMessage,
+  useUrlMetadata,
+  useUrlMetadataSuspense,
 };
