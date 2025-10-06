@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.8.1
+
 ### `@liveblocks/react`
 
 - Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
