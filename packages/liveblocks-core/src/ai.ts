@@ -7,6 +7,7 @@ import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
+import { makeEventSource, type Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
 import type { JsonObject } from "./lib/Json";
@@ -975,6 +976,10 @@ export type Ai = {
     tool: AiOpaqueToolDefinition,
     chatId?: string
   ) => () => void;
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
+  events: {
+    status: Observable<Status>;
+  };
 };
 
 /** @internal */
@@ -1008,6 +1013,10 @@ export function createAi(config: AiConfig): Ai {
     messagesStore,
     toolsStore,
     knowledgeStore,
+  };
+
+  const eventHub = {
+    status: makeEventSource<Status>(),
   };
 
   // Delta batch processing system to throttle incoming delta updates. Incoming
@@ -1044,7 +1053,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   let lastTokenKey: string | undefined;
-  function onStatusDidChange(_newStatus: Status) {
+  function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
       const tokenKey = getBearerTokenFromAuthValue(authValue);
@@ -1067,6 +1076,9 @@ export function createAi(config: AiConfig): Ai {
         }
       }
     }
+
+    // Forward to the outside world
+    eventHub.status.notify(newStatus);
   }
   let _connectionLossTimerId: TimeoutID | undefined;
   let _hasLostConnection = false;
@@ -1463,6 +1475,9 @@ export function createAi(config: AiConfig): Ai {
       },
 
       registerTool: context.toolsStore.registerTool,
+      events: {
+        status: eventHub.status.observable,
+      },
     } satisfies Ai,
     kInternal,
     { enumerable: false }
