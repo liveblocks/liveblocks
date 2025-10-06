@@ -1,5 +1,10 @@
-## v3.8.1 (not released yet)
+## vNEXT (not yet published)
 
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
 - Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
   updated.
 
@@ -9,6 +14,8 @@
 
 - LiveMap and LiveObject deletions now report which item got deleted in the
   update notifications. LiveLists already did this.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
 
 ### `@liveblocks/react`
 
@@ -19,13 +26,7 @@
   if so, what type of content is currently generating.
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
-
 - Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
-  metadata query filters.
-
-### `@liveblocks/client`
-
-- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
   metadata query filters.
 
 ### `@liveblocks/react-ui`
