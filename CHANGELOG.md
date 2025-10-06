@@ -8,6 +8,11 @@
 - Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
   updated.
 
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+
 ## v3.8.0
 
 ### `@liveblocks/client`
