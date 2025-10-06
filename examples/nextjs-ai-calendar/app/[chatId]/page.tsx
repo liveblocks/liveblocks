@@ -1,13 +1,10 @@
 "use client";
 
-import { useIsGenerating } from "./_hooks/use-is-generating";
 import { Calendar } from "./_components/calendar";
 import { Room } from "./_components/room";
 import { Chat } from "./_components/chat";
 
 export default function Page({ params }: { params: { chatId: string } }) {
-  const generating = useIsGenerating();
-
   return (
     <Room chatId={params.chatId}>
       <div className="flex justify-center items-center h-full w-full p-2.5 gap-2.5 overflow-hidden">
