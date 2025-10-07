@@ -114,6 +114,15 @@ export const AiChatAssistantMessage = memo(
 
       let children: ReactNode = null;
 
+      const messageContent = (
+        <AssistantMessageContent
+          message={message}
+          components={components}
+          showReasoning={showReasoning}
+          showRetrievals={showRetrievals}
+        />
+      );
+
       if (message.deletedAt !== undefined) {
         children = (
           <div className="lb-ai-chat-message-deleted">
@@ -131,44 +140,18 @@ export const AiChatAssistantMessage = memo(
             </div>
           );
         } else {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-              showReasoning={showReasoning}
-              showRetrievals={showRetrievals}
-            />
-          );
+          children = messageContent;
         }
       } else if (message.status === "completed") {
-        children = (
-          <AssistantMessageContent
-            message={message}
-            components={components}
-            showReasoning={showReasoning}
-            showRetrievals={showRetrievals}
-          />
-        );
+        children = messageContent;
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
         if (message.errorReason === "Aborted by user") {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-              showReasoning={showReasoning}
-              showRetrievals={showRetrievals}
-            />
-          );
+          children = messageContent;
         } else {
           children = (
             <>
-              <AssistantMessageContent
-                message={message}
-                components={components}
-                showReasoning={showReasoning}
-                showRetrievals={showRetrievals}
-              />
+              {messageContent}
 
               <div className="lb-ai-chat-message-error">
                 <span className="lb-icon-container">
