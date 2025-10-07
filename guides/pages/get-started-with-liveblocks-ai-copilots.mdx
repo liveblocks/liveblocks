@@ -71,3 +71,34 @@ Copilots dashboard inside your Liveblocks project and write a system prompt.
 </Steps>
 
 ### Create an AI Copilot using the Liveblocks node client
+
+To create an AI Copilot using the Liveblocks node client, you need to provide a
+a provider API key and a system prompt.
+
+<Steps>
+  <Step>
+    <StepTitle>Create a new Liveblocks client</StepTitle>
+    <StepContent>
+      ```tsx
+      const liveblocks = new Liveblocks({
+        secret: "YOUR_PROJECT_SECRET_KEY",
+      });
+      ```
+    </StepContent>
+  </Step>
+  <Step>
+    <StepTitle>Create a new copilot</StepTitle>
+    <StepContent>
+      Call the `createAiCopilot` method:
+      ```tsx
+      await liveblocks.createAiCopilot({
+        name: "Documentation Helper"
+        provider: "openai",
+        providerModel: "4o-mini",
+        providerApiKey: "sk...",
+        systemPrompt: "You are an expert at helping users understand technical documentation.",
+      });
+      ```
+    </StepContent>
+  </Step>
+</Steps>
