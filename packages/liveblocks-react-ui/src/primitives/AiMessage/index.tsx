@@ -27,6 +27,19 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       </ErrorBoundary>
     );
   },
+  CitationsPart: ({ part }) => {
+    return (
+      <ul>
+        {part.citations.map((citation, index) => {
+          return (
+            <li key={index}>
+              {citation.title} ({citation.url})
+            </li>
+          );
+        })}
+      </ul>
+    );
+  },
 };
 
 /**
@@ -43,11 +56,16 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { ReasoningPart, RetrievalPart, TextPart, ToolInvocationPart } =
-      useMemo(
-        () => ({ ...defaultMessageContentComponents, ...components }),
-        [components]
-      );
+    const {
+      ReasoningPart,
+      RetrievalPart,
+      TextPart,
+      ToolInvocationPart,
+      CitationsPart,
+    } = useMemo(
+      () => ({ ...defaultMessageContentComponents, ...components }),
+      [components]
+    );
 
     const content = message.content ?? message.contentSoFar;
     const numParts = content.length;
@@ -82,6 +100,10 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                   message={message as AiAssistantMessage}
                 />
               );
+
+            case "citations":
+              return <CitationsPart key={index} part={part} {...extra} />;
+
             default:
               return null;
           }

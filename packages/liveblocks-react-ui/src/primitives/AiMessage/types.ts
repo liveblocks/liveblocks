@@ -1,6 +1,7 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
+  AiCitationsPart,
   AiReasoningPart,
   AiRetrievalPart,
   AiTextPart,
@@ -46,6 +47,15 @@ export type AiMessageContentRetrievalPartProps = {
   part: AiRetrievalPart;
 };
 
+/** @internal */
+export type AiMessageContentCitationsPartProps = {
+  /** @internal */
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
+  part: AiCitationsPart;
+};
+
 export interface AiMessageContentComponents {
   /**
    * The component used to display text parts.
@@ -61,6 +71,11 @@ export interface AiMessageContentComponents {
    * The component used to display knowledge retrieval parts.
    */
   RetrievalPart: ComponentType<AiMessageContentRetrievalPartProps>;
+
+  /**
+   * The component used to display
+   */
+  CitationsPart: ComponentType<AiMessageContentCitationsPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.

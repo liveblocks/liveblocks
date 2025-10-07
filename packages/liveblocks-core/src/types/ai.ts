@@ -417,11 +417,41 @@ export type AiUploadedImagePart = {
  */
 export type AiRetrievalPart = {
   type: "retrieval";
-  kind: "knowledge";
   id: string;
-  query: string;
   startedAt: ISODateString;
   endedAt?: ISODateString;
+} & (
+  | {
+      kind: "knowledge";
+      query: string;
+    }
+  | {
+      kind: "web";
+      query?: string;
+      sources?: Array<{
+        type: "url";
+        title: string;
+        url: string;
+      }>;
+    }
+);
+
+export type AiKnowledgeRetrievalPart = Extract<
+  AiRetrievalPart,
+  { kind: "knowledge" }
+>;
+
+export type AiWebRetrievalPart = Extract<AiRetrievalPart, { kind: "web" }>;
+
+export type AiCitationsPart = {
+  type: "citations";
+  citations: Array<AiURLCitation>;
+};
+
+export type AiURLCitation = {
+  type: "url-citation";
+  title: string;
+  url: string;
 };
 
 // "Parts" are what make up the "content" of a message.
@@ -431,7 +461,8 @@ export type AiAssistantContentPart =
   | AiReasoningPart
   | AiTextPart
   | AiToolInvocationPart
-  | AiRetrievalPart;
+  | AiRetrievalPart
+  | AiCitationsPart;
 
 export type AiAssistantDeltaUpdate =
   | AiTextDelta // a delta appended to the last part (if text)
@@ -443,7 +474,10 @@ export type AiAssistantDeltaUpdate =
   | AiToolInvocationDelta // a partial/under-construction tool invocation (since protocol V5)
 
   // Since protocol V6, clients can receive retrieval parts
-  | AiRetrievalPart; // Emitted when created, and when later updated with endedAt
+  | AiRetrievalPart // Emitted when created, and when later updated with endedAt
+
+  // Since protocol V7, clients can receive web retrieval parts and URL citations
+  | AiURLCitation; // a URL citation obtained from a web search tool call
 
 export type AiUserMessage = {
   id: MessageId;
@@ -583,9 +617,12 @@ export function patchContentWithDelta(
     return;
 
   const now = new Date().toISOString() as ISODateString;
-  const lastPart = content[content.length - 1] as
-    | AiAssistantContentPart
-    | undefined;
+  let lastPart = content[content.length - 1];
+  // If the last part is a citations part, set the last part to the second last part
+  // TODO[nimesh] Replace this workaround with a better one
+  if (lastPart?.type === "citations") {
+    lastPart = content[content.length - 2];
+  }
 
   // Otherwise, append a new part type to the array, which we can start
   // writing into
@@ -642,6 +679,23 @@ export function patchContentWithDelta(
     case "retrieval":
       replaceOrAppend(content, delta, (x) => x.id, now);
       break;
+
+    case "url-citation": {
+      const lastIndex = findLastIndex(
+        content,
+        (item) => item.type === "citations"
+      );
+      if (lastIndex > -1) {
+        const lastPart = content[lastIndex] as AiCitationsPart;
+        lastPart.citations.push(delta);
+      } else {
+        content.push({
+          type: "citations",
+          citations: [delta],
+        });
+      }
+      break;
+    }
 
     default:
       return assertNever(delta, "Unhandled case");
