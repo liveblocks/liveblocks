@@ -37,11 +37,6 @@ export type AiComposerContext = {
   isEmpty: boolean;
 
   /**
-   * Whether the WebSocket connection is currently unavailable.
-   */
-  isWebSocketConnectionUnavailable: boolean;
-
-  /**
    * Submit the composer programmatically.
    */
   submit: () => void;

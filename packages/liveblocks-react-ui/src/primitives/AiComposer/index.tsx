@@ -122,7 +122,8 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const isDisabled = isSubmitting || disabled === true;
 
     const isWebSocketConnectionUnavailable = status !== "connected";
-    const canAbort = abortableMessageId !== undefined;
+    const canAbort =
+      abortableMessageId !== undefined && !isWebSocketConnectionUnavailable;
     const canSubmit =
       !isEditorEmpty && !canAbort && !isWebSocketConnectionUnavailable;
 
@@ -284,7 +285,6 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
             isDisabled,
             isEmpty: isEditorEmpty,
             isFocused,
-            isWebSocketConnectionUnavailable,
             canSubmit,
             canAbort,
             submit,
@@ -487,17 +487,8 @@ export const AiComposerAbort = forwardRef<
   AiComposerSubmitProps
 >(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const {
-    isDisabled: isComposerDisabled,
-    isWebSocketConnectionUnavailable,
-    canAbort,
-    abort,
-  } = useAiComposer();
-  const isDisabled =
-    isComposerDisabled ||
-    disabled ||
-    !canAbort ||
-    isWebSocketConnectionUnavailable;
+  const { isDisabled: isComposerDisabled, canAbort, abort } = useAiComposer();
+  const isDisabled = isComposerDisabled || disabled || !canAbort;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
