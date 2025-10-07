@@ -1,9 +1,9 @@
 "use client";
 
-import { ClientSideSuspense, useAiChat } from "@liveblocks/react";
-import Link from "next/link";
 import { ErrorBoundary } from "react-error-boundary";
-import { nanoid } from "nanoid";
+import { ClientSideSuspense, useAiChat } from "@liveblocks/react";
+
+import { NewLink } from "./new-link";
 
 export function Header({ chatId }: { chatId: string }) {
   return (
@@ -20,12 +20,7 @@ export function Header({ chatId }: { chatId: string }) {
           <Title chatId={chatId} />
         </ClientSideSuspense>
       </ErrorBoundary>
-      <Link
-        href={`/${nanoid()}`}
-        className="bg-white ring-1 ring-neutral-200 text-sm font-medium px-1.5 py-1 rounded-md shadow-sm hover:bg-neutral-50"
-      >
-        + New
-      </Link>
+      <NewLink />
     </div>
   );
 }
