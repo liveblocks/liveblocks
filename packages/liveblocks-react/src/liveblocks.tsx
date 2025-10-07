@@ -1193,7 +1193,8 @@ function useGroupInfoSuspense_withClient(
   } as const;
 }
 
-/** @private
+/**
+ * @private
  * Internal API, do not rely on it.
  *
  * Gets the status of the AI WebSocket connection.
