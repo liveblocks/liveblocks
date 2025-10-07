@@ -53,8 +53,8 @@ describe("useUrlMetadata", () => {
       title: "Liveblocks",
       description:
         "Liveblocks gives you ready-made features like AI Copilots, Comments, and Multiplayer Editing to make your product more engaging and grow your business.",
-      favicon: "https://liveblocks.io/favicon.svg",
       image: "https://liveblocks.io/og.jpg",
+      icon: "https://liveblocks.io/favicon.svg",
     };
 
     server.use(
@@ -92,8 +92,6 @@ describe("useUrlMetadata", () => {
     const url = "https://liveblocks.io";
     const metadata: UrlMetadata = {
       title: "Liveblocks",
-      description:
-        "Liveblocks gives you ready-made features like AI Copilots, Comments, and Multiplayer Editing to make your product more engaging and grow your business.",
     };
 
     let fetchCount = 0;
@@ -144,14 +142,10 @@ describe("useUrlMetadata", () => {
     const metadata1: UrlMetadata = {
       title:
         "GitHub · Build and ship software on a single, collaborative platform · GitHub",
-      description:
-        "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
     };
 
     const metadata2: UrlMetadata = {
       title: "Letterboxd • Social film discovery.",
-      description:
-        "Letterboxd is a social platform for sharing your taste in film. Use it as a diary to record your opinion about films as you watch them, or just to keep track of films you’ve seen in the past. Rate, review and tag films as you add them. Find and follow your friends to see what they’re enjoying. Keep a watchlist of films you’d like to see, and create lists/collections on any topic.",
     };
 
     server.use(
@@ -211,14 +205,10 @@ describe("useUrlMetadata", () => {
     const metadata1: UrlMetadata = {
       title:
         "GitHub · Build and ship software on a single, collaborative platform · GitHub",
-      description:
-        "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
     };
 
     const metadata2: UrlMetadata = {
       title: "Letterboxd • Social film discovery.",
-      description:
-        "Letterboxd is a social platform for sharing your taste in film. Use it as a diary to record your opinion about films as you watch them, or just to keep track of films you’ve seen in the past. Rate, review and tag films as you add them. Find and follow your friends to see what they’re enjoying. Keep a watchlist of films you’d like to see, and create lists/collections on any topic.",
     };
 
     let fetchCount = 0;
@@ -273,10 +263,6 @@ describe("useUrlMetadata", () => {
     const url = "https://liveblocks.io";
     const metadata: UrlMetadata = {
       title: "Liveblocks",
-      description:
-        "Liveblocks gives you ready-made features like AI Copilots, Comments, and Multiplayer Editing to make your product more engaging and grow your business.",
-      favicon: "https://liveblocks.io/favicon.svg",
-      image: "https://liveblocks.io/og.jpg",
     };
 
     let fetchCount = 0;
@@ -402,14 +388,14 @@ describe("useUrlMetadataSuspense", () => {
     jest.useRealTimers();
   });
 
-  test("should suspend and fetch URL metadata", async () => {
+  test("should suspend while fetching URL metadata", async () => {
     const url = "https://liveblocks.io";
     const metadata: UrlMetadata = {
       title: "Liveblocks",
       description:
         "Liveblocks gives you ready-made features like AI Copilots, Comments, and Multiplayer Editing to make your product more engaging and grow your business.",
-      favicon: "https://liveblocks.io/favicon.svg",
       image: "https://liveblocks.io/og.jpg",
+      icon: "https://liveblocks.io/favicon.svg",
     };
 
     server.use(
@@ -513,14 +499,10 @@ describe("useUrlMetadataSuspense", () => {
     const metadata1: UrlMetadata = {
       title:
         "GitHub · Build and ship software on a single, collaborative platform · GitHub",
-      description:
-        "Join the world's most widely adopted, AI-powered developer platform where millions of developers, businesses, and the largest open source community build software that advances humanity.",
     };
 
     const metadata2: UrlMetadata = {
       title: "Letterboxd • Social film discovery.",
-      description:
-        "Letterboxd is a social platform for sharing your taste in film. Use it as a diary to record your opinion about films as you watch them, or just to keep track of films you’ve seen in the past. Rate, review and tag films as you add them. Find and follow your friends to see what they’re enjoying. Keep a watchlist of films you’d like to see, and create lists/collections on any topic.",
     };
 
     server.use(
