@@ -119,11 +119,12 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
       : emptyMessagesΣ;
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+    const isDisabled = isSubmitting || disabled === true;
 
-    const isDisabled =
-      status === "disconnected" || isSubmitting || disabled === true;
+    const isWebSocketConnectionUnavailable = status !== "connected";
     const canAbort = abortableMessageId !== undefined;
-    const canSubmit = !isEditorEmpty && !canAbort;
+    const canSubmit =
+      !isEditorEmpty && !canAbort && !isWebSocketConnectionUnavailable;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -283,6 +284,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
             isDisabled,
             isEmpty: isEditorEmpty,
             isFocused,
+            isWebSocketConnectionUnavailable,
             canSubmit,
             canAbort,
             submit,
@@ -485,8 +487,17 @@ export const AiComposerAbort = forwardRef<
   AiComposerSubmitProps
 >(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const { isDisabled: isComposerDisabled, canAbort, abort } = useAiComposer();
-  const isDisabled = isComposerDisabled || disabled || !canAbort;
+  const {
+    isDisabled: isComposerDisabled,
+    isWebSocketConnectionUnavailable,
+    canAbort,
+    abort,
+  } = useAiComposer();
+  const isDisabled =
+    isComposerDisabled ||
+    disabled ||
+    !canAbort ||
+    isWebSocketConnectionUnavailable;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
