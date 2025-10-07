@@ -1201,6 +1201,7 @@ function useGroupInfoSuspense_withClient(
  * */
 export function useAiWebSocketStatus(): Status {
   const client = useClient();
+  useEnsureAiConnection(client);
 
   const subscribe = client[kInternal].ai.events.status.subscribe;
   const getSnapshot = client[kInternal].ai.getStatus;
