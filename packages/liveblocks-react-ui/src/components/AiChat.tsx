@@ -128,6 +128,11 @@ export interface AiChatProps extends ComponentProps<"div"> {
   showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
 
   /**
+   * Whether to show citations
+   */
+  showCitations?: AiChatAssistantMessageProps["showCitations"];
+
+  /**
    * The time, in milliseconds, before an AI response will timeout.
    */
   responseTimeout?: number;
@@ -154,6 +159,7 @@ interface AiChatMessagesProps extends ComponentProps<"div"> {
   components: AiChatProps["components"];
   showReasoning: AiChatProps["showReasoning"];
   showRetrievals: AiChatProps["showRetrievals"];
+  showCitations: AiChatProps["showCitations"];
   lastSentMessageId: MessageId | null;
   scrollToBottom: MutableRefObject<
     (behavior: "instant" | "smooth", includeTrailingSpace?: boolean) => void
@@ -185,6 +191,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
       components,
       showReasoning,
       showRetrievals,
+      showCitations,
       lastSentMessageId,
       scrollToBottom,
       onScrollAtBottomChange,
@@ -453,6 +460,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 components={components}
                 showReasoning={showReasoning}
                 showRetrievals={showRetrievals}
+                showCitations={showCitations}
               />
             );
           } else {
@@ -477,6 +485,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       layout = "inset",
       showReasoning,
       showRetrievals,
+      showCitations,
       components,
       className,
       responseTimeout,
@@ -572,12 +581,12 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <AiChatMessages
-                showReasoning={showReasoning}
-                showRetrievals={showRetrievals}
-                ref={messagesRef}
                 messages={messages}
                 overrides={overrides}
                 components={components}
+                showReasoning={showReasoning}
+                showRetrievals={showRetrievals}
+                showCitations={showCitations}
                 lastSentMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
                 onScrollAtBottomChange={onScrollAtBottomChange}
@@ -586,6 +595,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 messagesRef={messagesRef}
                 bottomTrailingMarkerRef={bottomTrailingMarkerRef}
                 trailingSpacerRef={trailingSpacerRef}
+                ref={forwardedRef}
               />
 
               {/**

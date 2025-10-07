@@ -70,6 +70,11 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
     | Record<AiRetrievalPart["kind"], boolean | "during">;
 
   /**
+   * Whether to show citations.
+   */
+  showCitations?: boolean;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
@@ -106,6 +111,7 @@ export const AiChatAssistantMessage = memo(
         components,
         showReasoning,
         showRetrievals,
+        showCitations,
         ...props
       },
       forwardedRef
@@ -120,6 +126,7 @@ export const AiChatAssistantMessage = memo(
           components={components}
           showReasoning={showReasoning}
           showRetrievals={showRetrievals}
+          showCitations={showCitations}
         />
       );
 
@@ -182,16 +189,20 @@ export const AiChatAssistantMessage = memo(
   )
 );
 
+const NoopComponent = () => null;
+
 function AssistantMessageContent({
   message,
   components,
-  showReasoning,
-  showRetrievals,
+  showReasoning = true,
+  showRetrievals = true,
+  showCitations = true,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
   showReasoning?: AiChatAssistantMessageProps["showReasoning"];
   showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
+  showCitations?: AiChatAssistantMessageProps["showCitations"];
 }) {
   const componentsRef = useRef(components);
   let showKnowledgeRetrievals =
@@ -254,8 +265,8 @@ function AssistantMessageContent({
         TextPart: BoundTextPart,
         ReasoningPart: BoundReasoningPart,
         RetrievalPart: BoundRetrievalPart,
+        CitationsPart: showCitations ? CitationsPart : NoopComponent,
         ToolInvocationPart,
-        CitationsPart,
       }}
       className="lb-ai-chat-message-content"
     />
