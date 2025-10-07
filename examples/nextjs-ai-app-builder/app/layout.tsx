@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { redirect } from "next/navigation";
-
-import { nanoid } from "nanoid";
 
 import { Providers } from "./providers";
 import "./globals.css";
