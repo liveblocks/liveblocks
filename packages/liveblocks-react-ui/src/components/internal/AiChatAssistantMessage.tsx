@@ -1,4 +1,8 @@
-import type { AiAssistantMessage, WithNavigation } from "@liveblocks/core";
+import type {
+  AiAssistantMessage,
+  AiRetrievalPart,
+  WithNavigation,
+} from "@liveblocks/core";
 import {
   type ComponentProps,
   forwardRef,
@@ -53,6 +57,19 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
   message: UiAssistantMessage;
 
   /**
+   * How to show or hide reasoning.
+   */
+  showReasoning?: boolean | "during";
+
+  /**
+   * How to show or hide retrievals.
+   */
+  showRetrievals?:
+    | boolean
+    | "during"
+    | Record<AiRetrievalPart["kind"], boolean | "during">;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
@@ -81,7 +98,18 @@ interface CitationsPartProps extends AiMessageContentCitationsPartProps {
 
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    ({ message, className, overrides, components, ...props }, forwardedRef) => {
+    (
+      {
+        message,
+        className,
+        overrides,
+        components,
+        showReasoning,
+        showRetrievals,
+        ...props
+      },
+      forwardedRef
+    ) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
@@ -107,12 +135,19 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
+              showReasoning={showReasoning}
+              showRetrievals={showRetrievals}
             />
           );
         }
       } else if (message.status === "completed") {
         children = (
-          <AssistantMessageContent message={message} components={components} />
+          <AssistantMessageContent
+            message={message}
+            components={components}
+            showReasoning={showReasoning}
+            showRetrievals={showRetrievals}
+          />
         );
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
@@ -121,6 +156,8 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
+              showReasoning={showReasoning}
+              showRetrievals={showRetrievals}
             />
           );
         } else {
@@ -129,6 +166,8 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 message={message}
                 components={components}
+                showReasoning={showReasoning}
+                showRetrievals={showRetrievals}
               />
 
               <div className="lb-ai-chat-message-error">
@@ -163,30 +202,75 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   message,
   components,
+  showReasoning,
+  showRetrievals,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+  showReasoning?: AiChatAssistantMessageProps["showReasoning"];
+  showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
 }) {
-  const ref = useRef(components);
+  const componentsRef = useRef(components);
+  let showKnowledgeRetrievals =
+    typeof showRetrievals === "object"
+      ? showRetrievals.knowledge
+      : showRetrievals;
+  let showWebRetrievals =
+    typeof showRetrievals === "object" ? showRetrievals.web : showRetrievals;
+
+  // Both default to `true` if not specified, even with the object form (e.g. `{ web: "during" }`, `knowledge` is still `true`)
+  showKnowledgeRetrievals ??= true;
+  showWebRetrievals ??= true;
+
   const BoundTextPart = useMemo(
     () => (props: TextPartProps) => (
-      <TextPart {...props} components={ref.current} />
+      <TextPart {...props} components={componentsRef.current} />
     ),
     []
   );
   const BoundReasoningPart = useMemo(
-    () => (props: ReasoningPartProps) => (
-      <ReasoningPart {...props} components={ref.current} />
-    ),
-    []
+    () => (props: ReasoningPartProps) => {
+      if (
+        !showReasoning ||
+        (showReasoning === "during" && !props.isStreaming)
+      ) {
+        return null;
+      }
+
+      return <ReasoningPart {...props} components={componentsRef.current} />;
+    },
+    [showReasoning]
   );
+  const BoundRetrievalPart = useMemo(
+    () => (props: RetrievalPartProps) => {
+      if (props.part.kind === "knowledge") {
+        if (
+          !showKnowledgeRetrievals ||
+          (showKnowledgeRetrievals === "during" && !props.isStreaming)
+        ) {
+          return null;
+        }
+      } else if (props.part.kind === "web") {
+        if (
+          !showWebRetrievals ||
+          (showWebRetrievals === "during" && !props.isStreaming)
+        ) {
+          return null;
+        }
+      }
+
+      return <RetrievalPart {...props} />;
+    },
+    [showKnowledgeRetrievals, showWebRetrievals]
+  );
+
   return (
     <AiMessage.Content
       message={message}
       components={{
         TextPart: BoundTextPart,
         ReasoningPart: BoundReasoningPart,
-        RetrievalPart,
+        RetrievalPart: BoundRetrievalPart,
         ToolInvocationPart,
         CitationsPart,
       }}
