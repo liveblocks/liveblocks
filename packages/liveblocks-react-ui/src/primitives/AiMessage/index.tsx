@@ -27,19 +27,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       </ErrorBoundary>
     );
   },
-  CitationsPart: ({ part }) => {
-    return (
-      <ul>
-        {part.citations.map((citation, index) => {
-          return (
-            <li key={index}>
-              {citation.title} ({citation.url})
-            </li>
-          );
-        })}
-      </ul>
-    );
-  },
+  CitationsPart: () => null,
 };
 
 /**
@@ -102,7 +90,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
               );
 
             case "citations":
-              return <CitationsPart key={index} part={part} {...extra} />;
+              return <CitationsPart key={index} part={part} />;
 
             default:
               return null;

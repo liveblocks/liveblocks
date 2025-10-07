@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type AiCitationsPart,
   type AiReasoningPart,
   type AiRetrievalPart,
   assertNever,
@@ -89,6 +90,8 @@ export interface AiChatMessageOverrides {
     isStreaming: boolean,
     part: AiRetrievalPart
   ) => ReactNode;
+  // XXX - Does it make sense to include 'isStreaming' parameter too for citations part?
+  AI_CHAT_MESSAGE_CITATIONS: (part: AiCitationsPart) => ReactNode;
 }
 
 export interface AiChatOverrides {
@@ -298,6 +301,23 @@ export const defaultOverrides: Overrides = {
         ) : null}
       </>
     ),
+  AI_CHAT_MESSAGE_CITATIONS: (part: AiCitationsPart) => (
+    <ul>
+      {part.citations.map((citation, index) => {
+        switch (citation.kind) {
+          case "url":
+            return (
+              <li key={index}>
+                {citation.title} ({citation.url})
+              </li>
+            );
+          default:
+            // XXX - Should we have some fallback for future possible citation kinds?
+            return null;
+        }
+      })}
+    </ul>
+  ),
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
   AI_TOOL_CONFIRMATION_CONFIRM: "Confirm",

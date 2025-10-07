@@ -449,7 +449,8 @@ export type AiCitationsPart = {
 };
 
 export type AiURLCitation = {
-  type: "url-citation";
+  type: "citation";
+  kind: "url";
   title: string;
   url: string;
 };
@@ -680,7 +681,7 @@ export function patchContentWithDelta(
       replaceOrAppend(content, delta, (x) => x.id, now);
       break;
 
-    case "url-citation": {
+    case "citation": {
       const lastIndex = findLastIndex(
         content,
         (item) => item.type === "citations"

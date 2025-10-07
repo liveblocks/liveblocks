@@ -49,10 +49,6 @@ export type AiMessageContentRetrievalPartProps = {
 
 /** @internal */
 export type AiMessageContentCitationsPartProps = {
-  /** @internal */
-  index: number;
-  /** @internal */
-  isStreaming: boolean;
   part: AiCitationsPart;
 };
 

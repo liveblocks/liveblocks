@@ -22,6 +22,7 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
+  AiMessageContentCitationsPartProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentRetrievalPartProps,
   AiMessageContentTextPartProps,
@@ -71,6 +72,10 @@ interface ReasoningPartProps extends AiMessageContentReasoningPartProps {
 }
 
 interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
+  components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+}
+
+interface CitationsPartProps extends AiMessageContentCitationsPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
@@ -183,6 +188,7 @@ function AssistantMessageContent({
         ReasoningPart: BoundReasoningPart,
         RetrievalPart,
         ToolInvocationPart,
+        CitationsPart,
       }}
       className="lb-ai-chat-message-content"
     />
@@ -290,6 +296,19 @@ function ToolInvocationPart({
       >
         <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * CitationsPart
+ * -----------------------------------------------------------------------------------------------*/
+function CitationsPart({ part }: CitationsPartProps) {
+  const $ = useOverrides();
+
+  return (
+    <div className="lb-ai-chat-message-citations">
+      {$.AI_CHAT_MESSAGE_CITATIONS(part)}
     </div>
   );
 }
