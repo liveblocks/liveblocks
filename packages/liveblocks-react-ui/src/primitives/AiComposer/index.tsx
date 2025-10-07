@@ -120,8 +120,8 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
 
-    const isDisabled = status === "disconnected";
-    isSubmitting || disabled === true;
+    const isDisabled =
+      status === "disconnected" || isSubmitting || disabled === true;
     const canAbort = abortableMessageId !== undefined;
     const canSubmit = !isEditorEmpty && !canAbort;
 
