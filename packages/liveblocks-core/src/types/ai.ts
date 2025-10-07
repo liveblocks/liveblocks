@@ -430,8 +430,8 @@ export type AiRetrievalPart = {
       query?: string;
       sources?: Array<{
         type: "url";
-        title: string;
         url: string;
+        title?: string;
       }>;
     }
 );
