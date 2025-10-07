@@ -2,6 +2,12 @@
 
 ## v3.8.1
 
+### `@liveblocks/react-ui`
+
+- Disable Ai chat composer when websocket connection is closed.
+
+## v3.8.1
+
 ### `@liveblocks/react`
 
 - Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
