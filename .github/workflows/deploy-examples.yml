@@ -21,6 +21,12 @@ jobs:
           echo Triggering deployment for nextjs-3d-builder
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ODKBX4EuSUo19sF7UcUUEUjULL50/ur6dsTOSvu; echo
 
+          echo Triggering deployment for nextjs-ai-app-builder
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_5PbrFsltmp5BKHnsBMAAHuJsj3lc/KiSCa1m4tB; echo
+
+          echo Triggering deployment for nextjs-ai-calendar
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_H7bFg3Aslr8x4sOrwDTNwY4pPUvH/7lC9fUdumy; echo
+
           echo Triggering deployment for nextjs-ai-dashboard-reports
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_4sGozV6komE0oZ3pLCfmq2BmsKHQ/6JL2UE6nNU; echo
 
