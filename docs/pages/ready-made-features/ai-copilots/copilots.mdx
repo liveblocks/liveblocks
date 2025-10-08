@@ -72,8 +72,8 @@ useSendAiMessage("my-chat-id", {
 ## Configuring your copilot
 
 Within the “General” tab you can configure a number of settings for your
-copilot. Setting slightly differ between providers though the “system prompt” is
-always the most important setting:
+copilot. Settings slightly differ between providers though the "system prompt"
+is always the most important setting:
 
 ### System prompt
 
@@ -138,15 +138,42 @@ This is your "knowledge base".
 
 ## Adding back-end knowledge
 
-### Knowledge prompt
+Under the “Knowledge” tab you can add back-end knowledge to your copilot.
+Knowledge can be submitted as web pages or files, and your AI chat can query
+this knowledge when responding, allowing it to intelligently answer questions or
+perform tasks.
 
-## Creating copilots programmatically
+<Figure>
+  <Image
+    src="/assets/ai-copilots/copilot-knowledge.png"
+    alt="Screenshot of the Liveblocks dashboard, adding knowledge to a copilot"
+    width={720}
+    height={409}
+    quality={100}
+  />
+</Figure>
 
-You can create copilots programmatically using the
-[Liveblocks Node.js client](/docs/api-reference/liveblocks-node).
+You can submit a whole website/sitemap for crawling, a single page, or PDF/image
+files. Crawled knowledge is not updated, and to update it, it must be
+resubmitted programmatically or via the dashboard.
+
+## Modifying copilots programmatically
+
+You aren’t limited to creating copilots from the dashboard—you can also create
+and modify copilots programmatically, allowing users or teams in your app to
+have their own individual copilots.
 
 ```ts
-TODO;
+const copilot = await liveblocks.createAiCopilot({
+  name: "My AI Assistant",
+  systemPrompt: "You're a helpful assistant that can answer questions.",
+  provider: "openai",
+  providerModel: "gpt-4",
+  providerApiKey: "sk-...",
+});
 ```
 
-TODO
+This is made possible using the
+[Liveblocks Node.js client](/docs/api-reference/liveblocks-node#AI-Copilots) and
+[REST API](/docs/api-reference/rest-api-endpoints#AI), where a number of APIs
+are available for managing copilots and knowledge sources.
