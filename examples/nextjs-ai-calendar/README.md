@@ -27,7 +27,7 @@ This example shows how to build an AI calendar app with
 Interact with a calendar by chatting with AI and create events directly from the
 chat.
 
-https://github.com/user-attachments/assets/9e555121-314e-4c40-9d45-b21b1ccd715f
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/ai-calendar.png" width="536" alt="AI calendar" />
 
 ## Getting started
 
