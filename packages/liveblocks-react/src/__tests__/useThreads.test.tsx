@@ -333,6 +333,99 @@ describe("useThreads", () => {
     unmount();
   });
 
+  test("should fetch threads for a number comparison query", async () => {
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({
+      roomId,
+      metadata: {
+        posX: 100,
+        posY: 200,
+      },
+    });
+    const thread2 = dummyThreadData({
+      roomId,
+      metadata: {
+        posX: 500,
+        posY: 3,
+      },
+    });
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const query = req.url.searchParams.get("query");
+        const pred = query ? makeThreadFilter(query) : () => true;
+
+        const filteredThreads = [thread1, thread2].filter(pred);
+
+        const subscriptions = filteredThreads.map((thread) =>
+          dummySubscriptionData({ subjectId: thread.id })
+        );
+        return res(
+          ctx.json({
+            data: filteredThreads,
+            inboxNotifications: [],
+            subscriptions,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
+      posX: number;
+      posY: number;
+    }>();
+
+    const { result, unmount } = renderHook(
+      () =>
+        useThreads({
+          query: {
+            metadata: {
+              posX: {
+                gt: 1,
+                lt: 300,
+              },
+              posY: {
+                gt: 20,
+                lt: 250,
+              },
+            },
+          },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [thread1],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+
   test("should fetch threads for a given query (multiple criteria)", async () => {
     const roomId = nanoid();
     const redPinnedThread = dummyThreadData({

@@ -51,6 +51,7 @@ const ALLOW_NO_FACTORY = [
   "UseSendAiMessageOptions",
   "UseThreadsOptions",
   "SendAiMessageOptions",
+  "AiChatStatus",
 ];
 
 /**

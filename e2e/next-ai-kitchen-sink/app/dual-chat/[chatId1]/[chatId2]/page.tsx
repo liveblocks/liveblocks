@@ -1,11 +1,18 @@
 "use client";
 
 import { use } from "react";
+import { CopilotId } from "@liveblocks/core";
 import { LiveblocksProvider, RegisterAiKnowledge } from "@liveblocks/react";
 import { AiChat } from "@liveblocks/react-ui";
 import { useState } from "react";
 
-function ChatWithLocalKnowledge({ chatId }: { chatId: string }) {
+function ChatWithLocalKnowledge({
+  chatId,
+  copilotId,
+}: {
+  chatId: string;
+  copilotId?: CopilotId;
+}) {
   const [localKnowledge, setLocalKnowledge] = useState("Spaghetti Carbonara");
 
   return (
@@ -31,6 +38,7 @@ function ChatWithLocalKnowledge({ chatId }: { chatId: string }) {
       <div className="h-80" data-testid="chat-a">
         <AiChat
           chatId={chatId}
+          copilotId={copilotId}
           className="h-full border border-gray-200 rounded"
           knowledge={[
             { description: "My favorite pasta dish", value: localKnowledge },
@@ -41,7 +49,13 @@ function ChatWithLocalKnowledge({ chatId }: { chatId: string }) {
   );
 }
 
-function ChatWithoutLocalKnowledge({ chatId }: { chatId: string }) {
+function ChatWithoutLocalKnowledge({
+  chatId,
+  copilotId,
+}: {
+  chatId: string;
+  copilotId?: CopilotId;
+}) {
   return (
     <div className="w-1/2 h-full p-4">
       <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4">
@@ -58,6 +72,7 @@ function ChatWithoutLocalKnowledge({ chatId }: { chatId: string }) {
       <div className="h-80" data-testid="chat-b">
         <AiChat
           chatId={chatId}
+          copilotId={copilotId}
           className="h-full border border-gray-200 rounded"
         />
       </div>
@@ -72,6 +87,9 @@ export default function DualChatPage({
 }) {
   const { chatId1, chatId2 } = use(params);
   const [globalKnowledge, setGlobalKnowledge] = useState("Tiramisu");
+  const copilotId =
+    (process.env.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+    undefined;
 
   return (
     <LiveblocksProvider
@@ -108,8 +126,8 @@ export default function DualChatPage({
         </div>
 
         <div className="flex-1 flex">
-          <ChatWithLocalKnowledge chatId={chatId1} />
-          <ChatWithoutLocalKnowledge chatId={chatId2} />
+          <ChatWithLocalKnowledge chatId={chatId1} copilotId={copilotId} />
+          <ChatWithoutLocalKnowledge chatId={chatId2} copilotId={copilotId} />
         </div>
       </main>
     </LiveblocksProvider>

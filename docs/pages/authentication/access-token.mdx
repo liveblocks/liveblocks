@@ -92,84 +92,14 @@ later.
 
 ## Permissions [#permissions]
 
-### Default permissions
-
-When creating rooms automatically with
-[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) **every room
-is publicly available**. If you’d like to prevent unauthenticated access to your
-room data, you must instead set permissions on your back end using the
-[Liveblocks Node.js package](/docs/api-reference/rest-api-endpoints), or the
-[REST API](/docs/api-reference/rest-api-endpoints).
-
-#### Permission types [#permission-types]
-
-There are three permission values that you can set as default on rooms.
-
-<dl>
-  <dt>`["room:write"]`</dt>
-  <dd>
-    Full access. Enables people to view and edit the room. `isReadOnly` is
-    `false`. Also known as `session.FULL_ACCESS`.
-  </dd>
-  <dt>`["room:read", "room:presence:write"]`</dt>
-  <dd>
-    Read access with presence. Enables people to edit their presence, but only
-    view the room&rsquo;s storage. `isReadOnly` is `true`. Also known as
-    `session.READ_ACCESS`.
-  </dd>
-  <dt>`[]`</dt>
-  <dd>
-    Private. Only users that have been given explicit access can enter the room.
-  </dd>
-</dl>
-
-#### Setting default permissions
-
-The `defaultAccesses` level is used to set the default permissions of the entire
-room.
-
-<Figure>
-  <Image
-    src="/assets/managing-rooms/rooms-access-denied.png"
-    alt="Access denied illustration"
-    width={820}
-    height={412}
-  />
-</Figure>
-
-We can use the
-[`liveblocks.createRoom`](/docs/api-reference/rest-api-endpoints#post-rooms) to
-create a new room with private access by default:
-
-```ts highlight="2"
-const room = await liveblocks.createRoom("Vu78Rt:design:9Hdu73", {
-  defaultAccesses: [],
-});
-```
-
-We could also later modify the value with
-[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
-in this example turning the room read-only:
-
-```ts highlight="2"
-const room = await liveblocks.updateRoom("Vu78Rt:design:9Hdu73", {
-  defaultAccesses: ["room:read", "room:presence:write"],
-});
-```
-
-### Advanced permissions
-
-Along with default permissions, you can assign advanced permissions to
-individual users. These permissions will override any default permissions.
-
-When granting advanced permissions using access tokens, it’s recommended to use
-a naming pattern for your room IDs. This makes it easy to use wildcard
-permissions, allowing you to authenticate access to multiple rooms at once. One
-scenario where this is helpful, is when rooms and users in your app are part of
-an organization (or workspace), and you need to permit users entry to each room
+When granting permissions using access tokens, it’s recommended to use a naming
+pattern for your room IDs. This makes it easy to use wildcard permissions,
+allowing you to authenticate access to multiple rooms at once. One scenario
+where this is helpful, is when rooms and users in your app are part of an
+organization (or workspace), and you need to permit users entry to each room
 that’s part of this.
 
-#### Organization hierarchy
+### Organization hierarchy
 
 Let’s picture an organization, a customer in your product. This organization has
 a number of groups (or teams), and each group can create documents that other
@@ -191,7 +121,7 @@ we can use these to create a naming pattern for your rooms. For example, in the
 diagram above, the Acme organization (`Vu78Rt`) has a Product group (`product`)
 with two documents inside (`6Dsw12`, `L2hr8p`).
 
-#### Naming pattern
+### Naming pattern
 
 An example of a naming pattern would be to combine the three IDs into a unique
 room ID separating them with symbols, such as
@@ -217,7 +147,7 @@ part of the room ID.
 
 </Banner>
 
-#### Wildcard permissions
+### Wildcard permissions
 
 Assuming you’re using the naming pattern displayed above, you can then grant
 access to multiple rooms at once using wildcards.
@@ -258,7 +188,7 @@ session.allow("Vu78Rt:*:product", session.FULL_ACCESS);
 session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 ```
 
-#### Read-only access
+### Read-only access
 
 Should we wish to grant read-only access to each room in the organization, we
 then add another line to enable this.
@@ -278,7 +208,7 @@ session.allow("Vu78Rt:*", session.READ_ACCESS);
 const { body, status } = await session.authorize();
 ```
 
-#### Limitations [#limitations]
+### Limitations [#limitations]
 
 There’s a limitation with access tokens related to granting access to individual
 rooms that are part of groups. Let’s say a user has been given access to every
@@ -336,7 +266,7 @@ the naming pattern doesn’t apply. This isn’t ideal, and it also doesn’t sc
 as the token will need to be refreshed whenever access is granted to new rooms
 for this to work correctly.
 
-##### Building more complex permissions
+#### Building complex permissions
 
 For this reason,
 **[we recommend using ID tokens for complex permissions](/docs/authentication/id-token)**.
@@ -344,7 +274,7 @@ ID token authentication allows you to attach permissions to each room when it’
 created or modified, which means you don’t need to check permissions yourself,
 and no naming pattern is required.
 
-#### Migrating your current rooms IDs
+### Migrating your current rooms IDs
 
 If your application already has rooms, it’s possible to rename their IDs to be
 compatible with a naming pattern. Learn more in our

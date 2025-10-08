@@ -157,7 +157,9 @@ export type RoomPermission =
   | ["room:read", "room:presence:write"];
 export type RoomAccesses = Record<
   string,
-  ["room:write"] | ["room:read", "room:presence:write"]
+  | ["room:write"]
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"]
 >;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
@@ -951,7 +953,13 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const {
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+      tenantId,
+    } = params;
 
     const res = await this.#post(
       options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
@@ -960,6 +968,7 @@ export class Liveblocks {
         defaultAccesses,
         groupsAccesses,
         usersAccesses,
+        tenantId,
         metadata,
       },
       options
@@ -1092,6 +1101,26 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(
       url`/v2/rooms/${roomId}`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Prepares a room for connectivity, making the eventual connection faster. Use this when you know you'll be loading a room but are not yet connected to it.
+   * @param roomId The id of the room to prewarm.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async prewarmRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/prewarm`,
       undefined,
       options
     );

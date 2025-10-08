@@ -24,6 +24,7 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
+  LayerKey,
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
@@ -144,7 +145,11 @@ export type {
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
-export { isPlainObject, isStartsWithOperator } from "./lib/guards";
+export {
+  isNumberOperator,
+  isPlainObject,
+  isStartsWithOperator,
+} from "./lib/guards";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
@@ -165,6 +170,7 @@ export { generateUrl, isUrl, sanitizeUrl, url, urljoin } from "./lib/url";
 export type {
   Brand,
   DistributiveOmit,
+  ISODateString,
   WithOptional,
   WithRequired,
 } from "./lib/utils";
