@@ -7,7 +7,6 @@ import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
-import { makeEventSource, type Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
 import type { JsonObject } from "./lib/Json";
@@ -948,6 +947,7 @@ export type Ai = {
       name: string,
       chatId?: string
     ): DerivedSignal<AiOpaqueToolDefinition | undefined>;
+    statusΣ: Signal<Status>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -976,10 +976,6 @@ export type Ai = {
     tool: AiOpaqueToolDefinition,
     chatId?: string
   ) => () => void;
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  events: {
-    status: Observable<Status>;
-  };
 };
 
 /** @internal */
@@ -1015,9 +1011,7 @@ export function createAi(config: AiConfig): Ai {
     knowledgeStore,
   };
 
-  const eventHub = {
-    status: makeEventSource<Status>(),
-  };
+  const statusΣ = new Signal<Status>("initial");
 
   // Delta batch processing system to throttle incoming delta updates. Incoming
   // deltas are buffered and only let through every every 25ms. This creates
@@ -1078,7 +1072,7 @@ export function createAi(config: AiConfig): Ai {
     }
 
     // Forward to the outside world
-    eventHub.status.notify(newStatus);
+    statusΣ.set(newStatus);
   }
   let _connectionLossTimerId: TimeoutID | undefined;
   let _hasLostConnection = false;
@@ -1449,6 +1443,7 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getToolΣ: context.toolsStore.getToolΣ,
+        statusΣ,
       },
 
       getChatById: context.chatsStore.getChatById,
@@ -1475,9 +1470,6 @@ export function createAi(config: AiConfig): Ai {
       },
 
       registerTool: context.toolsStore.registerTool,
-      events: {
-        status: eventHub.status.observable,
-      },
     } satisfies Ai,
     kInternal,
     { enumerable: false }

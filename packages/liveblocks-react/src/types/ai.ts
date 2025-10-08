@@ -45,6 +45,7 @@ export type RegisterAiToolProps = {
  * generation is in progress.
  */
 export type AiChatStatus = Relax<
+  | { status: "disconnected" } // WebSocket connection is disconnected
   | { status: "loading" }
   | { status: "idle" }
   | { status: "generating" } // Still generating, but there is no content yet

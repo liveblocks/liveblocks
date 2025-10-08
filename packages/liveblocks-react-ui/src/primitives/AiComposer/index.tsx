@@ -5,11 +5,7 @@ import {
   type WithNavigation,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import {
-  useAiWebSocketStatus,
-  useLayoutEffect,
-  useSignal,
-} from "@liveblocks/react/_private";
+import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import type { FocusEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
@@ -106,7 +102,6 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
   ) => {
     const Component = asChild ? Slot : "form";
     const client = useClient();
-    const status = useAiWebSocketStatus();
     const formRef = useRef<HTMLFormElement | null>(null);
     const editor = useInitial(() =>
       withNormalize(withHistory(withReact(createEditor())))
@@ -119,13 +114,13 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
       : emptyMessagesΣ;
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+    const status = useSignal(client[kInternal].ai.signals.statusΣ);
     const isDisabled = isSubmitting || disabled === true;
 
-    const isWebSocketConnectionUnavailable = status !== "connected";
-    const canAbort =
-      abortableMessageId !== undefined && !isWebSocketConnectionUnavailable;
-    const canSubmit =
-      !isEditorEmpty && !canAbort && !isWebSocketConnectionUnavailable;
+    const isDisconnected = status !== "connected";
+
+    const canAbort = abortableMessageId !== undefined && !isDisconnected;
+    const canSubmit = !isEditorEmpty && !canAbort && !isDisconnected;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {

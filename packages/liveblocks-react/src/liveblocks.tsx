@@ -17,7 +17,6 @@ import type {
   MessageId,
   OpaqueClient,
   PartialNotificationSettings,
-  Status,
   SyncStatus,
   WithRequired,
 } from "@liveblocks/core";
@@ -1194,23 +1193,6 @@ function useGroupInfoSuspense_withClient(
 }
 
 /**
- * @private
- * Internal API, do not rely on it.
- *
- * Gets the status of the AI WebSocket connection.
- * */
-export function useAiWebSocketStatus(): Status {
-  const client = useClient();
-  useEnsureAiConnection(client);
-
-  const subscribe = client[kInternal].ai.events.status.subscribe;
-  const getSnapshot = client[kInternal].ai.getStatus;
-  const getServerSnapshot = client[kInternal].ai.getStatus;
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-/**
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
@@ -1426,6 +1408,7 @@ function useDeleteAiChat() {
   );
 }
 
+const DISCONNECTED = Object.freeze({ status: "disconnected" });
 const LOADING = Object.freeze({ status: "loading" });
 const IDLE = Object.freeze({ status: "idle" });
 
@@ -1469,7 +1452,17 @@ function useAiChatStatus(
         .waitUntilLoaded()
   );
 
-  return useSignal(
+  const disconnectedStatus = useSignal(
+    client[kInternal].ai.signals.statusΣ,
+    (status) => {
+      if (status !== "connected") {
+        return DISCONNECTED satisfies AiChatStatus;
+      }
+
+      return null;
+    }
+  );
+  const chatStatus = useSignal(
     // Signal
     store.outputs.messagesByChatId
       .getOrCreate(chatId)
@@ -1477,18 +1470,18 @@ function useAiChatStatus(
 
     // Selector
     (result) => {
-      if (result.isLoading) return LOADING;
-      if (result.error) return IDLE;
+      if (result.isLoading) return LOADING satisfies AiChatStatus;
+      if (result.error) return IDLE satisfies AiChatStatus;
 
       const messages = result.messages;
       const lastMessage = messages[messages.length - 1];
 
-      if (lastMessage?.role !== "assistant") return IDLE;
+      if (lastMessage?.role !== "assistant") return IDLE satisfies AiChatStatus;
       if (
         lastMessage.status !== "generating" &&
         lastMessage.status !== "awaiting-tool"
       )
-        return IDLE;
+        return IDLE satisfies AiChatStatus;
 
       const contentSoFar = lastMessage.contentSoFar;
       const lastPart = contentSoFar[contentSoFar.length - 1];
@@ -1498,15 +1491,24 @@ function useAiChatStatus(
           status: "generating",
           partType: "tool-invocation",
           toolName: lastPart.name,
-        };
+        } satisfies AiChatStatus;
       } else {
-        return { status: "generating", partType: lastPart?.type };
+        return {
+          status: "generating",
+          partType: lastPart?.type,
+        } satisfies AiChatStatus;
       }
     },
 
     // Consider { status: "generating", partType: "text" } and { status: "generating", partType: "text" } equal
     shallow
   );
+
+  if (disconnectedStatus !== null) {
+    return disconnectedStatus;
+  }
+
+  return chatStatus;
 }
 
 /**
