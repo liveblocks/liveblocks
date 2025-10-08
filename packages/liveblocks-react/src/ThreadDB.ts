@@ -1,5 +1,7 @@
 import type {
   BaseMetadata,
+  SubscriptionData,
+  SubscriptionKey,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -8,7 +10,6 @@ import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
-import type { SubscriptionsByKey } from "./umbrella-store";
 
 function sanitizeThread<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>
@@ -187,7 +188,7 @@ export class ThreadDB<M extends BaseMetadata> {
     roomId: string | undefined,
     query: ThreadsQuery<M> | undefined,
     direction: "asc" | "desc",
-    subscriptions: SubscriptionsByKey | undefined
+    subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
   ): ThreadData<M>[] {
     const index = direction === "desc" ? this.#desc : this.#asc;
     const crit: ((thread: ThreadData<M>) => boolean)[] = [];

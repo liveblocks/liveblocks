@@ -7,10 +7,11 @@ import {
   getSubscriptionKey,
   isNumberOperator,
   isStartsWithOperator,
+  type SubscriptionData,
+  type SubscriptionKey,
 } from "@liveblocks/core";
 
 import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
-import type { SubscriptionsByKey } from "../umbrella-store";
 
 /**
  * Creates a predicate function that will filter all ThreadData instances that
@@ -18,7 +19,7 @@ import type { SubscriptionsByKey } from "../umbrella-store";
  */
 export function makeThreadsFilter<M extends BaseMetadata>(
   query: ThreadsQuery<M>,
-  subscriptions: SubscriptionsByKey | undefined
+  subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ): (thread: ThreadData<M>) => boolean {
   return (thread: ThreadData<M>) =>
     matchesThreadsQuery(thread, query, subscriptions) &&
@@ -28,7 +29,7 @@ export function makeThreadsFilter<M extends BaseMetadata>(
 function matchesThreadsQuery(
   thread: ThreadData<BaseMetadata>,
   q: ThreadsQuery<BaseMetadata>,
-  subscriptions: SubscriptionsByKey | undefined
+  subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ) {
   let subscription = undefined;
   if (subscriptions) {
