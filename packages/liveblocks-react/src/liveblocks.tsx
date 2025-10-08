@@ -1452,16 +1452,12 @@ function useAiChatStatus(
         .waitUntilLoaded()
   );
 
-  const disconnectedStatus = useSignal(
+  // Subscribe to connection status
+  const isDisconnected = useSignal(
     client[kInternal].ai.signals.statusΣ,
-    (status) => {
-      if (status !== "connected") {
-        return DISCONNECTED satisfies AiChatStatus;
-      }
-
-      return null;
-    }
+    (status) => status !== "connected"
   );
+
   const chatStatus = useSignal(
     // Signal
     store.outputs.messagesByChatId
@@ -1504,8 +1500,8 @@ function useAiChatStatus(
     shallow
   );
 
-  if (disconnectedStatus !== null) {
-    return disconnectedStatus;
+  if (isDisconnected) {
+    return DISCONNECTED;
   }
 
   return chatStatus;
