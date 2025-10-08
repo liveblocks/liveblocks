@@ -3951,10 +3951,11 @@ function Component() {
 #### Querying threads [#useThreads-query]
 
 It’s possible to return threads that match a certain query with the `query`
-option. You can filter threads based on their resolved status, and metadata.
-Additionally, you can filter for metadata strings that being with certain
-characters using `startsWith` and you can filter for metadata numbers using
-`gt`, `lt`, `gte`, and `lte`. Returned threads match the entire query.
+option. You can filter threads based on their resolved status, if the user is
+subscribed to them, and metadata. Additionally, you can filter for metadata
+strings that being with certain characters using `startsWith` and you can filter
+for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned threads match
+the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -3962,6 +3963,9 @@ const { threads } = useThreads({
   query: {
     // Filter for unresolved threads
     resolved: false,
+
+    // Filter for threads that the user is subscribed to
+    subscribed: true,
 
     metadata: {
       // Filter for threads that contain specific string, boolean, and number data

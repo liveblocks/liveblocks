@@ -52,13 +52,14 @@ describe("objectToQuery", () => {
         color: null,
       },
       resolved: true,
+      subscribed: true,
       roomId: {
         startsWith: "engineering:",
       },
     });
 
     expect(query).toEqual(
-      "resolved:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
+      "resolved:true subscribed:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
     );
   });
 
