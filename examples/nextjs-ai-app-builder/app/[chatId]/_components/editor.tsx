@@ -12,7 +12,7 @@ import {
 } from "@liveblocks/react";
 import { AiTool } from "@liveblocks/react-ui";
 
-import MonacoEditor, { type OnMount } from "@monaco-editor/react";
+import MonacoEditor from "@monaco-editor/react";
 
 import estree from "prettier/plugins/estree";
 import html from "prettier/plugins/html";

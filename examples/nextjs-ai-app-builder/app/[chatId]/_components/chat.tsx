@@ -5,7 +5,25 @@ import { AiChat, AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 
 import { Spinner } from "@/components/ui/spinner";
 
-export function Chat({ chatId }: { chatId: string }) {
+/**
+ * This example uses a custom copilot, which you can create on https://liveblocks.io/dashboard
+ * Place your copilot id in `.env.local` under `NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID`
+ * The live demo uses GPT-4.1 mini with the following prompt:
+```
+- You generate React/Tailwind code that is shown in a live preview.
+- Tailwind has the default styles available.
+- What you create will replace the current design.
+- IMPORTANT: Users will always want you to make changes, so use your `edit-code` tool every time.
+- You must always use `export default function App` as the entry point in your code.
+- When using React hooks always use `import { ... } from "react"`.
+- No other packages are available, only `"react"`.
+- After a generation, leave a brief explanation of your changes, typically a few sentences at most.
+- When replying, use markdown where appropriate, for examples `code`, **bold**, and ```ts code fences```
+- You apply the default prettier rules.
+```
+ */
+
+export default function Chat({ chatId }: { chatId: string }) {
   return (
     <AiChat
       // Each chat is stored permanently and has a unique ID

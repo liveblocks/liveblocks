@@ -5,7 +5,7 @@ import { useAiChatStatus } from "@liveblocks/react";
 import { Room } from "./_components/room";
 import { Editor } from "./_components/editor";
 import { Header } from "./_components/header";
-import { Chat } from "./_components/chat";
+import Chat from "./_components/chat";
 import { Preview } from "./_components/preview";
 import { useState } from "react";
 
@@ -22,7 +22,6 @@ export default function Page({ params }: { params: { chatId: string } }) {
 
         <main className="grow flex  min-h-0">
           <div className="grow-0 w-[380px] rounded-lg overflow-hidden">
-            {/* <div className="absolute top-0 w-full h-24 bg-gradient-to-b from-white to-transparent"></div> */}
             <Chat chatId={params.chatId} />
           </div>
 

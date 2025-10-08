@@ -15,7 +15,7 @@ export function Room({
 }) {
   return (
     <RoomProvider
-      id={"liveblocks:examples:nextjs-ai-web-generator:" + chatId}
+      id={"liveblocks:examples:nextjs-ai-app-builder:" + chatId}
       initialStorage={{ code: INITIAL_CODE }}
     >
       {children}

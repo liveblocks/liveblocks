@@ -24,9 +24,7 @@ export function Preview({ chatId }: { chatId: string }) {
       files={{ "/App.js": code }}
       options={{
         externalResources: ["https://cdn.tailwindcss.com"],
-        // autoReload: generatingCode ? false : true,
         recompileMode: generatingCode ? "delayed" : "immediate",
-        // recompileDelay: 15000,
       }}
       style={{
         position: "absolute",
