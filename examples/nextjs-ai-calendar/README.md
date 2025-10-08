@@ -21,9 +21,11 @@
 </p>
 
 This example shows how to build an AI calendar app with
-[Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
+[Liveblocks](https://liveblocks.io), [Kibo UI](https://www.kibo-ui.com/), and
+[Next.js](https://nextjs.org/).
 
-Interact with a calendar by chatting with AI and realize actions directly from the chat.
+Interact with a calendar by chatting with AI and create events directly from the
+chat.
 
 https://github.com/user-attachments/assets/9e555121-314e-4c40-9d45-b21b1ccd715f
 

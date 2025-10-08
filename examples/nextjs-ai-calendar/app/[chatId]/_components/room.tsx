@@ -9,7 +9,7 @@ export function Room({
   chatId: string;
 }) {
   return (
-    <RoomProvider id={"liveblocks:examples:nextjs-ai-web-generator:" + chatId}>
+    <RoomProvider id={"liveblocks:examples:nextjs-a-calendar:" + chatId}>
       {children}
     </RoomProvider>
   );

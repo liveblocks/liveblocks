@@ -32,7 +32,7 @@ export function Calendar() {
         value={new Date().toString()}
       />
       <RegisterAiKnowledge
-        description="Current calendar events"
+        description="Current calendar events. You can only modify August 2025. If a user refers to a date, assume it is August 2025."
         value={JSON.stringify(events)}
       />
       <RegisterAiTool
@@ -80,10 +80,11 @@ export function Calendar() {
             required: ["events"],
             additionalProperties: false,
           },
-          render: ({ stage, args, result, types }) => {
+          render: ({ stage, args, types }) => {
             if (stage === "receiving") {
               return "Loading...";
             }
+
             return (
               <AiTool
                 title={`Add calendar event${args.events.length === 1 ? "" : "s"}`}
@@ -271,8 +272,6 @@ export function Calendar() {
     </CalendarProvider>
   );
 }
-
-const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 const statuses = [
   { id: faker.string.uuid(), name: "Planned", color: "#6B7280" },
