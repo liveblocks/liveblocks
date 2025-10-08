@@ -25,7 +25,7 @@ This example shows how to build an AI app builder app with
 
 Create apps like in V0 by chatting with AI.
 
-https://github.com/user-attachments/assets/5e812f39-6083-4f51-b693-e7f03a1b0a6b
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/ai-app-builder.png" width="536" alt="AI app builder" />
 
 ## Getting started
 
