@@ -89,7 +89,10 @@ test.describe("Knowledge Registration", () => {
 
     await test.step("Test AI knowledge of current view", async () => {
       // Ask AI about the current view - it should know we're on the Todo list
-      await sendAiMessage(page, "What is the current view in the app?");
+      await sendAiMessage(
+        page,
+        "What is the current view in the app? Be brief."
+      );
 
       // Wait for AI response that should mention the todo view
       await expect(
@@ -99,7 +102,7 @@ test.describe("Knowledge Registration", () => {
 
     await test.step("Test AI knowledge of specific todos", async () => {
       // Ask AI about the todos - it should know the specific items
-      await sendAiMessage(page, "What todos do I have?");
+      await sendAiMessage(page, "What todos do I have? Be brief.");
 
       // Wait for AI response that should include the todo items
       await page.waitForTimeout(10000);
@@ -131,7 +134,7 @@ test.describe("Knowledge Registration", () => {
     await expect(nicknameCheckbox).not.toBeChecked();
 
     // Ask AI about my name - it shouldn't know it
-    await sendAiMessage(page, "What is my name or nickname?");
+    await sendAiMessage(page, "What is my name or nickname? Be brief.");
     await page.waitForTimeout(10000);
 
     // Now enable nickname sharing
@@ -139,7 +142,7 @@ test.describe("Knowledge Registration", () => {
     await expect(nicknameCheckbox).toBeChecked();
 
     // Ask AI again about my name - now it should know "nvie"
-    await sendAiMessage(page, "What is my nickname?");
+    await sendAiMessage(page, "What is my nickname? Be brief.");
 
     // Wait for AI response that should include "nvie"
     await expect(page.locator("text=nvie")).toBeVisible({ timeout: 30000 });
@@ -177,7 +180,10 @@ test.describe("Knowledge Registration", () => {
     await expect(page.locator("text=☀️")).toBeVisible();
 
     // Ask AI about current mode
-    await sendAiMessage(page, "What is the current dark mode setting?");
+    await sendAiMessage(
+      page,
+      "What is the current dark mode setting? Be brief."
+    );
 
     // Wait for AI response about light mode
     await expect(
@@ -185,7 +191,7 @@ test.describe("Knowledge Registration", () => {
     ).toBeVisible({ timeout: 30000 });
 
     // Ask AI to change to dark mode using the tool
-    await sendAiMessage(page, "Change the app to dark mode");
+    await sendAiMessage(page, "Change the app to dark mode. Be brief.");
 
     // Wait for the tool execution and verify dark mode is now enabled
     await page.waitForTimeout(10000);
@@ -204,7 +210,7 @@ test.describe("Knowledge Registration", () => {
     await expect(page.getByTestId("tab-todo-app")).toContainClass("font-bold");
 
     // Ask about current view
-    await sendAiMessage(page, "What view am I currently in?");
+    await sendAiMessage(page, "What view am I currently in? Be brief.");
     await expect(page.locator(".lb-ai-chat-messages")).toContainText(/todo/i, {
       timeout: 30000,
     });
@@ -217,7 +223,7 @@ test.describe("Knowledge Registration", () => {
     await expect(page.locator("text=Another part of the app")).toBeVisible();
 
     // Ask about current view again - should now know it's "Another app"
-    await sendAiMessage(page, "What is my current view now?");
+    await sendAiMessage(page, "What is my current view now? Be brief.");
     // Look for "Another" in the AI chat response, not in the UI
     await expect(page.locator(".lb-ai-chat-messages")).toContainText(
       /another/i,
@@ -229,7 +235,7 @@ test.describe("Knowledge Registration", () => {
     await expect(page.getByTestId("tab-both")).toContainClass("font-bold");
 
     // Ask about current view - should know it's "Both apps"
-    await sendAiMessage(page, "What view am I in now?");
+    await sendAiMessage(page, "What view am I in now? Be brief.");
     // Look for "Both" in the AI chat response, not in the UI
     await expect(page.locator(".lb-ai-chat-messages")).toContainText(/both/i, {
       timeout: 30000,
@@ -247,13 +253,16 @@ test.describe("Knowledge Registration", () => {
     await expect(exposeCheckbox).not.toBeChecked();
 
     // Ask AI about dark mode - it should not have access to this knowledge
-    await sendAiMessage(page, "What is the current dark mode setting?");
+    await sendAiMessage(
+      page,
+      "What is the current dark mode setting? Be brief."
+    );
 
     // Wait for response - AI should indicate it doesn't know or can't access this info
     await page.waitForTimeout(10000);
 
     // Try to use the dark mode tool - it should not be available
-    await sendAiMessage(page, "Change to dark mode");
+    await sendAiMessage(page, "Change to dark mode. Be brief.");
 
     // Wait for response - AI should indicate it can't perform this action
     await page.waitForTimeout(10000);

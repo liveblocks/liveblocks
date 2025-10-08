@@ -157,7 +157,9 @@ export type RoomPermission =
   | ["room:read", "room:presence:write"];
 export type RoomAccesses = Record<
   string,
-  ["room:write"] | ["room:read", "room:presence:write"]
+  | ["room:write"]
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"]
 >;
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
@@ -951,7 +953,13 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
-    const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
+    const {
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+      tenantId,
+    } = params;
 
     const res = await this.#post(
       options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
@@ -960,6 +968,7 @@ export class Liveblocks {
         defaultAccesses,
         groupsAccesses,
         usersAccesses,
+        tenantId,
         metadata,
       },
       options

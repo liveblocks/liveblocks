@@ -2040,6 +2040,10 @@ function Whiteboard() {
     Optional unique identifier for this knowledge source. If provided,
     subsequent updates with the same ID will replace the previous knowledge.
   </PropertiesListItem>
+  <PropertiesListItem name="chatId" type="string">
+    Optional chat ID to scope this tool to a specific chat. If provided, the
+    tool will only be available to that chat.
+  </PropertiesListItem>
 </PropertiesList>
 
 ### RegisterAiTool
