@@ -20,7 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 41 (2025-10-10)
 
+## Examples
+
+New example: [AI app builder](/examples/ai-app-builder).
+New example: [AI calendar](/examples/ai-calendar).
+
 ## Contributors
+
+ctnicholas, sugardarius, pierrelevaillant
 
 # Week 40 (2025-10-03)
 
