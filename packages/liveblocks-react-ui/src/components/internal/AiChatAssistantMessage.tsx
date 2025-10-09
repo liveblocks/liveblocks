@@ -36,6 +36,7 @@ import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
 import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
+import { Favicon } from "./Favicon";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -99,6 +100,40 @@ interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
 
 interface CitationsPartProps extends AiMessageContentCitationsPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+}
+
+interface AiChatAssistantMessageSourcesProps extends ComponentProps<"ol"> {
+  sources: { url: string; title?: string }[];
+}
+
+function AiChatAssistantMessageSources({
+  sources,
+  className,
+  ...props
+}: AiChatAssistantMessageSourcesProps) {
+  return (
+    <ol className={cn("lb-ai-chat-sources", className)} {...props}>
+      {sources.map((source, index) => {
+        return (
+          <li key={`${index}-${source.url}`}>
+            {/* TODO: Use `Anchor` component */}
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lb-ai-chat-source"
+            >
+              <Favicon url={source.url} className="lb-ai-chat-source-favicon" />
+              {source.title ? (
+                <span className="lb-ai-chat-source-title">{source.title}</span>
+              ) : null}
+              <span className="lb-ai-chat-source-url">{source.url}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 export const AiChatAssistantMessage = memo(
@@ -382,11 +417,10 @@ function ToolInvocationPart({
  * CitationsPart
  * -----------------------------------------------------------------------------------------------*/
 function CitationsPart({ part }: CitationsPartProps) {
-  const $ = useOverrides();
-
   return (
-    <div className="lb-ai-chat-message-citations">
-      {$.AI_CHAT_MESSAGE_CITATIONS(part)}
-    </div>
+    <AiChatAssistantMessageSources
+      className="lb-ai-chat-message-sources"
+      sources={part.citations}
+    />
   );
 }
