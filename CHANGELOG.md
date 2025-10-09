@@ -7,6 +7,8 @@
 ### `@liveblocks/react`
 
 - Add query filters `subscribed` on the `useThreads` hook.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
 
 ### `@liveblocks/client`
 
