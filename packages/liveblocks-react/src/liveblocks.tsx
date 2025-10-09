@@ -1413,8 +1413,8 @@ const LOADING = Object.freeze({ status: "loading" });
 const IDLE = Object.freeze({ status: "idle" });
 
 /**
- * Returns the status of an AI chat, indicating whether it's idle or actively
- * generating content. This is a convenience hook that derives its state from
+ * Returns the status of an AI chat, indicating whether it's disconnected, loading, idle
+ * or actively generating content. This is a convenience hook that derives its state from
  * the latest assistant message in the chat.
  *
  * Re-renders whenever any of the relevant fields change.
@@ -1428,7 +1428,7 @@ const IDLE = Object.freeze({ status: "idle" });
  *
  * function ChatStatus() {
  *   const { status, partType, toolName } = useAiChatStatus("my-chat");
- *   console.log(status);          // "loading" | "idle" | "generating"
+ *   console.log(status);          // "disconnected" | "loading" | "idle" | "generating"
  *   console.log(status.partType); // "text" | "tool-invocation" | ...
  *   console.log(status.toolName); // string | undefined
  * }
