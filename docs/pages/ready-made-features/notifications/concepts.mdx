@@ -97,6 +97,14 @@ Custom notifications can be sent using
 on the server, and the `kind` must always begin with a `$`, for example
 `$myCustomNotification`.
 
+When you trigger an inbox notification, you pass the activity data, which
+represents the events that happened.
+
+If you want to update an existing inbox notification when a new activity
+happens, you can configure the notification kind to have batching enabled. Learn
+more about
+[batching](/docs/ready-made-features/notifications/concepts#batching-configuration).
+
 ### Liveblocks notifications
 
 [Comments](/docs/ready-made-features/comments) can send `thread` notifications
@@ -126,6 +134,23 @@ participating in.
   <Image
     src="/assets/comments/thread-unread-indicator.png"
     alt="Unread indicator in Thread component"
+    width={1456}
+    height={896}
+  />
+</Figure>
+
+### Batching configuration [#batching-configuration]
+
+You can configure a notification kind to have batching enabled. With batching,
+when you trigger an inbox notification activity for a specific subject id, it
+will update the existing inbox notification instead of creating a new one. An
+inbox notification can have up to 50 activities, if you exceed this number, a
+new inbox notification will be created.
+
+<Figure>
+  <Image
+    src="/assets/notifications/inbox-notification-batching.png"
+    alt="Inbox notification batching"
     width={1456}
     height={896}
   />
