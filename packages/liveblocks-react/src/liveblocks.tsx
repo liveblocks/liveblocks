@@ -1453,7 +1453,7 @@ function useAiChatStatus(
   );
 
   const isAvailable = useSignal(
-    // Subscribe to connection status
+    // Subscribe to connection status signal
     client[kInternal].ai.signals.statusΣ,
     // "Disconnected" means the AI service is not available
     // as it represents a final error status.
