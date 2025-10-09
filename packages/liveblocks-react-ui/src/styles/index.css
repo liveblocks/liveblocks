@@ -3187,6 +3187,15 @@
   }
 }
 
+.lb-ai-chat-message-retrieval-favicons {
+  display: inline-flex;
+  vertical-align: bottom;
+  gap: calc(0.25 * var(--lb-spacing));
+  align-items: center;
+  block-size: 1lh;
+  margin-inline-start: calc(0.5 * var(--lb-spacing));
+}
+
 /*************************************
  *            Animations             *
  *************************************/

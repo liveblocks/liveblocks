@@ -1,6 +1,7 @@
 import type {
   AiAssistantMessage,
   AiRetrievalPart,
+  AiWebRetrievalPart,
   WithNavigation,
 } from "@liveblocks/core";
 import {
@@ -396,6 +397,9 @@ function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
         )}
       >
         {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
+        {part.kind === "web" ? (
+          <RetrievalPartFavicons sources={part.sources} />
+        ) : null}
         {content ? (
           <span className="lb-collapsible-chevron lb-icon-container">
             <ChevronRightIcon />
@@ -409,6 +413,24 @@ function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
         </Collapsible.Content>
       ) : null}
     </Collapsible.Root>
+  );
+}
+
+function RetrievalPartFavicons({
+  sources,
+}: {
+  sources: AiWebRetrievalPart["sources"];
+}) {
+  if (!sources) {
+    return null;
+  }
+
+  return (
+    <div className="lb-ai-chat-message-retrieval-favicons">
+      {sources.slice(0, 3).map((source) => (
+        <Favicon key={source.url} url={source.url} />
+      ))}
+    </div>
   );
 }
 
