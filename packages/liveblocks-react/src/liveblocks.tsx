@@ -1452,10 +1452,12 @@ function useAiChatStatus(
         .waitUntilLoaded()
   );
 
-  // Subscribe to connection status
-  const isDisconnected = useSignal(
+  const isAvailable = useSignal(
+    // Subscribe to connection status
     client[kInternal].ai.signals.statusΣ,
-    (status) => status !== "connected"
+    // "Disconnected" means the AI service is not available
+    // as it represents a final error status.
+    (status) => status !== "disconnected"
   );
 
   const chatStatus = useSignal(
@@ -1500,7 +1502,7 @@ function useAiChatStatus(
     shallow
   );
 
-  if (isDisconnected) {
+  if (!isAvailable) {
     return DISCONNECTED;
   }
 
