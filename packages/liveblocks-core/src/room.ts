@@ -472,6 +472,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
+    subscribed?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
 };

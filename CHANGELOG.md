@@ -4,6 +4,14 @@
 
 - Disable AI chat composers when AI service is not available.
 
+### `@liveblocks/react`
+
+- Add query filters `subscribed` on the `useThreads` hook.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
 ## v3.8.1
 
 ### `@liveblocks/react`
