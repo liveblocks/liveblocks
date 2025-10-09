@@ -2,7 +2,7 @@
 
 ### `@liveblocks/react-ui`
 
-- Disable AI chat composers when WebSocket connection is closed.
+- Disable AI chat composers when AI service is not available.
 
 ## v3.8.1
 
