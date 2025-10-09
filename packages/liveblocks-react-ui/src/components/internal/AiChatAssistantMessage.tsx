@@ -372,16 +372,43 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
  * -----------------------------------------------------------------------------------------------*/
 function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
   const $ = useOverrides();
+  let content: ReactNode = null;
+
+  if (part.kind === "web" && part.sources && part.sources.length > 0) {
+    content = (
+      <AiChatAssistantMessageSources
+        className="lb-ai-chat-message-retrieval-sources"
+        sources={part.sources}
+      />
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        "lb-ai-chat-message-retrieval",
-        isStreaming && "lb-ai-chat-pending"
-      )}
+    <Collapsible.Root
+      className="lb-collapsible lb-ai-chat-message-retrieval"
+      defaultOpen={false}
+      disabled={!content}
     >
-      {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
-    </div>
+      <Collapsible.Trigger
+        className={cn(
+          "lb-collapsible-trigger",
+          isStreaming && "lb-ai-chat-pending"
+        )}
+      >
+        {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
+        {content ? (
+          <span className="lb-collapsible-chevron lb-icon-container">
+            <ChevronRightIcon />
+          </span>
+        ) : null}
+      </Collapsible.Trigger>
+
+      {content ? (
+        <Collapsible.Content className="lb-collapsible-content">
+          {content}
+        </Collapsible.Content>
+      ) : null}
+    </Collapsible.Root>
   );
 }
 
