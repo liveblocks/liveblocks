@@ -20,6 +20,22 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 41 (2025-10-10)
 
+## v3.8.1
+
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+- Add `comments:write` to the list of possible room permissions.
+
 ## Examples
 
 New example: [AI app builder](/examples/ai-app-builder).
@@ -27,7 +43,7 @@ New example: [AI calendar](/examples/ai-calendar).
 
 ## Contributors
 
-ctnicholas, sugardarius, pierrelevaillant
+ctnicholas, sugardarius, pierrelevaillant, marcbouchenoire, nvie, flowflorent
 
 # Week 40 (2025-10-03)
 
