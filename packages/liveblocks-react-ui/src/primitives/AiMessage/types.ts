@@ -3,6 +3,7 @@ import type {
   AiChatMessage,
   AiReasoningPart,
   AiRetrievalPart,
+  AiSourcesPart,
   AiTextPart,
   AiToolInvocationPart,
 } from "@liveblocks/core";
@@ -46,6 +47,11 @@ export type AiMessageContentRetrievalPartProps = {
   part: AiRetrievalPart;
 };
 
+/** @internal */
+export type AiMessageContentSourcesPartProps = {
+  part: AiSourcesPart;
+};
+
 export interface AiMessageContentComponents {
   /**
    * The component used to display text parts.
@@ -61,6 +67,11 @@ export interface AiMessageContentComponents {
    * The component used to display knowledge retrieval parts.
    */
   RetrievalPart: ComponentType<AiMessageContentRetrievalPartProps>;
+
+  /**
+   * The component used to display
+   */
+  SourcesPart: ComponentType<AiMessageContentSourcesPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.

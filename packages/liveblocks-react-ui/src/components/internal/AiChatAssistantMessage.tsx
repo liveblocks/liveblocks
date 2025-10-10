@@ -1,4 +1,9 @@
-import type { AiAssistantMessage, WithNavigation } from "@liveblocks/core";
+import type {
+  AiAssistantMessage,
+  AiRetrievalPart,
+  AiWebRetrievalPart,
+  WithNavigation,
+} from "@liveblocks/core";
 import {
   type ComponentProps,
   forwardRef,
@@ -24,6 +29,7 @@ import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocat
 import type {
   AiMessageContentReasoningPartProps,
   AiMessageContentRetrievalPartProps,
+  AiMessageContentSourcesPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
@@ -31,6 +37,7 @@ import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
 import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
+import { Favicon } from "./Favicon";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -50,6 +57,24 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
    * The message to display.
    */
   message: UiAssistantMessage;
+
+  /**
+   * How to show or hide reasoning.
+   */
+  showReasoning?: boolean | "during";
+
+  /**
+   * How to show or hide retrievals.
+   */
+  showRetrievals?:
+    | boolean
+    | "during"
+    | Record<AiRetrievalPart["kind"], boolean | "during">;
+
+  /**
+   * Whether to show citations.
+   */
+  showCitations?: boolean;
 
   /**
    * Override the component's strings.
@@ -74,12 +99,72 @@ interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
+interface SourcesPartProps extends AiMessageContentSourcesPartProps {
+  components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+}
+
+interface AiChatAssistantMessageSourcesProps extends ComponentProps<"ol"> {
+  sources: { url: string; title?: string }[];
+}
+
+function AiChatAssistantMessageSources({
+  sources,
+  className,
+  ...props
+}: AiChatAssistantMessageSourcesProps) {
+  return (
+    <ol className={cn("lb-ai-chat-sources", className)} {...props}>
+      {sources.map((source, index) => {
+        return (
+          <li key={`${index}-${source.url}`}>
+            {/* TODO: Use `Anchor` component */}
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lb-ai-chat-source"
+            >
+              <Favicon url={source.url} className="lb-ai-chat-source-favicon" />
+              {source.title ? (
+                <span className="lb-ai-chat-source-title">{source.title}</span>
+              ) : null}
+              <span className="lb-ai-chat-source-url">{source.url}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    ({ message, className, overrides, components, ...props }, forwardedRef) => {
+    (
+      {
+        message,
+        className,
+        overrides,
+        components,
+        showReasoning,
+        showRetrievals,
+        showCitations,
+        ...props
+      },
+      forwardedRef
+    ) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
+
+      const messageContent = (
+        <AssistantMessageContent
+          message={message}
+          components={components}
+          showReasoning={showReasoning}
+          showRetrievals={showRetrievals}
+          showCitations={showCitations}
+        />
+      );
 
       if (message.deletedAt !== undefined) {
         children = (
@@ -98,33 +183,18 @@ export const AiChatAssistantMessage = memo(
             </div>
           );
         } else {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-            />
-          );
+          children = messageContent;
         }
       } else if (message.status === "completed") {
-        children = (
-          <AssistantMessageContent message={message} components={components} />
-        );
+        children = messageContent;
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
         if (message.errorReason === "Aborted by user") {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-            />
-          );
+          children = messageContent;
         } else {
           children = (
             <>
-              <AssistantMessageContent
-                message={message}
-                components={components}
-              />
+              {messageContent}
 
               <div className="lb-ai-chat-message-error">
                 <span className="lb-icon-container">
@@ -155,33 +225,83 @@ export const AiChatAssistantMessage = memo(
   )
 );
 
+const NoopComponent = () => null;
+
 function AssistantMessageContent({
   message,
   components,
+  showReasoning = true,
+  showRetrievals = true,
+  showCitations = true,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+  showReasoning?: AiChatAssistantMessageProps["showReasoning"];
+  showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
+  showCitations?: AiChatAssistantMessageProps["showCitations"];
 }) {
-  const ref = useRef(components);
+  const componentsRef = useRef(components);
+  let showKnowledgeRetrievals =
+    typeof showRetrievals === "object"
+      ? showRetrievals.knowledge
+      : showRetrievals;
+  let showWebRetrievals =
+    typeof showRetrievals === "object" ? showRetrievals.web : showRetrievals;
+
+  // Both default to `true` if not specified, even with the object form (e.g. `{ web: "during" }`, `knowledge` is still `true`)
+  showKnowledgeRetrievals ??= true;
+  showWebRetrievals ??= true;
+
   const BoundTextPart = useMemo(
     () => (props: TextPartProps) => (
-      <TextPart {...props} components={ref.current} />
+      <TextPart {...props} components={componentsRef.current} />
     ),
     []
   );
   const BoundReasoningPart = useMemo(
-    () => (props: ReasoningPartProps) => (
-      <ReasoningPart {...props} components={ref.current} />
-    ),
-    []
+    () => (props: ReasoningPartProps) => {
+      if (
+        !showReasoning ||
+        (showReasoning === "during" && !props.isStreaming)
+      ) {
+        return null;
+      }
+
+      return <ReasoningPart {...props} components={componentsRef.current} />;
+    },
+    [showReasoning]
   );
+  const BoundRetrievalPart = useMemo(
+    () => (props: RetrievalPartProps) => {
+      if (props.part.kind === "knowledge") {
+        if (
+          !showKnowledgeRetrievals ||
+          (showKnowledgeRetrievals === "during" && !props.isStreaming)
+        ) {
+          return null;
+        }
+      } else if (props.part.kind === "web") {
+        if (
+          !showWebRetrievals ||
+          (showWebRetrievals === "during" && !props.isStreaming)
+        ) {
+          return null;
+        }
+      }
+
+      return <RetrievalPart {...props} />;
+    },
+    [showKnowledgeRetrievals, showWebRetrievals]
+  );
+
   return (
     <AiMessage.Content
       message={message}
       components={{
         TextPart: BoundTextPart,
         ReasoningPart: BoundReasoningPart,
-        RetrievalPart,
+        RetrievalPart: BoundRetrievalPart,
+        SourcesPart: showCitations ? SourcesPart : NoopComponent,
         ToolInvocationPart,
       }}
       className="lb-ai-chat-message-content"
@@ -253,15 +373,63 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
  * -----------------------------------------------------------------------------------------------*/
 function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
   const $ = useOverrides();
+  let content: ReactNode = null;
+
+  if (part.kind === "web" && part.sources && part.sources.length > 0) {
+    content = (
+      <AiChatAssistantMessageSources
+        className="lb-ai-chat-message-retrieval-sources"
+        sources={part.sources}
+      />
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        "lb-ai-chat-message-retrieval",
-        isStreaming && "lb-ai-chat-pending"
-      )}
+    <Collapsible.Root
+      className="lb-collapsible lb-ai-chat-message-retrieval"
+      defaultOpen={false}
+      disabled={!content}
     >
-      {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
+      <Collapsible.Trigger
+        className={cn(
+          "lb-collapsible-trigger",
+          isStreaming && "lb-ai-chat-pending"
+        )}
+      >
+        {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
+        {part.kind === "web" ? (
+          <RetrievalPartFavicons sources={part.sources} />
+        ) : null}
+        {content ? (
+          <span className="lb-collapsible-chevron lb-icon-container">
+            <ChevronRightIcon />
+          </span>
+        ) : null}
+      </Collapsible.Trigger>
+
+      {content ? (
+        <Collapsible.Content className="lb-collapsible-content">
+          {content}
+        </Collapsible.Content>
+      ) : null}
+    </Collapsible.Root>
+  );
+}
+
+function RetrievalPartFavicons({
+  sources,
+}: {
+  sources: AiWebRetrievalPart["sources"];
+}) {
+  if (!sources) {
+    return null;
+  }
+
+  return (
+    <div className="lb-ai-chat-message-retrieval-favicons">
+      {sources.slice(0, 3).map((source) => (
+        <Favicon key={source.url} url={source.url} />
+      ))}
     </div>
   );
 }
@@ -291,5 +459,17 @@ function ToolInvocationPart({
         <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * CitationsPart
+ * -----------------------------------------------------------------------------------------------*/
+function SourcesPart({ part }: SourcesPartProps) {
+  return (
+    <AiChatAssistantMessageSources
+      className="lb-ai-chat-message-sources"
+      sources={part.sources}
+    />
   );
 }
