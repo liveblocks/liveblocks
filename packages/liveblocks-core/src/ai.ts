@@ -947,6 +947,7 @@ export type Ai = {
       name: string,
       chatId?: string
     ): DerivedSignal<AiOpaqueToolDefinition | undefined>;
+    statusΣ: Signal<Status>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -1010,6 +1011,8 @@ export function createAi(config: AiConfig): Ai {
     knowledgeStore,
   };
 
+  const statusΣ = new Signal<Status>("initial");
+
   // Delta batch processing system to throttle incoming delta updates. Incoming
   // deltas are buffered and only let through every every 25ms. This creates
   // a ceiling of max 40 rerenders/second during streaming.
@@ -1044,7 +1047,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   let lastTokenKey: string | undefined;
-  function onStatusDidChange(_newStatus: Status) {
+  function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
       const tokenKey = getBearerTokenFromAuthValue(authValue);
@@ -1067,6 +1070,9 @@ export function createAi(config: AiConfig): Ai {
         }
       }
     }
+
+    // Forward to the outside world
+    statusΣ.set(newStatus);
   }
   let _connectionLossTimerId: TimeoutID | undefined;
   let _hasLostConnection = false;
@@ -1437,6 +1443,7 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getToolΣ: context.toolsStore.getToolΣ,
+        statusΣ,
       },
 
       getChatById: context.chatsStore.getChatById,

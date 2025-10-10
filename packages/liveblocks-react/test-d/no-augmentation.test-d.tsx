@@ -990,7 +990,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<undefined>(status.toolName);
     }
   } else {
-    expectType<"loading" | "idle">(status.status);
+    expectType<"disconnected" | "loading" | "idle">(status.status);
     expectType<undefined>(status.partType);
     expectType<undefined>(status.toolName);
   }
@@ -1012,7 +1012,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<undefined>(status.toolName);
     }
   } else {
-    expectType<"loading" | "idle">(status.status);
+    expectType<"disconnected" | "loading" | "idle">(status.status);
     expectType<undefined>(status.partType);
     expectType<undefined>(status.toolName);
   }
@@ -1033,7 +1033,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<undefined>(status.toolName);
     }
   } else {
-    expectType<"loading" | "idle">(status.status);
+    expectType<"disconnected" | "loading" | "idle">(status.status);
     expectType<undefined>(status.partType);
     expectType<undefined>(status.toolName);
   }
@@ -1054,7 +1054,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<undefined>(status.toolName);
     }
   } else {
-    expectType<"loading" | "idle">(status.status);
+    expectType<"disconnected" | "loading" | "idle">(status.status);
     expectType<undefined>(status.partType);
     expectType<undefined>(status.toolName);
   }
