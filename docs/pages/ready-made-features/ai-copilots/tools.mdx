@@ -1,0 +1,202 @@
+---
+meta:
+  title: "Tools"
+  parentTitle: "AI Copilots"
+  description: "Allow AI to interact with your application"
+---
+
+Tools are a way to allow AI to make actions, modify your application state,
+interact with your front-end, or render custom components within your AI chat.
+You can use them to extend the capabilities of AI Copilots beyond simple text,
+allowing autonomous and human-in-the-loop interactions.
+
+## Tool uses
+
+Tools can be used to create various different interactions inside of your AI
+chat, such as:
+
+- **Custom components**: Render custom React components like forms, graphs,
+  videos, callouts.
+- **Actions**: Autonomously perform actions like editing documents, redirecting
+  users, sending emails.
+- **Query actions**: AI can query your app, search documents, find pages, check
+  invoices.
+- **Human-in-the-loop actions**: Show confirm/deny buttons before taking
+  destructive actions.
+- **AI presence**: Tool results can be streamed in, allowing AI to show live
+  updates in your app.
+
+### How tools work
+
+You can define a list of tools in your application, and your AI can choose to
+use them whenever it likes. Within each tool you can set certain parameters
+which AI will fill in for you. For example, a weather tool may have a `location`
+parameter, and AI may fill in this argument with `Paris`. Here’s an example of
+how an interaction occurs:
+
+<Steps>
+  <StepCompact>
+    <StepTitle>In your weather tool, `location` is defined as a `string`</StepTitle>
+    <StepContent>
+    ```json
+    { "location": { type: "string" } }
+    ```
+    </StepContent>
+  </StepCompact>
+
+{" "}
+
+<StepCompact>
+  <StepTitle>User sends a message</StepTitle>
+  <StepContent>
+
+    ```js
+    User: "What's the weather in Paris?"
+    ```
+
+  </StepContent>
+</StepCompact>
+
+  <StepCompact>
+    <StepTitle>AI calls the weather tool with `Paris` as the `location`</StepTitle>
+    <StepContent>
+    ```js
+    { "location": "Paris" }
+    ```
+    </StepContent>
+  </StepCompact>
+
+{" "}
+
+<StepCompact>
+  <StepTitle>You write code to fetch the weather for the `location`</StepTitle>
+  <StepContent>
+
+    ```js
+    execute: async ({ location }) => {
+      // { "temperature": 20, "condition": "sunny" };
+      const weather = await fetchWeather(location);
+      return { data: { weather }};
+    }
+    ```
+
+  </StepContent>
+</StepCompact>
+
+  <StepCompact lastStep>
+    <StepTitle>AI answers the user</StepTitle>
+    <StepContent>
+    ```js
+    AI: "It's sunny in Paris, with a temperature of 20°C."
+    ```
+    </StepContent>
+  </StepCompact>
+</Steps>
+
+<details>
+  <summary>Optionally, you can also use `render` to display a custom component in the chat.</summary>
+  <div style={{ marginTop: -16 }}>
+
+<Steps startAt={4}>
+
+<StepCompact>
+  <StepTitle>…your existing code to fetch the weather</StepTitle>
+  <StepContent>
+
+    ```js
+    execute: async ({ location }) => {
+      // { "temperature": 20, "condition": "sunny" };
+      const weather = await fetchWeather(location);
+      return { data: { weather }};
+    }
+    ```
+    </StepContent>
+
+  </StepCompact>
+
+<StepCompact>
+  <StepTitle>Define a custom component to render</StepTitle>
+  <StepContent>
+
+    ```tsx
+    render: ({ result }) => {
+      const weather = result.data;
+      return <div>{weather.condition === "sunny" ? "☀️" : "🌧️"} in {weather.location}</div>;
+    }
+    ```
+
+  </StepContent>
+</StepCompact>
+
+  <StepCompact lastStep>
+    <StepTitle>AI answers the user</StepTitle>
+    <StepContent>
+    ```tsx
+    AI: <div>☀️ in Paris</div>
+    ```
+    </StepContent>
+  </StepCompact>
+</Steps>
+
+</div>
+</details>
+
+---
+
+When writing your
+[system prompt](/docs/ready-made-features/ai-copilots/copilots#System-prompt)
+you can suggest when certain tools should be used, helping AI respond
+accurately.
+
+## Defining tools
+
+To define a tool, you first need to give it a unique name, and a description,
+which AI will use to decide when to call it. Tools are defined with
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) and
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool).
+
+```tsx
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+
+<RegisterAiTool
+  // +++
+  name="weather-tool"
+  // +++
+  tool={defineAiTool()({
+    // +++
+    description: "Get the weather for a location",
+    // +++
+    // ...
+  })}
+/>;
+```
+
+All tools require parameters in the form of a
+[JSON schema](https://json-schema.org/learn/getting-started-step-by-step).
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    // +++
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    // ...
+  })}
+/>
+```
+
+and JSON schema for the parameters it will fill in. For example, if this is
+
+Tools are defined with
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) and
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool).
