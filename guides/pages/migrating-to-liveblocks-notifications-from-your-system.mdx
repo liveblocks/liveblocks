@@ -1,0 +1,970 @@
+---
+meta:
+  title: "Migrating to Liveblocks Notifications from Your System"
+  description:
+    "A comprehensive guide to migrating your existing notification system to
+    Liveblocks using a parallel running strategy"
+---
+
+# Migrating to Liveblocks Notifications from Your System
+
+You've built a solid notification system for your application, but now you want
+to leverage Liveblocks' powerful notification infrastructure. This guide walks
+you through migrating from your custom notification system to Liveblocks using a
+**parallel running strategy** - the safest approach that allows you to gradually
+transition while maintaining system reliability.
+
+## Why Migrate to Liveblocks Notifications?
+
+Your current notification system probably handles:
+
+- In-app notifications (notification tray, badges, real-time updates)
+- Channel notifications (email, Slack, Teams, SMS)
+- User notification preferences and settings
+- Multiple notification types (file uploads, document creation, user joins,
+  etc.)
+
+Liveblocks provides all of this with:
+
+- **Inbox Notifications**: Project-based notification system with built-in UI
+  components
+- **Channel Notifications**: Webhook-driven external notifications to email,
+  Slack, Teams, and web push
+- **Notification Settings**: Two-level configuration (project and user level)
+- **Real-time Updates**: Automatic synchronization and real-time notification
+  delivery
+
+## The Parallel Running Strategy
+
+Instead of a risky "big bang" migration, we'll run both systems simultaneously:
+
+1. **Phase 1**: Set up Liveblocks alongside your existing system
+2. **Phase 2**: Setup Liveblocks notifications in the Liveblocks dashboard
+3. **Phase 3**: Dual write in-app notifications and user notification settings
+4. **Phase 4**: Migrate all notifications and user notification settings
+5. **Phase 5**: Setup webhook for channel notifications
+6. **Phase 6**: Decommission your old system
+
+This approach ensures zero downtime and allows you to validate each step before
+proceeding.
+
+## Understanding Liveblocks Notification Architecture
+
+### Inbox Notifications
+
+Liveblocks notifications are **project-based** (not room-based), meaning users
+receive notifications from any room within the project. Each notification has:
+
+- **`kind`**: The notification type (e.g., `$fileUploaded`, `$documentCreated`,
+  `thread`)
+- **`subjectId`**: A unique identifier for the subject of the notification
+- **`activityData`**: Custom data payload
+- **`readAt`**: When the user read the notification
+- **`notifiedAt`**: When the notification was created
+
+### Channel Notifications
+
+Channel notifications are delivered via webhooks to external services:
+
+- **Channels**: `email`, `slack`, `teams`, `webPush`
+- **Webhook Events**: `ThreadNotificationEvent`, `TextMentionNotificationEvent`,
+  `CustomNotificationEvent`
+- **Delivery**: Configurable timing (default: 30 minutes after activity)
+
+### Notification Settings
+
+Two levels of configuration:
+
+- **Project Level**: Configured in Liveblocks dashboard
+- **User Level**: Managed via Client API and REST API
+
+## Phase 1: Set up Liveblocks alongside your existing system
+
+Before starting the migration, you'll need to set up Liveblocks in your project.
+Follow the
+[Liveblocks Notifications setup guide](https://liveblocks.io/docs/get-started/notifications)
+to:
+
+- Install the necessary packages
+- Configure your project settings
+- Set up authentication
+
+Once you have Liveblocks set up, you can proceed with the parallel running
+strategy.
+
+## Phase 2: Setup Liveblocks notifications in the Liveblocks dashboard
+
+In your Liveblocks dashboard:
+
+1. Go to your project settings
+2. Navigate to "Notifications" tab
+3. Enable the channels you need: `email`, `slack`, `teams`
+4. Configure webhook endpoints for each channel
+5. Set up your environment variables:
+
+```bash
+# .env
+LIVEBLOCKS_SECRET_KEY=sk_xxx
+LIVEBLOCKS_PUBLIC_KEY=pk_xxx
+LIVEBLOCKS_WEBHOOK_SECRET=whsec_xxx
+```
+
+## Phase 3: Dual write in-app notifications and user notification settings
+
+### 3.1 Create Notification Service Wrapper
+
+Create a service that sends notifications to both systems:
+
+```typescript
+// services/NotificationService.ts
+import { Liveblocks } from "@liveblocks/node";
+
+interface NotificationData {
+  userId: string;
+  kind: string;
+  subjectId: string;
+  activityData: Record<string, any>;
+  title: string;
+  message: string;
+  metadata?: Record<string, any>;
+}
+
+class NotificationService {
+  private liveblocks: Liveblocks;
+  private useLiveblocks: boolean = false; // Feature flag
+
+  constructor() {
+    this.liveblocks = new Liveblocks({
+      secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+    });
+  }
+
+  async sendNotification(data: NotificationData) {
+    // Always send to your existing system
+    await this.sendToExistingSystem(data);
+
+    // Conditionally send to Liveblocks based on feature flag
+    if (this.useLiveblocks) {
+      await this.sendToLiveblocks(data);
+    }
+  }
+
+  private async sendToExistingSystem(data: NotificationData) {
+    // Your existing notification logic
+    await this.existingNotificationService.create({
+      userId: data.userId,
+      type: data.kind.replace("$", ""), // Remove $ prefix
+      title: data.title,
+      message: data.message,
+      metadata: data.metadata,
+    });
+  }
+
+  private async sendToLiveblocks(data: NotificationData) {
+    try {
+      await this.liveblocks.triggerInboxNotification({
+        userId: data.userId,
+        kind: data.kind as any,
+        subjectId: data.subjectId,
+        activityData: data.activityData,
+      });
+    } catch (error) {
+      console.error("Failed to send Liveblocks notification:", error);
+      // Don't throw - we want the existing system to still work
+    }
+  }
+
+  // Method to enable Liveblocks for specific users
+  enableLiveblocksForUser(userId: string) {
+    // Implementation to enable Liveblocks for specific users
+  }
+
+  // Method to enable Liveblocks globally
+  enableLiveblocksGlobally() {
+    this.useLiveblocks = true;
+  }
+}
+
+export const notificationService = new NotificationService();
+```
+
+### 3.2 Update Your Application Code
+
+Replace direct calls to your notification service with the wrapper:
+
+```typescript
+// Before
+await existingNotificationService.create({
+  userId: "user123",
+  type: "file_uploaded",
+  title: "File Uploaded",
+  message: "document.pdf was uploaded",
+  metadata: { fileId: "file_456" },
+});
+
+// After
+await notificationService.sendNotification({
+  userId: "user123",
+  kind: "$fileUploaded",
+  subjectId: "file_456",
+  activityData: { fileName: "document.pdf" },
+  title: "File Uploaded",
+  message: "document.pdf was uploaded",
+  metadata: { fileId: "file_456" },
+});
+```
+
+## Phase 4: Migrate all notifications and user notification settings
+
+### 4.1 Create Liveblocks Notification Components
+
+Set up the Liveblocks provider and notification components:
+
+```typescript
+// components/LiveblocksProvider.tsx
+import { LiveblocksProvider } from "@liveblocks/react";
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+});
+
+export function LiveblocksNotificationProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <LiveblocksProvider client={client}>
+      {children}
+    </LiveblocksProvider>
+  );
+}
+```
+
+### 4.2 Create Notification Tray Component
+
+```typescript
+// components/NotificationTray.tsx
+import { useInboxNotifications } from "@liveblocks/react";
+
+export function NotificationTray() {
+  const { inboxNotifications, isLoading, error } = useInboxNotifications();
+
+  if (isLoading) return <div>Loading notifications...</div>;
+  if (error) return <div>Error loading notifications</div>;
+
+  return (
+    <div className="notification-tray">
+      <h3>Notifications</h3>
+      {inboxNotifications.map((notification) => (
+        <NotificationItem key={notification.id} notification={notification} />
+      ))}
+    </div>
+  );
+}
+
+function NotificationItem({ notification }: { notification: any }) {
+  const { markInboxNotificationAsRead } = useInboxNotifications();
+
+  const handleClick = () => {
+    markInboxNotificationAsRead(notification.id);
+  };
+
+  return (
+    <div
+      className={`notification ${notification.readAt ? 'read' : 'unread'}`}
+      onClick={handleClick}
+    >
+      <div className="notification-content">
+        {renderNotificationContent(notification)}
+      </div>
+    </div>
+  );
+}
+
+function renderNotificationContent(notification: any) {
+  switch (notification.kind) {
+    case '$fileUploaded':
+      return (
+        <div>
+          <strong>File Uploaded</strong>
+          <p>{notification.activityData.fileName} was uploaded</p>
+        </div>
+      );
+    case '$documentCreated':
+      return (
+        <div>
+          <strong>Document Created</strong>
+          <p>{notification.activityData.documentName} was created</p>
+        </div>
+      );
+    case '$userJoined':
+      return (
+        <div>
+          <strong>User Joined</strong>
+          <p>{notification.activityData.userName} joined the project</p>
+        </div>
+      );
+    default:
+      return <div>Unknown notification type</div>;
+  }
+}
+```
+
+### 4.3 Implement Gradual User Migration
+
+Create a system to gradually migrate users to Liveblocks notifications:
+
+```typescript
+// services/UserMigrationService.ts
+class UserMigrationService {
+  private migratedUsers = new Set<string>();
+
+  async migrateUser(userId: string) {
+    // Migrate user's existing notifications to Liveblocks
+    const existingNotifications = await this.getExistingNotifications(userId);
+
+    for (const notification of existingNotifications) {
+      await this.migrateNotification(notification);
+    }
+
+    // Mark user as migrated
+    this.migratedUsers.add(userId);
+
+    // Enable Liveblocks for this user
+    notificationService.enableLiveblocksForUser(userId);
+  }
+
+  private async migrateNotification(notification: any) {
+    const liveblocksKind = `$${notification.type}`;
+
+    await liveblocks.triggerInboxNotification({
+      userId: notification.userId,
+      kind: liveblocksKind as any,
+      subjectId: notification.metadata?.subjectId || notification.id,
+      activityData: notification.metadata || {},
+    });
+  }
+
+  isUserMigrated(userId: string): boolean {
+    return this.migratedUsers.has(userId);
+  }
+}
+
+export const userMigrationService = new UserMigrationService();
+```
+
+### 4.4 Create Migration UI
+
+```typescript
+// components/MigrationBanner.tsx
+import { useState } from "react";
+
+export function MigrationBanner({ userId }: { userId: string }) {
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [isMigrated, setIsMigrated] = useState(false);
+
+  const handleMigrate = async () => {
+    setIsMigrating(true);
+    try {
+      await userMigrationService.migrateUser(userId);
+      setIsMigrated(true);
+    } catch (error) {
+      console.error('Migration failed:', error);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  if (isMigrated) {
+    return (
+      <div className="migration-banner success">
+        ✅ You're now using the new notification system!
+      </div>
+    );
+  }
+
+  return (
+    <div className="migration-banner">
+      <div>
+        <h4>Upgrade Your Notifications</h4>
+        <p>Get real-time notifications and better performance with our new system.</p>
+      </div>
+      <button
+        onClick={handleMigrate}
+        disabled={isMigrating}
+        className="migrate-button"
+      >
+        {isMigrating ? 'Migrating...' : 'Upgrade Now'}
+      </button>
+    </div>
+  );
+}
+```
+
+## Phase 5: Setup webhook for channel notifications
+
+### 5.1 Set Up Webhook Handler
+
+Create a webhook endpoint to handle Liveblocks notification events:
+
+```typescript
+// pages/api/liveblocks-webhook.ts
+import { WebhookHandler, Liveblocks } from "@liveblocks/node";
+import {
+  isThreadNotificationEvent,
+  isTextMentionNotificationEvent,
+  isCustomNotificationEvent,
+} from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+});
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET!
+);
+
+export default async function handler(req: any, res: any) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const event = webhookHandler.verifyRequest({
+      headers: req.headers,
+      rawBody: JSON.stringify(req.body),
+    });
+
+    // Handle different notification types
+    if (isCustomNotificationEvent(event)) {
+      await handleCustomNotification(event);
+    } else if (isThreadNotificationEvent(event)) {
+      await handleThreadNotification(event);
+    } else if (isTextMentionNotificationEvent(event)) {
+      await handleTextMentionNotification(event);
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(400).json({ error: "Webhook verification failed" });
+  }
+}
+
+async function handleCustomNotification(event: any) {
+  const { channel, kind, userId, inboxNotificationId } = event.data;
+
+  // Get the full notification data
+  const notification = await liveblocks.getInboxNotification({
+    userId,
+    inboxNotificationId,
+  });
+
+  // Send to appropriate channel based on user preferences
+  switch (channel) {
+    case "email":
+      await sendEmailNotification(notification, userId);
+      break;
+    case "slack":
+      await sendSlackNotification(notification, userId);
+      break;
+    case "teams":
+      await sendTeamsNotification(notification, userId);
+      break;
+  }
+}
+
+async function sendEmailNotification(notification: any, userId: string) {
+  // Your existing email service integration
+  await emailService.send({
+    to: userId,
+    subject: getEmailSubject(notification),
+    html: getEmailTemplate(notification),
+  });
+}
+
+async function sendSlackNotification(notification: any, userId: string) {
+  // Your existing Slack integration
+  const slackUserId = await getUserSlackId(userId);
+  await slackService.sendMessage({
+    channel: slackUserId,
+    text: getSlackMessage(notification),
+  });
+}
+```
+
+### 5.2 Create Channel Notification Templates
+
+```typescript
+// services/NotificationTemplates.ts
+export function getEmailSubject(notification: any): string {
+  switch (notification.kind) {
+    case "$fileUploaded":
+      return `File Uploaded: ${notification.activityData.fileName}`;
+    case "$documentCreated":
+      return `Document Created: ${notification.activityData.documentName}`;
+    case "$userJoined":
+      return `${notification.activityData.userName} joined the project`;
+    default:
+      return "New Notification";
+  }
+}
+
+export function getEmailTemplate(notification: any): string {
+  const baseTemplate = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2>${getEmailSubject(notification)}</h2>
+      <p>${getNotificationMessage(notification)}</p>
+      <a href="${getNotificationUrl(notification)}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+        View Details
+      </a>
+    </div>
+  `;
+
+  return baseTemplate;
+}
+
+export function getSlackMessage(notification: any): string {
+  switch (notification.kind) {
+    case "$fileUploaded":
+      return `📁 *File Uploaded*\n${notification.activityData.fileName} was uploaded to the project.`;
+    case "$documentCreated":
+      return `📄 *Document Created*\n${notification.activityData.documentName} was created.`;
+    case "$userJoined":
+      return `👋 *User Joined*\n${notification.activityData.userName} joined the project.`;
+    default:
+      return "🔔 New notification received.";
+  }
+}
+```
+
+### 4.5 Create Settings Migration Service
+
+```typescript
+// services/SettingsMigrationService.ts
+class SettingsMigrationService {
+  async migrateUserSettings(userId: string) {
+    // Get existing user preferences
+    const existingSettings = await this.getExistingUserSettings(userId);
+
+    // Map to Liveblocks notification settings
+    const liveblocksSettings = this.mapToLiveblocksSettings(existingSettings);
+
+    // Update Liveblocks settings
+    await liveblocks.updateNotificationSettings({
+      userId,
+      data: liveblocksSettings,
+    });
+  }
+
+  private mapToLiveblocksSettings(existingSettings: any) {
+    const settings: any = {};
+
+    // Map email settings
+    if (existingSettings.email) {
+      settings.email = {
+        thread: existingSettings.email.threads || false,
+        textMention: existingSettings.email.mentions || false,
+        $fileUploaded: existingSettings.email.fileUploads || false,
+        $documentCreated: existingSettings.email.documentCreated || false,
+        $userJoined: existingSettings.email.userJoined || false,
+      };
+    }
+
+    // Map Slack settings
+    if (existingSettings.slack) {
+      settings.slack = {
+        thread: existingSettings.slack.threads || false,
+        textMention: existingSettings.slack.mentions || false,
+        $fileUploaded: existingSettings.slack.fileUploads || false,
+        $documentCreated: existingSettings.slack.documentCreated || false,
+        $userJoined: existingSettings.slack.userJoined || false,
+      };
+    }
+
+    return settings;
+  }
+}
+
+export const settingsMigrationService = new SettingsMigrationService();
+```
+
+### 4.6 Create Settings UI Component
+
+```typescript
+// components/NotificationSettings.tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+export function NotificationSettings() {
+  const [{ settings, isLoading, error }, updateSettings] = useNotificationSettings();
+
+  if (isLoading) return <div>Loading settings...</div>;
+  if (error) return <div>Error loading settings: {error.message}</div>;
+
+  return (
+    <div className="notification-settings">
+      <h3>Notification Settings</h3>
+
+      <div className="settings-section">
+        <h4>Email Notifications</h4>
+        {settings.email ? (
+          <div className="settings-grid">
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.email.thread || false}
+                onChange={(e) => updateSettings({
+                  email: { thread: e.target.checked }
+                })}
+              />
+              Thread notifications
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.email.$fileUploaded || false}
+                onChange={(e) => updateSettings({
+                  email: { $fileUploaded: e.target.checked }
+                })}
+              />
+              File uploads
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.email.$documentCreated || false}
+                onChange={(e) => updateSettings({
+                  email: { $documentCreated: e.target.checked }
+                })}
+              />
+              Document creation
+            </label>
+          </div>
+        ) : (
+          <p>Email notifications not configured for this project.</p>
+        )}
+      </div>
+
+      <div className="settings-section">
+        <h4>Slack Notifications</h4>
+        {settings.slack ? (
+          <div className="settings-grid">
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.slack.thread || false}
+                onChange={(e) => updateSettings({
+                  slack: { thread: e.target.checked }
+                })}
+              />
+              Thread notifications
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.slack.$fileUploaded || false}
+                onChange={(e) => updateSettings({
+                  slack: { $fileUploaded: e.target.checked }
+                })}
+              />
+              File uploads
+            </label>
+          </div>
+        ) : (
+          <p>Slack notifications not configured for this project.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+## Phase 6: Decommission your old system
+
+### 6.1 Create Migration Dashboard
+
+```typescript
+// components/MigrationDashboard.tsx
+export function MigrationDashboard() {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    migratedUsers: 0,
+    liveblocksNotifications: 0,
+    existingNotifications: 0,
+  });
+
+  useEffect(() => {
+    // Fetch migration statistics
+    fetchMigrationStats().then(setStats);
+  }, []);
+
+  const migrationProgress = (stats.migratedUsers / stats.totalUsers) * 100;
+
+  return (
+    <div className="migration-dashboard">
+      <h2>Migration Progress</h2>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Users Migrated</h3>
+          <div className="stat-value">
+            {stats.migratedUsers} / {stats.totalUsers}
+          </div>
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{ width: `${migrationProgress}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <h3>Liveblocks Notifications</h3>
+          <div className="stat-value">{stats.liveblocksNotifications}</div>
+        </div>
+
+        <div className="stat-card">
+          <h3>Existing Notifications</h3>
+          <div className="stat-value">{stats.existingNotifications}</div>
+        </div>
+      </div>
+
+      <div className="migration-actions">
+        <button onClick={migrateNextBatch}>
+          Migrate Next Batch (100 users)
+        </button>
+        <button onClick={enableLiveblocksGlobally}>
+          Enable Liveblocks Globally
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### 6.2 Create Monitoring Service
+
+```typescript
+// services/MigrationMonitoringService.ts
+class MigrationMonitoringService {
+  async trackNotificationDelivery(
+    userId: string,
+    notificationId: string,
+    system: "existing" | "liveblocks"
+  ) {
+    // Track notification delivery for comparison
+    await this.logEvent({
+      type: "notification_delivered",
+      userId,
+      notificationId,
+      system,
+      timestamp: new Date(),
+    });
+  }
+
+  async trackUserInteraction(
+    userId: string,
+    notificationId: string,
+    action: "clicked" | "dismissed" | "read"
+  ) {
+    // Track user interactions for engagement analysis
+    await this.logEvent({
+      type: "notification_interaction",
+      userId,
+      notificationId,
+      action,
+      timestamp: new Date(),
+    });
+  }
+
+  async getMigrationStats() {
+    // Return migration statistics
+    return {
+      totalUsers: await this.getTotalUserCount(),
+      migratedUsers: await this.getMigratedUserCount(),
+      liveblocksNotifications: await this.getLiveblocksNotificationCount(),
+      existingNotifications: await this.getExistingNotificationCount(),
+    };
+  }
+}
+
+export const migrationMonitoringService = new MigrationMonitoringService();
+```
+
+## Phase 7: Decommissioning the Old System
+
+### 7.1 Gradual Shutdown Process
+
+```typescript
+// services/SystemDecommissionService.ts
+class SystemDecommissionService {
+  private shutdownPhases = [
+    "disable_new_notifications",
+    "migrate_remaining_users",
+    "disable_channel_notifications",
+    "archive_old_data",
+    "remove_old_code",
+  ];
+
+  async executeShutdownPhase(phase: string) {
+    switch (phase) {
+      case "disable_new_notifications":
+        await this.disableNewNotifications();
+        break;
+      case "migrate_remaining_users":
+        await this.migrateRemainingUsers();
+        break;
+      case "disable_channel_notifications":
+        await this.disableChannelNotifications();
+        break;
+      case "archive_old_data":
+        await this.archiveOldData();
+        break;
+      case "remove_old_code":
+        await this.removeOldCode();
+        break;
+    }
+  }
+
+  private async disableNewNotifications() {
+    // Stop creating new notifications in the old system
+    // Only process existing notifications
+  }
+
+  private async migrateRemainingUsers() {
+    // Migrate any remaining users who haven't been migrated yet
+    const remainingUsers = await this.getRemainingUsers();
+    for (const user of remainingUsers) {
+      await userMigrationService.migrateUser(user.id);
+    }
+  }
+
+  private async disableChannelNotifications() {
+    // Disable old channel notification system
+    // All channel notifications now go through Liveblocks webhooks
+  }
+
+  private async archiveOldData() {
+    // Archive old notification data for compliance/audit purposes
+    // Don't delete immediately - keep for a grace period
+  }
+
+  private async removeOldCode() {
+    // Remove old notification system code
+    // This should be done carefully with proper testing
+  }
+}
+
+export const systemDecommissionService = new SystemDecommissionService();
+```
+
+## Testing Your Migration
+
+### Unit Tests
+
+```typescript
+// tests/NotificationMigration.test.ts
+describe("Notification Migration", () => {
+  test("should send notifications to both systems when enabled", async () => {
+    const notificationData = {
+      userId: "user123",
+      kind: "$fileUploaded",
+      subjectId: "file_456",
+      activityData: { fileName: "test.pdf" },
+      title: "File Uploaded",
+      message: "test.pdf was uploaded",
+    };
+
+    // Mock both systems
+    const existingSystemSpy = jest.spyOn(existingNotificationService, "create");
+    const liveblocksSpy = jest.spyOn(liveblocks, "triggerInboxNotification");
+
+    // Enable Liveblocks
+    notificationService.enableLiveblocksGlobally();
+
+    await notificationService.sendNotification(notificationData);
+
+    expect(existingSystemSpy).toHaveBeenCalled();
+    expect(liveblocksSpy).toHaveBeenCalled();
+  });
+
+  test("should only send to existing system when Liveblocks is disabled", async () => {
+    const notificationData = {
+      userId: "user123",
+      kind: "$fileUploaded",
+      subjectId: "file_456",
+      activityData: { fileName: "test.pdf" },
+      title: "File Uploaded",
+      message: "test.pdf was uploaded",
+    };
+
+    const existingSystemSpy = jest.spyOn(existingNotificationService, "create");
+    const liveblocksSpy = jest.spyOn(liveblocks, "triggerInboxNotification");
+
+    // Keep Liveblocks disabled
+    await notificationService.sendNotification(notificationData);
+
+    expect(existingSystemSpy).toHaveBeenCalled();
+    expect(liveblocksSpy).not.toHaveBeenCalled();
+  });
+});
+```
+
+### Integration Tests
+
+```typescript
+// tests/WebhookIntegration.test.ts
+describe("Webhook Integration", () => {
+  test("should handle custom notification webhook events", async () => {
+    const webhookEvent = {
+      type: "notification",
+      data: {
+        channel: "email",
+        kind: "$fileUploaded",
+        projectId: "test-project",
+        roomId: "test-room",
+        userId: "user123",
+        subjectId: "file_456",
+        inboxNotificationId: "in_123",
+        createdAt: "2023-01-01T00:00:00Z",
+        triggeredAt: "2023-01-01T00:00:00Z",
+      },
+    };
+
+    const emailSpy = jest.spyOn(emailService, "send");
+
+    await handleCustomNotification(webhookEvent);
+
+    expect(emailSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "user123",
+        subject: expect.stringContaining("File Uploaded"),
+      })
+    );
+  });
+});
+```
+
+## Conclusion
+
+The parallel running strategy allows you to migrate to Liveblocks notifications
+safely and gradually. By running both systems simultaneously, you can:
+
+- **Validate** each step before proceeding
+- **Maintain** system reliability throughout the migration
+- **Monitor** performance and user experience
+- **Roll back** quickly if issues arise
+
+Key success factors:
+
+1. **Start small**: Begin with a subset of users
+2. **Monitor closely**: Track metrics and user feedback
+3. **Test thoroughly**: Validate each phase before proceeding
+4. **Communicate clearly**: Keep users informed about changes
+5. **Plan for rollback**: Always have a rollback strategy
+
+Once you've successfully migrated all users and validated the system, you can
+confidently decommission your old notification system and enjoy the benefits of
+Liveblocks' powerful notification infrastructure.
+
+Remember: migration is a journey, not a destination. Take your time, test
+thoroughly, and don't hesitate to adjust your strategy based on what you learn
+along the way.
