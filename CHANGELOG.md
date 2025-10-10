@@ -8,6 +8,11 @@
 
 - Add query filter `subscribed` on the `room.getThreads` method.
 
+### `@liveblocks/node`
+
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
 ## v3.8.1
 
 ### `@liveblocks/react`
