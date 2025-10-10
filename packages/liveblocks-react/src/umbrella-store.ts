@@ -27,6 +27,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
+  UrlMetadata,
 } from "@liveblocks/core";
 import {
   assertNever,
@@ -67,6 +68,7 @@ import type {
   ThreadsAsyncResult,
   ThreadsQuery,
   UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -872,6 +874,23 @@ function createStore_forHistoryVersions() {
   };
 }
 
+function createStore_forUrlsMetadata() {
+  const baseSignal = new MutableSignal<Map<string, UrlMetadata>>(new Map());
+
+  function update(url: string, metadata: UrlMetadata): void {
+    baseSignal.mutate((lut) => {
+      lut.set(url, metadata);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (m) => Object.fromEntries(m)),
+
+    // Mutations
+    update,
+  };
+}
+
 function createStore_forPermissionHints() {
   const permissionsByRoomId = new DefaultMap(
     () => new Signal<Set<Permission>>(new Set())
@@ -1022,6 +1041,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly unreadNotificationsCount: ReturnType<
     typeof createStore_forUnreadNotificationsCount
   >;
+  readonly urlsMetadata: ReturnType<typeof createStore_forUrlsMetadata>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly notificationSettings: ReturnType<
     typeof createStore_forNotificationSettings
@@ -1079,6 +1099,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       string,
       LoadableResource<AiChatAsyncResult>
     >;
+    readonly urlMetadataByUrl: DefaultMap<
+      string,
+      LoadableResource<UrlMetadataAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1128,6 +1152,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
     this.historyVersions = createStore_forHistoryVersions();
     this.unreadNotificationsCount = createStore_forUnreadNotificationsCount();
+    this.urlsMetadata = createStore_forUrlsMetadata();
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1553,6 +1578,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
 
+    const urlMetadataByUrl = new DefaultMap(
+      (url: string): LoadableResource<UrlMetadataAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          const metadata =
+            await this.#client[kInternal].httpClient.getUrlMetadata(url);
+          this.urlsMetadata.update(url, metadata);
+        });
+
+        const signal = DerivedSignal.from((): UrlMetadataAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          return ASYNC_OK("metadata", nn(this.urlsMetadata.signal.get()[url]));
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1568,6 +1614,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       aiChats,
       messagesByChatId,
       aiChatById,
+      urlMetadataByUrl,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
