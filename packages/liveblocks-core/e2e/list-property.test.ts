@@ -475,6 +475,177 @@ test(
 );
 
 test(
+  "Regression from fast-check: LiveList inconsistency with undo/redo and concurrent operations",
+  prepareTestsConflicts(
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, room1, room2, control }) => {
+      const listA = root1.get("list");
+      const listB = root2.get("list");
+
+      // Clear initial state
+      listA.clear();
+      listB.clear();
+      room1.history.clear();
+      room2.history.clear();
+      await control.flushA();
+      await control.flushB();
+
+      // Execute the exact sequence from fast-check failure
+      // The * in the output means the index was modulo'd to fit the list size
+
+      listA.push("vM");
+      await control.flushA();
+      // A: ["vM"], B: ["vM"]
+
+      listB.insert("HF", 1 % 2); // B.insert("HF", 1*) -> insert at index 1
+      // A.set(2*, "FD") -> list has 1 element, so 2 % 1 = 0
+      listA.set(0, "FD");
+      await control.flushB();
+      // A: ["FD", "HF"], B: ["vM", "HF"]
+
+      // A.delete(5*) -> list has 2 elements, so 5 % 2 = 1
+      listA.delete(1);
+      // B.set(2*, "tS") -> list has 2 elements, so 2 % 2 = 0
+      listB.set(0, "tS");
+      // A.set(4*, "wC") -> list has 1 element, so 4 % 1 = 0
+      listA.set(0, "wC");
+      // A.set(5*, "Kg") -> list has 1 element, so 5 % 1 = 0
+      listA.set(0, "Kg");
+      await control.flushB();
+
+      // B.move(2*, 0*) -> list has 2 elements, so 2 % 2 = 0, 0 % 2 = 0
+      listB.move(0, 0);
+      listA.insert("Qp", 0);
+      // B.set(5*, "yC") -> list has 2 elements, so 5 % 2 = 1
+      listB.set(1, "yC");
+      room1.history.undo();
+      room1.history.undo();
+      await control.flushB();
+
+      listB.insert("pU", 0);
+      listA.push("dg");
+      listA.set(0, "LQ"); // A.set(1*, "LQ") -> 1 % 1 = 0
+      listB.push("lM");
+      room2.history.undo();
+      await control.flushA();
+
+      // A.delete(3*) -> will need to check list size at this point
+      if (listA.length > 0) listA.delete(3 % listA.length);
+      listB.insert("wN", 3 % (listB.length + 1)); // B.insert("wN", 3*)
+      room2.history.redo();
+      if (listB.length > 0) listB.set(5 % listB.length, "Eu"); // B.set(5*, "Eu")
+      listB.push("SM");
+      listB.push("zn");
+      if (listA.length > 0) listA.delete(5 % listA.length); // A.delete(5*)
+      listB.insert("EA", 0);
+      if (listA.length > 0) listA.delete(0); // A.delete(0*)
+      listA.push("cY");
+      await control.flushB();
+
+      room1.history.redo();
+      room2.history.undo();
+      listA.insert("tn", 1 % (listA.length + 1)); // A.insert("tn", 1*)
+      room2.history.undo();
+      listA.push("wj");
+      listB.insert("PV", 3 % (listB.length + 1)); // B.insert("PV", 3*)
+      listA.push("XM");
+      room2.history.undo();
+      room1.history.undo();
+      listB.push("Xg");
+      listB.push("nn");
+      room1.history.redo();
+      await control.flushB();
+      await control.flushA();
+
+      listA.push("Ad");
+      room2.history.undo();
+      room2.history.undo();
+      await control.flushB();
+
+      if (listB.length > 0) listB.move(0, 1 % listB.length); // B.move(0*, 1*)
+      room2.history.redo();
+      room1.history.undo();
+      room1.history.undo();
+      room2.history.undo();
+      listB.push("ER");
+      await control.flushA();
+      await control.flushB();
+
+      listA.push("dZ");
+      listB.insert("uR", 5 % (listB.length + 1)); // B.insert("uR", 5*)
+      listB.insert("Eg", 1); // B.insert("Eg", 1*)
+      await control.flushA();
+
+      room2.history.undo();
+      listB.push("Iq");
+      if (listA.length > 0) listA.set(4 % listA.length, "RM"); // A.set(4*, "RM")
+      listA.insert("dh", 3 % (listA.length + 1)); // A.insert("dh", 3*)
+      listA.push("xc");
+      await control.flushB();
+
+      room1.history.undo();
+      if (listB.length > 0) listB.move(3 % listB.length, 3 % listB.length); // B.move(3*, 3*)
+      room2.history.redo();
+      await control.flushB();
+
+      listB.push("VR");
+      await control.flushB();
+
+      listA.push("kc");
+      if (listB.length > 0) listB.set(5 % listB.length, "kl"); // B.set(5*, "kl")
+      if (listB.length > 0) {
+        const from = 4 % listB.length;
+        const to = 0;
+        listB.move(from, to); // B.move(4*, 0*)
+      }
+      listB.insert("ca", 3 % (listB.length + 1)); // B.insert("ca", 3*)
+      if (listB.length > 0) {
+        const from = 4 % listB.length;
+        const to = 5 % listB.length;
+        listB.move(from, to); // B.move(4*, 5*)
+      }
+      room1.history.undo();
+
+      // Final sync
+      await control.flushA();
+      await control.flushB();
+
+      // Check final states
+      const finalA = listA.toImmutable();
+      const finalB = listB.toImmutable();
+
+      // The bug from fast-check: A has an extra "tS" element
+      // Client A: ["wN","tn","pU","ca","cY","tS","dh","kl","RM","SM","wj","ER","dZ","Iq","VR"]
+      // Client B: ["wN","tn","pU","ca","cY","dh","kl","RM","SM","wj","ER","dZ","Iq","VR"]
+
+      // Verify both clients reach the same state
+      expect(finalA).toEqual(finalB);
+
+      // Both should have the same expected state (without the extra "tS")
+      const expected = [
+        "wN",
+        "tn",
+        "pU",
+        "ca",
+        "cY",
+        "dh",
+        "kl",
+        "RM",
+        "SM",
+        "wj",
+        "ER",
+        "dZ",
+        "Iq",
+        "VR",
+      ];
+      expect(finalA).toEqual(expected);
+      expect(finalB).toEqual(expected);
+    }
+  )
+);
+
+test(
   "LiveList operations maintain eventual consistency across clients",
   prepareTestsConflicts(
     { list: new LiveList<string>([]) },
