@@ -42,10 +42,22 @@ You can add front-end knowledge to your chat by using the
 component anywhere in your application.
 
 ```tsx
-<RegisterAiKnowledge
-  description="The current user's payment plan"
-  value={{ name: "Advanced Plan", expires: "2026-01-01" }}
-/>
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      // +++
+      <RegisterAiKnowledge
+        description="The current user's payment plan"
+        value={{ name: "Advanced Plan", expires: "2026-01-01" }}
+      />
+      // +++
+    </>
+  );
+}
 ```
 
 After adding this, the AI will understand that the user is on the Advanced Plan
@@ -64,6 +76,12 @@ You can use knowledge to share the document content with the AI, then create a
 tool that allows AI to edit the document.
 
 ```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { useState } from "react";
+
 function Document() {
   // +++
   const [document, setDocument] = useState("Hello world");
@@ -170,11 +188,19 @@ copilot knowledge programmatically, allowing users or teams in your app to have
 their own individual knowledge bases.
 
 ```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
 const { id } = await liveblocks.createWebKnowledgeSource({
   copilotId: "co_abc123...",
   url: "https://example.com",
   type: "crawl",
 });
+// +++
 ```
 
 This is made possible using the

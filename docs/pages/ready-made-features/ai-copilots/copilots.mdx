@@ -53,20 +53,34 @@ Paste the copilot ID into
 start using it.
 
 ```tsx
-<AiChat
-  chatId="my-chat-id"
-  // +++
-  copilotId="co_tUYtNctLAtUIAAIZBc1Zk"
-  // +++
-/>
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      copilotId="co_tUYtNctLAtUIAAIZBc1Zk"
+      // +++
+    />
+  );
+}
 ```
 
 ```tsx
-useSendAiMessage("my-chat-id", {
-  // +++
-  copilotId: "co_tUYtNctLAtUIAAIZBc1Zk",
-  // +++
-});
+import { useSendAiMessage } from "@liveblocks/react";
+
+function SendMessage() {
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    // +++
+    copilotId: "co_tUYtNctLAtUIAAIZBc1Zk",
+    // +++
+  });
+
+  return (
+    <button onClick={() => sendAiMessage("What's new?")}>What's new?</button>
+  );
+}
 ```
 
 ## Configuring your copilot
@@ -254,6 +268,13 @@ and modify copilots programmatically, allowing users or teams in your app to
 have their own individual copilots.
 
 ```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
 const copilot = await liveblocks.createAiCopilot({
   name: "My AI Assistant",
   systemPrompt: "You're a helpful assistant that can answer questions.",
@@ -261,6 +282,7 @@ const copilot = await liveblocks.createAiCopilot({
   providerModel: "gpt-4",
   providerApiKey: "sk-...",
 });
+// +++
 ```
 
 This is made possible using the
