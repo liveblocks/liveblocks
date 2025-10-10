@@ -397,5 +397,13 @@
     "technologies": ["nodejs"],
     "date": "2025-02-20",
     "featured": true
+  },
+  {
+    "title": "Get started with Liveblocks AI Copilots",
+    "path": "/get-started-with-liveblocks-ai-copilots",
+    "topics": ["ai", "tutorials"],
+    "technologies": ["react", "react-ui", "nextjs"],
+    "date": "2025-10-07",
+    "featured": true
   }
 ]
