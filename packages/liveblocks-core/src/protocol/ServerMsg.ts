@@ -14,7 +14,6 @@ export enum ServerMsgCode {
   // For Storage
   INITIAL_STORAGE_STATE = 200,
   UPDATE_STORAGE = 201,
-  REJECT_STORAGE_OP = 299,
 
   // For Yjs Docs
   UPDATE_YDOC = 300,
@@ -29,6 +28,10 @@ export enum ServerMsgCode {
   COMMENT_DELETED = 404,
   COMMENT_REACTION_ADDED = 405,
   COMMENT_REACTION_REMOVED = 406,
+
+  // Ignored legacy op codes
+  /** @deprecated No longer sent by server */
+  REJECT_STORAGE_OP = 299, // Sent if Schema Validation would reject a mutation
 }
 
 /**
@@ -49,7 +52,6 @@ export type ServerMsg<
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
-  | RejectedStorageOpServerMsg // For a single client
   | YDocUpdateServerMsg // For receiving doc from backend
 
   // Comments
@@ -295,15 +297,4 @@ export type InitialDocumentStateServerMsg = {
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
   readonly ops: Op[];
-};
-
-/**
- * Sent by the WebSocket server to the client to indicate that certain opIds
- * have been received but were rejected because they caused mutations that are
- * incompatible with the Room's schema.
- */
-export type RejectedStorageOpServerMsg = {
-  readonly type: ServerMsgCode.REJECT_STORAGE_OP;
-  readonly opIds: string[];
-  readonly reason: string;
 };

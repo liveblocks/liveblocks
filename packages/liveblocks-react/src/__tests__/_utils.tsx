@@ -124,6 +124,7 @@ export function generateFakeJwt(options: { userId: string }) {
 const parser = new QueryParser({
   fields: {
     resolved: "boolean",
+    subscribed: "boolean",
   },
   indexableFields: {
     metadata: "mixed",

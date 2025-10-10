@@ -3,7 +3,13 @@ import type {
   InboxNotificationData,
   ThreadData,
 } from "@liveblocks/client";
-import { isNumberOperator, isStartsWithOperator } from "@liveblocks/core";
+import {
+  getSubscriptionKey,
+  isNumberOperator,
+  isStartsWithOperator,
+  type SubscriptionData,
+  type SubscriptionKey,
+} from "@liveblocks/core";
 
 import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
 
@@ -12,18 +18,30 @@ import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
  * match the given query.
  */
 export function makeThreadsFilter<M extends BaseMetadata>(
-  query: ThreadsQuery<M>
+  query: ThreadsQuery<M>,
+  subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ): (thread: ThreadData<M>) => boolean {
   return (thread: ThreadData<M>) =>
-    matchesThreadsQuery(thread, query) && matchesMetadata(thread, query);
+    matchesThreadsQuery(thread, query, subscriptions) &&
+    matchesMetadata(thread, query);
 }
 
 function matchesThreadsQuery(
   thread: ThreadData<BaseMetadata>,
-  q: ThreadsQuery<BaseMetadata>
+  q: ThreadsQuery<BaseMetadata>,
+  subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ) {
-  // Boolean logic: query.resolved? => q.resolved === t.resolved
-  return q.resolved === undefined || thread.resolved === q.resolved;
+  let subscription = undefined;
+  if (subscriptions) {
+    subscription = subscriptions?.[getSubscriptionKey("thread", thread.id)];
+  }
+
+  return (
+    (q.resolved === undefined || thread.resolved === q.resolved) &&
+    (q.subscribed === undefined ||
+      (q.subscribed === true && subscription !== undefined) ||
+      (q.subscribed === false && subscription === undefined))
+  );
 }
 
 function matchesMetadata(
