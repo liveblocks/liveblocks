@@ -1,9 +1,9 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
-  AiCitationsPart,
   AiReasoningPart,
   AiRetrievalPart,
+  AiSourcesPart,
   AiTextPart,
   AiToolInvocationPart,
 } from "@liveblocks/core";
@@ -48,8 +48,8 @@ export type AiMessageContentRetrievalPartProps = {
 };
 
 /** @internal */
-export type AiMessageContentCitationsPartProps = {
-  part: AiCitationsPart;
+export type AiMessageContentSourcesPartProps = {
+  part: AiSourcesPart;
 };
 
 export interface AiMessageContentComponents {
@@ -71,7 +71,7 @@ export interface AiMessageContentComponents {
   /**
    * The component used to display
    */
-  CitationsPart: ComponentType<AiMessageContentCitationsPartProps>;
+  SourcesPart: ComponentType<AiMessageContentSourcesPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.

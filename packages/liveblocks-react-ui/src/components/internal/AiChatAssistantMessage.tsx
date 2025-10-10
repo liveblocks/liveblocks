@@ -27,9 +27,9 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
-  AiMessageContentCitationsPartProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentRetrievalPartProps,
+  AiMessageContentSourcesPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
@@ -99,7 +99,7 @@ interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
-interface CitationsPartProps extends AiMessageContentCitationsPartProps {
+interface SourcesPartProps extends AiMessageContentSourcesPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
@@ -301,7 +301,7 @@ function AssistantMessageContent({
         TextPart: BoundTextPart,
         ReasoningPart: BoundReasoningPart,
         RetrievalPart: BoundRetrievalPart,
-        CitationsPart: showCitations ? CitationsPart : NoopComponent,
+        SourcesPart: showCitations ? SourcesPart : NoopComponent,
         ToolInvocationPart,
       }}
       className="lb-ai-chat-message-content"
@@ -465,11 +465,11 @@ function ToolInvocationPart({
 /* -------------------------------------------------------------------------------------------------
  * CitationsPart
  * -----------------------------------------------------------------------------------------------*/
-function CitationsPart({ part }: CitationsPartProps) {
+function SourcesPart({ part }: SourcesPartProps) {
   return (
     <AiChatAssistantMessageSources
       className="lb-ai-chat-message-sources"
-      sources={part.citations}
+      sources={part.sources}
     />
   );
 }

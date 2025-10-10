@@ -27,7 +27,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       </ErrorBoundary>
     );
   },
-  CitationsPart: () => null,
+  SourcesPart: () => null,
 };
 
 /**
@@ -49,7 +49,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
       RetrievalPart,
       TextPart,
       ToolInvocationPart,
-      CitationsPart,
+      SourcesPart,
     } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
       [components]
@@ -89,8 +89,8 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                 />
               );
 
-            case "citations":
-              return <CitationsPart key={index} part={part} />;
+            case "sources":
+              return <SourcesPart key={index} part={part} />;
 
             default:
               return null;

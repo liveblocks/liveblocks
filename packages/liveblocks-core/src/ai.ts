@@ -9,6 +9,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
+import { IncrementalJsonParser } from "./lib/IncrementalJsonParser";
 import type { JsonObject } from "./lib/Json";
 import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
@@ -16,7 +17,7 @@ import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { TreePool } from "./lib/TreePool";
 import type { Brand, DistributiveOmit, ISODateString } from "./lib/utils";
-import { raise, tryParseJson } from "./lib/utils";
+import { findLastIndex, raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -27,6 +28,7 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
+  AiAssistantContentPart,
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
   AiChat,
@@ -36,6 +38,8 @@ import type {
   AiGeneratingAssistantMessage,
   AiGenerationOptions,
   AiKnowledgeSource,
+  AiReceivingToolInvocationPart,
+  AiSourcesPart,
   AiToolDescription,
   AiToolInvocationPart,
   AiUserContentPart,
@@ -57,7 +61,6 @@ import type {
   SetToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
-import { patchContentWithDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
   InferFromSchema,
@@ -1498,4 +1501,162 @@ export function makeCreateSocketDelegateForAi(
     url.searchParams.set("version", PKG_VERSION || "dev");
     return new ws(url.toString());
   };
+}
+
+/**
+ * Finds the last item in the content array that matches the type and the given
+ * keyFn. If found, replaces that item with newItem in the content array. If
+ * not found, appends newItem to the content array.
+ * Mutates the content array in-place.
+ */
+function replaceOrAppend<const T extends AiAssistantContentPart>(
+  content: AiAssistantContentPart[],
+  newItem: T,
+  keyFn: (item: T) => string,
+  now: ISODateString
+): void {
+  const existingIndex = findLastIndex(
+    content,
+    (item) => item.type === newItem.type && keyFn(item as T) === keyFn(newItem)
+  );
+
+  if (existingIndex > -1) {
+    // Replace the existing one
+    content[existingIndex] = newItem;
+  } else {
+    // No existing one found, just append
+    closePart(content[content.length - 1], now);
+    content.push(newItem);
+  }
+}
+
+/**
+ * Given a part, mutates it in-place by setting its endedAt timestamp.
+ */
+function closePart(
+  prevPart: AiAssistantContentPart | undefined,
+  endedAt: ISODateString
+) {
+  // Currently, only reasoning parts have an endedAt timestamp
+  if (prevPart?.type === "reasoning") {
+    prevPart.endedAt ??= endedAt;
+  }
+}
+
+function patchContentWithDelta(
+  content: AiAssistantContentPart[],
+  delta: AiAssistantDeltaUpdate | null
+): void {
+  if (delta === null)
+    // Nothing to do
+    return;
+
+  const now = new Date().toISOString() as ISODateString;
+  let lastPart = content[content.length - 1];
+  // If the last part is a sources part, set the last part to the second last part
+  // TODO[nimesh] Replace this workaround with a better one
+  if (lastPart?.type === "sources") {
+    lastPart = content[content.length - 2];
+  }
+
+  // Otherwise, append a new part type to the array, which we can start
+  // writing into
+  switch (delta.type) {
+    case "text-delta":
+      if (lastPart?.type === "text") {
+        lastPart.text += delta.textDelta;
+      } else {
+        closePart(lastPart, now);
+        content.push({ type: "text", text: delta.textDelta });
+      }
+      break;
+
+    case "reasoning-delta":
+      if (lastPart?.type === "reasoning") {
+        lastPart.text += delta.textDelta;
+      } else {
+        closePart(lastPart, now);
+        content.push({
+          type: "reasoning",
+          text: delta.textDelta,
+          startedAt: now,
+        });
+      }
+      break;
+
+    case "tool-stream": {
+      const toolInvocation = createReceivingToolInvocation(
+        delta.invocationId,
+        delta.name
+      );
+      content.push(toolInvocation);
+      break;
+    }
+
+    case "tool-delta": {
+      // Take the last part, expect it to be a tool invocation in receiving
+      // stage. If not, ignore this delta. If it is, append the delta to the
+      // parser
+      if (
+        lastPart?.type === "tool-invocation" &&
+        lastPart.stage === "receiving"
+      ) {
+        lastPart.__appendDelta?.(delta.delta);
+      }
+      // Otherwise ignore the delta - it's out of order or unexpected
+      break;
+    }
+
+    case "tool-invocation":
+      replaceOrAppend(content, delta, (x) => x.invocationId, now);
+      break;
+
+    case "retrieval":
+      replaceOrAppend(content, delta, (x) => x.id, now);
+      break;
+
+    case "source": {
+      const lastIndex = findLastIndex(
+        content,
+        (item) => item.type === "sources"
+      );
+      if (lastIndex > -1) {
+        const lastPart = content[lastIndex] as AiSourcesPart;
+        lastPart.sources.push(delta);
+      } else {
+        content.push({
+          type: "sources",
+          sources: [delta],
+        });
+      }
+      break;
+    }
+
+    default:
+      return assertNever(delta, "Unhandled case");
+  }
+}
+
+/**
+ * Creates a receiving tool invocation part for testing purposes.
+ * This helper eliminates the need to manually create fake tool invocation objects
+ * and provides a clean API for tests.
+ */
+function createReceivingToolInvocation(
+  invocationId: string,
+  name: string,
+  partialArgsText: string = ""
+): AiReceivingToolInvocationPart {
+  const parser = new IncrementalJsonParser(partialArgsText); // FRONTEND only
+  return {
+    type: "tool-invocation",
+    stage: "receiving",
+    invocationId,
+    name,
+    // --- Alternative implementation for FRONTEND only ------------------------
+    get partialArgsText(): string { return parser.source; }, // prettier-ignore
+    get partialArgs(): JsonObject { return parser.json; }, // prettier-ignore
+    __appendDelta(delta: string) { parser.append(delta); }, // prettier-ignore
+    // ------------------------------------------------------------------------
+  } satisfies AiReceivingToolInvocationPart;
 }
