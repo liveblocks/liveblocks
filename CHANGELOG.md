@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.8.1
+
 ### `@liveblocks/react`
 
 - Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
@@ -7,6 +9,13 @@
   prop on `AiChat`.
 - Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
   updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+
+- Add `comments:write` to the list of possible room permissions.
 
 ## v3.8.0
 

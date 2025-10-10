@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node",
-  "version": "3.8.0",
+  "version": "3.8.1",
   "description": "A server-side utility that lets you set up a Liveblocks authentication endpoint. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -34,7 +34,7 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/core": "3.8.0",
+    "@liveblocks/core": "3.8.1",
     "@stablelib/base64": "^1.0.1",
     "fast-sha256": "^1.3.0",
     "node-fetch": "^2.6.1"
