@@ -1,0 +1,271 @@
+---
+meta:
+  title: "Get started with AI Copilots using Liveblocks and Next.js"
+  parentTitle: "Get started"
+  description:
+    "Learn how to get started with AI Copilots using Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding an AI
+copilot experience to your Next.js `/app` directory application using the hooks
+from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
+components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
+
+      Every package should use the same version.
+
+      ```bash
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create an AI Copilot</StepTitle>
+    <StepContent>
+
+      To create an AI Copilot, navigate to the [Liveblocks dashboard](/dashboard),
+      select your project, and click on the **"Add copilot…"** button.
+      Configure the copilot with your preferred LLM provider (OpenAI, Anthropic, etc.),
+      model, API key, and system prompt.
+
+      Alternatively, you can create a copilot programmatically using the
+      [`@liveblocks/node`](/docs/api-reference/liveblocks-node) client:
+
+      ```tsx
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "YOUR_PROJECT_SECRET_KEY",
+      });
+
+      await liveblocks.createAiCopilot({
+        name: "Documentation Helper",
+        provider: "openai",
+        providerModel: "gpt-4o-mini",
+        providerApiKey: "sk-...",
+        systemPrompt: "You are an expert at helping users understand technical documentation.",
+      });
+      ```
+
+      Learn more about AI Copilots in the
+      [AI Copilots](/docs/ready-made-features/ai-copilots) overview page.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication</StepTitle>
+    <StepContent>
+
+      Create an API route to authenticate users with Liveblocks. This allows
+      Liveblocks to identify users and manage access to chats.
+
+      ```tsx file="app/api/liveblocks-auth/route.ts"
+      import { Liveblocks } from "@liveblocks/node";
+      import { NextRequest } from "next/server";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function POST(req: NextRequest) {
+        // Get the current user from your database
+        const user = {
+          id: "user-1",
+          info: {
+            name: "John Doe",
+            avatar: "https://example.com/avatar.png",
+          },
+        };
+
+        // Create a session for the current user
+        const session = liveblocks.prepareSession(user.id, {
+          userInfo: user.info,
+        });
+
+        // Give the user access to AI chats
+        session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return new Response(body, { status });
+      }
+      ```
+
+      Add your secret key to `.env.local`:
+
+      ```bash file=".env.local"
+      LIVEBLOCKS_SECRET_KEY=sk_prod_xxxxxxx
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepContent>
+
+      Create a provider component to wrap your application with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+      ```tsx file="app/Room.tsx"
+      "use client";
+
+      import { ReactNode } from "react";
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+            {children}
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks provider to your page</StepTitle>
+    <StepContent>
+
+      After creating your provider, it's time to use it. Import
+      your `Room` component into your `page.tsx` file, and place
+      your AI copilot components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { CollaborativeApp } from "./CollaborativeApp";
+
+      export default function Page() {
+        return (
+          <Room>
+            <CollaborativeApp />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the AI chat component</StepTitle>
+    <StepContent>
+
+      Now you can add the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
+      component to your application. This component renders a fully-featured AI
+      chat interface with message history and a composer.
+
+      ```tsx file="app/CollaborativeApp.tsx" highlight="5-10"
+      "use client";
+
+      import { AiChat } from "@liveblocks/react-ui";
+
+      export function CollaborativeApp() {
+        return (
+          <AiChat
+            chatId="my-first-chat"
+            copilotId="my-copilot-id"
+          />
+        );
+      }
+      ```
+
+      Make sure to replace `my-copilot-id` with the ID of the copilot you created
+      earlier. You can find this ID in the Liveblocks dashboard.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: add custom tools and knowledge</StepTitle>
+    <StepContent>
+
+      AI Copilots is set up and working now! The next steps are to add custom
+      tools that your copilot can use to interact with your application, and
+      provide knowledge about your application state.
+
+      <Button asChild  className="not-markdown">
+        <a href="/docs/ready-made-features/ai-copilots/tools">
+          Add custom tools
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You've set up the foundation to start building an AI copilot
+experience for your Next.js application.
+
+- [AI Copilots overview](/docs/ready-made-features/ai-copilots)
+- [@liveblocks/react AI Copilots API](/docs/api-reference/liveblocks-react#AI-Copilots)
+- [@liveblocks/react-ui AI Copilots API](/docs/api-reference/liveblocks-react-ui#AI-Copilots)
+- [Styling and customization](/docs/ready-made-features/ai-copilots/default-components)
+
+---
+
+## Examples using Next.js
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Calendar",
+      slug: "ai-copilots/nextjs-ai-calendar",
+      image: "/images/examples/thumbnails/ai-calendar.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI App Builder",
+      slug: "ai-copilots/nextjs-ai-app-builder",
+      image: "/images/examples/thumbnails/ai-app-builder.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
