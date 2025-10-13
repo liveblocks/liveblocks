@@ -2438,7 +2438,7 @@
   position: relative;
   overflow: hidden;
   aspect-ratio: 1;
-  border-radius: 2px;
+  border-radius: max(2px, 15%);
 }
 
 /*************************************
@@ -2866,13 +2866,17 @@
 
   display: flex;
   align-items: center;
-  block-size: calc(1em + 2 * 0.375 * var(--lb-spacing));
+  block-size: calc(0.75em + 2 * 0.5 * var(--lb-spacing));
   border-radius: $lb-radius-full;
   background: var(--lb-background-foreground-faint);
   transition-property: background;
 
   &:where(:hover, :focus-visible) {
     background: var(--lb-background-foreground-subtle);
+
+    :where(.lb-ai-chat-source-label, .lb-ai-chat-sources-more-label) {
+      color: var(--lb-foreground-secondary);
+    }
   }
 }
 
@@ -2883,20 +2887,20 @@
 
 .lb-ai-chat-source-favicon {
   flex: none;
-  inline-size: 1em;
-  block-size: 1em;
-  margin: calc(0.375 * var(--lb-spacing));
+  inline-size: 0.75em;
+  block-size: 0.75em;
+  margin: calc(0.5 * var(--lb-spacing));
   margin-inline-end: calc(0.3125 * var(--lb-spacing));
-  border-radius: $lb-radius-full;
 }
 
 .lb-ai-chat-source-label,
 .lb-ai-chat-sources-more-label {
   @include truncate;
 
-  color: var(--lb-foreground-secondary);
-  font-size: 0.75em;
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.625em;
   line-height: 1.25;
+  transition-property: color;
 }
 
 .lb-ai-chat-sources-more {
@@ -3189,7 +3193,7 @@
 .lb-ai-chat-message-retrieval-favicons {
   display: inline-flex;
   vertical-align: bottom;
-  gap: calc(0.25 * var(--lb-spacing));
+  gap: calc(0.3125 * var(--lb-spacing));
   align-items: center;
   block-size: 1lh;
   margin-inline-start: calc(0.5 * var(--lb-spacing));
