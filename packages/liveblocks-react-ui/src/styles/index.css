@@ -2860,13 +2860,12 @@
   display: contents;
 }
 
-.lb-ai-chat-source {
+.lb-ai-chat-source,
+.lb-ai-chat-sources-more {
   @include button;
 
   display: flex;
   align-items: center;
-  min-inline-size: 0;
-  padding-inline-end: calc(0.625 * var(--lb-spacing));
   border-radius: $lb-radius-full;
   background: var(--lb-background-foreground-faint);
   transition-property: background;
@@ -2874,6 +2873,11 @@
   &:where(:hover, :focus-visible) {
     background: var(--lb-background-foreground-subtle);
   }
+}
+
+.lb-ai-chat-source {
+  min-inline-size: 0;
+  padding-inline-end: calc(0.625 * var(--lb-spacing));
 }
 
 .lb-ai-chat-source-favicon {
@@ -2885,12 +2889,17 @@
   border-radius: $lb-radius-full;
 }
 
-.lb-ai-chat-source-label {
+.lb-ai-chat-source-label,
+.lb-ai-chat-sources-more-label {
   @include truncate;
 
   color: var(--lb-foreground-secondary);
   font-size: 0.75em;
   line-height: 1.25;
+}
+
+.lb-ai-chat-sources-more {
+  padding-inline: calc(0.625 * var(--lb-spacing));
 }
 
 .lb-ai-chat-message-sources {

@@ -9,6 +9,7 @@ import {
   forwardRef,
   memo,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -110,6 +111,7 @@ interface AiChatSourceProps extends ComponentProps<"a"> {
 
 interface AiChatSourcesProps extends ComponentProps<"ol"> {
   sources: AiChatSourceProps["source"][];
+  maxSources?: number;
   components?: Partial<GlobalComponents>;
 }
 
@@ -144,20 +146,42 @@ function AiChatSource({
 }
 
 function AiChatSources({
-  sources,
+  sources: allSources,
+  maxSources,
   components,
   className,
   ...props
 }: AiChatSourcesProps) {
+  const $ = useOverrides();
+  const [isOpen, setOpen] = useState(false);
+  const visibleSources =
+    typeof maxSources === "number" && !isOpen
+      ? allSources.slice(0, maxSources)
+      : allSources;
+
+  const handleToggle = useCallback(() => {
+    setOpen((isOpen) => !isOpen);
+  }, []);
+
   return (
     <ol className={cn("lb-ai-chat-sources", className)} {...props}>
-      {sources.map((source, index) => {
+      {visibleSources.map((source, index) => {
         return (
           <li key={`${index}-${source.url}`}>
             <AiChatSource source={source} components={components} />
           </li>
         );
       })}
+
+      {visibleSources.length !== allSources.length ? (
+        <li>
+          <button className="lb-ai-chat-sources-more" onClick={handleToggle}>
+            <span className="lb-ai-chat-sources-more-label">
+              + {$.LIST_REMAINING(allSources.length - visibleSources.length)}
+            </span>
+          </button>
+        </li>
+      ) : null}
     </ol>
   );
 }
@@ -396,6 +420,29 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
 /* -------------------------------------------------------------------------------------------------
  * RetrievalPart
  * -----------------------------------------------------------------------------------------------*/
+function RetrievalPartFavicons({
+  sources,
+  maxSources,
+}: {
+  sources: AiWebRetrievalPart["sources"];
+  maxSources?: number;
+}) {
+  if (!sources) {
+    return null;
+  }
+
+  const visibleSources =
+    typeof maxSources === "number" ? sources.slice(0, maxSources) : sources;
+
+  return (
+    <div className="lb-ai-chat-message-retrieval-favicons">
+      {visibleSources.map((source) => (
+        <Favicon key={source.url} url={source.url} />
+      ))}
+    </div>
+  );
+}
+
 function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
   const $ = useOverrides();
   let content: ReactNode = null;
@@ -423,7 +470,7 @@ function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
       >
         {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
         {part.kind === "web" ? (
-          <RetrievalPartFavicons sources={part.sources} />
+          <RetrievalPartFavicons sources={part.sources} maxSources={3} />
         ) : null}
         {content ? (
           <span className="lb-collapsible-chevron lb-icon-container">
@@ -438,24 +485,6 @@ function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
         </Collapsible.Content>
       ) : null}
     </Collapsible.Root>
-  );
-}
-
-function RetrievalPartFavicons({
-  sources,
-}: {
-  sources: AiWebRetrievalPart["sources"];
-}) {
-  if (!sources) {
-    return null;
-  }
-
-  return (
-    <div className="lb-ai-chat-message-retrieval-favicons">
-      {sources.slice(0, 3).map((source) => (
-        <Favicon key={source.url} url={source.url} />
-      ))}
-    </div>
   );
 }
 
@@ -495,6 +524,7 @@ function SourcesPart({ part }: SourcesPartProps) {
     <AiChatSources
       className="lb-ai-chat-message-sources"
       sources={part.sources}
+      maxSources={5}
     />
   );
 }
