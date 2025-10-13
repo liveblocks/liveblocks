@@ -1,8 +1,14 @@
 ## v3.9.0 (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Disable AI chat composers when AI service is not available.
+
 ### `@liveblocks/react`
 
 - Add query filters `subscribed` on the `useThreads` hook.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
 
 ### `@liveblocks/client`
 
