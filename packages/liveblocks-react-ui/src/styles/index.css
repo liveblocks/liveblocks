@@ -2866,6 +2866,7 @@
 
   display: flex;
   align-items: center;
+  block-size: calc(1em + 2 * 0.375 * var(--lb-spacing));
   border-radius: $lb-radius-full;
   background: var(--lb-background-foreground-faint);
   transition-property: background;
