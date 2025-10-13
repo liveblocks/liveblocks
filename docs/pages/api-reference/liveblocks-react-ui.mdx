@@ -2849,6 +2849,39 @@ function Notification({ inboxNotification }) {
 }
 ```
 
+##### Batching custom notifications
+
+If you’re
+[batching custom notifications](/docs/api-reference/liveblocks-node#Batching-custom-notifications),
+you can render each activity inside a single notification.
+
+```tsx
+<InboxNotification
+  inboxNotification={inboxNotification}
+  kinds={{
+    $alert: (props) => {
+      // Eached batched `activityData` is added to the `activities` array
+      const { activities } = props.inboxNotification;
+
+      return (
+        <InboxNotification.Custom
+          {...props}
+          title={title}
+          aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+        >
+          {activities.map((activity) => (
+            <div key={activity.id}>
+              <div>{activity.data.title}</div>
+              <div>{activity.data.message}</div>
+            </div>
+          ))}
+        </InboxNotification.Custom>
+      );
+    },
+  }}
+/>
+```
+
 ##### Props [#InboxNotification-props]
 
 <PropertiesList>

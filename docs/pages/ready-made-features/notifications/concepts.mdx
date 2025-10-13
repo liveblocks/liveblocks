@@ -38,9 +38,9 @@ an example of an inbox notification object for a custom notification.
   subjectId: "myCustomId_dxs9s0",
   readAt: Date <Fri Dec 16 2023 15:16:25 GMT+0000 (Greenwich Mean Time)>,
   notifiedAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
-  activityData: {
-    myCustomProperty: "myCustomValue",
-  }
+  activities: [
+    { myCustomProperty: "myCustomValue" },
+  ]
 }
 ```
 
@@ -98,18 +98,17 @@ on the server, and the `kind` must always begin with a `$`, for example
 `$myCustomNotification`.
 
 When you trigger an inbox notification, you pass the activity data, which
-represents the events that happened.
-
-If you want to update an existing inbox notification when a new activity
-happens, you can configure the notification kind to have batching enabled. Learn
-more about
-[batching](/docs/ready-made-features/notifications/concepts#batching-configuration).
+represents the events that happened. If you’d like to update an existing inbox
+notification when a new activity happens, you can
+[configure the custom notification to use batching](#notification-batching).
 
 ### Liveblocks notifications
 
 [Comments](/docs/ready-made-features/comments) can send `thread` notifications
 for you automatically, notifying you of events such as a mention, or a new reply
-in a thread you’re participating in.
+in a thread you’re participating in. Additionally,
+[text editors](/docs/ready-made-features/multiplayer-editing) can send
+`textMention` notifications whe users are mentioned inside the editor.
 
 <Figure>
   <Image
@@ -120,9 +119,10 @@ in a thread you’re participating in.
   />
 </Figure>
 
-This is enabled by default and the notification `kind` is `thread`. Threads
-leverage Notifications behind-the-scenes to keep track of unread comments so
-viewing a thread will also mark its inbox notification as read, and vice versa.
+These are enabled by default and the notification `kind` names are `thread` and
+`textMention`. Threads and mentions leverage Notifications behind-the-scenes to
+keep track of unread comments so viewing a thread will also mark its inbox
+notification as read, and vice versa.
 
 If you use the default
 [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component, it will
@@ -139,22 +139,31 @@ participating in.
   />
 </Figure>
 
-### Batching configuration [#batching-configuration]
+## Notification batching
 
-You can configure a notification kind to have batching enabled. With batching,
-when you trigger an inbox notification activity for a specific subject id, it
-will update the existing inbox notification instead of creating a new one. An
-inbox notification can have up to 50 activities, if you exceed this number, a
-new inbox notification will be created.
+Batching allows you to group multiple activities into a single notification.
+This is useful for reducing the number of notifications that are sent to the
+user, and can be enabled on custom notification kinds. It’s always enabled for
+Liveblocks `thread` notifications, where new comments in a thread are grouped
+into a single notification.
+
+Within the “Notifications” page in the [dashboard](/dashboard), you can add a
+custom kind and enable batching. When it’s enabled, triggering an inbox
+notification activity for a specific `subjectId`, will update the existing inbox
+notification instead of creating a new one.
 
 <Figure>
-  <Image
-    src="/assets/notifications/inbox-notification-batching.png"
-    alt="Inbox notification batching"
-    width={1456}
-    height={896}
-  />
+  <video width={1512} height={982} autoPlay loop muted playsInline>
+    <source
+      src="/assets/notifications/notification-batching.mp4"
+      type="video/mp4"
+    />
+  </video>
 </Figure>
+
+An inbox notification can have up to 50 activities, if you exceed this number, a
+new inbox notification will be created. Liveblocks `textMention` notifications
+are never batched.
 
 ## Notification channels
 
