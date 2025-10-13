@@ -90,6 +90,11 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
               );
 
             case "sources":
+              // Sources are only shown after the message is fully generated.
+              if (isGenerating) {
+                return null;
+              }
+
               return <SourcesPart key={index} part={part} />;
 
             default:
