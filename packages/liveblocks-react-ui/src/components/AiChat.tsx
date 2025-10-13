@@ -128,9 +128,9 @@ export interface AiChatProps extends ComponentProps<"div"> {
   showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
 
   /**
-   * Whether to show citations
+   * Whether to show sources
    */
-  showCitations?: AiChatAssistantMessageProps["showCitations"];
+  showSources?: AiChatAssistantMessageProps["showSources"];
 
   /**
    * The time, in milliseconds, before an AI response will timeout.
@@ -159,7 +159,7 @@ interface AiChatMessagesProps extends ComponentProps<"div"> {
   components: AiChatProps["components"];
   showReasoning: AiChatProps["showReasoning"];
   showRetrievals: AiChatProps["showRetrievals"];
-  showCitations: AiChatProps["showCitations"];
+  showSources: AiChatProps["showSources"];
   lastSentMessageId: MessageId | null;
   scrollToBottom: MutableRefObject<
     (behavior: "instant" | "smooth", includeTrailingSpace?: boolean) => void
@@ -191,7 +191,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
       components,
       showReasoning,
       showRetrievals,
-      showCitations,
+      showSources,
       lastSentMessageId,
       scrollToBottom,
       onScrollAtBottomChange,
@@ -460,7 +460,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 components={components}
                 showReasoning={showReasoning}
                 showRetrievals={showRetrievals}
-                showCitations={showCitations}
+                showSources={showSources}
               />
             );
           } else {
@@ -485,7 +485,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       layout = "inset",
       showReasoning,
       showRetrievals,
-      showCitations,
+      showSources,
       components,
       className,
       responseTimeout,
@@ -586,7 +586,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 components={components}
                 showReasoning={showReasoning}
                 showRetrievals={showRetrievals}
-                showCitations={showCitations}
+                showSources={showSources}
                 lastSentMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
                 onScrollAtBottomChange={onScrollAtBottomChange}

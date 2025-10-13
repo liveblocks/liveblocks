@@ -2431,6 +2431,17 @@
 }
 
 /*************************************
+ *             Favicon               *
+ *************************************/
+
+.lb-favicon {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: 2px;
+}
+
+/*************************************
  *            Code block             *
  *************************************/
 
@@ -2839,22 +2850,10 @@
 .lb-ai-chat-sources {
   position: relative;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex-flow: row wrap;
+  gap: calc(0.625 * var(--lb-spacing));
   margin-inline: 0;
-  border-radius: var(--lb-radius);
   list-style-type: none;
-  isolation: isolate;
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
-    pointer-events: none;
-  }
 }
 
 .lb-ai-chat-sources li {
@@ -2862,46 +2861,36 @@
 }
 
 .lb-ai-chat-source {
+  @include button;
+
   display: flex;
-  gap: calc(0.625 * var(--lb-spacing));
   align-items: center;
   min-inline-size: 0;
-  padding: calc(0.625 * var(--lb-spacing));
-  border-block-end: 1px solid var(--lb-foreground-subtle);
+  padding-inline-end: calc(0.625 * var(--lb-spacing));
+  border-radius: $lb-radius-full;
+  background: var(--lb-background-foreground-faint);
   transition-property: background;
 
   &:where(:hover, :focus-visible) {
-    background: var(--lb-background-foreground-faint);
-    outline: none;
+    background: var(--lb-background-foreground-subtle);
   }
-}
-
-.lb-ai-chat-sources :where(li:last-child) :where(.lb-ai-chat-source) {
-  border-block-end: none;
 }
 
 .lb-ai-chat-source-favicon {
   flex: none;
   inline-size: 1em;
   block-size: 1em;
+  margin: calc(0.375 * var(--lb-spacing));
+  margin-inline-end: calc(0.3125 * var(--lb-spacing));
+  border-radius: $lb-radius-full;
 }
 
-.lb-ai-chat-source-title,
-.lb-ai-chat-source-url {
+.lb-ai-chat-source-label {
   @include truncate;
 
-  font-size: 0.75em;
-}
-
-.lb-ai-chat-source-title {
-  flex: none;
   color: var(--lb-foreground-secondary);
-  font-weight: 500;
-}
-
-.lb-ai-chat-source-url {
-  margin-inline-start: auto;
-  color: var(--lb-foreground-tertiary);
+  font-size: 0.75em;
+  line-height: 1.25;
 }
 
 .lb-ai-chat-message-sources {

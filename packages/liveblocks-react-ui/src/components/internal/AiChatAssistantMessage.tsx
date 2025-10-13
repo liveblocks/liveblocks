@@ -15,7 +15,7 @@ import {
   useState,
 } from "react";
 
-import { type GlobalComponents } from "../../components";
+import { type GlobalComponents, useComponents } from "../../components";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { WarningIcon } from "../../icons/Warning";
 import {
@@ -72,9 +72,9 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
     | Record<AiRetrievalPart["kind"], boolean | "during">;
 
   /**
-   * Whether to show citations.
+   * Whether to show sources.
    */
-  showCitations?: boolean;
+  showSources?: boolean;
 
   /**
    * Override the component's strings.
@@ -103,33 +103,58 @@ interface SourcesPartProps extends AiMessageContentSourcesPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
-interface AiChatAssistantMessageSourcesProps extends ComponentProps<"ol"> {
-  sources: { url: string; title?: string }[];
+interface AiChatSourceProps extends ComponentProps<"a"> {
+  source: { url: string; title?: string };
+  components?: Partial<GlobalComponents>;
 }
 
-function AiChatAssistantMessageSources({
-  sources,
+interface AiChatSourcesProps extends ComponentProps<"ol"> {
+  sources: AiChatSourceProps["source"][];
+  components?: Partial<GlobalComponents>;
+}
+
+function getUrlDomain(url: string) {
+  return new URL(url).hostname;
+}
+
+// TODO: Use `useUrlMetadata`
+function AiChatSource({
+  source,
+  components,
   className,
   ...props
-}: AiChatAssistantMessageSourcesProps) {
+}: AiChatSourceProps) {
+  const { Anchor } = useComponents(components);
+  const label = useMemo(() => {
+    return source.title ?? getUrlDomain(source.url);
+  }, [source.title, source.url]);
+
+  return (
+    <Anchor
+      href={source.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn("lb-ai-chat-source", className)}
+      {...props}
+    >
+      <Favicon url={source.url} className="lb-ai-chat-source-favicon" />
+      <span className="lb-ai-chat-source-label">{label}</span>
+    </Anchor>
+  );
+}
+
+function AiChatSources({
+  sources,
+  components,
+  className,
+  ...props
+}: AiChatSourcesProps) {
   return (
     <ol className={cn("lb-ai-chat-sources", className)} {...props}>
       {sources.map((source, index) => {
         return (
           <li key={`${index}-${source.url}`}>
-            {/* TODO: Use `Anchor` component */}
-            <a
-              href={source.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="lb-ai-chat-source"
-            >
-              <Favicon url={source.url} className="lb-ai-chat-source-favicon" />
-              {source.title ? (
-                <span className="lb-ai-chat-source-title">{source.title}</span>
-              ) : null}
-              <span className="lb-ai-chat-source-url">{source.url}</span>
-            </a>
+            <AiChatSource source={source} components={components} />
           </li>
         );
       })}
@@ -147,7 +172,7 @@ export const AiChatAssistantMessage = memo(
         components,
         showReasoning,
         showRetrievals,
-        showCitations,
+        showSources,
         ...props
       },
       forwardedRef
@@ -162,7 +187,7 @@ export const AiChatAssistantMessage = memo(
           components={components}
           showReasoning={showReasoning}
           showRetrievals={showRetrievals}
-          showCitations={showCitations}
+          showSources={showSources}
         />
       );
 
@@ -232,13 +257,13 @@ function AssistantMessageContent({
   components,
   showReasoning = true,
   showRetrievals = true,
-  showCitations = true,
+  showSources = true,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
   showReasoning?: AiChatAssistantMessageProps["showReasoning"];
   showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
-  showCitations?: AiChatAssistantMessageProps["showCitations"];
+  showSources?: AiChatAssistantMessageProps["showSources"];
 }) {
   const componentsRef = useRef(components);
   let showKnowledgeRetrievals =
@@ -301,7 +326,7 @@ function AssistantMessageContent({
         TextPart: BoundTextPart,
         ReasoningPart: BoundReasoningPart,
         RetrievalPart: BoundRetrievalPart,
-        SourcesPart: showCitations ? SourcesPart : NoopComponent,
+        SourcesPart: showSources ? SourcesPart : NoopComponent,
         ToolInvocationPart,
       }}
       className="lb-ai-chat-message-content"
@@ -377,7 +402,7 @@ function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
 
   if (part.kind === "web" && part.sources && part.sources.length > 0) {
     content = (
-      <AiChatAssistantMessageSources
+      <AiChatSources
         className="lb-ai-chat-message-retrieval-sources"
         sources={part.sources}
       />
@@ -463,11 +488,11 @@ function ToolInvocationPart({
 }
 
 /* -------------------------------------------------------------------------------------------------
- * CitationsPart
+ * SourcesPart
  * -----------------------------------------------------------------------------------------------*/
 function SourcesPart({ part }: SourcesPartProps) {
   return (
-    <AiChatAssistantMessageSources
+    <AiChatSources
       className="lb-ai-chat-message-sources"
       sources={part.sources}
     />
