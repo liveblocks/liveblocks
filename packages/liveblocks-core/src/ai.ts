@@ -39,7 +39,6 @@ import type {
   AiGenerationOptions,
   AiKnowledgeSource,
   AiReceivingToolInvocationPart,
-  AiSourcesPart,
   AiToolDescription,
   AiToolInvocationPart,
   AiUserContentPart,
@@ -1551,13 +1550,18 @@ function patchContentWithDelta(
     // Nothing to do
     return;
 
+  // Filter out sources parts from the content array to ensure we only process the other parts and handle sources separately
+  const parts: AiAssistantContentPart[] = content.filter(
+    (part) => part.type !== "sources"
+  );
+
+  // Collect all sources from the content array and flatten them so that we can add them to the content array at the end
+  const sources = content
+    .filter((part) => part.type === "sources")
+    .flatMap((part) => part.sources);
+
   const now = new Date().toISOString() as ISODateString;
-  let lastPart = content[content.length - 1];
-  // If the last part is a sources part, set the last part to the second last part
-  // TODO[nimesh] Replace this workaround with a better one
-  if (lastPart?.type === "sources") {
-    lastPart = content[content.length - 2];
-  }
+  const lastPart = parts[parts.length - 1];
 
   // Otherwise, append a new part type to the array, which we can start
   // writing into
@@ -1567,7 +1571,7 @@ function patchContentWithDelta(
         lastPart.text += delta.textDelta;
       } else {
         closePart(lastPart, now);
-        content.push({ type: "text", text: delta.textDelta });
+        parts.push({ type: "text", text: delta.textDelta });
       }
       break;
 
@@ -1576,7 +1580,7 @@ function patchContentWithDelta(
         lastPart.text += delta.textDelta;
       } else {
         closePart(lastPart, now);
-        content.push({
+        parts.push({
           type: "reasoning",
           text: delta.textDelta,
           startedAt: now,
@@ -1589,7 +1593,7 @@ function patchContentWithDelta(
         delta.invocationId,
         delta.name
       );
-      content.push(toolInvocation);
+      parts.push(toolInvocation);
       break;
     }
 
@@ -1608,33 +1612,33 @@ function patchContentWithDelta(
     }
 
     case "tool-invocation":
-      replaceOrAppend(content, delta, (x) => x.invocationId, now);
+      replaceOrAppend(parts, delta, (x) => x.invocationId, now);
       break;
 
     case "retrieval":
-      replaceOrAppend(content, delta, (x) => x.id, now);
+      replaceOrAppend(parts, delta, (x) => x.id, now);
       break;
 
     case "source": {
-      const lastIndex = findLastIndex(
-        content,
-        (item) => item.type === "sources"
-      );
-      if (lastIndex > -1) {
-        const lastPart = content[lastIndex] as AiSourcesPart;
-        lastPart.sources.push(delta);
-      } else {
-        content.push({
-          type: "sources",
-          sources: [delta],
-        });
-      }
+      sources.push(delta);
       break;
     }
 
     default:
       return assertNever(delta, "Unhandled case");
   }
+
+  // Add the sources part to the parts array at the end if there are any sources
+  if (sources.length > 0) {
+    parts.push({
+      type: "sources",
+      sources,
+    });
+  }
+
+  // Replace the content array with the parts array
+  content.length = 0;
+  content.push(...parts);
 }
 
 /**
