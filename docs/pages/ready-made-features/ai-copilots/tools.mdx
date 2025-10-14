@@ -15,10 +15,10 @@ allowing autonomous and human-in-the-loop interactions.
 Tools can be used to create various different interactions inside of your AI
 chat, such as:
 
-- **Custom components**: Render custom React components like forms, graphs,
-  videos, callouts.
 - **Actions**: Autonomously perform actions like editing documents, redirecting
   users, sending emails.
+- **Custom components**: Render custom React components like forms, graphs,
+  videos, callouts.
 - **Query actions**: AI can query your app, search documents, find pages, check
   invoices.
 - **Human-in-the-loop actions**: Show confirm/deny buttons before taking
@@ -47,7 +47,7 @@ how an interaction occurs:
 {" "}
 
 <StepCompact>
-  <StepTitle>User sends a message</StepTitle>
+  <StepTitle>User asks about the weather in Paris</StepTitle>
   <StepContent>
 
     ```js
@@ -75,7 +75,7 @@ how an interaction occurs:
     ```js
     execute: async ({ location }) => {
       // { "temperature": 20, "condition": "sunny" };
-      const weather = await fetchWeather(location);
+      const weather = await __fetchWeather__(location);
       return { data: { weather }};
     }
     ```
@@ -93,20 +93,31 @@ how an interaction occurs:
   </StepCompact>
 </Steps>
 
-<details>
-  <summary>Optionally, you can also use `render` to display a custom component in the chat.</summary>
+<hr style={{ marginTop: -16 }} />
+
+<details style={{ marginTop: -24 }}>
+  <summary>Optionally, you can also display a custom component in the chat using `render`.</summary>
   <div style={{ marginTop: -16 }}>
 
-<Steps startAt={4}>
+<Steps startAt={3}>
 
 <StepCompact>
-  <StepTitle>…your existing code to fetch the weather</StepTitle>
+    <StepTitle>AI calls the weather tool with `Paris` as the `location`</StepTitle>
+    <StepContent>
+    ```js
+    { "location": "Paris" }
+    ```
+    </StepContent>
+  </StepCompact>
+
+<StepCompact>
+  <StepTitle>You write code to fetch the weather for the `location`</StepTitle>
   <StepContent>
 
     ```js
     execute: async ({ location }) => {
       // { "temperature": 20, "condition": "sunny" };
-      const weather = await fetchWeather(location);
+      const weather = await __fetchWeather__(location);
       return { data: { weather }};
     }
     ```
@@ -115,13 +126,14 @@ how an interaction occurs:
   </StepCompact>
 
 <StepCompact>
-  <StepTitle>Define a custom component to render</StepTitle>
+  <StepTitle>Define a custom component to display in the chat</StepTitle>
   <StepContent>
 
     ```tsx
     render: ({ result }) => {
       const weather = result.data;
-      return <div>{weather.condition === "sunny" ? "☀️" : "🌧️"} in {weather.location}</div>;
+      const emoji = weather.condition === "sunny" ? "☀️" : "🌧️";
+      return <div>{emoji} in <em>{weather.location}</em></div>;
     }
     ```
 
@@ -132,7 +144,7 @@ how an interaction occurs:
     <StepTitle>AI answers the user</StepTitle>
     <StepContent>
     ```tsx
-    AI: <div>☀️ in Paris</div>
+    AI: <div>☀️ in <em>Paris</em></div>
     ```
     </StepContent>
   </StepCompact>
@@ -143,17 +155,20 @@ how an interaction occurs:
 
 ---
 
-When writing your
+This is just an example of a simple tool, below we’ll detail how to create more
+complex tools that allow you to create confirm/deny dialogs, render custom
+components, and more. When writing your
 [system prompt](/docs/ready-made-features/ai-copilots/copilots#System-prompt)
 you can suggest when certain tools should be used, helping AI respond
 accurately.
 
 ## Defining tools
 
-To define a tool, you first need to give it a unique name, and a description,
-which AI will use to decide when to call it. Tools are defined with
+You can define a tool with
 [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) and
-[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool).
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool). First,
+you first need to give your tool a unique name, and a description, which helps
+AI understand when to call it.
 
 ```tsx
 import { RegisterAiTool } from "@liveblocks/react";
@@ -172,8 +187,11 @@ import { defineAiTool } from "@liveblocks/client";
 />;
 ```
 
-All tools require parameters in the form of a
-[JSON schema](https://json-schema.org/learn/getting-started-step-by-step).
+For AI to use your tools intelligently, parameters must be defined, which AI can
+fill in. Tools use
+[JSON schema](https://json-schema.org/learn/getting-started-step-by-step) to
+define these, such as the example below that creates a `location` parameter as a
+`string`.
 
 ```tsx
 <RegisterAiTool
@@ -195,8 +213,306 @@ All tools require parameters in the form of a
 />
 ```
 
-and JSON schema for the parameters it will fill in. For example, if this is
+To add the functionality to your tool, a combination of `execute` and `render`
+functions can be used.
 
-Tools are defined with
-[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) and
-[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool).
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    execute: async ({ location }) => {
+      // ...
+    },
+    render: ({ stage, partialArgs, args, result, respond }) => {
+      // ...
+    },
+    // +++
+  })}
+/>
+```
+
+Let’s take a look at how to use them.
+
+## Actions
+
+If you’d like your AI to perform an action when the tool is called, you can use
+`execute` to define what should happen. The arguments passed to `execute` are
+the parameters defined in your tool, filled in by AI. After the tool has run,
+returning any `data` you’d like to pass back to AI.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    execute: async ({ location }) => {
+      const weather = await __fetchWeather__(location);
+      return { data: { weather } };
+    },
+    // +++
+  })}
+/>
+```
+
+After running the tool, AI will read the `data` object, and choose how to
+respond. Additionally, you can define a `description` to pass back to AI. This
+is a way to tell AI what the tool has just done, so it understands the context
+of the result, and what it can do next. This text will never be shown to the
+user.
+
+```ts
+execute: async ({ location }) => {
+  const weather = await __fetchWeather__(location);
+  return {
+    data: { weather },
+    // +++
+    description: "You've just fetched the weather, share the temperature in °C."
+    // +++
+  };
+},
+```
+
+### Display a loading message
+
+You can easily display a loading message while an action takes place, and a
+message afterwards, using `render` and
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool).
+
+```tsx
+import { AiChat, AiTool } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+
+function Chat() {
+  <>
+    <AiChat chatId="my-chat-id" />
+    <RegisterAiTool
+      name="weather-tool"
+      tool={defineAiTool()({
+        description: "Get the weather for a location",
+        parameters: {
+          type: "object",
+          properties: {
+            location: { type: "string" },
+          },
+          required: ["location"],
+          additionalProperties: false,
+        },
+        execute: async ({ location }) => {
+          const weather = await __fetchWeather__(location);
+          return {
+            data: { weather },
+            description: "You've just fetched the weather.",
+          };
+        },
+        // +++
+        render: ({ stage }) => {
+          // `execute` is still running
+          if (stage !== "executed") {
+            return <AiTool title="Fetching weather…" variant="minimal" />;
+          }
+
+          // `execute` has finished
+          return <AiTool title="Weather fetched" variant="minimal" />;
+        },
+        // +++
+      })}
+    />
+  </>;
+}
+```
+
+### Combine actions with front-end knowledge
+
+You can combine actions with
+[front-end knowledge](/docs/ready-made-features/ai-copilots/knowledge) to create
+an AI assistant that can take actions. For example, say you have a document on
+the current page. You can use knowledge to share the document content with the
+AI, then create a tool that allows AI to edit the document.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { useState } from "react";
+
+function Document() {
+  // +++
+  const [document, setDocument] = useState("Hello world");
+  // +++
+
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      <RegisterAiKnowledge
+        description="The current document"
+        // +++
+        value={document}
+        // +++
+      />
+      <RegisterAiTool
+        name="edit-document"
+        tool={defineAiTool()({
+          description: "Edit the document's text",
+          parameters: {
+            type: "object",
+            properties: {},
+          },
+        })}
+      />
+      <RegisterAiTool
+        name="edit-document"
+        tool={defineAiTool()({
+          description: "Edit the document's text",
+          parameters: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+            },
+          },
+          execute: ({ args }) => {
+            // +++
+            setDocument(args.text);
+            // +++
+            return { data: {}, description: "Document updated" };
+          },
+          render: ({ stage }) => {
+            if (stage !== "executed") {
+              return <AiTool title="Updating document…" variant="minimal" />;
+            }
+
+            return <AiTool title="Document updated" variant="minimal" />;
+          },
+        })}
+      />
+    </>
+  );
+}
+```
+
+## Custom components
+
+You can use tools to display custom components inside the chat with the `render`
+function. These don’t have to be simple components, but can be complex, like a
+forms, graphs, videos, callouts. Include an `execute` function, even if it’s
+empty, otherwise the tool will assume it’s a
+[human-in-the-loop action](#Human-in-the-loop-actions).
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {},
+    execute: () => {},
+    // +++
+    render: () => {
+      return <MyGraph x={50} y={100} />;
+    },
+    // +++
+  })}
+/>
+```
+
+AI will most likely write a response after using your tool, but you can prompt
+the AI to not respond by adding a `description` to `execute`.
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {},
+    execute: () => {
+      return {
+        data: {},
+        // +++
+        description: "You’re displaying a graph. Do not respond further.",
+        // +++
+      };
+    },
+    // +++
+    render: () => {
+      return <MyGraph x={50} y={100} />;
+    },
+    // +++
+  })}
+/>
+```
+
+### Display data in custom components
+
+You can take custom components a step further by combining them with
+[actions](#Actions), and then showing the results inside the custom component.
+The `result` property contains the data returned from the action.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    execute: async ({ location }) => {
+      // { "temperature": 20, "condition": "sunny" };
+      const weather = await __fetchWeather__(location);
+      return { data: { weather } };
+    },
+    // +++
+    render: ({ stage, args, result }) => {\
+      if (stage !== "executed") {
+        return <div>Fetching weather…</div>;
+      }
+
+      return (
+        <MyWeatherComponent
+          location={args.location}
+          condition={result.data.weather.condition}
+          temperature={result.data.weather.temperature}
+        />
+      );
+    },
+    // +++
+  })}
+/>
+```
+
+`args` contains the arguments passed to the tool from AI, and `result` contains
+the data returned from the tool.
+
+## Query actions
+
+## Human-in-the-loop actions
+
+### Default components
+
+### Custom components
+
+## Streaming and AI presence
+
+## Updating tools
