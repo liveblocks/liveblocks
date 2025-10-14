@@ -480,7 +480,7 @@ title, folder, and category.
     };
   },
   // +++
-  render: ({ stage, args, result }) => {\
+  render: ({ stage, args, result }) => {
     if (stage !== "executed") {
       return <AiTool title="Fetching documents…" variant="minimal" />;
     }
@@ -493,9 +493,100 @@ title, folder, and category.
 
 ## Human-in-the-loop actions
 
-### Default components
+Human-in-the-loop actions are a way to allow the user to confirm or deny an
+action before it’s executed. This is particualrly useful for destructive and
+stateful actions, such as deleting a document, or sending an email. Confirmable
+actions like these will freeze the chat until the user responds, confirming or
+cancelling the action.
 
-### Custom components
+<Steps>
+<StepCompact>
+  <StepTitle>User asks to delete a document</StepTitle>
+  <StepContent>
+
+    ```js
+    User: "Can you delete my-document.txt?"
+    ```
+
+  </StepContent>
+</StepCompact>
+  <StepCompact>
+    <StepTitle>AI calls the delete document tool, “Confirm” and “deny” buttons are displayed</StepTitle>
+    <StepContent>
+    _The chat waits for the user to respond._
+    </StepContent>
+  </StepCompact>
+  <StepCompact>
+    <StepTitle>The user clicks “Confirm”</StepTitle>
+    <StepContent>
+    _The document is deleted._
+    </StepContent>
+  </StepCompact>
+<StepCompact lastStep>
+  <StepTitle>The chat unfreezes and is ready to continue</StepTitle>
+  <StepContent>
+
+    ```js
+    AI: "I've deleted it! How else can I help you?"
+    ```
+
+  </StepContent>
+</StepCompact>
+</Steps>
+
+To create confirmable actions, you must skip using the `execute` function, and
+instead move this logic to `render`.
+
+### Default confirmation component
+
+The easiest way to create confirmable actions, is to skip using the `execute`
+function, and instead return the ready-made
+[`AiTool.Confirmation`](/docs/api-reference/liveblocks-react-ui#AiTool.Confirmation)
+component in `render`. The `confirm` and `cancel` callbacks work very similarly
+to `execute`, and are triggered when the user clicks “Confirm” or “Cancel”.
+
+```tsx
+<RegisterAiTool
+  name="delete-document"
+  tool={defineAiTool()({
+    description: "Delete a document by its ID",
+    parameters: {
+      type: "object",
+      properties: {
+        documentId: { type: "string" },
+      },
+      required: ["documentId"],
+      additionalProperties: false,
+    },
+    render: ({ stage, args, result, types }) => {
+      return (
+        <AiTool title="Delete document" variant="minimal">
+          // +++
+          <AiTool.Confirmation
+            types={types}
+            confirm={async ({ documentId }) => {
+              await __deleteDocument__(documentId);
+              return {
+                data: { documentId }
+                description: "The user chose to delete the document"
+              };
+            }}
+            cancel={() => {
+              return {
+                data: { documentId },
+                description: "The user cancelled deleting the document"
+              };
+            }}
+          />
+          // +++
+        </AiTool>
+      );
+    },
+  })}
+/>
+```
+
+### Building a custom confirmation component
 
 ## Streaming and AI presence
 
