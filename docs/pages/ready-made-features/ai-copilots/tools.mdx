@@ -676,4 +676,41 @@ Here’s a custom send email tool, note how `respond` is used similarly to
 
 ## Streaming and AI presence
 
+You can stream in tool results as they arrive, allowing you to show live updates
+and AI presence in your application. An example would be a tool that generates
+documents—you can display each part of the content as it’s created, for example
+like this.
+
+<Steps>
+
+<StepCompact>
+```json
+{ "content": "Here’s" }
+```
+</StepCompact>
+
+<StepCompact>
+```json
+{ "content": "Here’s my suggestions" }
+```
+</StepCompact>
+
+<StepCompact>
+```json
+{ "content": "Here’s my suggestions for a" }
+```
+</StepCompact>
+
+<StepCompact lastStep>
+```json
+{ "content": "Here’s my suggestions for a marketing email!" }
+```
+</StepCompact>
+
+</Steps>
+
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) allows
+you to stream in strings, objects, and arrays, and you can use them in `render`
+as they arrive.
+
 ## Updating tools
