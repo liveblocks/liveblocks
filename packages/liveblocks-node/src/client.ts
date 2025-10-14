@@ -205,7 +205,10 @@ type OpenAiModel =
 
 type OpenAiProviderOptions = {
   openai: {
-    reasoningEffort: "low" | "medium" | "high";
+    reasoningEffort?: "low" | "medium" | "high";
+    webSearch?: {
+      allowedDomains?: string[];
+    };
   };
 };
 
@@ -218,9 +221,18 @@ type AnthropicModel =
   | "claude-3-opus-latest";
 type AnthropicProviderOptions = {
   anthropic: {
-    thinking: {
-      type: "enabled" | "disabled";
-      budgetTokens: number;
+    thinking?:
+      | {
+          type: "enabled";
+          budgetTokens: number;
+        }
+      | {
+          type: "disabled";
+        };
+    webSearch?: {
+      maxUses?: number;
+      allowedDomains?: string[];
+      blockedDomains?: string[];
     };
   };
 };
@@ -233,7 +245,7 @@ type GoogleModel =
   | "gemini-1.5-pro";
 type GoogleProviderOptions = {
   google: {
-    thinkingConfig: {
+    thinkingConfig?: {
       thinkingBudget: number;
     };
   };
@@ -484,27 +496,48 @@ export type UpdateAiCopilotOptions = {
 } & (
   | {
       provider?: "openai";
+      /**
+       * The provider model to use.
+       */
       providerModel?: OpenAiModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: OpenAiProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "anthropic";
+      /**
+       * The provider model to use.
+       */
       providerModel?: AnthropicModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs..
+       */
       providerOptions?: AnthropicProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "google";
+      /**
+       * The provider model to use.
+       */
       providerModel?: GoogleModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: GoogleProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "openai-compatible";
+      /**
+       * The provider model to use.
+       */
       providerModel?: string;
       compatibleProviderName?: string;
       providerBaseUrl?: string;
