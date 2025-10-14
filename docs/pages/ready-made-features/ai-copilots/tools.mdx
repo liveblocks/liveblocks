@@ -535,12 +535,12 @@ cancelling the action.
 </Steps>
 
 To create confirmable actions, you must skip using the `execute` function, and
-instead move this logic to `render`.
+instead move this logic to `render`. This will always freeze the chat until the
+user responds.
 
 ### Default confirmation component
 
-The easiest way to create confirmable actions, is to skip using the `execute`
-function, and instead return the ready-made
+The easiest way to create confirmable actions, is toreturn the ready-made
 [`AiTool.Confirmation`](/docs/api-reference/liveblocks-react-ui#AiTool.Confirmation)
 component in `render`. The `confirm` and `cancel` callbacks work very similarly
 to `execute`, and are triggered when the user clicks “Confirm” or “Cancel”.
@@ -567,14 +567,14 @@ to `execute`, and are triggered when the user clicks “Confirm” or “Cancel�
             confirm={async ({ documentId }) => {
               await __deleteDocument__(documentId);
               return {
-                data: { documentId }
-                description: "The user chose to delete the document"
+                data: { documentId },
+                description: "The user chose to delete the document",
               };
             }}
             cancel={() => {
               return {
                 data: { documentId },
-                description: "The user cancelled deleting the document"
+                description: "The user cancelled deleting the document",
               };
             }}
           />
@@ -586,7 +586,93 @@ to `execute`, and are triggered when the user clicks “Confirm” or “Cancel�
 />
 ```
 
+In the `cancel` callback it’s important to let the AI know that the user
+cancelled the action, otherwise it may assume the action failed and try to run
+it again.
+
 ### Building a custom confirmation component
+
+By utilising the `respond` argument in `render`, and the different stages of a
+tool’s lifecycle, you can build a fully custom confirmation component. You can
+use these stages to build a fully custom confirmation component:
+
+1. `receiving` - Displayed when AI is streaming in the parameters.
+2. `executing` - Displayed when the chat is frozen, and is waiting for a
+   response.
+3. `executed` - Displayed after a response has been recorded.
+
+Here’s a custom send email tool, note how `respond` is used similarly to
+`execute`.
+
+```tsx
+<RegisterAiTool
+  name="send-email"
+  tool={defineAiTool()({
+    description: "Send an email",
+    parameters: {
+      type: "object",
+      properties: {
+        emailAddress: { type: "string" },
+      },
+      required: ["emailAddress"],
+      additionalProperties: false,
+    },
+    render: ({ stage, args, respond, result }) => {
+      // `emailAddress` param is still streaming in, wait
+      // +++
+      if (stage === "receiving") {
+        return <div>Loading...</div>;
+      }
+      // +++
+
+      // The tool is waiting for `respond` to be called
+      // +++
+      if (stage === "executing") {
+        return (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const message = e.target.message.value;
+              await __sendEmail__(args.emailAddress, message);
+
+              // Similar to `execute`/`confirm`, let AI know it succeeded
+              respond({
+                data: { emailAddress: args.emailAddress, message },
+                description: "You sent an email for the user",
+              });
+            }}
+          >
+            <textarea name="message" />
+            <button type="submit">Send</button>
+            <button
+              type="button"
+              onClick={() =>
+                // Similar to `execute`/`cancel`, let AI know the user cancelled
+                respond({
+                  data: { emailAddress: args.emailAddress, message },
+                  description: "The user cancelled sending an email",
+                })
+              }
+            >
+              Cancel
+            </button>
+          </form>
+        );
+      }
+      // +++
+
+      // `respond` has already been called, show the result
+      // +++
+      return (
+        <div>
+          You sent an email to {args.emailAddress}: "{result.data.message}".
+        </div>
+      );
+      // +++
+    },
+  })}
+/>
+```
 
 ## Streaming and AI presence
 
