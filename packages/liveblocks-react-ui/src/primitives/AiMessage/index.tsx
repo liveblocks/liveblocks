@@ -90,8 +90,12 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
               );
 
             case "sources":
-              // Sources are only shown after the message is fully generated.
-              if (isGenerating) {
+              // Sources are only shown after the message is either completed or failed.
+              if (
+                message.role === "assistant" &&
+                message.status !== "completed" &&
+                message.status !== "failed"
+              ) {
                 return null;
               }
 
