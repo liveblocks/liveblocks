@@ -674,12 +674,11 @@ Here’s a custom send email tool, note how `respond` is used similarly to
 />
 ```
 
-## Streaming and AI presence
+## AI presence and streaming
 
 You can stream in tool results as they arrive, allowing you to show live updates
 and AI presence in your application. An example would be a tool that generates
-documents—you can display each part of the content as it’s created, for example
-like this.
+documents—you can display each part of the content as it’s created, for example:
 
 <Steps>
 
@@ -709,8 +708,96 @@ like this.
 
 </Steps>
 
+To show this inside the tool, you can use `render`. While you’d normally access
+AI-generated arguments via `args`, but to access streaming results, you can use
+`partialArgs` to get the whole stream up to this point. This all occurs during
+the `receiving` stage, and as each chunk is receivied, `render` will re-render
+and update the UI.
+
+```tsx
+<RegisterAiTool
+  name="create-document"
+  tool={defineAiTool()({
+    description: "Create a document",
+    parameters: {
+      type: "object",
+      properties: {
+        content: { type: "string" },
+      },
+      required: ["content"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ stage, partialArgs }) => {
+      // Document is streaming in
+      // +++
+      if (stage === "receiving") {
+        return <div>Document: {partialArgs.content}</div>;
+      }
+      // +++
+
+      // Document has fully streamed in
+      // +++
+      return <div>Document: {args.content}</div>;
+      // +++
+    },
+  })}
+/>
+```
+
 [`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) allows
 you to stream in strings, objects, and arrays, and you can use them in `render`
 as they arrive.
 
+### Streaming into a document with AI presence
+
+To stream results outside of the chat window, and show AI presence, you can call
+functions inside `render`. In this case, we’re updating a document outside of
+the chat window, and inside the chat, we’re showing a simple
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) message.
+
+```tsx
+<RegisterAiTool
+  name="create-document"
+  tool={defineAiTool()({
+    description: "Create a document",
+    parameters: {
+      type: "object",
+      properties: {
+        content: { type: "string" },
+      },
+      required: ["content"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ stage, partialArgs }) => {
+      // Document is streaming in, update document and presence
+      // +++
+      if (stage === "receiving") {
+        __updateDocument__(partialArgs.content);
+        __renderPresenceAtPosition__(partialArgs.content.length);
+        return <AiTool title="Creating document…" />;
+      }
+      // +++
+
+      // Final chunk of stream is here, update document and end presence
+      // +++
+      if (stage === "executing") {
+        __updateDocument__(args.content);
+        __renderPresenceAtPosition__(null);
+        return <AiTool title="Creating document…" />;
+      }
+      // +++
+
+      // Document has fully streamed in
+      // +++
+      return <AiTool title="Document complete!" />;
+      // +++
+    },
+  })}
+/>
+```
+
 ## Updating tools
+
+...
