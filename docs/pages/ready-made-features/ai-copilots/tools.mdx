@@ -93,71 +93,9 @@ how an interaction occurs:
   </StepCompact>
 </Steps>
 
-<hr style={{ marginTop: -16 }} />
-
-<details style={{ marginTop: -24 }}>
-  <summary>Optionally, you can also display a custom component in the chat using `render`.</summary>
-  <div style={{ marginTop: -16 }}>
-
-<Steps startAt={3}>
-
-<StepCompact>
-    <StepTitle>AI calls the weather tool with `Paris` as the `location`</StepTitle>
-    <StepContent>
-    ```js
-    { "location": "Paris" }
-    ```
-    </StepContent>
-  </StepCompact>
-
-<StepCompact>
-  <StepTitle>You write code to fetch the weather for the `location`</StepTitle>
-  <StepContent>
-
-    ```js
-    execute: async ({ location }) => {
-      // { "temperature": 20, "condition": "sunny" };
-      const weather = await __fetchWeather__(location);
-      return { data: { weather }};
-    }
-    ```
-    </StepContent>
-
-  </StepCompact>
-
-<StepCompact>
-  <StepTitle>Define a custom component to display in the chat</StepTitle>
-  <StepContent>
-
-    ```tsx
-    render: ({ result }) => {
-      const weather = result.data;
-      const emoji = weather.condition === "sunny" ? "☀️" : "🌧️";
-      return <div>{emoji} in <em>{weather.location}</em></div>;
-    }
-    ```
-
-  </StepContent>
-</StepCompact>
-
-  <StepCompact lastStep>
-    <StepTitle>AI answers the user</StepTitle>
-    <StepContent>
-    ```tsx
-    AI: <div>☀️ in <em>Paris</em></div>
-    ```
-    </StepContent>
-  </StepCompact>
-</Steps>
-
-</div>
-</details>
-
----
-
 This is just an example of a simple tool, below we’ll detail how to create more
-complex tools that allow you to create confirm/deny dialogs, render custom
-components, and more. When writing your
+complex tools that have confirm/deny dialogs, render custom components, query
+data, and more. When writing your
 [system prompt](/docs/ready-made-features/ai-copilots/copilots#System-prompt)
 you can suggest when certain tools should be used, helping AI respond
 accurately.
@@ -506,6 +444,52 @@ The `result` property contains the data returned from the action.
 the data returned from the tool.
 
 ## Query actions
+
+A helpful way to use tools is to allow AI to query data from your application,
+such as documents, pages, or other data sources. If your application already
+contains a search function, you can easily plug it into your tool to create a
+powerful AI assistant. For example, this tool can search through documents by
+title, folder, and category.
+
+```tsx
+<RegisterAiTool
+  name="find-documents"
+  tool={defineAiTool()({
+    // +++
+    description: "Find documents by title, folder, and category",
+    // +++
+    parameters: {
+      type: "object",
+      properties: {
+        // +++
+        title: { type: "string" },
+        folder: { type: "string" },
+        category: { type: "string" },
+        // +++
+      },
+    },
+    required: ["title", "folder", "category"],
+    additionalProperties: false,
+  },
+  // +++
+  execute: async ({ title, folder, category }) => {
+    const documents = await __queryDocuments__({ title, folder, category });
+    return {
+      data: { documents },
+      description: documents.length > 0 ? `${documents.length} results` : "No results"
+    };
+  },
+  // +++
+  render: ({ stage, args, result }) => {\
+    if (stage !== "executed") {
+      return <AiTool title="Fetching documents…" variant="minimal" />;
+    }
+
+    return null;
+  },
+  })}
+/>
+```
 
 ## Human-in-the-loop actions
 
