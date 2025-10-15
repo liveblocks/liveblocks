@@ -4962,6 +4962,39 @@ function Inbox() {
 }
 ```
 
+#### Batched notifications [#useInboxNotifications-batched-notifications]
+
+If you’re
+[batching custom notifications](/docs/api-reference/liveblocks-node#Batching-custom-notifications),
+you can render each activity inside a single notification. The `activities`
+array will contain multiple items.
+
+```tsx
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  // If the last notification was batched, it will have multiple
+  // items in the `activities` array
+  // {
+  //   id: "in_3dH7sF3...",
+  //   kind: "$fileUploaded",
+  // +++
+  //   activities: [
+  //     { status: "processing" },
+  //     { status: "complete" },
+  //   ],
+  // +++
+  //   ...
+  // }
+  console.log(inboxNotifications[0].activities);
+
+  // ...
+}
+```
+
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
 Returns the number of unread inbox notifications for the current user.
