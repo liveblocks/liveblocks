@@ -412,33 +412,30 @@ export type AiUploadedImagePart = {
  * Represents a pending or completed knowledge retrieval operation.
  * Since protocol V6.
  */
-export type AiRetrievalPart = {
+export type AiRetrievalPart = AiKnowledgeRetrievalPart | AiWebRetrievalPart;
+
+export type AiKnowledgeRetrievalPart = {
   type: "retrieval";
   id: string;
   startedAt: ISODateString;
   endedAt?: ISODateString;
-} & (
-  | {
-      kind: "knowledge";
-      query: string;
-    }
-  | {
-      kind: "web";
-      query?: string;
-      sources?: Array<{
-        type: "url";
-        title?: string;
-        url: string;
-      }>;
-    }
-);
+  kind: "knowledge";
+  query: string;
+};
 
-export type AiKnowledgeRetrievalPart = Extract<
-  AiRetrievalPart,
-  { kind: "knowledge" }
->;
-
-export type AiWebRetrievalPart = Extract<AiRetrievalPart, { kind: "web" }>;
+export type AiWebRetrievalPart = {
+  type: "retrieval";
+  id: string;
+  startedAt: ISODateString;
+  endedAt?: ISODateString;
+  kind: "web";
+  query?: string;
+  sources?: Array<{
+    type: "url";
+    title?: string;
+    url: string;
+  }>;
+};
 
 export type AiSourcesPart = {
   type: "sources";
