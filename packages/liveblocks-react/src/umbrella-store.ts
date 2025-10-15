@@ -607,7 +607,7 @@ type RoomSubscriptionSettingsByRoomId = Record<
   RoomSubscriptionSettings
 >;
 
-type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
+export type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
@@ -1215,10 +1215,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
+          const subscriptions = threadSubscriptions.get().subscriptions;
+
           const threads = this.outputs.threads.get().findMany(
             undefined, // Do _not_ filter by roomId
             query ?? {},
-            "desc"
+            "desc",
+            subscriptions
           );
 
           const page = result.data;
@@ -1285,9 +1288,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
+          const subscriptions = threadSubscriptions.get().subscriptions;
+
           const threads = this.outputs.threads
             .get()
-            .findMany(roomId, query ?? {}, "asc");
+            .findMany(roomId, query ?? {}, "asc", subscriptions);
 
           const page = result.data;
           return {
@@ -2307,7 +2312,12 @@ function applyOptimisticUpdates_forSubscriptions(
           continue;
         }
 
-        const roomThreads = threads.findMany(update.roomId, undefined, "desc");
+        const roomThreads = threads.findMany(
+          update.roomId,
+          undefined,
+          "desc",
+          undefined
+        );
 
         for (const thread of roomThreads) {
           const subscriptionKey = getSubscriptionKey("thread", thread.id);

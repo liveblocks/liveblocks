@@ -78,6 +78,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     cursor?: string;
     query?: {
       resolved?: boolean;
+      subscribed?: boolean;
       metadata?: Partial<QueryMetadata<M>>;
     };
   }): Promise<{
@@ -575,6 +576,7 @@ export function createApiClient<M extends BaseMetadata>({
     cursor?: string;
     query?: {
       resolved?: boolean;
+      subscribed?: boolean;
       metadata?: Partial<QueryMetadata<M>>;
     };
   }) {

@@ -1744,9 +1744,9 @@ const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 
 ### useAiChatStatus
 
-Returns the status of an AI chat, indicating whether it’s idle or actively
-generating content. This is a convenience hook that derives its state from the
-latest assistant message in the chat.
+Returns the status of an AI chat, indicating whether it’s disconnected, loading,
+idle or actively generating content. This is a convenience hook that derives its
+state from the latest assistant message in the chat.
 
 ```tsx
 import { useAiChatStatus } from "@liveblocks/react";
@@ -1761,8 +1761,12 @@ const { status, partType, toolName } = useAiChatStatus("my-chat-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="status" type={`"loading" | "idle" | "generating"`}>
-    The current synchronization status of the chat.
+  <PropertiesListItem
+    name="status"
+    type={`"disconnected" | "loading" | "idle" | "generating"`}
+  >
+    The current synchronization status of the chat. When disconnected the AI
+    service is not available.
   </PropertiesListItem>
   <PropertiesListItem name="partType" type={`"text" | "tool-invocation"`}>
     The type of content being generated.
@@ -3951,10 +3955,11 @@ function Component() {
 #### Querying threads [#useThreads-query]
 
 It’s possible to return threads that match a certain query with the `query`
-option. You can filter threads based on their resolved status, and metadata.
-Additionally, you can filter for metadata strings that being with certain
-characters using `startsWith` and you can filter for metadata numbers using
-`gt`, `lt`, `gte`, and `lte`. Returned threads match the entire query.
+option. You can filter threads based on their resolved status, if the user is
+subscribed to them, and metadata. Additionally, you can filter for metadata
+strings that being with certain characters using `startsWith` and you can filter
+for metadata numbers using `gt`, `lt`, `gte`, and `lte`. Returned threads match
+the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -3962,6 +3967,9 @@ const { threads } = useThreads({
   query: {
     // Filter for unresolved threads
     resolved: false,
+
+    // Filter for threads that the user is subscribed to
+    subscribed: true,
 
     metadata: {
       // Filter for threads that contain specific string, boolean, and number data

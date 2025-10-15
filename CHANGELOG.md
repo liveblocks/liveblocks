@@ -1,4 +1,4 @@
-## 3.9.0 (to be published)
+## v3.9.0 (not yet published)
 
 ### `@liveblocks/react-ui`
 
@@ -6,11 +6,24 @@
 - Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
   component to determine how sources, retrievals and reasoning are displayed
   respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
 
 ### `@liveblocks/node`
 
 - Update `createAiCopilot` and `updateAiCopilot` to include web search in
   provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
 
 ## v3.8.1
 
@@ -26,7 +39,6 @@
 
 - Fix issue where `tenantId` was not being passed to the request when using
   `Liveblocks.createRoom()`.
-
 - Add `comments:write` to the list of possible room permissions.
 
 ## v3.8.0
