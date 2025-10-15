@@ -20,7 +20,14 @@ render custom in-chat components.
 The [`AiChat`][] component renders an AI chat, with a chat history, a composer
 for adding new messages, and a toolbar for adding AI actions.
 
-{/* TODO AiChat image */}
+<Figure>
+  <Image
+    src="/assets/ai-copilots/ai-chat.jpg"
+    alt="AiChat"
+    width={768}
+    height={446}
+  />
+</Figure>
 
 ### Usage
 
@@ -42,11 +49,10 @@ later.
 
 ## AiTool
 
-The [`AiTool`][] component renders
-[tools](/docs/ready-made-features/ai-copilots/features#tools) called in AI
-chats. It shows the tool’s name, its stage (e.g. a spinner when executing, a
-checkmark when successful, etc.), and optionally an icon and custom content
-inside it.
+The [`AiTool`][] component
+[renders tools](/docs/ready-made-features/ai-copilots/tools) called in AI chats.
+It shows the tool’s name, its stage (e.g. a spinner when executing, a checkmark
+when successful, etc.), and optionally an icon and custom content inside it.
 
 {/* TODO AiTool image */}
 
@@ -77,17 +83,19 @@ function App() {
             );
             return { data: { temperature, condition } };
           },
-          render: ({ result }) => (
-            // +++
-            <AiTool>
-              {result.data ? (
-                <div>
-                  {result.data.temperature}°F - {result.data.condition}
-                </div>
-              ) : null}
-            </AiTool>
-            // +++
-          ),
+          render: ({ result }) => {
+            return (
+              // +++
+              <AiTool title="Weather" icon="🌤️">
+                {result.data ? (
+                  <div>
+                    {result.data.temperature}°F - {result.data.condition}
+                  </div>
+                ) : null}
+              </AiTool>
+              // +++
+            );
+          },
         })}
       />
       <AiChat chatId="my-chat" />

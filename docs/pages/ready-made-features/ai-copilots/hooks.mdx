@@ -6,10 +6,10 @@ meta:
 ---
 
 The AI Copilots React hooks allow you to fetch, create, and modify AI chats,
-allowing you to build custom AI interfaces, even beyond our
+enabling you to build custom AI interfaces, even beyond our
 [default components](/docs/ready-made-features/ai-copilots/default-components).
 Chats are stored permanently and the infrastructure is handled for you. All
-hooks work optimsitically, meaning they update immediately, before the server
+hooks work optimistically, meaning they update immediately, before the server
 has synched.
 
 ## List a user’s chats
@@ -112,8 +112,8 @@ The
 [`useAiChatMessages`](/docs/api-reference/liveblocks-react#useAiChatMessages)
 hook allows you to fetch all messages in a specific chat. Use this to display
 the main content of a chat. User and assistant messages can be rendered
-differently, below we‘re returning different UI for user and assistant messages.
-Other types of message can be rendered too, for example tool calls, knowledge
+differently, and below we’re returning different UI for each. Other types of
+messages can be rendered separately too, for example tool calls, knowledge
 calls, custom components.
 
 ```tsx
@@ -254,7 +254,7 @@ function ChatTitle({ chatId }: { chatId: string }) {
 
 The [`useAiChatStatus`](/docs/api-reference/liveblocks-react#useAiChatStatus)
 hook allows you to fetch the status of an AI chat, indicating whether it’s idle
-or actively generating content. This is helpful for displaying a loading state
+or currently generating content. This is helpful for displaying a loading state
 or freezing part of your app while content is generating.
 
 ```tsx

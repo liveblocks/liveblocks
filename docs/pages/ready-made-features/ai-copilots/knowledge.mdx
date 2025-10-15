@@ -5,7 +5,7 @@ meta:
   description: "Add context and files to your AI copilots"
 ---
 
-Knowledge allows you to provide context to your AI so it can understand your
+Knowledge allows you to provide information to your AI so it can understand your
 application’s state, content, and domain-specific information, making responses
 more relevant and accurate. There are two different knowledge types—_front-end
 knowledge_, ideal for adding small pieces of contextual information, and
@@ -32,8 +32,7 @@ limit your front-end knowledge to relatively small amounts of data, not multiple
 pages of text.
 
 Because front-end knowledge is simply passed along with every message, and is
-never specifically queried, there front-end knowledge is not displayed in the UI
-when its used.
+never specifically queried, no messages are displayed in the UI when it’s used.
 
 ### Adding front-end knowledge
 
@@ -102,16 +101,6 @@ function Document() {
           description: "Edit the document's text",
           parameters: {
             type: "object",
-            properties: {},
-          },
-        })}
-      />
-      <RegisterAiTool
-        name="edit-document"
-        tool={defineAiTool()({
-          description: "Edit the document's text",
-          parameters: {
-            type: "object",
             properties: {
               text: { type: "string" },
             },
@@ -150,9 +139,9 @@ information, for example:
 Back-end knowledge uses Retrieval-Augmented Generation (RAG) search, and is
 triggered by a hidden tool call, meaning the AI will search through its back-end
 knowledge when it feels its relevant. You can define
-[when AI should use back-endknowledge](/docs/ready-made-features/ai-copilots/copilots#When-should-AI-use-knowledge)
+[when AI should use back-end knowledge](/docs/ready-made-features/ai-copilots/copilots#When-should-AI-use-knowledge)
 in your copilot settings, and AI will understand what should trigger a back-end
-knowldege query.
+knowledge query.
 
 The AI will rewrite your query, and may even run multiple queries in a row, each
 of which will be displayed in the
