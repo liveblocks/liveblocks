@@ -836,6 +836,72 @@ the chat window, and inside the chat, we’re showing a simple
 />
 ```
 
+## Advanced JSON schema
+
+Up to this point, we’ve only covered generating objects/strings with AI, but
+JSON schema allows for more complex data types, such as numbers, arrays, enums,
+as well as constraints, and hints for AI.
+
+<Banner type="warning" title="Model compatibility">
+  Some AI models don’t allow certain JSON schema types, but we’ve found these
+  types work with most models. Many models enforce using the `required` array,
+  and setting `additionalProperties: "false"`, which is why we recommend this.
+</Banner>
+
+```js
+properties: {
+  type: "object",
+
+  // String
+  name: { type: "string" },
+
+  // Number
+  age: { type: "number" },
+
+  // Boolean
+  sendEmail: { type: "boolean" },
+
+  // Union
+  count: { type: ["string", "number", "null"] },
+
+  // Array
+  pets: { type: "array", items: { type: "string" } },
+
+  // Description, helps AI understand the type
+  job: { type: "string", description: "A job title, 1-2 words" },
+
+  // String constraints
+  fullName: {
+    type: "string",
+    minLength: 1,
+    maxLength: 100,
+    pattern: "^[A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)+$",
+  },
+
+  // Number constraints
+  ageInYears: { type: "number", minimum: 18, maximum: 100 },
+
+  // Combination of all
+  people: {
+    type: "array",
+    description: "A list of all people",
+    items: {
+      type: "object",
+      properties: {
+        sendEmail: { type: "boolean", description: "Notify them by?" },
+        name: { type: "string", description: "First and last names" },
+        age: { type: "number", minimum: 18, description: "Age in years" },
+        job: { type: ["string", "null"], description: "`null` for unemployed" },
+      }
+    },
+  },
+
+  // Recommended to always set the following
+  additionalProperties: false,
+  required: ["name", "age", "sendEmail", "job", "fullName", "ageInYears", "pets", "people"],
+}
+```
+
 ## Updating tools
 
 After a tool has been used in the chat, the parameters AI filled in are
