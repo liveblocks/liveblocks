@@ -11,6 +11,7 @@
 ### `@liveblocks/react`
 
 - Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
 - Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
   is not available.
 
