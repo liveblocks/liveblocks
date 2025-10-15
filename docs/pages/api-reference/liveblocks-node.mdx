@@ -2742,6 +2742,10 @@ const copilot = await liveblocks.createAiCopilot({
   providerOptions: {
     openai: {
       reasoningEffort: "low",
+      // Optional, restrict web search to specific domains for OpenAI
+      webSearch: {
+        allowedDomains: ["docs.liveblocks.io", "example.com"],
+      },
     },
   },
 
@@ -2770,6 +2774,44 @@ const copilot = await liveblocks.createAiCopilot({
   providerBaseUrl: "https://api.mycustomprovider.com/v1",
   providerApiKey: "your-api-key-here", // Your API key for the custom provider
   providerModel: "custom-provider-model",
+});
+```
+
+You can also configure Anthropic or Google providers with provider-specific
+options:
+
+```ts
+// Anthropic example
+await liveblocks.createAiCopilot({
+  name: "Anthropic Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "anthropic",
+  providerModel: "claude-3-5-sonnet-latest",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "disabled" },
+      webSearch: {
+        maxUses: 3,
+        allowedDomains: ["example.com"],
+        blockedDomains: ["blocked.example"],
+      },
+    },
+  },
+});
+
+// Google example
+await liveblocks.createAiCopilot({
+  name: "Gemini Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "google",
+  providerModel: "gemini-2.5-pro",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    google: {
+      thinkingConfig: { thinkingBudget: 2000 },
+    },
+  },
 });
 ```
 
@@ -2821,13 +2863,41 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   // Optional, update the knowledge prompt
   knowledgePrompt: "Reference our latest guidelines.",
 
-  // Optional, update provider-specific options
+  // Optional, update provider-specific options (replaces the entire nested options object)
+  // Set to null to clear options
   providerOptions: null,
 
   // Optional, update model settings
   settings: {
     temperature: 0.5,
     maxTokens: 1500,
+  },
+});
+```
+
+You can also update provider options. When updating `providerOptions`, it fully
+replaces the previous nested options (no deep merge):
+
+```ts
+// Update OpenAI provider options (replaces prior options)
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "openai",
+  providerOptions: {
+    openai: {
+      reasoningEffort: "medium",
+      webSearch: { allowedDomains: ["docs.liveblocks.io"] },
+    },
+  },
+});
+
+// Update Anthropic thinking/web search settings
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "anthropic",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "enabled", budgetTokens: 2000 },
+      webSearch: { maxUses: 2 },
+    },
   },
 });
 ```

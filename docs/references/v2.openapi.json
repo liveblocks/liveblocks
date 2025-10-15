@@ -3921,8 +3921,8 @@
         "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
         "tags": ["AI"],
         "responses": {
-          "200": {
-            "description": "Success. Returns the created AI copilot.",
+          "201": {
+            "description": "Created. Returns the created AI copilot.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5479,6 +5479,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -5577,9 +5586,24 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "maxUses": {
+                            "type": "number"
+                          },
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "blockedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -5660,8 +5684,7 @@
                         },
                         "required": ["thinkingBudget"]
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               },
@@ -5795,6 +5818,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -5831,9 +5863,24 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "maxUses": {
+                            "type": "number"
+                          },
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "blockedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -5853,8 +5900,7 @@
                         },
                         "required": ["thinkingBudget"]
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               }
@@ -5920,6 +5966,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -5956,9 +6011,24 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "maxUses": {
+                            "type": "number"
+                          },
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "blockedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -5978,8 +6048,7 @@
                         },
                         "required": ["thinkingBudget"]
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               }
