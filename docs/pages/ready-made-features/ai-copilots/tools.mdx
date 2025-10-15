@@ -179,7 +179,8 @@ functions can be used.
 />
 ```
 
-Let’s take a look at how to use them.
+In each of the following sections, different ways to use `execute` and `render`
+are demonstrated.
 
 ## Actions
 
@@ -228,6 +229,13 @@ execute: async ({ location }) => {
   };
 },
 ```
+
+<Banner title="Actions example">
+
+The [AI Calendar](/examples/ai-calendar/nextjs-ai-calendar) example contains an
+action that allows AI to create new calendar events.
+
+</Banner>
 
 ### Display a loading message
 
@@ -397,6 +405,13 @@ the AI to not respond by adding a `description` to `execute`.
 />
 ```
 
+<Banner title="Custom components example">
+
+The [AI Support Chat](/examples/ai-support/nextjs-ai-support) example uses
+custom components in its support ticket tool to display a contact form.
+
+</Banner>
+
 ### Display data in custom components
 
 You can take custom components a step further by combining them with
@@ -491,6 +506,14 @@ title, folder, and category.
 />
 ```
 
+<Banner title="Query actions example">
+
+The
+[AI Reports Dashboard](/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports)
+example has a query transactions tool allowing for complex searching.
+
+</Banner>
+
 ## Human-in-the-loop actions
 
 Human-in-the-loop actions are a way to allow the user to confirm or deny an
@@ -537,6 +560,14 @@ cancelling the action.
 To create confirmable actions, you must skip using the `execute` function, and
 instead move this logic to `render`. This will always freeze the chat until the
 user responds.
+
+<Banner title="Human-in-the-loop actions example">
+
+The
+[AI Reports Dashboard](/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports)
+example demonstrates human-in-the-loop actions with its invite member tool.
+
+</Banner>
 
 ### Default confirmation component
 
@@ -674,7 +705,7 @@ Here’s a custom send email tool, note how `respond` is used similarly to
 />
 ```
 
-## AI presence and streaming
+## AI presence & streaming
 
 You can stream in tool results as they arrive, allowing you to show live updates
 and AI presence in your application. An example would be a tool that generates
@@ -749,6 +780,13 @@ and update the UI.
 you to stream in strings, objects, and arrays, and you can use them in `render`
 as they arrive.
 
+<Banner title="AI presence & streaming example">
+
+The [AI App Builder](/examples/ai-app-builder/nextjs-ai-app-builder) example
+demonstrates AI presence and streaming in a code editor.
+
+</Banner>
+
 ### Streaming into a document with AI presence
 
 To stream results outside of the chat window, and show AI presence, you can call
@@ -800,4 +838,80 @@ the chat window, and inside the chat, we’re showing a simple
 
 ## Updating tools
 
-...
+After a tool has been used in the chat, the parameters AI filled in are
+permanently set. This leaves us with a problem—if we remove or change the tool’s
+existing parameters, old versions of the tool will display an empty space in the
+chat (or in development mode, an error box).
+
+```diff
+‎<RegisterAiTool
+  name="send-email"
+  tool={defineAiTool()({
+    description: "Send an email",
+    parameters: {
+      type: "object",
+      properties: {
+-       email: { type: "string" },
++       emailAddress: { type: "string" },
+      },
+-     required: ["email"],
++     required: ["emailAddress"],
+      additionalProperties: false,
+    },
+  })}
+  // ...
+/>
+```
+
+Care needs to be taken when creating a new version of each tool if you wish for
+old chats to display fully working components. For this reason, we recommend
+versioning your tools, and disabling the old tool until you’re sure the old
+tools aren’t needed anymore. This will ennsure the tool won’t be used in new
+chats, but the old component will still render correctly.
+
+```tsx
+function Chat() {
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      <RegisterAiTool
+        name="send-email"
+        // +++
+        // Disabling the old tool so it won't be used in new chats
+        enabled={false}
+        // +++
+        tool={defineAiTool()({
+          description: "Send an email",
+          parameters: {
+            type: "object",
+            properties: {
+              email: { type: "string" },
+            },
+            required: ["email"],
+            additionalProperties: false,
+          },
+        })}
+        // ...
+      />
+      <RegisterAiTool
+        // +++
+        // Version 2, which will be used in new chats
+        name="send-email-v2"
+        // +++
+        tool={defineAiTool()({
+          description: "Send an email",
+          parameters: {
+            type: "object",
+            properties: {
+              emailAddress: { type: "string" },
+            },
+            required: ["emailAddress"],
+            additionalProperties: false,
+          },
+        })}
+        // ...
+      />
+    </>
+  );
+}
+```
