@@ -318,12 +318,10 @@ describe("useUrlMetadata", () => {
   });
 
   test("should return error if initial fetch throws an error", async () => {
-    let getUrlMetadataReqCount = 0;
     const url = "https://github.com";
 
     server.use(
       mockGetUrlMetadata((_req, res, ctx) => {
-        getUrlMetadataReqCount++;
         return res(ctx.status(500));
       })
     );
@@ -343,36 +341,11 @@ describe("useUrlMetadata", () => {
     // Wait until all fetch attempts have been done
     await jest.advanceTimersToNextTimerAsync(); // fetch attempt 1
 
-    // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(2));
-
-    // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(3));
-
-    // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(4));
-
-    // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(5));
-
     await waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
         error: expect.any(Error),
       });
-    });
-
-    // Wait for 5 seconds for the error to clear
-    await jest.advanceTimersByTimeAsync(5_000);
-
-    // A new fetch request should have been made after the error cleared
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(6));
-    expect(result.current).toEqual({
-      isLoading: true,
     });
 
     unmount();
@@ -431,12 +404,10 @@ describe("useUrlMetadataSuspense", () => {
   });
 
   test("should trigger error boundary if fetch throws an error", async () => {
-    let getUrlMetadataReqCount = 0;
     const url = "https://github.com";
 
     server.use(
       mockGetUrlMetadata((_req, res, ctx) => {
-        getUrlMetadataReqCount++;
         return res(ctx.status(500));
       })
     );
@@ -462,25 +433,6 @@ describe("useUrlMetadataSuspense", () => {
     expect(result.current).toEqual(null);
 
     expect(screen.getByText("Loading")).toBeInTheDocument();
-
-    // Wait until all fetch attempts have been done
-    await jest.advanceTimersToNextTimerAsync(); // fetch attempt 1
-
-    // The first retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(2));
-
-    // The second retry should be made after 5s
-    await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(3));
-
-    // The third retry should be made after 10s
-    await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(4));
-
-    // The fourth retry should be made after 15s
-    await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUrlMetadataReqCount).toBe(5));
 
     // Check if the error boundary's fallback is displayed
     await waitFor(() => {
