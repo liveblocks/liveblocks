@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-lexical",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "description": "An integration of Lexical + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
   "type": "module",
@@ -43,11 +43,11 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.1",
-    "@liveblocks/client": "3.8.1",
-    "@liveblocks/core": "3.8.1",
-    "@liveblocks/react": "3.8.1",
-    "@liveblocks/react-ui": "3.8.1",
-    "@liveblocks/yjs": "3.8.1",
+    "@liveblocks/client": "3.9.0",
+    "@liveblocks/core": "3.9.0",
+    "@liveblocks/react": "3.9.0",
+    "@liveblocks/react-ui": "3.9.0",
+    "@liveblocks/yjs": "3.9.0",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-toggle": "^1.1.0",
     "yjs": "^13.6.18"

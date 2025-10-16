@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "3.8.1",
+  "version": "3.9.0",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "module",
   "main": "./dist/index.cjs",
