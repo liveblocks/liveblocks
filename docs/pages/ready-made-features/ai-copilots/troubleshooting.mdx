@@ -8,13 +8,60 @@ meta:
 AI models are often unreliable and tricky to debug. Here are some common issues
 you may encounter, and how to troubleshoot them.
 
-## A model is ignoring my back-end knowledge
+## Common issues
+
+Here’s a list of common issues you may encounter, and how to fix them.
+
+### The AI provider is currently overloaded or unavailable
+
+This means that the AI provider you’re using is currently not available. You can
+check the status of your provider by visiting their status pages:
+[OpenAI](https://status.openai.com/), [Anthropic](https://status.claude.com/),
+[Google](https://aistudio.google.com/status). To avoid this issue, you can
+[set up fallback models](/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots)
+that use other providers.
+
+### The AI provider's rate limit or quota exceeded
+
+This means that you’ve hit token limits defined by your AI provider (e.g.
+OpenAI, Anthropic, Google). You can reach out to your provider to increase your
+limits, use a model with lower limits, or consider
+[setting up fallback models](/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots)
+for busy times.
+
+### For this AI provider, 'additionalProperties: false' is required to be set in the properties [#additionalproperties-false-is-required]
+
+This means that your provider requires the `additionalProperties` field to be
+set to `false` in tool `parameters`. Fix this by adding the following line to
+your tool definition:
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      // +++
+      additionalProperties: false,
+      // +++
+    },
+    // ...
+  })}
+/>
+```
+
+### A model is ignoring my back-end knowledge
 
 If an AI model doesn’t seem to be using your
 [back-end knowledge](/docs/ready-made-features/ai-copilots/knowledge#Back-end-knowledge)
 correctly, there are a few things you can check:
 
-### Check you’re using the correct copilot ID in all APIs
+#### Check you’re using the correct copilot ID in all APIs
 
 Check you’re using the the copilot ID throughout your application, specifically
 in every use of [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
@@ -51,7 +98,7 @@ function SendMessage() {
 }
 ```
 
-### Make sure you’re letting AI know when to use knowledge
+#### Make sure you’re letting AI know when to use knowledge
 
 Make sure you’re defining
 [when AI should use knowledge](/docs/ready-made-features/ai-copilots/copilots#When-should-AI-use-knowledge)
@@ -67,3 +114,16 @@ with your prompt to be more specific, authoritative, and use examples.
 It’s worth checking if there’s an official guide for your specific model, which
 details how to talk to it. For example the
 [official prompting guide for GPT-4.1](https://cookbook.openai.com/examples/gpt4-1_prompting_guide).
+
+## Error table
+
+Every error you may encounter is listed in the table below, along with a
+suggestion.
+
+| Error                                                                                        | Info                                                                                                                                  |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| The AI provider is currently overloaded or unavailable                                       | Your provider is down, check its status. [Learn more](#The-AI-provider-is-currently-overloaded-or-unavailable)                        |
+| The AI provider's rate limit or quota exceeded                                               | You’ve breached the rate rate limit or quota for your model. [Learn more](#The-AI-provider's-rate-limit-or-quota-exceeded)            |
+| For this AI provider, 'additionalProperties: false' is required to be set in the properties` | You need to add `additionalProperties: false` to your tool `parameters` object. [Learn more](#additionalproperties-false-is-required) |
+| Error from AI provider: ...                                                                  | Generic error received from the AI Provider                                                                                           |
+| The AI copilot’s model does not exist or you have insufficient access to it                  | Most likely the wrong `copilotId` is set. Potentially the current user has no permissions to view it                                  |
