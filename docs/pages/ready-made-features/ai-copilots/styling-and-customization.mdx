@@ -117,3 +117,63 @@ function Component() {
   );
 }
 ```
+
+## Custom UI
+
+You can bypass the default components and build completely custom UI for your AI
+copilots, for example using
+[`useAiChatMessages`](/docs/api-reference/liveblocks-react#useAiChatMessages)
+and [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage)
+to build your own chat history and composer.
+
+```tsx
+import {
+  useAiChatMessages,
+  useSendAiMessage,
+} from "@liveblocks/react/suspense";
+
+function ChatMessages({ chatId }: { chatId: string }) {
+  // +++
+  const { messages } = useAiChatMessages(chatId);
+  const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_a7Gd3x..." });
+  // +++
+
+  return (
+    <div>
+      // +++
+      {messages.map((message) => {
+        // +++
+        if (message.role === "user") {
+          return (
+            <div key={message.id}>
+              {message.content.map((part) => (
+                <p>👤 You: {part.text}</p>
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <div key={message.id}>
+            {(message.contentSoFar ?? message.content).map((part) => (
+              <p>🤖 Assistant: {part.text}</p>
+            ))}
+          </div>
+        );
+      })}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          // +++
+          sendAiMessage({ text: e.target.message.value });
+          // +++
+          e.target.reset();
+        }}
+      >
+        <input type="text" name="message" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+}
+```
