@@ -1,7 +1,7 @@
 ---
-title: How to customize room names in inbox notifications
 meta:
-  description: Learn how to display custom room names instead of room IDs in inbox notifications using resolveRoomsInfo.
+  title: "How to customize room names in inbox notifications"
+  description: "Learn how to display custom room names instead of room IDs in inbox notifications using resolveRoomsInfo."
 ---
 
 When using inbox notifications with Comments, you’ll notice that room IDs are displayed by default (e.g., ”Chris mentioned you in _room-abc123_”). This isn’t ideal for users who need to see meaningful context. In this guide, you’ll learn how to replace room IDs with actual document or room names using `resolveRoomsInfo`.
@@ -36,7 +36,7 @@ function App() {
 
 Once you’ve added this, the [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) component will automatically use the room names instead of IDs, showing notifications like “Chris mentioned you in _Document A_” instead of “Chris mentioned you in _room-abc123_”.
 
-## Add room URLs (optional)
+## Adding room URLs
 
 You can also provide a `url` property for each room, which will be used by the `InboxNotification` component to make notifications clickable.
 
