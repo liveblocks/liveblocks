@@ -397,5 +397,12 @@
     "technologies": ["nodejs"],
     "date": "2025-02-20",
     "featured": true
+  },
+  {
+    "title": "How to customize room names in inbox notifications",
+    "path": "/how-to-customize-room-names-in-inbox-notifications",
+    "topics": ["notifications", "data-fetching"],
+    "technologies": ["react", "react-notifications"],
+    "date": "2025-10-15"
   }
 ]
