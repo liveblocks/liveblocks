@@ -1866,13 +1866,13 @@ export function createApiClient<M extends BaseMetadata>({
    * -------------------------------------------------------------------------------------------------
    */
   async function getUrlMetadata(_url: string) {
-    const result = await httpClient.get<UrlMetadata>(
+    const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
       url`/v2/c/urls/metadata`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       { url: _url }
     );
 
-    return result;
+    return metadata;
   }
 
   return {
