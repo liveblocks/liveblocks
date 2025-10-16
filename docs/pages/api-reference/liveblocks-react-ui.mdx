@@ -480,16 +480,31 @@ the `components` prop. A full list is [available here](#AiChat-components).
     Custom components to override specific parts of the chat UI, such as the
     `Empty` placeholder component or Markdown components.
   </PropertiesListItem>
+  <PropertiesListItem name="responseTimeout" type="number">
+    The time, in milliseconds, before an AI response will timeout. Defaults to
+    30_000.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReasoning" type="boolean | 'during'">
+    Whether to show reasoning. Defaults to `true`. If set to `'during'`,
+    reasoning will only be shown during reasoning.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showRetrievals"
+    type="boolean | 'during' | { ... } | undefined"
+    advancedType="boolean | 'during' | { web?: boolean | 'during', knowledge?: boolean | 'during' } | undefined"
+  >
+    Whether to show retrievals. Defaults to `true`. If set to `'during'`,
+    retrievals will only be shown during retrieval.
+  </PropertiesListItem>
+  <PropertiesListItem name="showSources" type="boolean">
+    Whether to show sources. Defaults to `true`.
+  </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the chat container.
   </PropertiesListItem>
   <PropertiesListItem name="style" type="CSSProperties">
     Inline styles to apply to the chat container. Useful for setting CSS custom
     properties.
-  </PropertiesListItem>
-  <PropertiesListItem name="responseTimeout" type="number">
-    The time, in milliseconds, before an AI response will timeout. Defaults to
-    30_000.
   </PropertiesListItem>
 </PropertiesList>
 
