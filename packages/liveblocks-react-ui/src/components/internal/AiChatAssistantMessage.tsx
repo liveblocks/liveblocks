@@ -4,6 +4,7 @@ import type {
   AiWebRetrievalPart,
   WithNavigation,
 } from "@liveblocks/core";
+import { useUrlMetadata } from "@liveblocks/react";
 import {
   type ComponentProps,
   forwardRef,
@@ -119,7 +120,6 @@ function getUrlDomain(url: string) {
   return new URL(url).hostname;
 }
 
-// TODO: Use `useUrlMetadata`
 function AiChatSource({
   source,
   components,
@@ -127,9 +127,10 @@ function AiChatSource({
   ...props
 }: AiChatSourceProps) {
   const { Anchor } = useComponents(components);
+  const { metadata } = useUrlMetadata(source.url);
   const label = useMemo(() => {
-    return source.title ?? getUrlDomain(source.url);
-  }, [source.title, source.url]);
+    return source.title ?? metadata?.title ?? getUrlDomain(source.url);
+  }, [source.title, source.url, metadata?.title]);
 
   return (
     <Anchor
