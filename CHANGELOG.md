@@ -1,4 +1,4 @@
-## v3.9.0 (not yet published)
+## v3.9.0
 
 ### `@liveblocks/react-ui`
 
