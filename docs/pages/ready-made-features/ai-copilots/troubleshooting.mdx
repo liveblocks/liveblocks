@@ -115,15 +115,41 @@ It’s worth checking if there’s an official guide for your specific model, wh
 details how to talk to it. For example the
 [official prompting guide for GPT-4.1](https://cookbook.openai.com/examples/gpt4-1_prompting_guide).
 
+### The AI provider response exceeded the maximum token limit
+
+This means that the response from the AI provider exceeded the maximum token
+limit.
+
+This error is usually caused:
+
+- When the model’s generated output would exceed the `max tokens` you set in the
+  dashboard for a copilot.
+- When the request would exceed the model/provider’s token limits (e.g.,
+  combined prompt + expected completion), leading the provider to return a
+  token-limit error
+
+Check first in your dashboard if the max tokens limit is set correctly.
+
 ## Error table
 
 Every error you may encounter is listed in the table below, along with a
 suggestion.
 
-| Error                                                                                        | Info                                                                                                                                  |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| The AI provider is currently overloaded or unavailable                                       | Your provider is down, check its status. [Learn more](#The-AI-provider-is-currently-overloaded-or-unavailable)                        |
-| The AI provider's rate limit or quota exceeded                                               | You’ve breached the rate rate limit or quota for your model. [Learn more](#The-AI-provider's-rate-limit-or-quota-exceeded)            |
-| For this AI provider, 'additionalProperties: false' is required to be set in the properties` | You need to add `additionalProperties: false` to your tool `parameters` object. [Learn more](#additionalproperties-false-is-required) |
-| Error from AI provider: ...                                                                  | Generic error received from the AI Provider                                                                                           |
-| The AI copilot’s model does not exist or you have insufficient access to it                  | Most likely the wrong `copilotId` is set. Potentially the current user has no permissions to view it                                  |
+| Error                                                                                        | Info                                                                                                                                                                                              |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The AI provider is currently overloaded or unavailable                                       | Your provider is down, check its status. [Learn more](#The-AI-provider-is-currently-overloaded-or-unavailable)                                                                                    |
+| The AI provider's rate limit or quota exceeded                                               | You’ve breached the rate rate limit or quota for your model. [Learn more](#The-AI-provider's-rate-limit-or-quota-exceeded)                                                                        |
+| A technical error happened while invoking the AI provider.                                   | A internal technical error happened. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                            |
+| For this AI provider, 'additionalProperties: false' is required to be set in the properties` | You need to add `additionalProperties: false` to your tool `parameters` object. [Learn more](#additionalproperties-false-is-required)                                                             |
+| Error from AI provider: ...                                                                  | Generic error received from the AI Provider. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                    |
+| The AI copilot’s model does not exist or you have insufficient access to it                  | Most likely the wrong `copilotId` is set. Potentially the current user has no permissions to view it.                                                                                             |
+| Invalid credentials or insufficient permissions                                              | The API key used in the copilot is invalid or it not has the required permissions to use the model defined in the copilot.                                                                        |
+| The AI copilot could not make the request because it is too large                            | Usually the token limit for the model to process is exceeded.                                                                                                                                     |
+| The AI provider blocked the request due to a content filter                                  | The request was blocked by the AI provider own content filter.                                                                                                                                    |
+| The AI provider response exceeded the maximum token limit                                    | The response from the AI provider exceeded the maximum token limit. Check your max tokens limit in the copilot settings. [Learn more](#The-AI-provider-response-exceeded-the-maximum-token-limit) |
+| An unexpected database error happened.                                                       | An internal database error happened. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                            |
+| Timeout error.                                                                               | The request timed out. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                                          |
+| Abort error.                                                                                 | The request was aborted by the user but the operation did not succeed to abort. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                 |
+| Aborted by user.                                                                             | The current request was aborted by the user.                                                                                                                                                      |
+| Messages deleted by user.                                                                    | A message in the hat no longer exists because it was deleted by a user.                                                                                                                           |
+| Chat deleted by user.                                                                        | A chat was deleted by a user and our infra cannot proceed the request.                                                                                                                            |
