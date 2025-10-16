@@ -274,30 +274,79 @@ export const defaultOverrides: Overrides = {
         ) : null}
       </>
     ),
-  AI_CHAT_MESSAGE_RETRIEVAL: (isStreaming: boolean, part: AiRetrievalPart) =>
-    isStreaming ? (
-      <>
-        Searching{" "}
-        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>
-        …
-      </>
-    ) : (
-      <>
-        Searched{" "}
-        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>
-        {isDurationVisible(part.startedAt, part.endedAt) ? (
-          <>
-            {" "}
-            for{" "}
-            <Duration
-              className="lb-duration lb-ai-chat-message-retrieval-duration"
-              from={part.startedAt}
-              to={part.endedAt}
-            />
-          </>
-        ) : null}
-      </>
-    ),
+  AI_CHAT_MESSAGE_RETRIEVAL: (isStreaming: boolean, part: AiRetrievalPart) => {
+    if (part.kind === "knowledge") {
+      return isStreaming ? (
+        <>
+          Searching{" "}
+          <span className="lb-ai-chat-message-retrieval-query">
+            {part.query}
+          </span>
+          …
+        </>
+      ) : (
+        <>
+          Searched{" "}
+          <span className="lb-ai-chat-message-retrieval-query">
+            {part.query}
+          </span>
+          {isDurationVisible(part.startedAt, part.endedAt) ? (
+            <>
+              {" "}
+              for{" "}
+              <Duration
+                className="lb-duration lb-ai-chat-message-retrieval-duration"
+                from={part.startedAt}
+                to={part.endedAt}
+              />
+            </>
+          ) : null}
+        </>
+      );
+    } else if (part.kind === "web") {
+      return isStreaming ? (
+        <>
+          Searching the web
+          {part.query ? (
+            <>
+              {" "}
+              for{" "}
+              <span className="lb-ai-chat-message-retrieval-query">
+                {part.query}
+              </span>
+            </>
+          ) : null}
+          …
+        </>
+      ) : (
+        <>
+          Searched the web
+          {part.query ? (
+            <>
+              {" "}
+              for{" "}
+              <span className="lb-ai-chat-message-retrieval-query">
+                {part.query}
+              </span>
+            </>
+          ) : null}
+          {isDurationVisible(part.startedAt, part.endedAt) ? (
+            <>
+              {" "}
+              for{" "}
+              <Duration
+                className="lb-duration lb-ai-chat-message-retrieval-duration"
+                from={part.startedAt}
+                to={part.endedAt}
+              />
+            </>
+          ) : null}
+        </>
+      );
+    } else {
+      return assertNever(part, "Unexpected retrieval kind");
+    }
+  },
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
   AI_TOOL_CONFIRMATION_CONFIRM: "Confirm",

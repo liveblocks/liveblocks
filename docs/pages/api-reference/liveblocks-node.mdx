@@ -13,7 +13,7 @@ for use in your Node.js back end.
 
 ## Liveblocks client [#Liveblocks-client]
 
-The `Liveblocks` client is new in 1.2, and offers access to our REST API.
+The `Liveblocks` client offers access to our REST API.
 
 ```ts showLineNumbers={false}
 import { Liveblocks } from "@liveblocks/node";
@@ -2427,7 +2427,8 @@ console.log(inboxNotification);
 Triggers a custom inbox notification. `kind` must start with a `$`, and
 represents the type of notification. `activityData` is used to send custom data
 with the notification, and properties can have `string`, `number`, or `boolean`
-values. This is a wrapper around the
+values. Notifications [can be batched](#Batching-custom-notifications). This is
+a wrapper around the
 [Trigger Inbox Notification API](/docs/api-reference/rest-api-endpoints#post-inbox-notifications-trigger).
 
 ```ts
@@ -2476,6 +2477,65 @@ declare global {
   }
 }
 ```
+
+##### Batching custom notifications
+
+You can configure a custom notification kind to have batching enabled. When it’s
+enabled, triggering an inbox notification activity for a specific `subjectId`,
+will update the existing inbox notification instead of creating a new one.
+
+To use this, you must first
+[enable batching in the dashboard](/docs/ready-made-features/notifications/concepts#Notification-batching).
+Next, trigger a notification with the same `subjectId` as an existing
+notification, and the result will be added to the `activityData` array.
+
+```ts
+const options = {
+  userId: "steven@example.com",
+  kind: "$fileUploaded",
+  subjectId: "my-file",
+};
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+
+  // +++
+  activityData: {
+    status: "processing",
+  },
+  // +++
+});
+
+await liveblocks.triggerInboxNotification({
+  ...options,
+
+  // +++
+  activityData: {
+    status: "complete",
+  },
+  // +++
+});
+
+const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
+  userId: "steven@example.com",
+});
+
+// {
+//   id: "in_3dH7sF3...",
+//   kind: "$fileUploaded",
+// +++
+//   activities: [
+//     { status: "processing" },
+//     { status: "complete" },
+//   ],
+// +++
+//   ...
+// }
+console.log(inboxNotifications[0]);
+```
+
+An inbox notification can have up to 50 activities, if you exceed this number, a
+new inbox notification will be created.
 
 #### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
 
@@ -2682,6 +2742,10 @@ const copilot = await liveblocks.createAiCopilot({
   providerOptions: {
     openai: {
       reasoningEffort: "low",
+      // Optional, restrict web search to specific domains for OpenAI
+      webSearch: {
+        allowedDomains: ["docs.liveblocks.io", "example.com"],
+      },
     },
   },
 
@@ -2710,6 +2774,42 @@ const copilot = await liveblocks.createAiCopilot({
   providerBaseUrl: "https://api.mycustomprovider.com/v1",
   providerApiKey: "your-api-key-here", // Your API key for the custom provider
   providerModel: "custom-provider-model",
+});
+```
+
+You can also configure Anthropic or Google providers with provider-specific
+options:
+
+```ts
+// Anthropic example
+await liveblocks.createAiCopilot({
+  name: "Anthropic Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "anthropic",
+  providerModel: "claude-3-5-sonnet-latest",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "disabled" },
+      webSearch: {
+        allowedDomains: ["example.com"],
+      },
+    },
+  },
+});
+
+// Google example
+await liveblocks.createAiCopilot({
+  name: "Gemini Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "google",
+  providerModel: "gemini-2.5-pro",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    google: {
+      thinkingConfig: { thinkingBudget: 2000 },
+    },
+  },
 });
 ```
 
@@ -2761,13 +2861,41 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   // Optional, update the knowledge prompt
   knowledgePrompt: "Reference our latest guidelines.",
 
-  // Optional, update provider-specific options
+  // Optional, update provider-specific options (replaces the entire nested options object)
+  // Set to null to clear options
   providerOptions: null,
 
   // Optional, update model settings
   settings: {
     temperature: 0.5,
     maxTokens: 1500,
+  },
+});
+```
+
+You can also update provider options. When updating `providerOptions`, it fully
+replaces the previous nested options (no deep merge):
+
+```ts
+// Update OpenAI provider options (replaces prior options)
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "openai",
+  providerOptions: {
+    openai: {
+      reasoningEffort: "medium",
+      webSearch: { allowedDomains: ["docs.liveblocks.io"] },
+    },
+  },
+});
+
+// Update Anthropic thinking/web search settings
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "anthropic",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "enabled", budgetTokens: 2000 },
+      webSearch: { maxUses: 2 },
+    },
   },
 });
 ```

@@ -34,7 +34,10 @@ import {
 import type { MarkdownComponents } from "../primitives/Markdown";
 import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
-import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
+import {
+  AiChatAssistantMessage,
+  type AiChatAssistantMessageProps,
+} from "./internal/AiChatAssistantMessage";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 import { AiComposer, type AiComposerProps } from "./internal/AiComposer";
 
@@ -115,6 +118,21 @@ export interface AiChatProps extends ComponentProps<"div"> {
   layout?: "inset" | "compact";
 
   /**
+   * How to show or hide reasoning.
+   */
+  showReasoning?: AiChatAssistantMessageProps["showReasoning"];
+
+  /**
+   * How to show or hide retrievals.
+   */
+  showRetrievals?: AiChatAssistantMessageProps["showRetrievals"];
+
+  /**
+   * Whether to show sources
+   */
+  showSources?: AiChatAssistantMessageProps["showSources"];
+
+  /**
    * The time, in milliseconds, before an AI response will timeout.
    */
   responseTimeout?: number;
@@ -139,6 +157,9 @@ interface AiChatMessagesProps extends ComponentProps<"div"> {
   messages: NonNullable<ReturnType<typeof useAiChatMessages>["messages"]>;
   overrides: AiChatProps["overrides"];
   components: AiChatProps["components"];
+  showReasoning: AiChatProps["showReasoning"];
+  showRetrievals: AiChatProps["showRetrievals"];
+  showSources: AiChatProps["showSources"];
   lastSentMessageId: MessageId | null;
   scrollToBottom: MutableRefObject<
     (behavior: "instant" | "smooth", includeTrailingSpace?: boolean) => void
@@ -168,6 +189,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
       messages,
       overrides,
       components,
+      showReasoning,
+      showRetrievals,
+      showSources,
       lastSentMessageId,
       scrollToBottom,
       onScrollAtBottomChange,
@@ -434,6 +458,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 message={message}
                 overrides={overrides}
                 components={components}
+                showReasoning={showReasoning}
+                showRetrievals={showRetrievals}
+                showSources={showSources}
               />
             );
           } else {
@@ -456,6 +483,9 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       tools = {},
       onComposerSubmit,
       layout = "inset",
+      showReasoning,
+      showRetrievals,
+      showSources,
       components,
       className,
       responseTimeout,
@@ -551,10 +581,12 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <AiChatMessages
-                ref={messagesRef}
                 messages={messages}
                 overrides={overrides}
                 components={components}
+                showReasoning={showReasoning}
+                showRetrievals={showRetrievals}
+                showSources={showSources}
                 lastSentMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
                 onScrollAtBottomChange={onScrollAtBottomChange}
@@ -563,6 +595,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 messagesRef={messagesRef}
                 bottomTrailingMarkerRef={bottomTrailingMarkerRef}
                 trailingSpacerRef={trailingSpacerRef}
+                ref={forwardedRef}
               />
 
               {/**
