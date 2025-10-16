@@ -2436,9 +2436,25 @@
 
 .lb-favicon {
   position: relative;
-  overflow: hidden;
   aspect-ratio: 1;
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+.lb-favicon img,
+.lb-favicon-fallback {
+  position: absolute;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.lb-favicon img {
+  overflow: hidden;
   border-radius: max(2px, 15%);
+}
+
+.lb-favicon-fallback {
+  color: var(--lb-foreground-moderate);
 }
 
 /*************************************

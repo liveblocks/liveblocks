@@ -3,6 +3,7 @@
 import { useUrlMetadata } from "@liveblocks/react";
 import { type ComponentProps } from "react";
 
+import { GlobeIcon } from "../../icons";
 import { cn } from "../../utils/cn";
 
 export interface FaviconProps extends ComponentProps<"div"> {
@@ -10,15 +11,15 @@ export interface FaviconProps extends ComponentProps<"div"> {
 }
 
 export function Favicon({ url, className, ...props }: FaviconProps) {
-  const { metadata, error, isLoading } = useUrlMetadata(url);
-
-  console.log({ url, error, isLoading, metadata });
+  const { metadata } = useUrlMetadata(url);
 
   return (
     <div className={cn("lb-favicon", className)} {...props}>
       {metadata?.icon ? (
         <img src={metadata?.icon} alt={metadata?.title} />
-      ) : null}
+      ) : (
+        <GlobeIcon className="lb-favicon-fallback" />
+      )}
     </div>
   );
 }
