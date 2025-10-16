@@ -5674,8 +5674,7 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
                     }
                   }
@@ -5883,8 +5882,7 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
                     }
                   }
@@ -6024,8 +6022,7 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
                     }
                   }

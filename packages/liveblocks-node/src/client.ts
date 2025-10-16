@@ -244,7 +244,7 @@ type GoogleModel =
 type GoogleProviderOptions = {
   google: {
     thinkingConfig?: {
-      thinkingBudget: number;
+      thinkingBudget?: number;
     };
   };
 };
