@@ -1,0 +1,207 @@
+---
+meta:
+  title: "Knowledge"
+  parentTitle: "AI Copilots"
+  description: "Add context and files to your AI copilots"
+---
+
+Knowledge allows you to provide information to your AI so it can understand your
+application’s state, content, and domain-specific information, making responses
+more relevant and accurate. There are two different knowledge types—_front-end
+knowledge_, ideal for adding small pieces of contextual information, and
+_back-end knowledge_, designed for larger datasets such as entire websites and
+lengthy PDFs.
+
+## Front-end knowledge
+
+Front-end knowledge is data that’s passed to your AI from the browser through
+[React](/docs/api-reference/liveblocks-react#RegisterAiKnowledge). This is most
+useful for passing contextual, user-specific, information, for example:
+
+- **User info**: The user’s local time, date, location, and language.
+- **Account info**: The user’s projects and which payment plan they’re on.
+- **Page info**: Which URL the user is viewing and the content of the current
+  document.
+
+### How it works [#front-end-knowledge-how-it-works]
+
+Front-end knowledge is string or JSON-serializable data that is passed to the AI
+with every message the user sends. The AI reads all front-end knowledge before
+responding. It’s easy to reach AI provider token limits with this approach, so
+limit your front-end knowledge to relatively small amounts of data, not multiple
+pages of text.
+
+Because front-end knowledge is simply passed along with every message, and is
+never specifically queried, no messages are displayed in the UI when it’s used.
+
+### Adding front-end knowledge
+
+You can add front-end knowledge to your chat by using the
+[`RegisterAiKnowledge`](/docs/api-reference/liveblocks-react#RegisterAiKnowledge)
+component anywhere in your application.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      // +++
+      <RegisterAiKnowledge
+        description="The current user's payment plan"
+        value={{ name: "Advanced Plan", expires: "2026-01-01" }}
+      />
+      // +++
+    </>
+  );
+}
+```
+
+After adding this, the AI will understand that the user is on the Advanced Plan
+and be able to answer questions on it, for example:
+
+> User: _What's my current plan?_
+>
+> Assistant: _You're on the Advanced Plan, it expires on January 1st, 2026._
+
+### Combine front-end knowledge with tools
+
+You can combine front-end knowledge with
+[tools](/docs/ready-made-features/ai-copilots/tools) to create an AI assistant
+that can take actions. For example, say you have a document on the current page.
+You can use knowledge to share the document content with the AI, then create a
+tool that allows AI to edit the document.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { useState } from "react";
+
+function Document() {
+  // +++
+  const [document, setDocument] = useState("Hello world");
+  // +++
+
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      <RegisterAiKnowledge
+        description="The current document"
+        // +++
+        value={document}
+        // +++
+      />
+      <RegisterAiTool
+        name="edit-document"
+        tool={defineAiTool()({
+          description: "Edit the document's text",
+          parameters: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+            },
+          },
+          execute: ({ args }) => {
+            // +++
+            setDocument(args.text);
+            // +++
+            return { data: {}, description: "Document updated" };
+          },
+        })}
+      />
+    </>
+  );
+}
+```
+
+Learn about more ways to use it in our documentation under
+[`RegisterAiKnowledge`](/docs/api-reference/liveblocks-react#RegisterAiKnowledge).
+
+## Back-end knowledge
+
+Back-end knowledge is data that’s passed to your AI from the server, through
+your
+[copilot](/docs/ready-made-features/ai-copilots/copilots#Adding-back-end-knowledge).
+You can submit PDF/image files, web pages, or entire websites which will be
+crawled and indexed. This is most useful for passing large amounts of
+information, for example:
+
+- **Knowledge bases**: Documentation, FAQs, and support tickets.
+- **Domain-specific data**: Detailed information that your AI must understand.
+- **Documents**: Submit PDF or image scans of reports, contracts, and invoices.
+
+### How it works [#back-end-knowledge-how-it-works]
+
+Back-end knowledge uses Retrieval-Augmented Generation (RAG) search, and is
+triggered by a hidden tool call, meaning the AI will search through its back-end
+knowledge when it feels its relevant. You can define
+[when AI should use back-end knowledge](/docs/ready-made-features/ai-copilots/copilots#When-should-AI-use-knowledge)
+in your copilot settings, and AI will understand what should trigger a back-end
+knowledge query.
+
+The AI will rewrite your query, and may even run multiple queries in a row, each
+of which will be displayed in the
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) UI as a search.
+
+### Adding back-end knowledge through the dashboard
+
+After
+[creating a copilot](/docs/ready-made-features/ai-copilots/copilots#Creating-a-copilot)
+in the [dashboard](/dashboard), you can navigate to the “Knowledge” tab to add
+back-end knowledge. Select which type of knowledge you’d like to submit, and
+enter your URLs or upload your files.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/copilot-knowledge.png"
+    alt="Screenshot of the Liveblocks dashboard, adding knowledge to a copilot"
+    width={720}
+    height={409}
+    quality={100}
+  />
+</Figure>
+
+Make sure to use your copilot ID in
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage) to
+use the knowledge in your application.
+
+### Adding back-end knowledge programmatically
+
+You aren’t limited to modifying knowledge through the dashboard—you can also add
+copilot knowledge programmatically, allowing users or teams in your app to have
+their own individual knowledge bases.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const { id } = await liveblocks.createWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  url: "https://example.com",
+  type: "crawl",
+});
+// +++
+```
+
+This is made possible using the
+[Liveblocks Node.js client](/docs/api-reference/liveblocks-node#AI-Copilots) and
+[REST API](/docs/api-reference/rest-api-endpoints#AI), where a number of APIs
+are available for managing copilots and knowledge sources.
+
+- [`createWebKnowledgeSource`](/docs/api-reference/liveblocks-node#create-web-knowledge-source)
+- [`createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-source)
+- [`getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources)
+- [`getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source)
+- [`getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown)
+- [`getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links)
+- [`deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source)
+- [`deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source)

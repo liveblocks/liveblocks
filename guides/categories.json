@@ -9,6 +9,10 @@
       "name": "Notifications"
     },
     {
+      "id": "ai-copilots",
+      "name": "AI Copilots"
+    },
+    {
       "id": "data-fetching",
       "name": "Data fetching"
     },

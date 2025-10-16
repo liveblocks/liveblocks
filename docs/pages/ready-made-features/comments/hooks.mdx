@@ -94,8 +94,8 @@ There are two versions of the
 Similar to users, Liveblocks only stores group IDs for groups. With the
 [`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook, you
 can fetch a group’s information from their ID. This is particularly helpful when
-building primitive components, as this allows you to fetch their name, avatar, and
-any other custom data you’ve set.
+building primitive components, as this allows you to fetch their name, avatar,
+and any other custom data you’ve set.
 
 ```tsx
 import { useGroupInfo } from "../liveblocks.config";
@@ -234,7 +234,7 @@ Using Suspense hooks means that any data retrieved, for example `threads` from
 error.
 
 ```tsx
-import { useThreads } from "../liveblocks.config.ts";
+import { useThreads } from "@liveblocks/react/suspense";
 
 // Suspense: `threads` is always defined
 function MyThreads() {
@@ -250,7 +250,7 @@ To catch errors and display a loading screen, you can use
 [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
 
 ```tsx highlight="7-11"
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 
 // Handle errors and loading state in the component above
@@ -265,20 +265,13 @@ function Component() {
 }
 ```
 
-To use Suspense, make sure you’re exporting your hooks from the `suspense`
-property in your config file.
+To use Suspense, make sure you’re exporting your hooks from
+`@liveblocks/react/suspense`.
 
-```tsx file="liveblocks.config.ts" highlight="5-7"
-// ...
-
-export const {
-  suspense: {
-    // Export from here to use Suspense hooks
-    useThreads,
-    useUser,
-    useGroupInfo,
-  },
-} = createRoomContext(client, {});
+```tsx
+// Suspense version of hooks
+import { useThreads, useUser, useGroupInfo } from "@liveblocks/react/suspense";
+//                                                                   ^^^^^^^^
 ```
 
 ### Regular hooks [#regular-hooks]
@@ -287,7 +280,7 @@ The regular versions of Liveblocks hooks require you to check for `error` and
 `isLoading` properties. You can then handle these states in the same component.
 
 ```tsx
-import { useThreads } from "../liveblocks.config.ts";
+import { useThreads } from "@liveblocks/react";
 
 // Handle errors and loading state in the same component
 function MyThreads() {
@@ -307,16 +300,10 @@ function MyThreads() {
 }
 ```
 
-To use the regular hooks, make sure you’re exporting from the root level in your
-config file.
+To use the regular hooks, make sure you’re exporting from `@liveblocks/react`.
 
-```tsx file="liveblocks.config.ts" highlight="4-6"
-// ...
-
-export const {
-  // Export from here to use regular hooks
-  useThreads,
-  useUser,
-  useGroupInfo,
-} = createRoomContext(client, {});
+```tsx
+// Regular version of hooks
+import { useThreads, useUser, useGroupInfo } from "@liveblocks/react";
+//                                                 ^^^^^^^^^^^^^^^^^
 ```
