@@ -32,7 +32,7 @@ function mockGetUrlMetadata(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    UrlMetadata
+    { metadata: UrlMetadata }
   >
 ) {
   return rest.get("https://api.liveblocks.io/v2/c/urls/metadata", resolver);
@@ -60,7 +60,7 @@ describe("useUrlMetadata", () => {
     server.use(
       mockGetUrlMetadata((req, res, ctx) => {
         expect(req.url.searchParams.get("url")).toBe(url);
-        return res(ctx.json(metadata));
+        return res(ctx.json({ metadata }));
       })
     );
 
@@ -98,7 +98,7 @@ describe("useUrlMetadata", () => {
     server.use(
       mockGetUrlMetadata((_req, res, ctx) => {
         fetchCount++;
-        return res(ctx.json(metadata));
+        return res(ctx.json({ metadata }));
       })
     );
 
@@ -152,9 +152,9 @@ describe("useUrlMetadata", () => {
       mockGetUrlMetadata((req, res, ctx) => {
         const requestedUrl = req.url.searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json(metadata1));
+          return res(ctx.json({ metadata: metadata1 }));
         } else if (requestedUrl === url2) {
-          return res(ctx.json(metadata2));
+          return res(ctx.json({ metadata: metadata2 }));
         }
         return res(ctx.status(404));
       })
@@ -217,9 +217,9 @@ describe("useUrlMetadata", () => {
         fetchCount++;
         const requestedUrl = _req.url.searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json(metadata1));
+          return res(ctx.json({ metadata: metadata1 }));
         } else if (requestedUrl === url2) {
-          return res(ctx.json(metadata2));
+          return res(ctx.json({ metadata: metadata2 }));
         }
         return res(ctx.status(404));
       })
@@ -269,7 +269,7 @@ describe("useUrlMetadata", () => {
     server.use(
       mockGetUrlMetadata((_req, res, ctx) => {
         fetchCount++;
-        return res(ctx.json(metadata));
+        return res(ctx.json({ metadata }));
       })
     );
 
@@ -400,7 +400,7 @@ describe("useUrlMetadataSuspense", () => {
 
     server.use(
       mockGetUrlMetadata((_req, res, ctx) => {
-        return res(ctx.json(metadata));
+        return res(ctx.json({ metadata }));
       })
     );
 
@@ -509,9 +509,9 @@ describe("useUrlMetadataSuspense", () => {
       mockGetUrlMetadata((_req, res, ctx) => {
         const requestedUrl = _req.url.searchParams.get("url");
         if (requestedUrl === url1) {
-          return res(ctx.json(metadata1));
+          return res(ctx.json({ metadata: metadata1 }));
         } else if (requestedUrl === url2) {
-          return res(ctx.json(metadata2));
+          return res(ctx.json({ metadata: metadata2 }));
         }
         return res(ctx.status(404));
       })
