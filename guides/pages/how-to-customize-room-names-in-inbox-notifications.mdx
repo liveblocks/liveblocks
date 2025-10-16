@@ -4,11 +4,11 @@ meta:
   description: Learn how to display custom room names instead of room IDs in inbox notifications using resolveRoomsInfo.
 ---
 
-When using inbox notifications with Comments, you'll notice that room IDs are displayed by default (e.g., "Chris mentioned you in _room-abc123_"). This isn't ideal for users who need to see meaningful context. In this guide, you'll learn how to replace room IDs with actual document or room names using `resolveRoomsInfo`.
+When using inbox notifications with Comments, you’ll notice that room IDs are displayed by default (e.g., ”Chris mentioned you in _room-abc123_”). This isn’t ideal for users who need to see meaningful context. In this guide, you’ll learn how to replace room IDs with actual document or room names using `resolveRoomsInfo`.
 
 ## Use resolveRoomsInfo to display custom names
 
-You can provide a `resolveRoomsInfo` function to [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider) that maps room IDs to human-readable names. This function receives an array of room IDs and should return an array of room info objects with a `name` property.
+You can provide a [`resolveRoomsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo) function to [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider) that maps room IDs to human-readable names. This function receives an array of room IDs and should return an array of room info objects with a `name` property.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -34,7 +34,7 @@ function App() {
 }
 ```
 
-Once you've added this, the [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) component will automatically use the room names instead of IDs, showing notifications like "Chris mentioned you in _Document A_" instead of "Chris mentioned you in _room-abc123_".
+Once you’ve added this, the [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) component will automatically use the room names instead of IDs, showing notifications like “Chris mentioned you in _Document A_” instead of “Chris mentioned you in _room-abc123_”.
 
 ## Add room URLs (optional)
 
@@ -58,5 +58,3 @@ You can also provide a `url` property for each room, which will be used by the `
 ```
 
 This is particularly useful when you need additional data from your backend to construct the URL, rather than building it directly in your React components using just the room ID.
-
-For more information about customizing notifications, check out the [`resolveRoomsInfo` API reference](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo) and the [inbox notifications documentation](/docs/ready-made-features/comments/email-notifications).
