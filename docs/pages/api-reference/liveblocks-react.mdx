@@ -5701,6 +5701,39 @@ const { info, error, isLoading } = useGroupInfo("group-id");
   </PropertiesListItem>
 </PropertiesList>
 
+### useUrlMetadata [@badge=Both]
+
+Returns metadata for a given URL.
+[Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
+[regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
+hook are available.
+
+```tsx
+import { useUrlMetadata } from "@liveblocks/react/suspense";
+
+const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+
+// metadata.title, metadata.description, metadata.image, metadata.icon, ...
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="url" type="string">
+    The URL to get metadata for.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="metadata" type="UrlMetadata | undefined">
+    The metadata for the URL.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the metadata.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the metadata is currently loading.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## TypeScript
 
 ### Typing your data

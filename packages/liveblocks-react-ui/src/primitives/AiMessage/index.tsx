@@ -27,6 +27,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       </ErrorBoundary>
     );
   },
+  SourcesPart: () => null,
 };
 
 /**
@@ -43,11 +44,16 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { ReasoningPart, RetrievalPart, TextPart, ToolInvocationPart } =
-      useMemo(
-        () => ({ ...defaultMessageContentComponents, ...components }),
-        [components]
-      );
+    const {
+      ReasoningPart,
+      RetrievalPart,
+      TextPart,
+      ToolInvocationPart,
+      SourcesPart,
+    } = useMemo(
+      () => ({ ...defaultMessageContentComponents, ...components }),
+      [components]
+    );
 
     const content = message.content ?? message.contentSoFar;
     const numParts = content.length;
@@ -82,6 +88,19 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                   message={message as AiAssistantMessage}
                 />
               );
+
+            case "sources":
+              // Sources are only shown after the message is either completed or failed.
+              if (
+                message.role === "assistant" &&
+                message.status !== "completed" &&
+                message.status !== "failed"
+              ) {
+                return null;
+              }
+
+              return <SourcesPart key={index} part={part} />;
+
             default:
               return null;
           }

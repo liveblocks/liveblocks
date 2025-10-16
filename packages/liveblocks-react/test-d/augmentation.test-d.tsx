@@ -1099,7 +1099,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1119,7 +1124,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1138,7 +1148,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1157,7 +1172,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);

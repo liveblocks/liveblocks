@@ -27,6 +27,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
+  UrlMetadata,
 } from "@liveblocks/core";
 import {
   assertNever,
@@ -67,6 +68,7 @@ import type {
   ThreadsAsyncResult,
   ThreadsQuery,
   UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -508,10 +510,13 @@ class SinglePageResource {
 
   #fetchPage: () => Promise<void>;
 
-  constructor(fetchPage: () => Promise<void>) {
+  #autoRetry: boolean = true;
+
+  constructor(fetchPage: () => Promise<void>, autoRetry: boolean = true) {
     this.#signal = new Signal<AsyncResult<void>>(ASYNC_LOADING);
     this.signal = this.#signal.asReadonly();
     this.#fetchPage = fetchPage;
+    this.#autoRetry = autoRetry;
 
     autobind(this);
   }
@@ -529,11 +534,9 @@ class SinglePageResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher$ = autoRetry(
-      () => this.#fetchPage(),
-      5,
-      [5000, 5000, 10000, 15000]
-    );
+    const initialFetcher$ = this.#autoRetry
+      ? autoRetry(() => this.#fetchPage(), 5, [5000, 5000, 10000, 15000])
+      : this.#fetchPage();
 
     const promise = usify(initialFetcher$);
 
@@ -548,11 +551,13 @@ class SinglePageResource {
       (err) => {
         this.#signal.set(ASYNC_ERR(err as Error));
 
-        // Wait for 5 seconds before removing the request
-        setTimeout(() => {
-          this.#cachedPromise = null;
-          this.#signal.set(ASYNC_LOADING);
-        }, 5_000);
+        if (this.#autoRetry) {
+          // Wait for 5 seconds before removing the request
+          setTimeout(() => {
+            this.#cachedPromise = null;
+            this.#signal.set(ASYNC_LOADING);
+          }, 5_000);
+        }
       }
     );
 
@@ -872,6 +877,23 @@ function createStore_forHistoryVersions() {
   };
 }
 
+function createStore_forUrlsMetadata() {
+  const baseSignal = new MutableSignal<Map<string, UrlMetadata>>(new Map());
+
+  function update(url: string, metadata: UrlMetadata): void {
+    baseSignal.mutate((lut) => {
+      lut.set(url, metadata);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (m) => Object.fromEntries(m)),
+
+    // Mutations
+    update,
+  };
+}
+
 function createStore_forPermissionHints() {
   const permissionsByRoomId = new DefaultMap(
     () => new Signal<Set<Permission>>(new Set())
@@ -1022,6 +1044,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly unreadNotificationsCount: ReturnType<
     typeof createStore_forUnreadNotificationsCount
   >;
+  readonly urlsMetadata: ReturnType<typeof createStore_forUrlsMetadata>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly notificationSettings: ReturnType<
     typeof createStore_forNotificationSettings
@@ -1079,6 +1102,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       string,
       LoadableResource<AiChatAsyncResult>
     >;
+    readonly urlMetadataByUrl: DefaultMap<
+      string,
+      LoadableResource<UrlMetadataAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1128,6 +1155,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
     this.historyVersions = createStore_forHistoryVersions();
     this.unreadNotificationsCount = createStore_forUnreadNotificationsCount();
+    this.urlsMetadata = createStore_forUrlsMetadata();
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1558,6 +1586,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
 
+    const urlMetadataByUrl = new DefaultMap(
+      (url: string): LoadableResource<UrlMetadataAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          const metadata =
+            await this.#client[kInternal].httpClient.getUrlMetadata(url);
+          this.urlsMetadata.update(url, metadata);
+        }, false);
+
+        const signal = DerivedSignal.from((): UrlMetadataAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          return ASYNC_OK("metadata", nn(this.urlsMetadata.signal.get()[url]));
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1573,6 +1622,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       aiChats,
       messagesByChatId,
       aiChatById,
+      urlMetadataByUrl,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable

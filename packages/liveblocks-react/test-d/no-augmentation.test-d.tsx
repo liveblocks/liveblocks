@@ -984,7 +984,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<"tool-invocation">(status.partType);
       expectType<string>(status.toolName);
     } else {
-      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
         status.partType
       );
       expectType<undefined>(status.toolName);
@@ -1006,7 +1006,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<"tool-invocation">(status.partType);
       expectType<string>(status.toolName);
     } else {
-      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
         status.partType
       );
       expectType<undefined>(status.toolName);
@@ -1027,7 +1027,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<"tool-invocation">(status.partType);
       expectType<string>(status.toolName);
     } else {
-      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
         status.partType
       );
       expectType<undefined>(status.toolName);
@@ -1048,7 +1048,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<"tool-invocation">(status.partType);
       expectType<string>(status.toolName);
     } else {
-      expectType<"text" | "reasoning" | "retrieval" | undefined>(
+      expectType<"text" | "reasoning" | "retrieval" | "sources" | undefined>(
         status.partType
       );
       expectType<undefined>(status.toolName);

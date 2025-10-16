@@ -45,6 +45,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  UrlMetadata,
   WithNavigation,
   WithRequired,
 } from "@liveblocks/core";
@@ -279,6 +280,9 @@ export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
 
 export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
 export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
+
+export type UrlMetadataAsyncSuccess = AsyncSuccess<UrlMetadata, "metadata">; // prettier-ignore
+export type UrlMetadataAsyncResult = AsyncResult<UrlMetadata, "metadata">; // prettier-ignore
 
 export type { AiChatStatus };
 
@@ -1523,6 +1527,14 @@ export type LiveblocksContextBundle<
        */
       useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
 
+      /**
+       * Returns metadata for a given URL.
+       *
+       * @example
+       * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+       */
+      useUrlMetadata(url: string): UrlMetadataAsyncResult;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1614,6 +1626,14 @@ export type LiveblocksContextBundle<
              * ```
              */
             useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
+
+            /**
+             * Returns metadata for a given URL.
+             *
+             * @example
+             * const { metadata } = useUrlMetadata("https://liveblocks.io");
+             */
+            useUrlMetadata(url: string): UrlMetadataAsyncSuccess;
           }
       >;
     }

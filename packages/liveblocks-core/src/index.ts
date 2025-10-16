@@ -322,6 +322,7 @@ export type {
   UserSubscriptionDataPlain,
 } from "./protocol/Subscriptions";
 export { getSubscriptionKey } from "./protocol/Subscriptions";
+export type { UrlMetadata } from "./protocol/UrlMetadata";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,
@@ -347,12 +348,16 @@ export type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
+  AiKnowledgeRetrievalPart,
   AiKnowledgeSource,
   AiReasoningPart,
   AiRetrievalPart,
+  AiSourcesPart,
   AiTextPart,
   AiToolInvocationPart,
+  AiUrlSource,
   AiUserMessage,
+  AiWebRetrievalPart,
   CopilotId,
   Cursor,
   MessageId,
