@@ -17,6 +17,10 @@ on:
 
 run-name: Publishing ${{ github.event.inputs.tag }} packages
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest

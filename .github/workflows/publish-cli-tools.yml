@@ -10,6 +10,10 @@ on:
           "NPM version to publish (use format v2.YYYYMMDD.0). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
