@@ -5590,14 +5590,7 @@
                       "webSearch": {
                         "type": "object",
                         "properties": {
-                          "maxUses": {
-                            "type": "number"
-                          },
                           "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          },
-                          "blockedDomains": {
                             "type": "array",
                             "items": { "type": "string" }
                           }
@@ -5867,14 +5860,7 @@
                       "webSearch": {
                         "type": "object",
                         "properties": {
-                          "maxUses": {
-                            "type": "number"
-                          },
                           "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          },
-                          "blockedDomains": {
                             "type": "array",
                             "items": { "type": "string" }
                           }
@@ -6015,14 +6001,7 @@
                       "webSearch": {
                         "type": "object",
                         "properties": {
-                          "maxUses": {
-                            "type": "number"
-                          },
                           "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          },
-                          "blockedDomains": {
                             "type": "array",
                             "items": { "type": "string" }
                           }

@@ -230,9 +230,7 @@ type AnthropicProviderOptions = {
           type: "disabled";
         };
     webSearch?: {
-      maxUses?: number;
       allowedDomains?: string[];
-      blockedDomains?: string[];
     };
   };
 };
