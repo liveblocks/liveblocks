@@ -75,6 +75,8 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
+  UrlMetadataAsyncSuccess,
   UseAiChatsOptions,
   UseInboxNotificationsOptions,
   UserAsyncResult,
@@ -467,6 +469,8 @@ function makeLiveblocksContextBundle<
     useDeleteAiChat,
     useSendAiMessage,
 
+    useUrlMetadata,
+
     ...shared.classic,
 
     suspense: {
@@ -499,6 +503,8 @@ function makeLiveblocksContextBundle<
       useCreateAiChat,
       useDeleteAiChat,
       useSendAiMessage,
+
+      useUrlMetadata: useUrlMetadataSuspense,
 
       ...shared.suspense,
     },
@@ -1345,6 +1351,53 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
 }
 
 /**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+ */
+function useUrlMetadata(url: string): UrlMetadataAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () => void store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.urlMetadataByUrl.getOrCreate(url).signal);
+}
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
+ */
+function useUrlMetadataSuspense(url: string): UrlMetadataAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.urlMetadataByUrl.getOrCreate(url).waitUntilLoaded());
+
+  const result = useUrlMetadata(url);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+/**
  * Returns a function that creates an AI chat.
  *
  * If you do not pass a title for the chat, it will be automatically computed
@@ -1408,12 +1461,13 @@ function useDeleteAiChat() {
   );
 }
 
+const DISCONNECTED = Object.freeze({ status: "disconnected" });
 const LOADING = Object.freeze({ status: "loading" });
 const IDLE = Object.freeze({ status: "idle" });
 
 /**
- * Returns the status of an AI chat, indicating whether it's idle or actively
- * generating content. This is a convenience hook that derives its state from
+ * Returns the status of an AI chat, indicating whether it's disconnected, loading, idle
+ * or actively generating content. This is a convenience hook that derives its state from
  * the latest assistant message in the chat.
  *
  * Re-renders whenever any of the relevant fields change.
@@ -1427,7 +1481,7 @@ const IDLE = Object.freeze({ status: "idle" });
  *
  * function ChatStatus() {
  *   const { status, partType, toolName } = useAiChatStatus("my-chat");
- *   console.log(status);          // "loading" | "idle" | "generating"
+ *   console.log(status);          // "disconnected" | "loading" | "idle" | "generating"
  *   console.log(status.partType); // "text" | "tool-invocation" | ...
  *   console.log(status.toolName); // string | undefined
  * }
@@ -1451,7 +1505,15 @@ function useAiChatStatus(
         .waitUntilLoaded()
   );
 
-  return useSignal(
+  const isAvailable = useSignal(
+    // Subscribe to connection status signal
+    client[kInternal].ai.signals.statusΣ,
+    // "Disconnected" means the AI service is not available
+    // as it represents a final error status.
+    (status) => status !== "disconnected"
+  );
+
+  const chatStatus = useSignal(
     // Signal
     store.outputs.messagesByChatId
       .getOrCreate(chatId)
@@ -1459,18 +1521,18 @@ function useAiChatStatus(
 
     // Selector
     (result) => {
-      if (result.isLoading) return LOADING;
-      if (result.error) return IDLE;
+      if (result.isLoading) return LOADING satisfies AiChatStatus;
+      if (result.error) return IDLE satisfies AiChatStatus;
 
       const messages = result.messages;
       const lastMessage = messages[messages.length - 1];
 
-      if (lastMessage?.role !== "assistant") return IDLE;
+      if (lastMessage?.role !== "assistant") return IDLE satisfies AiChatStatus;
       if (
         lastMessage.status !== "generating" &&
         lastMessage.status !== "awaiting-tool"
       )
-        return IDLE;
+        return IDLE satisfies AiChatStatus;
 
       const contentSoFar = lastMessage.contentSoFar;
       const lastPart = contentSoFar[contentSoFar.length - 1];
@@ -1480,15 +1542,24 @@ function useAiChatStatus(
           status: "generating",
           partType: "tool-invocation",
           toolName: lastPart.name,
-        };
+        } satisfies AiChatStatus;
       } else {
-        return { status: "generating", partType: lastPart?.type };
+        return {
+          status: "generating",
+          partType: lastPart?.type,
+        } satisfies AiChatStatus;
       }
     },
 
     // Consider { status: "generating", partType: "text" } and { status: "generating", partType: "text" } equal
     shallow
   );
+
+  if (!isAvailable) {
+    return DISCONNECTED;
+  }
+
+  return chatStatus;
 }
 
 /**
@@ -2192,6 +2263,23 @@ const _useAiChatMessages: TypedBundle["useAiChatMessages"] = useAiChatMessages;
 const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
   useAiChatMessagesSuspense;
 
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+ */
+const _useUrlMetadata: TypedBundle["useUrlMetadata"] = useUrlMetadata;
+
+/**
+ * Returns metadata for a given URL.
+ *
+ * @example
+ * const { metadata } = useUrlMetadata("https://liveblocks.io");
+ */
+const _useUrlMetadataSuspense: TypedBundle["suspense"]["useUrlMetadata"] =
+  useUrlMetadataSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -2316,4 +2404,6 @@ export {
   useCreateAiChat,
   useDeleteAiChat,
   useSendAiMessage,
+  _useUrlMetadata as useUrlMetadata,
+  _useUrlMetadataSuspense as useUrlMetadataSuspense,
 };
