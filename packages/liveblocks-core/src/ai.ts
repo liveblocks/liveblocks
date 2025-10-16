@@ -1549,7 +1549,7 @@ function closePart(
   }
 }
 
-function patchContentWithDelta(
+export function patchContentWithDelta(
   content: AiAssistantContentPart[],
   delta: AiAssistantDeltaUpdate | null
 ): void {
@@ -1653,7 +1653,7 @@ function patchContentWithDelta(
  * This helper eliminates the need to manually create fake tool invocation objects
  * and provides a clean API for tests.
  */
-function createReceivingToolInvocation(
+export function createReceivingToolInvocation(
   invocationId: string,
   name: string,
   partialArgsText: string = ""
