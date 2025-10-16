@@ -8,4 +8,62 @@ meta:
 AI models are often unreliable and tricky to debug. Here are some common issues
 you may encounter, and how to troubleshoot them.
 
-TODO
+## A model is ignoring my back-end knowledge
+
+If an AI model doesn’t seem to be using your
+[back-end knowledge](/docs/ready-made-features/ai-copilots/knowledge#Back-end-knowledge)
+correctly, there are a few things you can check:
+
+### Check you’re using the correct copilot ID in all APIs
+
+Check you’re using the the copilot ID throughout your application, specifically
+in every use of [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage).
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      copilotId="co_tUYtNctLAtUIAAIZBc1Zk"
+      // +++
+    />
+  );
+}
+```
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+function SendMessage() {
+  const sendAiMessage = useSendAiMessage("my-chat-id", {
+    // +++
+    copilotId: "co_tUYtNctLAtUIAAIZBc1Zk",
+    // +++
+  });
+
+  return (
+    <button onClick={() => sendAiMessage("What's new?")}>What's new?</button>
+  );
+}
+```
+
+### Make sure you’re letting AI know when to use knowledge
+
+Make sure you’re defining
+[when AI should use knowledge](/docs/ready-made-features/ai-copilots/copilots#When-should-AI-use-knowledge)
+in your copilot settings. When defining copilots from the server, this is the
+`knowledgePrompt` field. If it doesn’t seem to be working, try experimenting
+with your prompt to be more specific, authoritative, and use examples.
+
+```diff title="When should AI use knowledge?"
+- When the user asks a question about code.
++ It's required to do this whenever the user mentions React code, e.g. `useOthers`.
+```
+
+It’s worth checking if there’s an official guide for your specific model, which
+details how to talk to it. For example the
+[official prompting guide for GPT-4.1](https://cookbook.openai.com/examples/gpt4-1_prompting_guide).
