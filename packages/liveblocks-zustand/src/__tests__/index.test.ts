@@ -870,5 +870,39 @@ describe("middleware", () => {
         "Invalid @liveblocks/zustand middleware config. mapping.cursor is invalid. Mapping to a function is not allowed."
       );
     });
+
+    test("isPatching protection prevents duplicate items when client initiates changes", async () => {
+      const { store } = await prepareWithStorage<{
+        items: Array<{ text: string }>;
+        addItem: (text: string) => void;
+      }>(
+        (set, get) => ({
+          items: [],
+          addItem: (text: string) => {
+            const newItem = { text };
+            set({ items: [...get().items, newItem] });
+          },
+        }),
+        {
+          storageMapping: { items: true },
+          presenceMapping: {},
+          items: [obj("root", {}), list("1:0", "root", "items")],
+        }
+      );
+
+      // Initial state should be empty
+      expect(store.getState().items).toEqual([]);
+
+      // Add an item (simulating clicking "Push" in e2e)
+      store.getState().addItem("A");
+
+      // Wait for any async processing
+      await waitFor(() => store.getState().items.length > 0);
+
+      // With isPatching protection: should have exactly one item
+      // Without isPatching protection: would have duplicate items
+      expect(store.getState().items).toEqual([{ text: "A" }]);
+      expect(store.getState().items.length).toBe(1);
+    });
   });
 });
