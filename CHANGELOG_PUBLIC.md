@@ -48,10 +48,6 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Remove all schema validation related client methods that should no longer be
   used. Schema validation was sunsetted on May 1st, 2025.
 
-## Documentation
-
-- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
-
 ## Dashboard
 
 - Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
@@ -68,10 +64,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Improved team/project selectors with UI polish and better accessibility.
 - Improved MAU usage cards showing your team’s personalized limits.
 - More clarity in project settings regarding environment and regions not being editable.
+- Fixed problem downloading examples with `create-liveblocks-app` integration.
+
+## Documentation
+
+- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+- Better clarity on Storage/Yjs limits.
 
 ## Contributors
 
-nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant, ctnicholas
 
 # Week 41 (2025-10-10)
 
