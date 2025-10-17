@@ -166,6 +166,12 @@ describe("WebSocket operations verification", () => {
     const sentMessage = socket.sentMessages.map((m) => JSON.parse(m) as Json);
     assertEq(sentMessage, [
       [
+        // --------------------------------------------------------------
+        // ⚠️ Possible issue found here! This is very surprising. Why is the
+        // first change to this nested structure generating a CREATE_OBJECT op?
+        // That's definitely a smell! I would have expected a similar
+        // UPDATE_OBJECT like the two cases below here.
+        // --------------------------------------------------------------
         {
           type: ClientMsgCode.UPDATE_STORAGE,
           ops: [
@@ -179,6 +185,7 @@ describe("WebSocket operations verification", () => {
             },
           ],
         },
+        // --------------------------------------------------------------
       ],
       [
         {
