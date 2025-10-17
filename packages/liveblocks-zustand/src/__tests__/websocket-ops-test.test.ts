@@ -54,18 +54,37 @@ async function waitForSocketToBeConnected() {
 interface TestStore {
   count: number;
   nested: { nestedCount: number };
+  nodezz: Record<
+    string,
+    { model: string; modelParameters?: { prompt: string } }
+  >;
   increment: () => void;
   incrementNested: () => void;
+  toggleModelParams: () => void;
 }
 
 const testStateCreator: StateCreator<TestStore> = (set) => ({
   count: 0,
   nested: { nestedCount: 13 },
+  nodezz: {},
   increment: () => set((state) => ({ ...state, count: state.count + 1 })),
   incrementNested: () =>
     set((state) => ({
       ...state,
       nested: { ...state.nested, nestedCount: state.nested.nestedCount + 1 },
+    })),
+  toggleModelParams: () =>
+    set((state) => ({
+      ...state,
+      nodezz: {
+        ...state.nodezz,
+        abc: {
+          model: state.nodezz.abc?.model === "Flux" ? "Flux Dev" : "Flux",
+          modelParameters: state.nodezz.abc?.modelParameters
+            ? undefined
+            : { prompt: "Wolves running in the mist" },
+        },
+      },
     })),
 });
 
@@ -76,7 +95,7 @@ async function setupStoreWithStorage() {
   >()(
     liveblocksMiddleware(testStateCreator, {
       client,
-      storageMapping: { count: true, nested: true },
+      storageMapping: { count: true, nested: true, nodezz: true },
       presenceMapping: {},
     }) as any
   );
@@ -89,7 +108,11 @@ async function setupStoreWithStorage() {
   socket.callbacks.message[0]!({
     data: JSON.stringify({
       type: ServerMsgCode.INITIAL_STORAGE_STATE,
-      items: [obj("root", { count: 0, nested: { nestedCount: 13 } })],
+      items: [
+        obj("root", { count: 0 }),
+        obj("0:1", { nestedCount: 13 }, "root", "nested"),
+        obj("0:2", {}, "root", "nodezz"),
+      ],
     }),
   } as MessageEvent);
 
@@ -165,41 +188,33 @@ describe("WebSocket operations verification", () => {
     // Verify the WebSocket message
     const sentMessage = socket.sentMessages.map((m) => JSON.parse(m) as Json);
     assertEq(sentMessage, [
+      // First message is sent immediately, then throttling kicks in
       [
-        // --------------------------------------------------------------
-        // ⚠️ Possible issue found here! This is very surprising. Why is the
-        // first change to this nested structure generating a CREATE_OBJECT op?
-        // That's definitely a smell! I would have expected a similar
-        // UPDATE_OBJECT like the two cases below here.
-        // --------------------------------------------------------------
         {
           type: ClientMsgCode.UPDATE_STORAGE,
           ops: [
             {
-              opId: "0:1",
-              id: "0:0",
-              parentId: "root",
-              parentKey: "nested",
-              type: OpCode.CREATE_OBJECT,
+              opId: "0:0",
+              id: "0:1",
+              type: OpCode.UPDATE_OBJECT,
               data: { nestedCount: 14 },
             },
           ],
         },
-        // --------------------------------------------------------------
       ],
       [
         {
           type: ClientMsgCode.UPDATE_STORAGE,
           ops: [
             {
-              opId: "0:2",
-              id: "0:0",
+              opId: "0:1",
+              id: "0:1",
               type: OpCode.UPDATE_OBJECT,
               data: { nestedCount: 15 },
             },
             {
-              opId: "0:3",
-              id: "0:0",
+              opId: "0:2",
+              id: "0:1",
               type: OpCode.UPDATE_OBJECT,
               data: { nestedCount: 16 },
             },
@@ -210,5 +225,180 @@ describe("WebSocket operations verification", () => {
 
     // Verify state was updated locally
     expect(store.getState().nested.nestedCount).toBe(16);
+  });
+
+  test.only("should send UPDATE_STORAGE op when modelParams are updated", async () => {
+    const { store, socket } = await setupStoreWithStorage();
+    assertEq(store.getState().nodezz, {});
+
+    // Clear initial messages
+    socket.sentMessages = [];
+
+    // --------------------------------------------------------------------
+    // Step 1. Call .toggleModelParams() for the first time
+    // Expect: it CREATE_OBJECT for the first time
+    // --------------------------------------------------------------------
+
+    // Perform state updates
+    store.getState().toggleModelParams();
+
+    // Wait for operation to be sent
+    await waitFor(() => socket.sentMessages.length > 0);
+
+    // Verify the WebSocket message
+    {
+      const sentMessage = socket.sentMessages.map((m) => JSON.parse(m) as Json);
+      assertEq(sentMessage, [
+        // First message is sent immediately, then throttling kicks in
+        [
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                type: OpCode.CREATE_OBJECT,
+                id: "0:0",
+                opId: "0:1",
+                parentId: "0:2",
+                parentKey: "abc",
+                data: {
+                  model: "Flux",
+                },
+              },
+              {
+                type: OpCode.CREATE_OBJECT,
+                id: "0:1",
+                opId: "0:2",
+                parentId: "0:0",
+                parentKey: "modelParameters",
+                data: {
+                  prompt: "Wolves running in the mist",
+                },
+              },
+            ],
+          },
+        ],
+      ]);
+
+      // Wipe
+      socket.sentMessages.length = 0;
+    }
+
+    // Verify state was updated locally
+    assertEq(store.getState().nodezz, {
+      abc: {
+        model: "Flux",
+        modelParameters: {
+          prompt: "Wolves running in the mist",
+        },
+      },
+    });
+
+    // --------------------------------------------------------------------
+    // Step 2. Call it again .toggleModelParams()
+    // Expect: it DELETE_OBJECT_KEY
+    // --------------------------------------------------------------------
+
+    // Perform state updates
+    store.getState().toggleModelParams();
+
+    // Wait for operation to be sent
+    await waitFor(() => socket.sentMessages.length > 0);
+
+    // Verify the WebSocket message
+    {
+      const sentMessage = socket.sentMessages.map((m) => JSON.parse(m) as Json);
+      assertEq(sentMessage, [
+        // First message is sent immediately, then throttling kicks in
+        [
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                type: OpCode.UPDATE_OBJECT,
+                id: "0:0",
+                opId: "0:3",
+                data: {
+                  model: "Flux Dev",
+                },
+              },
+              {
+                type: OpCode.DELETE_OBJECT_KEY,
+                id: "0:0",
+                opId: "0:4",
+                key: "modelParameters",
+              },
+            ],
+          },
+        ],
+      ]);
+
+      // Wipe
+      socket.sentMessages.length = 0;
+    }
+
+    // Verify state was updated locally
+    assertEq(store.getState().nodezz, {
+      abc: {
+        model: "Flux Dev",
+        modelParameters: undefined,
+      },
+    });
+
+    // --------------------------------------------------------------------
+    // Step 3. Call it again .toggleModelParams()
+    // Expect: it UPDATE_OBJECT_KEY to re-create modelParameters
+    // --------------------------------------------------------------------
+
+    // Perform state updates
+    store.getState().toggleModelParams();
+
+    // Wait for operation to be sent
+    await waitFor(() => socket.sentMessages.length > 0);
+
+    // Verify the WebSocket message
+    {
+      const sentMessage = socket.sentMessages.map((m) => JSON.parse(m) as Json);
+      assertEq(sentMessage, [
+        // First message is sent immediately, then throttling kicks in
+        [
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                type: OpCode.UPDATE_OBJECT,
+                id: "0:0",
+                opId: "0:5",
+                data: {
+                  model: "Flux",
+                },
+              },
+              {
+                type: OpCode.CREATE_OBJECT,
+                id: "0:2",
+                opId: "0:7",
+                parentId: "0:0",
+                parentKey: "modelParameters",
+                data: {
+                  prompt: "Wolves running in the mist",
+                },
+              },
+            ],
+          },
+        ],
+      ]);
+
+      // Wipe
+      socket.sentMessages.length = 0;
+    }
+
+    // Verify state was updated locally
+    assertEq(store.getState().nodezz, {
+      abc: {
+        model: "Flux",
+        modelParameters: {
+          prompt: "Wolves running in the mist",
+        },
+      },
+    });
   });
 });
