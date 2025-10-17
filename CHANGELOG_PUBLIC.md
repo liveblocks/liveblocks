@@ -62,9 +62,12 @@ list and feel free to give them credit at the end of a line, e.g.:
   - Set a rate limit for your webhooks when creating them.
   - More detailed error messages when creating webhooks.
   - Better UX on the URL input.
-- Improved UX when creating new projects, better dialogs, polished project cards displaying more info.
+- Improved UX when creating projects 
+  - New polished project cards displaying more info such as region restrictions.
+  - More clarity in project creation dialog boxes.
 - Improved team/project selectors with UI polish and better accessibility.
 - Improved MAU usage cards showing your team’s personalized limits.
+- More clarity in project settings regarding environment and regions not being editable.
 
 ## Contributors
 
