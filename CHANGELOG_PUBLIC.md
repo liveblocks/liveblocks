@@ -59,7 +59,7 @@ list and feel free to give them credit at the end of a line, e.g.:
   - See the status of your webhooks from here.
   - Warnings when no webhooks are set up, and shortcuts to get started.
 - Improved “Webhooks” page.
-  - Set a rate limit ffor your webhooks when creating them.
+  - Set a rate limit for your webhooks when creating them.
   - More detailed error messages when creating webhooks.
   - Better UX on the URL input.
 - Improved UX when creating new projects, better dialogs, polished project cards displaying more info.
