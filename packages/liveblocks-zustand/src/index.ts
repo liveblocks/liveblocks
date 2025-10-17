@@ -285,25 +285,27 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         if (maybeRoom) {
           const room = maybeRoom;
           isPatching = true;
-          updatePresence(
-            room,
-            oldState as JsonObject,
-            newState as JsonObject,
-            presenceMapping
-          );
+          try {
+            updatePresence(
+              room,
+              oldState as JsonObject,
+              newState as JsonObject,
+              presenceMapping
+            );
 
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping
-              );
-            }
-          });
-
-          isPatching = false;
+            room.batch(() => {
+              if (storageRoot) {
+                patchLiveblocksStorage(
+                  storageRoot,
+                  oldState,
+                  newState,
+                  storageMapping
+                );
+              }
+            });
+          } finally {
+            isPatching = false;
+          }
         }
       },
       get,
