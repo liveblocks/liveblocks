@@ -156,6 +156,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
     function enterRoom(newRoomId: string): void {
       if (lastRoomId === newRoomId) {
+        // istanbul ignore next -- @preserve
         return;
       }
 

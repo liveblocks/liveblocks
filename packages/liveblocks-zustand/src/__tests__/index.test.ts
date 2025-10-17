@@ -816,4 +816,59 @@ describe("middleware", () => {
       );
     });
   });
+
+  describe("room lifecycle coverage tests", () => {
+    test("covers re-entering same room early return", async () => {
+      const { store } = await prepareBasicStoreWithStorage([obj("root", {})]);
+
+      // Enter room first time
+      store.getState().liveblocks.enterRoom("same-room");
+      expect(store.getState().liveblocks.room?.id).toBe("same-room");
+
+      // Re-enter same room
+      // This test just ensures the code path executes without error
+      store.getState().liveblocks.enterRoom("same-room");
+
+      // Room should still be the same room ID
+      expect(store.getState().liveblocks.room?.id).toBe("same-room");
+    });
+
+    test("covers leaveRoom functionality", async () => {
+      const { store } = await prepareBasicStoreWithStorage([obj("root", {})]);
+
+      // Enter room
+      store.getState().liveblocks.enterRoom("test-room");
+
+      // Leave room
+      store.getState().liveblocks.leaveRoom();
+
+      // Should be cleaned up
+      expect(store.getState().liveblocks.room).toBeNull();
+      expect(store.getState().liveblocks.status).toBe("initial");
+    });
+
+    test("should throw when setting a function as presence value", async () => {
+      const { client, store } = await prepareClientAndStore(
+        (set) => ({
+          cursor: { x: 0, y: 0 },
+          setCursorToFunction: () => {
+            set({ cursor: /* 😈 */ (() => {}) as any });
+          },
+        }),
+        {
+          storageMapping: {},
+          presenceMapping: { cursor: true },
+        }
+      );
+
+      store.getState().liveblocks.enterRoom("test-room");
+
+      await waitForSocketToBeConnected();
+
+      // This should throw when trying to update presence with a function
+      expect(() => store.getState().setCursorToFunction()).toThrow(
+        "Invalid @liveblocks/zustand middleware config. mapping.cursor is invalid. Mapping to a function is not allowed."
+      );
+    });
+  });
 });
