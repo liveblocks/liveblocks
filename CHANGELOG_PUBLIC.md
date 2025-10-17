@@ -65,15 +65,6 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Improved UX when creating new projects, better dialogs, polished project cards displaying more info.
 - Improved team/project selectors with UI polish and better accessibility.
 - Improved MAU usage cards showing your team’s personalized limits.
-Webhook status shown in the channel detail view
-Added channel image to channel detail page
- Improve webhook status (loading state jump + load it once?)
- Scrolling is broken in channel detail view
- Make inApp channel not editable (disabled toggles and make them all active + no throttle)
- Hide warning banner in publish dialog if webhook isn’t active yet
- Global edit mode via provider so user can easily navigate between tabs and channels
- New UX where channels and kinds are clearly listed, including an inapp channel that’s already active by default
- Reuse ApiKeyInput logic and behavior in webhook detail view where we display an API key
 
 ## Contributors
 
