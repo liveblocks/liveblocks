@@ -48,9 +48,36 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Remove all schema validation related client methods that should no longer be
   used. Schema validation was sunsetted on May 1st, 2025.
 
+## Documentation
+
+- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+
+## Dashboard
+
+- Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
+  - New “Kinds” tab, allowing you to define batching per kind.
+  - See the status of your webhooks from here.
+  - Warnings when no webhooks are set up, and shortcuts to get started.
+- Improved “Webhooks” page.
+  - Set a rate limit ffor your webhooks when creating them.
+  - More detailed error messages when creating webhooks.
+  - Better UX on the URL input.
+- Improved UX when creating new projects, better dialogs, polished project cards displaying more info.
+- Improved team/project selectors with UI polish and better accessibility.
+- Improved MAU usage cards showing your team’s personalized limits.
+Webhook status shown in the channel detail view
+Added channel image to channel detail page
+ Improve webhook status (loading state jump + load it once?)
+ Scrolling is broken in channel detail view
+ Make inApp channel not editable (disabled toggles and make them all active + no throttle)
+ Hide warning banner in publish dialog if webhook isn’t active yet
+ Global edit mode via provider so user can easily navigate between tabs and channels
+ New UX where channels and kinds are clearly listed, including an inapp channel that’s already active by default
+ Reuse ApiKeyInput logic and behavior in webhook detail view where we display an API key
+
 ## Contributors
 
-nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant
 
 # Week 41 (2025-10-10)
 
