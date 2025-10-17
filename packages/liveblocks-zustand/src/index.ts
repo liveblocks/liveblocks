@@ -194,7 +194,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
 
       unsubscribeCallbacks.push(
         room.events.myPresence.subscribe(() => {
-          if (isPatching === false) {
+          if (!isPatching) {
             set(
               selectFields(
                 room.getPresence(),
@@ -234,7 +234,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
           room.subscribe(
             root,
             (updates) => {
-              if (isPatching === false) {
+              if (!isPatching) {
                 set(patchState(get(), updates, storageMapping));
               }
             },
