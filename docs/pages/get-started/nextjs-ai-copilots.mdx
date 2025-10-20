@@ -23,7 +23,7 @@ components from
       Every package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
       ```
 
     </StepContent>
@@ -125,11 +125,15 @@ components from
 
       export default function Layout({ children }) {
         return (
-          // +++
-          <Providers>
-            {children}
-          </Providers>
-          // +++
+          <html>
+            <body>
+              // +++
+              <Providers>
+                {children}
+              </Providers>
+              // +++
+            </body>
+          </html>
         );
       }
       ```
@@ -151,20 +155,19 @@ components from
       "use client";
 
       import { AiChat } from "@liveblocks/react-ui";
-      import { RegisterAiTool, RegisterAiKnowledge } from "@liveblocks/react-ui";
+      import { RegisterAiTool, RegisterAiKnowledge } from "@liveblocks/react";
 
       export default function Page() {
         return (
-          <>
+          <div style={{ height: 500, width: 500}}>
             // +++
             <AiChat
               chatId="my-first-chat"
               // copilotId="co_aH1j2..."
             />
             // +++
-            <RegisterAiTool {/* ... */} />
-            <RegisterAiKnowledge {/* ... */} />
-          </>
+            {/* <RegisterAiTool ... /> and <RegisterAiKnowledge ... /> */}
+          </div>
         );
       }
       ```

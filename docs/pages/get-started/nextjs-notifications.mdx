@@ -81,11 +81,15 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       export default function Layout({ children }) {
         return (
-          // +++
-          <Providers>
-            {children}
-          </Providers>
-          // +++
+          <html>
+            <body>
+              // +++
+              <Providers>
+                {children}
+              </Providers>
+              // +++
+            </body>
+          </html>
         );
       }
       ```
