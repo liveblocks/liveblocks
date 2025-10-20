@@ -12,11 +12,6 @@
         "href": "/get-started",
         "routes": [
           {
-            "title": "AI Copilots",
-            "path": "/get-started/ai-copilots",
-            "hidden": true
-          },
-          {
             "title": "Next.js",
             "path": "/get-started/nextjs",
             "hidden": true
@@ -24,6 +19,16 @@
           {
             "title": "React",
             "path": "/get-started/react",
+            "hidden": true
+          },
+          {
+            "title": "AI Copilots",
+            "path": "/get-started/react-ai-copilots",
+            "hidden": true
+          },
+          {
+            "title": "AI Copilots",
+            "path": "/get-started/nextjs-ai-copilots",
             "hidden": true
           },
           {
