@@ -66,6 +66,7 @@ import type {
   SubscriptionDeleteInfo,
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
+import type { UrlMetadata } from "./protocol/UrlMetadata";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -77,6 +78,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     cursor?: string;
     query?: {
       resolved?: boolean;
+      subscribed?: boolean;
       metadata?: Partial<QueryMetadata<M>>;
     };
   }): Promise<{
@@ -378,7 +380,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     roomId: string;
   }): Promise<IdTuple<SerializedCrdt>[]>;
 
-  sendMessages<P extends JsonObject, E extends Json>(options: {
+  sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -433,7 +435,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  getUnreadInboxNotificationsCount(): Promise<number>;
+  getUnreadInboxNotificationsCount(options?: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }): Promise<number>;
 
   markAllInboxNotificationsAsRead(): Promise<void>;
 
@@ -455,6 +463,8 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 export interface LiveblocksHttpApi<M extends BaseMetadata>
   extends RoomHttpApi<M>,
     NotificationHttpApi<M> {
+  getUrlMetadata(url: string): Promise<UrlMetadata>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -566,6 +576,7 @@ export function createApiClient<M extends BaseMetadata>({
     cursor?: string;
     query?: {
       resolved?: boolean;
+      subscribed?: boolean;
       metadata?: Partial<QueryMetadata<M>>;
     };
   }) {
@@ -1508,7 +1519,10 @@ export function createApiClient<M extends BaseMetadata>({
     return (await result.json()) as IdTuple<SerializedCrdt>[];
   }
 
-  async function sendMessages<P extends JsonObject, E extends Json>(options: {
+  async function sendMessagesOverHTTP<
+    P extends JsonObject,
+    E extends Json,
+  >(options: {
     roomId: string;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
@@ -1623,10 +1637,24 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUnreadInboxNotificationsCount() {
+  async function getUnreadInboxNotificationsCount(options: {
+    query?: {
+      roomId?: string;
+      kind?: string;
+    };
+    signal?: AbortSignal;
+  }) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      await authManager.getAuthValue({ requestedScope: "comments:read" })
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { query },
+      { signal: options?.signal }
     );
     return count;
   }
@@ -1833,6 +1861,20 @@ export function createApiClient<M extends BaseMetadata>({
     return batchedGetGroups.get(groupId);
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * URL metadata
+   * -------------------------------------------------------------------------------------------------
+   */
+  async function getUrlMetadata(_url: string) {
+    const { metadata } = await httpClient.get<{ metadata: UrlMetadata }>(
+      url`/v2/c/urls/metadata`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      { url: _url }
+    );
+
+    return metadata;
+  }
+
   return {
     // Room threads
     getThreads,
@@ -1872,7 +1914,7 @@ export function createApiClient<M extends BaseMetadata>({
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessages,
+    sendMessagesOverHTTP,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
@@ -1891,6 +1933,8 @@ export function createApiClient<M extends BaseMetadata>({
     getGroup,
     // AI
     executeContextualPrompt,
+    // URL metadata
+    getUrlMetadata,
   };
 }
 

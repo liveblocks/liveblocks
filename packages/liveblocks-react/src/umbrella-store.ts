@@ -27,6 +27,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
+  UrlMetadata,
 } from "@liveblocks/core";
 import {
   assertNever,
@@ -66,6 +67,8 @@ import type {
   RoomSubscriptionSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
+  UnreadInboxNotificationsCountAsyncResult,
+  UrlMetadataAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -507,10 +510,13 @@ class SinglePageResource {
 
   #fetchPage: () => Promise<void>;
 
-  constructor(fetchPage: () => Promise<void>) {
+  #autoRetry: boolean = true;
+
+  constructor(fetchPage: () => Promise<void>, autoRetry: boolean = true) {
     this.#signal = new Signal<AsyncResult<void>>(ASYNC_LOADING);
     this.signal = this.#signal.asReadonly();
     this.#fetchPage = fetchPage;
+    this.#autoRetry = autoRetry;
 
     autobind(this);
   }
@@ -528,11 +534,9 @@ class SinglePageResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher$ = autoRetry(
-      () => this.#fetchPage(),
-      5,
-      [5000, 5000, 10000, 15000]
-    );
+    const initialFetcher$ = this.#autoRetry
+      ? autoRetry(() => this.#fetchPage(), 5, [5000, 5000, 10000, 15000])
+      : this.#fetchPage();
 
     const promise = usify(initialFetcher$);
 
@@ -547,11 +551,13 @@ class SinglePageResource {
       (err) => {
         this.#signal.set(ASYNC_ERR(err as Error));
 
-        // Wait for 5 seconds before removing the request
-        setTimeout(() => {
-          this.#cachedPromise = null;
-          this.#signal.set(ASYNC_LOADING);
-        }, 5_000);
+        if (this.#autoRetry) {
+          // Wait for 5 seconds before removing the request
+          setTimeout(() => {
+            this.#cachedPromise = null;
+            this.#signal.set(ASYNC_LOADING);
+          }, 5_000);
+        }
       }
     );
 
@@ -578,6 +584,11 @@ type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
 type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
+ * A lookup table (LUT) for all the unread inbox notifications count.
+ */
+type UnreadInboxNotificationsCountLUT = Map<string, number>;
+
+/**
  * A lookup table (LUT) for all the subscriptions.
  */
 type SubscriptionsLUT = Map<SubscriptionKey, SubscriptionData>;
@@ -599,7 +610,7 @@ type RoomSubscriptionSettingsByRoomId = Record<
   RoomSubscriptionSettings
 >;
 
-type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
+export type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
@@ -746,6 +757,25 @@ function createStore_forNotifications() {
   };
 }
 
+function createStore_forUnreadNotificationsCount() {
+  const baseSignal = new MutableSignal<UnreadInboxNotificationsCountLUT>(
+    new Map()
+  );
+
+  function update(queryKey: InboxNotificationsQueryKey, count: number): void {
+    baseSignal.mutate((lut) => {
+      lut.set(queryKey, count);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (c) => Object.fromEntries(c)),
+
+    // Mutations
+    update,
+  };
+}
+
 function createStore_forSubscriptions(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>,
   threads: ReadonlyThreadDB<BaseMetadata>
@@ -841,6 +871,23 @@ function createStore_forHistoryVersions() {
         ])
       )
     ),
+
+    // Mutations
+    update,
+  };
+}
+
+function createStore_forUrlsMetadata() {
+  const baseSignal = new MutableSignal<Map<string, UrlMetadata>>(new Map());
+
+  function update(url: string, metadata: UrlMetadata): void {
+    baseSignal.mutate((lut) => {
+      lut.set(url, metadata);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (m) => Object.fromEntries(m)),
 
     // Mutations
     update,
@@ -994,6 +1041,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly subscriptions: ReturnType<typeof createStore_forSubscriptions>;
   readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
+  readonly unreadNotificationsCount: ReturnType<
+    typeof createStore_forUnreadNotificationsCount
+  >;
+  readonly urlsMetadata: ReturnType<typeof createStore_forUrlsMetadata>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly notificationSettings: ReturnType<
     typeof createStore_forNotificationSettings
@@ -1026,6 +1077,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       InboxNotificationsQueryKey,
       LoadableResource<InboxNotificationsAsyncResult>
     >;
+    readonly unreadNotificationsCount: DefaultMap<
+      InboxNotificationsQueryKey,
+      LoadableResource<UnreadInboxNotificationsCountAsyncResult>
+    >;
     readonly roomSubscriptionSettingsByRoomId: DefaultMap<
       RoomId,
       LoadableResource<RoomSubscriptionSettingsAsyncResult>
@@ -1046,6 +1101,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly aiChatById: DefaultMap<
       string,
       LoadableResource<AiChatAsyncResult>
+    >;
+    readonly urlMetadataByUrl: DefaultMap<
+      string,
+      LoadableResource<UrlMetadataAsyncResult>
     >;
   };
 
@@ -1095,6 +1154,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
+    this.unreadNotificationsCount = createStore_forUnreadNotificationsCount();
+    this.urlsMetadata = createStore_forUrlsMetadata();
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1157,10 +1218,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
+          const subscriptions = threadSubscriptions.get().subscriptions;
+
           const threads = this.outputs.threads.get().findMany(
             undefined, // Do _not_ filter by roomId
             query ?? {},
-            "desc"
+            "desc",
+            subscriptions
           );
 
           const page = result.data;
@@ -1227,9 +1291,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return result;
           }
 
+          const subscriptions = threadSubscriptions.get().subscriptions;
+
           const threads = this.outputs.threads
             .get()
-            .findMany(roomId, query ?? {}, "asc");
+            .findMany(roomId, query ?? {}, "asc", subscriptions);
 
           const page = result.data;
           return {
@@ -1302,6 +1368,42 @@ export class UmbrellaStore<M extends BaseMetadata> {
             fetchMore: page.fetchMore,
           };
         }, shallow2);
+
+        return {
+          signal,
+          waitUntilLoaded: resource.waitUntilLoaded,
+        };
+      }
+    );
+
+    const unreadNotificationsCount = new DefaultMap(
+      (
+        queryKey: InboxNotificationsQueryKey
+      ): LoadableResource<UnreadInboxNotificationsCountAsyncResult> => {
+        const query = JSON.parse(queryKey) as InboxNotificationsQuery;
+
+        const resource = new SinglePageResource(async () => {
+          const result = await this.#client.getUnreadInboxNotificationsCount({
+            query,
+          });
+
+          this.unreadNotificationsCount.update(queryKey, result);
+        });
+
+        const signal = DerivedSignal.from(
+          (): UnreadInboxNotificationsCountAsyncResult => {
+            const result = resource.get();
+            if (result.isLoading || result.error) {
+              return result;
+            } else {
+              return ASYNC_OK(
+                "count",
+                nn(this.unreadNotificationsCount.signal.get()[queryKey])
+              );
+            }
+          },
+          shallow
+        );
 
         return {
           signal,
@@ -1484,6 +1586,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
 
+    const urlMetadataByUrl = new DefaultMap(
+      (url: string): LoadableResource<UrlMetadataAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          const metadata =
+            await this.#client[kInternal].httpClient.getUrlMetadata(url);
+          this.urlsMetadata.update(url, metadata);
+        }, false);
+
+        const signal = DerivedSignal.from((): UrlMetadataAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          return ASYNC_OK("metadata", nn(this.urlsMetadata.signal.get()[url]));
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1491,6 +1614,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingUserThreads,
       notifications,
       loadingNotifications,
+      unreadNotificationsCount,
       roomSubscriptionSettingsByRoomId,
       versionsByRoomId,
       notificationSettings,
@@ -1498,6 +1622,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       aiChats,
       messagesByChatId,
       aiChatById,
+      urlMetadataByUrl,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
@@ -1798,6 +1923,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
+  }
+
+  public async fetchUnreadNotificationsCount(
+    queryKey: InboxNotificationsQueryKey,
+    signal: AbortSignal
+  ) {
+    const query = JSON.parse(queryKey) as InboxNotificationsQuery;
+
+    const result = await this.#client.getUnreadInboxNotificationsCount({
+      query,
+      signal,
+    });
+
+    this.unreadNotificationsCount.update(queryKey, result);
   }
 
   public async fetchRoomThreadsDeltaUpdate(
@@ -2176,7 +2315,12 @@ function applyOptimisticUpdates_forSubscriptions(
           continue;
         }
 
-        const roomThreads = threads.findMany(update.roomId, undefined, "desc");
+        const roomThreads = threads.findMany(
+          update.roomId,
+          undefined,
+          "desc",
+          undefined
+        );
 
         for (const thread of roomThreads) {
           const subscriptionKey = getSubscriptionKey("thread", thread.id);

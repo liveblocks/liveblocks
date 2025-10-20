@@ -18,6 +18,146 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 42 (2025-10-17)
+
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## Dashboard
+
+- Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
+  - New “Kinds” tab, allowing you to define batching per kind.
+  - See the status of your webhooks from here.
+  - Warnings when no webhooks are set up, and shortcuts to get started.
+- Improved “Webhooks” page.
+  - Set a rate limit for your webhooks when creating them.
+  - More detailed error messages when creating webhooks.
+  - Better UX on the URL input.
+- Improved UX when creating projects 
+  - New polished project cards displaying more info such as region restrictions.
+  - More clarity in project creation dialog boxes.
+- Improved team/project selectors with UI polish and better accessibility.
+- Improved MAU usage cards showing your team’s personalized limits.
+- More clarity in project settings regarding environment and regions not being editable.
+- Fixed problem downloading examples with `create-liveblocks-app` integration.
+
+## Documentation
+
+- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+- Better clarity on Storage/Yjs limits.
+
+## Contributors
+
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant, ctnicholas
+
+# Week 41 (2025-10-10)
+
+## v3.8.1
+
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+- Add `comments:write` to the list of possible room permissions.
+
+## Examples
+
+New example: [AI app builder](/examples/ai-app-builder).
+New example: [AI calendar](/examples/ai-calendar).
+
+## Contributors
+
+ctnicholas, sugardarius, pierrelevaillant, marcbouchenoire, nvie, flowflorent
+
+# Week 40 (2025-10-03)
+
+## v3.8.0
+
+### `@liveblocks/client`
+
+- `LiveMap` and `LiveObject` deletions now report which item got deleted in the
+  update notifications. `LiveLists` already did this.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useAiChatStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useAiChatStatus)
+  that offers a convenient way to get the current generation status for an AI
+  chat, indicating whether the chat is idle, currently generating contents, and,
+  if so, what type of content is currently generating.
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
+  metadata query filters.
+
+### `@liveblocks/react-ui`
+
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
+
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
+
+## Website
+
+- Blog post: [Why we built our AI agents on WebSockets instead of HTTP](https://liveblocks.io/blog/why-we-built-our-ai-agents-on-websockets-instead-of-http).
+
+## Contributors
+
+ofoucherot, nvie, jrowny, marcbouchenoire, ctnicholas, nimeshnayaju
+
+# Week 38 (2025-09-19)
+
+## Website
+
+- Blog post: [What's the best vector database for building AI products?](https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
+- Blog post: [What's new in Liveblocks: August 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2025).
+
+## Contributors
+
+jrowny, ctnicholas
+
 # Week 37 (2025-09-12)
 
 ## v3.7.1

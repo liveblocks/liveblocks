@@ -25,6 +25,7 @@ export {
   EllipsisIcon as Ellipsis,
   EmojiIcon as Emoji,
   EmojiPlusIcon as EmojiPlus,
+  GlobeIcon as Globe,
   H1Icon as H1,
   H2Icon as H2,
   H3Icon as H3,

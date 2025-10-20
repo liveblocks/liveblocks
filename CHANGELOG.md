@@ -1,4 +1,81 @@
-## vNEXT (not yet published)
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## v3.8.1
+
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+- Add `comments:write` to the list of possible room permissions.
+
+## v3.8.0
+
+### `@liveblocks/client`
+
+- LiveMap and LiveObject deletions now report which item got deleted in the
+  update notifications. LiveLists already did this.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
+
+### `@liveblocks/react`
+
+- Add new hook
+  [`useAiChatStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useAiChatStatus)
+  that offers a convenient way to get the current generation status for an AI
+  chat, indicating whether the chat is idle, currently generating contents, and,
+  if so, what type of content is currently generating.
+- Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
+  proper count if there were more than a page of unread notifications.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
+  metadata query filters.
+
+### `@liveblocks/react-ui`
+
+- Add `responseTimeout` property to `AiChat` to allow customization of the
+  default 30 seconds timeout.
+- The `title` prop on `AiTool` now accepts `ReactNode`, not just strings.
+- Fix a bug where `AiChat` would not always scroll in the same way when sending
+  new messages.
+
+### `@liveblocks/node`
+
+- Add new method `Liveblocks.prewarmRoom(roomId, options)`. This method can
+  prewarm a room from your backend, preparing it for connectivity and making the
+  eventual connection from the frontend faster.
 
 ## v3.7.1
 
@@ -1395,7 +1472,9 @@ for more information about this change please read our
 
 ### Version History
 
-This release adds some new hooks for Version History in text documents. If you're interested in getting access, please [contact us](https://liveblocks.io/contact/sales).
+This release adds some new hooks for Version History in text documents. If
+you're interested in getting access, please
+[contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)

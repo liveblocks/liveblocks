@@ -19,7 +19,11 @@ export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 // Export all the top-level hooks
 export { ClientContext, RoomContext, useClient } from "./contexts";
 export { RegisterAiKnowledge, RegisterAiTool } from "./ai";
-export type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./types/ai";
+export type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./types/ai";
 export {
   LiveblocksProvider,
   useInboxNotificationThread,
@@ -94,4 +98,6 @@ export {
   useAiChatsSuspense as useAiChats,
   useAiChatMessagesSuspense as useAiChatMessages,
   useAiChatSuspense as useAiChat,
+  useAiChatStatus,
+  useUrlMetadataSuspense as useUrlMetadata,
 } from "./liveblocks";

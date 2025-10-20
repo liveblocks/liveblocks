@@ -124,6 +124,7 @@ export function generateFakeJwt(options: { userId: string }) {
 const parser = new QueryParser({
   fields: {
     resolved: "boolean",
+    subscribed: "boolean",
   },
   indexableFields: {
     metadata: "mixed",
@@ -170,8 +171,22 @@ function matchesConditionGroup(
       return typeof actual === "string" && actual.startsWith(expected);
     }
 
-    case "NumericCondition":
-      throw new Error("Not implemented yet");
+    case "NumericCondition": {
+      const actual = getFieldValue(thread, cond.field);
+      const expected = cond.value.value;
+      switch (cond.op) {
+        case ">":
+          return typeof actual === "number" && actual > expected;
+        case ">=":
+          return typeof actual === "number" && actual >= expected;
+        case "<":
+          return typeof actual === "number" && actual < expected;
+        case "<=":
+          return typeof actual === "number" && actual <= expected;
+        default:
+          throw new Error(`Unknown numeric operator: ${cond.op}`);
+      }
+    }
 
     default:
       return assertNever(cond, "Unhandled case");

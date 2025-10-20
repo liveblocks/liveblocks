@@ -9,6 +9,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
+import { IncrementalJsonParser } from "./lib/IncrementalJsonParser";
 import type { JsonObject } from "./lib/Json";
 import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
@@ -16,7 +17,7 @@ import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { TreePool } from "./lib/TreePool";
 import type { Brand, DistributiveOmit, ISODateString } from "./lib/utils";
-import { raise, tryParseJson } from "./lib/utils";
+import { findLastIndex, raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -27,6 +28,7 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
+  AiAssistantContentPart,
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
   AiChat,
@@ -36,6 +38,7 @@ import type {
   AiGeneratingAssistantMessage,
   AiGenerationOptions,
   AiKnowledgeSource,
+  AiReceivingToolInvocationPart,
   AiToolDescription,
   AiToolInvocationPart,
   AiUserContentPart,
@@ -57,7 +60,6 @@ import type {
   SetToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
-import { patchContentWithDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
   InferFromSchema,
@@ -213,10 +215,10 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  knowledge: KnowledgeStack;
+  knowledgeStore: ReturnType<typeof createStore_forKnowledge>;
 };
 
-type LayerKey = Brand<string, "LayerKey">;
+export type LayerKey = Brand<string, "LayerKey">;
 
 export class KnowledgeStack {
   #_layers: Set<LayerKey>;
@@ -285,6 +287,27 @@ export class KnowledgeStack {
     this.#stack.getOrCreate(key).set(layerKey, data);
     this.invalidate();
   }
+}
+
+function createStore_forKnowledge() {
+  const knowledgeByChatId = new DefaultMap(
+    (_chatId: string | typeof kWILDCARD) => new KnowledgeStack()
+  );
+
+  function getKnowledgeStack(chatId?: string): KnowledgeStack {
+    return knowledgeByChatId.getOrCreate(chatId ?? kWILDCARD);
+  }
+
+  function getKnowledgeForChat(chatId: string): AiKnowledgeSource[] {
+    const globalKnowledge = knowledgeByChatId.getOrCreate(kWILDCARD).get();
+    const scopedKnowledge = knowledgeByChatId.get(chatId)?.get() ?? [];
+    return [...globalKnowledge, ...scopedKnowledge];
+  }
+
+  return {
+    getKnowledgeStack,
+    getKnowledgeForChat,
+  };
 }
 
 export type GetOrCreateChatOptions = {
@@ -926,6 +949,7 @@ export type Ai = {
       name: string,
       chatId?: string
     ): DerivedSignal<AiOpaqueToolDefinition | undefined>;
+    statusΣ: Signal<Status>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -934,14 +958,19 @@ export type Ai = {
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getLastUsedCopilotId: (chatId: string) => CopilotId | undefined;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
+  registerKnowledgeLayer: (
+    uniqueLayerId: string,
+    chatId?: string
+  ) => {
+    layerKey: LayerKey;
+    deregister: () => void;
+  };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   updateKnowledge: (
     layerKey: LayerKey,
     data: AiKnowledgeSource,
-    key?: string
+    key?: string,
+    chatId?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerTool: (
@@ -972,6 +1001,7 @@ export function createAi(config: AiConfig): Ai {
 
   const chatsStore = createStore_forUserAiChats();
   const toolsStore = createStore_forTools();
+  const knowledgeStore = createStore_forKnowledge();
   const messagesStore = createStore_forChatMessages(toolsStore, setToolResult);
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
@@ -980,8 +1010,10 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    knowledge: new KnowledgeStack(),
+    knowledgeStore,
   };
+
+  const statusΣ = new Signal<Status>("initial");
 
   // Delta batch processing system to throttle incoming delta updates. Incoming
   // deltas are buffered and only let through every every 25ms. This creates
@@ -1017,7 +1049,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   let lastTokenKey: string | undefined;
-  function onStatusDidChange(_newStatus: Status) {
+  function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
       const tokenKey = getBearerTokenFromAuthValue(authValue);
@@ -1040,6 +1072,9 @@ export function createAi(config: AiConfig): Ai {
         }
       }
     }
+
+    // Forward to the outside world
+    statusΣ.set(newStatus);
   }
   let _connectionLossTimerId: TimeoutID | undefined;
   let _hasLostConnection = false;
@@ -1294,22 +1329,6 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerKnowledgeLayer(uniqueLayerId: string): LayerKey {
-    return context.knowledge.registerLayer(uniqueLayerId);
-  }
-
-  function deregisterKnowledgeLayer(layerKey: LayerKey): void {
-    context.knowledge.deregisterLayer(layerKey);
-  }
-
-  function updateKnowledge(
-    layerKey: LayerKey,
-    data: AiKnowledgeSource,
-    key: string = nanoid()
-  ) {
-    context.knowledge.updateKnowledge(layerKey, key, data);
-  }
-
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
@@ -1317,7 +1336,7 @@ export function createAi(config: AiConfig): Ai {
     result: ToolResultResponse,
     options?: SetToolResultOptions
   ): Promise<void> {
-    const knowledge = context.knowledge.get();
+    const knowledge = context.knowledgeStore.getKnowledgeForChat(chatId);
     const tools = context.toolsStore.getToolDescriptions(chatId);
 
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
@@ -1390,9 +1409,9 @@ export function createAi(config: AiConfig): Ai {
         targetMessageId: MessageId,
         options?: AskUserMessageInChatOptions
       ): Promise<AskInChatResponse> => {
-        const globalKnowledge = context.knowledge.get();
+        const knowledge = context.knowledgeStore.getKnowledgeForChat(chatId);
         const requestKnowledge = options?.knowledge || [];
-        const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
+        const combinedKnowledge = [...knowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
         messagesStore.markMine(targetMessageId);
@@ -1426,14 +1445,31 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getToolΣ: context.toolsStore.getToolΣ,
+        statusΣ,
       },
 
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
       getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
-      registerKnowledgeLayer,
-      deregisterKnowledgeLayer,
-      updateKnowledge,
+      registerKnowledgeLayer: (uniqueLayerId: string, chatId?: string) => {
+        const stack = context.knowledgeStore.getKnowledgeStack(chatId);
+        const layerKey = stack.registerLayer(uniqueLayerId);
+        const deregister = () => stack.deregisterLayer(layerKey);
+        return {
+          layerKey,
+          deregister,
+        };
+      },
+      updateKnowledge: (
+        layerKey: LayerKey,
+        data: AiKnowledgeSource,
+        key?: string,
+        chatId?: string
+      ) => {
+        context.knowledgeStore
+          .getKnowledgeStack(chatId)
+          .updateKnowledge(layerKey, key ?? nanoid(), data);
+      },
 
       registerTool: context.toolsStore.registerTool,
     } satisfies Ai,
@@ -1459,7 +1495,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v6";
+    url.pathname = "/ai/v7";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
@@ -1471,4 +1507,167 @@ export function makeCreateSocketDelegateForAi(
     url.searchParams.set("version", PKG_VERSION || "dev");
     return new ws(url.toString());
   };
+}
+
+/**
+ * Finds the last item in the content array that matches the type and the given
+ * keyFn. If found, replaces that item with newItem in the content array. If
+ * not found, appends newItem to the content array.
+ * Mutates the content array in-place.
+ */
+function replaceOrAppend<const T extends AiAssistantContentPart>(
+  content: AiAssistantContentPart[],
+  newItem: T,
+  keyFn: (item: T) => string,
+  now: ISODateString
+): void {
+  const existingIndex = findLastIndex(
+    content,
+    (item) => item.type === newItem.type && keyFn(item as T) === keyFn(newItem)
+  );
+
+  if (existingIndex > -1) {
+    // Replace the existing one
+    content[existingIndex] = newItem;
+  } else {
+    // No existing one found, just append
+    closePart(content[content.length - 1], now);
+    content.push(newItem);
+  }
+}
+
+/**
+ * Given a part, mutates it in-place by setting its endedAt timestamp.
+ */
+function closePart(
+  prevPart: AiAssistantContentPart | undefined,
+  endedAt: ISODateString
+) {
+  // Currently, only reasoning parts have an endedAt timestamp
+  if (prevPart?.type === "reasoning") {
+    prevPart.endedAt ??= endedAt;
+  }
+}
+
+export function patchContentWithDelta(
+  content: AiAssistantContentPart[],
+  delta: AiAssistantDeltaUpdate | null
+): void {
+  if (delta === null)
+    // Nothing to do
+    return;
+
+  // Filter out sources parts from the content array to ensure we only process the other parts and handle sources separately
+  const parts: AiAssistantContentPart[] = content.filter(
+    (part) => part.type !== "sources"
+  );
+
+  // Collect all sources from the content array and flatten them so that we can add them to the content array at the end
+  const sources = content
+    .filter((part) => part.type === "sources")
+    .flatMap((part) => part.sources);
+
+  const now = new Date().toISOString() as ISODateString;
+  const lastPart = parts[parts.length - 1];
+
+  // Otherwise, append a new part type to the array, which we can start
+  // writing into
+  switch (delta.type) {
+    case "text-delta":
+      if (lastPart?.type === "text") {
+        lastPart.text += delta.textDelta;
+      } else {
+        closePart(lastPart, now);
+        parts.push({ type: "text", text: delta.textDelta });
+      }
+      break;
+
+    case "reasoning-delta":
+      if (lastPart?.type === "reasoning") {
+        lastPart.text += delta.textDelta;
+      } else {
+        closePart(lastPart, now);
+        parts.push({
+          type: "reasoning",
+          text: delta.textDelta,
+          startedAt: now,
+        });
+      }
+      break;
+
+    case "tool-stream": {
+      const toolInvocation = createReceivingToolInvocation(
+        delta.invocationId,
+        delta.name
+      );
+      parts.push(toolInvocation);
+      break;
+    }
+
+    case "tool-delta": {
+      // Take the last part, expect it to be a tool invocation in receiving
+      // stage. If not, ignore this delta. If it is, append the delta to the
+      // parser
+      if (
+        lastPart?.type === "tool-invocation" &&
+        lastPart.stage === "receiving"
+      ) {
+        lastPart.__appendDelta?.(delta.delta);
+      }
+      // Otherwise ignore the delta - it's out of order or unexpected
+      break;
+    }
+
+    case "tool-invocation":
+      replaceOrAppend(parts, delta, (x) => x.invocationId, now);
+      break;
+
+    case "retrieval":
+      replaceOrAppend(parts, delta, (x) => x.id, now);
+      break;
+
+    case "source": {
+      sources.push(delta);
+      break;
+    }
+
+    default:
+      return assertNever(delta, "Unhandled case");
+  }
+
+  // Add the sources part to the parts array at the end if there are any sources
+  if (sources.length > 0) {
+    parts.push({
+      type: "sources",
+      sources,
+    });
+  }
+
+  // Replace the content array with the parts array
+  content.length = 0;
+  content.push(...parts);
+}
+
+/**
+ * Creates a receiving tool invocation part for testing purposes.
+ * This helper eliminates the need to manually create fake tool invocation objects
+ * and provides a clean API for tests.
+ */
+export function createReceivingToolInvocation(
+  invocationId: string,
+  name: string,
+  partialArgsText: string = ""
+): AiReceivingToolInvocationPart {
+  const parser = new IncrementalJsonParser(partialArgsText); // FRONTEND only
+  return {
+    type: "tool-invocation",
+    stage: "receiving",
+    invocationId,
+    name,
+    // --- Alternative implementation for FRONTEND only ------------------------
+    get partialArgsText(): string { return parser.source; }, // prettier-ignore
+    get partialArgs(): JsonObject { return parser.json; }, // prettier-ignore
+    __appendDelta(delta: string) { parser.append(delta); }, // prettier-ignore
+    // ------------------------------------------------------------------------
+  } satisfies AiReceivingToolInvocationPart;
 }

@@ -216,9 +216,8 @@ const client = createClient({
     </div>
 
     - `"default"` Don’t send anything, but log the error to the console and notify useErrorListener.
-    - `"split"` Break the message up into chunks each of which is smaller than the maximum message size.
-      Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
-    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
+    - `"split"` Break the message up into chunks each of which is smaller than the maximum message size. Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
+    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets. This strategy is marked experimental, as it can make the client appear as "synchronizing" indefinitely when used with Liveblocks Storage or Yjs.
 
   </PropertiesListItem>
   <PropertiesListItem
@@ -890,6 +889,13 @@ connects, the new property will be created. Other properties will be unaffected.
 Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
+
+#### Speed up connecting to a room [#speed-up-connecting-to-a-room]
+
+To speed up connecting to a room, you can call
+[`Liveblocks.prewarmRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId-prewarm)
+on the server, which will warm up a room for the next 10 seconds. Triggering
+this directly before a user navigates to a room is an easy to way use this API.
 
 ### Client.getRoom
 
@@ -2802,6 +2808,9 @@ console.log(inboxNotifications);
   <PropertiesListItem name="resolved" type="boolean">
     Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
+  <PropertiesListItem name="subscribed" type="boolean">
+    Only return `subscribed` or `unsubscribed` threads. [Learn more](#filtering-subscribed-status).
+  </PropertiesListItem>
   <PropertiesListItem name="metadata" type="Partial<ThreadMetadata>">
     Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`. [Learn more](#filtering-metadata).
   </PropertiesListItem>
@@ -2818,6 +2827,22 @@ const threads = await room.getThreads({
   query: {
     // +++
     resolved: false,
+    // +++
+  },
+});
+```
+
+#### Filtering subscribed status [#filtering-subscribed-status]
+
+You can filter threads by those that the user is subscribed to, or not, by
+passing a `boolean` to `query.subscribed`.
+
+```ts
+// Filtering for threads that the user is subscribed to
+const threads = await room.getThreads({
+  query: {
+    // +++
+    subscribed: true,
     // +++
   },
 });
@@ -2870,6 +2895,37 @@ const threads = await room.getThreads({
     metadata: {
       assigned: {
         startsWith: "sales:",
+      },
+    },
+    // +++
+  },
+});
+```
+
+You can also filter for metadata using numeric operators.
+
+```ts
+// Creating a thread with `{ posX: 87, level: 5 } metadata
+await room.createThread({
+  body: {
+    // ...
+  },
+  // +++
+  metadata: { posX: 87, level: 5 },
+  // +++
+});
+
+// Filtering for threads with `posX` greater than 50 and lower than 100, and level greater than or equal to 5
+const threads = await room.getThreads({
+  query: {
+    // +++
+    metadata: {
+      posX: {
+        gt: 50,
+        lt: 100,
+      },
+      level: {
+        gte: 5,
       },
     },
     // +++

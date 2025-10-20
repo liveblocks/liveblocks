@@ -480,6 +480,25 @@ the `components` prop. A full list is [available here](#AiChat-components).
     Custom components to override specific parts of the chat UI, such as the
     `Empty` placeholder component or Markdown components.
   </PropertiesListItem>
+  <PropertiesListItem name="responseTimeout" type="number">
+    The time, in milliseconds, before an AI response will timeout. Defaults to
+    30_000.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReasoning" type="boolean | 'during'">
+    Whether to show reasoning. Defaults to `true`. If set to `'during'`,
+    reasoning will only be shown during reasoning.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showRetrievals"
+    type="boolean | 'during' | { ... } | undefined"
+    advancedType="boolean | 'during' | { web?: boolean | 'during', knowledge?: boolean | 'during' } | undefined"
+  >
+    Whether to show retrievals. Defaults to `true`. If set to `'during'`,
+    retrievals will only be shown during retrieval.
+  </PropertiesListItem>
+  <PropertiesListItem name="showSources" type="boolean">
+    Whether to show sources. Defaults to `true`.
+  </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the chat container.
   </PropertiesListItem>
@@ -656,7 +675,7 @@ render: () => (
 ##### Props [#AiTool-props]
 
 <PropertiesList>
-  <PropertiesListItem name="title" type="string">
+  <PropertiesListItem name="title" type="ReactNode">
     The title to display for the tool. If not provided, the tool name will be
     formatted as a human-readable string.
   </PropertiesListItem>
@@ -2845,6 +2864,39 @@ function Notification({ inboxNotification }) {
 }
 ```
 
+##### Batching custom notifications
+
+If you’re
+[batching custom notifications](/docs/api-reference/liveblocks-node#Batching-custom-notifications),
+you can render each activity inside a single notification.
+
+```tsx
+<InboxNotification
+  inboxNotification={inboxNotification}
+  kinds={{
+    $alert: (props) => {
+      // Eached batched `activityData` is added to the `activities` array
+      const { activities } = props.inboxNotification;
+
+      return (
+        <InboxNotification.Custom
+          {...props}
+          title={title}
+          aside={<InboxNotification.Icon>❗</InboxNotification.Icon>}
+        >
+          {activities.map((activity) => (
+            <div key={activity.id}>
+              <div>{activity.data.title}</div>
+              <div>{activity.data.message}</div>
+            </div>
+          ))}
+        </InboxNotification.Custom>
+      );
+    },
+  }}
+/>
+```
+
 ##### Props [#InboxNotification-props]
 
 <PropertiesList>
@@ -3092,16 +3144,13 @@ All hooks for Notifications are in
 
 ## Version History
 
-<Banner title="Contact support for access">
-
-Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
-
-</Banner>
-
-When enabled, version history will automatically create versions of your
+Version history enables you to track and restore versions of your
 [Lexical](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical) or
-[Yjs](/docs/api-reference/liveblocks-yjs) document and allow you to restore to
-specific versions. These components aid in displaying a list of those versions.
+[Yjs](/docs/api-reference/liveblocks-yjs) document. Versions can be
+automatically created when enabled in your project settings, or manually created
+using the
+[REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-version).
+These components aid in displaying a list of those versions.
 
 ### Default components
 

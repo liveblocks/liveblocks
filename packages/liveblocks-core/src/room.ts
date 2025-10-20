@@ -22,7 +22,6 @@ import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
-import { captureStackTrace } from "./lib/debug";
 import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -472,6 +471,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
+    subscribed?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
 };
@@ -1208,9 +1208,6 @@ type RoomState<
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
   readonly unacknowledgedOps: Map<string, Op>;
-
-  // Stack traces of all pending Ops. Used for debugging in non-production builds
-  readonly opStackTraces?: Map<string, string>;
 };
 
 export type Polyfills = {
@@ -1426,12 +1423,6 @@ export function createRoom<
 
     activeBatch: null,
     unacknowledgedOps: new Map<string, Op>(),
-
-    // Debug
-    opStackTraces:
-      process.env.NODE_ENV !== "production"
-        ? new Map<string, string>()
-        : undefined,
   };
 
   let lastTokenKey: string | undefined;
@@ -1548,17 +1539,6 @@ export function createRoom<
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
-    if (process.env.NODE_ENV !== "production") {
-      const stackTrace = captureStackTrace("Storage mutation", onDispatch);
-      if (stackTrace) {
-        for (const op of ops) {
-          if (op.opId) {
-            nn(context.opStackTraces).set(op.opId, stackTrace);
-          }
-        }
-      }
-    }
-
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -1755,6 +1735,11 @@ export function createRoom<
         return;
       }
 
+      // NOTE: This strategy is experimental as it will not work in all situations.
+      // It should only be used for broadcasting, presence updates, but isn't suitable
+      // for Storage or Yjs updates yet (because through this channel the server does
+      // not respond with acks or rejections, causing the client's reported status to
+      // be stuck in "synchronizing" forever).
       case "experimental-fallback-to-http": {
         console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
         const nonce =
@@ -1762,11 +1747,16 @@ export function createRoom<
           raise("Session is not authorized to send message over HTTP");
 
         void httpClient
-          .sendMessages<P, E>({ roomId, nonce, messages })
+          .sendMessagesOverHTTP<P, E>({ roomId, nonce, messages })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
+          })
+          .catch((err) => {
+            console.error(
+              `Failed to deliver message over HTTP: ${String(err)}`
+            );
           });
         return;
       }
@@ -1980,10 +1970,6 @@ export function createRoom<
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
           const opId = nn(op.opId);
-          if (process.env.NODE_ENV !== "production") {
-            nn(context.opStackTraces).delete(opId);
-          }
-
           const deleted = context.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
@@ -2368,41 +2354,6 @@ export function createRoom<
           break;
         }
 
-        // Receiving a RejectedOps message in the client means that the server is no
-        // longer in sync with the client. Trying to synchronize the client again by
-        // rolling back particular Ops may be hard/impossible. It's fine to not try and
-        // accept the out-of-sync reality and throw an error. We look at this kind of bug
-        // as a developer-owned bug. In production, these errors are not expected to happen.
-        case ServerMsgCode.REJECT_STORAGE_OP: {
-          console.errorWithTitle(
-            "Storage mutation rejection error",
-            message.reason
-          );
-
-          if (process.env.NODE_ENV !== "production") {
-            const traces: Set<string> = new Set();
-            for (const opId of message.opIds) {
-              const trace = context.opStackTraces?.get(opId);
-              if (trace) {
-                traces.add(trace);
-              }
-            }
-
-            if (traces.size > 0) {
-              console.warnWithTitle(
-                "The following function calls caused the rejected storage mutations:",
-                `\n\n${Array.from(traces).join("\n\n")}`
-              );
-            }
-
-            throw new Error(
-              `Storage mutations rejected by server: ${message.reason}`
-            );
-          }
-
-          break;
-        }
-
         case ServerMsgCode.THREAD_CREATED:
         case ServerMsgCode.THREAD_DELETED:
         case ServerMsgCode.THREAD_METADATA_UPDATED:
@@ -2415,6 +2366,10 @@ export function createRoom<
           eventHub.comments.notify(message);
           break;
         }
+
+        default:
+          // Ignore unknown server messages
+          break;
       }
     }
 
