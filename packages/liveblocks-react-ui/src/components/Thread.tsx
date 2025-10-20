@@ -490,10 +490,10 @@ export const Thread = forwardRef(
                       ? thread.id
                       : undefined
                   }
-                  additionalActionsClassName={
+                  actionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
-                  additionalActions={
+                  actions={
                     isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
