@@ -163,7 +163,9 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * Additional actions to display in the comment's dropdown.
    */
-  dropdownActions?: ReactNode | ((props: PropsWithChildren) => ReactNode);
+  dropdownActions?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
   /**
    * Override the component's strings.
@@ -847,7 +849,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       align="end"
                       content={
                         typeof dropdownActions === "function" ? (
-                          dropdownActions({ children: defaultDropdownActions })
+                          dropdownActions({
+                            children: defaultDropdownActions,
+                            comment,
+                          })
                         ) : (
                           <>
                             {defaultDropdownActions}
