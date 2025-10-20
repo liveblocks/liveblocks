@@ -49,17 +49,19 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       collaborate, and to create a realtime experience, multiple users must
       be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
 
-      ```tsx file="App.tsx" highlight="11-15"
+      ```tsx file="App.tsx"
       "use client";
 
       import { LiveblocksProvider } from "@liveblocks/react/suspense";
-      import { Room } from "./Room";
+      import { MyApp } from "./MyApp";
 
       export default function App() {
         return (
+          // +++
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <Room />
+            <MyApp />
           </LiveblocksProvider>
+          // +++
         );
       }
       ```
@@ -76,7 +78,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       to get the current project’s notifications, then we’ll
       use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/MyApp.tsx" highlight="1,13-20"
+      ```tsx file="app/MyApp.tsx"
       "use client";
 
       import { useInboxNotifications } from "@liveblocks/react/suspense";
@@ -85,10 +87,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         InboxNotificationList,
       } from "@liveblocks/react-ui";
 
-      export function CollaborativeApp() {
+      export function MyApp() {
+        // +++
         const { inboxNotifications } = useInboxNotifications();
+        // +++
 
         return (
+          // +++
           <InboxNotificationList>
             {inboxNotifications.map((inboxNotification) => (
               <InboxNotification
@@ -97,6 +102,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
               />
             ))}
           </InboxNotificationList>
+          // +++
         );
       }
       ```

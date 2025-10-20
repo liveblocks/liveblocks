@@ -51,13 +51,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
       to a client component in your app.
 
-      ```tsx file="app/NotificationsProvider.tsx" highlight="8-10"
+      ```tsx file="app/Providers.tsx" highlight="8-10"
       "use client";
 
       import { ReactNode } from "react";
       import { LiveblocksProvider } from "@liveblocks/react";
 
-      export function NotificationsProvider({ children }: { children: ReactNode }) {
+      export function Providers({ children }: { children: ReactNode }) {
         return (
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
             {children}
@@ -73,19 +73,19 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepTitle>Add the provider to your layout</StepTitle>
     <StepContent>
 
-      After creating your provider file, it’s time to join it. Import
-      your room into your `layout.tsx` file, and place
-      your collaborative app components inside it.
+      After creating your provider file, it’s time to use it. Import
+      your room into your `layout.tsx` file.
 
-      ```tsx file="app/layout.tsx" highlight="6-1-"
-      import { NotificationsProvider } from "./NotificationsProvider";
-      import { MyApp } from "./MyApp";
+      ```tsx file="app/layout.tsx"
+      import { Providers } from "./Providers";
 
       export default function Layout({ children }) {
         return (
-          <NotificationsProvider>
-            <MyApp />
-          </NotificationsProvider>
+          // +++
+          <Providers>
+            {children}
+          </Providers>
+          // +++
         );
       }
       ```
@@ -102,7 +102,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       to get the current project’s notifications, then we’ll
       use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/MyApp.tsx" highlight="10,13-20"
+      ```tsx file="app/page.tsx" highlight="10,13-20"
       "use client";
 
       import { useInboxNotifications } from "@liveblocks/react/suspense";
@@ -111,7 +111,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         InboxNotificationList,
       } from "@liveblocks/react-ui";
 
-      export function CollaborativeApp() {
+      export default function Page() {
         const { inboxNotifications } = useInboxNotifications();
 
         return (
