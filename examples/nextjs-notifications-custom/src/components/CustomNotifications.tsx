@@ -91,6 +91,26 @@ function SendNotificationButtons() {
       >
         Image upload
       </Button>
+
+      {/* payment or delivery one, the message inside updates every time, its not a list */}
+
+      {/* moved a file, renamed it, set a reviewer, etc */}
+
+      {/* like linear: edited by X, status changed, assign to Y */}
+
+      {/* invoice: submitted, approved, paid */}
+
+      {/* transactions: charged company, refund, payout done */}
+
+      {/* event scheduled, time changed, agenda added, document uploaded */}
+      <Button
+        onClick={async () => {
+          await imageUploadNotification(self.id, {});
+          location.reload();
+        }}
+      >
+        Image upload
+      </Button>
     </div>
   );
 }

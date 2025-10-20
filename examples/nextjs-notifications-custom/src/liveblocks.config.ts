@@ -28,6 +28,26 @@ export type InviteData = {
   roomId: `${string}:${string}:${string}`;
 };
 
+type IssueStatusUpdate = {
+  type: "status";
+  status: string;
+};
+
+type IssueRenameUpdate = {
+  type: "rename";
+  title: string;
+};
+
+type IssueAssignUpdate = {
+  type: "assign";
+  name: string;
+};
+
+export type IssueUpdatedData =
+  | IssueAssignUpdate
+  | IssueRenameUpdate
+  | IssueStatusUpdate;
+
 declare global {
   interface Liveblocks {
     UserMeta: UserMeta;
@@ -36,6 +56,7 @@ declare global {
       $alert: AlertData;
       $imageUpload: ImageUploadData;
       $invite: InviteData;
+      $issueUpdated: IssueUpdatedData;
     };
   }
 }

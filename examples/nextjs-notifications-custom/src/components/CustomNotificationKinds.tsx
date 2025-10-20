@@ -86,3 +86,39 @@ export function InviteNotification({
     </InboxNotification.Custom>
   );
 }
+
+export function IssueUpdatedNotification({
+  inboxNotification,
+}: InboxNotificationCustomKindProps<"$issueUpdated">) {
+  const { activities } = inboxNotification;
+
+  return (
+    <InboxNotification.Custom
+      inboxNotification={inboxNotification}
+      title={<strong>Issue updated</strong>}
+      aside={
+        <div className={styles.warningIcon}>
+          <WarningIcon />
+        </div>
+      }
+    >
+      {activities.map((activity: (typeof activities)[number]) => {
+        const { type } = activity.data;
+
+        if (type === "assign") {
+          return <div>Assigned to {activity.data.name}</div>;
+        }
+
+        if (type === "rename") {
+          return <div>Renamed to {activity.data.title}</div>;
+        }
+
+        if (type === "status") {
+          return <div>Status changed to {activity.data.status}</div>;
+        }
+
+        return null;
+      })}
+    </InboxNotification.Custom>
+  );
+}
