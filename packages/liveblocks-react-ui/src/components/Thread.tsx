@@ -18,6 +18,8 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   ForwardedRef,
+  PropsWithChildren,
+  ReactNode,
   RefAttributes,
   SyntheticEvent,
 } from "react";
@@ -83,6 +85,13 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * Whether to show the composer's formatting controls.
    */
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
+
+  /**
+   * Additional actions to display in a comment's dropdown.
+   */
+  commentDropdownActions?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
   /**
    * The maximum number of comments to show.
@@ -203,6 +212,7 @@ export const Thread = forwardRef(
       showAttachments = true,
       showComposerFormattingControls = true,
       maxVisibleComments,
+      commentDropdownActions,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -528,30 +538,47 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  dropdownActions={
-                    isFirstComment
-                      ? ({ children }) => (
+                  dropdownActions={({ children }) => {
+                    const threadDropdownActions = isFirstComment ? (
+                      <>
+                        <DropdownItem
+                          onSelect={handleSubscribeChange}
+                          onClick={stopPropagation}
+                          icon={
+                            subscriptionStatus === "subscribed" ? (
+                              <BellCrossedIcon />
+                            ) : (
+                              <BellIcon />
+                            )
+                          }
+                        >
+                          {subscriptionStatus === "subscribed"
+                            ? $.THREAD_UNSUBSCRIBE
+                            : $.THREAD_SUBSCRIBE}
+                        </DropdownItem>
+                      </>
+                    ) : null;
+
+                    if (typeof commentDropdownActions === "function") {
+                      return commentDropdownActions({
+                        children: (
                           <>
-                            <DropdownItem
-                              onSelect={handleSubscribeChange}
-                              onClick={stopPropagation}
-                              icon={
-                                subscriptionStatus === "subscribed" ? (
-                                  <BellCrossedIcon />
-                                ) : (
-                                  <BellIcon />
-                                )
-                              }
-                            >
-                              {subscriptionStatus === "subscribed"
-                                ? $.THREAD_UNSUBSCRIBE
-                                : $.THREAD_SUBSCRIBE}
-                            </DropdownItem>
+                            {threadDropdownActions}
                             {children}
                           </>
-                        )
-                      : null
-                  }
+                        ),
+                        comment,
+                      });
+                    }
+
+                    return threadDropdownActions || commentDropdownActions ? (
+                      <>
+                        {threadDropdownActions}
+                        {children}
+                        {commentDropdownActions}
+                      </>
+                    ) : null;
+                  }}
                 />
               );
 
