@@ -528,24 +528,29 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  additionalDropdownItemsBefore={
-                    isFirstComment ? (
-                      <DropdownItem
-                        onSelect={handleSubscribeChange}
-                        onClick={stopPropagation}
-                        icon={
-                          subscriptionStatus === "subscribed" ? (
-                            <BellCrossedIcon />
-                          ) : (
-                            <BellIcon />
-                          )
-                        }
-                      >
-                        {subscriptionStatus === "subscribed"
-                          ? $.THREAD_UNSUBSCRIBE
-                          : $.THREAD_SUBSCRIBE}
-                      </DropdownItem>
-                    ) : null
+                  dropdownActions={
+                    isFirstComment
+                      ? ({ children }) => (
+                          <>
+                            <DropdownItem
+                              onSelect={handleSubscribeChange}
+                              onClick={stopPropagation}
+                              icon={
+                                subscriptionStatus === "subscribed" ? (
+                                  <BellCrossedIcon />
+                                ) : (
+                                  <BellIcon />
+                                )
+                              }
+                            >
+                              {subscriptionStatus === "subscribed"
+                                ? $.THREAD_UNSUBSCRIBE
+                                : $.THREAD_SUBSCRIBE}
+                            </DropdownItem>
+                            {children}
+                          </>
+                        )
+                      : null
                   }
                 />
               );

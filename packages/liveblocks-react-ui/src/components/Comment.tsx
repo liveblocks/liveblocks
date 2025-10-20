@@ -25,6 +25,7 @@ import type {
   ComponentPropsWithoutRef,
   FormEvent,
   MouseEvent,
+  PropsWithChildren,
   ReactNode,
   RefObject,
   SyntheticEvent,
@@ -162,7 +163,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * Additional actions to display in the comment's dropdown.
    */
-  dropdownActions?: ReactNode;
+  dropdownActions?: ReactNode | ((props: PropsWithChildren) => ReactNode);
 
   /**
    * Override the component's strings.
@@ -845,10 +846,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       onOpenChange={setMoreActionOpen}
                       align="end"
                       content={
-                        <>
-                          {defaultDropdownActions}
-                          {dropdownActions}
-                        </>
+                        typeof dropdownActions === "function" ? (
+                          dropdownActions({ children: defaultDropdownActions })
+                        ) : (
+                          <>
+                            {defaultDropdownActions}
+                            {dropdownActions}
+                          </>
+                        )
                       }
                     >
                       <Tooltip content={$.COMMENT_MORE}>
