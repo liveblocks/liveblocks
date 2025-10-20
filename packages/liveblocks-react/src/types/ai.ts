@@ -12,6 +12,12 @@ export type RegisterAiKnowledgeProps = AiKnowledgeSource & {
    * precedence.
    */
   id?: string;
+
+  /**
+   * When provided, the knowledge source will only be available for this chatId.
+   * If not provided, this knowledge source will be available globally.
+   */
+  chatId?: string;
 };
 
 export type RegisterAiToolProps = {
@@ -20,8 +26,7 @@ export type RegisterAiToolProps = {
 
   /**
    * When provided, the tool will only be available for this chatId. If not
-   * provided, this tool will globally be made available to any AiChat
-   * instance.
+   * provided, this tool will be available globally.
    */
   chatId?: string;
 
@@ -40,6 +45,7 @@ export type RegisterAiToolProps = {
  * generation is in progress.
  */
 export type AiChatStatus = Relax<
+  | { status: "disconnected" } // WebSocket connection permanently rejected
   | { status: "loading" }
   | { status: "idle" }
   | { status: "generating" } // Still generating, but there is no content yet

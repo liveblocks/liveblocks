@@ -1,9 +1,55 @@
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## v3.8.1
+
+### `@liveblocks/react`
+
+- Add `chatId` prop to `RegisterAiKnowledge` to scope knowledge to a specific
+  chat, similar to `RegisterAiTool`. This is the same as using the `knowledge`
+  prop on `AiChat`.
+- Fix issue where `useAiChat()` didn't re-render correctly when chat title gets
+  updated.
+
+### `@liveblocks/node`
+
+- Fix issue where `tenantId` was not being passed to the request when using
+  `Liveblocks.createRoom()`.
+- Add `comments:write` to the list of possible room permissions.
+
 ## v3.8.0
 
 ### `@liveblocks/client`
 
 - LiveMap and LiveObject deletions now report which item got deleted in the
   update notifications. LiveLists already did this.
+- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
+  metadata query filters.
 
 ### `@liveblocks/react`
 
@@ -14,13 +60,7 @@
   if so, what type of content is currently generating.
 - Fixes an issue where `useUnreadInboxNotificationsCount` wasn't returning the
   proper count if there were more than a page of unread notifications.
-
 - Support numerical operators `gt`, `lt`, `gte`, and `lte` in `useThreads`
-  metadata query filters.
-
-### `@liveblocks/client`
-
-- Support numerical operators `gt`, `lt`, `gte`, and `lte` in `room.getThreads`
   metadata query filters.
 
 ### `@liveblocks/react-ui`

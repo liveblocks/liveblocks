@@ -10,6 +10,7 @@ import {
  * ```ts
  * const query = objectToQuery({
  *   resolved: true,
+ *   subscribed: true,
  *   metadata: {
  *     status: "open",
  *     priority: 3,
@@ -28,7 +29,7 @@ import {
  * });
  *
  * console.log(query);
- * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:" AND metadata["posX"]>100 AND metadata["posX"]<200 AND metadata["posY"]>=50 AND metadata["posY"]<=300
+ * // resolved:true AND subscribed:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:" AND metadata["posX"]>100 AND metadata["posX"]<200 AND metadata["posY"]>=50 AND metadata["posY"]<=300
  * ```
  */
 type SimpleFilterValue = string | number | boolean | null;
@@ -90,12 +91,13 @@ type NullFilter = {
  * ```ts
  * const query = objectToQuery({
  *  resolved: true,
+ *  subscribed: true,
  *  roomId: {
  *   startsWith: "engineering:",
  *  },
  * });
  * console.log(query);
- * // resolved:true AND roomId^"engineering:"
+ * // resolved:true AND subscribed:true AND roomId^"engineering:"
  * ```
  *
  */

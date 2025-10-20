@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import type { CopilotId } from "@liveblocks/core";
 import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
@@ -8,13 +8,13 @@ import {
   RegisterAiKnowledge,
   useSendAiMessage,
 } from "@liveblocks/react/suspense";
-import { useCallback, useState } from "react";
-import { Popover } from "radix-ui";
 import {
   AiChat,
   AiChatComponentsEmptyProps,
   AiTool,
 } from "@liveblocks/react-ui";
+import { use, useCallback, useState } from "react";
+import { Popover } from "radix-ui";
 
 export default function Page({
   params,
@@ -22,6 +22,9 @@ export default function Page({
   params: Promise<{ chatId: string }>;
 }) {
   const { chatId } = use(params);
+  const copilotId =
+    (process.env.NEXT_PUBLIC_LIVEBLOCKS_DEFAULT_COPILOT_ID as CopilotId) ||
+    undefined;
   const [todos, setTodos] = useState<
     { id: number; title: string; isCompleted: boolean }[]
   >([
@@ -137,6 +140,7 @@ export default function Page({
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId={chatId}
+                    copilotId={copilotId}
                     layout="compact"
                     components={{
                       Empty: AiChatEmptyComponent,

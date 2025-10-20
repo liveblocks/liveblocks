@@ -17,7 +17,6 @@ import type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
-  AiKnowledgeSource,
   AiUserMessage,
   AsyncError,
   AsyncLoading,
@@ -46,6 +45,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  UrlMetadata,
   WithNavigation,
   WithRequired,
 } from "@liveblocks/core";
@@ -56,7 +56,11 @@ import type {
   ReactNode,
 } from "react";
 
-import type { AiChatStatus, RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+import type {
+  AiChatStatus,
+  RegisterAiKnowledgeProps,
+  RegisterAiToolProps,
+} from "./ai";
 
 type UiChatMessage = WithNavigation<AiChatMessage>;
 
@@ -85,11 +89,6 @@ export type UseSendAiMessageOptions = {
    * The maximum timeout for the answer to be generated.
    */
   timeout?: number;
-
-  /**
-   * @internal
-   */
-  knowledge?: AiKnowledgeSource[];
 };
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
@@ -124,6 +123,13 @@ export type ThreadsQuery<M extends BaseMetadata> = {
    * all threads will be returned.
    */
   resolved?: boolean;
+
+  /**
+   * Whether to only return threads that the user is subscribed to or not. If not provided,
+   * all threads will be returned.
+   */
+  subscribed?: boolean;
+
   /**
    * The metadata to filter the threads by. If provided, only threads with metadata that matches
    * the provided metadata will be returned. If not provided, all threads will be returned.
@@ -274,6 +280,9 @@ export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
 
 export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
 export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
+
+export type UrlMetadataAsyncSuccess = AsyncSuccess<UrlMetadata, "metadata">; // prettier-ignore
+export type UrlMetadataAsyncResult = AsyncResult<UrlMetadata, "metadata">; // prettier-ignore
 
 export type { AiChatStatus };
 
@@ -1518,6 +1527,14 @@ export type LiveblocksContextBundle<
        */
       useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
 
+      /**
+       * Returns metadata for a given URL.
+       *
+       * @example
+       * const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
+       */
+      useUrlMetadata(url: string): UrlMetadataAsyncResult;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1609,6 +1626,14 @@ export type LiveblocksContextBundle<
              * ```
              */
             useAiChatStatus(chatId: string, branchId?: MessageId): AiChatStatus;
+
+            /**
+             * Returns metadata for a given URL.
+             *
+             * @example
+             * const { metadata } = useUrlMetadata("https://liveblocks.io");
+             */
+            useUrlMetadata(url: string): UrlMetadataAsyncSuccess;
           }
       >;
     }

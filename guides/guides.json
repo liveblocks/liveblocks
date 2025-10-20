@@ -405,5 +405,12 @@
     "technologies": ["react"],
     "date": "2025-10-16",
     "featured": true
+  },
+  {
+    "title": "How to customize room names in inbox notifications",
+    "path": "/how-to-customize-room-names-in-inbox-notifications",
+    "topics": ["notifications"],
+    "technologies": ["react", "react-notifications"],
+    "date": "2025-10-15"
   }
 ]
