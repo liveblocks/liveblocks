@@ -148,7 +148,10 @@ function LinkPreview({
         <>
           <div className="flex items-center gap-2 whitespace-nowrap flex-grow-1 flex-shrink-1 truncate px-3 py-2">
             <img
-              src={`https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`}
+              src={
+                metadata?.icon ||
+                `https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`
+              }
               alt=""
               className="w-4 h-4 flex-shrink-0 flex-grow-0"
             />
