@@ -7,8 +7,8 @@ meta:
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding an AI
-copilot experience to your React application using the hooks from
+collaborative experiences. Follow the following steps to start adding an
+advanced AI chat to your React application using the hooks from
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
 from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
@@ -29,49 +29,46 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
   </Step>
   <Step>
-    <StepTitle>Create an AI Copilot</StepTitle>
+    <StepTitle>Set up an authentication route</StepTitle>
     <StepContent>
 
-      To create an AI Copilot, navigate to the [Liveblocks dashboard](/dashboard),
-      select your project, and click on the **"Add copilot…"** button.
-      Configure the copilot with your preferred LLM provider (OpenAI, Anthropic, etc.),
-      model, API key, and system prompt.
+      Create an [authentication](/docs/authentication) endpoint at `/api-liveblocks-auth`,
+      passing a unique user ID to [`prepareSession`](/docs/api-reference/liveblocks-node#prepareSession).
+      Each user has their own set of private chats, and this allows Liveblocks to identify who is connecting.
 
-      Alternatively, you can create a copilot programmatically using the
-      [`@liveblocks/node`](/docs/api-reference/liveblocks-node) client:
-
-      ```tsx
+      ```tsx file="Your endpoint at /api/liveblocks-auth"
       import { Liveblocks } from "@liveblocks/node";
 
       const liveblocks = new Liveblocks({
-        secret: "YOUR_PROJECT_SECRET_KEY",
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       });
 
-      await liveblocks.createAiCopilot({
-        name: "Documentation Helper",
-        provider: "openai",
-        providerModel: "gpt-4o-mini",
-        providerApiKey: "sk-...",
-        systemPrompt: "You are an expert at helping users understand technical documentation.",
-      });
+      export async function POST() {
+        // Get the current user from your database
+        const user = {
+          // +++
+          id: "user-1",
+          // +++
+          info: {
+            // Optional. `name`, `avatar`, `color`, custom info.
+          },
+        };
+
+        // Create a session for the current user
+        // +++
+        const session = liveblocks.prepareSession(user.id, {
+          userInfo: user.info,
+        });
+        // +++
+
+        // Give the user access to AI chats
+        session.allow(`*`, session.FULL_ACCESS);
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return new Response(body, { status });
+      }
       ```
-
-      Learn more about AI Copilots in the
-      [AI Copilots](/docs/ready-made-features/ai-copilots) overview page.
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
-    <StepContent>
-
-      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
-
-      ```bash
-      npx create-liveblocks-app@latest --init --framework react
-      ```
-
     </StepContent>
 
   </Step>
@@ -79,54 +76,24 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
-      Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
-      You'll need to set up an authentication endpoint to identify users and manage access to chats.
+      To connect the user to their chats, you must
+      add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component in your app.
 
-      ```tsx file="App.tsx" highlight="8"
+      ```tsx file="App.tsx"
       "use client";
 
-      import { LiveblocksProvider } from "@liveblocks/react";
-      import { AiChat } from "@liveblocks/react-ui";
+      import { LiveblocksProvider } from "@liveblocks/react/suspense";
+      import { MyApp } from "./MyApp";
 
       export default function App() {
         return (
+          // +++
           <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-            {/* ... */}
+            <MyApp />
           </LiveblocksProvider>
+          // +++
         );
-      }
-      ```
-
-      Your authentication endpoint should look like this:
-
-      ```tsx file="api/liveblocks-auth.ts"
-      import { Liveblocks } from "@liveblocks/node";
-
-      const liveblocks = new Liveblocks({
-        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-      });
-
-      export async function POST(req: Request) {
-        // Get the current user from your database
-        const user = {
-          id: "user-1",
-          info: {
-            name: "John Doe",
-            avatar: "https://example.com/avatar.png",
-          },
-        };
-
-        // Create a session for the current user
-        const session = liveblocks.prepareSession(user.id, {
-          userInfo: user.info,
-        });
-
-        // Give the user access to AI chats
-        session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
-
-        // Authorize the user and return the result
-        const { status, body } = await session.authorize();
-        return new Response(body, { status });
       }
       ```
 
@@ -139,28 +106,31 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       Now you can add the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
       component to your application. This component renders a fully-featured AI
-      chat interface with message history and a composer.
+      chat interface with message history and a composer. You can add
+      [tools](/docs/ready-made-features/ai-copilots/tools), [knowledge](/docs/ready-made-features/ai-copilots/knowledge),
+      and use [hooks](/docs/reaady-made-features/ai-copilots/hooks).
 
-      ```tsx file="App.tsx" highlight="9-13"
+      ```tsx file="MyApp.tsx"
       "use client";
 
-      import { LiveblocksProvider } from "@liveblocks/react";
       import { AiChat } from "@liveblocks/react-ui";
+      import { RegisterAiTool, RegisterAiKnowledge } from "@liveblocks/react-ui";
 
-      export default function App() {
+      export function MyApp() {
         return (
-          <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+          <>
+            // +++
             <AiChat
               chatId="my-first-chat"
-              copilotId="my-copilot-id"
+              // copilotId="co_aH1j2..."
             />
-          </LiveblocksProvider>
+            // +++
+            <RegisterAiTool {/* ... */} />
+            <RegisterAiKnowledge {/* ... */} />
+          </>
         );
       }
       ```
-
-      Make sure to replace `my-copilot-id` with the ID of the copilot you created
-      earlier. You can find this ID in the Liveblocks dashboard.
 
     </StepContent>
 
@@ -180,16 +150,16 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
   </Step>
   <Step lastStep>
-    <StepTitle>Next: add custom tools and knowledge</StepTitle>
+    <StepTitle>Next: create a copilot</StepTitle>
     <StepContent>
 
-      AI Copilots is set up and working now! The next steps are to add custom
-      tools that your copilot can use to interact with your application, and
-      provide knowledge about your application state.
+      AI Copilots is set up and working, but it’s using our default AI model
+      and prompt—the next step is to create a custom copilot
+      using your preferred AI provider and configuration.
 
-      <Button asChild className="not-markdown">
-        <a href="/docs/ready-made-features/ai-copilots/tools">
-          Add custom tools
+      <Button asChild  className="not-markdown">
+        <a href="/docs/ready-made-features/ai-copilots/copilots">
+          Create a copilot
         </a>
       </Button>
     </StepContent>
@@ -202,7 +172,50 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 Congratulations! You’ve set up the foundation to start building an AI copilot
 experience for your React application.
 
-- [AI Copilots overview](/docs/ready-made-features/ai-copilots)
-- [@liveblocks/react AI Copilots API](/docs/api-reference/liveblocks-react#AI-Copilots)
-- [@liveblocks/react-ui AI Copilots API](/docs/api-reference/liveblocks-react-ui#AI-Copilots)
-- [Styling and customization](/docs/ready-made-features/ai-copilots/default-components)
+- [Overview of all features and where to start](/docs/ready-made-features/ai-copilots)
+- [@liveblocks/react API reference](/docs/api-reference/liveblocks-react#AI-Copilots)
+- [@liveblocks/react-ui API reference](/docs/api-reference/liveblocks-react-ui#AI-Copilots)
+- [How to use a fallback AI model](/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots)
+
+---
+
+## Examples using React
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Chats",
+      slug: "ai-chats/nextjs-ai-chats",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Reports Dashboard",
+      slug: "ai-dashboard-reports/nextjs-ai-dashboard-reports",
+      image: "/images/examples/thumbnails/ai-reports-dashboard.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Support Chat",
+      slug: "ai-support-chat/nextjs-ai-support-chat",
+      image: "/images/examples/thumbnails/ai-support.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI App Builder",
+      slug: "ai-app-builder/nextjs-ai-app-builder",
+      image: "/images/examples/thumbnails/ai-app-builder.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>
