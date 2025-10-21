@@ -8,7 +8,7 @@ err () {
 }
 
 usage () {
-    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] [-f] <pkgdir> [<pkgdir>...]"
+    err "usage: release.sh [-h] [-V <version>] [-p] [-m <message>] [-f] [-w] <pkgdir> [<pkgdir>...]"
     err
     err "Prepare a release by updating files in this repo."
     err "Run this prior to publishing to NPM (or elsewhere, e.g. DevTools)."
@@ -17,6 +17,7 @@ usage () {
     err "    -p   push the bump commit (no need if publish.sh is called afterwards)"
     err "    -m   improve the commit message by specifying what was bumped"
     err "    -f   force version update (use --force flag with npm version)"
+    err "    -w   disable workspace updates (use --workspaces-update false with npm version)"
     err ""
 }
 
@@ -24,12 +25,14 @@ VERSION=
 PUSH_COMMIT="false"
 COMMIT_MESSAGE="Bump to "
 FORCE_FLAG=""
-while getopts V:p:m:fh flag; do
+WORKSPACES_UPDATE_FLAG=""
+while getopts V:p:m:fwh flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         p) PUSH_COMMIT="true";;
         m) COMMIT_MESSAGE=$OPTARG;;
         f) FORCE_FLAG="--force";;
+        w) WORKSPACES_UPDATE_FLAG="--workspaces-update false";;
         *) usage; exit 2;;
     esac
 done
@@ -80,7 +83,7 @@ update_package_version () {
     PKGNAME="$( get_package_name_from_dir "$PKGDIR" )"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version --workspaces-update false && update_dependencies_to_new_package_versions "$2" )
+    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version $WORKSPACES_UPDATE_FLAG && update_dependencies_to_new_package_versions "$2" )
 }
 
 commit_to_git () {
