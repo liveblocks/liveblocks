@@ -1,4 +1,4 @@
-## v3.9.1 (Not yet published)
+## v3.9.1
 
 ### `@liveblocks/node`
 
