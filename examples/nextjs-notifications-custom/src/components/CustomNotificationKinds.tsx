@@ -22,7 +22,7 @@ import { ReactNode } from "react";
 // Types for your custom notification kinds are defined in `/liveblocks.config.ts`
 // https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typing-custom-notifications
 
-https: export function AlertNotification({
+export function AlertNotification({
   inboxNotification,
 }: InboxNotificationCustomKindProps<"$alert">) {
   const { title, message } = inboxNotification.activities[0].data;
