@@ -92,3 +92,8 @@ export const USER_INFO: UserMeta[] = [
 export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || null;
 }
+
+export function getRandomStatus() {
+  const statuses = ["To Do", "In Progress", "In Review", "Done"];
+  return statuses[Math.floor(Math.random() * statuses.length)];
+}

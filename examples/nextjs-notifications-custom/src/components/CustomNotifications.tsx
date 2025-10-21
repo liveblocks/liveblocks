@@ -25,7 +25,7 @@ import {
   IssueUpdatedNotification,
 } from "./CustomNotificationKinds";
 import { nanoid } from "nanoid";
-import { USER_INFO } from "../database";
+import { USER_INFO, getRandomStatus } from "../database";
 
 export function CustomNotifications() {
   return (
@@ -247,18 +247,6 @@ function newSubjectId() {
   const subjectId = nanoid();
   localStorage.setItem("subjectId", subjectId);
   return subjectId;
-}
-
-function getRandomStatus() {
-  const statuses = [
-    "To Do",
-    "In Progress",
-    "In Review",
-    "Done",
-    "Blocked",
-    "Cancelled",
-  ];
-  return statuses[Math.floor(Math.random() * statuses.length)];
 }
 
 function getRandomIssueName() {
