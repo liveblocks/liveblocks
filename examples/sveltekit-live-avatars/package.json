@@ -19,7 +19,7 @@
     "svelte": "^4.2.19",
     "tslib": "^2.4.1",
     "typescript": "^5.4.5",
-    "vite": "^5.4.14"
+    "vite": "^5.4.21"
   },
   "dependencies": {
     "@liveblocks/client": "^3.7.1",
