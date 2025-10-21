@@ -40,6 +40,7 @@
 
 .buttonSecondary {
   background: var(--color-surface);
+  border: 1px solid var(--color-border-contrasted);
   color: var(--color-text-light);
 }
 
