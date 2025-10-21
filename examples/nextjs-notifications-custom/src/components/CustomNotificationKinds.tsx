@@ -3,9 +3,24 @@ import {
   InboxNotificationCustomKindProps,
 } from "@liveblocks/react-ui";
 import styles from "./CustomNotificationKinds.module.css";
-import { WarningIcon } from "./Icons";
+import {
+  IssueIcon,
+  ProgressDoneIcon,
+  ProgressInReviewIcon,
+  ProgressInProgressIcon,
+  ProgressTodoIcon,
+  WarningIcon,
+} from "./Icons";
 import { Button } from "./Button";
 import { useRoomInfo, useUser } from "@liveblocks/react/suspense";
+import { getUser } from "../database";
+import { ReactNode } from "react";
+
+// How to render custom notification kinds
+// https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently
+//
+// Types for your custom notification kinds are defined in `/liveblocks.config.ts`
+// https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typing-custom-notifications
 
 export function AlertNotification({
   inboxNotification,
@@ -84,5 +99,90 @@ export function InviteNotification({
         <Button variant="secondary">Decline</Button>
       </div>
     </InboxNotification.Custom>
+  );
+}
+
+// This is a custom notification kind that displays batched notifications.
+// Each batched notification appears as a new activity in the list.
+export function IssueUpdatedNotification({
+  inboxNotification,
+}: InboxNotificationCustomKindProps<"$issueUpdated">) {
+  const { activities } = inboxNotification;
+
+  return (
+    <InboxNotification.Custom
+      inboxNotification={inboxNotification}
+      title={<strong>New issue</strong>}
+      aside={
+        <div className={styles.issueIcon}>
+          <IssueIcon />
+        </div>
+      }
+    >
+      <div className={styles.timeline}>
+        {[...activities]
+          .reverse()
+          .map((activity: (typeof activities)[number], index) => {
+            const { type } = activity.data;
+
+            if (type === "assign") {
+              const user = getUser(activity.data.userId);
+
+              return (
+                <TimelineItem key={index}>
+                  Assigned to{" "}
+                  <InboxNotification.Avatar
+                    userId={activity.data.userId}
+                    style={{ width: 18 }}
+                  />
+                  <strong>{user?.info.name ?? "Unknown user"}</strong>
+                </TimelineItem>
+              );
+            }
+
+            if (type === "rename") {
+              return (
+                <TimelineItem key={index}>
+                  Renamed to <strong>“{activity.data.title}”</strong>
+                </TimelineItem>
+              );
+            }
+
+            if (type === "status") {
+              const status = activity.data.status;
+              const icon =
+                status === "Done" ? (
+                  <ProgressDoneIcon />
+                ) : status === "In Review" ? (
+                  <ProgressInReviewIcon />
+                ) : status === "In Progress" ? (
+                  <ProgressInProgressIcon />
+                ) : (
+                  <ProgressTodoIcon />
+                );
+              return (
+                <TimelineItem key={index}>
+                  Changed to {icon}
+                  <strong>{activity.data.status}</strong>
+                </TimelineItem>
+              );
+            }
+
+            return null;
+          })}
+      </div>
+    </InboxNotification.Custom>
+  );
+}
+
+export function TimelineItem({ children }: { children: ReactNode }) {
+  return (
+    <div className={styles.timelineItem}>
+      <div className={styles.timelineConnector}>
+        <div className={styles.timelineCircle} />
+        <div className={styles.timelineLine} />
+      </div>
+      <div className={styles.timelineContent}>{children}</div>
+    </div>
   );
 }
