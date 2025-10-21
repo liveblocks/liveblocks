@@ -1195,7 +1195,7 @@
     "/rooms/{roomId}/ydoc-binary": {
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
-        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
+        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -1219,7 +1219,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the room’s Yjs document encoded as a binary Yjs update.",
+            "description": "Success. Returns the room's Yjs document encoded as a binary Yjs update.",
             "content": {
               "application/octet-stream": {
                 "schema": {
@@ -1239,6 +1239,187 @@
           }
         },
         "operationId": "get-rooms-roomId-ydoc-binary"
+      }
+    },
+    "/rooms/{roomId}/versions": {
+      "get": {
+        "summary": "Get Yjs version history",
+        "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
+        "tags": ["Yjs"],
+        "operationId": "get-rooms-roomId-versions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of version history snapshots and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetYjsVersions"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "data": [
+                        {
+                          "type": "historyVersion",
+                          "id": "vh_abc123",
+                          "createdAt": "2024-10-15T10:30:00.000Z",
+                          "authors": [
+                            {
+                              "id": "user-123"
+                            },
+                            {
+                              "id": "user-456"
+                            }
+                          ],
+                          "kind": "yjs"
+                        }
+                      ],
+                      "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/version/{versionId}": {
+      "get": {
+        "summary": "Get Yjs document version",
+        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
+        "tags": ["Yjs"],
+        "operationId": "get-rooms-roomId-version-versionId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the version"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the Yjs document version as a binary stream.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/version": {
+      "post": {
+        "summary": "Create Yjs version snapshot",
+        "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
+        "tags": ["Yjs"],
+        "operationId": "post-rooms-roomId-version",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created version ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateYjsVersion"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "data": {
+                        "id": "vh_abc123"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
       }
     },
     "/rooms/{roomId}/threads": {
@@ -4791,6 +4972,75 @@
             }
           }
         }
+      },
+      "GetYjsVersions": {
+        "title": "GetYjsVersions",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string",
+            "description": "Cursor for pagination to get the next page of results"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["historyVersion"],
+                  "description": "Type identifier for the version history object"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the version"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 timestamp of when the version was created"
+                },
+                "authors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "User ID of the author"
+                      }
+                    }
+                  },
+                  "description": "List of users who contributed to this version"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["yjs"],
+                  "description": "Type of document (yjs for Yjs documents)"
+                }
+              },
+              "required": ["type", "id", "createdAt", "authors", "kind"]
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "CreateYjsVersion": {
+        "title": "CreateYjsVersion",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the created version"
+              }
+            },
+            "required": ["id"]
+          }
+        },
+        "required": ["data"]
       },
       "ActiveUsersResponse": {
         "title": "ActiveUsersResponse",

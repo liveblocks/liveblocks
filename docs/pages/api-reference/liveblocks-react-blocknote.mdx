@@ -720,12 +720,6 @@ offset that’s added when a thread is selected.
 
 ### HistoryVersionPreview [@badge=beta]
 
-<Banner title="Contact support for access">
-
-Version History is an add-on feature, available by contacting support. Please [contact us](https://liveblocks.io/contact/sales) and we'd love to help you get started.
-
-</Banner>
-
 The `HistoryVersionPreview` component allows you to display a preview of a
 specific version of your BlockNote editor’s content. It also contains a button
 and logic for restoring. It must be used inside the `<LiveblocksPlugin>`
@@ -1037,7 +1031,10 @@ const status = useIsEditorReady();
 Here's how it can be used in the context of your editor.
 
 ```tsx
-import { useCreateBlockNoteWithLiveblocks, useIsEditorReady } from "@liveblocks/react-blocknote";
+import {
+  useCreateBlockNoteWithLiveblocks,
+  useIsEditorReady,
+} from "@liveblocks/react-blocknote";
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {

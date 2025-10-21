@@ -18,6 +18,63 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 42 (2025-10-17)
+
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## Dashboard
+
+- Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
+  - New “Kinds” tab, allowing you to define batching per kind.
+  - See the status of your webhooks from here.
+  - Warnings when no webhooks are set up, and shortcuts to get started.
+- Improved “Webhooks” page.
+  - Set a rate limit for your webhooks when creating them.
+  - More detailed error messages when creating webhooks.
+  - Better UX on the URL input.
+- Improved UX when creating projects 
+  - New polished project cards displaying more info such as region restrictions.
+  - More clarity in project creation dialog boxes.
+- Improved team/project selectors with UI polish and better accessibility.
+- Improved MAU usage cards showing your team’s personalized limits.
+- More clarity in project settings regarding environment and regions not being editable.
+- Fixed problem downloading examples with `create-liveblocks-app` integration.
+
+## Documentation
+
+- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+- Better clarity on Storage/Yjs limits.
+
+## Contributors
+
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant, ctnicholas
+
 # Week 41 (2025-10-10)
 
 ## v3.8.1
