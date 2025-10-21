@@ -100,8 +100,8 @@ function SendNotificationButtons() {
       <h3>Batched notifications</h3>
       {/*
         For batched notifications to work you must enable batching in the
-        Noticications page of the dashboard for the kind. This example
-        uses the $issueUpdated kind.
+        Notifications dashboard page for the custom kind. This example
+        uses the `$issueUpdated` kind.
         https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching
 
         If you then post using the same `subjectId` the existing notification
@@ -109,7 +109,7 @@ function SendNotificationButtons() {
         the last used `subjectId` in local storage for demonstration purposes.
         https://liveblocks.io/docs/api-reference/liveblocks-node#Batching-custom-notifications
 
-        In our custom IssueUpdatedNotification component we then render the
+        In our custom `IssueUpdatedNotification` component we then render the
         acitivies as a list inside the notification.
         https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Batching-custom-notifications
       */}

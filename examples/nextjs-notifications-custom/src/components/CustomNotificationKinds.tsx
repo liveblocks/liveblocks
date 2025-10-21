@@ -102,6 +102,8 @@ export function InviteNotification({
   );
 }
 
+// This is a custom notification kind that displays batched notifications.
+// Each batched notification appears as a new activity in the list.
 export function IssueUpdatedNotification({
   inboxNotification,
 }: InboxNotificationCustomKindProps<"$issueUpdated">) {
