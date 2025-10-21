@@ -15,13 +15,17 @@ import {
   alertNotification,
   inviteNotification,
   imageUploadNotification,
+  issueUpdatedNotification,
 } from "../actions";
 import { Button } from "./Button";
 import {
   AlertNotification,
   ImageUploadNotification,
   InviteNotification,
+  IssueUpdatedNotification,
 } from "./CustomNotificationKinds";
+import { nanoid } from "nanoid";
+import { USER_INFO } from "../database";
 
 export function CustomNotifications() {
   return (
@@ -54,63 +58,132 @@ function SendNotificationButtons() {
   const self = useSelf();
 
   return (
-    <div className={styles.buttonBar}>
-      <Button
-        onClick={async () => {
-          await alertNotification(self.id, {
-            title: "Warning!",
-            message: "Your account may be at risk if you don’t take action.",
-          });
-          location.reload();
-        }}
-      >
-        Alert
-      </Button>
+    <div>
+      <div className={styles.buttonBar}>
+        <Button
+          onClick={async () => {
+            await alertNotification(self.id, {
+              title: "Warning!",
+              message: "Your account may be at risk if you don’t take action.",
+            });
+            location.reload();
+          }}
+        >
+          Alert
+        </Button>
 
-      <Button
-        onClick={async () => {
-          await inviteNotification(self.id, {
-            inviteFrom: "emil.joyce@example.com",
-            roomId: "my-org:my-team:room-1",
-          });
-          location.reload();
-        }}
-      >
-        Invite
-      </Button>
+        <Button
+          onClick={async () => {
+            await inviteNotification(self.id, {
+              inviteFrom: "emil.joyce@example.com",
+              roomId: "my-org:my-team:room-1",
+            });
+            location.reload();
+          }}
+        >
+          Invite
+        </Button>
 
-      <Button
-        onClick={async () => {
-          await imageUploadNotification(self.id, {
-            src: "/atoll.png",
-            alt: "A Polynesian atoll",
-            uploadedBy: "quinn.elton@example.com",
-          });
-          location.reload();
-        }}
-      >
-        Image upload
-      </Button>
+        <Button
+          onClick={async () => {
+            await imageUploadNotification(self.id, {
+              src: "/atoll.png",
+              alt: "A Polynesian atoll",
+              uploadedBy: "quinn.elton@example.com",
+            });
+            location.reload();
+          }}
+        >
+          Image upload
+        </Button>
 
-      {/* payment or delivery one, the message inside updates every time, its not a list */}
+        {/* payment or delivery one, the message inside updates every time, its not a list */}
 
-      {/* moved a file, renamed it, set a reviewer, etc */}
+        {/* moved a file, renamed it, set a reviewer, etc */}
 
-      {/* like linear: edited by X, status changed, assign to Y */}
+        {/* like linear: edited by X, status changed, assign to Y */}
 
-      {/* invoice: submitted, approved, paid */}
+        {/* invoice: submitted, approved, paid */}
 
-      {/* transactions: charged company, refund, payout done */}
+        {/* transactions: charged company, refund, payout done */}
 
-      {/* event scheduled, time changed, agenda added, document uploaded */}
-      <Button
-        onClick={async () => {
-          await imageUploadNotification(self.id, {});
-          location.reload();
-        }}
-      >
-        Image upload
-      </Button>
+        {/* event scheduled, time changed, agenda added, document uploaded */}
+      </div>
+      <h3>Batched notifications</h3>
+      {/*
+        For batched notifications to work you must enable batching in the
+        Noticications page of the dashboard for the kind. This example
+        uses the $issueUpdated kind.
+
+        Dashboard: https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching
+
+        If you then post using the same `subjectId` the existing notification
+        will be updated with new `activityData`. In this example we're storing
+        the last used `subjectId` in local storage for demonstration purposes.
+
+        Sending activities: https://liveblocks.io/docs/api-reference/liveblocks-node#Batching-custom-notifications
+
+        In our custom IssueUpdatedNotification component we then render the
+        acitivies as a list inside the notification.
+        
+        Rendering activies: https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Batching-custom-notifications
+      */}
+      <div className={styles.buttonBar}>
+        <Button
+          onClick={async () => {
+            await issueUpdatedNotification(self.id, {
+              subjectId: newSubjectId(),
+              type: "create",
+              title: "New issue",
+            });
+            location.reload();
+          }}
+        >
+          New issue
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            await issueUpdatedNotification(self.id, {
+              subjectId: getSubjectId(),
+              type: "status",
+              status: getRandomStatus(),
+            });
+            location.reload();
+          }}
+        >
+          Update status
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            await issueUpdatedNotification(self.id, {
+              subjectId: getSubjectId(),
+              type: "rename",
+              title: getRandomIssueName(),
+            });
+            location.reload();
+          }}
+        >
+          Rename issue
+        </Button>
+
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            await issueUpdatedNotification(self.id, {
+              subjectId: getSubjectId(),
+              type: "assign",
+              userId: getRandomUser().id,
+            });
+            location.reload();
+          }}
+        >
+          Assign issue
+        </Button>
+      </div>
     </div>
   );
 }
@@ -124,6 +197,8 @@ function NotificationPanel() {
   if (inboxNotifications.length === 0) {
     return <div>No notifications yet</div>;
   }
+
+  console.log(inboxNotifications);
 
   return (
     <>
@@ -147,10 +222,61 @@ function NotificationPanel() {
               $alert: AlertNotification,
               $imageUpload: ImageUploadNotification,
               $invite: InviteNotification,
+              $issueUpdated: IssueUpdatedNotification,
             }}
           />
         ))}
       </InboxNotificationList>
     </>
   );
+}
+
+function getSubjectId() {
+  const existingId = localStorage.getItem("subjectId");
+
+  if (typeof existingId === "string") {
+    return existingId;
+  }
+
+  const newId = nanoid();
+  localStorage.setItem("subjectId", newId);
+  return newId;
+}
+
+function newSubjectId() {
+  const subjectId = nanoid();
+  localStorage.setItem("subjectId", subjectId);
+  return subjectId;
+}
+
+function getRandomStatus() {
+  const statuses = [
+    "To Do",
+    "In Progress",
+    "In Review",
+    "Done",
+    "Blocked",
+    "Cancelled",
+  ];
+  return statuses[Math.floor(Math.random() * statuses.length)];
+}
+
+function getRandomIssueName() {
+  const issueNames = [
+    "Fix login bug",
+    "Implement dark mode",
+    "Add user authentication",
+    "Optimize database queries",
+    "Update documentation",
+    "Refactor component structure",
+    "Add error handling",
+    "Improve performance",
+    "Fix responsive design",
+    "Add unit tests",
+  ];
+  return issueNames[Math.floor(Math.random() * issueNames.length)];
+}
+
+function getRandomUser() {
+  return USER_INFO[Math.floor(Math.random() * USER_INFO.length)];
 }

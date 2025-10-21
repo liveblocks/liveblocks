@@ -22,7 +22,7 @@ export function getRoom(id: string) {
   return ROOMS.find((u) => u.id === id) || null;
 }
 
-const USER_INFO: UserMeta[] = [
+export const USER_INFO: UserMeta[] = [
   {
     id: "charlie.layne@example.com",
     info: {

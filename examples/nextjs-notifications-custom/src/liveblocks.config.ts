@@ -28,6 +28,11 @@ export type InviteData = {
   roomId: `${string}:${string}:${string}`;
 };
 
+type IssueCreatedUpdate = {
+  type: "create";
+  title: string;
+};
+
 type IssueStatusUpdate = {
   type: "status";
   status: string;
@@ -40,10 +45,11 @@ type IssueRenameUpdate = {
 
 type IssueAssignUpdate = {
   type: "assign";
-  name: string;
+  userId: string;
 };
 
 export type IssueUpdatedData =
+  | IssueCreatedUpdate
   | IssueAssignUpdate
   | IssueRenameUpdate
   | IssueStatusUpdate;

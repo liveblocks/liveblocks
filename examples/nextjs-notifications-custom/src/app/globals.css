@@ -206,3 +206,13 @@ h2 {
   margin: 18px 0;
   font-weight: bold;
 }
+
+h3 {
+  font-size: 18px;
+  margin: 32px 0 12px;
+  font-weight: 600;
+}
+
+strong {
+  font-weight: 600;
+}

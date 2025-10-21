@@ -3,9 +3,10 @@ import {
   InboxNotificationCustomKindProps,
 } from "@liveblocks/react-ui";
 import styles from "./CustomNotificationKinds.module.css";
-import { WarningIcon } from "./Icons";
+import { IssueIcon, WarningIcon } from "./Icons";
 import { Button } from "./Button";
 import { useRoomInfo, useUser } from "@liveblocks/react/suspense";
+import { getUser } from "../database";
 
 export function AlertNotification({
   inboxNotification,
@@ -95,26 +96,40 @@ export function IssueUpdatedNotification({
   return (
     <InboxNotification.Custom
       inboxNotification={inboxNotification}
-      title={<strong>Issue updated</strong>}
+      title={<strong>New issue</strong>}
       aside={
-        <div className={styles.warningIcon}>
-          <WarningIcon />
+        <div className={styles.issueIcon}>
+          <IssueIcon />
         </div>
       }
     >
-      {activities.map((activity: (typeof activities)[number]) => {
+      {activities.map((activity: (typeof activities)[number], index) => {
         const { type } = activity.data;
 
         if (type === "assign") {
-          return <div>Assigned to {activity.data.name}</div>;
+          const user = getUser(activity.data.userId);
+
+          return (
+            <div key={index}>
+              Assigned to <strong>{user?.info.name ?? "Unknown user"}</strong>
+            </div>
+          );
         }
 
         if (type === "rename") {
-          return <div>Renamed to {activity.data.title}</div>;
+          return (
+            <div key={index}>
+              Renamed to <strong>{activity.data.title}</strong>
+            </div>
+          );
         }
 
         if (type === "status") {
-          return <div>Status changed to {activity.data.status}</div>;
+          return (
+            <div key={index}>
+              Status changed to <strong>{activity.data.status}</strong>
+            </div>
+          );
         }
 
         return null;
