@@ -9,6 +9,9 @@ import {
   IssueUpdatedData,
 } from "./liveblocks.config";
 
+// Functions that trigger custom notifications
+// https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger
+
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });

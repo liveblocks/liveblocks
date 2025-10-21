@@ -96,37 +96,22 @@ function SendNotificationButtons() {
         >
           Image upload
         </Button>
-
-        {/* payment or delivery one, the message inside updates every time, its not a list */}
-
-        {/* moved a file, renamed it, set a reviewer, etc */}
-
-        {/* like linear: edited by X, status changed, assign to Y */}
-
-        {/* invoice: submitted, approved, paid */}
-
-        {/* transactions: charged company, refund, payout done */}
-
-        {/* event scheduled, time changed, agenda added, document uploaded */}
       </div>
       <h3>Batched notifications</h3>
       {/*
         For batched notifications to work you must enable batching in the
         Noticications page of the dashboard for the kind. This example
         uses the $issueUpdated kind.
-
-        Dashboard: https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching
+        https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching
 
         If you then post using the same `subjectId` the existing notification
         will be updated with new `activityData`. In this example we're storing
         the last used `subjectId` in local storage for demonstration purposes.
-
-        Sending activities: https://liveblocks.io/docs/api-reference/liveblocks-node#Batching-custom-notifications
+        https://liveblocks.io/docs/api-reference/liveblocks-node#Batching-custom-notifications
 
         In our custom IssueUpdatedNotification component we then render the
         acitivies as a list inside the notification.
-        
-        Rendering activies: https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Batching-custom-notifications
+        https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Batching-custom-notifications
       */}
       <div className={styles.buttonBar}>
         <Button
@@ -198,8 +183,6 @@ function NotificationPanel() {
     return <div>No notifications yet</div>;
   }
 
-  console.log(inboxNotifications);
-
   return (
     <>
       <div className={styles.topBar}>
@@ -231,6 +214,7 @@ function NotificationPanel() {
   );
 }
 
+// All functions below are just used to generate random data for the demo
 function getSubjectId() {
   const existingId = localStorage.getItem("subjectId");
 
