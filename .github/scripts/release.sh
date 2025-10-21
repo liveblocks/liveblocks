@@ -80,7 +80,7 @@ update_package_version () {
     PKGNAME="$( get_package_name_from_dir "$PKGDIR" )"
 
     echo "==> Updating package.json version for $PKGNAME"
-    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version && update_dependencies_to_new_package_versions "$2" )
+    ( cd "$PKGDIR" && npm version "$VERSION" $FORCE_FLAG --no-git-tag-version --workspaces-update false && update_dependencies_to_new_package_versions "$2" )
 }
 
 commit_to_git () {
