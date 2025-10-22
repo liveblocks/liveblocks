@@ -619,7 +619,7 @@
  *************************************/
 
 /* Give a remote user a caret */
-.collaboration-caret__caret,
+.collaboration-carets__caret,
 .collaboration-cursor__caret {
   position: relative;
   margin-inline-start: -1px;
@@ -631,7 +631,7 @@
 }
 
 /* Render the username above the caret */
-.collaboration-caret__label,
+.collaboration-carets__label,
 .collaboration-cursor__label {
   position: absolute;
   inset-inline-start: -1px;
