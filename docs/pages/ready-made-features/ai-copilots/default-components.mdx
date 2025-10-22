@@ -17,10 +17,17 @@ render custom in-chat components.
 
 ## AiChat
 
-The [`AiChat`][] component renders an AI chat, with a chat history, a composer
-for adding new messages, and a toolbar for adding AI actions.
+The [`AiChat`][] component renders an AI chat, with a chat history and a
+composer for adding new messages.
 
-{/* TODO AiChat image */}
+<Figure>
+  <Image
+    src="/assets/ai-copilots/ai-chat.jpg"
+    alt="AiChat"
+    width={768}
+    height={446}
+  />
+</Figure>
 
 ### Usage
 
@@ -42,11 +49,13 @@ later.
 
 ## AiTool
 
-The [`AiTool`][] component renders
-[tools](/docs/ready-made-features/ai-copilots/features#tools) called in AI
-chats. It shows the tool’s name, its stage (e.g. a spinner when executing, a
-checkmark when successful, etc.), and optionally an icon and custom content
-inside it.
+When
+[registering a tool](/docs/ready-made-features/ai-copilots/tools#Registering-a-tool),
+the [`AiTool`][] component can be used to
+[show tool progress and results](/docs/ready-made-features/ai-copilots/tools)
+within AI chats. It shows the tool’s name, its stage (e.g. a spinner when
+executing, a checkmark when successful, etc.), and optionally an icon and custom
+content inside it.
 
 {/* TODO AiTool image */}
 
@@ -77,23 +86,77 @@ function App() {
             );
             return { data: { temperature, condition } };
           },
-          render: ({ result }) => (
-            // +++
-            <AiTool>
-              {result.data ? (
-                <div>
-                  {result.data.temperature}°F - {result.data.condition}
-                </div>
-              ) : null}
-            </AiTool>
-            // +++
-          ),
+          render: ({ result }) => {
+            return (
+              // +++
+              <AiTool title="Weather" icon="🌤️">
+                {result.data ? (
+                  <div>
+                    {result.data.temperature}°F - {result.data.condition}
+                  </div>
+                ) : null}
+              </AiTool>
+              // +++
+            );
+          },
         })}
       />
       <AiChat chatId="my-chat" />
     </>
   );
 }
+```
+
+## AiTool.Confirmation
+
+Inside of tools, the [`AiTool.Confirmation`][] component is a sub-component of
+[`AiTool`][] that renders confirm/deny buttons as part of a
+[human-in-the-loop tool action](/docs/ready-made-features/ai-copilots/tools#Default-confirmation-component).
+“Confirm” and Cancel” buttons are displayed to the user.
+
+{/* TODO AiTool.Confirmation image */}
+
+### Usage
+
+```tsx
+<RegisterAiTool
+  name="delete-document"
+  tool={defineAiTool()({
+    description: "Delete a document by its ID",
+    parameters: {
+      type: "object",
+      properties: {
+        documentId: { type: "string" },
+      },
+      required: ["documentId"],
+      additionalProperties: false,
+    },
+    render: ({ stage, args, result, types }) => {
+      return (
+        <AiTool title="Delete document" variant="minimal">
+          // +++
+          <AiTool.Confirmation
+            types={types}
+            confirm={async ({ documentId }) => {
+              await __deleteDocument__(documentId);
+              return {
+                data: { documentId },
+                description: "The user chose to delete the document",
+              };
+            }}
+            cancel={() => {
+              return {
+                data: { documentId },
+                description: "The user cancelled deleting the document",
+              };
+            }}
+          />
+          // +++
+        </AiTool>
+      );
+    },
+  })}
+/>
 ```
 
 ## Customization
@@ -104,10 +167,10 @@ It’s possible to style and localize the default components:
 - Modify the style with CSS variables and class names.
 - Use overrides to change default text used in the components.
 
-{/* TODO page */}
-
 Learn more under
-[styling and customization](/docs/ready-made-features/comments/styling-and-customization).
+[styling and customization](/docs/ready-made-features/ai-copilots/styling-and-customization):
 
 [`aichat`]: /docs/api-reference/liveblocks-react-ui#AiChat
 [`aitool`]: /docs/api-reference/liveblocks-react-ui#AiTool
+[`aitool.confirmation`]:
+  /docs/api-reference/liveblocks-react-ui#AiTool.Confirmation

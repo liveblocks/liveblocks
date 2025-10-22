@@ -1,0 +1,132 @@
+---
+meta:
+  title: "How to use fallback AI models in AI Copilots"
+  description:
+    "Learn how to set different AI models as fallbacks when your primary model
+    isn’t available"
+---
+
+AI Copilots allows you to select an AI model when you
+[create a copilot](/docs/ready-made-features/ai-copilots/copilots#Creating-a-copilot),
+however AI models are regularly down and token usage limits are easily reached.
+Liveblocks supports using OpenAI-compatible models when you create a copilot,
+and you can use this with a service such as
+[OpenRouter](https://openrouter.ai/), which will swap in a fallback model when
+your primary model is unavailable or over its rate limit.
+
+## Creating fallbacks with OpenRouter
+
+How to set up OpenRouter and attach your fallback models to your Liveblocks
+copilot.
+
+<Steps>
+
+<Step>
+  <StepTitle>Create an account</StepTitle>
+  <StepContent>
+    To get started, first sign up for an account at
+    [OpenRouter](https://openrouter.ai/).
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Add credit or set up integrations</StepTitle>
+  <StepContent>
+    You can add credit, and pay OpenRouter directly for model usage, or you can
+    insert API keys from AI providers. Go to “Settings” and then either “Credit”
+    or “Integrations”, and set it up as you prefer.
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Create a preset</StepTitle>
+  <StepContent>
+    Presets let you define your AI settings, including the fallback model.
+    Create a new preset, and make note of the **name**, as we’ll need this
+    later. Select multiple AI models—the first will be your primary, and the
+    rest will be your fallbacks. After this, save your model.
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Create an API key</StepTitle>
+  <StepContent>
+    Navigate to “Settings” and then “API Keys”. Create an **API key**, and save
+    it for later.
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Add to your Liveblocks copilot</StepTitle>
+  <StepContent>
+    Navigate to the [Liveblocks dashboard](https://liveblocks.io/dashboard), select your project and
+    click on “Copilots”. Click on “Add Copilot” and use the following settings:
+
+  <dl>
+    <dt>Name</dt>
+    <dd>_Whatever you like_. Example: `My Copilot`</dd>
+    <dt>Model</dt>
+    <dd>`OpenAI compatible`</dd>
+    <dt>Model</dt>
+    <dd>Insert the **name** of the OpenRouter preset, prefixed by `@preset/`. For example if the name was `my-model` your should insert `@preset/my-model`.</dd>
+    <dt>Custom provider name</dt>
+    <dd>_Whatever you like_. Example: `custom`</dd>
+    <dt>Base URL</dt>
+    <dd>`https://openrouter.ai/api/v1/`</dd>
+    <dt>API Key</dt>
+    <dd>Insert the OpenRouter **API key** you created earlier. Example: `sk-or-v1-...`</dd>
+    <dt>System Prompt</dt>
+    <dd>_Your system prompt_. Example: `You are a helpful assistant.`</dd>
+  </dl>
+  </StepContent>
+</Step>
+
+<Step lastStep>
+  <StepTitle>Copy the copilot ID into your app</StepTitle>
+  <StepContent>
+    You’ve now set up a copilot with fallbacks! Copy the `copilotId` from the dashboard into
+    [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+    [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage) to
+    start using it in your application.
+
+    ```tsx
+    import { AiChat } from "@liveblocks/react-ui";
+
+    function Chat() {
+      return (
+        <AiChat
+          chatId="my-chat-id"
+          // +++
+          copilotId="co_tUYtNctLAtUIAAIZBc1Zk"
+          // +++
+        />
+      );
+    }
+    ```
+
+    ```tsx
+    import { useSendAiMessage } from "@liveblocks/react";
+
+    function SendMessage() {
+      const sendAiMessage = useSendAiMessage("my-chat-id", {
+        // +++
+        copilotId: "co_tUYtNctLAtUIAAIZBc1Zk",
+        // +++
+      });
+
+      return (
+        <button onClick={() => sendAiMessage("What's new?")}>What's new?</button>
+      );
+    }
+    ```
+
+  </StepContent>
+</Step>
+</Steps>
+
+## Learn more
+
+While we’ve had success with OpenRouter, there are likely alternative services
+that work too, as long as they are OpenAI-compatible. To learn more about
+setting up a copilot read our
+[Copilots](/docs/ready-made-features/ai-copilots/copilots) overview page.

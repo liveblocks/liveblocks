@@ -129,8 +129,8 @@ There are two versions of the
 Similar to users, Liveblocks only stores group IDs for groups. With the
 [`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook, you
 can fetch a group’s information from their ID. This is particularly helpful when
-building custom components, as this allows you to fetch their name, avatar, and any
-other custom data you’ve set.
+building custom components, as this allows you to fetch their name, avatar, and
+any other custom data you’ve set.
 
 ```tsx
 import { useGroupInfo } from "../liveblocks.config";
@@ -247,7 +247,7 @@ Using Suspense hooks means that any data retrieved, for example
 and your component will never see an error.
 
 ```tsx
-import { useInboxNotifications } from "../liveblocks.config.ts";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
 
 // Suspense: `inboxNotifications` is always defined
 function MyNotifications() {
@@ -263,7 +263,7 @@ To catch errors and display a loading screen, you can use
 [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
 
 ```tsx highlight="7-11"
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 
 // Handle errors and loading state in the component above
@@ -278,20 +278,13 @@ function Component() {
 }
 ```
 
-To use Suspense, make sure you’re exporting your hooks from the `suspense`
-property in your config file.
+To use Suspense, make sure you’re exporting your hooks from
+`@liveblocks/react/suspense`.
 
-```tsx file="liveblocks.config.ts" highlight="5-7"
-// ...
-
-export const {
-  suspense: {
-    // Export from here to use Suspense hooks
-    useInboxNotifications,
-    useUser,
-    useGroupInfo,
-  },
-} = createLiveblocksContext(client, {});
+```tsx
+// Suspense version of hooks
+import { useInboxNotifications, useUser } from "@liveblocks/react/suspense";
+//                                                                ^^^^^^^^
 ```
 
 ### Regular hooks [#regular-hooks]
@@ -300,7 +293,7 @@ The regular versions of Liveblocks hooks require you to check for `error` and
 `isLoading` properties. You can then handle these states in the same component.
 
 ```tsx
-import { useInboxNotifications } from "../liveblocks.config.ts";
+import { useInboxNotifications } from "@liveblocks/react";
 
 // Handle errors and loading state in the same component
 function MyNotifications() {
@@ -320,18 +313,12 @@ function MyNotifications() {
 }
 ```
 
-To use the regular hooks, make sure you’re exporting from the root level in your
-config file.
+To use the regular hooks, make sure you’re exporting from `@liveblocks/react`.
 
-```tsx file="liveblocks.config.ts" highlight="4-6"
-// ...
-
-export const {
-  // Export from here to use regular hooks
-  useInboxNotifications,
-  useUser,
-  useGroupInfo,
-} = createLiveblocksContext(client, {});
+```tsx
+// Regular version of hooks
+import { useInboxNotifications, useUser } from "@liveblocks/react";
+//                                              ^^^^^^^^^^^^^^^^^
 ```
 
 [`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification

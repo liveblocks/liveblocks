@@ -399,9 +399,17 @@
     "featured": true
   },
   {
+    "title": "How to use fallback AI models in AI Copilots",
+    "path": "/how-to-use-fallback-ai-models-in-ai-copilots",
+    "topics": ["ai-copilots"],
+    "technologies": ["react"],
+    "date": "2025-10-16",
+    "featured": true
+  },
+  {
     "title": "How to customize room names in inbox notifications",
     "path": "/how-to-customize-room-names-in-inbox-notifications",
-    "topics": ["notifications", "data-fetching"],
+    "topics": ["notifications"],
     "technologies": ["react", "react-notifications"],
     "date": "2025-10-15"
   }
