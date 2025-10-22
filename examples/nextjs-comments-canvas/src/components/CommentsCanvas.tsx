@@ -12,10 +12,11 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect } from "react";
 import styles from "./CommentsCanvas.module.css";
 import { Toolbar } from "./Toolbar";
 import { useMaxZIndex, useNearEdge } from "../hooks";
+import { useActiveThread } from "./ActiveThreadProvider";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
@@ -69,11 +70,17 @@ export function CommentsCanvas() {
 
 // A draggable thread
 function DraggableThread({ thread }: { thread: ThreadData }) {
+  const { open, setOpen } = useActiveThread(thread.id);
+
   // Open threads that have just been created
-  const startOpen = useMemo(() => {
-    return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
-  }, [thread]);
-  const [open, setOpen] = useState(startOpen);
+  useEffect(() => {
+    const justCreated =
+      Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
+
+    if (justCreated) {
+      setOpen(true);
+    }
+  }, [thread, setOpen]);
 
   // Enable drag
   const { attributes, listeners, setNodeRef, transform, node } = useDraggable({
@@ -125,14 +132,13 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
           )}
         </div>
       </div>
-      {open ? (
-        <Thread
-          thread={thread}
-          className="thread"
-          data-flip-vertical={nearBottomEdge || undefined}
-          data-flip-horizontal={nearRightEdge || undefined}
-        />
-      ) : null}
+      <Thread
+        style={open ? undefined : { display: "none" }}
+        thread={thread}
+        className="thread"
+        data-flip-vertical={nearBottomEdge || undefined}
+        data-flip-horizontal={nearRightEdge || undefined}
+      />
     </div>
   );
 }
