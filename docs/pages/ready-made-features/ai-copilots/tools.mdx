@@ -379,6 +379,40 @@ forms, graphs, videos, callouts. When displaying a simple component, include an
 />
 ```
 
+You can go further than this, and allow AI to
+[create parameters](#Advanced-JSON-schema) which you can use in your custom
+component, for example `x` and `y` values on a graph.
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {
+      type: "object",
+      properties: {
+        // +++
+        x: { type: "number" },
+        y: { type: "number" },
+        // +++
+      },
+      required: ["x", "y"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ args, stage }) => {
+      if (stage !== "executed") {
+        return <div>Loading...</div>;
+      }
+
+      // +++
+      return <MyGraph x={args.x} y={args.y} />;
+      // +++
+    },
+  })}
+/>
+```
+
 AI will most likely write a response after using your tool, but you can prompt
 the AI to not respond by adding a `description` to `execute`.
 
@@ -387,7 +421,15 @@ the AI to not respond by adding a `description` to `execute`.
   name="graph-tool"
   tool={defineAiTool()({
     description: "Display a graph in the chat",
-    parameters: {},
+    parameters: {
+      type: "object",
+      properties: {
+        x: { type: "number" },
+        y: { type: "number" },
+      },
+      required: ["x", "y"],
+      additionalProperties: false,
+    },
     execute: () => {
       return {
         data: {},
@@ -396,11 +438,15 @@ the AI to not respond by adding a `description` to `execute`.
         // +++
       };
     },
-    // +++
-    render: () => {
-      return <MyGraph x={50} y={100} />;
+    render: ({ args, stage }) => {
+      if (stage !== "executed") {
+        return <div>Loading...</div>;
+      }
+
+      // +++
+      return <MyGraph x={args.x} y={args.y} />;
+      // +++
     },
-    // +++
   })}
 />
 ```
@@ -412,7 +458,7 @@ custom components in its support ticket tool to display a contact form.
 
 </Banner>
 
-### Display data in custom components
+### Fetching data for custom components
 
 You can take custom components a step further by combining them with
 [actions](#Actions), and then showing the results inside the custom component.
