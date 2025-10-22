@@ -16,7 +16,7 @@
     "@types/degit": "^2.8.3",
     "@types/prompts": "^2.4.1",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.15.12"
+    "esbuild": "^0.21.3"
   },
   "dependencies": {
     "ansi-colors": "^4.1.3",
