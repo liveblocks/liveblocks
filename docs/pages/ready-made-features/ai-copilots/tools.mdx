@@ -909,54 +909,56 @@ constraints, and hints for AI.
 </Banner>
 
 ```js
-properties: {
+parameters: {
   type: "object",
 
-  // String
-  name: { type: "string" },
-
-  // Number
-  age: { type: "number" },
-
-  // Boolean
-  sendEmail: { type: "boolean" },
-
-  // Union
-  count: { type: ["string", "number", "null"] },
-
-  // Array
-  pets: { type: "array", items: { type: "string" } },
-
-  // Description, helps AI understand the type
-  job: { type: "string", description: "A job title, 1-2 words" },
-
-  // String constraints
-  fullName: {
-    type: "string",
-    minLength: 1,
-    maxLength: 100,
-    pattern: "^[A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)+$",
-  },
-
-  // Number constraints
-  ageInYears: { type: "number", minimum: 18, maximum: 100 },
-
-  // Combination of all
-  people: {
-    type: "array",
-    description: "A list of all people",
-    items: {
-      type: "object",
-      properties: {
-        sendEmail: { type: "boolean", description: "Notify them by?" },
-        name: { type: "string", description: "First and last names" },
-        age: { type: "number", minimum: 18, description: "Age in years" },
-        job: { type: ["string", "null"], description: "`null` for unemployed" },
-      }
+  properties: {
+    // String
+    name: { type: "string" },
+  
+    // Number
+    age: { type: "number" },
+  
+    // Boolean
+    sendEmail: { type: "boolean" },
+  
+    // Union
+    count: { type: ["string", "number", "null"] },
+  
+    // Array
+    pets: { type: "array", items: { type: "string" } },
+  
+    // Description, helps AI understand the type
+    job: { type: "string", description: "A job title, 1-2 words" },
+  
+    // String constraints
+    fullName: {
+      type: "string",
+      minLength: 1,
+      maxLength: 100,
+      pattern: "^[A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)+$",
+    },
+  
+    // Number constraints
+    ageInYears: { type: "number", minimum: 18, maximum: 100 },
+  
+    // Combination of all
+    people: {
+      type: "array",
+      description: "A list of all people",
+      items: {
+        type: "object",
+        properties: {
+          sendEmail: { type: "boolean", description: "Notify them by?" },
+          name: { type: "string", description: "First and last names" },
+          age: { type: "number", minimum: 18, description: "Age in years" },
+          job: { type: ["string", "null"], description: "`null` for unemployed" },
+        }
+      },
     },
   },
 
-  // Recommended to always set the following
+  // Recommended to always set the following, passing all properties to `required`
   additionalProperties: false,
   required: ["name", "age", "sendEmail", "job", "fullName", "ageInYears", "pets", "people"],
 }
