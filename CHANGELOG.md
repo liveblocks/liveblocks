@@ -1,3 +1,9 @@
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
 ## v3.9.0
 
 ### `@liveblocks/react-ui`
