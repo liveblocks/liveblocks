@@ -45,21 +45,25 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepTitle>Set up the Liveblocks client</StepTitle>
     <StepContent>
 
-      Liveblocks uses the concept of rooms, separate virtual spaces where
-      collaborate, and to create a realtime experience, multiple users must
-      be connected to the same room. Set up a Liveblocks client with [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+      Liveblocks Notifications uses the concept of projects, which relate to
+      projects in [your dashboard](/dashboard). Notifications are sent between
+      users in the same project. To connect and receive notifications, you must
+      add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component in your app.
 
-      ```tsx file="App.tsx" highlight="11-15"
+      ```tsx file="App.tsx"
       "use client";
 
       import { LiveblocksProvider } from "@liveblocks/react/suspense";
-      import { Room } from "./Room";
+      import { MyApp } from "./MyApp";
 
       export default function App() {
         return (
+          // +++
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <Room />
+            <MyApp />
           </LiveblocksProvider>
+          // +++
         );
       }
       ```
@@ -76,7 +80,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       to get the current project’s notifications, then we’ll
       use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/MyApp.tsx" highlight="1,13-20"
+      ```tsx file="app/MyApp.tsx"
       "use client";
 
       import { useInboxNotifications } from "@liveblocks/react/suspense";
@@ -85,10 +89,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         InboxNotificationList,
       } from "@liveblocks/react-ui";
 
-      export function CollaborativeApp() {
+      export function MyApp() {
+        // +++
         const { inboxNotifications } = useInboxNotifications();
+        // +++
 
         return (
+          // +++
           <InboxNotificationList>
             {inboxNotifications.map((inboxNotification) => (
               <InboxNotification
@@ -97,6 +104,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
               />
             ))}
           </InboxNotificationList>
+          // +++
         );
       }
       ```
@@ -153,6 +161,33 @@ experience for your React application.
       title: "Comments notifications",
       slug: "comments-notifications/nextjs-comments-notifications",
       image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notification settings",
+      slug: "notification-settings/nextjs-notification-settings",
+      image: "/images/examples/thumbnails/notification-settings.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI Editor",
+      slug: "notion-like-ai-editor/nextjs-notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
     }}
     technologies={["nextjs", "react"]}
     openInNewWindow

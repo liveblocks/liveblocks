@@ -201,7 +201,11 @@ type OpenAiModel =
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gpt-4-turbo"
-  | "gpt-4";
+  | "gpt-4"
+  | "gpt-5"
+  | "gpt-5-mini"
+  | "gpt-5-nano"
+  | "gpt-5-chat-latest";
 
 type OpenAiProviderOptions = {
   openai: {

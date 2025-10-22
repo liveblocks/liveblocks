@@ -1711,6 +1711,9 @@ import { useSendAiMessage } from "@liveblocks/react";
 
 const sendAiMessage = useSendAiMessage("my-chat-id");
 const message = sendAiMessage("Hello world");
+
+//  { id: "ms_gw1wEn...", chatId: "my-chat-id", content: [...], ...}
+console.log(message);
 ```
 
 ### useAiChatMessages
@@ -1733,6 +1736,53 @@ const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 <PropertiesList title="Returns">
   <PropertiesListItem name="messages" type="AiChatMessage[]">
     An array of messages in the AI chat.
+
+    <div className="-mt-1">
+    ```tsx isCollapsable isCollapsed title="Example messages"
+    [
+      {
+        "id": "ms_gw1wENvliU471QuojwVbO",
+        "chatId": "my-chat-id",
+        "parentId": null,
+        "createdAt": "2025-09-30T15:37:01.000Z",
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello"
+          }
+        ],
+        "navigation": {
+          "parent": null,
+          "prev": null,
+          "next": null
+        }
+      },
+      {
+        "id": "ms_dwoLgXARKgJT4zAjkktv6",
+        "chatId": "my-chat-id",
+        "parentId": "ms_gw1wENvliU471QuojwVbO",
+        "createdAt": "2025-09-30T15:37:01.000Z",
+        "copilotId": "co_lxYkxUdt08d01sJIBUZhg",
+        "role": "assistant",
+        "status": "completed",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hi there! How can I help you today?\n",
+            "t": 2783
+          }
+        ],
+        "navigation": {
+          "parent": "ms_gw1wENvliU471QuojwVbO",
+          "prev": null,
+          "next": null
+        }
+      }
+    ]
+    ```
+    </div>
+
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the messages are currently being loaded.
