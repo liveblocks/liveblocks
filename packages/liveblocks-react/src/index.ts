@@ -102,4 +102,5 @@ export {
   useAiChats,
   useAiChatMessages,
   useAiChatStatus,
+  useUrlMetadata,
 } from "./liveblocks";

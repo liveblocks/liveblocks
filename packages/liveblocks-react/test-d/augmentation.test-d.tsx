@@ -27,8 +27,8 @@ declare global {
     };
 
     RoomEvent:
-    | { type: "emoji"; emoji: string }
-    | { type: "beep"; times?: number };
+      | { type: "emoji"; emoji: string }
+      | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";
@@ -1095,11 +1095,16 @@ declare global {
 // The useAiChatStatus() hook
 {
   const status = classic.useAiChatStatus("chat-id");
-  expectType<"idle" | "loading" | "generating">(status.status);
+  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1115,11 +1120,16 @@ declare global {
 // The useAiChatStatus() hook (suspense)
 {
   const status = suspense.useAiChatStatus("chat-id");
-  expectType<"idle" | "loading" | "generating">(status.status);
+  expectType<"disconnected" | "idle" | "loading" | "generating">(status.status);
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1138,7 +1148,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);
@@ -1157,7 +1172,12 @@ declare global {
   if (status.status === "generating") {
     // The partType might not exist if there's no content yet
     expectType<
-      "text" | "reasoning" | "retrieval" | "tool-invocation" | undefined
+      | "text"
+      | "reasoning"
+      | "retrieval"
+      | "tool-invocation"
+      | "sources"
+      | undefined
     >(status.partType);
     if (status.partType === "tool-invocation") {
       expectType<string>(status.toolName);

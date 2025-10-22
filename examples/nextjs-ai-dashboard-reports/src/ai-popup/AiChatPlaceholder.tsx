@@ -24,7 +24,9 @@ const SUGGESTIONS = [
 
 // Placeholder that's displayed when there's no messages in the chat
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
-  const sendMessage = useSendAiMessage(chatId);
+  const sendMessage = useSendAiMessage(chatId, {
+    copilotId: process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined,
+  });
 
   return (
     <div className="flex h-full flex-col justify-end gap-5 p-4">

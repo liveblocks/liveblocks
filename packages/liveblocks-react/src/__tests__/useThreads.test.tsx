@@ -450,10 +450,10 @@ describe("useThreads", () => {
     });
     const subscriptions = [
       dummySubscriptionData({ subjectId: bluePinnedThread.id }),
-      dummySubscriptionData({ subjectId: blueUnpinnedThread.id }),
-      dummySubscriptionData({ subjectId: redPinnedThread.id }),
       dummySubscriptionData({ subjectId: redUnpinnedThread.id }),
       dummySubscriptionData({ subjectId: uncoloredPinnedThread.id }),
+      // not subscribed to "blueUnpinnedThread"
+      // not subscribed to "redPinnedThread"
     ];
 
     server.use(
@@ -795,6 +795,93 @@ describe("useThreads", () => {
         expect(result.current).toEqual({
           isLoading: false,
           threads: [uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 11: query with subscribed: true
+      const { result, unmount } = renderHook(
+        () => useThreads({ query: { subscribed: true } }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [bluePinnedThread, redUnpinnedThread, uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 12: query with subscribed: false
+      const { result, unmount } = renderHook(
+        () => useThreads({ query: { subscribed: false } }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [blueUnpinnedThread, redPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 13: query with subscribed: true and metadata
+      const { result, unmount } = renderHook(
+        () =>
+          useThreads({
+            query: {
+              subscribed: true,
+              metadata: { color: "red" },
+            },
+          }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      expect(result.current).toEqual({ isLoading: true });
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [redUnpinnedThread],
           fetchMore: expect.any(Function),
           isFetchingMore: false,
           hasFetchedAll: true,
@@ -2046,6 +2133,153 @@ describe("useThreads", () => {
     expect(getThreadsSinceReqCount).toBe(1);
 
     unmount();
+  });
+
+  test("should update threads with query on subscribed and update threads if subscribed status changes", async () => {
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({ roomId });
+    const thread2 = dummyThreadData({ roomId });
+    const threads = [thread1, thread2];
+
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: thread1.id }),
+      // not subscribed to "thread2"
+    ];
+
+    let getThreadsSinceReqCount = 0;
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            deletedThreads: [],
+            inboxNotifications: [],
+            deletedInboxNotifications: [],
+            subscriptions,
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
+            },
+          })
+        );
+      }),
+      mockGetThreadsSince(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        getThreadsSinceReqCount++;
+
+        if (since) {
+          const updatedSubscriptions = [
+            dummySubscriptionData({ subjectId: thread1.id }),
+            dummySubscriptionData({ subjectId: thread2.id }),
+          ];
+
+          return res(
+            ctx.json({
+              data: [],
+              deletedThreads: [],
+              inboxNotifications: [],
+              subscriptions: updatedSubscriptions,
+              deletedInboxNotifications: [],
+              deletedSubscriptions: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
+              },
+            })
+          );
+        }
+
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const firstRenderResult = renderHook(
+      () =>
+        useThreads({
+          query: {
+            subscribed: true,
+          },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(firstRenderResult.result.current).toEqual({ isLoading: true });
+
+    // Threads should be displayed after the server responds with the threads
+    await waitFor(() =>
+      expect(firstRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads: [thread1],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    // Advance time to trigger the first poll and verify that a poll does occur
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+
+    firstRenderResult.unmount();
+
+    // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
+    await jest.advanceTimersByTimeAsync(6_000);
+
+    // Render the RoomProvider again and verify the threads are updated
+    const secondRenderResult = renderHook(
+      () =>
+        useThreads({
+          query: {
+            subscribed: true,
+          },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    // Threads (outdated ones) should be displayed instantly because we already fetched them previously
+    expect(secondRenderResult.result.current).toEqual({
+      isLoading: false,
+      threads: [thread1, thread2],
+      fetchMore: expect.any(Function),
+      isFetchingMore: false,
+      hasFetchedAll: true,
+      fetchMoreError: undefined,
+    });
+
+    // The updated threads should be displayed after the server responds with the updated threads
+    await waitFor(() => {
+      expect(secondRenderResult.result.current).toEqual({
+        isLoading: false,
+        threads: [thread1, thread2],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      });
+    });
+    secondRenderResult.unmount();
   });
 });
 
