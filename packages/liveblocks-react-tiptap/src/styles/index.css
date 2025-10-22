@@ -619,6 +619,7 @@
 
 /* Give a remote user a caret */
 /* stylelint-disable-next-line selector-class-pattern */
+.collaboration-caret__caret,
 .collaboration-cursor__caret {
   position: relative;
   margin-inline-start: -1px;
@@ -631,6 +632,7 @@
 
 /* Render the username above the caret */
 /* stylelint-disable-next-line selector-class-pattern */
+.collaboration-caret__label,
 .collaboration-cursor__label {
   position: absolute;
   inset-inline-start: -1px;
