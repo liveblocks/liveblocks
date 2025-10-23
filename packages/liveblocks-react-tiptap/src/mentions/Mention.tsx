@@ -5,9 +5,7 @@ import {
   type UserMentionData,
 } from "@liveblocks/core";
 import { cn, Group, User } from "@liveblocks/react-ui/_private";
-import type { Node } from "@tiptap/pm/model";
-import { NodeViewWrapper } from "@tiptap/react";
-import { type ComponentPropsWithoutRef, forwardRef } from "react";
+import { NodeViewWrapper, type ReactNodeViewProps } from "@tiptap/react";
 
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
@@ -15,46 +13,45 @@ import {
   type SerializedTiptapMentionData,
 } from "../types";
 
-interface MentionProps extends ComponentPropsWithoutRef<"span"> {
+interface MentionProps {
   mention: MentionData;
   isSelected: boolean;
 }
+interface GroupMentionProps {
+  mention: GroupMentionData;
+  isSelected: boolean;
+}
 
-const UserMention = forwardRef<HTMLSpanElement, MentionProps>(
-  ({ mention, isSelected }, forwardedRef) => {
-    return (
-      <NodeViewWrapper
-        className={cn(
-          "lb-root lb-mention lb-tiptap-mention",
-          isSelected && "lb-mention-selected"
-        )}
-        as="span"
-        ref={forwardedRef}
-      >
-        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-        <User userId={mention.id} />
-      </NodeViewWrapper>
-    );
-  }
-);
+const UserMention = ({ isSelected, mention }: MentionProps) => {
 
-const GroupMention = forwardRef<HTMLSpanElement, MentionProps>(
-  ({ mention, isSelected }, forwardedRef) => {
-    return (
-      <NodeViewWrapper
-        className={cn(
-          "lb-root lb-mention lb-tiptap-mention",
-          isSelected && "lb-mention-selected"
-        )}
-        as="span"
-        ref={forwardedRef}
-      >
-        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-        <Group groupId={mention.id} />
-      </NodeViewWrapper>
-    );
-  }
-);
+  return (
+    <NodeViewWrapper
+      className={cn(
+        "lb-root lb-mention lb-tiptap-mention",
+        isSelected && "lb-mention-selected"
+      )}
+      as="span"
+    >
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <User userId={mention.id} />
+    </NodeViewWrapper>
+  );
+};
+
+const GroupMention = ({ isSelected, mention }: GroupMentionProps) => {
+  return (
+    <NodeViewWrapper
+      className={cn(
+        "lb-root lb-mention lb-tiptap-mention",
+        isSelected && "lb-mention-selected"
+      )}
+      as="span"
+    >
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
+      <Group groupId={mention.id} />
+    </NodeViewWrapper>
+  );
+};
 
 function deserializeGroupUserIds(
   userIds: string | undefined
@@ -76,10 +73,7 @@ function deserializeGroupUserIds(
   }
 }
 
-export const Mention = forwardRef<
-  HTMLSpanElement,
-  { node: Node; selected: boolean }
->(({ node, selected: isSelected }, forwardedRef) => {
+export const Mention = ({ node, selected: isSelected }: ReactNodeViewProps<HTMLSpanElement>) => {
   const attrs = node.attrs as Omit<SerializedTiptapMentionData, "kind">;
 
   if (node.type.name === LIVEBLOCKS_MENTION_TYPE) {
@@ -92,11 +86,9 @@ export const Mention = forwardRef<
       <UserMention
         mention={mention}
         isSelected={isSelected}
-        ref={forwardedRef}
       />
     );
   }
-
   if (node.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE) {
     const mention: GroupMentionData = {
       kind: "group",
@@ -108,10 +100,9 @@ export const Mention = forwardRef<
       <GroupMention
         mention={mention}
         isSelected={isSelected}
-        ref={forwardedRef}
       />
     );
   }
 
   return null;
-});
+};

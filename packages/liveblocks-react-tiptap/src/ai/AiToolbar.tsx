@@ -312,7 +312,7 @@ function AiToolbarReviewingSuggestions() {
 
 function AiToolbarCustomPromptContent() {
   const editor = useCurrentEditor("CustomPromptContent", "AiToolbar");
-  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
+  const aiName = editor.storage.liveblocksAi.name;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { state, dropdownRef, isDropdownHidden } = useAiToolbarContext();
   const { customPrompt } = state as Exclude<

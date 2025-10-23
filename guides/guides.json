@@ -412,5 +412,13 @@
     "topics": ["notifications"],
     "technologies": ["react", "react-notifications"],
     "date": "2025-10-15"
+  },
+  {
+    "title": "Migrating from Tiptap 2 to 3",
+    "path": "/migrating-from-tiptap-2-to-3",
+    "topics": ["text-editors"],
+    "technologies": ["tiptap", "react"],
+    "date": "2025-10-22",
+    "featured": true
   }
 ]

@@ -29,7 +29,6 @@ import { forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import type {
-  CommentsExtensionStorage,
   ExtendedChainedCommands,
 } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
@@ -68,15 +67,14 @@ export const FloatingComposer = forwardRef<
     useEditorState({
       editor,
       selector: (ctx) => {
-        if (!ctx.editor) return;
+        if (!ctx.editor) {
+          return undefined;
+        };
 
-        return (
-          ctx.editor.storage.liveblocksComments as
-            | CommentsExtensionStorage
-            | undefined
-        )?.pendingComment && !ctx.editor.state.selection.empty
-          ? ctx.editor.state.selection
-          : undefined;
+        const hasPendingComment = ctx.editor.storage.liveblocksComments.pendingComment;
+        const isEmpty = ctx.editor.state.selection.empty;
+
+        return hasPendingComment && !isEmpty ? ctx.editor.state.selection : undefined;
       },
       equalityFn: compareSelections,
     }) ?? undefined;

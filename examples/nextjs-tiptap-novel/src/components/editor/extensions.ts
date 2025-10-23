@@ -55,7 +55,7 @@ const horizontalRule = HorizontalRule.configure({
 
 const starterKit = StarterKit.configure({
   // The Liveblocks extension comes with its own history handling
-  history: false,
+  undoRedo: false,
 
   bulletList: {
     HTMLAttributes: {

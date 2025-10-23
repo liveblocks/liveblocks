@@ -9,8 +9,8 @@ import {
   FloatingToolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
-import { Placeholder } from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor, Editor as TEditor } from "@tiptap/react";
+import { Placeholder } from "@tiptap/extensions";
 import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { Avatars } from "@/components/Avatars";
@@ -34,6 +34,7 @@ export function Editor() {
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -44,7 +45,7 @@ export function Editor() {
       liveblocks,
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
-        history: false,
+        undoRedo: false,
         ...starterKitOptions,
       }),
       Placeholder.configure({
