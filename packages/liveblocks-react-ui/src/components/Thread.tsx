@@ -51,7 +51,6 @@ import { Comment } from "./Comment";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
-import { DropdownItem } from "./internal/Dropdown";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps<M extends BaseMetadata = DM>
@@ -541,9 +540,8 @@ export const Thread = forwardRef(
                   dropdownActions={({ children }) => {
                     const threadDropdownActions = isFirstComment ? (
                       <>
-                        <DropdownItem
+                        <Comment.DropdownAction
                           onSelect={handleSubscribeChange}
-                          onClick={stopPropagation}
                           icon={
                             subscriptionStatus === "subscribed" ? (
                               <BellCrossedIcon />
@@ -555,7 +553,7 @@ export const Thread = forwardRef(
                           {subscriptionStatus === "subscribed"
                             ? $.THREAD_UNSUBSCRIBE
                             : $.THREAD_SUBSCRIBE}
-                        </DropdownItem>
+                        </Comment.DropdownAction>
                       </>
                     ) : null;
 
