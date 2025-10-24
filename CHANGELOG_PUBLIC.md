@@ -20,6 +20,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 43 (2025-10-24)
 
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
 ## Documentation
 
 - New AI Copilots get started guides for [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
@@ -46,7 +52,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nimeshnayaju
 
 # Week 42 (2025-10-17)
 
