@@ -38,7 +38,9 @@ import StarterKit from "@tiptap/starter-kit";
 
 const editor = useEditor({
   extensions: [
-    StarterKit, // Required - provides Doc and Paragraph nodes
+    StarterKit.configure({
+      history: false, // Required - disable history for Liveblocks
+    }),
     // Add other extensions here
   ],
 });
@@ -75,6 +77,58 @@ const editor = useEditor({
 However, you should **never disable** the `doc` or `paragraph` options, as these
 are required for the editor to function.
 
+## Disable server-side rendering with immediatelyRender: false
+
+When using Tiptap with server-side rendering (SSR) frameworks like Next.js, you
+should **always set `immediatelyRender: false`** in your `useEditor` hook.
+Tiptap should never be rendered on the server.
+
+### Why disable server-side rendering?
+
+Tiptap is a client-side editor that relies on browser APIs and the DOM. When
+rendered on the server, it can cause:
+
+- Hydration mismatches between server and client
+- Errors related to missing browser APIs
+
+### How to disable server-side rendering
+
+Set `immediatelyRender: false` in your `useEditor` configuration:
+
+```tsx
+// ✅ CORRECT: Disable server-side rendering for Next.js and other SSR frameworks
+import { useEditor } from "@tiptap/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import StarterKit from "@tiptap/starter-kit";
+
+function Editor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    immediatelyRender: false, // Required for SSR frameworks like Next.js
+    extensions: [
+      StarterKit.configure({
+        history: false, // Required - disable history for Liveblocks
+      }),
+      liveblocks,
+    ],
+  });
+
+  return <EditorContent editor={editor} />;
+}
+```
+
+This ensures that Tiptap is only rendered on the client side, avoiding any
+server-side rendering issues.
+
+<Banner title="Required for Next.js" type="warning">
+
+If you're using Next.js (App Router or Pages Router) or any other SSR framework,
+**always set `immediatelyRender: false`**. Failing to do so will cause hydration
+errors and other unexpected behavior.
+
+</Banner>
+
 ## Enable content validation
 
 Tiptap has a schema that defines the structure of your document. By default,
@@ -98,7 +152,11 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
 const editor = useEditor({
-  extensions: [StarterKit],
+  extensions: [
+    StarterKit.configure({
+      history: false, // Required - disable history for Liveblocks
+    }),
+  ],
   enableContentCheck: true,
   onContentError: ({ editor, error, disableCollaboration }) => {
     // Disable collaboration to prevent data corruption
@@ -126,6 +184,68 @@ This ensures that:
 - The issue is logged for debugging
 - Users are notified of the problem
 
+## Use initialContent instead of content
+
+When setting default content for your Tiptap editor, always use `initialContent`
+instead of `content`. Using `content` will cause the content to be duplicated
+every time the page loads or the component re-renders.
+
+### The problem with content
+
+The `content` option in Tiptap sets the editor content every time the editor is
+initialized. When using Liveblocks, this means the content will be **added** to
+the existing document rather than replacing it, causing duplication:
+
+```tsx
+// ❌ AVOID: This will duplicate content on every page load
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      history: false, // Required - disable history for Liveblocks
+    }),
+    liveblocks,
+  ],
+  content: "<p>Default text</p>", // This gets added every time!
+});
+```
+
+### Use initialContent instead
+
+The `initialContent` option sets a flag internally and only sets the content the
+**very first time** the document is empty. This prevents duplication:
+
+```tsx
+// ✅ CORRECT: This only sets content once
+import { useEditor } from "@tiptap/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import StarterKit from "@tiptap/starter-kit";
+
+function Editor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        history: false, // Required - disable history for Liveblocks
+      }),
+      liveblocks,
+    ],
+    initialContent: "<p>Default text</p>", // Only set on first load
+  });
+
+  return <EditorContent editor={editor} />;
+}
+```
+
+<Banner title="Not compatible with the field option" type="warning">
+
+The `initialContent` option does not currently work when using the `field`
+option for multiple editors. If you need to set initial content for multiple
+editors, you'll need to implement your own logic to check if the document is
+empty before setting content.
+
+</Banner>
+
 ## Support multiple editors with the field option
 
 If you want to display multiple Tiptap editors on the same page, use the `field`
@@ -143,7 +263,12 @@ function EditorOne() {
   });
 
   const editor = useEditor({
-    extensions: [StarterKit, liveblocks],
+    extensions: [
+      StarterKit.configure({
+        history: false, // Required - disable history for Liveblocks
+      }),
+      liveblocks,
+    ],
   });
 
   return <EditorContent editor={editor} />;
@@ -155,7 +280,12 @@ function EditorTwo() {
   });
 
   const editor = useEditor({
-    extensions: [StarterKit, liveblocks],
+    extensions: [
+      StarterKit.configure({
+        history: false, // Required - disable history for Liveblocks
+      }),
+      liveblocks,
+    ],
   });
 
   return <EditorContent editor={editor} />;
@@ -191,7 +321,9 @@ import Image from "@tiptap/extension-image";
 
 const editor = useEditor({
   extensions: [
-    StarterKit,
+    StarterKit.configure({
+      history: false, // Required - disable history for Liveblocks
+    }),
     Image.configure({
       allowBase64: true, // This will cause problems!
     }),
@@ -214,7 +346,9 @@ import Image from "@tiptap/extension-image";
 
 const editor = useEditor({
   extensions: [
-    StarterKit,
+    StarterKit.configure({
+      history: false, // Required - disable history for Liveblocks
+    }),
     Image.configure({
       allowBase64: false, // Default, but explicit is better
     }),
