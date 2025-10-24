@@ -743,26 +743,32 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const defaultDropdownActions =
       comment.userId === currentUserId ? (
         <>
-          {comment.userId === currentUserId && (
-            <>
-              <DropdownItem
-                onSelect={handleEdit}
-                onClick={stopPropagation}
-                icon={<EditIcon />}
-              >
-                {$.COMMENT_EDIT}
-              </DropdownItem>
-              <DropdownItem
-                onSelect={handleDelete}
-                onClick={stopPropagation}
-                icon={<DeleteIcon />}
-              >
-                {$.COMMENT_DELETE}
-              </DropdownItem>
-            </>
-          )}
+          <DropdownItem
+            onSelect={handleEdit}
+            onClick={stopPropagation}
+            icon={<EditIcon />}
+          >
+            {$.COMMENT_EDIT}
+          </DropdownItem>
+          <DropdownItem
+            onSelect={handleDelete}
+            onClick={stopPropagation}
+            icon={<DeleteIcon />}
+          >
+            {$.COMMENT_DELETE}
+          </DropdownItem>
         </>
       ) : null;
+
+    const dropdownContent =
+      typeof dropdownActions === "function" ? (
+        dropdownActions({ children: defaultDropdownActions, comment })
+      ) : (
+        <>
+          {defaultDropdownActions}
+          {dropdownActions}
+        </>
+      );
 
     return (
       <TooltipProvider>
@@ -842,24 +848,12 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       </Tooltip>
                     </EmojiPicker>
                   ) : null}
-                  {defaultDropdownActions || dropdownActions ? (
+                  {dropdownContent ? (
                     <Dropdown
                       open={isMoreActionOpen}
                       onOpenChange={setMoreActionOpen}
                       align="end"
-                      content={
-                        typeof dropdownActions === "function" ? (
-                          dropdownActions({
-                            children: defaultDropdownActions,
-                            comment,
-                          })
-                        ) : (
-                          <>
-                            {defaultDropdownActions}
-                            {dropdownActions}
-                          </>
-                        )
-                      }
+                      content={dropdownContent}
                     >
                       <Tooltip content={$.COMMENT_MORE}>
                         <DropdownTrigger asChild>

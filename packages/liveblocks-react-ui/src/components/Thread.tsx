@@ -571,7 +571,9 @@ export const Thread = forwardRef(
                       });
                     }
 
-                    return threadDropdownActions || commentDropdownActions ? (
+                    return threadDropdownActions ||
+                      commentDropdownActions ||
+                      children ? (
                       <>
                         {threadDropdownActions}
                         {children}
