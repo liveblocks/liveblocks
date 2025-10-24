@@ -1,0 +1,250 @@
+---
+meta:
+  title: "Tiptap best practices and tips"
+  description:
+    "Learn best practices and common pitfalls to avoid when working with Tiptap
+    and Liveblocks"
+---
+
+This guide covers best practices and common pitfalls to avoid when working with
+Tiptap and Liveblocks.
+
+<Banner title="Tiptap is backed by Yjs" type="note">
+
+Tiptap uses [Yjs](https://docs.yjs.dev/) for synchronization. Make sure to also
+check out our [Yjs best practices and tips](/guides/yjs-best-practices-and-tips)
+guide for additional recommendations.
+
+</Banner>
+
+## Always include StarterKit or Doc, Paragraph extensions
+
+The Tiptap
+[StarterKit](https://tiptap.dev/docs/editor/extensions/functionality/starterkit)
+extension is **required** for Tiptap to function properly. It provides essential
+node types that every Tiptap editor needs, specifically the `Doc` and
+`Paragraph` nodes. Alternatively you can include only the Doc and Paragraph
+extensions.
+
+### Why StarterKit is required
+
+Tiptap documents must have a root `Doc` node and at least one `Paragraph` node
+to maintain a valid document structure. Without these core nodes, the editor
+will not work correctly and synchronization will fail.
+
+```tsx
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+const editor = useEditor({
+  extensions: [
+    StarterKit, // Required - provides Doc and Paragraph nodes
+    // Add other extensions here
+  ],
+});
+```
+
+### What StarterKit includes
+
+In addition to the required `Doc` and `Paragraph` nodes, StarterKit also
+includes commonly used extensions like:
+
+- Text formatting (Bold, Italic, Strike, Code)
+- Block types (Heading, Blockquote, CodeBlock, BulletList, OrderedList,
+  ListItem)
+- Horizontal rule and hard break
+- History (undo/redo) (This must be disabled to work with Liveblocks)
+
+If you need more control over which extensions are included, you can configure
+StarterKit to disable specific extensions:
+
+```tsx
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      // Disable extensions you don't need
+      heading: false,
+      blockquote: false,
+      // Must be disabled for Liveblocks
+      history: false, // renamed to undoRedo: false in TipTap3
+    }),
+  ],
+});
+```
+
+However, you should **never disable** the `doc` or `paragraph` options, as these
+are required for the editor to function.
+
+## Enable content validation
+
+Tiptap has a schema that defines the structure of your document. By default,
+Tiptap does **not validate content** against this schema. When invalid content
+is present, it will **silently break synchronization** without any error
+messages.
+
+This can happen when:
+
+- Extensions are added or removed from the editor
+- The schema changes between different versions of your application
+- Users collaborate on documents with different editor configurations
+
+### How to enable content validation
+
+Always enable content validation by setting `enableContentCheck: true` and
+implementing an `onContentError` handler:
+
+```tsx
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+const editor = useEditor({
+  extensions: [StarterKit],
+  enableContentCheck: true,
+  onContentError: ({ editor, error, disableCollaboration }) => {
+    // Disable collaboration to prevent data corruption
+    disableCollaboration();
+
+    // Make the editor read-only to prevent further changes
+    editor.setEditable(false, false);
+
+    // Log the error for debugging
+    console.error("Content validation error:", error);
+
+    // Notify the user that there's an issue
+    alert(
+      "There was an error loading this document. The content may be incompatible with the current editor version. The document has been made read-only to prevent data loss."
+    );
+  },
+});
+```
+
+This ensures that:
+
+- Invalid content is detected early
+- Collaboration is disabled to prevent data corruption
+- The editor is made read-only to prevent further changes
+- The issue is logged for debugging
+- Users are notified of the problem
+
+## Support multiple editors with the field option
+
+If you want to display multiple Tiptap editors on the same page, use the `field`
+option with a unique identifier for each editor. This ensures that each editor
+synchronizes to its own section of the Yjs document.
+
+```tsx
+import { useEditor } from "@tiptap/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import StarterKit from "@tiptap/starter-kit";
+
+function EditorOne() {
+  const liveblocks = useLiveblocksExtension({
+    field: "editor-1", // Unique identifier for this editor
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, liveblocks],
+  });
+
+  return <EditorContent editor={editor} />;
+}
+
+function EditorTwo() {
+  const liveblocks = useLiveblocksExtension({
+    field: "editor-2", // Different unique identifier
+  });
+
+  const editor = useEditor({
+    extensions: [StarterKit, liveblocks],
+  });
+
+  return <EditorContent editor={editor} />;
+}
+```
+
+Without the `field` option, both editors would synchronize to the same location
+in the document, causing conflicts and data loss.
+
+[Learn more about multiple editors →](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
+
+## Never use extensions with binary data
+
+Never use Tiptap extensions that store binary data (such as base64-encoded
+images) directly in the document. Binary data will be synchronized across all
+clients and can fill up your room extremely quickly, leading to:
+
+- Increased bandwidth usage
+- Slower synchronization
+- Higher storage costs
+- Potential rate limiting
+
+### Common pitfall: Image extension
+
+The official Tiptap
+[Image extension](https://tiptap.dev/docs/editor/extensions/nodes/image) has an
+`allowBase64` option. This option is **defaulted to `false`**, and it should
+**never be set to `true`**.
+
+```tsx
+// ❌ NEVER DO THIS
+import Image from "@tiptap/extension-image";
+
+const editor = useEditor({
+  extensions: [
+    StarterKit,
+    Image.configure({
+      allowBase64: true, // This will cause problems!
+    }),
+  ],
+});
+```
+
+### Recommended approach
+
+Instead of storing images as base64 in the document:
+
+1. Upload images to a file storage service (e.g., AWS S3, Cloudflare R2, Vercel
+   Blob)
+2. Store only the URL in the document
+3. Reference the URL in your image nodes
+
+```tsx
+// ✅ CORRECT: Store only URLs
+import Image from "@tiptap/extension-image";
+
+const editor = useEditor({
+  extensions: [
+    StarterKit,
+    Image.configure({
+      allowBase64: false, // Default, but explicit is better
+    }),
+  ],
+});
+
+// When adding an image
+editor.commands.setImage({
+  src: "https://your-storage.com/images/photo.jpg", // URL only, no base64
+});
+```
+
+## Prevent users from losing unsaved changes
+
+To prevent users from accidentally losing their work when closing the browser
+tab or navigating away, enable the `preventUnsavedChanges` option:
+
+```tsx
+import { RoomProvider } from "@liveblocks/react/suspense";
+
+<RoomProvider
+  id="my-room"
+  initialPresence={{}}
+  preventUnsavedChanges={true} // Warn users before they leave with unsaved changes
+>
+  {/* Your components */}
+</RoomProvider>;
+```
+
+This will display a browser confirmation dialog when users try to leave the page
+with unsaved changes, helping prevent accidental data loss.
+
+[Learn more about preventing unsaved changes →](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes)
