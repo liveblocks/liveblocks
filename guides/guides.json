@@ -412,5 +412,21 @@
     "topics": ["notifications"],
     "technologies": ["react", "react-notifications"],
     "date": "2025-10-15"
+  },
+  {
+    "title": "Yjs best practices and tips",
+    "path": "/yjs-best-practices-and-tips",
+    "topics": ["tutorials", "data-fetching"],
+    "technologies": ["yjs"],
+    "date": "2025-10-24",
+    "featured": true
+  },
+  {
+    "title": "Tiptap best practices and tips",
+    "path": "/tiptap-best-practices-and-tips",
+    "topics": ["tutorials", "text-editors"],
+    "technologies": ["tiptap", "yjs"],
+    "date": "2025-10-24",
+    "featured": true
   }
 ]
