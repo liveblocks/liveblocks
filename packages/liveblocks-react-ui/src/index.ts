@@ -13,7 +13,10 @@ export type {
 export { AiChat } from "./components/AiChat";
 export type { AiToolIconProps, AiToolProps } from "./components/AiTool";
 export { AiTool } from "./components/AiTool";
-export type { CommentProps } from "./components/Comment";
+export type {
+  CommentDropdownItemProps,
+  CommentProps,
+} from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";

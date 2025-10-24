@@ -25,6 +25,7 @@ import type {
   ComponentPropsWithoutRef,
   FormEvent,
   MouseEvent,
+  PropsWithChildren,
   ReactNode,
   RefObject,
   SyntheticEvent,
@@ -160,6 +161,13 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   ) => void;
 
   /**
+   * Add (or change) items to display in the comment's dropdown.
+   */
+  dropdownItems?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>;
@@ -177,22 +185,25 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
-  additionalActions?: ReactNode;
+  actions?: ReactNode;
 
   /**
    * @internal
    */
-  additionalDropdownItemsBefore?: ReactNode;
+  actionsClassName?: string;
+}
+
+export interface CommentDropdownItemProps
+  extends Omit<ComponentPropsWithoutRef<"div">, "onSelect"> {
+  /**
+   * An optional icon displayed in this dropdown item.
+   */
+  icon?: ReactNode;
 
   /**
-   * @internal
+   * The event handler called when the dropdown item is selected.
    */
-  additionalDropdownItemsAfter?: ReactNode;
-
-  /**
-   * @internal
-   */
-  additionalActionsClassName?: string;
+  onSelect?: (event: Event) => void;
 }
 
 interface CommentReactionButtonProps
@@ -572,6 +583,34 @@ function AutoMarkReadThreadIdHandler({
   return null;
 }
 
+const CommentDropdownItem = forwardRef<
+  HTMLDivElement,
+  CommentDropdownItemProps
+>(({ children, icon, onSelect, onClick, ...props }, forwardedRef) => {
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      onClick?.(event);
+
+      if (!event.isDefaultPrevented()) {
+        event.stopPropagation();
+      }
+    },
+    [onClick]
+  );
+
+  return (
+    <DropdownItem
+      icon={icon}
+      onSelect={onSelect}
+      onClick={handleClick}
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </DropdownItem>
+  );
+});
+
 /**
  * Displays a single comment.
  *
@@ -582,428 +621,429 @@ function AutoMarkReadThreadIdHandler({
  *   ))}
  * </>
  */
-export const Comment = forwardRef<HTMLDivElement, CommentProps>(
-  (
-    {
-      comment,
-      indentContent = true,
-      showDeleted,
-      showActions = "hover",
-      showReactions = true,
-      showAttachments = true,
-      showComposerFormattingControls = true,
-      onAuthorClick,
-      onMentionClick,
-      onAttachmentClick,
-      onCommentEdit,
-      onCommentDelete,
-      overrides,
-      components,
-      className,
-      additionalActions,
-      additionalActionsClassName,
-      additionalDropdownItemsBefore,
-      additionalDropdownItemsAfter,
-      autoMarkReadThreadId,
-      ...props
-    },
-    forwardedRef
-  ) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const mergedRefs = useRefs(forwardedRef, ref);
-    const currentUserId = useCurrentUserId();
-    const deleteComment = useDeleteRoomComment(comment.roomId);
-    const editComment = useEditRoomComment(comment.roomId);
-    const addReaction = useAddRoomCommentReaction(comment.roomId);
-    const removeReaction = useRemoveRoomCommentReaction(comment.roomId);
-    const $ = useOverrides(overrides);
-    const [isEditing, setEditing] = useState(false);
-    const [isTarget, setTarget] = useState(false);
-    const [isMoreActionOpen, setMoreActionOpen] = useState(false);
-    const [isReactionActionOpen, setReactionActionOpen] = useState(false);
-    const { mediaAttachments, fileAttachments } = useMemo(() => {
-      return separateMediaAttachments(comment.attachments);
-    }, [comment.attachments]);
-
-    const permissions = useRoomPermissions(comment.roomId);
-    const canComment =
-      permissions.size > 0
-        ? permissions.has(Permission.CommentsWrite) ||
-          permissions.has(Permission.Write)
-        : true;
-
-    const stopPropagation = useCallback((event: SyntheticEvent) => {
-      event.stopPropagation();
-    }, []);
-
-    const handleEdit = useCallback(() => {
-      setEditing(true);
-    }, []);
-
-    const handleEditCancel = useCallback(
-      (event: MouseEvent<HTMLButtonElement>) => {
-        event.stopPropagation();
-        setEditing(false);
+export const Comment = Object.assign(
+  forwardRef<HTMLDivElement, CommentProps>(
+    (
+      {
+        comment,
+        indentContent = true,
+        showDeleted,
+        showActions = "hover",
+        showReactions = true,
+        showAttachments = true,
+        showComposerFormattingControls = true,
+        onAuthorClick,
+        onMentionClick,
+        onAttachmentClick,
+        onCommentEdit,
+        onCommentDelete,
+        dropdownItems,
+        overrides,
+        components,
+        className,
+        actions,
+        actionsClassName,
+        autoMarkReadThreadId,
+        ...props
       },
-      []
-    );
+      forwardedRef
+    ) => {
+      const ref = useRef<HTMLDivElement>(null);
+      const mergedRefs = useRefs(forwardedRef, ref);
+      const currentUserId = useCurrentUserId();
+      const deleteComment = useDeleteRoomComment(comment.roomId);
+      const editComment = useEditRoomComment(comment.roomId);
+      const addReaction = useAddRoomCommentReaction(comment.roomId);
+      const removeReaction = useRemoveRoomCommentReaction(comment.roomId);
+      const $ = useOverrides(overrides);
+      const [isEditing, setEditing] = useState(false);
+      const [isTarget, setTarget] = useState(false);
+      const [isMoreActionOpen, setMoreActionOpen] = useState(false);
+      const [isReactionActionOpen, setReactionActionOpen] = useState(false);
+      const { mediaAttachments, fileAttachments } = useMemo(() => {
+        return separateMediaAttachments(comment.attachments);
+      }, [comment.attachments]);
 
-    const handleEditSubmit = useCallback(
-      (
-        { body, attachments }: ComposerSubmitComment,
-        event: FormEvent<HTMLFormElement>
-      ) => {
-        // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-        onCommentEdit?.(comment);
+      const permissions = useRoomPermissions(comment.roomId);
+      const canComment =
+        permissions.size > 0
+          ? permissions.has(Permission.CommentsWrite) ||
+            permissions.has(Permission.Write)
+          : true;
 
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
+      const stopPropagation = useCallback((event: SyntheticEvent) => {
         event.stopPropagation();
-        event.preventDefault();
+      }, []);
 
-        setEditing(false);
-        editComment({
+      const handleEdit = useCallback(() => {
+        setEditing(true);
+      }, []);
+
+      const handleEditCancel = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+          event.stopPropagation();
+          setEditing(false);
+        },
+        []
+      );
+
+      const handleEditSubmit = useCallback(
+        (
+          { body, attachments }: ComposerSubmitComment,
+          event: FormEvent<HTMLFormElement>
+        ) => {
+          // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
+          onCommentEdit?.(comment);
+
+          if (event.isDefaultPrevented()) {
+            return;
+          }
+
+          event.stopPropagation();
+          event.preventDefault();
+
+          setEditing(false);
+          editComment({
+            commentId: comment.id,
+            threadId: comment.threadId,
+            body,
+            attachments,
+          });
+        },
+        [comment, editComment, onCommentEdit]
+      );
+
+      const handleDelete = useCallback(() => {
+        // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
+        onCommentDelete?.(comment);
+
+        deleteComment({
           commentId: comment.id,
           threadId: comment.threadId,
-          body,
-          attachments,
         });
-      },
-      [comment, editComment, onCommentEdit]
-    );
+      }, [comment, deleteComment, onCommentDelete]);
 
-    const handleDelete = useCallback(() => {
-      // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
-      onCommentDelete?.(comment);
+      const handleAuthorClick = useCallback(
+        (event: MouseEvent<HTMLElement>) => {
+          onAuthorClick?.(comment.userId, event);
+        },
+        [comment.userId, onAuthorClick]
+      );
 
-      deleteComment({
-        commentId: comment.id,
-        threadId: comment.threadId,
-      });
-    }, [comment, deleteComment, onCommentDelete]);
+      const handleReactionSelect = useCallback(
+        (emoji: string) => {
+          const reactionIndex = comment.reactions.findIndex(
+            (reaction) => reaction.emoji === emoji
+          );
 
-    const handleAuthorClick = useCallback(
-      (event: MouseEvent<HTMLElement>) => {
-        onAuthorClick?.(comment.userId, event);
-      },
-      [comment.userId, onAuthorClick]
-    );
+          if (
+            reactionIndex >= 0 &&
+            currentUserId &&
+            comment.reactions[reactionIndex]?.users.some(
+              (user) => user.id === currentUserId
+            )
+          ) {
+            removeReaction({
+              threadId: comment.threadId,
+              commentId: comment.id,
+              emoji,
+            });
+          } else {
+            addReaction({
+              threadId: comment.threadId,
+              commentId: comment.id,
+              emoji,
+            });
+          }
+        },
+        [
+          addReaction,
+          comment.id,
+          comment.reactions,
+          comment.threadId,
+          removeReaction,
+          currentUserId,
+        ]
+      );
 
-    const handleReactionSelect = useCallback(
-      (emoji: string) => {
-        const reactionIndex = comment.reactions.findIndex(
-          (reaction) => reaction.emoji === emoji
+      useEffect(() => {
+        const isWindowDefined = typeof window !== "undefined";
+        if (!isWindowDefined) return;
+
+        const hash = window.location.hash;
+        const commentId = hash.slice(1);
+
+        if (commentId === comment.id) {
+          setTarget(true);
+        }
+      }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+      if (!showDeleted && !comment.body) {
+        return null;
+      }
+
+      const defaultDropdownItems =
+        comment.userId === currentUserId ? (
+          <>
+            <CommentDropdownItem onSelect={handleEdit} icon={<EditIcon />}>
+              {$.COMMENT_EDIT}
+            </CommentDropdownItem>
+            <CommentDropdownItem onSelect={handleDelete} icon={<DeleteIcon />}>
+              {$.COMMENT_DELETE}
+            </CommentDropdownItem>
+          </>
+        ) : null;
+
+      const dropdownContent =
+        typeof dropdownItems === "function" ? (
+          dropdownItems({ children: defaultDropdownItems, comment })
+        ) : (
+          <>
+            {defaultDropdownItems}
+            {dropdownItems}
+          </>
         );
 
-        if (
-          reactionIndex >= 0 &&
-          currentUserId &&
-          comment.reactions[reactionIndex]?.users.some(
-            (user) => user.id === currentUserId
-          )
-        ) {
-          removeReaction({
-            threadId: comment.threadId,
-            commentId: comment.id,
-            emoji,
-          });
-        } else {
-          addReaction({
-            threadId: comment.threadId,
-            commentId: comment.id,
-            emoji,
-          });
-        }
-      },
-      [
-        addReaction,
-        comment.id,
-        comment.reactions,
-        comment.threadId,
-        removeReaction,
-        currentUserId,
-      ]
-    );
-
-    useEffect(() => {
-      const isWindowDefined = typeof window !== "undefined";
-      if (!isWindowDefined) return;
-
-      const hash = window.location.hash;
-      const commentId = hash.slice(1);
-
-      if (commentId === comment.id) {
-        setTarget(true);
-      }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    if (!showDeleted && !comment.body) {
-      return null;
-    }
-
-    return (
-      <TooltipProvider>
-        <ComponentsProvider components={components}>
-          {autoMarkReadThreadId && (
-            <AutoMarkReadThreadIdHandler
-              commentRef={ref}
-              threadId={autoMarkReadThreadId}
-              roomId={comment.roomId}
-            />
-          )}
-          <div
-            id={comment.id}
-            className={cn(
-              "lb-root lb-comment",
-              indentContent && "lb-comment:indent-content",
-              showActions === "hover" && "lb-comment:show-actions-hover",
-              (isMoreActionOpen || isReactionActionOpen) &&
-                "lb-comment:action-open",
-              className
+      return (
+        <TooltipProvider>
+          <ComponentsProvider components={components}>
+            {autoMarkReadThreadId && (
+              <AutoMarkReadThreadIdHandler
+                commentRef={ref}
+                threadId={autoMarkReadThreadId}
+                roomId={comment.roomId}
+              />
             )}
-            data-deleted={!comment.body ? "" : undefined}
-            data-editing={isEditing ? "" : undefined}
-            // In some cases, `:target` doesn't work as expected so we also define it manually.
-            data-target={isTarget ? "" : undefined}
-            dir={$.dir}
-            {...props}
-            ref={mergedRefs}
-          >
-            <div className="lb-comment-header">
-              <div className="lb-comment-details">
-                <Avatar
-                  className="lb-comment-avatar"
-                  userId={comment.userId}
-                  onClick={handleAuthorClick}
-                />
-                <span className="lb-comment-details-labels">
-                  <User
-                    className="lb-comment-author"
+            <div
+              id={comment.id}
+              className={cn(
+                "lb-root lb-comment",
+                indentContent && "lb-comment:indent-content",
+                showActions === "hover" && "lb-comment:show-actions-hover",
+                (isMoreActionOpen || isReactionActionOpen) &&
+                  "lb-comment:action-open",
+                className
+              )}
+              data-deleted={!comment.body ? "" : undefined}
+              data-editing={isEditing ? "" : undefined}
+              // In some cases, `:target` doesn't work as expected so we also define it manually.
+              data-target={isTarget ? "" : undefined}
+              dir={$.dir}
+              {...props}
+              ref={mergedRefs}
+            >
+              <div className="lb-comment-header">
+                <div className="lb-comment-details">
+                  <Avatar
+                    className="lb-comment-avatar"
                     userId={comment.userId}
                     onClick={handleAuthorClick}
                   />
-                  <span className="lb-comment-date">
-                    <Timestamp
-                      locale={$.locale}
-                      date={comment.createdAt}
-                      className="lb-date lb-comment-date-created"
+                  <span className="lb-comment-details-labels">
+                    <User
+                      className="lb-comment-author"
+                      userId={comment.userId}
+                      onClick={handleAuthorClick}
                     />
-                    {comment.editedAt && comment.body && (
-                      <>
-                        {" "}
-                        <span className="lb-comment-date-edited">
-                          {$.COMMENT_EDITED}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </span>
-              </div>
-              {showActions && !isEditing && (
-                <div
-                  className={cn(
-                    "lb-comment-actions",
-                    additionalActionsClassName
-                  )}
-                >
-                  {additionalActions ?? null}
-                  {showReactions && canComment ? (
-                    <EmojiPicker
-                      onEmojiSelect={handleReactionSelect}
-                      onOpenChange={setReactionActionOpen}
-                    >
-                      <Tooltip content={$.COMMENT_ADD_REACTION}>
-                        <EmojiPickerTrigger asChild>
-                          <Button
-                            className="lb-comment-action"
-                            onClick={stopPropagation}
-                            aria-label={$.COMMENT_ADD_REACTION}
-                            icon={<EmojiPlusIcon />}
-                          />
-                        </EmojiPickerTrigger>
-                      </Tooltip>
-                    </EmojiPicker>
-                  ) : null}
-                  {comment.userId === currentUserId ||
-                  additionalDropdownItemsBefore ||
-                  additionalDropdownItemsAfter ? (
-                    <Dropdown
-                      open={isMoreActionOpen}
-                      onOpenChange={setMoreActionOpen}
-                      align="end"
-                      content={
+                    <span className="lb-comment-date">
+                      <Timestamp
+                        locale={$.locale}
+                        date={comment.createdAt}
+                        className="lb-date lb-comment-date-created"
+                      />
+                      {comment.editedAt && comment.body && (
                         <>
-                          {additionalDropdownItemsBefore}
-                          {comment.userId === currentUserId && (
-                            <>
-                              <DropdownItem
-                                onSelect={handleEdit}
-                                onClick={stopPropagation}
-                                icon={<EditIcon />}
-                              >
-                                {$.COMMENT_EDIT}
-                              </DropdownItem>
-                              <DropdownItem
-                                onSelect={handleDelete}
-                                onClick={stopPropagation}
-                                icon={<DeleteIcon />}
-                              >
-                                {$.COMMENT_DELETE}
-                              </DropdownItem>
-                            </>
-                          )}
-                          {additionalDropdownItemsAfter}
+                          {" "}
+                          <span className="lb-comment-date-edited">
+                            {$.COMMENT_EDITED}
+                          </span>
                         </>
-                      }
-                    >
-                      <Tooltip content={$.COMMENT_MORE}>
-                        <DropdownTrigger asChild>
-                          <Button
-                            className="lb-comment-action"
-                            disabled={!comment.body}
-                            onClick={stopPropagation}
-                            aria-label={$.COMMENT_MORE}
-                            icon={<EllipsisIcon />}
-                          />
-                        </DropdownTrigger>
-                      </Tooltip>
-                    </Dropdown>
-                  ) : null}
+                      )}
+                    </span>
+                  </span>
                 </div>
-              )}
-            </div>
-            <div className="lb-comment-content">
-              {isEditing ? (
-                <Composer
-                  className="lb-comment-composer"
-                  onComposerSubmit={handleEditSubmit}
-                  defaultValue={comment.body}
-                  defaultAttachments={comment.attachments}
-                  autoFocus
-                  showAttribution={false}
-                  showAttachments={showAttachments}
-                  showFormattingControls={showComposerFormattingControls}
-                  actions={
-                    <>
-                      <Tooltip
-                        content={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                        aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                {showActions && !isEditing && (
+                  <div className={cn("lb-comment-actions", actionsClassName)}>
+                    {actions ?? null}
+                    {showReactions && canComment ? (
+                      <EmojiPicker
+                        onEmojiSelect={handleReactionSelect}
+                        onOpenChange={setReactionActionOpen}
                       >
-                        <Button
-                          className="lb-composer-action"
-                          onClick={handleEditCancel}
-                          icon={<CrossIcon />}
-                        />
-                      </Tooltip>
-                      <ShortcutTooltip
-                        content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                        shortcut="Enter"
+                        <Tooltip content={$.COMMENT_ADD_REACTION}>
+                          <EmojiPickerTrigger asChild>
+                            <Button
+                              className="lb-comment-action"
+                              onClick={stopPropagation}
+                              aria-label={$.COMMENT_ADD_REACTION}
+                              icon={<EmojiPlusIcon />}
+                            />
+                          </EmojiPickerTrigger>
+                        </Tooltip>
+                      </EmojiPicker>
+                    ) : null}
+                    {dropdownContent ? (
+                      <Dropdown
+                        open={isMoreActionOpen}
+                        onOpenChange={setMoreActionOpen}
+                        align="end"
+                        content={dropdownContent}
                       >
-                        <ComposerPrimitive.Submit asChild>
+                        <Tooltip content={$.COMMENT_MORE}>
+                          <DropdownTrigger asChild>
+                            <Button
+                              className="lb-comment-action"
+                              disabled={!comment.body}
+                              onClick={stopPropagation}
+                              aria-label={$.COMMENT_MORE}
+                              icon={<EllipsisIcon />}
+                            />
+                          </DropdownTrigger>
+                        </Tooltip>
+                      </Dropdown>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <div className="lb-comment-content">
+                {isEditing ? (
+                  <Composer
+                    className="lb-comment-composer"
+                    onComposerSubmit={handleEditSubmit}
+                    defaultValue={comment.body}
+                    defaultAttachments={comment.attachments}
+                    autoFocus
+                    showAttribution={false}
+                    showAttachments={showAttachments}
+                    showFormattingControls={showComposerFormattingControls}
+                    actions={
+                      <>
+                        <Tooltip
+                          content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                          aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                        >
                           <Button
-                            variant="primary"
                             className="lb-composer-action"
-                            onClick={stopPropagation}
-                            aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
-                            icon={<CheckIcon />}
+                            onClick={handleEditCancel}
+                            icon={<CrossIcon />}
                           />
-                        </ComposerPrimitive.Submit>
-                      </ShortcutTooltip>
-                    </>
-                  }
-                  overrides={{
-                    COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
-                  }}
-                  roomId={comment.roomId}
-                />
-              ) : comment.body ? (
-                <>
-                  <CommentPrimitive.Body
-                    className="lb-comment-body"
-                    body={comment.body}
-                    components={{
-                      Mention: ({ mention }) => (
-                        <CommentMention
-                          mention={mention}
-                          onClick={(event) => onMentionClick?.(mention, event)}
-                          overrides={overrides}
-                        />
-                      ),
-                      Link: CommentLink,
+                        </Tooltip>
+                        <ShortcutTooltip
+                          content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                          shortcut="Enter"
+                        >
+                          <ComposerPrimitive.Submit asChild>
+                            <Button
+                              variant="primary"
+                              className="lb-composer-action"
+                              onClick={stopPropagation}
+                              aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                              icon={<CheckIcon />}
+                            />
+                          </ComposerPrimitive.Submit>
+                        </ShortcutTooltip>
+                      </>
+                    }
+                    overrides={{
+                      COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
                     }}
+                    roomId={comment.roomId}
                   />
-                  {showAttachments &&
-                  (mediaAttachments.length > 0 ||
-                    fileAttachments.length > 0) ? (
-                    <div className="lb-comment-attachments">
-                      {mediaAttachments.length > 0 ? (
-                        <div className="lb-attachments">
-                          {mediaAttachments.map((attachment) => (
-                            <CommentMediaAttachment
-                              key={attachment.id}
-                              attachment={attachment}
-                              overrides={overrides}
-                              onAttachmentClick={onAttachmentClick}
-                              roomId={comment.roomId}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                      {fileAttachments.length > 0 ? (
-                        <div className="lb-attachments">
-                          {fileAttachments.map((attachment) => (
-                            <CommentFileAttachment
-                              key={attachment.id}
-                              attachment={attachment}
-                              overrides={overrides}
-                              onAttachmentClick={onAttachmentClick}
-                              roomId={comment.roomId}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {showReactions && comment.reactions.length > 0 && (
-                    <div className="lb-comment-reactions">
-                      {comment.reactions.map((reaction) => (
-                        <CommentReaction
-                          key={reaction.emoji}
-                          comment={comment}
-                          reaction={reaction}
-                          overrides={overrides}
-                          disabled={!canComment}
-                        />
-                      ))}
-                      {canComment ? (
-                        <EmojiPicker onEmojiSelect={handleReactionSelect}>
-                          <Tooltip content={$.COMMENT_ADD_REACTION}>
-                            <EmojiPickerTrigger asChild>
-                              <Button
-                                className="lb-comment-reaction lb-comment-reaction-add"
-                                variant="outline"
-                                onClick={stopPropagation}
-                                aria-label={$.COMMENT_ADD_REACTION}
-                                icon={<EmojiPlusIcon />}
+                ) : comment.body ? (
+                  <>
+                    <CommentPrimitive.Body
+                      className="lb-comment-body"
+                      body={comment.body}
+                      components={{
+                        Mention: ({ mention }) => (
+                          <CommentMention
+                            mention={mention}
+                            onClick={(event) =>
+                              onMentionClick?.(mention, event)
+                            }
+                            overrides={overrides}
+                          />
+                        ),
+                        Link: CommentLink,
+                      }}
+                    />
+                    {showAttachments &&
+                    (mediaAttachments.length > 0 ||
+                      fileAttachments.length > 0) ? (
+                      <div className="lb-comment-attachments">
+                        {mediaAttachments.length > 0 ? (
+                          <div className="lb-attachments">
+                            {mediaAttachments.map((attachment) => (
+                              <CommentMediaAttachment
+                                key={attachment.id}
+                                attachment={attachment}
+                                overrides={overrides}
+                                onAttachmentClick={onAttachmentClick}
+                                roomId={comment.roomId}
                               />
-                            </EmojiPickerTrigger>
-                          </Tooltip>
-                        </EmojiPicker>
-                      ) : null}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="lb-comment-body">
-                  <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-                </div>
-              )}
+                            ))}
+                          </div>
+                        ) : null}
+                        {fileAttachments.length > 0 ? (
+                          <div className="lb-attachments">
+                            {fileAttachments.map((attachment) => (
+                              <CommentFileAttachment
+                                key={attachment.id}
+                                attachment={attachment}
+                                overrides={overrides}
+                                onAttachmentClick={onAttachmentClick}
+                                roomId={comment.roomId}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {showReactions && comment.reactions.length > 0 && (
+                      <div className="lb-comment-reactions">
+                        {comment.reactions.map((reaction) => (
+                          <CommentReaction
+                            key={reaction.emoji}
+                            comment={comment}
+                            reaction={reaction}
+                            overrides={overrides}
+                            disabled={!canComment}
+                          />
+                        ))}
+                        {canComment ? (
+                          <EmojiPicker onEmojiSelect={handleReactionSelect}>
+                            <Tooltip content={$.COMMENT_ADD_REACTION}>
+                              <EmojiPickerTrigger asChild>
+                                <Button
+                                  className="lb-comment-reaction lb-comment-reaction-add"
+                                  variant="outline"
+                                  onClick={stopPropagation}
+                                  aria-label={$.COMMENT_ADD_REACTION}
+                                  icon={<EmojiPlusIcon />}
+                                />
+                              </EmojiPickerTrigger>
+                            </Tooltip>
+                          </EmojiPicker>
+                        ) : null}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="lb-comment-body">
+                    <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </ComponentsProvider>
-      </TooltipProvider>
-    );
+          </ComponentsProvider>
+        </TooltipProvider>
+      );
+    }
+  ),
+  {
+    /**
+     * Displays a dropdown item in the comment's dropdown.
+     */
+    DropdownItem: CommentDropdownItem,
   }
 );

@@ -18,6 +18,8 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   ForwardedRef,
+  PropsWithChildren,
+  ReactNode,
   RefAttributes,
   SyntheticEvent,
 } from "react";
@@ -49,7 +51,6 @@ import { Comment } from "./Comment";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
-import { DropdownItem } from "./internal/Dropdown";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps<M extends BaseMetadata = DM>
@@ -83,6 +84,13 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * Whether to show the composer's formatting controls.
    */
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
+
+  /**
+   * Add (or change) items to display in a comment's dropdown.
+   */
+  commentDropdownItems?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
   /**
    * The maximum number of comments to show.
@@ -203,6 +211,7 @@ export const Thread = forwardRef(
       showAttachments = true,
       showComposerFormattingControls = true,
       maxVisibleComments,
+      commentDropdownItems,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -490,10 +499,10 @@ export const Thread = forwardRef(
                       ? thread.id
                       : undefined
                   }
-                  additionalActionsClassName={
+                  actionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
-                  additionalActions={
+                  actions={
                     isFirstComment && showResolveAction ? (
                       <Tooltip
                         content={
@@ -528,25 +537,48 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  additionalDropdownItemsBefore={
-                    isFirstComment ? (
-                      <DropdownItem
-                        onSelect={handleSubscribeChange}
-                        onClick={stopPropagation}
-                        icon={
-                          subscriptionStatus === "subscribed" ? (
-                            <BellCrossedIcon />
-                          ) : (
-                            <BellIcon />
-                          )
-                        }
-                      >
-                        {subscriptionStatus === "subscribed"
-                          ? $.THREAD_UNSUBSCRIBE
-                          : $.THREAD_SUBSCRIBE}
-                      </DropdownItem>
-                    ) : null
-                  }
+                  dropdownItems={({ children }) => {
+                    const threadDropdownItems = isFirstComment ? (
+                      <>
+                        <Comment.DropdownItem
+                          onSelect={handleSubscribeChange}
+                          icon={
+                            subscriptionStatus === "subscribed" ? (
+                              <BellCrossedIcon />
+                            ) : (
+                              <BellIcon />
+                            )
+                          }
+                        >
+                          {subscriptionStatus === "subscribed"
+                            ? $.THREAD_UNSUBSCRIBE
+                            : $.THREAD_SUBSCRIBE}
+                        </Comment.DropdownItem>
+                      </>
+                    ) : null;
+
+                    if (typeof commentDropdownItems === "function") {
+                      return commentDropdownItems({
+                        children: (
+                          <>
+                            {threadDropdownItems}
+                            {children}
+                          </>
+                        ),
+                        comment,
+                      });
+                    }
+
+                    return threadDropdownItems ||
+                      commentDropdownItems ||
+                      children ? (
+                      <>
+                        {threadDropdownItems}
+                        {children}
+                        {commentDropdownItems}
+                      </>
+                    ) : null;
+                  }}
                 />
               );
 
