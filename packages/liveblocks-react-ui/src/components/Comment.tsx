@@ -161,9 +161,9 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   ) => void;
 
   /**
-   * Additional actions to display in the comment's dropdown.
+   * Add (or change) items to display in the comment's dropdown.
    */
-  dropdownActions?:
+  dropdownItems?:
     | ReactNode
     | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
@@ -193,15 +193,15 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   actionsClassName?: string;
 }
 
-export interface CommentDropdownActionProps
+export interface CommentDropdownItemProps
   extends Omit<ComponentPropsWithoutRef<"div">, "onSelect"> {
   /**
-   * An optional icon displayed in this button.
+   * An optional icon displayed in this dropdown item.
    */
   icon?: ReactNode;
 
   /**
-   * The event handler called when the action is selected.
+   * The event handler called when the dropdown item is selected.
    */
   onSelect?: (event: Event) => void;
 }
@@ -583,9 +583,9 @@ function AutoMarkReadThreadIdHandler({
   return null;
 }
 
-const CommentDropdownAction = forwardRef<
+const CommentDropdownItem = forwardRef<
   HTMLDivElement,
-  CommentDropdownActionProps
+  CommentDropdownItemProps
 >(({ children, icon, onSelect, onClick, ...props }, forwardedRef) => {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
@@ -637,7 +637,7 @@ export const Comment = Object.assign(
         onAttachmentClick,
         onCommentEdit,
         onCommentDelete,
-        dropdownActions,
+        dropdownItems,
         overrides,
         components,
         className,
@@ -782,28 +782,25 @@ export const Comment = Object.assign(
         return null;
       }
 
-      const defaultDropdownActions =
+      const defaultDropdownItems =
         comment.userId === currentUserId ? (
           <>
-            <CommentDropdownAction onSelect={handleEdit} icon={<EditIcon />}>
+            <CommentDropdownItem onSelect={handleEdit} icon={<EditIcon />}>
               {$.COMMENT_EDIT}
-            </CommentDropdownAction>
-            <CommentDropdownAction
-              onSelect={handleDelete}
-              icon={<DeleteIcon />}
-            >
+            </CommentDropdownItem>
+            <CommentDropdownItem onSelect={handleDelete} icon={<DeleteIcon />}>
               {$.COMMENT_DELETE}
-            </CommentDropdownAction>
+            </CommentDropdownItem>
           </>
         ) : null;
 
       const dropdownContent =
-        typeof dropdownActions === "function" ? (
-          dropdownActions({ children: defaultDropdownActions, comment })
+        typeof dropdownItems === "function" ? (
+          dropdownItems({ children: defaultDropdownItems, comment })
         ) : (
           <>
-            {defaultDropdownActions}
-            {dropdownActions}
+            {defaultDropdownItems}
+            {dropdownItems}
           </>
         );
 
@@ -1045,8 +1042,8 @@ export const Comment = Object.assign(
   ),
   {
     /**
-     * Displays a dropdown action in the comment's dropdown.
+     * Displays a dropdown item in the comment's dropdown.
      */
-    DropdownAction: CommentDropdownAction,
+    DropdownItem: CommentDropdownItem,
   }
 );

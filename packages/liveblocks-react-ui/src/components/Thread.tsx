@@ -86,9 +86,9 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
-   * Additional actions to display in a comment's dropdown.
+   * Add (or change) items to display in a comment's dropdown.
    */
-  commentDropdownActions?:
+  commentDropdownItems?:
     | ReactNode
     | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
@@ -211,7 +211,7 @@ export const Thread = forwardRef(
       showAttachments = true,
       showComposerFormattingControls = true,
       maxVisibleComments,
-      commentDropdownActions,
+      commentDropdownItems,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -537,10 +537,10 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  dropdownActions={({ children }) => {
-                    const threadDropdownActions = isFirstComment ? (
+                  dropdownItems={({ children }) => {
+                    const threadDropdownItems = isFirstComment ? (
                       <>
-                        <Comment.DropdownAction
+                        <Comment.DropdownItem
                           onSelect={handleSubscribeChange}
                           icon={
                             subscriptionStatus === "subscribed" ? (
@@ -553,15 +553,15 @@ export const Thread = forwardRef(
                           {subscriptionStatus === "subscribed"
                             ? $.THREAD_UNSUBSCRIBE
                             : $.THREAD_SUBSCRIBE}
-                        </Comment.DropdownAction>
+                        </Comment.DropdownItem>
                       </>
                     ) : null;
 
-                    if (typeof commentDropdownActions === "function") {
-                      return commentDropdownActions({
+                    if (typeof commentDropdownItems === "function") {
+                      return commentDropdownItems({
                         children: (
                           <>
-                            {threadDropdownActions}
+                            {threadDropdownItems}
                             {children}
                           </>
                         ),
@@ -569,13 +569,13 @@ export const Thread = forwardRef(
                       });
                     }
 
-                    return threadDropdownActions ||
-                      commentDropdownActions ||
+                    return threadDropdownItems ||
+                      commentDropdownItems ||
                       children ? (
                       <>
-                        {threadDropdownActions}
+                        {threadDropdownItems}
                         {children}
-                        {commentDropdownActions}
+                        {commentDropdownItems}
                       </>
                     ) : null;
                   }}
