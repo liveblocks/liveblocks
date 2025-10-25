@@ -69,6 +69,6 @@ export function normalizeStatusCode(statusCode: number): number {
   } else if (statusCode >= 500) {
     return 503; /* Service Unavailable */
   } else {
-    return 403; /* Forbidden */
+    return statusCode; // 429, 404, 403, 409, 422, 400
   }
 }
