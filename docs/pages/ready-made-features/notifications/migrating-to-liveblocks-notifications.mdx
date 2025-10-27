@@ -1,6 +1,6 @@
 ---
 meta:
-  title: "Migrating to Liveblocks Notifications"
+  title: "Migrating to Liveblocks notifications"
   description: "Learn how to migrate from your existing notification system to Liveblocks Notifications using a parallel running strategy"
 ---
 
@@ -12,7 +12,7 @@ This guide walks you through how to migrate from your existing system to **Liveb
 
 ## Understand Liveblocks notification concepts
 
-Before starting the migration, it’s important to understand the key concepts in Liveblocks Notifications. Review our [notification concepts documentation](/docs/ready-made-features/notifications/concepts) for a comprehensive overview.
+Before starting the migration, it's important to understand the key concepts in Liveblocks Notifications. Review our [notification concepts documentation](/ready-made-features/notifications/concepts) for a comprehensive overview.
 
 ### Custom vs. Liveblocks notifications
 
@@ -43,7 +43,7 @@ An unread inbox notification will trigger a notification based on the project no
 
 The most important step is to map your system’s in-app notifications to Liveblocks’s inbox notifications, as you will dual write to both your system and Liveblocks in a later step.
 
-Inbox notifications are triggered by your backend using the [`triggerInboxNotification` API](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+Inbox notifications are triggered by your backend using the [`triggerInboxNotification` API](/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 
 ```tsx
 await liveblocks.triggerInboxNotification({
@@ -209,15 +209,15 @@ You’ve setup notifications! Now the only thing left before starting the migrat
 
 **Follow our webhooks documentation to setup your endpoint:**
 
-- [Configuring webhooks](/docs/platform/webhooks#Configuring-webhooks)
+- [Configuring webhooks](/platform/webhooks#Configuring-webhooks)
 
 **Follow this guide to setup email notifications for comments:**
 
-- [Email notifications](/docs/ready-made-features/notifications/email-notifications)
+- [Email notifications](/ready-made-features/notifications/email-notifications)
 
 **Follow this guide to setup a new notification kind:**
 
-- [What to check before enabling a new notification kind](/docs/guides/what-to-check-before-enabling-a-new-notification-kind)
+- [What to check before enabling a new notification kind](/guides/what-to-check-before-enabling-a-new-notification-kind)
 
 ## Dual write
 
@@ -336,7 +336,7 @@ Use a feature flag to either display notifications from your legacy system or Li
 
 Follow our documentation on notifications to setup the inbox notification UI in your application.
 
-[InboxNotification component](/docs/ready-made-features/notifications/default-components#InboxNotification)
+[InboxNotification component](/ready-made-features/notifications/default-components#InboxNotification)
 
 ### Setup user notification settings UI
 
@@ -348,7 +348,7 @@ Use a feature flag to display user notifications settings from your legacy syste
 
 Follow our guide on creating a notification settings panel:
 
-[How to create a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel#Custom-notification-kinds)
+[How to create a notification settings panel](/guides/how-to-create-a-notification-settings-panel#Custom-notification-kinds)
 
 ## Release
 
