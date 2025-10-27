@@ -19,8 +19,17 @@ Liveblocks to version 3.10.0 or higher, you'll need to upgrade Tiptap to version
 
 ## Upgrade dependencies
 
-First, upgrade all Tiptap and Liveblocks packages together to ensure
-compatibility. Run this command to upgrade all necessary packages:
+First, you _must_ uninstall all tiptap and liveblocks dependencies to avoid
+future version conflicts as we upgrade. _Note:_ This includes any extra TipTap
+extensions you may have installed or anything else with a dependency on TipTap.
+
+```bash
+npm uninstall @tiptap/react @tiptap/starter-kit @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap
+```
+
+Next re-install all Tiptap and Liveblocks packages. If you see a peer dependency
+issue during this install, you may have missed something during the previous
+uninstall step.
 
 ```bash
 npm install @tiptap/react@3 @tiptap/starter-kit@3 @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-ui@latest @liveblocks/react-tiptap@latest
