@@ -412,5 +412,12 @@
     "topics": ["notifications"],
     "technologies": ["react", "react-notifications"],
     "date": "2025-10-15"
+  },
+  {
+    "title": "Migrating to Liveblocks Notifications",
+    "path": "/migrating-to-liveblocks-notifications",
+    "topics": ["notifications", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2025-10-27"
   }
 ]

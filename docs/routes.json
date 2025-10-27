@@ -491,10 +491,6 @@
           {
             "title": "Email notifications",
             "path": "/ready-made-features/notifications/email-notifications"
-          },
-          {
-            "title": "Migrating to Liveblocks notifications",
-            "path": "/ready-made-features/notifications/migrating-to-liveblocks-notifications"
           }
         ]
       },
