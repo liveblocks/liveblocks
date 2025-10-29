@@ -14,7 +14,7 @@
     "@liveblocks/react": "^3.7.1",
     "classnames": "^2.3.2",
     "next": "^13.5.4",
-    "next-auth": "^4.23.2",
+    "next-auth": "^4.24.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
