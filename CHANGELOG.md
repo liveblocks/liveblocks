@@ -1,6 +1,15 @@
+
 ## vNEXT (not released yet)
 
 ## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403
 
 ### `@liveblocks/react-ui`
 
