@@ -2,6 +2,11 @@
 
 ## v3.10.0
 
+### `@liveblocks/react-ui`
+
+- Fix scroll issues in some scenarios where the `AiChat` component would be
+  rendered but hidden.
+
 ## v3.9.2
 
 ### `@liveblocks/node`
