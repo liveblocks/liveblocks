@@ -1043,6 +1043,13 @@ setting `maxVisibleComments` to an object.
     Whether to show deleted comments.
   </PropertiesListItem>
   <PropertiesListItem
+    name="commentDropdownItems"
+    type="ReactNode | (props) => ReactNode"
+    detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
+  >
+    Add (or change) items to display in the comment’s dropdown.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onComposerSubmit"
     type="function"
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
@@ -1420,6 +1427,13 @@ function Component() {
   <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
     Whether to show the comment if it was deleted. If set to `false`, it will
     render deleted comments as `null`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="dropdownItems"
+    type="ReactNode | (props) => ReactNode"
+    detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
+  >
+    Add (or change) items to display in the comment’s dropdown.
   </PropertiesListItem>
   <PropertiesListItem
     name="onCommentEdit"
