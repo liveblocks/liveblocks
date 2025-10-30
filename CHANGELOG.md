@@ -4,8 +4,11 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix scroll issues in some scenarios where the `AiChat` component would be
-  rendered but hidden.
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop to
+  `Thread`) to allow customizing comments’ dropdown items in the default
+  components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but
+  hidden.
 
 ## v3.9.2
 
