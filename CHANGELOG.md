@@ -1,3 +1,5 @@
+## v3.10.0
+
 ## v3.9.1
 
 ### `@liveblocks/node`
