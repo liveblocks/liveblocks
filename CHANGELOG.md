@@ -1,5 +1,7 @@
 ## vNEXT (not released yet)
 
+## v3.9.2
+
 ### `@liveblocks/node`
 
 - Update type definitions for provider models to support newer Claude variants:
