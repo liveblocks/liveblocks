@@ -19,7 +19,7 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor, {
+import CollaborationCaret, {
   type CollaborationCaretOptions,
 } from "@tiptap/extension-collaboration-caret";
 import type { Mark as PMMark } from "@tiptap/pm/model";
@@ -399,8 +399,8 @@ export const useLiveblocksExtension = (
           },
           document: this.storage.doc,
           field: options.field,
-        }), // I don't really think this is needed...
-        CollaborationCursor.configure({
+        }),
+        CollaborationCaret.configure({
           provider: this.storage.provider,
         }) as Extension<CollaborationCaretOptions>,
       ];

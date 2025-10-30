@@ -232,7 +232,7 @@ const AiToolbarSuggestion = forwardRef<
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+      (editor.commands).$startAiToolbarThinking(
         manualPrompt ?? prompt
       );
     },
@@ -259,7 +259,7 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<CheckIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$acceptAiToolbarResponse
+            (editor.commands).$acceptAiToolbarResponse
           }
         >
           Accept
@@ -267,14 +267,14 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<UndoIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$startAiToolbarThinking
+            (editor.commands).$startAiToolbarThinking
           }
         >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<CrossIcon />}
-          onSelect={(editor.commands as unknown as AiCommands).$closeAiToolbar}
+          onSelect={(editor.commands).$closeAiToolbar}
         >
           Discard
         </AiToolbarDropdownItem>
@@ -286,7 +286,7 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<ArrowCornerDownRightIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$acceptAiToolbarResponse
+            (editor.commands).$acceptAiToolbarResponse
           }
         >
           Insert below
@@ -294,14 +294,14 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<UndoIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$startAiToolbarThinking
+            (editor.commands).$startAiToolbarThinking
           }
         >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<CrossIcon />}
-          onSelect={(editor.commands as unknown as AiCommands).$closeAiToolbar}
+          onSelect={(editor.commands).$closeAiToolbar}
         >
           Discard
         </AiToolbarDropdownItem>
@@ -312,6 +312,8 @@ function AiToolbarReviewingSuggestions() {
 
 function AiToolbarCustomPromptContent() {
   const editor = useCurrentEditor("CustomPromptContent", "AiToolbar");
+  // Eslint doesn't seem to like Tiptap's Type declaration strategy
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
   const aiName = editor.storage.liveblocksAi.name;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { state, dropdownRef, isDropdownHidden } = useAiToolbarContext();
@@ -352,7 +354,7 @@ function AiToolbarCustomPromptContent() {
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        (editor.commands as unknown as AiCommands)._updateAiToolbarCustomPrompt(
+        (editor.commands)._updateAiToolbarCustomPrompt(
           (customPrompt) => customPrompt + "\n"
         );
       } else {
@@ -365,7 +367,7 @@ function AiToolbarCustomPromptContent() {
           selectedDropdownItem.click();
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+          (editor.commands).$startAiToolbarThinking(
             customPrompt,
             state.phase === "reviewing"
           );
@@ -376,7 +378,7 @@ function AiToolbarCustomPromptContent() {
 
   const handleCustomPromptChange = useCallback(
     (customPrompt: string) => {
-      (editor.commands as unknown as AiCommands)._updateAiToolbarCustomPrompt(
+      (editor.commands)._updateAiToolbarCustomPrompt(
         customPrompt
       );
     },
@@ -388,7 +390,7 @@ function AiToolbarCustomPromptContent() {
       return;
     }
 
-    (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+    (editor.commands).$startAiToolbarThinking(
       customPrompt,
       state.phase === "reviewing"
     );
@@ -459,7 +461,7 @@ function AiToolbarThinking() {
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleAbort = useCallback(() => {
-    (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
+    (editor.commands).$cancelAiToolbarThinking();
   }, [editor]);
 
   // Focus the toolbar content and clear the current window selection while thinking
@@ -545,7 +547,7 @@ function AiToolbarContainer({
         event.stopPropagation();
 
         if (state.phase === "thinking") {
-          (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
+          (editor.commands).$cancelAiToolbarThinking();
         } else {
           (editor.chain() as ChainedAiCommands).$closeAiToolbar().focus().run();
         }
@@ -754,7 +756,7 @@ export const AiToolbar = Object.assign(
         }
 
         if (!selection && state.phase !== "closed") {
-          (editor.commands as unknown as AiCommands).$closeAiToolbar();
+          (editor.commands).$closeAiToolbar();
         }
       }, [state.phase, editor, selection]);
 
@@ -835,7 +837,7 @@ export const AiToolbar = Object.assign(
               ? !dropdownRef.current.contains(event.target as Node)
               : true)
           ) {
-            (editor.commands as unknown as AiCommands).$closeAiToolbar();
+            (editor.commands).$closeAiToolbar();
           }
         };
 
