@@ -14,12 +14,12 @@ chosen LLM, and integrate directly into your existing UI using flexible APIs and
 fully themeable components.
 
 <Figure>
-  <Image
-    src="/assets/ai-copilots/full-dashboard.png"
-    alt="An example of a dashboard with integrated Liveblocks AI Copilots features"
-    width={768}
-    height={512}
-  />
+  <video width={1592} height={1080} autoPlay loop muted playsInline>
+    <source
+      src="/assets/ai-copilots/ai-copilots-features.mp4"
+      type="video/mp4"
+    />
+  </video>
 </Figure>
 
 <Banner type="info" title="Try AI Copilots">
@@ -30,8 +30,6 @@ and we’ll reach out to you and enable it on your account.
 </Banner>
  
 ## Features
-
-{/* - **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks, with support for tools, context, more. */}
 
 - **[Persistent chats](#persistent-chats)**: No database is required, each
   user’s chats are stored permanently.
@@ -55,9 +53,10 @@ and we’ll reach out to you and enable it on your account.
 
 When building a chat interface, it’s important to save the chat history so that
 the user can continue the conversation from where they left off. All chats and
-messages are stored automatically by Liveblocks, and each user has their own set
-of chats. No database is required, and messages are streamed into the chat in
-realtime using WebSockets.
+messages are stored automatically by Liveblocks, and each user has
+[their own set of chats](/docs/ready-made-features/ai-copilots/hooks#List-a-user's-chats).
+No database is required, and messages are streamed into the chat in realtime
+using WebSockets.
 
 <Figure>
   <Image
@@ -81,14 +80,12 @@ will correctly display chats, and update in real-time.
 
 ## Tools [#tools]
 
-Tools are a way to allow AI to make actions, modify your application state,
-interact with your front end, or render custom content with your own components.
-You can use them to extend the capabilities of AI Copilots beyond simple
-text-based interactions. For example, you may have tools that create new
-documents in your app, automatically fill in form data, search the web for data,
-or anything else you like.
-
-{/* TODO Better explain tools for non-AI/non-technical readers: action === tool, generative UI ==== tool, etc. */}
+[Tools](/docs/ready-made-features/ai-copilots/tools) are a way to allow AI to
+make actions, modify your application state, interact with your front end, or
+render custom content with your own components. You can use them to extend the
+capabilities of AI Copilots beyond simple text-based interactions. For example,
+you may have tools that create new documents in your app, automatically fill in
+form data, invite members to a project, or anything else you like.
 
 <Figure>
   <Image
@@ -113,9 +110,11 @@ shapes to a collaborative drawing app.
 
 ## Knowledge [#knowledge]
 
-It’s simple to add context to your AI, so that is understands the current
-document or page. You can also submit webpages and files, such as documentation,
-that the copilot will deeply internalize, allowing it to reply intelligently.
+It’s simple to
+[add knowledge and context to your AI](/docs/ready-made-features/ai-copilots/knowledge),
+so that is understands the current document or page. You can also submit
+webpages and files, such as documentation, that the copilot will deeply
+internalize, allowing it to reply intelligently.
 
 <Figure>
   <Image
@@ -141,8 +140,8 @@ realtime.
   />
 </Figure>
 
-We also provide a number of hooks, such as `useChats` and `useMessages`, that
-allow you to create your own custom chat components.
+We also provide [a number of hooks](/docs/ready-made-features/ai-copilots/hooks)
+that allow you to extend your chat, or create fully custom chat interfaces.
 
 ## Custom chat components [#custom-chat-components]
 

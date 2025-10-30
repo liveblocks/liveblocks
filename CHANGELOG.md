@@ -1,3 +1,25 @@
+## vNEXT (not released yet)
+
+## v3.10.0
+
+### `@liveblocks/react-ui`
+
+- Fix scroll issues in some scenarios where the `AiChat` component would be
+  rendered but hidden.
+
+## v3.9.2
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support newer Claude variants:
+  Opus 4.1, Sonnet 4.5, and Haiku 4.5.
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
 ## v3.9.0
 
 ### `@liveblocks/react-ui`

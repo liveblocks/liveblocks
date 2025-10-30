@@ -1,0 +1,1054 @@
+---
+meta:
+  title: "Tools"
+  parentTitle: "AI Copilots"
+  description: "Allow AI to interact with your application"
+---
+
+Tools allow AI to make actions, modify your application state, interact with
+your front-end, and render custom components within your AI chat. Use tools to
+extend the capabilities of AI Copilots beyond simple text, allowing autonomous
+and human-in-the-loop interactions.
+
+## Tool use cases
+
+Tools can be used to create various different interactions inside of your AI
+chat, such as:
+
+- **Actions**: Autonomously perform actions like editing documents, redirecting
+  users, sending emails.
+- **Custom components**: Render custom React components like forms, graphs,
+  videos, callouts.
+- **Query actions**: AI can query your app, search documents, find pages, check
+  invoices.
+- **Human-in-the-loop actions**: Show confirm/deny buttons before taking
+  destructive actions.
+- **AI presence**: Tool results can be streamed in, allowing AI to show live
+  updates in your app.
+
+### How tools work
+
+You can define a list of tools in your application, and your AI can choose to
+use them whenever it decides they’re needed. Within each tool you can set
+certain parameters which AI will fill in for you. For example, a weather tool
+may have a `location` parameter, and AI may enter `"Paris"` as the value. Here’s
+an example of a tool call interaction:
+
+<Steps>
+  <StepCompact>
+    <StepTitle>In your weather tool, `location` is defined as a `string`</StepTitle>
+    <StepContent>
+    ```json
+    { "location": { type: "string" } }
+    ```
+    </StepContent>
+  </StepCompact>
+
+{" "}
+
+<StepCompact>
+  <StepTitle>User asks about the weather in Paris</StepTitle>
+  <StepContent>
+
+    ```js
+    User: "What's the weather in Paris?"
+    ```
+
+  </StepContent>
+</StepCompact>
+
+  <StepCompact>
+    <StepTitle>AI calls the weather tool with `Paris` as the `location`</StepTitle>
+    <StepContent>
+    ```js
+    { "location": "Paris" }
+    ```
+    </StepContent>
+  </StepCompact>
+
+{" "}
+
+<StepCompact>
+  <StepTitle>You write code to fetch the weather for the `location`</StepTitle>
+  <StepContent>
+
+    ```js
+    execute: async ({ location }) => {
+      // { "temperature": 20, "condition": "sunny" };
+      const weather = await __fetchWeather__(location);
+      return { data: { weather }};
+    }
+    ```
+
+  </StepContent>
+</StepCompact>
+
+  <StepCompact lastStep>
+    <StepTitle>AI answers the user</StepTitle>
+    <StepContent>
+    ```js
+    AI: "It's sunny in Paris, with a temperature of 20°C."
+    ```
+    </StepContent>
+  </StepCompact>
+</Steps>
+
+When writing your
+[system prompt](/docs/ready-made-features/ai-copilots/copilots#System-prompt)
+you can suggest when certain tools should be used, helping AI respond as you
+like. This is just an example of a simple tool, but below we’ll detail how to
+create more complex tools that have confirm/deny dialogs, render custom
+components, query data, and more.
+
+## Defining tools
+
+You can define a tool with
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) and
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool). First,
+you first need to give your tool a unique name, and a description, which helps
+AI understand when to call it. You can place the component anywhere in your app.
+
+```tsx
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      // +++
+      <RegisterAiTool
+        name="weather-tool"
+        tool={defineAiTool()({
+          description: "Get the weather for a location",
+          // ...
+        })}
+      />
+      // +++
+    </>
+  );
+}
+```
+
+For AI to use your tools intelligently, parameters must be defined, which AI
+will fill in for you. Tools use
+[JSON schema](/docs/ready-made-features/ai-copilots/tools#Advanced-JSON-schema)
+to define these. For example, you can define `location` parameter as a `string`.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    // +++
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    // ...
+  })}
+/>
+```
+
+To add functionality to your tool, a combination of `execute` and `render`
+functions are used.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    execute: async ({ location }) => {
+      // ...
+    },
+    render: ({ stage, partialArgs, args, result, respond }) => {
+      // ...
+    },
+    // +++
+  })}
+/>
+```
+
+In each of the following sections, different ways to implement `execute` and
+`render` are detailed.
+
+## Actions
+
+If you’d like your AI to perform an action when the tool is called, you can use
+`execute` to define what should happen. The arguments passed to `execute` are
+the parameters defined in your tool, filled in by AI. After the tool has run,
+return any `data` you’d like to pass back to AI.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    // +++
+    execute: async ({ location }) => {
+      const weather = await __fetchWeather__(location);
+      return { data: { weather } };
+    },
+    // +++
+  })}
+/>
+```
+
+After running `execute`, AI will read the `data` object, and choose how to
+respond. Additionally, you can define a `description` to pass back to AI. This
+is a way to inform AI what has just taken place, so it can understand the
+context of the result, and what it should do next. This text will never be shown
+to the user.
+
+```ts
+execute: async ({ location }) => {
+  const weather = await __fetchWeather__(location);
+  return {
+    data: { weather },
+    // +++
+    description: "You've just fetched the weather, share the temperature in °C."
+    // +++
+  };
+},
+```
+
+<Banner title="Actions example">
+
+The [AI Calendar](/examples/ai-calendar/nextjs-ai-calendar) example contains an
+action that allows AI to create new calendar events.
+
+</Banner>
+
+### Display a loading message
+
+You can easily display a loading message while an action takes place using
+`render` and [`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool). You can
+also choose to display a message after the action has finished, as in the
+example below.
+
+```tsx
+import { AiChat, AiTool } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+
+function Chat() {
+  <>
+    <AiChat chatId="my-chat-id" />
+    <RegisterAiTool
+      name="weather-tool"
+      tool={defineAiTool()({
+        description: "Get the weather for a location",
+        parameters: {
+          type: "object",
+          properties: {
+            location: { type: "string" },
+          },
+          required: ["location"],
+          additionalProperties: false,
+        },
+        execute: async ({ location }) => {
+          const weather = await __fetchWeather__(location);
+          return {
+            data: { weather },
+            description: "You've just fetched the weather.",
+          };
+        },
+        // +++
+        render: ({ stage }) => {
+          // `execute` is still running
+          if (stage !== "executed") {
+            return <AiTool title="Fetching weather…" variant="minimal" />;
+          }
+
+          // `execute` has finished
+          return <AiTool title="Weather fetched" variant="minimal" />;
+        },
+        // +++
+      })}
+    />
+  </>;
+}
+```
+
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) isn’t required here,
+as you can return any JSX, but it’s an easy way to match the styling of the
+default chat. Returning `null` will display nothing.
+
+### Combine actions with front-end knowledge
+
+You can combine actions with
+[front-end knowledge](/docs/ready-made-features/ai-copilots/knowledge) to create
+an AI assistant that can take actions. For example, say you have a document on
+the current page. You can use knowledge to pass the document’s text to the AI,
+then create a tool that allows AI to edit the document.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { useState } from "react";
+
+function Document() {
+  // +++
+  const [document, setDocument] = useState("Hello world");
+  // +++
+
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      <RegisterAiKnowledge
+        description="The document's text"
+        // +++
+        value={document}
+        // +++
+      />
+      <RegisterAiTool
+        name="edit-document"
+        tool={defineAiTool()({
+          description: "Edit the document's text",
+          parameters: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+            },
+          },
+          execute: ({ args }) => {
+            // +++
+            setDocument(args.text);
+            // +++
+            return { data: {}, description: "Document updated" };
+          },
+          render: ({ stage }) => {
+            if (stage !== "executed") {
+              return <AiTool title="Updating document…" variant="minimal" />;
+            }
+
+            return <AiTool title="Document updated" variant="minimal" />;
+          },
+        })}
+      />
+    </>
+  );
+}
+```
+
+## Custom components
+
+You can use tools to display custom components inside the chat with the `render`
+function. These don’t have to be simple components, but can be complex, like
+forms, graphs, videos, callouts. When displaying a simple component, include an
+`execute` function, even if it’s empty, otherwise the chat will assume it’s a
+[human-in-the-loop action](#Human-in-the-loop-actions).
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {},
+    execute: () => {},
+    // +++
+    render: () => {
+      return <MyGraph x={50} y={100} />;
+    },
+    // +++
+  })}
+/>
+```
+
+You can go further than this, and allow AI to
+[create parameters](#Advanced-JSON-schema) which you can use in your custom
+component, for example `x` and `y` values on a graph.
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {
+      type: "object",
+      properties: {
+        // +++
+        x: { type: "number" },
+        y: { type: "number" },
+        // +++
+      },
+      required: ["x", "y"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ args, stage }) => {
+      if (stage !== "executed") {
+        return <div>Loading...</div>;
+      }
+
+      // +++
+      return <MyGraph x={args.x} y={args.y} />;
+      // +++
+    },
+  })}
+/>
+```
+
+AI will most likely write a response after using your tool, but you can prompt
+the AI to not respond by adding a `description` to `execute`.
+
+```tsx
+<RegisterAiTool
+  name="graph-tool"
+  tool={defineAiTool()({
+    description: "Display a graph in the chat",
+    parameters: {
+      type: "object",
+      properties: {
+        x: { type: "number" },
+        y: { type: "number" },
+      },
+      required: ["x", "y"],
+      additionalProperties: false,
+    },
+    execute: () => {
+      return {
+        data: {},
+        // +++
+        description: "You’re displaying a graph. Do not respond further.",
+        // +++
+      };
+    },
+    render: ({ args, stage }) => {
+      if (stage !== "executed") {
+        return <div>Loading...</div>;
+      }
+
+      // +++
+      return <MyGraph x={args.x} y={args.y} />;
+      // +++
+    },
+  })}
+/>
+```
+
+<Banner title="Custom components example">
+
+The [AI Support Chat](/examples/ai-support/nextjs-ai-support) example uses
+custom components in its support ticket tool to display a contact form.
+
+</Banner>
+
+### Fetching data for custom components
+
+You can take custom components a step further by combining them with
+[actions](#Actions), and then showing the results inside the custom component.
+The `result` property contains the data returned from the action.
+
+```tsx
+<RegisterAiTool
+  name="weather-tool"
+  tool={defineAiTool()({
+    description: "Get the weather for a location",
+    parameters: {
+      type: "object",
+      properties: {
+        location: { type: "string" },
+      },
+      required: ["location"],
+      additionalProperties: false,
+    },
+    execute: async ({ location }) => {
+      // { "temperature": 20, "condition": "sunny" };
+      const weather = await __fetchWeather__(location);
+      return { data: { weather } };
+    },
+    // +++
+    render: ({ stage, args, result }) => {\
+      if (stage !== "executed") {
+        return <div>Fetching weather…</div>;
+      }
+
+      return (
+        <MyWeatherComponent
+          location={args.location}
+          condition={result.data.weather.condition}
+          temperature={result.data.weather.temperature}
+        />
+      );
+    },
+    // +++
+  })}
+/>
+```
+
+`args` contains the arguments passed to the tool from AI, and `result` contains
+the data returned from the tool.
+
+## Query actions
+
+A helpful way to use tools is to allow AI to query data from your application,
+such as documents, pages, or other data sources. If your application already
+contains a search function, you can easily plug it into your tool to create a
+powerful AI assistant. For example, this tool can search through documents by
+title, folder, and category.
+
+```tsx
+<RegisterAiTool
+  name="find-documents"
+  tool={defineAiTool()({
+    // +++
+    description: "Find documents by title, folder, and category",
+    // +++
+    parameters: {
+      type: "object",
+      properties: {
+        // +++
+        title: { type: "string" },
+        folder: { type: "string" },
+        category: { type: "string" },
+        // +++
+      },
+    },
+    required: ["title", "folder", "category"],
+    additionalProperties: false,
+  },
+  // +++
+  execute: async ({ title, folder, category }) => {
+    const documents = await __queryDocuments__({ title, folder, category });
+    return {
+      data: { documents },
+      description: documents.length > 0 ? `${documents.length} results` : "No results"
+    };
+  },
+  // +++
+  render: ({ stage, args, result }) => {
+    if (stage !== "executed") {
+      return <AiTool title="Fetching documents…" variant="minimal" />;
+    }
+
+    return null;
+  },
+  })}
+/>
+```
+
+Since the query is happening on the front-end, you don’t need to implement
+separate authentication for your AI tool—it can leverage the same APIs that your
+users are already authorized to access.
+
+<Banner title="Query actions example">
+
+The
+[AI Reports Dashboard](/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports)
+example has a query transactions tool allowing for complex searching.
+
+</Banner>
+
+## Human-in-the-loop actions
+
+Human-in-the-loop actions allow the user to confirm or deny an action before
+it’s executed. This is particularly useful when it comes to destructive and
+stateful actions, such as deleting a document, or sending an email. Confirmable
+actions like these will freeze the chat until the user responds, either by
+confirming or cancelling the action.
+
+<Steps>
+<StepCompact>
+  <StepTitle>User asks to delete a document</StepTitle>
+  <StepContent>
+
+    ```js
+    User: "Can you delete my-document.txt?"
+    ```
+
+  </StepContent>
+</StepCompact>
+  <StepCompact>
+    <StepTitle>AI calls the delete document tool, “Confirm” and “deny” buttons are displayed</StepTitle>
+    <StepContent>
+    _The chat waits for the user to respond._
+    </StepContent>
+  </StepCompact>
+  <StepCompact>
+    <StepTitle>The user clicks “Confirm”</StepTitle>
+    <StepContent>
+    _The document is deleted._
+    </StepContent>
+  </StepCompact>
+<StepCompact lastStep>
+  <StepTitle>The chat unfreezes and is ready to continue</StepTitle>
+  <StepContent>
+
+    ```js
+    AI: "I've deleted it! How else can I help you?"
+    ```
+
+  </StepContent>
+</StepCompact>
+</Steps>
+
+To create confirmable actions, you must skip using the `execute` function, and
+instead move your logic to `render`, as we detail below. This will always freeze
+the chat until the user responds.
+
+<Banner title="Human-in-the-loop actions example">
+
+The
+[AI Reports Dashboard](/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports)
+example demonstrates human-in-the-loop actions with its invite member tool.
+
+</Banner>
+
+### Default confirmation component
+
+The easiest way to create confirmable actions, is to return the ready-made
+[`AiTool.Confirmation`](/docs/api-reference/liveblocks-react-ui#AiTool.Confirmation)
+component in `render`. The `confirm` and `cancel` callbacks work very similarly
+to `execute`, and are triggered when the user clicks “Confirm” or “Cancel”.
+
+```tsx
+<RegisterAiTool
+  name="delete-document"
+  tool={defineAiTool()({
+    description: "Delete a document by its ID",
+    parameters: {
+      type: "object",
+      properties: {
+        documentId: { type: "string" },
+      },
+      required: ["documentId"],
+      additionalProperties: false,
+    },
+    render: ({ stage, args, result, types }) => {
+      return (
+        <AiTool title="Delete document" variant="minimal">
+          // +++
+          <AiTool.Confirmation
+            types={types}
+            confirm={async ({ documentId }) => {
+              await __deleteDocument__(documentId);
+              return {
+                data: { documentId },
+                description: "The user chose to delete the document",
+              };
+            }}
+            cancel={() => {
+              return {
+                data: { documentId },
+                description: "The user cancelled deleting the document",
+              };
+            }}
+          />
+          // +++
+        </AiTool>
+      );
+    },
+  })}
+/>
+```
+
+In the `cancel` callback it’s important to let the AI know that the user
+cancelled the action, otherwise it may assume the action failed and try to run
+it again.
+
+```js
+description: "The user cancelled deleting the document",
+```
+
+### Building a custom confirmation component
+
+By utilizing the `respond` argument in `render`, and the different stages of a
+tool’s lifecycle, you can build a fully custom confirmation component. These are
+the different stages:
+
+1. `receiving` - Displayed when AI is streaming in the parameters.
+2. `executing` - Displayed when the chat is frozen, and is waiting for a
+   response.
+3. `executed` - Displayed after a response has been recorded.
+
+Here’s how to leverage the different stages to create a custom “send email”
+tool—note how `respond` is used similarly to `execute`.
+
+```tsx
+<RegisterAiTool
+  name="send-email"
+  tool={defineAiTool()({
+    description: "Send an email",
+    parameters: {
+      type: "object",
+      properties: {
+        emailAddress: { type: "string" },
+      },
+      required: ["emailAddress"],
+      additionalProperties: false,
+    },
+    render: ({ stage, args, respond, result }) => {
+      // `emailAddress` param is still streaming in, wait
+      // +++
+      if (stage === "receiving") {
+        return <div>Loading...</div>;
+      }
+      // +++
+
+      // The tool is waiting for `respond` to be called
+      // +++
+      if (stage === "executing") {
+        return (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const message = e.target.message.value;
+              await __sendEmail__(args.emailAddress, message);
+
+              // Similar to `execute`/`confirm`, let AI know it succeeded
+              respond({
+                data: { emailAddress: args.emailAddress, message },
+                description: "You sent an email for the user",
+              });
+            }}
+          >
+            <textarea name="message" />
+            <button type="submit">Send</button>
+            <button
+              type="button"
+              onClick={() =>
+                // Similar to `execute`/`cancel`, let AI know the user cancelled
+                respond({
+                  data: { emailAddress: args.emailAddress, message },
+                  description: "The user cancelled sending an email",
+                })
+              }
+            >
+              Cancel
+            </button>
+          </form>
+        );
+      }
+      // +++
+
+      // `respond` has already been called, show the result
+      // +++
+      return (
+        <div>
+          You sent an email to {args.emailAddress}: "{result.data.message}".
+        </div>
+      );
+      // +++
+    },
+  })}
+/>
+```
+
+A tool’s stages never reset, which means that once an email has been sent, the
+tool will remain in the `executed` stage showing “You sent an email to…”, even
+after refreshing the page. This enables stateful interaction.
+
+## AI presence & streaming
+
+You can stream in tool results as they arrive, allowing you to show live updates
+and AI presence in your application. An example would be a tool that generates
+documents—you can display the partially generated document as each chunk
+arrives, for example:
+
+<Steps>
+
+<StepCompact>
+```json
+{ "content": "Here’s" }
+```
+</StepCompact>
+
+<StepCompact>
+```json
+{ "content": "Here’s my suggestions" }
+```
+</StepCompact>
+
+<StepCompact>
+```json
+{ "content": "Here’s my suggestions for a" }
+```
+</StepCompact>
+
+<StepCompact lastStep>
+```json
+{ "content": "Here’s my suggestions for a marketing email!" }
+```
+</StepCompact>
+
+</Steps>
+
+To show this inside the tool, you can use `render`. While you’d normally access
+AI-generated arguments via `args`, but to access streaming results, you can use
+`partialArgs` to get the whole stream up to this point. This all occurs during
+the `receiving` stage, and as each chunk is received, `render` will re-render
+and update the UI.
+
+```tsx
+<RegisterAiTool
+  name="create-document"
+  tool={defineAiTool()({
+    description: "Create a document",
+    parameters: {
+      type: "object",
+      properties: {
+        content: { type: "string" },
+      },
+      required: ["content"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ stage, partialArgs }) => {
+      // Document is streaming in
+      // +++
+      if (stage === "receiving") {
+        return <div>Document: {partialArgs.content}</div>;
+      }
+      // +++
+
+      // Document has fully streamed in
+      // +++
+      return <div>Document: {args.content}</div>;
+      // +++
+    },
+  })}
+/>
+```
+
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) allows
+you to stream in strings, objects, and arrays, and you can use them in `render`
+as they arrive.
+
+<Banner title="AI presence & streaming example">
+
+The [AI App Builder](/examples/ai-app-builder/nextjs-ai-app-builder) example
+demonstrates AI presence and streaming in a code editor.
+
+</Banner>
+
+### Streaming into a document with AI presence
+
+To stream results outside of the chat window, and show AI presence, you can call
+functions inside `render`. In this case, we’re updating a document outside of
+the chat window, and inside the chat, we’re showing a simple
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) message.
+
+```tsx
+<RegisterAiTool
+  name="create-document"
+  tool={defineAiTool()({
+    description: "Create a document",
+    parameters: {
+      type: "object",
+      properties: {
+        content: { type: "string" },
+      },
+      required: ["content"],
+      additionalProperties: false,
+    },
+    execute: () => {},
+    render: ({ stage, partialArgs }) => {
+      // Document is streaming in, update document and presence
+      // +++
+      if (stage === "receiving") {
+        __updateDocument__(partialArgs.content);
+        __renderPresenceAtPosition__(partialArgs.content.length);
+        return <AiTool title="Creating document…" />;
+      }
+      // +++
+
+      // Final chunk of stream is here, update document and end presence
+      // +++
+      if (stage === "executing") {
+        __updateDocument__(args.content);
+        __renderPresenceAtPosition__(null);
+        return <AiTool title="Creating document…" />;
+      }
+      // +++
+
+      // Document has fully streamed in
+      // +++
+      return <AiTool title="Document complete!" />;
+      // +++
+    },
+  })}
+/>
+```
+
+## Advanced JSON schema
+
+Up to this point, we’ve only covered generating objects and strings with AI, but
+[JSON schema](https://json-schema.org/learn/getting-started-step-by-step) allows
+for more complex data types, such as numbers, arrays, enums, as well as
+constraints, and hints for AI.
+
+<Banner type="warning" title="Model compatibility">
+  Some AI models don’t allow certain JSON schema types, but we’ve found these
+  types work with most models. Many models enforce using the `required` array,
+  and setting `additionalProperties: "false"`, which is why we recommend this.
+</Banner>
+
+```js
+parameters: {
+  type: "object",
+
+  properties: {
+    // String
+    name: { type: "string" },
+  
+    // Number
+    age: { type: "number" },
+  
+    // Boolean
+    sendEmail: { type: "boolean" },
+  
+    // Union
+    count: { type: ["string", "number", "null"] },
+  
+    // Array
+    pets: { type: "array", items: { type: "string" } },
+  
+    // Description, helps AI understand the type
+    job: { type: "string", description: "A job title, 1-2 words" },
+  
+    // String constraints
+    fullName: {
+      type: "string",
+      minLength: 1,
+      maxLength: 100,
+      pattern: "^[A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)+$",
+    },
+  
+    // Number constraints
+    ageInYears: { type: "number", minimum: 18, maximum: 100 },
+  
+    // Combination of all
+    people: {
+      type: "array",
+      description: "A list of all people",
+      items: {
+        type: "object",
+        properties: {
+          sendEmail: { type: "boolean", description: "Notify them by?" },
+          name: { type: "string", description: "First and last names" },
+          age: { type: "number", minimum: 18, description: "Age in years" },
+          job: { type: ["string", "null"], description: "`null` for unemployed" },
+        }
+      },
+    },
+  },
+
+  // Recommended to always set the following, passing all properties to `required`
+  additionalProperties: false,
+  required: ["name", "age", "sendEmail", "job", "fullName", "ageInYears", "pets", "people"],
+}
+```
+
+## Updating tools
+
+After a tool has been used in the chat, its AI-filled parameters are permanently
+set. This leaves us with a problem—if we remove or change the tool’s parameters,
+old versions of the tool will display an empty space in the chat (or in
+development mode, an error box).
+
+```diff
+// ❌ Will render `null` in the chat instead of a tool
+‎<RegisterAiTool
+  name="send-email"
+  tool={defineAiTool()({
+    description: "Send an email",
+    parameters: {
+      type: "object",
+      properties: {
+-       email: { type: "string" },
++       emailAddress: { type: "string" },
+      },
+-     required: ["email"],
++     required: ["emailAddress"],
+      additionalProperties: false,
+    },
+  })}
+  // ...
+/>
+```
+
+Care needs to be taken when creating a new version of each tool if you wish for
+old chats to display fully working components. For this reason, we recommend
+versioning your tools, and disabling the old tool until you’re sure the old
+tools aren’t needed anymore. This will ensure the tool won’t be used in new
+chats, but the old component will still render correctly.
+
+```tsx
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <>
+      <AiChat chatId="my-chat-id" />
+      <RegisterAiTool
+        name="send-email"
+        // +++
+        // Disabling the old tool so it won't be used in new chats
+        enabled={false}
+        // +++
+        tool={defineAiTool()({
+          description: "Send an email",
+          parameters: {
+            type: "object",
+            properties: {
+              // +++
+              email: { type: "string" },
+              // +++
+            },
+            required: ["email"],
+            additionalProperties: false,
+          },
+        })}
+        // ...
+      />
+      <RegisterAiTool
+        // +++
+        // Version 2, which will be used in new chats
+        name="send-email-v2"
+        // +++
+        tool={defineAiTool()({
+          description: "Send an email",
+          parameters: {
+            type: "object",
+            properties: {
+              // +++
+              emailAddress: { type: "string" },
+              // +++
+            },
+            required: ["emailAddress"],
+            additionalProperties: false,
+          },
+        })}
+        // ...
+      />
+    </>
+  );
+}
+```

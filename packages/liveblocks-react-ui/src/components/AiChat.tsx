@@ -472,6 +472,29 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
   }
 );
 
+// Call `Element.scrollIntoView()` unless the element is not displayed.
+// (with `display: none` or nested within elements with `display: none`)
+// https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
+//
+// This avoids browser quirks where they still attempt to scroll to the
+// element but it results in a scroll to the document's top.
+function scrollIntoView(
+  element: HTMLElement | null,
+  options?: ScrollIntoViewOptions
+) {
+  if (!element) {
+    return;
+  }
+
+  // Checking for at least one client rect allows 0 width/height elements,
+  // unlike checking if the width/height is 0 with `getBoundingClientRect`.
+  if (element.getClientRects().length === 0) {
+    return;
+  }
+
+  element.scrollIntoView(options);
+}
+
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   (
     {
@@ -529,7 +552,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           // but wait for the next tick in case the trailing space hasn't
           // been updated yet. (e.g. when sending a new message)
           setTimeout(() => {
-            bottomMarkerRef.current?.scrollIntoView({
+            scrollIntoView(bottomMarkerRef.current, {
               behavior,
               block: "end",
             });
@@ -537,7 +560,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         } else {
           // Scroll to the trailing space marker to only scroll to the
           // bottom of the messages, without including the trailing space.
-          bottomTrailingMarkerRef.current?.scrollIntoView({
+          scrollIntoView(bottomTrailingMarkerRef.current, {
             behavior,
             block: "end",
           });

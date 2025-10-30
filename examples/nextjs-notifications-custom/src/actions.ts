@@ -2,7 +2,15 @@
 
 import { Liveblocks } from "@liveblocks/node";
 import { nanoid } from "nanoid";
-import { AlertData, ImageUploadData, InviteData } from "./liveblocks.config";
+import {
+  AlertData,
+  ImageUploadData,
+  InviteData,
+  IssueUpdatedData,
+} from "./liveblocks.config";
+
+// Functions that trigger custom notifications
+// https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -35,5 +43,18 @@ export async function inviteNotification(userId: string, data: InviteData) {
     kind: "$invite",
     subjectId: nanoid(),
     activityData: data,
+  });
+}
+
+export async function issueUpdatedNotification(
+  userId: string,
+  data: { subjectId: string } & IssueUpdatedData
+) {
+  const { subjectId, ...activityData } = data;
+  await liveblocks.triggerInboxNotification({
+    userId,
+    kind: "$issueUpdated",
+    subjectId,
+    activityData,
   });
 }
