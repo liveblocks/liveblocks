@@ -1,4 +1,7 @@
-## unreleased
+
+## vNEXT (not released yet)
+
+## v3.10.0
 
 ### `@liveblocks/client`
 
@@ -7,6 +10,18 @@
 ### `@liveblocks/node`
 
 - Prevents certain 400 level errors from being reported as a 403
+
+### `@liveblocks/react-ui`
+
+- Fix scroll issues in some scenarios where the `AiChat` component would be
+  rendered but hidden.
+
+## v3.9.2
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support newer Claude variants:
+  Opus 4.1, Sonnet 4.5, and Haiku 4.5.
 
 ## v3.9.1
 
