@@ -50,7 +50,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
-    "msw": "^2.10.4"
+    "msw": "^2.11.6"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"
