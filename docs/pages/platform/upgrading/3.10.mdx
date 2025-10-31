@@ -1,0 +1,233 @@
+---
+meta:
+  title: "Upgrading to 3.10"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 3.10"
+---
+
+Liveblocks 3.10 releases breaking changes for [Tiptap](#Upgrade-Tiptap) and
+[BlockNote](#Upgrade-BlockNote) users, as it requires at least Tiptap 3.0 or
+BlockNote 0.39. No other parts of Liveblocks are affected by breaking changes.
+
+## Not using Tiptap or BlockNote?
+
+**If you’re not using Tiptap or BlockNote, there are no breaking changes**,
+simply upgrade all Liveblocks dependencies to their latest versions. The easiest
+way to upgrade is to run the following command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## Upgrade Tiptap
+
+Tiptap v3 is a major update with breaking changes, but the migration process is
+quite simple. First, you _must_ uninstall all Tiptap and Liveblocks dependencies
+to avoid future version conflicts as we upgrade. This includes any extra Tiptap
+extensions you may have installed or anything else with a dependency on Tiptap.
+
+### AI-assisted upgrade
+
+The easiest way to upgrade is to use our AI assistant to generate the uninstall
+and install commands for you. Make sure you’re signed in, paste your
+`package.json` into the following input, and generate the commands.
+
+<AskAiInput 
+  placeholder="Paste package.json here" 
+  prompt={`Write two **multi-line** npm commands for me:
+1. Uninstall all Tiptap and Liveblocks packages. 
+2. Install all the same packages with @latest on Liveblocks and @3 on Tiptap.
+
+Here is my package.json:
+
+\`\`\`json
+
+{{INPUT}}
+
+\`\`\`
+
+Offer to rewrite the multi-line commands if I'm on Windows.
+
+`}>
+
+Generate commands
+
+</AskAiInput>
+
+Run the two commands then skip to
+[Critical changes for Liveblocks users](#Critical-changes-for-Liveblocks-Tiptap-users).
+
+### Manual upgrade
+
+If you’d like to upgrade manually, you need to run the npm command to uninstall
+all Tiptap and Liveblocks packages. Note that you are likely using more package
+than are listed here, such as Tiptap extensions.
+
+```bash
+npm uninstall @tiptap/react @tiptap/starter-kit @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap @liveblocks/node
+```
+
+Next re-install all Tiptap and Liveblocks packages. If you see a peer dependency
+issue during this install, you may have missed something during the previous
+uninstall step.
+
+```bash
+npm install @tiptap/react@3 @tiptap/starter-kit@3 @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-ui@latest @liveblocks/react-tiptap@latest @liveblocks/node@latest
+```
+
+This will ensure that all packages are compatible with each other and prevent
+version conflicts.
+
+### Critical changes for Liveblocks Tiptap users
+
+While Tiptap 3 includes many changes, there are two particularly critical
+changes that affect Liveblocks integration:
+
+#### StarterKit configuration change
+
+Liveblocks provides its own undo/redo functionality for collaborative editing.
+In Tiptap 2, you disabled this by setting `history: false` in the StarterKit
+extension. In Tiptap 3, this option has been renamed to `undoRedo`:
+
+```diff
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+-      history: false,
++      undoRedo: false,
+    }),
+    // Other extensions...
+  ],
+});
+```
+
+#### Set `immediatelyRender: false` for SSR
+
+If you're using server-side rendering (such as with Next.js), it's now more
+critical to set `immediatelyRender: false` in your editor configuration to
+prevent hydration issues:
+
+```tsx highlight="3"
+const editor = useEditor(
+  {
+    immediatelyRender: false,
+    extensions: [
+      StarterKit.configure({
+        undoRedo: false,
+      }),
+      // Other extensions...
+    ],
+  },
+  []
+);
+```
+
+This ensures the editor doesn't render on the server, which can cause mismatches
+between server and client rendering.
+
+### Style Changes
+
+If you have your own styles for collaboration cursors, the default CSS classes
+prefix changed from `.collaboration-cursor` to `.collaboration-carets`.
+
+```diff
+- .collaboration-cursor__caret {
++ .collaboration-carets__caret {
+  /* Your caret styles */
+}
+
+- .collaboration-cursor__label {
++ .collaboration-carets__label {
+  /* Your label styles */
+}
+```
+
+### Full migration guide
+
+For a complete list of breaking changes and new features in Tiptap 3, refer to
+the
+[official Tiptap upgrade guide](https://tiptap.dev/docs/guides/upgrade-tiptap-v2).
+
+## Upgrade BlockNote
+
+BlockNote 0.39 has upgraded to use Tiptap 3.0 under the hood, which requires a
+simple upgrade. First, you _must_ uninstall all BlockNote, Tiptap, and
+Liveblocks dependencies to avoid future version conflicts as we upgrade. This
+includes any extra Tiptap extensions you may have installed or anything else
+with a dependency on Tiptap.
+
+### AI-assisted upgrade
+
+The easiest way to upgrade is to use our AI assistant to generate the uninstall
+and install commands for you. Make sure you’re signed in, paste your
+`package.json` into the following input, and generate the commands.
+
+<AskAiInput 
+  placeholder="Paste package.json here" 
+  prompt={`Write two **multi-line** npm commands for me:
+1. Uninstall all BlockNote, Tiptap, and Liveblocks packages. 
+2. Install all the same packages with @latest on Liveblocks and BlockNote, and @3 on Tiptap.
+
+Here is my package.json:
+
+\`\`\`json
+
+{{INPUT}}
+
+\`\`\`
+
+Offer to rewrite the multi-line commands if I'm on Windows.
+
+`}>
+
+Generate commands
+
+</AskAiInput>
+
+Run the two commands then skip to
+[Critical changes for Liveblocks BlockNote users](#Critical-changes-for-Liveblocks-BlockNote-users).
+
+### Manual upgrade
+
+If you’d like to upgrade manually, you need to run the npm command to uninstall
+all BlockNote, Tiptap, and Liveblocks packages. Note that you are likely using
+more package than are listed here, such as text editor extensions.
+
+```bash
+npm uninstall @blocknote/core @blocknote/mantine @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-blocknote @liveblocks/node
+```
+
+Next re-install all BlockNote, Tiptap, and Liveblocks packages. If you see a
+peer dependency issue during this install, you may have missed something during
+the previous uninstall step.
+
+```bash
+npm install @blocknote/core@latest @blocknote/mantine@latest @liveblocks/client@latest @liveblocks/react@latest @liveblocks/react-ui@latest @liveblocks/react-blocknote@latest @liveblocks/node@latest
+```
+
+This will ensure that all packages are compatible with each other and prevent
+version conflicts.
+
+### Critical changes for Liveblocks BlockNote users
+
+#### Style Changes
+
+If you have your own styles for collaboration cursors, the default CSS classes
+prefix changed from `.collaboration-cursor` to `.collaboration-carets`.
+
+```diff
+- .collaboration-cursor__caret {
++ .collaboration-carets__caret {
+  /* Your caret styles */
+}
+
+- .collaboration-cursor__label {
++ .collaboration-carets__label {
+  /* Your label styles */
+}
+```
+
+### BlockNote release notes
+
+To learn more about the changes in BlockNote 0.39, please refer to the
+[BlockNote 0.39 release notes](https://github.com/TypeCellOS/BlockNote/releases/tag/v0.39.0).
