@@ -18,6 +18,42 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 44 (2025-10-31)
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
+## Documentation
+
+- New AI Copilots get started guides for [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
+- New AI Copilots overview pages:
+  - [Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots/copilots).
+  - [Default components](https://liveblocks.io/docs/ready-made-features/ai-copilots/default-components).
+  - [Hooks](https://liveblocks.io/docs/ready-made-features/ai-copilots/hooks).
+  - [Knowledge](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge).
+  - [Tools](https://liveblocks.io/docs/ready-made-features/ai-copilots/tools).
+  - [Styling and customization](https://liveblocks.io/docs/ready-made-features/ai-copilots/styling-and-customization).
+  - [Troubleshooting](https://liveblocks.io/docs/ready-made-features/ai-copilots/troubleshooting).
+- New guide: [How to use fallback AI models in AI Copilots](https://liveblocks.io/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots).
+
+## Examples
+
+- Added batched notifications to [Custom Notifications example](https://liveblocks.io/examples/notifications-custom).
+
+## Website
+
+- New diff code block styling.
+- New icons for docs overview pages.
+- Fixed example integrations when no environment variable is needed.
+- Fixed code snippet background color.
+
+## Contributors
+
+ctnicholas, nimeshnayaju
+
 # Week 42 (2025-10-17)
 
 ## v3.9.0
