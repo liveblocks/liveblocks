@@ -1,11 +1,20 @@
 version: 2
 updates:
+  # Only patch lockfile bumps for examples, starter kits, interactive tutorial
+  - package-ecosystem: "npm"
+    directories:
+      - "/examples/**"
+      - "/starter-kits/**"
+      - "/tutorial/**"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    versioning-strategy: lockfile-only
+
+  # Default behavior elsewhere
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
-    exclude-paths:
-      - "docs/**"
-      - "examples/**"
-      - "guides/**"
-      - "tutorial/**"
+      interval: "weekly"
