@@ -4,7 +4,7 @@
 
 ### `@liveblocks/react-ui`
 
-- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop to
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on
   `Thread`) to allow customizing comments’ dropdown items in the default
   components.
 - Fix scroll issues in some scenarios where `AiChat` would be rendered but

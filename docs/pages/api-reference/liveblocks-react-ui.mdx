@@ -973,6 +973,90 @@ setting `maxVisibleComments` to an object.
 <Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
 ```
 
+##### Custom dropdown items
+
+`Thread` shows a dropdown menu for threads and comments which contains actions
+related to them: “Subscribe to thread”, “Edit comment”, “Delete comment”, etc.
+
+The prop `commentDropdownItems` allows customizing the dropdown’s items, for
+example adding new items. Items can be built with the `Comment.DropdownItem`
+component which accepts an `onSelect` prop that is called when the item is
+selected.
+
+```tsx
+<Thread
+  commentDropdownItems={
+    <>
+      <Comment.DropdownItem
+        onSelect={() => {
+          console.log("Open details");
+        }}
+      >
+        Details
+      </Comment.DropdownItem>
+      <Comment.DropdownItem
+        onSelect={() => {
+          console.log("Move comment");
+        }}
+      >
+        Move
+      </Comment.DropdownItem>
+    </>
+  }
+/>
+```
+
+These new items will be displayed below the default items, but it’s possible to
+change that by passing a function. This function receives a `children` prop
+which contains the default items, so you can decide to display them above or
+below your new items, or even not display them at all. This function also
+receives a `comment` prop which contains the comment it’s attached to.
+
+```tsx
+<Thread
+  // +++
+  commentDropdownItems={({ children }) => {
+    // +++
+    return (
+      <>
+        <Comment.DropdownItem
+          onSelect={() => {
+            // +++
+            openDetails(comment.id);
+            // +++
+          }}
+        >
+          Details
+        </Comment.DropdownItem>
+        // +++
+        {/* The "Details" item will be displayed above the default items */}
+        {children}
+        // +++
+      </>
+    );
+  }}
+/>
+```
+
+The `Comment.DropdownItem` component also accepts an `icon` prop to display an
+icon next to the item’s label.
+
+```tsx
+<Comment.DropdownItem
+  onSelect={() => {
+    openDetails(comment.id);
+  }}
+  // +++
+  icon={<Icon.Details />}
+  // +++
+>
+  Details
+</Comment.DropdownItem>
+```
+
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) offers the same as
+`Thread`’s `commentDropdownItems` but named `dropdownItems` instead.
+
 ##### Props [#Thread-props]
 
 <PropertiesList>
