@@ -18,7 +18,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
-# Week 43 (2025-10-24)
+# Week 44 (2025-10-31)
 
 ## v3.9.1
 
