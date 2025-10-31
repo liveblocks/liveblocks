@@ -8,7 +8,8 @@ updates:
       - "/tutorial/**"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 0 # Security updates ignore this
+    # Security updates ignore this limit: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#open-pull-requests-limit-
+    open-pull-requests-limit: 0 
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
