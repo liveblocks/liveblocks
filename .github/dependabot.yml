@@ -8,7 +8,7 @@ updates:
       - "/tutorial/**"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 0 # Security updates ignore this
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
