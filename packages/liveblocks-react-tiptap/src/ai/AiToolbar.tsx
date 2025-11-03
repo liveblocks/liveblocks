@@ -54,8 +54,6 @@ import { createPortal } from "react-dom";
 
 import { EditorProvider, useCurrentEditor } from "../context";
 import type {
-  AiCommands,
-  AiExtensionStorage,
   AiToolbarState,
   ChainedAiCommands,
 } from "../types";
@@ -458,7 +456,7 @@ function AiToolbarAsking() {
 function AiToolbarThinking() {
   const editor = useCurrentEditor("AiToolbarThinking", "AiToolbar");
   const contentRef = useRef<HTMLDivElement>(null);
-  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
+  const aiName = (editor.storage.liveblocksAi).name;
 
   const handleAbort = useCallback(() => {
     (editor.commands).$cancelAiToolbarThinking();
@@ -670,7 +668,7 @@ export const AiToolbar = Object.assign(
           editor,
           selector: (ctx) => {
             return (
-              ctx.editor?.storage.liveblocksAi as AiExtensionStorage | undefined
+              ctx.editor?.storage.liveblocksAi
             )?.state;
           },
         }) ?? DEFAULT_STATE;
