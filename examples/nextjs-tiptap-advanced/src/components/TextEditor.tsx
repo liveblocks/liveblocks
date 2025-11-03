@@ -9,11 +9,11 @@ import {
 import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import TaskList from "@tiptap/extension-task-list";
+import { TaskList } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import Youtube from "@tiptap/extension-youtube";
+import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
@@ -37,6 +37,7 @@ export function Editor() {
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -70,7 +71,7 @@ export function Editor() {
           },
         },
         // The Collaboration extension comes with its own history handling
-        history: false,
+        undoRedo: false,
         horizontalRule: {
           HTMLAttributes: {
             class: "tiptap-hr",

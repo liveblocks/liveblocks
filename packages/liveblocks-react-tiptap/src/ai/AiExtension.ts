@@ -24,11 +24,9 @@ import {
 
 import {
   AI_TOOLBAR_SELECTION_PLUGIN,
-  type AiCommands,
   type AiExtensionOptions,
   type AiExtensionStorage,
   type AiToolbarState,
-  type LiveblocksExtensionStorage,
   type ResolveContextualPromptResponse,
   type YSyncPluginState,
 } from "../types";
@@ -45,13 +43,12 @@ function getYjsBinding(editor: Editor) {
     .binding;
 }
 
-function getLiveblocksYjsProvider(editor: Editor) {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  return (
-    editor.extensionStorage.liveblocksExtension as
-      | LiveblocksExtensionStorage
-      | undefined
-  )?.provider as LiveblocksYjsProvider | undefined;
+function getLiveblocksYjsProvider(
+  editor: Editor
+): LiveblocksYjsProvider | undefined {
+  // Eslint doesn't seem to like Tiptap's Type declaration strategy
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+  return editor.extensionStorage.liveblocksExtension?.provider;
 }
 
 export function isContextualPromptDiffResponse(
@@ -157,20 +154,16 @@ export const AiExtension = Extension.create<
     return {
       askAi: (prompt) => () => {
         if (typeof prompt === "string") {
-          (
-            this.editor.commands as unknown as AiCommands
-          ).$startAiToolbarThinking(prompt);
+          this.editor.commands.$startAiToolbarThinking(prompt);
         } else {
-          (
-            this.editor.commands as unknown as AiCommands
-          ).$openAiToolbarAsking();
+          this.editor.commands.$openAiToolbarAsking();
         }
 
         return true;
       },
 
       closeAi: () => () => {
-        (this.editor.commands as unknown as AiCommands).$closeAiToolbar();
+        this.editor.commands.$closeAiToolbar();
 
         return true;
       },
@@ -414,9 +407,7 @@ export const AiExtension = Extension.create<
               }
 
               // 6.a. If the AI request succeeds, set to "reviewing" phase with the response
-              (
-                this.editor.commands as unknown as AiCommands
-              )._handleAiToolbarThinkingSuccess({
+              this.editor.commands._handleAiToolbarThinkingSuccess({
                 type: response.type,
                 text: response.text,
               });
@@ -427,9 +418,7 @@ export const AiExtension = Extension.create<
               }
 
               // 6.b. If the AI request fails, set to "asking" phase with error
-              (
-                this.editor.commands as unknown as AiCommands
-              )._handleAiToolbarThinkingError(error);
+              this.editor.commands._handleAiToolbarThinkingError(error);
             });
 
           return true;
@@ -554,9 +543,7 @@ export const AiExtension = Extension.create<
           tr.setMeta("preventDispatch", true);
 
           // 6. Show the diff
-          (
-            this.editor.commands as unknown as AiCommands
-          )._showAiToolbarReviewingDiff();
+          this.editor.commands._showAiToolbarReviewingDiff();
 
           // We moved to the "reviewing" phase, so even if `_showAiToolbarReviewingDiff`
           // returns `false` somehow, we still want to return `true`
