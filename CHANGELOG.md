@@ -19,6 +19,10 @@
 - Fix scroll issues in some scenarios where `AiChat` would be rendered but
   hidden.
 
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
 ## v3.9.2
 
 ### `@liveblocks/node`
