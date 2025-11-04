@@ -9,7 +9,7 @@ meta:
 This guide covers best practices and common pitfalls to avoid when working with
 Tiptap and Liveblocks.
 
-<Banner title="Tiptap is backed by Yjs" type="note">
+<Banner title="Tiptap is backed by Yjs">
 
 Tiptap uses [Yjs](https://docs.yjs.dev/) for synchronization. Make sure to also
 check out our [Yjs best practices and tips](/guides/yjs-best-practices-and-tips)
@@ -17,13 +17,15 @@ guide for additional recommendations.
 
 </Banner>
 
-## Always include StarterKit or Doc, Paragraph extensions
+## Always include StarterKit or Doc & Paragraph extensions
 
 The Tiptap
 [StarterKit](https://tiptap.dev/docs/editor/extensions/functionality/starterkit)
 extension is **required** for Tiptap to function properly. It provides essential
 node types that every Tiptap editor needs, specifically the `Doc` and
-`Paragraph` nodes. Alternatively you can include only the [Doc](https://tiptap.dev/docs/editor/extensions/nodes/document) and [Paragraph](https://tiptap.dev/docs/editor/extensions/nodes/paragraph)
+`Paragraph` nodes. Alternatively you can include only the
+[Doc](https://tiptap.dev/docs/editor/extensions/nodes/document) and
+[Paragraph](https://tiptap.dev/docs/editor/extensions/nodes/paragraph)
 extensions.
 
 ### Why StarterKit is required
@@ -38,10 +40,12 @@ import StarterKit from "@tiptap/starter-kit";
 
 const editor = useEditor({
   extensions: [
+    // +++
     StarterKit.configure({
       // Required, Liveblocks extension handles its own history
-      undoRedo: false, 
+      undoRedo: false,
     }),
+    // +++
     // Add other extensions here
   ],
 });
@@ -49,7 +53,7 @@ const editor = useEditor({
 
 <Banner>
 
-In Tiptap v2, `undoRedo` is named `history`.
+`undoRedo` used to be called `history` in Tiptap v2.
 
 </Banner>
 
@@ -72,9 +76,11 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({
       // Disable extensions you don't need
+      // +++
       heading: false,
       blockquote: false,
-       // Required, Liveblocks extension handles its own history
+      // +++
+      // Required, Liveblocks extension handles its own history
       undoRedo: false,
     }),
   ],
@@ -87,8 +93,8 @@ are required for the editor to function.
 ## Disable server-side rendering with immediatelyRender: false
 
 When using Tiptap with server-side rendering (SSR) frameworks like Next.js, you
-should **always set `immediatelyRender: false`** in your `useEditor` hook.
-Tiptap should never be rendered on the server.
+should _always_ set `immediatelyRender: false` in your `useEditor` hook. Tiptap
+should never be rendered on the server.
 
 ### Why disable server-side rendering?
 
@@ -200,9 +206,13 @@ This ensures that:
 
 ## Use initialContent instead of content
 
-When setting default content for your Tiptap editor, always use [`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content) on [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
-instead of `content` on `useEditor`. Using `content` will cause the content to be appended to the document
-every time the page loads or the component re-renders.
+When setting default content for your Tiptap editor, always use
+[`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content)
+on
+[`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
+instead of `content` on `useEditor`. Using `content` will cause the content to
+be appended to the document every time the page loads or the component
+re-renders.
 
 ### The problem with content
 
@@ -242,7 +252,7 @@ function Editor() {
   const liveblocks = useLiveblocksExtension({
     // ✅ This text is only set the first time the room is used
     // +++
-    initialContent: "<p>Default text</p>", 
+    initialContent: "<p>Default text</p>",
     // +++
   });
 
@@ -262,17 +272,21 @@ function Editor() {
 
 <Banner title="Not compatible with the field option" type="warning">
 
-The [`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content) option does not currently work when using the [`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
-option for multiple editors. If you need to set initial content for multiple
-editors, you'll need to implement your own logic to check if the document is
-empty before setting content.
+The
+[`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content)
+option does not currently work when using the
+[`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) option
+for multiple editors. If you need to set initial content for multiple editors,
+you'll need to implement your own logic to check if the document is empty before
+setting content.
 
 </Banner>
 
 ## Support multiple editors with the field option
 
-If you want to display multiple Tiptap editors on the same page, use the [`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
-option with a unique identifier for each editor. This ensures that each editor
+If you want to display multiple Tiptap editors on the same page, use the
+[`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) option
+with a unique identifier for each editor. This ensures that each editor
 synchronizes to its own section of the Yjs document.
 
 ```tsx
@@ -386,7 +400,7 @@ const editor = useEditor({
     Image.configure({
       // The default option. Never set to `true` as it will cause issues with Liveblocks
       // +++
-      allowBase64: false, 
+      allowBase64: false,
       // +++
     }),
   ],
@@ -396,7 +410,7 @@ const editor = useEditor({
 // +++
 editor.commands.setImage({
   // URL only, no base64
-  src: "https://your-storage.com/images/photo.jpg", 
+  src: "https://your-storage.com/images/photo.jpg",
 });
 // +++
 ```
@@ -404,7 +418,9 @@ editor.commands.setImage({
 ## Prevent users from losing unsaved changes
 
 To prevent users from accidentally losing their work when closing the browser
-tab or navigating away, enable the [`preventUnsavedChanges`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes) option:
+tab or navigating away, enable the
+[`preventUnsavedChanges`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes)
+option:
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -413,11 +429,14 @@ import { RoomProvider } from "@liveblocks/react/suspense";
   id="my-room"
   initialPresence={{}}
   // Warn users before they leave with unsaved changes
-  preventUnsavedChanges={true} 
+  // +++
+  preventUnsavedChanges={true}
+  // +++
 >
   {/* Your components */}
 </RoomProvider>;
 ```
 
 This will display a browser confirmation dialog when users try to leave the page
-with unsaved changes, helping prevent accidental data loss. [Learn more](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
+with unsaved changes, helping prevent accidental data loss.
+[Learn more](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
