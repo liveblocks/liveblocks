@@ -418,8 +418,7 @@
     "path": "/yjs-best-practices-and-tips",
     "topics": ["tutorials", "data-fetching"],
     "technologies": ["yjs"],
-    "date": "2025-10-24",
-    "featured": true
+    "date": "2025-10-24"
   },
   {
     "title": "Tiptap best practices and tips",
