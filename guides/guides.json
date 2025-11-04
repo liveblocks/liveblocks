@@ -372,8 +372,7 @@
     "path": "/how-to-migrate-to-liveblocks-comments",
     "topics": ["comments", "rest-api"],
     "technologies": ["nodejs"],
-    "date": "2024-08-28",
-    "featured": true
+    "date": "2024-08-28"
   },
   {
     "title": "How to send email notifications for unread text editor mentions",
@@ -395,8 +394,7 @@
     "path": "/how-to-create-a-notification-settings-panel",
     "topics": ["notifications", "webhooks"],
     "technologies": ["nodejs"],
-    "date": "2025-02-20",
-    "featured": true
+    "date": "2025-02-20"
   },
   {
     "title": "How to use fallback AI models in AI Copilots",
@@ -426,6 +424,14 @@
     "topics": ["tutorials", "text-editors"],
     "technologies": ["tiptap", "yjs"],
     "date": "2025-10-24",
+    "featured": true,
+  },
+  {
+    "title": "Migrating from Tiptap 2 to 3",
+    "path": "/migrating-from-tiptap-2-to-3",
+    "topics": ["text-editors"],
+    "technologies": ["tiptap", "react"],
+    "date": "2025-10-22",
     "featured": true
   }
 ]

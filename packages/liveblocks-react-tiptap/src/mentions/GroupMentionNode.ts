@@ -4,7 +4,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { LIVEBLOCKS_GROUP_MENTION_TYPE } from "../types";
 import { Mention } from "./Mention";
 
-export const GroupMentionNode = Node.create<never, never>({
+export const GroupMentionNode = Node.create({
   name: LIVEBLOCKS_GROUP_MENTION_TYPE,
   group: "inline",
   inline: true,

@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Only security update lockfile bumps for examples, starter kits, interactive tutorial
+  - package-ecosystem: "npm"
+    directories:
+      - "/examples/**"
+      - "/starter-kits/**"
+      - "/tutorial/**"
+    schedule:
+      interval: "weekly"
+    # Security updates ignore this limit: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#open-pull-requests-limit-
+    open-pull-requests-limit: 0 
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    versioning-strategy: lockfile-only
+
+  # Default behavior elsewhere
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -19,7 +19,9 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import CollaborationCaret, {
+  type CollaborationCaretOptions,
+} from "@tiptap/extension-collaboration-caret";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
@@ -76,10 +78,10 @@ const LiveblocksCollab = Collaboration.extend({
       );
     }
     if (
-      this.editor.extensionManager.extensions.find((e) => e.name === "history")
+      this.editor.extensionManager.extensions.find((e) => e.name === "undoRedo")
     ) {
       console.warn(
-        "[Liveblocks] The history extension is enabled, Liveblocks extension provides its own. Please remove or disable the History plugin to prevent unwanted conflicts."
+        "[Liveblocks] The undoRedo extension is enabled, Liveblocks extension provides its own. Please remove or disable the undoRedo extension to prevent conflicts."
       );
     }
   },
@@ -248,7 +250,9 @@ export const useLiveblocksExtension = (
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
-  return Extension.create<never, LiveblocksExtensionStorage>({
+  // Tiptap has options default as any, in tiptap2, we could use never, but now we must use any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return Extension.create<any, LiveblocksExtensionStorage>({
     name: "liveblocksExtension",
 
     onCreate() {
@@ -388,6 +392,7 @@ export const useLiveblocksExtension = (
     addExtensions() {
       const extensions: AnyExtension[] = [
         YChangeMark,
+
         LiveblocksCollab.configure({
           ySyncOptions: {
             permanentUserData: this.storage.permanentUserData,
@@ -395,9 +400,9 @@ export const useLiveblocksExtension = (
           document: this.storage.doc,
           field: options.field,
         }),
-        CollaborationCursor.configure({
+        CollaborationCaret.configure({
           provider: this.storage.provider,
-        }),
+        }) as Extension<CollaborationCaretOptions>,
       ];
 
       if (options.comments) {

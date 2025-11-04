@@ -1,6 +1,12 @@
 import { detectDupes } from "@liveblocks/core";
 
-import type { AiCommands, CommentsCommands } from "./types";
+import type {
+  AiCommands,
+  AiExtensionStorage,
+  CommentsCommands,
+  CommentsExtensionStorage,
+  LiveblocksExtensionStorage,
+} from "./types";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
@@ -38,8 +44,40 @@ export type { HistoryVersionPreviewProps } from "./version-history/HistoryVersio
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 
 declare module "@tiptap/core" {
+  interface Storage {
+    liveblocksAi: AiExtensionStorage;
+    liveblocksExtension: LiveblocksExtensionStorage;
+    liveblocksComments: CommentsExtensionStorage;
+  }
+
   interface Commands<ReturnType> {
     liveblocksComments: CommentsCommands<ReturnType>;
     liveblocksAi: AiCommands<ReturnType>;
+    collaborationCaret: {
+      /**
+       * Update details of the current user
+       * @example editor.commands.updateUser({ name: 'John Doe', color: '#305500' })
+       */
+      updateUser: (attributes: Record<string, any>) => ReturnType;
+      /**
+       * Update details of the current user
+       *
+       * @deprecated The "user" command is deprecated. Please use "updateUser" instead. Read more: https://tiptap.dev/api/extensions/collaboration-caret
+       */
+      user: (attributes: Record<string, any>) => ReturnType;
+    };
+
+    collaboration: {
+      /**
+       * Undo recent changes
+       * @example editor.commands.undo()
+       */
+      undo: () => ReturnType;
+      /**
+       * Reapply reverted changes
+       * @example editor.commands.redo()
+       */
+      redo: () => ReturnType;
+    };
   }
 }

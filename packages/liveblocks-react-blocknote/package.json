@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-blocknote",
-  "version": "3.9.1",
+  "version": "3.9.2",
   "description": "An integration of BlockNote + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
   "type": "module",
@@ -42,19 +42,19 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.9.1",
-    "@liveblocks/core": "3.9.1",
-    "@liveblocks/react": "3.9.1",
-    "@liveblocks/react-tiptap": "3.9.1",
-    "@liveblocks/react-ui": "3.9.1",
-    "@liveblocks/yjs": "3.9.1",
-    "@tiptap/core": "^2.7.2",
+    "@liveblocks/client": "3.9.2",
+    "@liveblocks/core": "3.9.2",
+    "@liveblocks/react": "3.9.2",
+    "@liveblocks/react-tiptap": "3.9.2",
+    "@liveblocks/react-ui": "3.9.2",
+    "@liveblocks/yjs": "3.9.2",
+    "@tiptap/core": "^3.4.2",
     "vitest-tsconfig-paths": "^3.4.1"
   },
   "peerDependencies": {
-    "@blocknote/core": "0.25.1 - 1.0.0",
-    "@blocknote/react": "0.25.1 - 1.0.0",
-    "@tiptap/core": "^2.7.2",
+    "@blocknote/core": "0.39.1 - 1.0.0",
+    "@blocknote/react": "0.39.1 - 1.0.0",
+    "@tiptap/core": "^3.4.2",
     "@types/react": "*",
     "@types/react-dom": "*",
     "react": "^18 || ^19 || ^19.0.0-rc",
