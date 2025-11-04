@@ -74,8 +74,8 @@ const editor = useEditor({
       // Disable extensions you don't need
       heading: false,
       blockquote: false,
-      // Must be disabled for Liveblocks
-      history: false, // renamed to undoRedo: false in TipTap3
+       // Required, Liveblocks extension handles its own history
+      undoRedo: false,
     }),
   ],
 });
