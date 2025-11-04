@@ -424,7 +424,7 @@
     "topics": ["tutorials", "text-editors"],
     "technologies": ["tiptap", "yjs"],
     "date": "2025-10-24",
-    "featured": true,
+    "featured": true
   },
   {
     "title": "Migrating from Tiptap 2 to 3",
