@@ -163,9 +163,12 @@ import { getYjsProviderForRoom } from "@liveblocks/yjs";
 
 function App() {
   const room = useRoom();
+
   const yProvider = getYjsProviderForRoom(room, {
     // Enable V2 encoding for better performance with LiveMaps
+    // +++
     useV2Encoding_experimental: true,
+    // +++
   });
 }
 ```
