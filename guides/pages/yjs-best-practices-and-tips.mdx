@@ -17,9 +17,7 @@ ECMAScript Modules (ESM), or when certain bundlers bundle more than one version
 of Yjs.
 
 When Yjs is imported twice, the two instances don't share the same class
-references, which can lead to synchronization issues and unexpected behavior.
-
-You will see a warning in the Console from Yjs if this happens.
+references, which can lead to synchronization issues and unexpected behavior. You'll see a Yjs warning in the Console if this happens.
 
 ### Fixing duplicate Yjs imports
 
@@ -83,7 +81,7 @@ This approach is simpler and performs better for most applications.
 ## Use getYjsProviderForRoom for better resilience
 
 When working with React or other UI frameworks where re-renders are common, use
-`getYjsProviderForRoom` instead of creating a new provider on each render. This
+[`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) instead of creating a new provider on each render. This
 ensures the provider is reused across renders, making your application more
 resilient:
 
@@ -108,7 +106,7 @@ This approach ensures that:
 
 ## Use YKeyValue for efficient key-value storage
 
-In many cases, `Y.Map` can be inefficient for key-value storage. Yjs needs to
+In many cases, [`Y.Map`](https://docs.yjs.dev/api/shared-types/y.map) can be inefficient for key-value storage. Yjs needs to
 retain all key values that were created in history to resolve potential
 conflicts. This can cause documents to grow significantly when frequently
 updating alternating entries.

@@ -118,7 +118,8 @@ function Editor() {
     // +++
     extensions: [
       StarterKit.configure({
-        history: false, // Required - disable history for Liveblocks
+        // Required, Liveblocks extension handles its own history
+        undoRedo: false,
       }),
       liveblocks,
     ],
@@ -164,9 +165,11 @@ import StarterKit from "@tiptap/starter-kit";
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      history: false, // Required - disable history for Liveblocks
+      // Required, Liveblocks extension handles its own history
+      undoRedo: false,
     }),
   ],
+  // +++
   enableContentCheck: true,
   onContentError: ({ editor, error, disableCollaboration }) => {
     // Disable collaboration to prevent data corruption
@@ -183,6 +186,7 @@ const editor = useEditor({
       "There was an error loading this document. The content may be incompatible with the current editor version. The document has been made read-only to prevent data loss."
     );
   },
+  // +++
 });
 ```
 
@@ -196,8 +200,8 @@ This ensures that:
 
 ## Use initialContent instead of content
 
-When setting default content for your Tiptap editor, always use `initialContent`
-instead of `content`. Using `content` will cause the content to be duplicated
+When setting default content for your Tiptap editor, always use [`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content) on [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
+instead of `content` on `useEditor`. Using `content` will cause the content to be appended to the document
 every time the page loads or the component re-renders.
 
 ### The problem with content
@@ -211,11 +215,15 @@ the existing document rather than replacing it, causing duplication:
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      history: false, // Required - disable history for Liveblocks
+      // Required, Liveblocks extension handles its own history
+      undoRedo: false,
     }),
     liveblocks,
   ],
-  content: "<p>Default text</p>", // This gets added every time!
+  // ❌ This text will be added to the document every time the editor is loaded
+  // +++
+  content: "<p>Default text</p>",
+  // +++
 });
 ```
 
@@ -231,16 +239,21 @@ import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
 
 function Editor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    // ✅ This text is only set the first time the room is used
+    // +++
+    initialContent: "<p>Default text</p>", 
+    // +++
+  });
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false, // Required - disable history for Liveblocks
+        // Required, Liveblocks extension handles its own history
+        undoRedo: false,
       }),
       liveblocks,
     ],
-    initialContent: "<p>Default text</p>", // Only set on first load
   });
 
   return <EditorContent editor={editor} />;
@@ -249,7 +262,7 @@ function Editor() {
 
 <Banner title="Not compatible with the field option" type="warning">
 
-The `initialContent` option does not currently work when using the `field`
+The [`initialContent`](/docs/api-reference/liveblocks-react-tiptap#Setting-initial-content) option does not currently work when using the [`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
 option for multiple editors. If you need to set initial content for multiple
 editors, you'll need to implement your own logic to check if the document is
 empty before setting content.
@@ -258,7 +271,7 @@ empty before setting content.
 
 ## Support multiple editors with the field option
 
-If you want to display multiple Tiptap editors on the same page, use the `field`
+If you want to display multiple Tiptap editors on the same page, use the [`field`](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
 option with a unique identifier for each editor. This ensures that each editor
 synchronizes to its own section of the Yjs document.
 
@@ -269,13 +282,17 @@ import StarterKit from "@tiptap/starter-kit";
 
 function EditorOne() {
   const liveblocks = useLiveblocksExtension({
-    field: "editor-1", // Unique identifier for this editor
+    // Unique identifier for this editor
+    // +++
+    field: "editor-1",
+    // +++
   });
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false, // Required - disable history for Liveblocks
+        // Required, Liveblocks extension handles its own history
+        undoRedo: false,
       }),
       liveblocks,
     ],
@@ -286,13 +303,17 @@ function EditorOne() {
 
 function EditorTwo() {
   const liveblocks = useLiveblocksExtension({
-    field: "editor-2", // Different unique identifier
+    // Different unique identifier
+    // +++
+    field: "editor-2",
+    // +++
   });
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        history: false, // Required - disable history for Liveblocks
+        // Required, Liveblocks extension handles its own history
+        undoRedo: false,
       }),
       liveblocks,
     ],
@@ -305,13 +326,11 @@ function EditorTwo() {
 Without the `field` option, both editors would synchronize to the same location
 in the document, causing conflicts and data loss.
 
-[Learn more about multiple editors →](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors)
-
 ## Never use extensions with binary data
 
 Never use Tiptap extensions that store binary data (such as base64-encoded
 images) directly in the document. Binary data will be synchronized across all
-clients and can fill up your room extremely quickly, leading to:
+clients and can fill up your Liveblocks room extremely quickly, leading to:
 
 - Increased bandwidth usage
 - Slower synchronization
@@ -332,10 +351,14 @@ import Image from "@tiptap/extension-image";
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      history: false, // Required - disable history for Liveblocks
+      // Required, Liveblocks extension handles its own history
+      undoRedo: false,
     }),
     Image.configure({
-      allowBase64: true, // This will cause problems!
+      // This will quickly fill up your room and cause problems
+      // +++
+      allowBase64: true,
+      // +++
     }),
   ],
 });
@@ -357,24 +380,31 @@ import Image from "@tiptap/extension-image";
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      history: false, // Required - disable history for Liveblocks
+      // Required, Liveblocks extension handles its own history
+      undoRedo: false,
     }),
     Image.configure({
-      allowBase64: false, // Default, but explicit is better
+      // The default option. Never set to `true` as it will cause issues with Liveblocks
+      // +++
+      allowBase64: false, 
+      // +++
     }),
   ],
 });
 
 // When adding an image
+// +++
 editor.commands.setImage({
-  src: "https://your-storage.com/images/photo.jpg", // URL only, no base64
+  // URL only, no base64
+  src: "https://your-storage.com/images/photo.jpg", 
 });
+// +++
 ```
 
 ## Prevent users from losing unsaved changes
 
 To prevent users from accidentally losing their work when closing the browser
-tab or navigating away, enable the `preventUnsavedChanges` option:
+tab or navigating away, enable the [`preventUnsavedChanges`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes) option:
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -382,13 +412,12 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 <RoomProvider
   id="my-room"
   initialPresence={{}}
-  preventUnsavedChanges={true} // Warn users before they leave with unsaved changes
+  // Warn users before they leave with unsaved changes
+  preventUnsavedChanges={true} 
 >
   {/* Your components */}
 </RoomProvider>;
 ```
 
 This will display a browser confirmation dialog when users try to leave the page
-with unsaved changes, helping prevent accidental data loss.
-
-[Learn more about preventing unsaved changes →](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes)
+with unsaved changes, helping prevent accidental data loss. [Learn more](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
