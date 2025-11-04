@@ -39,7 +39,8 @@ import StarterKit from "@tiptap/starter-kit";
 const editor = useEditor({
   extensions: [
     StarterKit.configure({
-      history: false, // Required - disable history for Liveblocks
+      // Required, Liveblocks extension handles its own history
+      undoRedo: false, 
     }),
     // Add other extensions here
   ],
