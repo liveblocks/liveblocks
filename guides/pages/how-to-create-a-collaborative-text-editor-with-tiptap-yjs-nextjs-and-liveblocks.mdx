@@ -234,7 +234,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
     extensions: [
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
-        history: false,
+        undoRedo: false,
       }),
       // Register the document with Tiptap
       Collaboration.configure({
@@ -365,7 +365,7 @@ We can style these cursors by placing CSS in a global CSS file.
 
 ```css file="globals.css" isCollapsed isCollapsable
 /* Give a remote user a caret */
-.collaboration-cursor__caret {
+.collaboration-carets__caret {
   border-left: 1px solid #0d0d0d;
   border-right: 1px solid #0d0d0d;
   margin-left: -1px;
@@ -376,7 +376,7 @@ We can style these cursors by placing CSS in a global CSS file.
 }
 
 /* Render the username above the caret */
-.collaboration-cursor__label {
+.collaboration-carets__label {
   font-style: normal;
   font-weight: 600;
   left: -1px;
