@@ -112,7 +112,10 @@ function Editor() {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
-    immediatelyRender: false, // Required for SSR frameworks like Next.js
+    // Required for SSR frameworks like Next.js
+    // +++
+    immediatelyRender: false,
+    // +++
     extensions: [
       StarterKit.configure({
         history: false, // Required - disable history for Liveblocks
