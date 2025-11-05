@@ -589,6 +589,205 @@ plug(Plug.Parsers, ...)
 
 </details>
 
+### Manually verify in Python
+
+It's also possible to manually verify your webhooks in Python, especially if you want to validate Liveblocks webhooks in frameworks like Django or Flask.
+
+<details>
+
+<summary>How to manually verify webhook events in Python</summary>
+
+<Steps>
+
+<Step>
+<StepTitle>Construct the signed content</StepTitle>
+<StepContent>
+
+The signed content is composed by concatenating the webhook ID, timestamp, and request body, separated by dots (`.`). In Python, it looks like this:
+
+```python
+signed_content = f"{webhook_id}.{webhook_timestamp}.{body}"
+```
+
+- `webhook_id` comes from the `"Webhook-Id"` header.
+- `webhook_timestamp` comes from the `"Webhook-Timestamp"` header.
+- `body` is the raw request body as a UTF-8 string.
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Generate the signature</StepTitle>
+<StepContent>
+
+Liveblocks signs webhooks using HMAC with SHA-256. You need to use the base64-decoded portion of your secret (after the `whsec_` prefix) as the key.
+
+Example in Python:
+
+```python
+import base64
+import hmac
+import hashlib
+
+secret = "whsec_..."
+
+# Extract and decode the base64 part of the secret
+key = base64.b64decode(secret.split("_")[1])
+
+# Compute the signature
+digest = hmac.new(key=key, msg=signed_content.encode("utf-8"), digestmod=hashlib.sha256).digest()
+signature = base64.b64encode(digest).decode()
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Validate the signature</StepTitle>
+<StepContent>
+
+The signature you just generated should match one of the signatures from the `Webhook-Signature` header. That header contains space-separated values like:
+
+```
+v1,abc123= v1,def456= v2,ghi789=
+```
+
+You should extract just the Base64-encoded signature (the part after the comma):
+
+```python
+webhook_signature = request.headers.get("Webhook-Signature")
+
+# Extract signatures from the header
+expected_signatures = []
+for entry in webhook_signature.split(" "):
+    expected_signatures.append(entry.split(",")[1])
+```
+
+Then check if your generated signature is in the list:
+
+```python
+if signature in expected_signatures:
+    # Valid signature
+    return True
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Verify the timestamp</StepTitle>
+<StepContent>
+
+Liveblocks includes a `Webhook-Timestamp` header to help prevent replay attacks. You should check that the timestamp is within a reasonable window (e.g., 5 minutes):
+
+```python
+import time
+
+tolerance = 5 * 60  # 5 minutes
+now = int(time.time())
+
+try:
+    timestamp = int(webhook_timestamp)
+    if abs(now - timestamp) <= tolerance:
+        # Valid timestamp
+        return True
+except ValueError:
+    # Invalid timestamp format
+    return False
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Full example</StepTitle>
+<StepContent>
+
+Here's the full code, as detailed so far.
+
+```python title="Django example" isCollapsed isCollapsable
+import base64
+import hmac
+import hashlib
+import time
+from django.http import HttpRequest, HttpResponse
+from django.conf import settings
+
+def verifyWebhookRequest(request: HttpRequest, webhookSecretKey: str | None = None) -> bool:
+    """
+    Verifies the request signature from Liveblocks. Returns True if valid, False otherwise.
+    """
+
+    if settings.APP_ENV == "production":
+        # In production, always use env var and always proceed
+        secretKey = settings.LIVEBLOCKS_WEBHOOK_SECRET_KEY
+    else:
+        # In dev, try using provided arg or constant; otherwise skip verification
+        secretKey = webhookSecretKey or DEV_WEBHOOK_SECRET_KEY
+        if not secretKey:
+            return True
+
+    # Extract the relevant parts of the request
+    webhookSignature = request.headers.get("Webhook-Signature")
+    webhookId = request.headers.get("Webhook-Id")
+    webhookTimestamp = request.headers.get("Webhook-Timestamp")
+    body = request.body.decode('utf-8')
+
+    # Liveblocks defines the message as the UTF-8 encoding of .-separated concatenation
+    signedContent = f"{webhookId}.{webhookTimestamp}.{body}".encode("utf-8")
+
+    # Liveblocks provides the key and signatures in base64 encodings and uses HMAC-SHA256
+    key = base64.b64decode(secretKey.split("_")[1])
+    digest = hmac.new(key=key, msg=signedContent, digestmod=hashlib.sha256).digest()
+    signature = base64.b64encode(digest).decode()
+
+    # Liveblocks provides webhookSignature as space-separated list of expected
+    # signatures, each of which has the format `v1,signature`
+    for expectedSignature in webhookSignature.split(" "):
+        if signature == expectedSignature.split(",")[1]:
+            return True
+    return False
+
+
+def liveblocks_webhook(request: HttpRequest) -> HttpResponse:
+    """
+    Handle incoming webhook requests from Liveblocks.
+    """
+    if not verifyWebhookRequest(request):
+        return HttpResponse("Invalid signature", status=401)
+
+    # Process the webhook event
+    # event_data = json.loads(request.body)
+    # Handle event based on event_data['type']
+
+    return HttpResponse(status=200)
+```
+
+</StepContent>
+</Step>
+
+<Step lastStep>
+<StepTitle>Add to your URL configuration</StepTitle>
+<StepContent>
+
+Finally, to use the webhook handler in your Django application, add it to your URL configuration.
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('webhook/liveblocks', views.liveblocks_webhook, name='liveblocks_webhook'),
+]
+```
+
+</StepContent>
+</Step>
+
+</Steps>
+
+</details>
+
 ## Testing locally [#testing-locally]
 
 Running webhooks locally can be difficult, but there are several tools that
