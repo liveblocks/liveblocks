@@ -10,7 +10,7 @@ import { ReactNode, useEffect } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import {
   authorizeLiveblocks,
-  getDocumentUsers,
+  getLiveUsers,
   getSpecificDocuments,
 } from "@/lib/actions";
 import { syncLiveblocksGroups } from "@/lib/actions/syncLiveblocksGroups";
@@ -99,15 +99,14 @@ export function Providers({
         }}
         // Resolve what mentions are suggested for Comments/Text Editor
         resolveMentionSuggestions={async ({ text, roomId }) => {
-          const [allUsers, documentUsers, matchingGroups, matchingUsers] =
+          const [allUsers, liveUsers, matchingGroups, matchingUsers] =
             await Promise.all([
               getUsers(), // All users
-              getDocumentUsers({ documentId: roomId }), // All users individually added to document
+              getLiveUsers({ documentIds: [roomId] }), // All users currently online in the document
               getGroups({ search: text }), // Groups that match the search term
               getUsers({ search: text }), // Users that match the search term
             ]);
 
-          // Create global suggestions for `@everyone` suggestion
           const globalSuggestions: MentionData[] = [];
 
           // Add `@everyone` suggestion, all users in app
@@ -121,12 +120,14 @@ export function Providers({
             });
           }
 
-          // Add `@here` suggestion, all users specifically added to the document
-          if (documentUsers.data && "here".includes(text.toLowerCase())) {
+          // Add `@here` suggestion, all users currently connected to the document
+          if (liveUsers.data && "here".includes(text.toLowerCase())) {
             globalSuggestions.push({
               kind: "group",
               id: "here",
-              userIds: documentUsers.data.map((user) => user.id),
+              userIds: liveUsers.data[0].users
+                .map((user) => user.id)
+                .filter((id) => id !== null),
             });
           }
 
