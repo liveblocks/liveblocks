@@ -328,15 +328,9 @@ To get started, create a group using
 defining each member by their user ID.
 
 ```ts
-import { Liveblocks } from "@liveblocks/node";
-
-const liveblocks = new Liveblocks({
-  secret: "{{SECRET_KEY}}",
-});
-
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
-  memberIds: ["alice@example.com", "bob@example.com"],
+  memberIds: ["marc@example.com", "florent@example.com"],
 });
 ```
 
@@ -373,12 +367,6 @@ query all groups and filter them by the search text.
 
 ```ts file="queryGroupIds.ts"
 "use server";
-
-import { Liveblocks } from "@liveblocks/node";
-
-const liveblocks = new Liveblocks({
-  secret: "{{SECRET_KEY}}",
-});
 
 export async function queryGroupIds(text: string) {
   // +++
