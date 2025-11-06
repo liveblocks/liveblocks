@@ -76,7 +76,7 @@ where you can return this information.
     // ["marc@example.com", ...]
     console.log(userIds);
 
-    // Get users from your back end
+    // Get users from your back-end
     const users = await __fetchUsers__(userIds);
 
     // [{ name: "Marc", avatar: "https://example.com/marc.png" }, ...]
@@ -162,7 +162,7 @@ input.
     let userIds;
 
     if (text) {
-      // If there's a query, get user IDs from your back end that match
+      // If there's a query, get user IDs from your back-end that match
       userIds = await __queryUserIds__(text);
     } else {
       // If there's no query, get all of the room's user IDs
@@ -178,7 +178,7 @@ input.
 ```
 
 You can also resolve group mentions in here, though that requires you to
-structure the function differently, [learn more]().
+structure the function differently.
 
 ## Group mentions
 
@@ -201,10 +201,10 @@ There are two different ways to set up group mentions:
 2. Using managed groups of users on the back-end, helpful for handling specific
    groups of users like `@engineering` or `@design`.
 
-### Use a different return format
+### Return a different format
 
-Note that when using group mentions, you must always return a list of mention
-objects with a `kind` property, not just user ID strings.
+When using group mentions, you must return a list of mention objects with a
+`kind` property, instead of a list user ID strings, like below.
 
 ```diff
 - return ["marc@example.com"];
@@ -217,6 +217,23 @@ objects with a `kind` property, not just user ID strings.
 ```
 
 Users have a `user` kind and groups have `group` kind.
+
+```tsx
+return [
+  {
+    // +++
+    kind: "user",
+    // +++
+    id: "marc@example.com",
+  },
+  {
+    // +++
+    kind: "group",
+    // +++
+    id: "engineering",
+  },
+];
+```
 
 ### Passing group members on the front-end
 
@@ -385,7 +402,7 @@ Liveblocks [tenants](/docs/authentication/tenants) feature to do this.
 Similar to when
 [displaying user information](/docs/ready-made-features/comments/users-and-mentions#adding-user-information),
 
-You can also adds groups to Comments, allowing you to tag a team of people with
+You can also add groups to Comments, allowing you to tag a team of people with
 one mention. Similar to users, group information is retrieved from a list of
 group IDs. You should return the same number of groups as the number of group
 IDs, in the same order.
@@ -412,7 +429,7 @@ where you can return this information.
     // ["engineering", ...]
     console.log(groupIds);
 
-    // Get groups from your back end
+    // Get groups from your back-end
     const groups = await __fetchGroups__(groupIds);
 
     // [{ name: "Engineering", avatar: "https://example.com/engineering.png" }, ...]
@@ -426,7 +443,7 @@ where you can return this information.
 ```
 
 The `name` and `avatar` are handled by the default components, but you can also
-also return custom metadata here. For example, each group may have a `color`
+return custom metadata here. For example, each group may have a `color`
 property. You can retrieve these properties in your app with
 [`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo).
 
