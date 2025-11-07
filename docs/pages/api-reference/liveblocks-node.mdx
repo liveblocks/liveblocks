@@ -72,6 +72,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
+          // Optional, authorize for a specific tenant
+          tenantId: "acme-corp",
         }
       );
       ```
@@ -208,7 +210,8 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
-    tenantId: "acme-corp", // Optional, tenant ID
+    // Optional, identify the user in a specific tenant
+    tenantId: "acme-corp",
   },
 
   // Optional
@@ -329,7 +332,7 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for rooms that are created for a specific tenant
+  // Optional, filter for a specific tenant
   tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
@@ -464,7 +467,7 @@ const room = await liveblocks.createRoom("my-room-id", {
     myRoomType: "whiteboard",
   },
 
-  // Optional, the tenant ID to create the room for
+  // Optional, create it on a specific tenant
   tenantId: "acme-corp",
 });
 ```
@@ -530,7 +533,7 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
     myRoomType: "whiteboard",
   },
 
-  // Optional, the tenant ID to create the room for
+  // Optional, create it on a specific tenant
   tenantId: "acme-corp",
 });
 ```
@@ -818,6 +821,7 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
+  // Optional, create it on a specific tenant
   tenantId: "acme-corp",
 });
 
@@ -833,7 +837,7 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, set tenant ID for multi-tenant applications
+  // Optional, create it on a specific tenant
   tenantId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
@@ -2413,7 +2417,11 @@ inbox notifications, without having to manually paginate through the results.
 ```ts
 const userId = "steven@example.com";
 
-for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+for await (const item of liveblocks.iterInboxNotifications({
+  userId,
+  // Optional, filter for a specific tenant
+  tenantId: "acme-corp",
+})) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
 }
@@ -2467,7 +2475,7 @@ await liveblocks.triggerInboxNotification({
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
 
-  // Optional, the tenant ID to trigger the notification for
+  // Optional, trigger it for a specific tenant
   tenantId: "acme-corp",
 });
 ```
@@ -2574,7 +2582,7 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
-  // Optional, the tenant ID to delete notifications for
+  // Optional, delete for a specific tenant
   tenantId: "acme-corp",
 });
 ```
