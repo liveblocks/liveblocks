@@ -20,9 +20,9 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 45 (2025-11-07)
 
-Version 3.10 comes with a new [upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.10).
-
 ## v3.10.0
+
+Version 3.10 comes with a new [upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.10).
 
 ### `@liveblocks/client`
 
