@@ -208,6 +208,7 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
+    tenantId: "acme-corp", // Optional, tenant ID
   },
 
   // Optional
@@ -231,9 +232,11 @@ assigning group permissions.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
 
+`tenantId` (optional) is the tenant for this user, will be set to `default` if not provided.
+
 `userInfo` (optional) is any custom JSON value, which you can use to attach
-static metadata to this user’s session. This will be publicly visible to all
-other people in the room. Useful for metadata like the user’s full name, or
+static metadata to this user's session. This will be publicly visible to all
+other people in the room. Useful for metadata like the user's full name, or
 their avatar URL.
 
 ##### ID tokens example
@@ -460,6 +463,9 @@ const room = await liveblocks.createRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, the tenant ID to create the room for
+  tenantId: "acme-corp",
 });
 ```
 
@@ -523,6 +529,9 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, the tenant ID to create the room for
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2321,6 +2330,8 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2332,6 +2343,7 @@ if (nextCursor) {
   const { data: nextPage } = await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
     startingAfter: nextCursor,
+    tenantId: "acme-corp",
   });
 }
 ```
@@ -2356,6 +2368,8 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 ```
 
@@ -2452,6 +2466,9 @@ await liveblocks.triggerInboxNotification({
 
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
+
+  // Optional, the tenant ID to trigger the notification for
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2557,6 +2574,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
+  // Optional, the tenant ID to delete notifications for
+  tenantId: "acme-corp",
 });
 ```
 
