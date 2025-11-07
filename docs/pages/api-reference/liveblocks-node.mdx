@@ -72,6 +72,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
+          // Optional, authenticate this user on a specific tenant
+          tenantId: "acme-corp",
         }
       );
       ```
@@ -208,6 +210,8 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
+    // Optional, identify the user in a specific tenant
+    tenantId: "acme-corp",
   },
 
   // Optional
@@ -230,6 +234,8 @@ assigning group permissions.
 `groupIds` (optional) can be used to specify which groups this user belongs to.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
+
+`tenantId` (optional) is the tenant for this user, will be set to `default` if not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all
@@ -326,7 +332,7 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for rooms that are created for a specific tenant
+  // Optional, authenticate this user on a specific tenant
   tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
@@ -460,6 +466,9 @@ const room = await liveblocks.createRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -523,6 +532,9 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -809,6 +821,7 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
+  // Optional, create it on a specific tenant
   tenantId: "acme-corp",
 });
 
@@ -824,7 +837,7 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, set tenant ID for multi-tenant applications
+  // Optional, create it on a specific tenant
   tenantId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
@@ -2321,6 +2334,9 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2356,6 +2372,9 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 ```
 
@@ -2399,7 +2418,11 @@ inbox notifications, without having to manually paginate through the results.
 ```ts
 const userId = "steven@example.com";
 
-for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+for await (const item of liveblocks.iterInboxNotifications({
+  userId,
+  // Optional, filter for a specific tenant
+  tenantId: "acme-corp",
+})) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
 }
@@ -2452,6 +2475,9 @@ await liveblocks.triggerInboxNotification({
 
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
+
+  // Optional, trigger it for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2557,6 +2583,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
+  // Optional, delete for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
