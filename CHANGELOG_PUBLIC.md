@@ -20,7 +20,36 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 45 (2025-11-07)
 
+## v3.10.0
+
+[Upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.10).
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on `Thread`) to allow customizing comments’ dropdown items in the default components
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but hidden
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3
+
+## Documentation
+
+- New guide: [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
+- New guide: [Tiptap best practices and tips](https://liveblocks.io/docs/guides/tiptap-best-practices-and-tips).
+- New guide: [Yjs best practices and tips](https://liveblocks.io/docs/guides/yjs-best-practices-and-tips).
+
 ## Contributors
+
+jrowny, marcbouchenoire, nvie, ctnicholas
 
 # Week 44 (2025-10-31)
 
