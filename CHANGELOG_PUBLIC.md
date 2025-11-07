@@ -26,20 +26,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/client`
 
-- Tweak reconnection logic to not retry on specific 400 level error codes
+- Tweak reconnection logic to not retry on specific 400 level error codes.
 
 ### `@liveblocks/node`
 
-- Prevents certain 400 level errors from being reported as a 403
+- Prevents certain 400 level errors from being reported as a 403.
 
 ### `@liveblocks/react-ui`
 
-- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on `Thread`) to allow customizing comments’ dropdown items in the default components
-- Fix scroll issues in some scenarios where `AiChat` would be rendered but hidden
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on `Thread`) to allow customizing comments’ dropdown items in the default components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but hidden.
 
 ### `@liveblocks/react-tiptap`
 
-- Support for Tiptap v3
+- Support for Tiptap v3.
 
 ## Documentation
 
