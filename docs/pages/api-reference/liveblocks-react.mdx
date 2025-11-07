@@ -3924,7 +3924,7 @@ the dependency arrays of your `useMutation` calls:
 ### useThreads [@badge=RoomProvider]
 
 Returns a paginated list of threads within the current room. Initially fetches
-the latest 50 threads.
+the oldest 50 threads.
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -3936,7 +3936,7 @@ const { threads, error, isLoading } = useThreads();
 ```
 
 Use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component to
-render the latest 50 threads with our default UI.
+render the oldest 50 threads with our default UI.
 
 ```tsx
 import { Thread } from "@liveblocks/react-ui";
@@ -4800,7 +4800,7 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ### useInboxNotifications [@badge=LiveblocksProvider]
 
 Returns a paginated list of inbox notifications for the current user. Initially
-fetches the latest 50 items. Inbox notifications are
+fetches the oldest 50 items. Inbox notifications are
 [project-based](/docs/ready-made-features/notifications/concepts#Project-based),
 meaning notifications from outside the current room are received.
 
@@ -4812,7 +4812,7 @@ const { inboxNotifications, error, isLoading } = useInboxNotifications();
 
 Use the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
-component to render the latest 50 inbox notifications with our default UI.
+component to render the oldest 50 inbox notifications with our default UI.
 
 ```tsx
 import { InboxNotification } from "@liveblocks/react-ui";
