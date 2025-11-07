@@ -72,7 +72,7 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
-          // Optional, authorize for a specific tenant
+          // Optional, authenticate this user on a specific tenant
           tenantId: "acme-corp",
         }
       );
@@ -238,8 +238,8 @@ refer to in the [Permissions REST API][] when assigning group permissions.
 `tenantId` (optional) is the tenant for this user, will be set to `default` if not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
-static metadata to this user's session. This will be publicly visible to all
-other people in the room. Useful for metadata like the user's full name, or
+static metadata to this user’s session. This will be publicly visible to all
+other people in the room. Useful for metadata like the user’s full name, or
 their avatar URL.
 
 ##### ID tokens example
@@ -332,7 +332,7 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for a specific tenant
+  // Optional, authenticate this user on a specific tenant
   tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
@@ -2334,6 +2334,7 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+
     // Optional, filter for a specific tenant
     tenantId: "acme-corp",
   });
@@ -2347,7 +2348,6 @@ if (nextCursor) {
   const { data: nextPage } = await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
     startingAfter: nextCursor,
-    tenantId: "acme-corp",
   });
 }
 ```
@@ -2372,6 +2372,7 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+
     // Optional, filter for a specific tenant
     tenantId: "acme-corp",
   });
