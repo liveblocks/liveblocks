@@ -22,8 +22,6 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## v3.10.0
 
-Version 3.10 comes with a new [upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.10).
-
 ### `@liveblocks/client`
 
 - Tweak reconnection logic to not retry on specific 400 level error codes.
@@ -43,6 +41,7 @@ Version 3.10 comes with a new [upgrade guide](https://liveblocks.io/docs/platfor
 
 ## Documentation
 
+- New guide: [Upgrading to 3.10](https://liveblocks.io/docs/platform/upgrading/3.10).
 - New guide: [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
 - New guide: [Tiptap best practices and tips](https://liveblocks.io/docs/guides/tiptap-best-practices-and-tips).
 - New guide: [Yjs best practices and tips](https://liveblocks.io/docs/guides/yjs-best-practices-and-tips).
