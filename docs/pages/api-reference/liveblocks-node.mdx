@@ -809,7 +809,6 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
-  tenantId: "acme-corp",
 });
 
 // { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }

@@ -381,9 +381,34 @@ export async function queryGroupIds(text: string) {
 }
 ```
 
-If your app has multi-tenancy, make sure you handle permissions correctly here,
-and filter out any groups that the user doesn’t have access to. You can use the
-Liveblocks [tenants](/docs/authentication/tenants) feature to do this.
+If your app has multi-tenancy, make sure you handle permissions correctly, and
+filter out any groups that the user doesn’t have access to.
+
+#### First-party multi-tenancy
+
+Using the Liveblocks [tenants](/docs/authentication/tenants) feature, you can
+create groups with the same ID in different tenants. This is an easy way to
+compartmentalize resources in your app for each organization. In the snippet
+below, both organizations have an engineering team, but because seperate tenants
+are used, they are different groups.
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["marc@example.com", "florent@example.com"],
+  // +++
+  tenantId: "apple-corp",
+  // +++
+});
+
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["chris@example.com", "olivier@example.com"],
+  // +++
+  tenantId: "banana-inc",
+  // +++
+});
+```
 
 ## Adding group information
 
