@@ -20,7 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 46 (2025-11-14)
 
+## Documentation
+
+- New section on [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+- Updated other information on the [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) page.
+
 ## Contributors
+
+ctnicholas
 
 # Week 45 (2025-11-07)
 
