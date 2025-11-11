@@ -5,10 +5,10 @@ meta:
   description: "Add users and groups to comments and mentions"
 ---
 
-When a comment is posted, Liveblocks doesn’t store any user or group metadata,
-for example their avatar or name. Instead, it only saves their user ID, which
-you manually set when authenticating. To fetch user and group metadata, we
-provide functions that allow you to return the correct data.
+When a comment is posted, Liveblocks doesn’t store any user metadata, for
+example their avatar or name. Instead, it only saves their user ID, which you
+manually set when authenticating. To fetch user metadata, we provide functions
+that allow you to return the correct data.
 
 <Figure>
   <Image
@@ -47,11 +47,12 @@ const session = liveblocks.prepareSession("charlie.layne@example.com", {
 There are two different authentication methods—make sure to follow an
 [authentication guide for your framework](/docs/authentication) to get started.
 
-## Adding user information to Comments
+## Adding user information
 
-In Comments, user information is retrieved from a list of user IDs, for example
-here’s a `userIds` array and the information you need to return. You should
-return the same number of users as the number of user IDs, in the same order.
+To add names and avatars to Comments, you need to convert user IDs into user
+objects. For example, here’s a `userIds` array and the information you need to
+return. You should return the same number of users as the number of user IDs, in
+the same order.
 
 ```shell
 # If this is `userIds`
@@ -61,7 +62,7 @@ return the same number of users as the number of user IDs, in the same order.
 [{ name: "Marc", avatar: "https://example.com/marc.png" }, { name: "Pierre", avatar: "https://example.com/pierre.png" }]
 ```
 
-Add a property named
+To do this, add a property named
 [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
 to your
 [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
@@ -75,7 +76,7 @@ where you can return this information.
     // ["marc@example.com", ...]
     console.log(userIds);
 
-    // Get users from your back end
+    // Get users from your back-end
     const users = await __fetchUsers__(userIds);
 
     // [{ name: "Marc", avatar: "https://example.com/marc.png" }, ...]
@@ -87,6 +88,8 @@ where you can return this information.
   // +++
 >
 ```
+
+### Custom user information
 
 The `name`, and `avatar` are handled by the default components, but you can also
 return custom metadata here. For example, each user may have a `color` property.
@@ -106,9 +109,313 @@ function Component() {
 }
 ```
 
-## Adding group information to Comments
+## Mentions
 
-You can also adds groups to Comments, allowing you to tag a team of people with
+Comments allows you to use mentions/tag users by typing the `@` character. You
+can also tag groups, for example `@everyone`. After a user’s mentioned in a
+thread, they’ll receive an
+[inbox notification](/docs/ready-made-features/notifications/concepts#Inbox-Notifications).
+
+<Figure>
+  <Image
+    src="/assets/tutorials/comments/mentions.png"
+    alt="Working Comments mentions"
+    width={1297}
+    height={781}
+  />
+</Figure>
+
+### Resolving mention suggestions
+
+To define which mentions appear in the suggestion pop-up, you need to return a
+list of users that are being searched for. When a user types `@` Comments passes
+you a `text` property, the text that the user has typed so far, which you can
+use to find and return matching user IDs.
+
+```shell
+# If "@mar" has been typed, this is `text`
+"mar"
+
+# Return matching `userIds` and `groupIds`
+["marc@example.com", "marissa@example.com"]
+```
+
+You can resolve these search results by adding a
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+property to your
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+Here’s what the function might look like if the user has typed `"@mar"` into the
+input.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  resolveUsers={async ({ userIds }) => {
+    // ...
+  }}
+  // +++
+  resolveMentionSuggestions={async ({ text, roomId }) => {
+    // "mar"
+    console.log(text);
+
+    // Return an array of user IDs for the query "mar"
+    let userIds;
+
+    if (text) {
+      // If there's a query, get user IDs from your back-end that match
+      userIds = await __queryUserIds__(text);
+    } else {
+      // If there's no query, get all of the room's user IDs
+      userIds = await __getAllUserIds__();
+    }
+
+    // ["marc@example.com", "marissa@example.com"]
+    console.log(userIds);
+    return userIds;
+  }}
+  // +++
+>
+```
+
+You can also resolve group mentions in here, though that requires you to
+structure the function differently.
+
+## Group mentions
+
+Alongside user mentions, you can also mention groups by typing the `@`
+character, for example `@everyone` or `@engineering`.
+
+<Figure>
+  <Image
+    src="/assets/comments/group-mentions.png"
+    alt="Working Comments group mentions"
+    width={1297}
+    height={781}
+  />
+</Figure>
+
+There are two different ways to set up group mentions:
+
+1. Passing group members on the front-end, particularly helpful for global
+   mentions like `@everyone` and `@here`.
+2. Using managed groups of users on the back-end, helpful for handling specific
+   groups of users like `@engineering` or `@design`.
+
+### Return a different format
+
+When using group mentions, you must return a list of mention objects with a
+`kind` property, instead of a list user ID strings, like below.
+
+```diff
+- return ["marc@example.com"];
++ return [
++  {
++    kind: "user",
++    id: "marc@example.com",
++  },
++ ];
+```
+
+Users have a `user` kind and groups have `group` kind.
+
+```tsx
+return [
+  {
+    // +++
+    kind: "user",
+    // +++
+    id: "marc@example.com",
+  },
+  {
+    // +++
+    kind: "group",
+    // +++
+    id: "engineering",
+  },
+];
+```
+
+### Passing group members on the front-end
+
+The easiest way to create a group mention is to pass a list of group members to
+the
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+function. This allows you to suggest a list of users that are part of the group,
+and requires no back-end code, simply return a list of user IDs. In the example
+below, a `@everyone` suggestion is added, which will tag all users in the app.
+
+```tsx
+resolveMentionSuggestions={async ({ text, roomId }) => {
+  const allUserIds = await __getAllUserIds__();
+  const queryUserIds = await __queryUserIds__(text);
+
+  // `@everyone`, `@here`, etc.
+  // +++
+  const globalMentions: MentionData[] = [];
+  // +++
+
+  // Create `@everyone` suggestion, for all users in app
+  // +++
+  globalMentions.push({
+    kind: "group",
+    id: "everyone",
+    userIds: allUserIds, // Array of all user IDs
+  });
+  // +++
+
+  return [
+    // +++
+    ...globalMentions,
+    // +++
+    ...queryUserIds.map((user) => ({
+      kind: "user",
+      id: user.id,
+    })),
+  ];
+}}
+```
+
+In the example above, `@everyone` will _always_ be displayed in the suggestions
+list. Make sure to filter using the search text if you’d like to only show it
+when the user is typing `"@everyone"`.
+
+```tsx
+import type { MentionData } from "@liveblocks/client";
+
+resolveMentionSuggestions={async ({ text, roomId }) => {
+  const allUserIds = await __getAllUserIds__();
+  const queryUserIds = await __queryUserIds__(text);
+
+  // `@everyone`, `@here`, etc.
+  const globalMentions: MentionData[] = [];
+
+  // Show `@everyone` suggestion when users search for it
+  // +++
+  if ("everyone".includes(text.toLowerCase())) {
+  // +++
+    globalMentions.push({
+      kind: "group",
+      id: "everyone",
+      userIds: allUserIds, // Array of all user IDs
+    });
+  // +++
+  }
+  // +++
+
+  return [
+    ...globalMentions,
+    ...queryUserIds.map((user) => ({
+      kind: "user",
+      id: user.id,
+    })),
+  ];
+}}
+```
+
+This method is generally most useful for dynamically fetching group mentions,
+for example with `@everyone`, `@here`, `@online`, but you can use it to create
+fixed group mentions as well.
+
+### Managed groups on the back-end
+
+You can create mention groups on the back-end using the Node.js SDK or REST API,
+and they’ll be saved permanently. You can add new members, create new groups,
+list groups, and more. If your app has teams or groups of users, it makes sense
+to synchronize them with Liveblocks whenever there’s a change.
+
+To get started, create a group using
+[`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group),
+defining each member by their user ID.
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["marc@example.com", "florent@example.com"],
+});
+```
+
+In your
+[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+function, you can then query all the groups you’ve created for the current
+search text, and return them.
+
+```tsx
+resolveMentionSuggestions={async ({ text, roomId }) => {
+  // +++
+  const groupIds = await queryGroupIds(text);
+  // +++
+  const userIds = await __queryUserIds__(text);
+
+  return [
+    // +++
+    ...groupIds.map((group) => ({
+      kind: "group",
+      id: group.id,
+    })),
+    // +++
+    ...userIds.map((user) => ({
+      kind: "user",
+      id: user.id,
+    })),
+  ];
+}}
+```
+
+Here’s how your `queryGroupIds` function can use
+[`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups) to
+query all groups and filter them by the search text.
+
+```ts file="queryGroupIds.ts"
+"use server";
+
+export async function queryGroupIds(text: string) {
+  // +++
+  const { data: groups } = await liveblocks.getGroups();
+  // +++
+
+  // +++
+  return groups
+    .filter((group) => group.id.includes(text))
+    .map((group) => group.id);
+  // +++
+}
+```
+
+If your app has multi-tenancy, make sure you handle permissions correctly, and
+filter out any groups that the user doesn’t have access to.
+
+#### First-party multi-tenancy
+
+Using the Liveblocks [tenants](/docs/authentication/tenants) feature, you can
+create groups with the same ID in different tenants. This is an easy way to
+compartmentalize resources in your app for each organization. In the snippet
+below, both organizations have an engineering team, but because seperate tenants
+are used, they are different groups.
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["marc@example.com", "florent@example.com"],
+  // +++
+  tenantId: "apple-corp",
+  // +++
+});
+
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["chris@example.com", "olivier@example.com"],
+  // +++
+  tenantId: "banana-inc",
+  // +++
+});
+```
+
+## Adding group information
+
+Similar to when
+[displaying user information](/docs/ready-made-features/comments/users-and-mentions#adding-user-information),
+
+You can also add groups to Comments, allowing you to tag a team of people with
 one mention. Similar to users, group information is retrieved from a list of
 group IDs. You should return the same number of groups as the number of group
 IDs, in the same order.
@@ -135,7 +442,7 @@ where you can return this information.
     // ["engineering", ...]
     console.log(groupIds);
 
-    // Get groups from your back end
+    // Get groups from your back-end
     const groups = await __fetchGroups__(groupIds);
 
     // [{ name: "Engineering", avatar: "https://example.com/engineering.png" }, ...]
@@ -149,7 +456,7 @@ where you can return this information.
 ```
 
 The `name` and `avatar` are handled by the default components, but you can also
-also return custom metadata here. For example, each group may have a `color`
+return custom metadata here. For example, each group may have a `color`
 property. You can retrieve these properties in your app with
 [`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo).
 
@@ -163,119 +470,3 @@ function Component() {
   // ...
 }
 ```
-
-## Resolving user and group mentions suggestions
-
-Comments allows you to search for users and groups after typing the `"@"`
-character.
-
-<Figure>
-  <Image
-    src="/assets/tutorials/comments/mentions.png"
-    alt="Working Comments mentions"
-    width={1297}
-    height={781}
-  />
-</Figure>
-
-When a user types `"@"` and searches for a user or group, Comments will pass you
-a `text` property which you can use to return matching user IDs and group IDs.
-
-```shell
-# If "@mar" has been typed, this is `text`
-"mar"
-
-# Return matching `userIds` and `groupIds`
-["marc@example.com", "marissa@example.com"]
-```
-
-You can resolve these search results by adding a
-[`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
-property to your
-[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
-Here's what the function might look like if the user has typed `"@mar"` into the
-input.
-
-### User mentions only
-
-```tsx
-<LiveblocksProvider
-  authEndpoint="/api/liveblocks-auth"
-  resolveUsers={async ({ userIds }) => {
-    // ...
-  }}
-  // +++
-  resolveMentionSuggestions={async ({ text, roomId }) => {
-    // "mar"
-    console.log(text);
-
-    // Return an array of user IDs for the query "mar"
-    let userIds;
-
-    if (text) {
-      // If there's a query, get user IDs from your back end that match
-      userIds = await __queryUserIds__(text);
-    } else {
-      // If there's no query, get all of the room's user IDs
-      userIds = await __getAllUserIds__();
-    }
-
-    // ["marc@example.com", "marissa@example.com"]
-    console.log(userIds);
-    return userIds;
-  }}
-  // +++
->
-```
-
-### User and group mentions
-
-To support both user and group mentions, you can return a list of mention
-objects instead of just user IDs. This allows you to suggest a mix of users and
-groups.
-
-```tsx
-<LiveblocksProvider
-  authEndpoint="/api/liveblocks-auth"
-  resolveUsers={async ({ userIds }) => {
-    // ...
-  }}
-  resolveGroupsInfo={async ({ groupIds }) => {
-    // ...
-  }}
-  // +++
-  resolveMentionSuggestions={async ({ text, roomId }) => {
-    // "mar"
-    console.log(text);
-
-    let userIds;
-    let groupIds;
-
-    if (text) {
-      // If there's a query, get user and groups IDs from your back end that match
-      userIds = await __queryUserIds__(text);
-      groupIds = await __queryGroupIds__(text);
-    } else {
-      // If there's no query, get all of the room's user and group IDs
-      userIds = await __getAllUserIds__();
-      groupIds = await _getAllGroupIds__();
-    }
-
-    // Show groups and users matching the text being typed
-    return [
-      ...groupIds.map((group) => ({
-        kind: "group",
-        id: group.id,
-      })),
-      ...userIds.map((user) => ({
-        kind: "user",
-        id: user.id,
-      })),
-    ];
-  }}
-  // +++
->
-```
-
-If a user has only typed `"@"`, `text` is an empty string, and it's recommended
-to return every user and group.

@@ -1,5 +1,6 @@
 "use client";
 
+import { MentionData } from "@liveblocks/client";
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import Router from "next/router";
@@ -7,7 +8,11 @@ import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ReactNode, useEffect } from "react";
 import { DOCUMENT_URL } from "@/constants";
-import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
+import {
+  authorizeLiveblocks,
+  getLiveUsers,
+  getSpecificDocuments,
+} from "@/lib/actions";
 import { syncLiveblocksGroups } from "@/lib/actions/syncLiveblocksGroups";
 import { getGroups, getUsers } from "@/lib/database";
 
@@ -93,27 +98,61 @@ export function Providers({
           }));
         }}
         // Resolve what mentions are suggested for Comments/Text Editor
-        resolveMentionSuggestions={async ({ text }) => {
-          // Get group suggestions
-          const groups = await getGroups({ search: text });
-          const groupSuggestions = groups
+        resolveMentionSuggestions={async ({ text, roomId }) => {
+          const [allUsers, liveUsers, matchingGroups, matchingUsers] =
+            await Promise.all([
+              getUsers(), // All users
+              getLiveUsers({ documentIds: [roomId] }), // All users currently online in the document
+              getGroups({ search: text }), // Groups that match the search term
+              getUsers({ search: text }), // Users that match the search term
+            ]);
+
+          const globalSuggestions: MentionData[] = [];
+
+          // Add `@everyone` suggestion, all users in app
+          if ("everyone".includes(text.toLowerCase())) {
+            globalSuggestions.push({
+              kind: "group",
+              id: "everyone",
+              userIds: allUsers
+                .filter((user) => user !== null)
+                .map((user) => user.id),
+            });
+          }
+
+          // Add `@here` suggestion, all users currently connected to the document
+          if (liveUsers.data && "here".includes(text.toLowerCase())) {
+            globalSuggestions.push({
+              kind: "group",
+              id: "here",
+              userIds: liveUsers.data[0].users
+                .map((user) => user.id)
+                .filter((id) => id !== null),
+            });
+          }
+
+          // Create group suggestions, e.g. `@engineering`
+          const groupSuggestions: MentionData[] = matchingGroups
             .filter((group) => group !== null)
             .map((group) => ({
-              kind: "group" as const,
+              kind: "group",
               id: group.id,
             }));
 
-          // Get user suggestions
-          const users = await getUsers({ search: text });
-          const userSuggestions = users
+          // Create user suggestions, e.g. `anjali.wanda@example.com`
+          const userSuggestions: MentionData[] = matchingUsers
             .filter((user) => user !== null)
             .map((user) => ({
-              kind: "user" as const,
+              kind: "user",
               id: user.id,
             }));
 
           // Return combined suggestions
-          return [...groupSuggestions, ...userSuggestions];
+          return [
+            ...globalSuggestions,
+            ...groupSuggestions,
+            ...userSuggestions,
+          ];
         }}
       >
         <TooltipProvider>{children}</TooltipProvider>

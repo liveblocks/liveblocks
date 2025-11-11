@@ -235,7 +235,8 @@ assigning group permissions.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
 
-`tenantId` (optional) is the tenant for this user, will be set to `default` if not provided.
+`tenantId` (optional) is the tenant for this user, will be set to `default` if
+not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all
@@ -821,8 +822,6 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
-  // Optional, create it on a specific tenant
-  tenantId: "acme-corp",
 });
 
 // { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
