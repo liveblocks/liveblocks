@@ -205,3 +205,49 @@ are available for managing copilots and knowledge sources.
 - [`getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links)
 - [`deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source)
 - [`deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source)
+
+## Web search
+
+Web search is a feature that allows your AI to search the internet for
+information. It is disabled by default, and can be enabled by toggling
+`webSearch` option to `true` in
+[your copilot settings](/docs/ready-made-features/ai-copilots/copilots#Web-search).
+
+```text title="Web search"
+on
+```
+
+You can also
+[limit the domains that the AI can search](/docs/ready-made-features/ai-copilots/copilots#Limit-web-search-to-specific-domains)
+by setting an option on your copilot.
+
+```text title="Limit web search to specific domains"
+encyclopedia.com
+en.wikipedia.org
+```
+
+It’s also possible to enable this setting through the back-end with
+`allowedDomains`, for example using
+[`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
+
+```ts
+const copilot = await liveblocks.createAiCopilot({
+  name: "My AI Assistant",
+  systemPrompt: "You are a helpful AI assistant for our team.",
+  provider: "openai",
+  providerModel: "gpt-4",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    openai: {
+      // Optional, restrict web search to specific domains
+      // +++
+      webSearch: {
+        allowedDomains: ["encyclopedia.com", "en.wikipedia.org"],
+      },
+      // +++
+    },
+  },
+});
+```
+
+Not all models support web search, but most OpenAI and Anthropic models do.
