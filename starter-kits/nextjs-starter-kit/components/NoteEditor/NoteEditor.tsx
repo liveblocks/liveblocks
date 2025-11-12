@@ -4,8 +4,8 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { NoteHeader } from "./NoteHeader";
-import { NoteThreads } from "./NoteTheads";
 import styles from "./NoteEditor.module.css";
+// import { useCreateBlockNote } from "@blocknote/react";
 
 export function NoteEditor() {
   return (
@@ -23,14 +23,16 @@ function BlockTextEditor() {
     { offlineSupport_experimental: true }
   );
 
+  // const editor = useCreateBlockNote();
+
   return (
     <div className={styles.wrapper}>
       <NoteHeader editor={editor} />
       <div className={styles.editorWrapper}>
         <BlockNoteView editor={editor} editable={canWrite ?? false} />
-        <ClientSideSuspense fallback={null}>
+        {/* <ClientSideSuspense fallback={null}>
           <NoteThreads editor={editor} />
-        </ClientSideSuspense>
+        </ClientSideSuspense> */}
       </div>
     </div>
   );
