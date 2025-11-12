@@ -49,6 +49,7 @@ export function buildDocument(room: RoomData): Document {
   const users: Document["accesses"]["users"] = {};
   Object.entries(room.usersAccesses).map(([id, accessValue]) => {
     if (accessValue) {
+      // @ts-ignore
       users[id] = roomAccessesToDocumentAccess(accessValue);
     }
   });

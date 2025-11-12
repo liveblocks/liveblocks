@@ -18,6 +18,7 @@ export async function buildDocumentUsers(result: RoomData, userId: string) {
     if (user) {
       users.push({
         ...user,
+        // @ts-ignore
         access: roomAccessesToDocumentAccess(accessValue, true),
         isCurrentUser: id === userId,
       });
