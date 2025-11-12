@@ -5,6 +5,8 @@ import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { NoteHeader } from "./NoteHeader";
 import styles from "./NoteEditor.module.css";
+
+// Uncomment and it works
 // import { useCreateBlockNote } from "@blocknote/react";
 
 export function NoteEditor() {
@@ -23,6 +25,7 @@ function BlockTextEditor() {
     { offlineSupport_experimental: true }
   );
 
+  // Uncomment and it works
   // const editor = useCreateBlockNote();
 
   return (
