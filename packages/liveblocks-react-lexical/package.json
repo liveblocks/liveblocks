@@ -53,14 +53,14 @@
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
-    "@lexical/react": "0.35.0",
-    "@lexical/rich-text": "0.35.0",
-    "@lexical/selection": "0.35.0",
-    "@lexical/utils": "0.35.0",
-    "@lexical/yjs": "0.35.0",
+    "@lexical/react": "0.36.2",
+    "@lexical/rich-text": "0.36.2",
+    "@lexical/selection": "0.36.2",
+    "@lexical/utils": "0.36.2",
+    "@lexical/yjs": "0.36.2",
     "@types/react": "*",
     "@types/react-dom": "*",
-    "lexical": "0.35.0",
+    "lexical": "0.36.2",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
