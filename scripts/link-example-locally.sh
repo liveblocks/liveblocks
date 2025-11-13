@@ -64,7 +64,14 @@ for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks
     jq ".dependencies.\"$dep\" = \"file:../../packages/liveblocks-${dep#@liveblocks/}\"" package.json | sponge package.json
 done
 
-# Step 4: Add this example to the top-level package.json to officially make it
+# Step 4: Build all @liveblocks packages to ensure they're up-to-date
+err "Building @liveblocks packages..."
+if ! ( cd ../../ && npm run build > /dev/null 2>&1 ); then
+    err "Warning: Some packages failed to build. This may cause version mismatch issues."
+    err "You can manually build packages with: npm run build"
+fi
+
+# Step 5: Add this example to the top-level package.json to officially make it
 # a workspace.
 if ! grep -q "\"$reldir\"" ../../package.json; then
     jq ".workspaces |= . + [\"$reldir\"]" ../../package.json | sponge ../../package.json
@@ -84,7 +91,7 @@ fi
 
 err "All good! Current example is now a local NPM workspace."
 
-# Step 5: Capture these changes in a Git commit, so you can easily undo this
+# Step 6: Capture these changes in a Git commit, so you can easily undo this
 # later when you're done testing, by simply removing this commit from the
 # history.
 if [ "$commit" -eq 1 ]; then
