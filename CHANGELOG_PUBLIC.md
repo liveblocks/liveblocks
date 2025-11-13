@@ -30,6 +30,9 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - New blog post: [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
 - New streaming video player in blog posts.
+  - Smoother, as quality is automatically adjusted to stream without pauses on poor connections.
+  - More performant, as offscreen videos automatically pause.
+  - More accessible, as videos are paused by default for those with `prefers-reduced-motion: reduce` enabled.
 
 ## Contributors
 
