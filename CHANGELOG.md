@@ -1,5 +1,16 @@
-
 ## vNEXT (not released yet)
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+### `@liveblocks/yjs`
+
+- Add `forceNewProvider` option to `getYjsProviderForRoom` and destroy existing
+  provider when requested
 
 ## v3.10.0
 
