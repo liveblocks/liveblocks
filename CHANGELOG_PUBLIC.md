@@ -24,6 +24,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - New section on [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
 - Updated other information on the [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) page.
+- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with new information.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
+- New streaming video player in blog posts.
 
 ## Contributors
 
