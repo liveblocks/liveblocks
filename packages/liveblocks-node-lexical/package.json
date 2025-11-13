@@ -39,11 +39,11 @@
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
-    "@lexical/headless": "0.38.2",
-    "@lexical/markdown": "0.38.2",
-    "@lexical/selection": "0.38.2",
-    "@lexical/yjs": "0.38.2",
-    "lexical": "0.38.2"
+    "@lexical/headless": "0.35.0",
+    "@lexical/markdown": "0.35.0",
+    "@lexical/selection": "0.35.0",
+    "@lexical/yjs": "0.35.0",
+    "lexical": "0.35.0"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
