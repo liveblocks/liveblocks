@@ -20,6 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 46 (2025-11-14)
 
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
 ## Documentation
 
 - New section on [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
