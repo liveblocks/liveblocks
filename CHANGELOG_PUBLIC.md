@@ -48,7 +48,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas, pierrelevaillant
+ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
 
 # Week 45 (2025-11-07)
 
