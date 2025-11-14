@@ -26,6 +26,7 @@ import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
  *
  * @param nodes - The existing storage nodes as IdTuple<SerializedCrdt>[]
  * @param mutation - The mutation data (can be partial JSON or LSON)
+ * @param actorId - Optional actor/connection ID to use for generating op IDs. Defaults to 1.
  * @returns Array of operations that can be applied to achieve the mutation
  *
  * @example
@@ -37,18 +38,19 @@ import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
  *
  * const ops = generateOpsFromJson(nodes, {
  *   engine: { displacement: 2 } // Preserves engine as LiveObject, only updates displacement
- * });
+ * }, 42); // Use actor ID 42 for generated ops
  * ```
  */
 export function generateOpsFromJson<S extends LsonObject>(
   nodes: IdTuple<SerializedCrdt>[],
-  mutation: Partial<S> | Json
+  mutation: Partial<S> | Json,
+  actorId: number = 1
 ): Op[] {
   const capturedOps: Op[] = [];
 
   // Create a temporary pool that captures all dispatched ops
   const pool = createManagedPool("mutation-temp", {
-    getCurrentConnectionId: () => 1,
+    getCurrentConnectionId: () => actorId,
     onDispatch: (ops) => {
       capturedOps.push(...ops);
     },
