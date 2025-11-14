@@ -18,6 +18,38 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 46 (2025-11-14)
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+## Documentation
+
+- New section on [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+- Updated other information on the [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) page.
+- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with new information.
+- Add information on [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search) in overview pages.
+
+## Dashboard
+
+- Standardized all date displays with a new unified component, including richer hover details, copyable timestamps, and improved list-view scannability.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
+- New streaming video player in blog posts.
+  - Smoother, as quality is automatically adjusted to stream without pauses on poor connections.
+  - More performant, as offscreen videos automatically pause.
+  - More accessible, as videos are paused by default for those with `prefers-reduced-motion: reduce` enabled.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
+
 # Week 45 (2025-11-07)
 
 ## v3.10.0
