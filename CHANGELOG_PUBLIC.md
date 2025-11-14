@@ -26,6 +26,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Updated other information on the [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) page.
 - Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with new information.
 
+## Dashboard
+
+- Standardized all date displays with a new unified component, including richer hover details, copyable timestamps, and improved list-view scannability.
+
 ## Website
 
 - New blog post: [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
@@ -36,7 +40,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, pierrelevaillant
 
 # Week 45 (2025-11-07)
 
