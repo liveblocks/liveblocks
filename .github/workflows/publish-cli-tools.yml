@@ -70,6 +70,7 @@ jobs:
         with:
           node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
+      - run: npm install -g npm@11.6.0
 
       - name: Setup git config
         run: |
