@@ -1209,9 +1209,6 @@ type RoomState<
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
   readonly unacknowledgedOps: Map<string, Op>;
-
-  // Stack traces of all pending Ops. Used for debugging in non-production builds
-  readonly opStackTraces?: Map<string, string>;
 };
 
 export type Polyfills = {
@@ -1427,12 +1424,6 @@ export function createRoom<
 
     activeBatch: null,
     unacknowledgedOps: new Map<string, Op>(),
-
-    // Debug
-    opStackTraces:
-      process.env.NODE_ENV !== "production"
-        ? new Map<string, string>()
-        : undefined,
   };
 
   let lastTokenKey: string | undefined;
@@ -1549,17 +1540,6 @@ export function createRoom<
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
-    if (process.env.NODE_ENV !== "production") {
-      const stackTrace = captureStackTrace("Storage mutation", onDispatch);
-      if (stackTrace) {
-        for (const op of ops) {
-          if (op.opId) {
-            nn(context.opStackTraces).set(op.opId, stackTrace);
-          }
-        }
-      }
-    }
-
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -1991,10 +1971,6 @@ export function createRoom<
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
           const opId = nn(op.opId);
-          if (process.env.NODE_ENV !== "production") {
-            nn(context.opStackTraces).delete(opId);
-          }
-
           const deleted = context.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
@@ -2382,8 +2358,7 @@ export function createRoom<
         // Receiving a RejectedOps message in the client means that the server is no
         // longer in sync with the client. Trying to synchronize the client again by
         // rolling back particular Ops may be hard/impossible. It's fine to not try and
-        // accept the out-of-sync reality and throw an error. We look at this kind of bug
-        // as a developer-owned bug.
+        // accept the out-of-sync reality and throw an error.
         case ServerMsgCode.REJECT_STORAGE_OP: {
           console.errorWithTitle(
             "Storage mutation rejection error",
@@ -2391,21 +2366,6 @@ export function createRoom<
           );
 
           if (process.env.NODE_ENV !== "production") {
-            const traces: Set<string> = new Set();
-            for (const opId of message.opIds) {
-              const trace = context.opStackTraces?.get(opId);
-              if (trace) {
-                traces.add(trace);
-              }
-            }
-
-            if (traces.size > 0) {
-              console.warnWithTitle(
-                "The following function calls caused the rejected storage mutations:",
-                `\n\n${Array.from(traces).join("\n\n")}`
-              );
-            }
-
             throw new Error(
               `Storage mutations rejected by server: ${message.reason}`
             );
