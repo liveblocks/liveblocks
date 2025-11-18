@@ -2383,7 +2383,7 @@ export function createRoom<
         // longer in sync with the client. Trying to synchronize the client again by
         // rolling back particular Ops may be hard/impossible. It's fine to not try and
         // accept the out-of-sync reality and throw an error. We look at this kind of bug
-        // as a developer-owned bug. In production, these errors are not expected to happen.
+        // as a developer-owned bug.
         case ServerMsgCode.REJECT_STORAGE_OP: {
           console.errorWithTitle(
             "Storage mutation rejection error",
