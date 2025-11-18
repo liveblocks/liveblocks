@@ -1,0 +1,237 @@
+/* Placeholder in first line */
+p.tiptap-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-paragraph {
+  margin: var(--space-8) 0;
+}
+
+.tiptap-hr {
+  margin: var(--space-14) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Heading styles below */
+h1.tiptap-heading {
+  font-size: var(--size-3xl);
+  font-weight: bold;
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
+}
+
+h2.tiptap-heading {
+  font-size: var(--size-2xl);
+  font-weight: bold;
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
+}
+
+h3.tiptap-heading {
+  font-size: var(--size-xl);
+  font-weight: bold;
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-8);
+}
+
+h1.tiptap-heading:first-child,
+h2.tiptap-heading:first-child,
+h3.tiptap-heading:first-child {
+  margin-top: 0;
+}
+
+h1.tiptap-heading + h2.tiptap-heading,
+h1.tiptap-heading + h3.tiptap-heading,
+h2.tiptap-heading + h1.tiptap-heading,
+h2.tiptap-heading + h3.tiptap-heading,
+h3.tiptap-heading + h1.tiptap-heading,
+h3.tiptap-heading + h2.tiptap-heading {
+  margin-top: 0;
+}
+
+/* Advanced inline styles below */
+.tiptap-code {
+  font-size: 1.2em;
+  line-height: 1em;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-xs);
+  font-weight: 400;
+  padding: 0 var(--space-2);
+}
+
+h1 .tiptap-code,
+h2 .tiptap-code,
+h3 .tiptap-code {
+  font-size: 1em;
+}
+
+.tiptap-highlight {
+  background: yellow;
+}
+
+.tiptap-link {
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Block styles below */
+.tiptap-blockquote {
+  margin-left: var(--space-8);
+  padding-left: var(--space-8);
+  display: block;
+  border-left: var(--space-2) solid var(--color-border-contrasted);
+}
+
+.tiptap-list-item p {
+  margin: var(--space-2) 0;
+}
+
+.tiptap-list-item {
+  margin-left: var(--space-12);
+  padding-left: var(--space-2);
+  list-style: disc;
+}
+
+.tiptap-list-item .tiptap-list-item,
+.tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  margin-left: var(--space-8);
+  list-style: circle;
+}
+
+.tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  list-style: square;
+}
+
+.tiptap-list-item .tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  list-style: disc;
+}
+
+.tiptap-ordered-list .tiptap-list-item {
+  list-style: decimal;
+}
+
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item,
+.tiptap-ordered-list
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  list-style: lower-alpha;
+}
+
+.tiptap-ordered-list .tiptap-list-item .tiptap-list-item .tiptap-list-item,
+.tiptap-ordered-list
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  list-style: lower-roman;
+}
+
+.tiptap-ordered-list
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item,
+.tiptap-ordered-list
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item
+  .tiptap-list-item {
+  list-style: decimal;
+}
+
+.tiptap-task-list {
+  list-style: none;
+  padding: 0;
+}
+
+.tiptap-task-list p {
+  margin: 0;
+}
+
+/* Styling for task item in /components/TextEditor/CustomTaskItem */
+
+/* Media blocks below */
+.tiptap-code-block {
+  font-size: var(--size-sm);
+  line-height: 1.6;
+  white-space: pre;
+  background: rgb(var(--color-gray-850));
+  color: rgb(var(--color-gray-100));
+  padding: var(--space-8);
+  border-radius: var(--radius-xs);
+  margin: var(--space-8) 0;
+}
+
+.tiptap-image,
+.tiptap-youtube {
+  margin: var(--space-8) 0;
+}
+
+.tiptap-image.ProseMirror-selectednode,
+.tiptap-youtube.ProseMirror-selectednode {
+  outline: 1.5px solid var(--color-accent);
+}
+
+.tiptap-youtube {
+  border: 0;
+}
+
+/* Give a remote user a caret */
+.collaboration-cursor__caret {
+  border-left: 1px solid #0d0d0d;
+  border-right: 1px solid #0d0d0d;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  position: relative;
+  word-break: normal;
+}
+
+/* Render the username above the caret */
+.collaboration-cursor__label {
+  font-style: normal;
+  font-weight: 600;
+  left: -1px;
+  line-height: normal;
+  position: absolute;
+  user-select: none;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #fff;
+  top: -1.4em;
+  border-radius: 6px;
+  border-bottom-left-radius: 0;
+  padding: 2px 6px;
+  pointer-events: none;
+}
