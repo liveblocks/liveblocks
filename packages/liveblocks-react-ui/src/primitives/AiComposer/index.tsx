@@ -114,10 +114,18 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
       : emptyMessagesΣ;
     const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+    const isAvailable = useSignal(
+      // Subscribe to connection status signal
+      client[kInternal].ai.signals.statusΣ,
+      // "Disconnected" means the AI service is not available
+      // as it represents a final error status.
+      (status) => status !== "disconnected"
+    );
 
     const isDisabled = isSubmitting || disabled === true;
-    const canAbort = abortableMessageId !== undefined;
-    const canSubmit = !isEditorEmpty && !canAbort;
+
+    const canAbort = isAvailable && abortableMessageId !== undefined;
+    const canSubmit = isAvailable && !isEditorEmpty && !canAbort;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {

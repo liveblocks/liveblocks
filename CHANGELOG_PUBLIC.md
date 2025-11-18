@@ -18,6 +18,163 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 46 (2025-11-14)
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+## Documentation
+
+- New section on [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+- Updated other information on the [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) page.
+- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with new information.
+- Add information on [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search) in overview pages.
+
+## Dashboard
+
+- Standardized all date displays with a new unified component, including richer hover details, copyable timestamps, and improved list-view scannability.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
+- New streaming video player in blog posts.
+  - Smoother, as quality is automatically adjusted to stream without pauses on poor connections.
+  - More performant, as offscreen videos automatically pause.
+  - More accessible, as videos are paused by default for those with `prefers-reduced-motion: reduce` enabled.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
+
+# Week 45 (2025-11-07)
+
+## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes.
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403.
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on `Thread`) to allow customizing comments’ dropdown items in the default components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but hidden.
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
+## Documentation
+
+- New guide: [Upgrading to 3.10](https://liveblocks.io/docs/platform/upgrading/3.10).
+- New guide: [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
+- New guide: [Tiptap best practices and tips](https://liveblocks.io/docs/guides/tiptap-best-practices-and-tips).
+- New guide: [Yjs best practices and tips](https://liveblocks.io/docs/guides/yjs-best-practices-and-tips).
+
+## Contributors
+
+jrowny, marcbouchenoire, nvie, ctnicholas
+
+# Week 44 (2025-10-31)
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
+## Documentation
+
+- New AI Copilots get started guides for [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
+- New AI Copilots overview pages:
+  - [Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots/copilots).
+  - [Default components](https://liveblocks.io/docs/ready-made-features/ai-copilots/default-components).
+  - [Hooks](https://liveblocks.io/docs/ready-made-features/ai-copilots/hooks).
+  - [Knowledge](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge).
+  - [Tools](https://liveblocks.io/docs/ready-made-features/ai-copilots/tools).
+  - [Styling and customization](https://liveblocks.io/docs/ready-made-features/ai-copilots/styling-and-customization).
+  - [Troubleshooting](https://liveblocks.io/docs/ready-made-features/ai-copilots/troubleshooting).
+- New guide: [How to use fallback AI models in AI Copilots](https://liveblocks.io/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots).
+
+## Examples
+
+- Added batched notifications to [Custom Notifications example](https://liveblocks.io/examples/notifications-custom).
+
+## Website
+
+- New diff code block styling.
+- New icons for docs overview pages.
+- Fixed example integrations when no environment variable is needed.
+- Fixed code snippet background color.
+
+## Contributors
+
+ctnicholas, nimeshnayaju
+
+# Week 42 (2025-10-17)
+
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
+
+## Dashboard
+
+- Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
+  - New “Kinds” tab, allowing you to define batching per kind.
+  - See the status of your webhooks from here.
+  - Warnings when no webhooks are set up, and shortcuts to get started.
+- Improved “Webhooks” page.
+  - Set a rate limit for your webhooks when creating them.
+  - More detailed error messages when creating webhooks.
+  - Better UX on the URL input.
+- Improved UX when creating projects 
+  - New polished project cards displaying more info such as region restrictions.
+  - More clarity in project creation dialog boxes.
+- Improved team/project selectors with UI polish and better accessibility.
+- Improved MAU usage cards showing your team’s personalized limits.
+- More clarity in project settings regarding environment and regions not being editable.
+- Fixed problem downloading examples with `create-liveblocks-app` integration.
+
+## Documentation
+
+- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+- Better clarity on Storage/Yjs limits.
+
+## Contributors
+
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant, ctnicholas
+
 # Week 41 (2025-10-10)
 
 ## v3.8.1

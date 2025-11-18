@@ -1,7 +1,7 @@
 "use client";
 
 import NotificationsPopover from "../notifications-popover";
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, Extension } from "@tiptap/react";
 import {
   useLiveblocksExtension,
   FloatingComposer,
@@ -19,6 +19,7 @@ export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -27,9 +28,9 @@ export default function TiptapEditor() {
     },
     extensions: [
       StarterKit.configure({
-        history: false,
+        undoRedo: false,
       }),
-      liveblocks,
+      liveblocks as Extension,
     ],
   });
 

@@ -1,0 +1,176 @@
+---
+meta:
+  title: "Yjs best practices and tips"
+  description:
+    "Learn best practices and common pitfalls to avoid when working with Yjs and
+    Liveblocks"
+---
+
+This guide covers best practices and common pitfalls to avoid when working with
+Yjs and Liveblocks.
+
+## Avoid importing Yjs twice
+
+One of the most common issues when working with Yjs is accidentally importing it
+twice in your application. This often happens when mixing CommonJS (CJS) and
+ECMAScript Modules (ESM), or when certain bundlers bundle more than one version
+of Yjs.
+
+When Yjs is imported twice, the two instances don't share the same class
+references, which can lead to synchronization issues and unexpected behavior. You'll see a Yjs warning in the Console if this happens.
+
+### Fixing duplicate Yjs imports
+
+If you find duplicate Yjs imports, you can:
+
+1. **Use package manager resolution**: Configure your package manager to resolve
+   Yjs to a single version:
+
+```json
+// package.json (npm/yarn)
+{
+  "resolutions": {
+    "yjs": "^13.6.0"
+  }
+}
+```
+
+```json
+// package.json (pnpm)
+{
+  "pnpm": {
+    "overrides": {
+      "yjs": "^13.6.0"
+    }
+  }
+}
+```
+
+2. **Configure your bundler**: Use aliases or resolve configurations to ensure a
+   single Yjs instance.
+
+## Avoid subdocuments when possible
+
+While Liveblocks Yjs supports
+[subdocuments](/guides/how-to-use-yjs-subdocuments), it's generally better to
+avoid them unless you have a specific use case that requires them.
+
+Subdocuments add complexity to your application and are only necessary when:
+
+- You have multiple _very large_ Yjs documents in the same room
+- You need to lazy-load documents individually
+
+For most use cases, including **multiple text editors on the same page**,
+subdocuments are not necessary. Instead, use a
+[`Y.Map`](https://docs.yjs.dev/api/shared-types/y.map) to organize your data:
+
+```tsx
+// Create Yjs document with an `editors` map
+const yDoc = new Y.Doc();
+const yMap = yDoc.getMap("editors");
+
+// Create shared types and add to map
+const editorOne = new Y.XMLFragment();
+const editorTwo = new Y.XMLFragment();
+yMap.set("editor-1", editorOne);
+yMap.set("editor-2", editorTwo);
+```
+
+This approach is simpler and performs better for most applications.
+
+## Use getYjsProviderForRoom for better resilience
+
+When working with React or other UI frameworks where re-renders are common, use
+[`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) instead of creating a new provider on each render. This
+ensures the provider is reused across renders, making your application more
+resilient:
+
+```tsx
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  const room = useRoom();
+  const yProvider = getYjsProviderForRoom(room);
+  const yDoc = yProvider.getYDoc();
+
+  // ...
+}
+```
+
+This approach ensures that:
+
+- The provider is properly reused across component re-renders
+- Connection state is maintained even when the component updates
+- Resources are properly cleaned up when the component unmounts
+
+## Use YKeyValue for efficient key-value storage
+
+In many cases, [`Y.Map`](https://docs.yjs.dev/api/shared-types/y.map) can be inefficient for key-value storage. Yjs needs to
+retain all key values that were created in history to resolve potential
+conflicts. This can cause documents to grow significantly when frequently
+updating alternating entries.
+
+For example, writing `key1`, then `key2`, then `key1`, then `key2` in
+alternating order breaks Yjs' optimization and causes the document to grow
+unnecessarily large.
+
+### Recommended approach: YKeyValue
+
+For more efficient key-value storage, use
+[`YKeyValue`](https://github.com/yjs/y-utility?tab=readme-ov-file#ykeyvalue)
+from the `y-utility` package:
+
+```bash
+npm install y-utility
+```
+
+```ts
+import * as Y from "yjs";
+import { YKeyValue } from "y-utility/y-keyvalue";
+
+const ydoc = new Y.Doc();
+const yarr = ydoc.getArray();
+const ykv = new YKeyValue(yarr);
+
+// Fires events similarly to Y.Map when content changes
+ykv.on("change", (changes) => {
+  console.log(changes);
+});
+
+ykv.set("key1", "val1");
+ykv.set("key1", "updated");
+ykv.delete("key1");
+ykv.set("key1", "new val");
+ykv.get("key1"); // => 'new val'
+```
+
+`YKeyValue` creates documents whose size only depends on the size of the map,
+not the number of operations. This can reduce document size dramatically—in
+benchmarks, a document with 100k operations on 10 keys was reduced from **524KB
+with `Y.Map`** to just **271 bytes with `YKeyValue`**.
+
+## Enable experimental V2 encoding for Y.Maps
+
+If you're using `Y.Map` in combination with Yjs, you can enable the
+experimental V2 encoding for better performance and smaller document sizes:
+
+```ts
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  const room = useRoom();
+
+  const yProvider = getYjsProviderForRoom(room, {
+    // Enable V2 encoding for better performance with LiveMaps
+    // +++
+    useV2Encoding_experimental: true,
+    // +++
+  });
+}
+```
+
+This encoding is more efficient when working with maps and can significantly
+reduce bandwidth usage. Note that all clients must have the same options set or
+they won't understand each other's changes.

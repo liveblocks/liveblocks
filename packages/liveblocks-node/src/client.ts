@@ -201,15 +201,25 @@ type OpenAiModel =
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gpt-4-turbo"
-  | "gpt-4";
+  | "gpt-4"
+  | "gpt-5"
+  | "gpt-5-mini"
+  | "gpt-5-nano"
+  | "gpt-5-chat-latest";
 
 type OpenAiProviderOptions = {
   openai: {
-    reasoningEffort: "low" | "medium" | "high";
+    reasoningEffort?: "low" | "medium" | "high";
+    webSearch?: {
+      allowedDomains?: string[];
+    };
   };
 };
 
 type AnthropicModel =
+  | "claude-sonnet-4-5-20250929"
+  | "claude-haiku-4-5-20251001"
+  | "claude-opus-4-1-20250805"
   | "claude-4-opus-20250514"
   | "claude-4-sonnet-20250514"
   | "claude-3-7-sonnet-20250219"
@@ -218,9 +228,16 @@ type AnthropicModel =
   | "claude-3-opus-latest";
 type AnthropicProviderOptions = {
   anthropic: {
-    thinking: {
-      type: "enabled" | "disabled";
-      budgetTokens: number;
+    thinking?:
+      | {
+          type: "enabled";
+          budgetTokens: number;
+        }
+      | {
+          type: "disabled";
+        };
+    webSearch?: {
+      allowedDomains?: string[];
     };
   };
 };
@@ -233,8 +250,8 @@ type GoogleModel =
   | "gemini-1.5-pro";
 type GoogleProviderOptions = {
   google: {
-    thinkingConfig: {
-      thinkingBudget: number;
+    thinkingConfig?: {
+      thinkingBudget?: number;
     };
   };
 };
@@ -284,17 +301,6 @@ export type RoomUser<U extends BaseUserMeta = DU> = {
   connectionId: number;
   info: U["info"];
 };
-
-export type Schema = {
-  id: string;
-  name: string;
-  version: number;
-  body: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-type SchemaPlain = DateToString<Schema>;
 
 type RequestStorageMutationResponse = {
   actor: number;
@@ -484,27 +490,48 @@ export type UpdateAiCopilotOptions = {
 } & (
   | {
       provider?: "openai";
+      /**
+       * The provider model to use.
+       */
       providerModel?: OpenAiModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: OpenAiProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "anthropic";
+      /**
+       * The provider model to use.
+       */
       providerModel?: AnthropicModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs..
+       */
       providerOptions?: AnthropicProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "google";
+      /**
+       * The provider model to use.
+       */
       providerModel?: GoogleModel;
+      /**
+       * The provider options to use. Replaces the entire existing provider options; no deep merge of the nested fields occurs.
+       */
       providerOptions?: GoogleProviderOptions | null;
       compatibleProviderName?: never;
       providerBaseUrl?: never;
     }
   | {
       provider?: "openai-compatible";
+      /**
+       * The provider model to use.
+       */
       providerModel?: string;
       compatibleProviderName?: string;
       providerBaseUrl?: string;
@@ -654,25 +681,6 @@ export class Liveblocks {
       signal: options?.signal,
     });
     return res;
-  }
-
-  async #put(
-    path: URLSafeString,
-    json: Json,
-    options?: RequestOptions
-  ): Promise<Response> {
-    const url = urljoin(this.#baseUrl, path);
-    const headers = {
-      Authorization: `Bearer ${this.#secret}`,
-      "Content-Type": "application/json",
-    };
-    const fetch = await fetchPolyfill();
-    return await fetch(url, {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(json),
-      signal: options?.signal,
-    });
   }
 
   async #putBinary(
@@ -1389,197 +1397,6 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return res.arrayBuffer();
-  }
-
-  /* -------------------------------------------------------------------------------------------------
-   * Schema Validation
-   * -----------------------------------------------------------------------------------------------*/
-
-  /**
-   * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
-   * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The created schema.
-   */
-  public async createSchema(
-    name: string,
-    body: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#post(url`/v2/schemas`, { name, body }, options);
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Returns a schema by its id.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The schema with the given id.
-   */
-  public async getSchema(
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#get(
-      url`/v2/schemas/${schemaId}`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Updates the body for the schema. A schema can only be updated if it is not used by any room.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The updated schema. The version of the schema will be incremented.
-   */
-  public async updateSchema(
-    schemaId: string,
-    body: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#put(
-      url`/v2/schemas/${schemaId}`,
-      { body },
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   */
-  public async deleteSchema(
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<void> {
-    const res = await this.#delete(
-      url`/v2/schemas/${schemaId}`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-  }
-
-  /**
-   * Returns the schema attached to a room.
-   * @param roomId The id of the room to get the schema from.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns
-   */
-  public async getSchemaByRoomId(
-    roomId: string,
-    options?: RequestOptions
-  ): Promise<Schema> {
-    const res = await this.#get(
-      url`/v2/rooms/${roomId}/schema`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-
-    const data = (await res.json()) as SchemaPlain;
-
-    // Convert createdAt and updatedAt from ISO date strings to Date objects
-    const createdAt = new Date(data.createdAt);
-    const updatedAt = new Date(data.updatedAt);
-
-    return {
-      ...data,
-      createdAt,
-      updatedAt,
-    };
-  }
-
-  /**
-   * Attaches a schema to a room, and instantly enables runtime schema validation for the room.
-   * If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.
-   * @param roomId The id of the room to attach the schema to.
-   * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   * @returns The schema id as JSON.
-   */
-  public async attachSchemaToRoom(
-    roomId: string,
-    schemaId: string,
-    options?: RequestOptions
-  ): Promise<{ schema: string }> {
-    const res = await this.#post(
-      url`/v2/rooms/${roomId}/schema`,
-      { schema: schemaId },
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
-    return (await res.json()) as Promise<{ schema: string }>;
-  }
-
-  /**
-   * Detaches a schema from a room, and disables runtime schema validation for the room.
-   * @param roomId The id of the room to detach the schema from.
-   * @param options.signal (optional) An abort signal to cancel the request.
-   */
-  public async detachSchemaFromRoom(
-    roomId: string,
-    options?: RequestOptions
-  ): Promise<void> {
-    const res = await this.#delete(
-      url`/v2/rooms/${roomId}/schema`,
-      undefined,
-      options
-    );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
-    }
   }
 
   /* -------------------------------------------------------------------------------------------------

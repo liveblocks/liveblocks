@@ -1,11 +1,12 @@
-import type {
-  BlockNoteEditorOptions,
-  BlockSchema,
-  DefaultBlockSchema,
-  DefaultInlineContentSchema,
-  DefaultStyleSchema,
-  InlineContentSchema,
-  StyleSchema,
+import {
+  type BlockNoteEditorOptions,
+  type BlockSchema,
+  createBlockNoteExtension,
+  type DefaultBlockSchema,
+  type DefaultInlineContentSchema,
+  type DefaultStyleSchema,
+  type InlineContentSchema,
+  type StyleSchema,
 } from "@blocknote/core";
 import type { Extension } from "@tiptap/core";
 
@@ -18,13 +19,14 @@ export const withLiveblocksEditorOptions = <
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
 >(
-  liveblocksExtension: Extension,
+  liveblocksExtension: Extension<any, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
   liveblocksOptions: Partial<{ mentions: boolean }> = {}
 ): Partial<BlockNoteEditorOptions<B, I, S>> => {
   const {
     schema: blocknoteSchema,
-    _extensions: blocknoteExtensions,
+    extensions: blocknoteExtensions,
     disableExtensions: blocknoteDisableExtensions,
     ...extraBlocknoteOptions
   } = blocknoteOptions;
@@ -34,7 +36,13 @@ export const withLiveblocksEditorOptions = <
     schema: withLiveblocksSchema(blocknoteSchema, liveblocksOptions),
 
     // add the liveblocks extension
-    _extensions: { liveblocksExtension, ...blocknoteExtensions },
+    extensions: [
+      createBlockNoteExtension({
+        key: "liveblocksExtension",
+        tiptapExtensions: [liveblocksExtension],
+      }),
+      ...(blocknoteExtensions ?? []),
+    ],
 
     // disable the history extension
     disableExtensions: ["history", ...(blocknoteDisableExtensions || [])],

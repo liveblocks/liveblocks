@@ -1195,7 +1195,7 @@
     "/rooms/{roomId}/ydoc-binary": {
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
-        "description": "This endpoint returns the room’s Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
+        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -1219,7 +1219,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the room’s Yjs document encoded as a binary Yjs update.",
+            "description": "Success. Returns the room's Yjs document encoded as a binary Yjs update.",
             "content": {
               "application/octet-stream": {
                 "schema": {
@@ -1241,47 +1241,70 @@
         "operationId": "get-rooms-roomId-ydoc-binary"
       }
     },
-    "/schemas": {
-      "post": {
-        "summary": "Create schema",
-        "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. Corresponds to [`liveblocks.createSchema`](/docs/api-reference/liveblocks-node#post-create-new-schema). \n\nThe schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
-        "tags": ["Schema validation"],
-        "parameters": [],
-        "operationId": "post-create-new-schema",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SchemaRequest"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "name": "my-schema",
-                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                  }
-                }
-              }
-            }
+    "/rooms/{roomId}/versions": {
+      "get": {
+        "summary": "Get Yjs version history",
+        "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
+        "tags": ["Yjs"],
+        "operationId": "get-rooms-roomId-versions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
           }
-        },
+        ],
         "responses": {
           "200": {
-            "description": "Success. Creates the new schema and returns it as JSON.",
+            "description": "Success. Returns the list of version history snapshots and the next page cursor.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
+                  "$ref": "#/components/schemas/GetYjsVersions"
                 },
                 "examples": {
                   "example": {
                     "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                      "data": [
+                        {
+                          "type": "historyVersion",
+                          "id": "vh_abc123",
+                          "createdAt": "2024-10-15T10:30:00.000Z",
+                          "authors": [
+                            {
+                              "id": "user-123"
+                            },
+                            {
+                              "id": "user-456"
+                            }
+                          ],
+                          "kind": "yjs"
+                        }
+                      ],
+                      "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
                     }
                   }
                 }
@@ -1291,189 +1314,96 @@
           "401": {
             "$ref": "#/components/responses/401"
           },
-          "422": {
-            "$ref": "#/components/responses/422-schema-validation"
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
           }
         }
       }
     },
-    "/schemas/{id}": {
+    "/rooms/{roomId}/version/{versionId}": {
       "get": {
-        "summary": "Get schema",
-        "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
-        "tags": ["Schema validation"],
+        "summary": "Get Yjs document version",
+        "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
+        "tags": ["Yjs"],
+        "operationId": "get-rooms-roomId-version-versionId",
         "parameters": [
           {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             },
-            "name": "id",
+            "description": "ID of the room"
+          },
+          {
+            "name": "versionId",
             "in": "path",
             "required": true,
-            "description": "ID of the schema"
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the version"
           }
         ],
-        "operationId": "get-create-new-schema",
         "responses": {
           "200": {
-            "description": "Success. Found the schema and returns it as JSON.",
+            "description": "Success. Returns the Yjs document version as a binary stream.",
             "content": {
-              "application/json": {
+              "application/octet-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
           },
           "401": {
             "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update schema",
-        "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room. Corresponds to [`liveblocks.updateSchema`](/docs/api-reference/liveblocks-node#put-update-new-schema).",
-        "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ],
-        "operationId": "put-update-new-schema",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSchema"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success. Updates the new schema and increments the version. The schema `body` is returned as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "id": "my-schema@2",
-                      "name": "my-schema",
-                      "version": 2,
-                      "createdAt": "2023-03-30T07:25:54.675Z",
-                      "updatedAt": "2023-03-30T07:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403-schema-validation"
-          },
-          "422": {
-            "$ref": "#/components/responses/422-schema-validation"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete schema",
-        "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room. Corresponds to [`liveblocks.deleteSchema`](/docs/api-reference/liveblocks-node#delete-a-schema).",
-        "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ],
-        "operationId": "delete-a-schema",
-        "responses": {
-          "200": {
-            "description": "Success. Schema was delated"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403-schema-validation"
+            "$ref": "#/components/responses/404"
           }
         }
       }
     },
-    "/rooms/{roomId}/schema": {
-      "get": {
-        "summary": "Get schema by room ID",
-        "description": "This endpoint retrieves the schema attached to a room.  Corresponds to [`liveblocks.getSchemaByRoomId`](/docs/api-reference/liveblocks-node#get-new-schema).",
-        "tags": ["Schema validation"],
+    "/rooms/{roomId}/version": {
+      "post": {
+        "summary": "Create Yjs version snapshot",
+        "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
+        "tags": ["Yjs"],
+        "operationId": "post-rooms-roomId-version",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
             "name": "roomId",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            },
             "description": "ID of the room"
           }
         ],
-        "operationId": "get-new-schema",
         "responses": {
           "200": {
-            "description": "Success. Found the schema attached to the room and returns it as JSON.",
+            "description": "Success. Returns the created version ID.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
+                  "$ref": "#/components/schemas/CreateYjsVersion"
                 },
                 "examples": {
                   "example": {
                     "value": {
-                      "id": "my-schema@1",
-                      "name": "my-schema",
-                      "version": 1,
-                      "createdAt": "2023-03-30T06:25:54.675Z",
-                      "updatedAt": "2023-03-30T06:25:54.675Z",
-                      "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
+                      "data": {
+                        "id": "vh_abc123"
+                      }
                     }
                   }
                 }
@@ -1484,102 +1414,10 @@
             "$ref": "#/components/responses/401"
           },
           "403": {
-            "$ref": "#/components/responses/403-schema-validation"
+            "$ref": "#/components/responses/403"
           },
           "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          }
-        }
-      },
-      "post": {
-        "summary": "Attach schema to room",
-        "description": "This endpoint attaches a schema to a room, and instantly enables runtime schema validation for the room. Corresponds to [`liveblocks.attachSchemaToRoom`](/docs/api-reference/liveblocks-node#post-attach-schema-to-room).\n\nIf the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
-        "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
-        "operationId": "post-attach-schema-to-room",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttachSchema"
-              },
-              "examples": {
-                "example": {
-                  "value": {
-                    "schema": "my-schema@1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Success. Found the schema attached to the room. Returns the schema ID as JSON.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachSchema"
-                },
-                "examples": {
-                  "example": {
-                    "value": {
-                      "schema": "my-schema@1"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-schema-validation"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Detach schema from room",
-        "description": "This endpoint detaches the schema from a room. Corresponds to [`liveblocks.detachSchemaFromRoom`](/docs/api-reference/liveblocks-node#delete-detach-schema-to-room).",
-        "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
-        "operationId": "delete-detach-schema-to-room",
-        "responses": {
-          "200": {
-            "description": "Success. Detached the schema from the room."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-schema-validation"
+            "$ref": "#/components/responses/404"
           }
         }
       }
@@ -4264,8 +4102,8 @@
         "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
         "tags": ["AI"],
         "responses": {
-          "200": {
-            "description": "Success. Returns the created AI copilot.",
+          "201": {
+            "description": "Created. Returns the created AI copilot.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5135,6 +4973,75 @@
           }
         }
       },
+      "GetYjsVersions": {
+        "title": "GetYjsVersions",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string",
+            "description": "Cursor for pagination to get the next page of results"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["historyVersion"],
+                  "description": "Type identifier for the version history object"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the version"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 timestamp of when the version was created"
+                },
+                "authors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "User ID of the author"
+                      }
+                    }
+                  },
+                  "description": "List of users who contributed to this version"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": ["yjs"],
+                  "description": "Type of document (yjs for Yjs documents)"
+                }
+              },
+              "required": ["type", "id", "createdAt", "authors", "kind"]
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "CreateYjsVersion": {
+        "title": "CreateYjsVersion",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique identifier for the created version"
+              }
+            },
+            "required": ["id"]
+          }
+        },
+        "required": ["data"]
+      },
       "ActiveUsersResponse": {
         "title": "ActiveUsersResponse",
         "type": "object",
@@ -5207,15 +5114,6 @@
         "type": "object",
         "properties": {
           "body": {
-            "type": "string"
-          }
-        }
-      },
-      "AttachSchema": {
-        "title": "AttachSchema",
-        "type": "object",
-        "properties": {
-          "schema": {
             "type": "string"
           }
         }
@@ -5819,7 +5717,11 @@
                   "gpt-4o",
                   "gpt-4o-mini",
                   "gpt-4-turbo",
-                  "gpt-4"
+                  "gpt-4",
+                  "gpt-5",
+                  "gpt-5-mini",
+                  "gpt-5-nano",
+                  "gpt-5-chat-latest"
                 ]
               },
               "providerOptions": {
@@ -5831,6 +5733,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -5890,6 +5801,9 @@
               "providerModel": {
                 "type": "string",
                 "enum": [
+                  "claude-sonnet-4-5-20250929",
+                  "claude-haiku-4-5-20251001",
+                  "claude-opus-4-1-20250805",
                   "claude-4-opus-20250514",
                   "claude-4-sonnet-20250514",
                   "claude-3-7-sonnet-20250219",
@@ -5929,9 +5843,17 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -6009,11 +5931,9 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               },
@@ -6147,6 +6067,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -6183,9 +6112,17 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -6202,11 +6139,9 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               }
@@ -6272,6 +6207,15 @@
                       "reasoningEffort": {
                         "type": "string",
                         "enum": ["low", "medium", "high"]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
                     }
                   }
@@ -6308,9 +6252,17 @@
                             "required": ["type"]
                           }
                         ]
+                      },
+                      "webSearch": {
+                        "type": "object",
+                        "properties": {
+                          "allowedDomains": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
                       }
-                    },
-                    "required": ["thinking"]
+                    }
                   }
                 }
               },
@@ -6327,11 +6279,9 @@
                             "type": "number",
                             "minimum": 0
                           }
-                        },
-                        "required": ["thinkingBudget"]
+                        }
                       }
-                    },
-                    "required": ["thinkingConfig"]
+                    }
                   }
                 }
               }
@@ -6848,123 +6798,6 @@
           }
         }
       },
-      "403-schema-validation": {
-        "description": "Unauthorized access.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "SCHEMA_FROZEN": {
-                "value": {
-                  "error": "SCHEMA_FROZEN",
-                  "message": "Schema is frozen",
-                  "suggestion": "Please ensure no room is using this schema before modifying it"
-                }
-              },
-              "INVALID_SECRET_KEY": {
-                "value": {
-                  "error": "INVALID_SECRET_KEY",
-                  "message": "Invalid secret key.",
-                  "suggestion": "Please use a valid secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys.",
-                  "docs": ""
-                }
-              },
-              "INVALID_PUBLIC_KEY": {
-                "value": {
-                  "error": "INVALID_PUBLIC_KEY",
-                  "message": "Invalid public key",
-                  "suggestion": "Please use a valid public key, the public key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
-                  "docs": ""
-                }
-              },
-              "UNAUTHORIZED_ROOM_ACCESS": {
-                "value": {
-                  "error": "UNAUTHORIZED_ROOM_ACCESS",
-                  "message": "The user does not have permission to access the room.",
-                  "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "404-schema-validation": {
-        "description": "Schema not found.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "SCHEMA_NOT_FOUND": {
-                "value": {
-                  "error": "SCHEMA_NOT_FOUND",
-                  "message": "Schema not found.",
-                  "suggestion": "Please use a valid schema ID, schema IDs are available in the dashboard: https://liveblocks.io/dashboard/schemas.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
-      "409-schema-validation": {
-        "description": "Existing room data does not match this schema.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "SCHEMA_NOT_COMPATIBLE": {
-                "value": {
-                  "error": "SCHEMA_NOT_COMPATIBLE",
-                  "message": "Existing room data does not match this schema.",
-                  "suggestion": "Check the following error and make adjustments to your schema to be able to attach it to this room.",
-                  "docs": ""
-                }
-              }
-            }
-          },
-          "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
-          }
-        }
-      },
-      "422-schema-validation": {
-        "description": "Unprocessable entity.",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
-            "examples": {
-              "UNPROCESSABLE_ENTITY": {
-                "value": {
-                  "error": "UNPROCESSABLE_ENTITY",
-                  "message": "Value at key 'name': Schema name must be non empty string with less than 65 characters and only contain lowercase letters, numbers and dashes.",
-                  "suggestion": "Please ensure the data follows the correct format.",
-                  "docs": ""
-                }
-              },
-              "INVALID_SCHEMA": {
-                "value": {
-                  "error": "INVALID_SCHEMA",
-                  "message": "The schema you specified contains errors.",
-                  "suggestion": "Please ensure the schema body follows the correct format, and has been converted to a string.",
-                  "docs": ""
-                }
-              }
-            }
-          }
-        }
-      },
       "409-thread": {
         "description": "Thread already exists.",
         "content": {
@@ -7123,9 +6956,6 @@
     },
     {
       "name": "Yjs"
-    },
-    {
-      "name": "Schema validation"
     },
     {
       "name": "Comments"

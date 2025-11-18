@@ -14,6 +14,13 @@ on:
         required: false
         default: false
         description: "Force version update (use --force flag with npm version)"
+      disable_workspaces_update:
+        type: boolean
+        required: false
+        default: false
+        description:
+          "Disable workspace updates (use --workspaces-update false with npm
+          version)"
 
 run-name: Publishing ${{ github.event.inputs.tag }} packages
 
@@ -75,7 +82,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: "22.9.0"
+          node-version: "22.21.0"
           registry-url: "https://registry.npmjs.org"
       # Trusted publishing (https://docs.npmjs.com/trusted-publishers) requires npm v11.5.1 or later
       # Node.js v22.9.0 comes with v10.8, so we need to update it:
@@ -90,15 +97,17 @@ jobs:
         env:
           VERSION: ${{steps.version.outputs.value}}
           FORCE_FLAG: ${{ inputs.force && '-f' || '' }}
+          WORKSPACES_UPDATE_FLAG:
+            ${{ inputs.disable_workspaces_update && '-w' || '' }}
         run:
           ./.github/scripts/release.sh -V "$VERSION" $FORCE_FLAG
-          "packages/liveblocks-core" "packages/liveblocks-client"
-          "packages/liveblocks-node" "packages/liveblocks-react"
-          "packages/liveblocks-redux" "packages/liveblocks-zustand"
-          "packages/liveblocks-yjs" "packages/liveblocks-react-ui"
-          "packages/liveblocks-react-lexical" "packages/liveblocks-node-lexical"
-          "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
-          "packages/liveblocks-node-prosemirror"
+          $WORKSPACES_UPDATE_FLAG "packages/liveblocks-core"
+          "packages/liveblocks-client" "packages/liveblocks-node"
+          "packages/liveblocks-react" "packages/liveblocks-redux"
+          "packages/liveblocks-zustand" "packages/liveblocks-yjs"
+          "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
+          "packages/liveblocks-node-lexical" "packages/liveblocks-react-tiptap"
+          "packages/liveblocks-emails" "packages/liveblocks-node-prosemirror"
           "packages/liveblocks-react-blocknote"
 
       - name: Build all packages

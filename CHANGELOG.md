@@ -1,4 +1,79 @@
-## vNEXT (not yet published)
+## vNEXT (not released yet)
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+### `@liveblocks/yjs`
+
+- Add `forceNewProvider` option to `getYjsProviderForRoom` and destroy existing
+  provider when requested
+
+## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on
+  `Thread`) to allow customizing comments’ dropdown items in the default
+  components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but
+  hidden.
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
+## v3.9.2
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support newer Claude variants:
+  Opus 4.1, Sonnet 4.5, and Haiku 4.5.
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
+## v3.9.0
+
+### `@liveblocks/react-ui`
+
+- Add support for web search to `<AiChat />` component.
+- Add `showSources`, `showRetrievals` and `showReasoning` props to `<AiChat />`
+  component to determine how sources, retrievals and reasoning are displayed
+  respectively.
+- Disable AI chat composers when AI service is not available.
+
+### `@liveblocks/react`
+
+- Add query filter `subscribed` on the `useThreads` hook.
+- Add `useUrlMetadata` hook to get metadata for a given URL.
+- Expose `disconnected` status in `useAiChatStatus` to indicate when AI service
+  is not available.
+
+### `@liveblocks/client`
+
+- Add query filter `subscribed` on the `room.getThreads` method.
+
+### `@liveblocks/node`
+
+- Update `createAiCopilot` and `updateAiCopilot` to include web search in
+  provider options for OpenAI and Anthropic.
+- Remove all schema validation related client methods that should no longer be
+  used. Schema validation was sunsetted on May 1st, 2025.
 
 ## v3.8.1
 
@@ -14,7 +89,6 @@
 
 - Fix issue where `tenantId` was not being passed to the request when using
   `Liveblocks.createRoom()`.
-
 - Add `comments:write` to the list of possible room permissions.
 
 ## v3.8.0

@@ -72,6 +72,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
+          // Optional, authenticate this user on a specific tenant
+          tenantId: "acme-corp",
         }
       );
       ```
@@ -208,6 +210,8 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
+    // Optional, identify the user in a specific tenant
+    tenantId: "acme-corp",
   },
 
   // Optional
@@ -230,6 +234,9 @@ assigning group permissions.
 `groupIds` (optional) can be used to specify which groups this user belongs to.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
+
+`tenantId` (optional) is the tenant for this user, will be set to `default` if
+not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all
@@ -326,7 +333,7 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for rooms that are created for a specific tenant
+  // Optional, authenticate this user on a specific tenant
   tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
@@ -460,6 +467,9 @@ const room = await liveblocks.createRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -523,6 +533,9 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -809,7 +822,6 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
-  tenantId: "acme-corp",
 });
 
 // { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
@@ -824,7 +836,7 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, set tenant ID for multi-tenant applications
+  // Optional, create it on a specific tenant
   tenantId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
@@ -2321,6 +2333,9 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2356,6 +2371,9 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 ```
 
@@ -2399,7 +2417,11 @@ inbox notifications, without having to manually paginate through the results.
 ```ts
 const userId = "steven@example.com";
 
-for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+for await (const item of liveblocks.iterInboxNotifications({
+  userId,
+  // Optional, filter for a specific tenant
+  tenantId: "acme-corp",
+})) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
 }
@@ -2452,6 +2474,9 @@ await liveblocks.triggerInboxNotification({
 
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
+
+  // Optional, trigger it for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2557,6 +2582,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
+  // Optional, delete for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2742,6 +2769,10 @@ const copilot = await liveblocks.createAiCopilot({
   providerOptions: {
     openai: {
       reasoningEffort: "low",
+      // Optional, restrict web search to specific domains for OpenAI
+      webSearch: {
+        allowedDomains: ["docs.liveblocks.io", "example.com"],
+      },
     },
   },
 
@@ -2770,6 +2801,42 @@ const copilot = await liveblocks.createAiCopilot({
   providerBaseUrl: "https://api.mycustomprovider.com/v1",
   providerApiKey: "your-api-key-here", // Your API key for the custom provider
   providerModel: "custom-provider-model",
+});
+```
+
+You can also configure Anthropic or Google providers with provider-specific
+options:
+
+```ts
+// Anthropic example
+await liveblocks.createAiCopilot({
+  name: "Anthropic Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "anthropic",
+  providerModel: "claude-3-5-sonnet-latest",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "disabled" },
+      webSearch: {
+        allowedDomains: ["example.com"],
+      },
+    },
+  },
+});
+
+// Google example
+await liveblocks.createAiCopilot({
+  name: "Gemini Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "google",
+  providerModel: "gemini-2.5-pro",
+  providerApiKey: "sk-...",
+  providerOptions: {
+    google: {
+      thinkingConfig: { thinkingBudget: 2000 },
+    },
+  },
 });
 ```
 
@@ -2821,13 +2888,41 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   // Optional, update the knowledge prompt
   knowledgePrompt: "Reference our latest guidelines.",
 
-  // Optional, update provider-specific options
+  // Optional, update provider-specific options (replaces the entire nested options object)
+  // Set to null to clear options
   providerOptions: null,
 
   // Optional, update model settings
   settings: {
     temperature: 0.5,
     maxTokens: 1500,
+  },
+});
+```
+
+You can also update provider options. When updating `providerOptions`, it fully
+replaces the previous nested options (no deep merge):
+
+```ts
+// Update OpenAI provider options (replaces prior options)
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "openai",
+  providerOptions: {
+    openai: {
+      reasoningEffort: "medium",
+      webSearch: { allowedDomains: ["docs.liveblocks.io"] },
+    },
+  },
+});
+
+// Update Anthropic thinking/web search settings
+await liveblocks.updateAiCopilot("co_abc123...", {
+  provider: "anthropic",
+  providerOptions: {
+    anthropic: {
+      thinking: { type: "enabled", budgetTokens: 2000 },
+      webSearch: { maxUses: 2 },
+    },
   },
 });
 ```
