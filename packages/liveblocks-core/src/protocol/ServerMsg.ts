@@ -301,8 +301,8 @@ export type UpdateStorageServerMsg = {
 
 /**
  * Sent by the WebSocket server to the client to indicate that certain opIds
- * have been received but were rejected because they caused mutations that are
- * incompatible with the Room's schema.
+ * have been rejected, possibly due to lack of permissions or exceeding
+ * a limit.
  */
 export type RejectedStorageOpServerMsg = {
   readonly type: ServerMsgCode.REJECT_STORAGE_OP;
