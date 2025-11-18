@@ -51,8 +51,8 @@ export type ServerMsg<
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
-  | RejectedStorageOpServerMsg // For a single client
   | YDocUpdateServerMsg // For receiving doc from backend
+  | RejectedStorageOpServerMsg // For a single client
 
   // Comments
   | CommentsEventServerMsg;
