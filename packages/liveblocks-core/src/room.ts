@@ -22,7 +22,6 @@ import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
-import { captureStackTrace } from "./lib/debug";
 import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
