@@ -84,9 +84,6 @@ jobs:
         with:
           node-version: "22.21.0"
           registry-url: "https://registry.npmjs.org"
-      # Trusted publishing (https://docs.npmjs.com/trusted-publishers) requires npm v11.5.1 or later
-      # Node.js v22.9.0 comes with v10.8, so we need to update it:
-      - run: npm install -g npm@11.5.1
 
       - name: Setup git config
         run: |
