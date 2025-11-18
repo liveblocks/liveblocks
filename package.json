@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/monorepo",
   "private": true,
-  "packageManager": "npm@11.6.0",
+  "packageManager": "npm@11.5.1",
   "workspaces": [
     "shared/*",
     "packages/*",

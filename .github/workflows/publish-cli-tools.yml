@@ -68,9 +68,11 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "22.9.0"
           registry-url: "https://registry.npmjs.org"
-      - run: npm install -g npm@11.6.0
+      # Trusted publishing (https://docs.npmjs.com/trusted-publishers) requires npm v11.5.1 or later
+      # Node.js v22.9.0 comes with v10.8, so we need to update it:
+      - run: npm install -g npm@11.5.1
 
       - name: Setup git config
         run: |
