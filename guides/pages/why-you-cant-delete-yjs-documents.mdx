@@ -1,0 +1,149 @@
+---
+meta:
+  title: "Why you can't delete Yjs documents"
+  description:
+    "Learn why Yjs documents can't be deleted and how tombstones, offline
+    history, and CRDTs work"
+---
+
+When working with Yjs and Liveblocks, you might wonder why there's no way to delete a Yjs document without deleting the entire room. This isn't a limitation—it's a fundamental aspect of how Yjs works as a Conflict-free Replicated Data Type (CRDT). Understanding this behavior is essential for building robust collaborative applications.
+
+## Yjs stores changes, not state
+
+Unlike traditional databases that store the current state of your data, Yjs stores a complete history of changes made to a document. When you make an edit in a Yjs document, you're not replacing the old data—you're appending a new change to the document's history.
+
+This approach is what enables Yjs to handle real-time collaboration so effectively. When multiple users edit the same document simultaneously, Yjs can merge their changes automatically without conflicts, even if they're working offline.
+
+## The role of tombstones
+
+When you "delete" content in a Yjs document, the data isn't actually removed. Instead, Yjs creates a tombstone—a marker that indicates the content has been deleted. These tombstones are crucial for maintaining consistency across all users.
+
+Tombstones serve several important purposes:
+
+- **Conflict resolution**: If one user deletes content while another user is editing it offline, the tombstone helps Yjs resolve this conflict when they reconnect.
+- **Causal ordering**: Tombstones maintain the causal relationship between operations, ensuring that edits are applied in the correct order.
+- **Synchronization**: When a new user joins or an offline user reconnects, tombstones ensure they see the correct state of the document.
+
+Without tombstones, Yjs wouldn't be able to guarantee that all users see the same document state, especially in scenarios with offline editing or network issues.
+
+## Offline peers and history
+
+One of Yjs's most powerful features is its ability to handle offline editing. Users can continue working on a document even without an internet connection, and their changes will sync automatically when they reconnect.
+
+For this to work, Yjs needs to maintain the complete history of changes. When an offline user reconnects, their client sends all the changes they made while offline. The server then merges these changes with any updates from other users, using the document's history to resolve conflicts.
+
+If you could delete parts of a document's history, offline users wouldn't be able to sync properly. Their changes might conflict with the "deleted" history, leading to data loss or inconsistent states across different users.
+
+## Why you can't delete Yjs documents
+
+Given how Yjs works, there's no safe way to delete a Yjs document without potentially breaking synchronization for offline or slow-to-sync users. Here's why:
+
+1. **Active sessions**: Users might have the document open and be making changes. Deleting the document would cause their changes to fail or create a new document unintentionally.
+
+2. **Offline users**: Someone might be editing the document offline. When they reconnect, they'd try to sync changes to a document that no longer exists.
+
+3. **Pending synchronization**: Changes might still be in transit across the network. Deleting the document could cause these changes to be lost or create inconsistencies.
+
+4. **CRDT guarantees**: Yjs's conflict-free guarantees depend on having access to the complete history. Partial deletion would break these guarantees.
+
+## What you can do instead
+
+While you can't delete a Yjs document directly, you have several options:
+
+### Delete the entire room
+
+The only way to fully delete a Yjs document is to delete the room that contains it. This ensures that all associated data is removed cleanly, and there's no risk of orphaned changes or synchronization issues.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Delete the room and all its data, including the Yjs document
+await liveblocks.deleteRoom("my-room-id");
+```
+
+When you delete a room, all data associated with it is removed, including:
+- The Yjs document and its complete history
+- Comments and threads
+- Presence data
+- Room metadata
+
+### Clear the document content
+
+If you want to "reset" a document without deleting it, you can clear its content while keeping the room and its history intact. This is useful when you want to start fresh but maintain the room's identity and permissions.
+
+```ts
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Get the current document
+const update = await liveblocks.getYjsDocumentAsBinaryUpdate("my-room-id");
+const yDoc = new Y.Doc();
+Y.applyUpdate(yDoc, new Uint8Array(update));
+
+// Clear the content (example with Y.Text)
+const yText = yDoc.getText("content");
+yText.delete(0, yText.length);
+
+// Send the update back
+const yUpdate = Y.encodeStateAsUpdate(yDoc);
+await liveblocks.sendYjsBinaryUpdate("my-room-id", yUpdate);
+```
+
+Note that this doesn't actually delete the history—it adds a new "delete everything" operation to the history. The document will still grow over time as you make changes.
+
+### Use a new room
+
+If you need a truly fresh start, create a new room instead of trying to delete the old document. This is the cleanest approach and avoids any potential synchronization issues.
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Create a new room with a new ID
+const newRoom = await liveblocks.createRoom("my-new-room-id", {
+  defaultAccesses: ["room:write"],
+});
+```
+
+You can then redirect users to the new room and optionally delete the old room once you're sure no one is using it.
+
+## Managing document size
+
+Since Yjs documents grow over time as you make changes, you might be concerned about document size. Here are some strategies to manage this:
+
+### Use efficient data structures
+
+Some Yjs data structures are more efficient than others. For example, [`YKeyValue`](https://github.com/yjs/y-utility?tab=readme-ov-file#ykeyvalue) from the `y-utility` package is much more efficient than `Y.Map` for key-value storage, as it doesn't retain the full history of every key change.
+
+### Monitor document size
+
+Keep an eye on your document sizes using the Liveblocks dashboard or API. If a document is growing too large, consider migrating to a new room.
+
+### Set retention policies
+
+Work with your team to establish policies for when to archive or delete old rooms. For example, you might delete rooms that haven't been accessed in 90 days.
+
+## Learn more
+
+To learn more about data storage and deletion in Liveblocks, see our [data storage documentation](/docs/platform/data-storage). This page covers:
+
+- **Data retention policies**: How long different types of data are stored
+- **Deletion procedures**: How to delete rooms, comments, and other data
+- **Storage locations**: Where your data is stored and how to configure regions
+
+For more information about working with Yjs and Liveblocks, check out these guides:
+
+- [Yjs best practices and tips](/guides/yjs-best-practices-and-tips)
+- [How to use your Y.Doc on the server](/guides/how-to-use-your-ydoc-on-the-server)
+- [Modifying Yjs document data with the REST API](/guides/modifying-yjs-document-data-with-the-rest-api)
