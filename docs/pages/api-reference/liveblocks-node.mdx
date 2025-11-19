@@ -435,11 +435,8 @@ const MAX_CONCURRENT = 50;
 const queue: Promise<void>[] = [];
 
 for await (const room of liveblocks.iterRooms({
-  query: {
-    metadata: {
-      roomType: "temporary",
-    },
-  },
+  // Optionally filter for certain rooms
+  // ...
 })) {
   if (queue.length >= MAX_CONCURRENT) {
     await Promise.race(queue);
