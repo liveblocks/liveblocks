@@ -426,6 +426,36 @@ The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
+##### Mass deleting rooms
+
+You can use `iterRooms` to efficiently delete multiple rooms at once. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  query: {
+    metadata: {
+      roomType: "temporary",
+    },
+  },
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+  
+  const promise = liveblocks.deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+  
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+This approach is useful when you need to delete a large number of rooms, as it automatically handles pagination and allows you to control the concurrency of deletions. You can use any of the filtering options shown above to select which rooms to delete.
+
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
@@ -651,7 +681,7 @@ more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. If the room doesn’t exist, or has already been deleted, no error
+Deletes a room. If the room doesn't exist, or has already been deleted, no error
 will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
@@ -659,6 +689,36 @@ and returns no response.
 ```ts
 await liveblocks.deleteRoom("my-room-id");
 ```
+
+##### Mass deleting rooms
+
+If you need to delete multiple rooms at once, you can use [`liveblocks.iterRooms`](#iter-rooms) to efficiently iterate through rooms and delete them in batches. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  query: {
+    metadata: {
+      roomType: "temporary",
+    },
+  },
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+  
+  const promise = liveblocks.deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+  
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+You can use any of the filtering options available in [`liveblocks.iterRooms`](#iter-rooms) to select which rooms to delete, such as filtering by metadata, room ID prefix, or user/group access.
 
 #### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
 
