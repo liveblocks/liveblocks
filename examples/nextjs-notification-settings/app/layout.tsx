@@ -11,7 +11,7 @@ import { Shell } from "./_components/shell";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Liveblocks Notifications",
+  title: "Collaborative notifications",
 };
 
 // Learn how to structure your collaborative Next.js app

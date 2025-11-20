@@ -23,7 +23,7 @@
 
 This example shows how handle notification settings for users in [Liveblocks](https://liveblocks.io), in a collaborative text editor built with [Tiptap](https://tiptap.dev/), [NextAuth](https://next-auth.js.org/), and [Next.js](https://nextjs.org/).
 
-With [Liveblocks Notifications](https://liveblocks.io/notifications), each user can choose whether they should receive notifications on different channels, for example Email, Slack, Teams. This example highlights how to create a settings panel for adjusting which notification webhooks should be triggered for the current user.
+With [Collaborative notifications](https://liveblocks.io/notifications), each user can choose whether they should receive notifications on different channels, for example Email, Slack, Teams. This example highlights how to create a settings panel for adjusting which notification webhooks should be triggered for the current user.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
 

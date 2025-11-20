@@ -268,7 +268,7 @@
     "date": "2023-11-02"
   },
   {
-    "title": "How to add users to Liveblocks Notifications",
+    "title": "How to add users to Collaborative notifications",
     "path": "/how-to-add-users-to-liveblocks-notifications",
     "topics": ["notifications", "tutorials", "data-fetching"],
     "technologies": ["react-notifications", "react"],

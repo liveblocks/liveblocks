@@ -3110,7 +3110,7 @@ For full upgrade instructions and codemods, see the
   [`textMention`](https://liveblocks.io/docs/platform/webhooks#TextMention-notification)
   kind.
 - Created new guide on
-  [adding users to Liveblocks Notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
+  [adding users to Collaborative notifications](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-notifications).
 - Created new guide on
   [adding users to Liveblocks Text Editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Created new get started guides for our new Lexical packages.
@@ -3130,7 +3130,7 @@ For full upgrade instructions and codemods, see the
   - New page product page for
     [Liveblocks Text Editor](https://liveblocks.io/text-editor)
   - New page product page for
-    [Liveblocks Notifications](https://liveblocks.io/notifications)
+    [Collaborative notifications](https://liveblocks.io/notifications)
   - New page product page for
     [Liveblocks Sync Datastore](https://liveblocks.io/sync-datastore)
   - Improved [pricing page](https://liveblocks.io)
