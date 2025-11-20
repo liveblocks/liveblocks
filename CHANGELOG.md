@@ -1,5 +1,9 @@
 ## vNEXT (not released yet)
 
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
 ## v3.10.1
 
 ### `@liveblocks/lexical`

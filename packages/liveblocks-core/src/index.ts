@@ -303,6 +303,7 @@ export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
+  RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
