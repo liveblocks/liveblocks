@@ -394,6 +394,7 @@ export { detectDupes };
 export type {
   GroupMentionData,
   MentionData,
+  TextMentionData,
   UserMentionData,
 } from "./protocol/MentionData";
 

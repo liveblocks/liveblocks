@@ -12,7 +12,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   assertNever,
   MENTION_CHARACTER,
-  type MentionData,
+  type TextMentionData,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
@@ -175,7 +175,9 @@ export function MentionPlugin() {
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
-  const suggestions = useMentionSuggestions(room.id, matchingString);
+  const suggestions = useMentionSuggestions(room.id, matchingString, {
+    excludedKinds: { copilot: true },
+  });
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
@@ -377,7 +379,7 @@ export function MentionPlugin() {
   }, [editor]);
 
   const handleSuggestionSelect = useCallback(
-    (mention: MentionData) => {
+    (mention: TextMentionData) => {
       function $onValueSelect() {
         if (match === null) return;
 

@@ -111,7 +111,7 @@ export type CommentBodyParagraph = {
 };
 
 export type CommentBodyMention = Relax<
-  CommentBodyUserMention | CommentBodyGroupMention
+  CommentBodyUserMention | CommentBodyGroupMention | CommentBodyCopilotMention
 >;
 
 type CommentBodyUserMention = {
@@ -125,6 +125,12 @@ type CommentBodyGroupMention = {
   kind: "group";
   id: string;
   userIds?: string[];
+};
+
+type CommentBodyCopilotMention = {
+  type: "mention";
+  kind: "copilot";
+  id: string;
 };
 
 export type CommentBodyLink = {

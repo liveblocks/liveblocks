@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { MentionData } from "@liveblocks/core";
+import type { TextMentionData } from "@liveblocks/core";
 import {
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
@@ -24,10 +24,10 @@ import {
   useState,
 } from "react";
 
-export const SuggestionsContext = createContext<MentionData[] | null>(null);
+export const SuggestionsContext = createContext<TextMentionData[] | null>(null);
 
 export const OnSuggestionSelectCallbackContext = createContext<
-  ((mention: MentionData) => void) | null
+  ((mention: TextMentionData) => void) | null
 >(null);
 
 export const OnResetMatchCallbackContext = createContext<(() => void) | null>(
@@ -237,7 +237,7 @@ function useHighlightedIndex(): [number, Dispatch<SetStateAction<number>>] {
   return context;
 }
 
-function useSuggestions(): MentionData[] {
+function useSuggestions(): TextMentionData[] {
   const suggestions = useContext(SuggestionsContext);
   if (suggestions === null) {
     throw new Error("useSuggestions: SuggestionsContext not found");
@@ -246,7 +246,7 @@ function useSuggestions(): MentionData[] {
   return suggestions;
 }
 
-function useOnSuggestionSelectCallback(): (mention: MentionData) => void {
+function useOnSuggestionSelectCallback(): (mention: TextMentionData) => void {
   const onSuggestionSelect = useContext(OnSuggestionSelectCallbackContext);
   if (onSuggestionSelect === null) {
     throw new Error(

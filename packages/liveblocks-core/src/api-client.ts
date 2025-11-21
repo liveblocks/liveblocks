@@ -53,7 +53,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { MentionData } from "./protocol/MentionData";
+import type { MentionData, TextMentionData } from "./protocol/MentionData";
 import type {
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -1337,7 +1337,7 @@ export function createApiClient<M extends BaseMetadata>({
   async function createTextMention(options: {
     roomId: string;
     mentionId: string;
-    mention: MentionData;
+    mention: TextMentionData;
   }) {
     if (options.mention.kind !== "user" && options.mention.kind !== "group") {
       return assertNever(options.mention, "Unexpected mention kind");
