@@ -111,6 +111,27 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     permissionHints: Record<string, Permission[]>;
   }>;
 
+  searchThreads(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ): Promise<{
+    data: Array<{
+      threadId: string;
+      commentId: string;
+      content: string;
+    }>;
+  }>;
+
   createThread({
     roomId,
     metadata,
@@ -648,6 +669,45 @@ export function createApiClient<M extends BaseMetadata>({
 
       throw err;
     }
+  }
+
+  async function searchThreads(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ) {
+    const result = await httpClient.get<{
+      data: Array<{
+        threadId: string;
+        commentId: string;
+        content: string;
+      }>;
+    }>(
+      url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      {
+        text: options.query.text,
+        // query: objectToQuery({
+        //   threadMetadata: options.query.threadMetadata,
+        //   threadResolved: options.query.threadResolved,
+        //   hasAttachments: options.query.hasAttachments,
+        // }),
+      },
+      { signal: requestOptions?.signal }
+    );
+    return result;
   }
 
   async function createThread(options: {
@@ -1879,6 +1939,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room threads
     getThreads,
     getThreadsSince,
+    searchThreads,
     createThread,
     getThread,
     deleteThread,

@@ -162,6 +162,17 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
+export type SearchThreadsQuery<M extends BaseMetadata> = {
+  threadMetadata?: Partial<QueryMetadata<M>>;
+  threadResolved?: boolean;
+  hasAttachments?: boolean;
+  text: string;
+};
+
+export type UseSearchThreadsOptions<M extends BaseMetadata> = {
+  query: SearchThreadsQuery<M>;
+};
+
 export type InboxNotificationsQuery = {
   /**
    * Whether to only return inbox notifications for a specific room.
@@ -254,6 +265,8 @@ export type PagedAsyncResult<T, F extends string> = Relax<
 
 export type ThreadsAsyncSuccess<M extends BaseMetadata> = PagedAsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
 export type ThreadsAsyncResult<M extends BaseMetadata> = PagedAsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+
+export type SearchThreadsAsyncResult = AsyncResult<Array<{ threadId: string; commentId: string; content: string }>, "results">; // prettier-ignore
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
@@ -1097,6 +1110,15 @@ export type RoomContextBundle<
        * const { threads, error, isLoading } = useThreads();
        */
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
+
+      /**
+       *
+       * @example
+       * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
+       */
+      useSearchThreads(
+        options?: UseSearchThreadsOptions<M>
+      ): SearchThreadsAsyncResult;
 
       /**
        * Returns the user's subscription settings for the current room

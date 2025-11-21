@@ -49,6 +49,7 @@ import {
   kInternal,
   makePoller,
   ServerMsgCode,
+  stableStringify,
 } from "@liveblocks/core";
 import type { Context } from "react";
 import {
@@ -95,9 +96,11 @@ import type {
   RoomProviderProps,
   RoomSubscriptionSettingsAsyncResult,
   RoomSubscriptionSettingsAsyncSuccess,
+  SearchThreadsAsyncResult,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
+  UseSearchThreadsOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
@@ -392,6 +395,7 @@ function makeRoomContextBundle<
     useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
     useThreads,
+    useSearchThreads,
 
     useCreateThread,
     useDeleteThread,
@@ -1248,6 +1252,88 @@ function useThreads<M extends BaseMetadata>(
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, result);
+  return result;
+}
+
+function useSearchThreads<M extends BaseMetadata>(
+  options: UseSearchThreadsOptions<M>
+): SearchThreadsAsyncResult {
+  const [result, setResult] = useState<SearchThreadsAsyncResult>({
+    isLoading: true,
+  });
+
+  const currentRequestInfo = useRef<{
+    id: number;
+    controller: AbortController;
+  } | null>(null);
+
+  const timeout = useRef<number | null>(null);
+
+  const client = useClient();
+  const room = useRoom();
+
+  const queryKey = stableStringify([room.id, options.query]);
+
+  useEffect(() => {
+    // If there is a timeout in progress, cancel it before we initiate a new one
+    if (timeout.current !== null) {
+      window.clearTimeout(timeout.current);
+    }
+
+    const currentRequestId = (currentRequestInfo.current?.id ?? 0) + 1;
+    const controller = new AbortController();
+
+    // Cancel any in-flight request and initiate a new request
+    if (currentRequestInfo.current !== null) {
+      currentRequestInfo.current.controller.abort();
+    }
+
+    currentRequestInfo.current = { id: currentRequestId, controller };
+    setResult((result) => {
+      if (result.isLoading) return result;
+      // **NOTE**: Should we keep the old result but only set loading to true.
+      // All our other hooks (useThreads) is defined in the way so that if the result is loading, the result is undefined.
+      return { isLoading: true };
+    });
+
+    timeout.current = window.setTimeout(() => {
+      client[kInternal].httpClient
+        .searchThreads(
+          {
+            roomId: room.id,
+            query: options.query,
+          },
+          { signal: controller.signal }
+        )
+        .then(({ data }) => {
+          // If the request was aborted, we do not update the result received from this request as it may be stale.
+          if (controller.signal.aborted) return;
+
+          // If a new request was made while this request was in flight, we do not update the result received from this request as it may be stale.
+          if (currentRequestInfo.current?.id !== currentRequestId) return;
+
+          setResult({ isLoading: false, results: data });
+
+          // Clear the current request info to avoid stale results from the next request.
+          currentRequestInfo.current = null;
+        })
+        .catch((err) => {
+          // If the request was aborted, we do not update the result received from this request as it may be stale.
+          if (controller.signal.aborted) return;
+
+          // If a new request was made while this request was in flight, we do not update the result received from this request as it may be stale.
+          if (currentRequestInfo.current?.id !== currentRequestId) return;
+
+          setResult({ isLoading: false, error: err as Error });
+
+          // Clear the current request info to avoid stale results from the next request.
+          currentRequestInfo.current = null;
+        });
+    }, 300 /* debounce time */);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryKey, client, room.id]);
+
   return result;
 }
 
@@ -2823,6 +2909,12 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
 const _useThreads: TypedBundle["useThreads"] = useThreads;
 
 /**
+ * @example
+ * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
+ */
+const _useSearchThreads: TypedBundle["useSearchThreads"] = useSearchThreads;
+
+/**
  * Returns the threads within the current room.
  *
  * @example
@@ -3190,6 +3282,7 @@ export {
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
   useRoomThreadSubscription,
+  _useSearchThreads as useSearchThreads,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,
