@@ -1,0 +1,218 @@
+---
+meta:
+  title: "Can I use my own database with Yjs?"
+  description:
+    "Learn how to use webhooks to duplicate Yjs document data to your own
+    database"
+---
+
+When building collaborative applications with Yjs and Liveblocks, you might want to store document data in your own database alongside Liveblocks. While Liveblocks needs to store Yjs document data to handle real-time collaboration, you can use webhooks to duplicate this data to your own database whenever changes occur.
+
+## Why Liveblocks stores Yjs data
+
+Liveblocks must store Yjs document data to provide real-time collaboration features. This storage is essential for:
+
+- **Real-time synchronization**: Distributing changes to all connected users instantly
+- **Conflict resolution**: Merging changes from multiple users working simultaneously
+- **Offline support**: Syncing changes when users reconnect after being offline
+- **New user onboarding**: Loading the current document state when someone joins
+
+Without storing this data, Liveblocks wouldn't be able to provide the real-time collaboration features that make Yjs powerful. However, you can still maintain your own copy of the data for additional purposes like backups, analytics, or integration with other systems.
+
+## Duplicating data with webhooks
+
+The best way to keep your own database in sync with Liveblocks is to use the [`YDocUpdated`](/docs/platform/webhooks#YDocUpdatedEvent) webhook event. This event fires whenever a Yjs document changes, allowing you to copy the updated data to your database.
+
+### How the YDocUpdated webhook works
+
+When a Yjs document is modified, Liveblocks sends a webhook event to your server with information about which room was updated. Your server can then:
+
+1. Receive the webhook event
+2. Fetch the latest document data from Liveblocks
+3. Store it in your database
+
+This approach ensures your database stays synchronized with Liveblocks without interfering with real-time collaboration.
+
+### Webhook throttling
+
+The `YDocUpdated` webhook is throttled to run no more than once every 60 seconds by default. This is because Yjs documents can update up to 60 times per second during active collaboration, and it would be impractical to run the webhook for every single change.
+
+On Enterprise plans, you can configure this throttle to be as low as every 5 seconds, giving you near-real-time synchronization to your database.
+
+## Setting up database synchronization
+
+We have detailed guides for synchronizing your Yjs data to popular databases:
+
+- [How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-vercel-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database)
+
+These guides walk you through the complete process of setting up webhooks and storing Yjs data in your database.
+
+## Pushing changes from your server
+
+In addition to pulling data from Liveblocks, you can also push changes to Yjs documents from your server. This is useful for:
+
+- Initializing documents with default content
+- Importing data from other sources
+- Making automated updates or corrections
+- Migrating data between rooms
+
+You can push changes using either the REST API or the Node.js package:
+
+### Using the REST API
+
+The [REST API](/docs/api-reference/rest-api-endpoints#put-rooms-roomId-ydoc) allows you to send Yjs binary updates to a room from any server environment.
+
+```ts
+import * as Y from "yjs";
+
+// Create a Yjs document with your changes
+const yDoc = new Y.Doc();
+const yText = yDoc.getText("content");
+yText.insert(0, "Hello from the server");
+
+// Encode as a binary update
+const update = Y.encodeStateAsUpdate(yDoc);
+
+// Send to Liveblocks via REST API
+await fetch(`https://api.liveblocks.io/v2/rooms/my-room-id/ydoc`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.LIVEBLOCKS_SECRET_KEY}`,
+    "Content-Type": "application/octet-stream",
+  },
+  body: update,
+});
+```
+
+### Using the Node.js package
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc) package provides a more convenient API for sending updates from Node.js servers.
+
+```ts
+import * as Y from "yjs";
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// Create a Yjs document with your changes
+const yDoc = new Y.Doc();
+const yText = yDoc.getText("content");
+yText.insert(0, "Hello from the server");
+
+// Encode as a binary update
+const update = Y.encodeStateAsUpdate(yDoc);
+
+// Send to Liveblocks
+await liveblocks.sendYjsBinaryUpdate("my-room-id", update);
+```
+
+For more details on modifying Yjs documents from the server, see our guide on [modifying Yjs document data with the REST API](/guides/modifying-yjs-document-data-with-the-rest-api).
+
+## Common use cases
+
+Here are some common scenarios where you might want to use your own database with Yjs:
+
+### Backups and disaster recovery
+
+Store periodic snapshots of your Yjs documents in your database to ensure you can recover data if needed. The webhook approach gives you automatic backups every time a document changes.
+
+### Full-text search
+
+Yjs documents are stored as binary data, which isn't searchable. By copying the content to your database, you can index it for full-text search using tools like Elasticsearch or your database's built-in search features.
+
+### Analytics and reporting
+
+Extract data from Yjs documents to generate reports, track usage patterns, or feed into analytics systems. Your database can store processed versions of the data optimized for these queries.
+
+### Data migration
+
+If you're migrating from another system or need to move data between Liveblocks projects, you can use your database as an intermediary storage layer.
+
+### Integration with existing systems
+
+If you have existing systems that need access to document data, storing it in your database makes it easier to integrate without requiring those systems to understand Yjs's binary format.
+
+## Best practices
+
+When duplicating Yjs data to your own database, keep these best practices in mind:
+
+### Store the binary format
+
+Consider storing the Yjs document in its binary format rather than converting it to JSON or another format. This preserves all the information needed to reconstruct the document exactly, including the complete history.
+
+```ts
+// Store the binary update directly
+await db.documents.upsert({
+  where: { roomId: "my-room-id" },
+  update: { binaryData: update },
+  create: { roomId: "my-room-id", binaryData: update },
+});
+```
+
+### Handle webhook failures gracefully
+
+Webhooks can fail due to network issues or server errors. Implement retry logic and monitoring to ensure you don't miss updates.
+
+```ts
+export async function POST(request: Request) {
+  try {
+    // Process webhook
+    await syncToDatabase(roomId, yDocData);
+    return new Response(null, { status: 200 });
+  } catch (error) {
+    console.error("Failed to sync to database:", error);
+    // Return 500 so Liveblocks will retry
+    return new Response("Internal server error", { status: 500 });
+  }
+}
+```
+
+### Consider the throttle limit
+
+Remember that the webhook is throttled to once every 60 seconds (or as low as 5 seconds on Enterprise plans). If you need more frequent updates, you may need to fetch data directly from Liveblocks on demand.
+
+### Don't rely on your database for real-time collaboration
+
+Your database should be treated as a secondary copy of the data. Always use Liveblocks as the source of truth for real-time collaboration, as it's optimized for low-latency updates and conflict resolution.
+
+### Monitor storage costs
+
+Yjs documents can grow large over time, especially if they have a long edit history. Monitor your database storage usage and consider implementing retention policies or archival strategies.
+
+## Configuring webhook throttle (Enterprise)
+
+If you're on an Enterprise plan, you can configure the webhook throttle to run more frequently. Contact your Liveblocks account manager to adjust this setting for your project.
+
+With a lower throttle (minimum 5 seconds), your database will stay more closely synchronized with Liveblocks, though this will increase the number of webhook calls and database writes.
+
+## Learn more
+
+For more information about data storage and webhooks, check out these resources:
+
+### Data storage
+
+Visit our [data storage documentation](/docs/platform/data-storage) to learn about:
+
+- **Data retention policies**: How long Liveblocks stores different types of data
+- **Deletion procedures**: How to delete rooms and associated data
+- **Storage locations**: Where your data is stored and regional options
+
+### Webhook guides
+
+Explore our webhook guides for step-by-step instructions:
+
+- [How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-vercel-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-supabase-postgres-database)
+- [How to synchronize your Liveblocks Yjs document data to a PlanetScale MySQL database](/guides/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database)
+
+### API documentation
+
+Learn more about the APIs for working with Yjs data:
+
+- [YDocUpdated webhook event](/docs/platform/webhooks#YDocUpdatedEvent)
+- [REST API for Yjs documents](/docs/api-reference/rest-api-endpoints#put-rooms-roomId-ydoc)
+- [@liveblocks/node package](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc)
