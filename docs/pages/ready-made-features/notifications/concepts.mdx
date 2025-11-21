@@ -75,8 +75,8 @@ require [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
 
 Each inbox notification has a `kind`, and this represents the type of
 notification it is. A `kind` is either a custom string prefixed with `$` (e.g.
-`$myCustomNotification`) when sending a custom notification, or specific string
-set by Liveblocks (e.g. `thread`) when it’s sent by a Liveblocks product.
+`$myCustomNotification`) when sending a custom notification, or a predefined
+string set by Liveblocks (e.g. `thread`) when it’s sent by a Liveblocks product.
 
 ### Custom notifications
 
@@ -102,7 +102,7 @@ represents the events that happened. If you’d like to update an existing inbox
 notification when a new activity happens, you can
 [configure the custom notification to use batching](#notification-batching).
 
-### Liveblocks notifications
+### Collaboration notifications
 
 [Comments](/docs/ready-made-features/comments) can send `thread` notifications
 for you automatically, notifying you of events such as a mention, or a new reply
