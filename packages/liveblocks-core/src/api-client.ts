@@ -699,11 +699,11 @@ export function createApiClient<M extends BaseMetadata>({
       }),
       {
         text: options.query.text,
-        // query: objectToQuery({
-        //   threadMetadata: options.query.threadMetadata,
-        //   threadResolved: options.query.threadResolved,
-        //   hasAttachments: options.query.hasAttachments,
-        // }),
+        query: objectToQuery({
+          threadMetadata: options.query.threadMetadata,
+          threadResolved: options.query.threadResolved,
+          hasAttachments: options.query.hasAttachments,
+        }),
       },
       { signal: requestOptions?.signal }
     );
