@@ -18,6 +18,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 47 (2025-11-21)
+
+### Website
+
+- New blog post: [Building an AI copilot inside your Tiptap text editor](https://liveblocks.io/blog/building-an-ai-copilot-inside-your-tiptap-text-editor).
+
+## Contributors
+
+ctnicholas, mmavko
+
 # Week 46 (2025-11-14)
 
 ## v3.10.1
