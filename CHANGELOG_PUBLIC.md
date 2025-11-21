@@ -22,7 +22,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### Website
 
-- New blog post: [Building an AI copilot inside your Tiptap text editor](https://liveblocks.io/blog/building-an-ai-copilot-inside-your-tiptap-text-editor). Thank you [@mmavko](https://github.com/mmavko).
+- New blog post: [Building an AI copilot inside your Tiptap text editor](https://liveblocks.io/blog/building-an-ai-copilot-inside-your-tiptap-text-editor). Thank you [@mmavko](https://github.com/mmavko)!
 
 ## Contributors
 
