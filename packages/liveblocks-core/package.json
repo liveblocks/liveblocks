@@ -54,7 +54,7 @@
     "dotenv": "^16.4.5",
     "eslint-plugin-rulesdir": "^0.2.2",
     "fast-check": "^4.3.0",
-    "msw": "^2.10.4",
+    "msw": "^2.11.6",
     "ws": "^8.17.1"
   },
   "peerDependencies": {
