@@ -1275,18 +1275,8 @@ function useSearchThreads<M extends BaseMetadata>(
   const queryKey = stableStringify([room.id, options.query]);
 
   useEffect(() => {
-    // If there is a timeout in progress, cancel it before we initiate a new one
-    if (timeout.current !== null) {
-      window.clearTimeout(timeout.current);
-    }
-
     const currentRequestId = (currentRequestInfo.current?.id ?? 0) + 1;
     const controller = new AbortController();
-
-    // Cancel any in-flight request and initiate a new request
-    if (currentRequestInfo.current !== null) {
-      currentRequestInfo.current.controller.abort();
-    }
 
     currentRequestInfo.current = { id: currentRequestId, controller };
     setResult((result) => {
@@ -1330,6 +1320,18 @@ function useSearchThreads<M extends BaseMetadata>(
           currentRequestInfo.current = null;
         });
     }, 300 /* debounce time */);
+
+    return () => {
+      // If there is a timeout in progress, cancel it before we initiate a new one
+      if (timeout.current !== null) {
+        window.clearTimeout(timeout.current);
+      }
+
+      // Cancel any in-flight request and initiate a new request
+      if (currentRequestInfo.current !== null) {
+        currentRequestInfo.current.controller.abort();
+      }
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryKey, client, room.id]);
@@ -2909,6 +2911,8 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
 const _useThreads: TypedBundle["useThreads"] = useThreads;
 
 /**
+ * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
+ *
  * @example
  * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
  */

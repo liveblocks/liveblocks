@@ -4206,6 +4206,55 @@ useErrorListener((error) => {
 });
 ```
 
+### useSearchThreads [@badge=RoomProvider]
+
+Returns the result of searching comments by text within the current room. The
+result includes the id and the plain text content of the matched comments along
+with the parent thread id of the comment. The hook allows filtering by metadata
+and resolved status of the associated thread and presence and absense of
+attachments and mentions in the comment.
+
+```tsx
+import { useSearchThreads } from "@liveblocks/react";
+
+const { results, error, isLoading } = useSearchThreads();
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.text" type="SearchThreadsQuery">
+    (Required) Text to search within comment content. Uses rich text and vector
+    search for relevance.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.threadMetadata" type="SearchThreadsQuery">
+    (Optional) Metadata to filter threads by
+  </PropertiesListItem>
+  <PropertiesListItem name="option.threadResolved" type="SearchThreadsQuery">
+    (Optional) Whether to only return comments from threads that have
+    attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.hasAttachments" type="SearchThreadsQuery">
+    (Optional) Whether to only return comments that have attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="option.hasMentions" type="SearchThreadsQuery">
+    (Optional) Whether to only return comments that have mentions.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="results" type="ThreadData[]">
+    An array of matched comments with the parent thread they belong to.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the results are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | null">
+    Any error that occurred while searching the threads.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### useDeleteThread [@badge=RoomProvider]
 
 Returns a function that deletes a thread and all its associated comments by ID.

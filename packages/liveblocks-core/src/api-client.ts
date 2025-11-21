@@ -41,6 +41,7 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
+  SearchThreadsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -125,11 +126,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
       signal?: AbortSignal;
     }
   ): Promise<{
-    data: Array<{
-      threadId: string;
-      commentId: string;
-      content: string;
-    }>;
+    data: Array<SearchThreadsResult>;
   }>;
 
   createThread({
@@ -678,6 +675,7 @@ export function createApiClient<M extends BaseMetadata>({
         threadMetadata?: Partial<QueryMetadata<M>>;
         threadResolved?: boolean;
         hasAttachments?: boolean;
+        hasMentions?: boolean;
         text: string;
       };
     },
@@ -686,11 +684,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
   ) {
     const result = await httpClient.get<{
-      data: Array<{
-        threadId: string;
-        commentId: string;
-        content: string;
-      }>;
+      data: Array<SearchThreadsResult>;
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
       await authManager.getAuthValue({
@@ -703,6 +697,7 @@ export function createApiClient<M extends BaseMetadata>({
           threadMetadata: options.query.threadMetadata,
           threadResolved: options.query.threadResolved,
           hasAttachments: options.query.hasAttachments,
+          hasMentions: options.query.hasMentions,
         }),
       },
       { signal: requestOptions?.signal }
