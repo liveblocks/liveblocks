@@ -1135,7 +1135,7 @@ export type RoomContextBundle<
        * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
        */
       useSearchThreads(
-        options?: UseSearchThreadsOptions<M>
+        options: UseSearchThreadsOptions<M>
       ): SearchThreadsAsyncResult;
 
       /**
