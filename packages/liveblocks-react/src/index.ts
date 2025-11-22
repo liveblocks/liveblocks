@@ -82,6 +82,7 @@ export {
   useSelf,
   useStorage,
   useThreads,
+  useSearchThreads,
   useAttachmentUrl,
   useHistoryVersions,
   useRoomSubscriptionSettings,

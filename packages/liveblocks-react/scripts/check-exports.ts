@@ -68,6 +68,7 @@ const CLASSIC_ONLY = [
   "createLiveblocksContext",
   "createRoomContext",
   "useHistoryVersionData",
+  "useSearchThreads",
 ];
 const SUSPENSE_ONLY = [];
 

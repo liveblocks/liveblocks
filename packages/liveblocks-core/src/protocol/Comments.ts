@@ -154,6 +154,12 @@ export type CommentUserReaction = {
 
 export type CommentUserReactionPlain = DateToString<CommentUserReaction>;
 
+export type SearchThreadsResult = {
+  threadId: string;
+  commentId: string;
+  content: string;
+};
+
 /**
  * Represents a thread of comments.
  */
