@@ -119,6 +119,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
         threadMetadata?: Partial<QueryMetadata<M>>;
         threadResolved?: boolean;
         hasAttachments?: boolean;
+        hasMentions?: boolean;
         text: string;
       };
     },
