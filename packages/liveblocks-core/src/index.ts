@@ -233,7 +233,7 @@ export type {
 } from "./protocol/Comments";
 export type { QueryMetadata } from "./protocol/Comments";
 export type {
-  SearchThreadsResult,
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDataWithDeleteInfo,

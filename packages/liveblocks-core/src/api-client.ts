@@ -41,7 +41,7 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
-  SearchThreadsResult,
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -112,7 +112,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     permissionHints: Record<string, Permission[]>;
   }>;
 
-  searchThreads(
+  searchComments(
     options: {
       roomId: string;
       query: {
@@ -126,7 +126,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
       signal?: AbortSignal;
     }
   ): Promise<{
-    data: Array<SearchThreadsResult>;
+    data: Array<SearchCommentsResult>;
   }>;
 
   createThread({
@@ -668,7 +668,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
-  async function searchThreads(
+  async function searchComments(
     options: {
       roomId: string;
       query: {
@@ -684,7 +684,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
   ) {
     const result = await httpClient.get<{
-      data: Array<SearchThreadsResult>;
+      data: Array<SearchCommentsResult>;
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
       await authManager.getAuthValue({
@@ -1934,7 +1934,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room threads
     getThreads,
     getThreadsSince,
-    searchThreads,
+    searchComments,
     createThread,
     getThread,
     deleteThread,

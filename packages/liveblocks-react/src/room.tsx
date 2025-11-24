@@ -96,11 +96,11 @@ import type {
   RoomProviderProps,
   RoomSubscriptionSettingsAsyncResult,
   RoomSubscriptionSettingsAsyncSuccess,
-  SearchThreadsAsyncResult,
+  SearchCommentsAsyncResult,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
-  UseSearchThreadsOptions,
+  UseSearchCommentsOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
@@ -395,7 +395,7 @@ function makeRoomContextBundle<
     useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
     useThreads,
-    useSearchThreads,
+    useSearchComments,
 
     useCreateThread,
     useDeleteThread,
@@ -1255,10 +1255,10 @@ function useThreads<M extends BaseMetadata>(
   return result;
 }
 
-function useSearchThreads<M extends BaseMetadata>(
-  options: UseSearchThreadsOptions<M>
-): SearchThreadsAsyncResult {
-  const [result, setResult] = useState<SearchThreadsAsyncResult>({
+function useSearchComments<M extends BaseMetadata>(
+  options: UseSearchCommentsOptions<M>
+): SearchCommentsAsyncResult {
+  const [result, setResult] = useState<SearchCommentsAsyncResult>({
     isLoading: true,
   });
 
@@ -1288,7 +1288,7 @@ function useSearchThreads<M extends BaseMetadata>(
 
     timeout.current = window.setTimeout(() => {
       client[kInternal].httpClient
-        .searchThreads(
+        .searchComments(
           {
             roomId: room.id,
             query: options.query,
@@ -2914,9 +2914,9 @@ const _useThreads: TypedBundle["useThreads"] = useThreads;
  * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
  *
  * @example
- * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
+ * const { results, error, isLoading } = useSearchComments({ query: { text: "hello"} });
  */
-const _useSearchThreads: TypedBundle["useSearchThreads"] = useSearchThreads;
+const _useSearchComments: TypedBundle["useSearchComments"] = useSearchComments;
 
 /**
  * Returns the threads within the current room.
@@ -3286,7 +3286,7 @@ export {
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
   useRoomThreadSubscription,
-  _useSearchThreads as useSearchThreads,
+  _useSearchComments as useSearchComments,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,

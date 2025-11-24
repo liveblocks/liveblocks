@@ -42,7 +42,7 @@ import type {
   Relax,
   Resolve,
   RoomEventMessage,
-  SearchThreadsResult,
+  SearchCommentsResult,
   SyncStatus,
   ThreadData,
   ToImmutable,
@@ -163,7 +163,7 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-export type SearchThreadsQuery<M extends BaseMetadata> = {
+export type SearchCommentsQuery<M extends BaseMetadata> = {
   /**
    * (Optional) Metadata to filter the threads by.
    */
@@ -186,8 +186,8 @@ export type SearchThreadsQuery<M extends BaseMetadata> = {
   text: string;
 };
 
-export type UseSearchThreadsOptions<M extends BaseMetadata> = {
-  query: SearchThreadsQuery<M>;
+export type UseSearchCommentsOptions<M extends BaseMetadata> = {
+  query: SearchCommentsQuery<M>;
 };
 
 export type InboxNotificationsQuery = {
@@ -283,7 +283,7 @@ export type PagedAsyncResult<T, F extends string> = Relax<
 export type ThreadsAsyncSuccess<M extends BaseMetadata> = PagedAsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
 export type ThreadsAsyncResult<M extends BaseMetadata> = PagedAsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
-export type SearchThreadsAsyncResult = AsyncResult<Array<SearchThreadsResult>, "results">; // prettier-ignore
+export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>, "results">; // prettier-ignore
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
@@ -1132,11 +1132,11 @@ export type RoomContextBundle<
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
        *
        * @example
-       * const { results, error, isLoading } = useSearchThreads({ query: { text: "hello"} });
+       * const { results, error, isLoading } = useSearchComments({ query: { text: "hello"} });
        */
-      useSearchThreads(
-        options: UseSearchThreadsOptions<M>
-      ): SearchThreadsAsyncResult;
+      useSearchComments(
+        options: UseSearchCommentsOptions<M>
+      ): SearchCommentsAsyncResult;
 
       /**
        * Returns the user's subscription settings for the current room
