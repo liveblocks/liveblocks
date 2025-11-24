@@ -33,6 +33,10 @@ export type AuthenticationOptions = {
   polyfills?: Polyfills;
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
+const NON_RETRY_STATUS_CODES = [
+  400, 401, 403, 404, 405, 410, 412, 414, 422, 431, 451,
+];
+
 export function createAuthManager(
   authOptions: AuthenticationOptions,
   onAuthenticate?: (token: AuthToken) => void
@@ -322,7 +326,7 @@ async function fetchAuthEndpoint(
       (await res.text()).trim() || "reason not provided in auth response"
     } (${res.status} returned by POST ${endpoint})`;
 
-    if (res.status === 401 || res.status === 403) {
+    if (NON_RETRY_STATUS_CODES.includes(res.status)) {
       // Throw a special error instance, which the connection manager will
       // recognize and understand that retrying will have no effect
       throw new StopRetrying(`Unauthorized: ${reason}`);

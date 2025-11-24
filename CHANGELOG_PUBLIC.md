@@ -18,6 +18,143 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 47 (2025-11-21)
+
+### Documentation
+
+- Changed name of Liveblocks-sent notifications (`thread`, `textMention`) from
+  Liveblocks notifications to Collaboration notifications.
+
+### Website
+
+- New blog post:
+  [Building an AI copilot inside your Tiptap text editor](https://liveblocks.io/blog/building-an-ai-copilot-inside-your-tiptap-text-editor).
+
+## Contributors
+
+ctnicholas, mmavko
+
+# Week 46 (2025-11-14)
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+## Documentation
+
+- New section on
+  [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions#Group-mentions).
+- Updated other information on the
+  [users and mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+  page.
+- Updated [Tenants](https://liveblocks.io/docs/authentication/tenants) page with
+  new information.
+- Add information on
+  [AI web search](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge#Web-search)
+  in overview pages.
+
+## Dashboard
+
+- Standardized all date displays with a new unified component, including richer
+  hover details, copyable timestamps, and improved list-view scannability.
+
+## Website
+
+- New blog post:
+  [What's new in Liveblocks: October 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-october-edition-2025).
+- New streaming video player in blog posts.
+  - Smoother, as quality is automatically adjusted to stream without pauses on
+    poor connections.
+  - More performant, as offscreen videos automatically pause.
+  - More accessible, as videos are paused by default for those with
+    `prefers-reduced-motion: reduce` enabled.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, jrowny, nimeshnayaju
+
+# Week 45 (2025-11-07)
+
+## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes.
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403.
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on
+  `Thread`) to allow customizing comments’ dropdown items in the default
+  components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but
+  hidden.
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
+## Documentation
+
+- New guide:
+  [Upgrading to 3.10](https://liveblocks.io/docs/platform/upgrading/3.10).
+- New guide:
+  [Migrating from Tiptap 2 to 3](https://liveblocks.io/docs/guides/migrating-from-tiptap-2-to-3).
+- New guide:
+  [Tiptap best practices and tips](https://liveblocks.io/docs/guides/tiptap-best-practices-and-tips).
+- New guide:
+  [Yjs best practices and tips](https://liveblocks.io/docs/guides/yjs-best-practices-and-tips).
+
+## Contributors
+
+jrowny, marcbouchenoire, nvie, ctnicholas
+
+# Week 44 (2025-10-31)
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
+## Documentation
+
+- New AI Copilots get started guides for
+  [Next.js](https://liveblocks.io/docs/get-started/nextjs-ai-copilots) and
+  [React](https://liveblocks.io/docs/get-started/react-ai-copilots).
+- New AI Copilots overview pages:
+  - [Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots/copilots).
+  - [Default components](https://liveblocks.io/docs/ready-made-features/ai-copilots/default-components).
+  - [Hooks](https://liveblocks.io/docs/ready-made-features/ai-copilots/hooks).
+  - [Knowledge](https://liveblocks.io/docs/ready-made-features/ai-copilots/knowledge).
+  - [Tools](https://liveblocks.io/docs/ready-made-features/ai-copilots/tools).
+  - [Styling and customization](https://liveblocks.io/docs/ready-made-features/ai-copilots/styling-and-customization).
+  - [Troubleshooting](https://liveblocks.io/docs/ready-made-features/ai-copilots/troubleshooting).
+- New guide:
+  [How to use fallback AI models in AI Copilots](https://liveblocks.io/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots).
+
+## Examples
+
+- Added batched notifications to
+  [Custom Notifications example](https://liveblocks.io/examples/notifications-custom).
+
+## Website
+
+- New diff code block styling.
+- New icons for docs overview pages.
+- Fixed example integrations when no environment variable is needed.
+- Fixed code snippet background color.
+
+## Contributors
+
+ctnicholas, nimeshnayaju
+
 # Week 42 (2025-10-17)
 
 ## v3.9.0
@@ -50,7 +187,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Dashboard
 
-- Greatly improved “Notifications” flow, making it much clearer how they're linked to webhooks.
+- Greatly improved “Notifications” flow, making it much clearer how they're
+  linked to webhooks.
   - New “Kinds” tab, allowing you to define batching per kind.
   - See the status of your webhooks from here.
   - Warnings when no webhooks are set up, and shortcuts to get started.
@@ -58,22 +196,25 @@ list and feel free to give them credit at the end of a line, e.g.:
   - Set a rate limit for your webhooks when creating them.
   - More detailed error messages when creating webhooks.
   - Better UX on the URL input.
-- Improved UX when creating projects 
+- Improved UX when creating projects
   - New polished project cards displaying more info such as region restrictions.
   - More clarity in project creation dialog boxes.
 - Improved team/project selectors with UI polish and better accessibility.
 - Improved MAU usage cards showing your team’s personalized limits.
-- More clarity in project settings regarding environment and regions not being editable.
+- More clarity in project settings regarding environment and regions not being
+  editable.
 - Fixed problem downloading examples with `create-liveblocks-app` integration.
 
 ## Documentation
 
-- New sections on [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
+- New sections on
+  [notification batching](https://liveblocks.io/docs/ready-made-features/notifications/concepts#Notification-batching).
 - Better clarity on Storage/Yjs limits.
 
 ## Contributors
 
-nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierrelevaillant, ctnicholas
+nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre,
+pierrelevaillant, ctnicholas
 
 # Week 41 (2025-10-10)
 
@@ -95,8 +236,8 @@ nimeshnayaju, sugardarius, marcbouchenoire, nvie, ofoucherot, stevenfabre, pierr
 
 ## Examples
 
-New example: [AI app builder](/examples/ai-app-builder).
-New example: [AI calendar](/examples/ai-calendar).
+New example: [AI app builder](/examples/ai-app-builder). New example:
+[AI calendar](/examples/ai-calendar).
 
 ## Contributors
 
@@ -141,7 +282,8 @@ ctnicholas, sugardarius, pierrelevaillant, marcbouchenoire, nvie, flowflorent
 
 ## Website
 
-- Blog post: [Why we built our AI agents on WebSockets instead of HTTP](https://liveblocks.io/blog/why-we-built-our-ai-agents-on-websockets-instead-of-http).
+- Blog post:
+  [Why we built our AI agents on WebSockets instead of HTTP](https://liveblocks.io/blog/why-we-built-our-ai-agents-on-websockets-instead-of-http).
 
 ## Contributors
 
@@ -151,8 +293,10 @@ ofoucherot, nvie, jrowny, marcbouchenoire, ctnicholas, nimeshnayaju
 
 ## Website
 
-- Blog post: [What's the best vector database for building AI products?](https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
-- Blog post: [What's new in Liveblocks: August 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2025).
+- Blog post:
+  [What's the best vector database for building AI products?](https://liveblocks.io/blog/whats-the-best-vector-database-for-building-ai-products).
+- Blog post:
+  [What's new in Liveblocks: August 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2025).
 
 ## Contributors
 
@@ -170,7 +314,9 @@ jrowny, ctnicholas
 ## v3.7.0
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
-and first-class support for tenants. Learn more about [group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions) and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
+and first-class support for tenants. Learn more about
+[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/client`
 
@@ -238,14 +384,16 @@ and first-class support for tenants. Learn more about [group mentions](https://l
 
 ## Website
 
-- AI assistant has been added to the documentation and dashboard pages. It can answer
-  questions on anything related to Liveblocks, such as code, recommendations, bugs,
-  billing, usage, and project information. It's powered by
+- AI assistant has been added to the documentation and dashboard pages. It can
+  answer questions on anything related to Liveblocks, such as code,
+  recommendations, bugs, billing, usage, and project information. It's powered
+  by
   [`AiChat`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#AiChat).
 
 ## Contributors
 
-ctnicholas, pierrelevaillant, nvie, marcbouchenoire, nimeshnayaju, ofoucherot, flowflorent
+ctnicholas, pierrelevaillant, nvie, marcbouchenoire, nimeshnayaju, ofoucherot,
+flowflorent
 
 # Week 36 (2025-09-05)
 
@@ -285,7 +433,8 @@ ctnicholas, pierrelevaillant, nvie, marcbouchenoire, nimeshnayaju, ofoucherot, f
 
 ## Dashboard
 
-- Add API reference modal to AI Copilot detail pages, with React, Node.js, and REST API snippets to get started quickly.
+- Add API reference modal to AI Copilot detail pages, with React, Node.js, and
+  REST API snippets to get started quickly.
 
 ## Contributors
 
@@ -340,7 +489,8 @@ pierrelevaillant, nvie, jrowny, nimeshnayaju, marcbouchenoire
 
 ## Website
 
-- New blog post: [Mock up AI agents in your product with the Liveblocks Collaboration Kit for Figma](https://liveblocks.io/blog/mock-up-ai-agents-in-your-propuct-with-the-liveblocks-collaboration-kit-for-figma).
+- New blog post:
+  [Mock up AI agents in your product with the Liveblocks Collaboration Kit for Figma](https://liveblocks.io/blog/mock-up-ai-agents-in-your-propuct-with-the-liveblocks-collaboration-kit-for-figma).
 
 ## Contributors
 
@@ -393,7 +543,8 @@ in.
 
 ## Infrastructure
 
-- Improved LiveList conflict resolution that will keep the conflicting element closer to its intended destination.
+- Improved LiveList conflict resolution that will keep the conflicting element
+  closer to its intended destination.
 
 ## Contributors
 
@@ -429,13 +580,14 @@ nvie, marcbouchenoire
 ## Infrastructure
 
 - Fixed a bug that caused unreliable storage updates under high concurrency.
-- Fixed an issue that could cause LLM responses to appear to "hang" if the
-  token limit got exceeded during the response generation. If this now happens,
-  the response will indicate a clear error to the user.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the token
+  limit got exceeded during the response generation. If this now happens, the
+  response will indicate a clear error to the user.
 
 ## Dashboard
 
-- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+- New knowledge prompt option when configuring AI copilots, allowing you to
+  customize when back-end knowledge is fetched.
 
 ## Documentation
 
@@ -517,9 +669,11 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Dashboard
 
-- Add MAU breakdown to the historical usage table on the “Billing & usage” page (MAU used / Non-billed MAU).
+- Add MAU breakdown to the historical usage table on the “Billing & usage” page
+  (MAU used / Non-billed MAU).
 - Support OpenAI compatible AI models in AI Copilots.
-- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
+- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and
+  remove support for the corresponding preview models.
 
 ## Doocumentation
 
@@ -528,7 +682,8 @@ ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
 
 ## Contributors
 
-pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, stevenfabre
+pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas,
+stevenfabre
 
 # Week 30 (2025-07-25)
 
@@ -556,7 +711,8 @@ pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, steven
 
 ## Dashboard
 
-- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents views.
+- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents
+  views.
 
 ## Contributors
 
@@ -581,11 +737,13 @@ marcbouchenoire, jrowny, flowflorent, ctnicholas
 
 ## Dashboard
 
-- Added the ability to use website crawls and sitemaps as knowledge sources for your AI copilot.
+- Added the ability to use website crawls and sitemaps as knowledge sources for
+  your AI copilot.
 
 ## Website
 
-- New blog post: [What’s new in Liveblocks: June 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-june-edition-2025).
+- New blog post:
+  [What’s new in Liveblocks: June 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-june-edition-2025).
 
 ## Contributors
 

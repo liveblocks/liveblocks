@@ -72,6 +72,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
+          // Optional, authenticate this user on a specific tenant
+          tenantId: "acme-corp",
         }
       );
       ```
@@ -208,6 +210,8 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
+    // Optional, identify the user in a specific tenant
+    tenantId: "acme-corp",
   },
 
   // Optional
@@ -230,6 +234,9 @@ assigning group permissions.
 `groupIds` (optional) can be used to specify which groups this user belongs to.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
+
+`tenantId` (optional) is the tenant for this user, will be set to `default` if
+not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all
@@ -326,7 +333,7 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, filter for rooms that are created for a specific tenant
+  // Optional, authenticate this user on a specific tenant
   tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
@@ -419,6 +426,33 @@ The `query` option also allows you to pass a
 [query language](/docs/guides/how-to-filter-rooms-using-query-language) string
 instead of a `query` object.
 
+##### Mass deleting rooms
+
+You can use `iterRooms` to efficiently delete multiple rooms at once. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  // Optionally filter for certain rooms
+  // ...
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+  
+  const promise = liveblocks.deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+  
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+This approach is useful when you need to delete a large number of rooms, as it automatically handles pagination and allows you to control the concurrency of deletions. You can use any of the filtering options shown above to select which rooms to delete.
+
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
@@ -460,6 +494,9 @@ const room = await liveblocks.createRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -523,6 +560,9 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
   metadata: {
     myRoomType: "whiteboard",
   },
+
+  // Optional, create it on a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -638,7 +678,7 @@ more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. If the room doesn’t exist, or has already been deleted, no error
+Deletes a room. If the room doesn't exist, or has already been deleted, no error
 will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
@@ -646,6 +686,33 @@ and returns no response.
 ```ts
 await liveblocks.deleteRoom("my-room-id");
 ```
+
+##### Mass deleting rooms
+
+If you need to delete multiple rooms at once, you can use [`liveblocks.iterRooms`](#iter-rooms) to efficiently iterate through rooms and delete them in batches. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+
+```ts
+const MAX_CONCURRENT = 50;
+const queue: Promise<void>[] = [];
+
+for await (const room of liveblocks.iterRooms({
+  // Optionally filter for certain rooms
+  // ...
+})) {
+  if (queue.length >= MAX_CONCURRENT) {
+    await Promise.race(queue);
+  }
+  
+  const promise = liveblocks.deleteRoom(room.id)
+    .finally(() => queue.splice(queue.indexOf(promise), 1));
+  
+  queue.push(promise);
+}
+
+await Promise.all(queue);
+```
+
+You can use any of the filtering options available in [`liveblocks.iterRooms`](#iter-rooms) to select which rooms to delete, such as filtering by metadata, room ID prefix, or user/group access.
 
 #### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
 
@@ -809,7 +876,6 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
-  tenantId: "acme-corp",
 });
 
 // { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
@@ -824,7 +890,7 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, set tenant ID for multi-tenant applications
+  // Optional, create it on a specific tenant
   tenantId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
@@ -2321,6 +2387,9 @@ wrapper around the
 const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2356,6 +2425,9 @@ const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
     query: { unread: true },
+
+    // Optional, filter for a specific tenant
+    tenantId: "acme-corp",
   });
 ```
 
@@ -2399,7 +2471,11 @@ inbox notifications, without having to manually paginate through the results.
 ```ts
 const userId = "steven@example.com";
 
-for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+for await (const item of liveblocks.iterInboxNotifications({
+  userId,
+  // Optional, filter for a specific tenant
+  tenantId: "acme-corp",
+})) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
 }
@@ -2452,6 +2528,9 @@ await liveblocks.triggerInboxNotification({
 
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
+
+  // Optional, trigger it for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 
@@ -2557,6 +2636,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
+  // Optional, delete for a specific tenant
+  tenantId: "acme-corp",
 });
 ```
 

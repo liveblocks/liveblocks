@@ -29,9 +29,8 @@ export enum ServerMsgCode {
   COMMENT_REACTION_ADDED = 405,
   COMMENT_REACTION_REMOVED = 406,
 
-  // Ignored legacy op codes
-  /** @deprecated No longer sent by server */
-  REJECT_STORAGE_OP = 299, // Sent if Schema Validation would reject a mutation
+  // Error codes
+  REJECT_STORAGE_OP = 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
 }
 
 /**
@@ -53,6 +52,7 @@ export type ServerMsg<
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
+  | RejectedStorageOpServerMsg // For a single client
 
   // Comments
   | CommentsEventServerMsg;
@@ -297,4 +297,15 @@ export type InitialDocumentStateServerMsg = {
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
   readonly ops: Op[];
+};
+
+/**
+ * Sent by the WebSocket server to the client to indicate that certain opIds
+ * have been rejected, possibly due to lack of permissions or exceeding
+ * a limit.
+ */
+export type RejectedStorageOpServerMsg = {
+  readonly type: ServerMsgCode.REJECT_STORAGE_OP;
+  readonly opIds: string[];
+  readonly reason: string;
 };

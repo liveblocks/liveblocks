@@ -39,9 +39,9 @@ export type LiveblocksDocumentApi = {
 };
 
 const DEFAULT_SCHEMA = getSchema([
-  StarterKit,
   CommentExtension,
   MentionExtension,
+  StarterKit,
   GroupMentionExtension,
 ]);
 
@@ -146,7 +146,7 @@ export async function withProsemirrorDocument<T>(
       );
     },
     /**
-     * Provide a callback to modify documetns with Lexical's standard api. All calls are discrete.
+     * Provide a callback to modify documetns with prosemirrors's standard api.
      */
     async update(modifyFn) {
       const { ydoc, fragment, state, mapping } = liveblocksState;
@@ -154,7 +154,10 @@ export async function withProsemirrorDocument<T>(
       const beforeVector = encodeStateVector(ydoc);
       const afterState = state.apply(modifyFn(state.doc, state.tr));
       ydoc.transact(() => {
-        updateYFragment(ydoc, fragment, afterState.doc, mapping);
+        updateYFragment(ydoc, fragment, afterState.doc, {
+          mapping,
+          isOMark: new Map(),
+        });
       });
       // grab update after diffing
       const diffUpdate = encodeStateAsUpdate(ydoc, beforeVector);

@@ -8,7 +8,7 @@ meta:
 The Notifications React hooks can be used to fetch inbox notifications on the
 client, and change their behavior.
 
-## useInboxNotifications hook [#inbox-notifications-hook]
+## List a user’s inbox notifications [#inbox-notifications-hook]
 
 The most important Notifications hook is [`useInboxNotifications`][], which
 retrieves every inbox notification for the current user. This can be used to
@@ -43,7 +43,7 @@ There are two versions of the [`useInboxNotifications`][] hook, the
 [Suspense version](#suspense-hooks), which we recommend by default, and the
 [regular version](#regular-hooks).
 
-## useUnreadInboxNotificationsCount hook [#unread-notifications-count-hook]
+## Get unread notifications count [#unread-notifications-count-hook]
 
 The
 [`useUnreadInboxNotificationsCount`](/docs/api-reference/liveblocks-react#useUnreadInboxNotificationsCount)
@@ -63,7 +63,7 @@ function Component() {
 }
 ```
 
-## useMarkAllInboxNotificationsAsRead hook
+## Mark all notifications as read
 
 To mark all notifications as read for the current user, you can add
 [`useMarkAllInboxNotificationsAsRead`](/docs/api-reference/liveblocks-react#useMarkAllInboxNotificationsAsRead).
@@ -78,7 +78,7 @@ function NotificationReadButton() {
 }
 ```
 
-## useUser hook [#user-hook]
+## Fetch a user’s information [#user-hook]
 
 The only information Liveblocks stores about users is their user ID, which is
 set when [authenticating with Liveblocks](/docs/authentication). With the
@@ -124,7 +124,7 @@ There are two versions of the
 [Suspense](#suspense-hooks), which we recommend by default, and
 [regular](#regular-hooks).
 
-## useGroupInfo hook [#group-hook]
+## Fetch a group’s information [#group-hook]
 
 Similar to users, Liveblocks only stores group IDs for groups. With the
 [`useGroupInfo`](/docs/api-reference/liveblocks-react#useGroupInfo) hook, you
