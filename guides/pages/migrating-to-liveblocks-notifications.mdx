@@ -69,22 +69,25 @@ wherever your product needs a more tailored experience.
       height={896}
     />
   </Figure>
+  You can view what notification kinds are active for each channel.
   <Figure>
     <Image
-      src="/assets/notifications/project-notification-settings-kinds.jpg"
+      src="/assets/notifications/project-notification-settings-kinds.png"
       alt="Project notification settings kinds"
       width={1344}
       height={896}
     />
   </Figure>
+  View the configuration for each notification kind.
   <Figure>
     <Image
-      src="/assets/notifications/project-notification-settings-edit.jpg"
+      src="/assets/notifications/project-notification-settings-edit.png"
       alt="Project notification settings edit"
       width={1344}
       height={896}
     />
   </Figure>
+  Update the configuration for each notification channel and kind.
 
 - The **user notification settings** refer to how a user can choose which
   notifications to receive on which channel (email, slack, teams, and more).
@@ -107,7 +110,7 @@ to send a channel notification.
 
 <Figure>
   <Image
-    src="/assets/notifications/notification-flow.jpg"
+    src="/assets/notifications/notification-flow.png"
     alt="Notification flow"
     width={1344}
     height={896}
@@ -334,12 +337,6 @@ You’ll dual write both in-app notifications and user notification settings.
 
 ### In-app notifications
 
-<Banner title="Liveblocks feature development required">
-
-Requires updating `triggerInboxNotification` to return the inbox notification.
-
-</Banner>
-
 Store Liveblocks IDs alongside your legacy IDs to keep states aligned. Create
 the Liveblocks notification, then add the corresponding Liveblocks ID to the
 created legacy notification.
@@ -371,12 +368,6 @@ async function createNotificationDualWrite(input: LegacyNotification) {
   return { legacyId: legacy.id, liveblocksId };
 }
 ```
-
-<Banner title="Liveblocks feature development required">
-
-Requires adding `markInboxNotificationAsRead` API.
-
-</Banner>
 
 Now whenever the user marks a notification as read you can also mark it as read
 in Liveblocks.
