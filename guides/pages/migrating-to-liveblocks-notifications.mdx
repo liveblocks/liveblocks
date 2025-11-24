@@ -6,23 +6,19 @@ meta:
     Notifications using a parallel running strategy"
 ---
 
-Notifications are a core driver of engagement in collaborative products. They
-bring users back into the experience, sustain collaboration loops, and connect
-key workflows like comments, spaces, and AI copilots so work moves forward
-naturally.
-
-By moving to Liveblocks Notifications, you can unify how updates are delivered
-across your product suite, ensuring that users receive timely, relevant, and
-actionable updates instead of noisy alerts. This creates cross-product
-consistency, deeper engagement, and long-term retention, making collaboration a
-habit rather than a feature.
+Notifications are a core driver of engagement in collaborative products. By
+using Liveblocks Notifications, you can unify how updates are delivered across
+your product suite, ensuring that users receive timely, relevant, and actionable
+updates instead of noisy alerts. This creates cross-product consistency, deeper
+engagement, and long-term retention, making collaboration a habit rather than a
+feature.
 
 This guide walks you through how to migrate from your existing system to
 **Liveblocks Notifications** using a **parallel running strategy**. With this
 approach, both systems operate simultaneously, allowing you to gradually
 transition data and logic. Once all notifications have been successfully
-migrated and validated, you can switch fully to Liveblocks Notifications to
-power your end-to-end collaboration experience.
+migrated and validated, you can switch to Liveblocks Notifications to power your
+end-to-end collaboration experience.
 
 ## Understand Liveblocks notification concepts
 
@@ -31,15 +27,15 @@ Liveblocks Notifications. We suggest reviewing our
 [notification concepts documentation](/docs/ready-made-features/notifications/concepts)
 for a comprehensive overview.
 
-### Custom vs. Liveblocks notifications
+### Custom vs. Collaboration notifications
 
-There are two main ways to use notifications in Liveblocks, depending on what
-your product needs.
+Liveblocks provides two types of notifications: collaboration notifications and
+custom notifications.
 
-**Liveblocks notifications** are built in and designed to cover the most common
-collaboration patterns out of the box. They automatically handle things like
-mentions, replies, and comment activity across your app. For example, when
-someone tags a teammate or replies in a thread, a Liveblocks notification is
+**Collaboration notifications** are built in and designed to cover the most
+common collaboration patterns out of the box. They automatically handle things
+like mentions, replies, and comment activity across your app. For example, when
+someone tags a teammate or replies in a thread, a collaboration notification is
 sent to keep that person in the loop without any extra setup.
 
 **Custom notifications** give you flexibility to extend beyond those default
@@ -51,9 +47,9 @@ experience. Take a look at our
 [custom notification example](/examples/notifications-custom/nextjs-notifications-custom)
 to get an idea of what you can build.
 
-Together, they let you balance speed and control. Use Liveblocks notifications
-to power your core collaboration flows and add custom ones wherever your product
-needs a more tailored experience.
+Together, they let you balance speed and control. Use collaboration
+notifications to power your core collaboration flows and add custom ones
+wherever your product needs a more tailored experience.
 
 ### Key terminology
 
@@ -91,7 +87,7 @@ needs a more tailored experience.
   </Figure>
 
 - The **user notification settings** refer to how a user can choose which
-  notifications to receive on which channel.
+  notifications to receive on which channel (email, slack, teams, and more).
 
   <Figure>
     <Image
@@ -486,20 +482,3 @@ feature flag to switch from your legacy notification system to Liveblocks’s.
 You can now stop writing to the legacy system and only write to Liveblocks
 notifications and user notification settings. You can also remove the feature
 flag from your webhook endpoint and from your application.
-
-## Possible notification architectures
-
-Here are multiple options for Liveblocks notification integrations.
-
-### Applications send notifications directly to Liveblocks
-
-In this architecture, your applications communicate directly with Liveblocks to
-trigger notifications. This is the simplest approach and works well for most use
-cases.
-
-### Applications send notifications to a notification service
-
-In this architecture, your applications send notifications to a centralized
-notification service, which then forwards them to Liveblocks. This approach is
-useful if you need to maintain a central notification hub or perform additional
-processing before sending notifications to Liveblocks.
