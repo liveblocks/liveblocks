@@ -1,4 +1,9 @@
-## vNEXT (not released yet)
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
 
 ### `@liveblocks/client`
 
