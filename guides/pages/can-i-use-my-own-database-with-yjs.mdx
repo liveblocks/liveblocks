@@ -10,8 +10,7 @@ When building collaborative applications with Yjs and Liveblocks, you may wish
 to store document data in your own database alongside Liveblocks. While
 Liveblocks needs to store Yjs document data to handle realtime collaboration,
 you can use webhooks to duplicate this data to your own database whenever
-changes occur. Duplicating/reading data may be useful for creating full-text
-search, making backups, analytics, and more.
+changes occur.
 
 ## Why Liveblocks stores Yjs data
 
@@ -23,13 +22,13 @@ features. This storage is essential for:
 - **Conflict resolution**: Merging changes from multiple users working
   simultaneously.
 - **Offline support**: Syncing changes when users reconnect after being offline.
-- **New user onboarding**: Loading the current document state when someone
-  joins.
+- **Document loading**: Loading the current document state when a user
+  enters the room.
 
 Without storing this data, Liveblocks wouldn't be able to provide the realtime
 collaboration features that make Yjs powerful. However, you can still maintain
 your own copy of the data for additional purposes like backups, analytics, or
-integration with other systems.
+creating full-text search.
 
 ## Duplicating data with webhooks
 
@@ -128,6 +127,6 @@ For more information about data storage and webhooks, check out these resources:
 Learn more about the APIs for working with Yjs data:
 
 - [YDocUpdated webhook event](/docs/platform/webhooks#YDocUpdatedEvent)
-- [REST API for Yjs documents](/docs/api-reference/rest-api-endpoints#put-rooms-roomId-ydoc)
-- [@liveblocks/node package](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc)
+- [@liveblocks/node-prosemirror](/docs/api-reference/liveblocks-node-prosemirror)
+- [@liveblocks/node-lexical](/docs/api-reference/liveblocks-node-lexical)
 - [Data storage](/docs/platform/data-storage)
