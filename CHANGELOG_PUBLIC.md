@@ -20,7 +20,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 48 (2025-11-28)
 
+## Documentation
+
+- New guide: [Can I use my own database with Yjs?](https://liveblocks.io/docs/guides/can-i-use-my-own-database-with-yjs)
+- New guide: [Why you can’t delete Yjs documents](https://liveblocks.io/docs/guides/why-you-cant-delete-yjs-documents).
+- Add info on mass deleting rooms.
+- Rename "Liveblocks" notification kinds as "Collaboration" kinds.
+
 ## Contributors
+
+ctnicholas
 
 # Week 47 (2025-11-21)
 
