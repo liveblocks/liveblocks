@@ -441,11 +441,11 @@
     "technologies": ["yjs"],
     "date": "2025-11-19"
   },
-  {
-    "title": "Can I use my own database with Yjs?",
-    "path": "/can-i-use-my-own-database-with-yjs",
-    "topics": ["webhooks", "databases", "rest-api"],
-    "technologies": ["yjs", "nodejs"],
-    "date": "2025-11-19"
-  }
+    {
+      "title": "Can I use my own database with Yjs?",
+      "path": "/can-i-use-my-own-database-with-yjs",
+      "topics": ["webhooks", "databases", "rest-api"],
+      "technologies": ["yjs", "nodejs"],
+      "date": "2025-11-26"
+    }
 ]
