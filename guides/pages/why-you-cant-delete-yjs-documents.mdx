@@ -12,6 +12,16 @@ limitation—it’s a fundamental aspect of how Yjs works as a Conflict-free
 Replicated Data Type (CRDT). Understanding this behavior is essential for
 building robust collaborative applications.
 
+<Banner title="Text editors">
+
+This guide applies to our extensions for
+[Tiptap](/docs/ready-made-features/multiplayer-editing/text-editor/tiptap),
+[Lexical](/docs/ready-made-features/multiplayer-editing/text-editor/lexical),
+[BlockNote](/docs/ready-made-features/multiplayer-editing/text-editor/blocknote),
+as they all use Yjs under the hood.
+
+</Banner>
+
 ## Yjs stores changes, not state
 
 Unlike traditional databases that store the current state of your data, Yjs
@@ -101,7 +111,7 @@ const liveblocks = new Liveblocks({
 await liveblocks.deleteRoom("my-room-id");
 ```
 
-You can then create a new room and start afresh
+You can then create a new room and start afresh.
 
 ```ts
 import { Liveblocks } from "@liveblocks/node";
@@ -122,7 +132,9 @@ including threads, Storage, and more.
 ### Clear the document content
 
 If you want to “reset” a document without deleting it, you can clear its Yjs
-content by replacing it with an empty string, keeping the room.
+content by replacing it with an empty string, keeping the room. However this
+doesn’t actually delete the document’s history—it adds a new “delete everything”
+operation, meaning the document data size has got larger instead of smaller.
 
 ```ts
 import * as Y from "yjs";
@@ -146,16 +158,12 @@ const yUpdate = Y.encodeStateAsUpdate(yDoc);
 await liveblocks.sendYjsBinaryUpdate("my-room-id", yUpdate);
 ```
 
-However this doesn’t actually delete the document’s history—it adds a new
-“delete everything” operation, meaning the document data size is now larger
-rather than smaller.
-
 ## Learn more
 
 For more information about working with Yjs and Liveblocks, check out these
 guides:
 
+- [Yjs best practices and tips](/docs/guides/yjs-best-practices-and-tips)
+- [How to use your Y.Doc on the server](/docs/guides/how-to-use-your-ydoc-on-the-server)
+- [Modifying Yjs document data with the REST API](/docs/guides/modifying-yjs-document-data-with-the-rest-api)
 - [Data storage](/docs/platform/data-storage)
-- [Yjs best practices and tips](/guides/yjs-best-practices-and-tips)
-- [How to use your Y.Doc on the server](/guides/how-to-use-your-ydoc-on-the-server)
-- [Modifying Yjs document data with the REST API](/guides/modifying-yjs-document-data-with-the-rest-api)
