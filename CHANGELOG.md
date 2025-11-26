@@ -9,6 +9,10 @@
 
 - Fix regression: handle rejection messages from the server again.
 
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
+
 ## v3.10.1
 
 ### `@liveblocks/lexical`
