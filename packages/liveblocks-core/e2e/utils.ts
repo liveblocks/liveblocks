@@ -9,6 +9,7 @@ import type { BaseMetadata, NoInfr } from "../src";
 import { nanoid } from "../src";
 import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
+import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
@@ -17,7 +18,6 @@ import type { Json, JsonObject } from "../src/lib/Json";
 import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
-import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
