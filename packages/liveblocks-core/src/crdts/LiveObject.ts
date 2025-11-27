@@ -19,7 +19,7 @@ import type {
   SerializedObject,
   SerializedRootObject,
 } from "../protocol/SerializedCrdt";
-import { CrdtType, isRootCrdt } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -74,20 +74,21 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   static #buildRootAndParentToChildren(
     items: IdTuple<SerializedCrdt>[]
-  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+  ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
-    let root: IdTuple<SerializedRootObject> | null = null;
+    let root: SerializedRootObject | null = null;
 
     for (const [id, crdt] of items) {
-      if (isRootCrdt(crdt)) {
-        root = [id, crdt];
+      if (id === "root") {
+        root = crdt as SerializedRootObject;
       } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
-        const children = parentToChildren.get(crdt.parentId);
+        const childCrdt = crdt as SerializedChild;
+        const tuple: IdTuple<SerializedChild> = [id, childCrdt];
+        const children = parentToChildren.get(childCrdt.parentId);
         if (children !== undefined) {
           children.push(tuple);
         } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
+          parentToChildren.set(childCrdt.parentId, [tuple]);
         }
       }
     }
@@ -107,7 +108,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const [root, parentToChildren] =
       LiveObject.#buildRootAndParentToChildren(items);
     return LiveObject._deserialize(
-      root,
+      ["root", root],
       parentToChildren,
       pool
     ) as LiveObject<O>;
