@@ -20,6 +20,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 48 (2025-11-28)
 
+## Examples
+
+- Updated Next.js Starter Kit to use Tiptap v3 and BlockNote 0.42.
+
 ## Documentation
 
 - New guide: [Can I use my own database with Yjs?](https://liveblocks.io/docs/guides/can-i-use-my-own-database-with-yjs)
