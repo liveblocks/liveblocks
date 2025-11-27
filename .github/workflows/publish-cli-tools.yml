@@ -33,7 +33,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
 
       - name: Validate git tag
         run: ./.github/scripts/validate-version.sh "${{ inputs.tag }}"
