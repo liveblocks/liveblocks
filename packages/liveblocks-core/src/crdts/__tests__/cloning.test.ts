@@ -8,7 +8,7 @@ import {
 } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
-  createSerializedObject,
+  createSerializedRoot,
   prepareStorageUpdateTest,
 } from "../../__tests__/_utils";
 import { cloneLson } from "../../crdts/liveblocks-helpers";
@@ -20,10 +20,7 @@ describe("cloning LiveStructures", () => {
     const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
       list1: LiveList<string>;
       list2: LiveList<string>;
-    }>([
-      createSerializedObject("0:0", {}),
-      createSerializedList("0:1", "0:0", "list1"),
-    ]);
+    }>([createSerializedRoot(), createSerializedList("0:1", "root", "list1")]);
 
     const list1 = root.get("list1");
     list1.push("a");
@@ -73,7 +70,7 @@ describe("cloning LiveStructures", () => {
 
         async (data) => {
           const { root } = await prepareStorageUpdateTest([
-            createSerializedObject("0:0", {}),
+            createSerializedRoot(),
           ]);
 
           // Clone "a" to "b"
@@ -93,7 +90,7 @@ describe("cloning LiveStructures", () => {
 
         async (data) => {
           const { root } = await prepareStorageUpdateTest([
-            createSerializedObject("0:0", {}),
+            createSerializedRoot(),
           ]);
 
           // Clone "a" to "b"
@@ -114,7 +111,7 @@ describe("cloning LiveStructures", () => {
 
         async (data) => {
           const { root } = await prepareStorageUpdateTest([
-            createSerializedObject("0:0", {}),
+            createSerializedRoot(),
           ]);
 
           // Clone "a" to "b"

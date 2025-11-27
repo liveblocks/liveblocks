@@ -5,6 +5,7 @@ import {
   createSerializedMap,
   createSerializedObject,
   createSerializedRegister,
+  createSerializedRoot,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceRemoteStorageAndReconnect,
@@ -99,10 +100,7 @@ describe("LiveMap", () => {
   test("create document with map in root", async () => {
     const { storage, expectStorage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([
-      createSerializedObject("0:0", {}),
-      createSerializedMap("0:1", "0:0", "map"),
-    ]);
+    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
 
     const root = storage.root;
     const map = root.toObject().map;
@@ -113,14 +111,10 @@ describe("LiveMap", () => {
   test("set throws on read-only", async () => {
     const { storage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],
-      1,
-      [Permission.Read, Permission.PresenceWrite]
-    );
+    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")], 1, [
+      Permission.Read,
+      Permission.PresenceWrite,
+    ]);
 
     const map = storage.root.get("map");
     expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrow(
@@ -132,8 +126,8 @@ describe("LiveMap", () => {
     const { storage, expectStorage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
-      createSerializedObject("0:0", {}),
-      createSerializedMap("0:1", "0:0", "map"),
+      createSerializedRoot(),
+      createSerializedMap("0:1", "root", "map"),
       createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
       createSerializedObject("0:3", { a: 1 }, "0:1", "second"),
       createSerializedObject("0:4", { a: 2 }, "0:1", "third"),
@@ -164,10 +158,7 @@ describe("LiveMap", () => {
       await prepareStorageTest<{
         map: LiveMap<string, number>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1
       );
 
@@ -206,10 +197,7 @@ describe("LiveMap", () => {
       const { storage } = await prepareStorageTest<{
         map: LiveMap<string, number>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -225,8 +213,8 @@ describe("LiveMap", () => {
         await prepareStorageTest<{
           map: LiveMap<string, number>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedRegister("0:2", "0:1", "first", 0),
           createSerializedRegister("0:3", "0:1", "second", 1),
           createSerializedRegister("0:4", "0:1", "third", 2),
@@ -270,8 +258,8 @@ describe("LiveMap", () => {
           map: LiveMap<string, LiveObject<{ a: number }>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRoot(),
+            createSerializedMap("0:1", "root", "map"),
             createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
           ],
           1
@@ -299,8 +287,8 @@ describe("LiveMap", () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRoot(),
+            createSerializedMap("0:1", "root", "map"),
             createSerializedList("0:2", "0:1", "first"),
             createSerializedRegister("0:3", "0:2", "!", 0),
           ],
@@ -331,8 +319,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedRegister("0:2", "0:1", "first", "a"),
           createSerializedRegister("0:3", "0:1", "second", "b"),
         ],
@@ -355,8 +343,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedRegister("0:2", "0:1", "first", "a"),
           createSerializedRegister("0:3", "0:1", "second", "b"),
         ],
@@ -380,8 +368,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedRegister("0:2", "0:1", "first", "a"),
           createSerializedRegister("0:3", "0:1", "second", "b"),
         ],
@@ -405,10 +393,7 @@ describe("LiveMap", () => {
       await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1
       );
 
@@ -430,10 +415,7 @@ describe("LiveMap", () => {
   test("map.set already attached live object should throw", async () => {
     const { storage } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([
-      createSerializedObject("0:0", {}),
-      createSerializedMap("0:1", "0:0", "map"),
-    ]);
+    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
 
     const root = storage.root;
     const map = root.toObject().map;
@@ -448,7 +430,7 @@ describe("LiveMap", () => {
     const { storage } = await prepareStorageTest<{
       child: LiveObject<{ a: number }> | null;
       map: LiveMap<string, LiveObject<{ a: number }>> | null;
-    }>([createSerializedObject("0:0", { child: null, map: null })], 1);
+    }>([createSerializedRoot({ child: null, map: null })], 1);
 
     const root = storage.root;
     const child = new LiveObject({ a: 0 });
@@ -463,8 +445,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
         ],
         1
@@ -490,7 +472,7 @@ describe("LiveMap", () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
-      }>([createSerializedObject("0:0", {})], 1);
+      }>([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -507,7 +489,7 @@ describe("LiveMap", () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, LiveObject<{ a: number }>>;
-      }>([createSerializedObject("0:0", {})], 1);
+      }>([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -524,7 +506,7 @@ describe("LiveMap", () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
-      }>([createSerializedObject("0:0", {})], 1);
+      }>([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -542,10 +524,7 @@ describe("LiveMap", () => {
       await prepareStorageTest<{
         map: LiveMap<string, LiveList<string>>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1
       );
 
@@ -566,10 +545,7 @@ describe("LiveMap", () => {
       await prepareStorageTest<{
         map: LiveMap<string, LiveMap<string, string>>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1
       );
 
@@ -590,10 +566,7 @@ describe("LiveMap", () => {
       const { room, storage } = await prepareStorageTest<{
         map: LiveMap<string, string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-        ],
+        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
         1
       );
 
@@ -616,8 +589,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedObject("0:2", { a: 0 }, "0:1", "mapElement"),
         ],
         1
@@ -656,8 +629,8 @@ describe("LiveMap", () => {
           map: LiveMap<string, string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRoot(),
+            createSerializedMap("0:1", "root", "map"),
             createSerializedRegister("0:2", "0:1", "first", "a"),
           ],
           1
@@ -674,8 +647,8 @@ describe("LiveMap", () => {
       expectStorage({ map: new Map([["first", "a"]]) });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.MAP, parentId: "0:0", parentKey: "map" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.MAP, parentId: "root", parentKey: "map" }],
         [
           "0:2",
           {
@@ -726,8 +699,8 @@ describe("LiveMap", () => {
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRoot(),
+          createSerializedMap("0:1", "root", "map"),
           createSerializedObject("0:2", { a: 1 }, "0:1", "el1"),
           createSerializedObject("0:3", { a: 2 }, "0:1", "el2"),
         ],
