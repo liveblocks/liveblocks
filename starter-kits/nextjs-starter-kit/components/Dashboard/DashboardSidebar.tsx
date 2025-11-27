@@ -16,8 +16,10 @@ interface Props extends ComponentProps<"div"> {
   groups: Group[];
 }
 
-interface SidebarLinkProps
-  extends Omit<ComponentProps<typeof LinkButton>, "href"> {
+interface SidebarLinkProps extends Omit<
+  ComponentProps<typeof LinkButton>,
+  "href"
+> {
   href: string;
 }
 
