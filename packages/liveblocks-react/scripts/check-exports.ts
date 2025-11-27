@@ -68,6 +68,7 @@ const CLASSIC_ONLY = [
   "createLiveblocksContext",
   "createRoomContext",
   "useHistoryVersionData",
+  "useSearchComments",
 ];
 const SUSPENSE_ONLY = [];
 

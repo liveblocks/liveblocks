@@ -2354,6 +2354,25 @@ export function createRoom<
           break;
         }
 
+        // Receiving a RejectedOps message in the client means that the server is no
+        // longer in sync with the client. Trying to synchronize the client again by
+        // rolling back particular Ops may be hard/impossible. It's fine to not try and
+        // accept the out-of-sync reality and throw an error.
+        case ServerMsgCode.REJECT_STORAGE_OP: {
+          console.errorWithTitle(
+            "Storage mutation rejection error",
+            message.reason
+          );
+
+          if (process.env.NODE_ENV !== "production") {
+            throw new Error(
+              `Storage mutations rejected by server: ${message.reason}`
+            );
+          }
+
+          break;
+        }
+
         case ServerMsgCode.THREAD_CREATED:
         case ServerMsgCode.THREAD_DELETED:
         case ServerMsgCode.THREAD_METADATA_UPDATED:

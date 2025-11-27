@@ -1,5 +1,29 @@
+## v3.11.0
 
-## vNEXT (not released yet)
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
+
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+### `@liveblocks/yjs`
+
+- Add `forceNewProvider` option to `getYjsProviderForRoom` and destroy existing
+  provider when requested
 
 ## v3.10.0
 
