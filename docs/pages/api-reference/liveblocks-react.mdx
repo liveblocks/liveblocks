@@ -4209,9 +4209,9 @@ useErrorListener((error) => {
 ### useSearchComments [@badge=RoomProvider]
 
 Returns the result of searching comments by text within the current room. The
-result includes the id and the plain text content of the matched comments along
-with the parent thread id of the comment. The hook allows filtering by metadata
-and resolved status of the parent thread and presence and absense of attachments
+result includes the ID and the plain text content of the matched comments along
+with the parent thread ID of the comment. The hook allows filtering by metadata
+and resolved status of the parent thread and presence and absence of attachments
 and mentions in the comment.
 
 ```tsx
@@ -4224,39 +4224,29 @@ const { results, error, isLoading } = useSearchComments();
   <PropertiesListItem name="options" type="object">
     Configuration object.
   </PropertiesListItem>
-  <PropertiesListItem name="options.query" type="InboxNotificationsQuery">
+  <PropertiesListItem name="options.query" type="SearchCommentsQuery">
     Optional query to filter comments by metadata and resolved status of the
-    parent thread, and presensce and absense of attachments and mentions in the
+    parent thread, and presence and absence of attachments and mentions in the
     comment.
   </PropertiesListItem>
-  <PropertiesListItem name="options.query.text" type="SearchCommentsQuery">
-    (Required) Text to search within comment content. Uses rich text and vector
-    search for relevance.
+  <PropertiesListItem name="options.query.text" type="string" isRequired>
+    Text to search within comment content. Uses rich text and vector search for
+    relevance.
   </PropertiesListItem>
   <PropertiesListItem
     name="options.query.threadMetadata"
-    type="SearchCommentsQuery"
+    type="Partial<QueryMetadata>"
   >
-    (Optional) Metadata to filter threads by
+    Metadata to filter threads by.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="options.query.threadResolved"
-    type="SearchCommentsQuery"
-  >
-    (Optional) Whether to only return comments from threads that have
-    attachments.
+  <PropertiesListItem name="options.query.threadResolved" type="boolean">
+    Whether to only return comments from threads that have attachments.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="options.query.hasAttachments"
-    type="SearchCommentsQuery"
-  >
-    (Optional) Whether to only return comments that have attachments.
+  <PropertiesListItem name="options.query.hasAttachments" type="boolean">
+    Whether to only return comments that have attachments.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="options.query.hasMentions"
-    type="SearchCommentsQuery"
-  >
-    (Optional) Whether to only return comments that have mentions.
+  <PropertiesListItem name="options.query.hasMentions" type="boolean">
+    Whether to only return comments that have mentions.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4908,7 +4898,7 @@ function Inbox() {
   <PropertiesListItem name="options" type="object">
     Optional configuration object.
   </PropertiesListItem>
-  <PropertiesListItem name="option.query" type="InboxNotificationsQuery">
+  <PropertiesListItem name="options.query" type="InboxNotificationsQuery">
     Optional query to filter notifications by room ID or kind. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-query).
   </PropertiesListItem>
