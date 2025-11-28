@@ -63,8 +63,8 @@ correctly, there are a few things you can check:
 
 #### Check you’re using the correct copilot ID in all APIs
 
-Check you’re using the the copilot ID throughout your application, specifically
-in every use of [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+Check you’re using the copilot ID throughout your application, specifically in
+every use of [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
 [`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage).
 
 ```tsx
@@ -138,7 +138,7 @@ suggestion.
 | Error                                                                                        | Info                                                                                                                                                                                              |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The AI provider is currently overloaded or unavailable                                       | Your provider is down, check its status. [Learn more](#The-AI-provider-is-currently-overloaded-or-unavailable)                                                                                    |
-| The AI provider's rate limit or quota exceeded                                               | You’ve breached the rate rate limit or quota for your model. [Learn more](#The-AI-provider's-rate-limit-or-quota-exceeded)                                                                        |
+| The AI provider's rate limit or quota exceeded                                               | You’ve breached the rate limit or quota for your model. [Learn more](#The-AI-provider's-rate-limit-or-quota-exceeded)                                                                             |
 | A technical error happened while invoking the AI provider.                                   | A internal technical error happened. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                            |
 | For this AI provider, 'additionalProperties: false' is required to be set in the properties` | You need to add `additionalProperties: false` to your tool `parameters` object. [Learn more](#additionalproperties-false-is-required)                                                             |
 | Error from AI provider: ...                                                                  | Generic error received from the AI Provider. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                    |
@@ -151,5 +151,5 @@ suggestion.
 | Timeout error.                                                                               | The request timed out. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                                                                          |
 | Abort error.                                                                                 | The request was aborted by the user but the operation did not succeed to abort. [Contact support](https://liveblocks.io/contact/support) if the problem persists.                                 |
 | Aborted by user.                                                                             | The current request was aborted by the user.                                                                                                                                                      |
-| Messages deleted by user.                                                                    | A message in the hat no longer exists because it was deleted by a user.                                                                                                                           |
+| Messages deleted by user.                                                                    | A message in the chat no longer exists because it was deleted by a user.                                                                                                                          |
 | Chat deleted by user.                                                                        | A chat was deleted by a user and our infra cannot proceed the request.                                                                                                                            |

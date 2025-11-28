@@ -483,7 +483,7 @@ The `result` property contains the data returned from the action.
       return { data: { weather } };
     },
     // +++
-    render: ({ stage, args, result }) => {\
+    render: ({ stage, args, result }) => {
       if (stage !== "executed") {
         return <div>Fetching weather…</div>;
       }
@@ -528,8 +528,8 @@ title, folder, and category.
         category: { type: "string" },
         // +++
       },
+      required: ["title", "folder", "category"],
     },
-    required: ["title", "folder", "category"],
     additionalProperties: false,
   },
   // +++
@@ -818,7 +818,7 @@ and update the UI.
       additionalProperties: false,
     },
     execute: () => {},
-    render: ({ stage, partialArgs }) => {
+    render: ({ stage, partialArgs, args }) => {
       // Document is streaming in
       // +++
       if (stage === "receiving") {
@@ -915,22 +915,22 @@ parameters: {
   properties: {
     // String
     name: { type: "string" },
-  
+
     // Number
     age: { type: "number" },
-  
+
     // Boolean
     sendEmail: { type: "boolean" },
-  
+
     // Union
     count: { type: ["string", "number", "null"] },
-  
+
     // Array
     pets: { type: "array", items: { type: "string" } },
-  
+
     // Description, helps AI understand the type
     job: { type: "string", description: "A job title, 1-2 words" },
-  
+
     // String constraints
     fullName: {
       type: "string",
@@ -938,10 +938,10 @@ parameters: {
       maxLength: 100,
       pattern: "^[A-Z][a-zA-Z'-]+(?: [A-Z][a-zA-Z'-]+)+$",
     },
-  
+
     // Number constraints
     ageInYears: { type: "number", minimum: 18, maximum: 100 },
-  
+
     // Combination of all
     people: {
       type: "array",

@@ -54,7 +54,7 @@ function App() {
     if (error.context.code === 4006) {
       // Room ID has been changed, get the new ID and redirect
       const newRoomId = error.message;
-      __redirect__(`https://example.com/document/${newRoomId}}`);
+      __redirect__(`https://example.com/document/${newRoomId}`);
     }
   });
 }
