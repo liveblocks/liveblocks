@@ -1019,11 +1019,11 @@ requires TypeScript 5.3+.
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="description" type="string" isRequired>
+  <PropertiesListItem name="description" type="string" required>
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
   </PropertiesListItem>
-  <PropertiesListItem name="parameters" type="JSONSchema7" isRequired>
+  <PropertiesListItem name="parameters" type="JSONSchema7" required>
     JSON Schema defining the tool’s input parameters. The AI will validate
     arguments against this schema.
   </PropertiesListItem>

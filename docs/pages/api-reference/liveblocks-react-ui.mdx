@@ -440,7 +440,7 @@ the `components` prop. A full list is [available here](#AiChat-components).
 ##### Props [#AiChat-props]
 
 <PropertiesList>
-  <PropertiesListItem name="chatId" type="string" isRequired>
+  <PropertiesListItem name="chatId" type="string" required>
     The unique identifier for the chat. Each chat is stored permanently and is
     only visible to the authenticated user who created it.
   </PropertiesListItem>
@@ -799,7 +799,7 @@ clicked.
   <PropertiesListItem
     name="confirm"
     type="(args: TArgs) => Promise<ToolResultResponse>"
-    isRequired
+    required
   >
     Function called when the user clicks the confirm button. It can return data
     which will be stored and accessible in `render`, and optionally also a

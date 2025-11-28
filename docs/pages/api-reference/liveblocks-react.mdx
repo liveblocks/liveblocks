@@ -2081,11 +2081,11 @@ function Whiteboard() {
 #### Props [#RegisterAiKnowledge-props]
 
 <PropertiesList>
-  <PropertiesListItem name="description" type="string" isRequired>
+  <PropertiesListItem name="description" type="string" required>
     A clear description of what this knowledge represents. This helps the AI
     understand the context and relevance of the provided information.
   </PropertiesListItem>
-  <PropertiesListItem name="value" type="Json" isRequired>
+  <PropertiesListItem name="value" type="Json" required>
     The actual data or information to share with the AI. Can be a string,
     object, array, or any JSON-serializable information that offers context
     relevant to your application or user.
@@ -2257,11 +2257,11 @@ function Chat() {
 #### Props [#RegisterAiTool-props]
 
 <PropertiesList>
-  <PropertiesListItem name="name" type="string" isRequired>
+  <PropertiesListItem name="name" type="string" required>
     Unique name for the tool. This is used internally to identify and manage the
     tool.
   </PropertiesListItem>
-  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" isRequired>
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" required>
     The tool definition created with
     [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool).
   </PropertiesListItem>
@@ -4229,7 +4229,7 @@ const { results, error, isLoading } = useSearchComments();
     parent thread, and presence and absence of attachments and mentions in the
     comment.
   </PropertiesListItem>
-  <PropertiesListItem name="options.query.text" type="string" isRequired>
+  <PropertiesListItem name="options.query.text" type="string" required>
     Text to search within comment content. Uses rich text and vector search for
     relevance.
   </PropertiesListItem>
