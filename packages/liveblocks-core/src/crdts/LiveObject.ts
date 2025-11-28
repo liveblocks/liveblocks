@@ -52,6 +52,10 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
+function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
+  return id === "root";
+}
+
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
@@ -79,16 +83,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     let root: SerializedRootObject | null = null;
 
     for (const [id, crdt] of items) {
-      if (id === "root") {
-        root = crdt as SerializedRootObject;
+      if (isRootCrdt(id, crdt)) {
+        root = crdt;
       } else {
-        const childCrdt = crdt as SerializedChild;
-        const tuple: IdTuple<SerializedChild> = [id, childCrdt];
-        const children = parentToChildren.get(childCrdt.parentId);
+        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const children = parentToChildren.get(crdt.parentId);
         if (children !== undefined) {
           children.push(tuple);
         } else {
-          parentToChildren.set(childCrdt.parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [tuple]);
         }
       }
     }
