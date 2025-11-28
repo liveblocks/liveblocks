@@ -6,7 +6,7 @@
     "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.1",
     "eslint": "^8.56.0",
-    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-simple-import-sort": "^12.1.0"
   }
 }
