@@ -1274,13 +1274,13 @@ const { chats, error, isLoading } = useAiChats();
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="chats" type="AiChat[]">
+  <PropertiesListItem name="chats" type="AiChat[] | undefined">
     An array of AI chats created by the current user.
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the chats are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the chats. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-error-handling).
   </PropertiesListItem>
@@ -1296,7 +1296,7 @@ const { chats, error, isLoading } = useAiChats();
     Whether more chats are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more chats. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
   </PropertiesListItem>
@@ -1493,7 +1493,7 @@ chat, and the AI’s response.
 hook are available.
 
 ```tsx
-import { useAiChat } from "@liveblocks/react/suspense";
+import { useAiChat } from "@liveblocks/react";
 
 const { chat, error, isLoading } = useAiChat("my-chat-id");
 ```
@@ -1505,13 +1505,13 @@ const { chat, error, isLoading } = useAiChat("my-chat-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="chat" type="AiChat | null">
+  <PropertiesListItem name="chat" type="AiChat | undefined">
     The AI chat object containing title, metadata, and other properties.
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the chat information is currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the chat information.
   </PropertiesListItem>
 </PropertiesList>
@@ -1523,7 +1523,7 @@ has not been set yet. You can display a default title in this case, and the
 title will be displayed once generated.
 
 ```tsx
-import { useAiChat } from "@liveblocks/react/suspense";
+import { useAiChat } from "@liveblocks/react";
 
 function ChatTitle() {
   const { chat, error, isLoading } = useAiChat("my-chat-id");
@@ -1734,7 +1734,7 @@ const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="messages" type="AiChatMessage[]">
+  <PropertiesListItem name="messages" type="AiChatMessage[] | undefined">
     An array of messages in the AI chat.
 
     <div className="-mt-1">
@@ -1787,7 +1787,7 @@ const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the messages are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the messages.
   </PropertiesListItem>
 </PropertiesList>
@@ -3930,7 +3930,7 @@ the latest 50 threads.
 hook are available.
 
 ```tsx
-import { useThreads } from "@liveblocks/react/suspense";
+import { useThreads } from "@liveblocks/react";
 
 const { threads, error, isLoading } = useThreads();
 ```
@@ -3975,13 +3975,14 @@ function Component() {
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="threads" type="ThreadData[]">
-    An array of threads within the current room.
+  <PropertiesListItem name="threads" type="ThreadData[] | undefined">
+    An array of threads within the current room, or `undefined` if not yet
+    loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the threads are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the threads.
   </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
@@ -3996,7 +3997,7 @@ function Component() {
     Whether more threads are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more threads. [Learn
     more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
@@ -4120,7 +4121,7 @@ loading errors and errors that occur when fetching more threads.
 
 ```tsx
 import { Thread } from "@liveblocks/react-ui";
-import { useThreads } from "@liveblocks/react/suspense";
+import { useThreads } from "@liveblocks/react";
 
 function Inbox() {
   const { threads, error, fetchMore, fetchMoreError } = useThreads();
@@ -4251,13 +4252,13 @@ const { results, error, isLoading } = useSearchComments();
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="results" type="ThreadData[]">
+  <PropertiesListItem name="results" type="ThreadData[] | undefined">
     An array of matched comments with the parent thread they belong to.
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the results are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while searching the threads.
   </PropertiesListItem>
 </PropertiesList>
@@ -4810,7 +4811,7 @@ Returns a presigned URL for an attachment by its ID.
 hook are available.
 
 ```tsx
-import { useAttachmentUrl } from "@liveblocks/react/suspense";
+import { useAttachmentUrl } from "@liveblocks/react";
 
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
@@ -4822,13 +4823,14 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="url" type="string | null">
-    The presigned URL for the attachment, or null if not yet loaded.
+  <PropertiesListItem name="url" type="string | undefined">
+    The presigned URL for the attachment, or `undefined` if not found or not yet
+    loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the URL is currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the URL.
   </PropertiesListItem>
 </PropertiesList>
@@ -4843,7 +4845,7 @@ fetches the latest 50 items. Inbox notifications are
 meaning notifications from outside the current room are received.
 
 ```tsx
-import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { useInboxNotifications } from "@liveblocks/react";
 
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
@@ -4887,13 +4889,17 @@ function Inbox() {
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
-    An array of inbox notifications for the current user.
+  <PropertiesListItem
+    name="inboxNotifications"
+    type="InboxNotificationData[] | undefined"
+  >
+    An array of inbox notifications for the current user, or `undefined` if not
+    yet loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the notifications are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the notifications.
   </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
@@ -4908,7 +4914,7 @@ function Inbox() {
     Whether more notifications are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more notifications. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
   </PropertiesListItem>
@@ -5010,7 +5016,7 @@ loading errors and errors that occur when fetching more inbox notifications.
 
 ```tsx
 import { InboxNotification } from "@liveblocks/react-ui";
-import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { useInboxNotifications } from "@liveblocks/react";
 
 function Inbox() {
   const { inboxNotifications, error, fetchMore, fetchMoreError } =
@@ -5091,7 +5097,7 @@ Returns the number of unread inbox notifications for the current user.
 hook are available.
 
 ```tsx
-import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react";
 
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
@@ -5112,8 +5118,16 @@ const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="count" type="number">
-    The number of unread inbox notifications for the current user.
+  <PropertiesListItem name="count" type="number | undefined">
+    The number of unread inbox notifications for the current user, or
+    `undefined` if not yet loaded (in non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the number of unread inbox notifications is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the number of unread inbox
+    notifications.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5710,7 +5724,7 @@ resolver function to the [`resolveUsers`][] option in [`createClient`][] or
 hook are available.
 
 ```tsx
-import { useUser } from "@liveblocks/react/suspense";
+import { useUser } from "@liveblocks/react";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
@@ -5722,8 +5736,15 @@ const { user, error, isLoading } = useUser("user-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="user" type="User | null">
-    The user information, or null if not found.
+  <PropertiesListItem name="user" type="User | undefined">
+    The user information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the user information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the user information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5737,7 +5758,7 @@ or [`LiveblocksProvider`][].
 hook are available.
 
 ```tsx
-import { useRoomInfo } from "@liveblocks/react/suspense";
+import { useRoomInfo } from "@liveblocks/react";
 
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
@@ -5749,8 +5770,15 @@ const { info, error, isLoading } = useRoomInfo("room-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="info" type="RoomInfo | null">
-    The room information, or null if not found.
+  <PropertiesListItem name="info" type="RoomInfo | undefined">
+    The room information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the room information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the room information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5764,7 +5792,7 @@ provide a resolver function to the [`resolveGroupsInfo`][] option in
 hook are available.
 
 ```tsx
-import { useGroupInfo } from "@liveblocks/react/suspense";
+import { useGroupInfo } from "@liveblocks/react";
 
 const { info, error, isLoading } = useGroupInfo("group-id");
 ```
@@ -5776,8 +5804,15 @@ const { info, error, isLoading } = useGroupInfo("group-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="info" type="GroupInfo | null">
-    The group information, or null if not found.
+  <PropertiesListItem name="info" type="GroupInfo | undefined">
+    The group information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the group information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the group information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5789,7 +5824,7 @@ Returns metadata for a given URL.
 hook are available.
 
 ```tsx
-import { useUrlMetadata } from "@liveblocks/react/suspense";
+import { useUrlMetadata } from "@liveblocks/react";
 
 const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
 
@@ -5804,13 +5839,14 @@ const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="metadata" type="UrlMetadata | undefined">
-    The metadata for the URL.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | undefined">
-    Any error that occurred while loading the metadata.
+    The metadata for the URL, or `undefined` if not yet loaded (in non-Suspense
+    version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the metadata is currently loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the metadata.
   </PropertiesListItem>
 </PropertiesList>
 
