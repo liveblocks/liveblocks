@@ -925,7 +925,7 @@ describe("useInboxNotifications: polling", () => {
     await jest.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(1));
 
-    // Advance 10 seconds (more than the the currently set maximum stale time, 5000)
+    // Advance 10 seconds (more than the currently set maximum stale time, 5000)
     await jest.advanceTimersByTimeAsync(10_000);
 
     // Dispatch a `visibilitychange` event and verify that when the document becomes

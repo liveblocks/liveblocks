@@ -301,8 +301,8 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## v3.4.0
 
