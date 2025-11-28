@@ -299,7 +299,6 @@ export type {
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
 export { CrdtType } from "./protocol/SerializedCrdt";
-export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,

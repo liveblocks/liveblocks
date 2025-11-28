@@ -16,8 +16,8 @@ import { toPlainLson } from "../utils";
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {
     const currentItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
-      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
       [
         "0:2",
         {
@@ -52,8 +52,8 @@ describe("getTreesDiffOperations", () => {
 
   test("delete liveList item", () => {
     const currentItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
-      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
       [
         "0:2",
         {
@@ -89,8 +89,8 @@ describe("getTreesDiffOperations", () => {
 
   test("liveList item moved, added and deleted", () => {
     const currentItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
-      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
       [
         "0:2",
         {
@@ -112,8 +112,8 @@ describe("getTreesDiffOperations", () => {
     ]);
 
     const newItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
-      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
       [
         "0:3",
         {
@@ -158,12 +158,12 @@ describe("getTreesDiffOperations", () => {
 
   test("liveObject update", () => {
     const currentItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
       [
         "0:1",
         {
           type: CrdtType.OBJECT,
-          parentId: "0:0",
+          parentId: "root",
           parentKey: "item",
           data: { a: 1 },
         },
@@ -181,7 +181,7 @@ describe("getTreesDiffOperations", () => {
         "0:3",
         {
           type: CrdtType.OBJECT,
-          parentId: "0:0",
+          parentId: "root",
           parentKey: "item2",
           data: { a: 1 },
         },
@@ -189,13 +189,13 @@ describe("getTreesDiffOperations", () => {
     ]);
 
     const newItems: NodeMap = new Map([
-      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["root", { type: CrdtType.OBJECT, data: {} }],
       [
         // different value
         "0:1",
         {
           type: CrdtType.OBJECT,
-          parentId: "0:0",
+          parentId: "root",
           parentKey: "item",
           data: { a: 2 },
         },
@@ -215,7 +215,7 @@ describe("getTreesDiffOperations", () => {
         "0:3",
         {
           type: CrdtType.OBJECT,
-          parentId: "0:0",
+          parentId: "root",
           parentKey: "item2",
           data: { a: 1 },
         },

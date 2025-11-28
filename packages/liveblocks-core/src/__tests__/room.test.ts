@@ -52,6 +52,7 @@ import {
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
+  createSerializedRoot,
   FIRST_POSITION,
   makeSyncSource,
   prepareDisconnectedStorageUpdateTest,
@@ -1083,8 +1084,8 @@ describe("room", () => {
     const { room, root } = await prepareDisconnectedStorageUpdateTest<{
       items: LiveList<LiveObject<Record<string, number>>>;
     }>([
-      createSerializedObject("0:0", {}),
-      createSerializedList("0:1", "0:0", "items"),
+      createSerializedRoot(),
+      createSerializedList("0:1", "root", "items"),
       createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
     ]);
 
@@ -1118,8 +1119,8 @@ describe("room", () => {
       await prepareDisconnectedStorageUpdateTest<{
         items: LiveList<LiveObject<Record<string, number>>>;
       }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRoot(),
+        createSerializedList("0:1", "root", "items"),
         createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
       ]);
 
@@ -1317,7 +1318,7 @@ describe("room", () => {
   test("canUndo / canRedo", async () => {
     const { room, storage } = await prepareStorageTest<{
       a: number;
-    }>([createSerializedObject("0:0", { a: 1 })], 1);
+    }>([createSerializedRoot({ a: 1 })], 1);
 
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(false);
@@ -1334,7 +1335,7 @@ describe("room", () => {
   test("clearing undo/redo stack", async () => {
     const { room, storage } = await prepareStorageTest<{
       a: number;
-    }>([createSerializedObject("0:0", { a: 1 })], 1);
+    }>([createSerializedRoot({ a: 1 })], 1);
 
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(false);
@@ -1412,7 +1413,7 @@ describe("room", () => {
     test("batch without operations should not add an item to the undo stack", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         a: number;
-      }>([createSerializedObject("0:0", { a: 1 })], 1);
+      }>([createSerializedRoot({ a: 1 })], 1);
 
       storage.root.set("a", 2);
 
@@ -1430,10 +1431,7 @@ describe("room", () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -1474,10 +1472,7 @@ describe("room", () => {
         expectStorage,
         refRoom: refRoom,
       } = await prepareStorageTest<S, P, M, E>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -1527,8 +1522,8 @@ describe("room", () => {
       const { room, root, expectUpdates } = await prepareStorageUpdateTest<{
         items: LiveList<LiveObject<{ names: LiveList<string> }>>;
       }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRoot(),
+        createSerializedList("0:1", "root", "items"),
         createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
         createSerializedList("0:3", "0:2", "names"),
       ]);
@@ -1810,8 +1805,8 @@ describe("room", () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
         await prepareStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -1845,8 +1840,8 @@ describe("room", () => {
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
           "1:0",
           {
@@ -1878,8 +1873,8 @@ describe("room", () => {
         items2?: LiveList<string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
         ],
         1
@@ -1888,8 +1883,8 @@ describe("room", () => {
       expectStorage({ items: ["a"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["2:0", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items2" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["2:0", { type: CrdtType.LIST, parentId: "root", parentKey: "items2" }],
         [
           "2:1",
           {
@@ -1930,7 +1925,7 @@ describe("room", () => {
       const { room, refRoom, reconnect, refWss } = await prepareStorageTest<
         never,
         { x: number }
-      >([createSerializedObject("0:0", {})], 1);
+      >([createSerializedRoot()], 1);
 
       room.updatePresence({ x: 1 });
 
@@ -1963,7 +1958,7 @@ describe("room", () => {
     test("hasPendingStorageModifications", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
         await prepareStorageTest<{ x: number }>(
-          [createSerializedObject("0:0", { x: 0 })],
+          [createSerializedRoot({ x: 0 })],
           1
         );
 
@@ -1995,7 +1990,7 @@ describe("room", () => {
       expect(refStorageJson).toEqual({ x: 0 });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        createSerializedObject("0:0", { x: 0 }),
+        createSerializedRoot({ x: 0 }),
       ];
 
       reconnect(2, newInitStorage);
@@ -2559,7 +2554,7 @@ describe("room", () => {
     test("initialize room with initial storage should send operation only once", async () => {
       const { wss, expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
-      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList([]) });
+      }>([createSerializedRoot()], 1, { items: new LiveList([]) });
 
       expectStorage({
         items: [],
@@ -2578,7 +2573,7 @@ describe("room", () => {
                 type: OpCode.CREATE_LIST,
                 id: "1:0",
                 opId: "1:1",
-                parentId: "0:0",
+                parentId: "root",
                 parentKey: "items",
               },
             ],
