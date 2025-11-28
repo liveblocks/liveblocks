@@ -76,7 +76,7 @@ export default function Page() {
     <LiveblocksProvider publicApiKey={"{{SECRET_KEY}}"}>
       <RoomProvider id="my-room">
         <ClientSideSuspense fallback={<div>Loading…</div>}>
-          <ToDoList />
+          <TodoList />
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
