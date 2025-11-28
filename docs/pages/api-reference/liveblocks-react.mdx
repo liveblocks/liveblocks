@@ -4199,7 +4199,7 @@ for the `CREATE_THREAD_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "CREATE_THREAD_ERROR") {
+  if (error.context.type === "CREATE_THREAD_ERROR") {
     const { roomId, threadId, commentId, body, metadata } = error.context;
     console.log(`Problem creating thread ${threadId}`);
   }
@@ -4291,7 +4291,7 @@ for the `DELETE_THREAD_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_THREAD_ERROR") {
+  if (error.context.type === "DELETE_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem deleting thread ${threadId}`);
   }
@@ -4332,7 +4332,7 @@ look for the `EDIT_THREAD_METADATA_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "EDIT_THREAD_METADATA_ERROR") {
+  if (error.context.type === "EDIT_THREAD_METADATA_ERROR") {
     const { roomId, threadId, metadata } = error.context;
     console.log(`Problem editing thread metadata ${threadId}`);
   }
@@ -4370,7 +4370,7 @@ successful status change. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_THREAD_AS_RESOLVED_ERROR") {
+  if (error.context.type === "MARK_THREAD_AS_RESOLVED_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem marking thread as resolved ${threadId}`);
   }
@@ -4408,7 +4408,7 @@ the successful status change. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_THREAD_AS_UNRESOLVED_ERROR") {
+  if (error.context.type === "MARK_THREAD_AS_UNRESOLVED_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem marking thread as unresolved ${threadId}`);
   }
@@ -4495,7 +4495,7 @@ successful subscription. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
+  if (error.context.type === "SUBSCRIBE_TO_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem subscribing to thread ${threadId}`);
   }
@@ -4589,7 +4589,7 @@ confirmed a successful unsubscription. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
+  if (error.context.type === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem unsubscribing from thread ${threadId}`);
   }
@@ -4632,7 +4632,7 @@ look for the `CREATE_COMMENT_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "CREATE_COMMENT_ERROR") {
+  if (error.context.type === "CREATE_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem creating comment ${commentId}`);
   }
@@ -4675,7 +4675,7 @@ catch any errors that occur, add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "EDIT_COMMENT_ERROR") {
+  if (error.context.type === "EDIT_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem editing comment ${commentId}`);
   }
@@ -4715,7 +4715,7 @@ for the `DELETE_COMMENT_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_COMMENT_ERROR") {
+  if (error.context.type === "DELETE_COMMENT_ERROR") {
     const { roomId, threadId, commentId } = error.context;
     console.log(`Problem deleting comment ${commentId}`);
   }
@@ -4755,7 +4755,7 @@ for the `ADD_REACTION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "ADD_REACTION_ERROR") {
+  if (error.context.type === "ADD_REACTION_ERROR") {
     const { roomId, threadId, commentId, emoji } = error.context;
     console.log(`Problem adding reaction ${emoji} to comment ${commentId}`);
   }
@@ -4795,7 +4795,7 @@ the `REMOVE_REACTION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "REMOVE_REACTION_ERROR") {
+  if (error.context.type === "REMOVE_REACTION_ERROR") {
     const { roomId, threadId, commentId, emoji } = error.context;
     console.log(`Problem removing reaction ${emoji} from comment ${commentId}`);
   }
@@ -5168,7 +5168,7 @@ type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
+  if (error.context.type === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
     const { inboxNotificationId, roomId } = error.context;
     console.log(`Problem marking notification as read ${inboxNotificationId}`);
   }
@@ -5205,7 +5205,7 @@ occur, add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR") {
+  if (error.context.type === "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR") {
     console.log("Problem marking all notifications as read");
   }
 });
@@ -5242,7 +5242,7 @@ and look for the `DELETE_INBOX_NOTIFICATION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_INBOX_NOTIFICATION_ERROR") {
+  if (error.context.type === "DELETE_INBOX_NOTIFICATION_ERROR") {
     const { inboxNotificationId } = error.context;
     console.log(`Problem deleting notification ${inboxNotificationId}`);
   }
@@ -5278,7 +5278,7 @@ type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR") {
+  if (error.context.type === "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR") {
     console.log("Problem deleting all notifications");
   }
 });
@@ -5396,7 +5396,7 @@ add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+  if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
     const { roomId } = error.context;
     console.log(`Problem updating subscription settings for room ${roomId}`);
   }
@@ -5459,7 +5459,7 @@ add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+  if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
     const { roomId } = error.context;
     console.log(`Problem updating subscription settings for room ${roomId}`);
   }
