@@ -4209,17 +4209,25 @@ useErrorListener((error) => {
 
 ### useSearchComments [@badge=RoomProvider]
 
-Returns the result of searching comments by text within the current room. The
-result includes the ID and the plain text content of the matched comments along
-with the parent thread ID of the comment. The hook allows filtering by metadata
-and resolved status of the parent thread and presence and absence of attachments
-and mentions in the comment.
+Search comments in the current room using semantic search and various filters.
+Returns a list of results, including the ID and the plain text content of
+matched comments, and the thread ID of the comment’s parent. Use it to
+[create a search bar](#create-a-comments-search-bar).
 
 ```tsx
 import { useSearchComments } from "@liveblocks/react";
 
-const { results, error, isLoading } = useSearchComments();
+const { results, error, isLoading } = useSearchComments({
+  query: { text: "fruit" },
+});
+
+// [{ content: "I like apples", threadId: "th_xxx", commentId: "cm_xxx"  }, ...]
+console.log(results);
 ```
+
+Its semantic search finds results based on meaning, so a query like “fruit” also
+brings up related items such as “apples” or “oranges”, even if the exact words
+don’t match.
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="options" type="object">
@@ -4262,6 +4270,122 @@ const { results, error, isLoading } = useSearchComments();
     Any error that occurred while searching the threads.
   </PropertiesListItem>
 </PropertiesList>
+
+#### Create a comments search bar
+
+`useSearchComments` allows you to create a search bar for comments that exist
+within the current room. Linking to the `commentId` with a hash will highlight
+the comment on the page.
+
+```tsx
+import { useSearchComments } from "@liveblocks/react";
+import { useState } from "react";
+
+function SearchBar() {
+  const [search, setSearch] = useState("");
+
+  // +++
+  const { results, isLoading, error } = useSearchComments({
+    query: { text: search },
+  });
+  // +++
+
+  return (
+    <>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        results.map((result) => (
+          // +++
+          <a key={result.commentId} href={"#" + result.commentId}>
+            {result.content}
+          </a>
+          // +++
+        ))
+      )}
+    </>
+  );
+}
+```
+
+You could also add buttons that apply various filters, such as “Resolved” and
+“Unresolved”.
+
+```tsx title="Resolved/unresolved filter" isCollapsable isCollapsed
+import { useSearchComments } from "@liveblocks/react";
+import { useState } from "react";
+
+type ThreadResolved = "all" | "resolved" | "unresolved";
+
+function SearchBar() {
+  const [search, setSearch] = useState("");
+  // +++
+  const [searchResolved, searchResolved] = useState<ThreadResolved>("all");
+  // +++
+
+  // +++
+  const searchThreadResolved =
+    threadResolved === "all"
+      ? undefined
+      : threadResolved === "resolved"
+        ? true
+        : false;
+  // +++
+
+  const { results, isLoading, error } = useSearchComments({
+    query: {
+      text: search,
+      // +++
+      threadResolved: searchThreadResolved,
+      // +++
+    },
+  });
+
+  return (
+    <>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      // +++
+      <button
+        data-active={searchResolved === "all"}
+        onClick={() => setSearchResolved("all")}
+      >
+        All
+      </button>
+      <button
+        data-active={searchResolved === "resolved"}
+        onClick={() => setSearchResolved("resolved")}
+      >
+        Resolved
+      </button>
+      <button
+        data-active={searchResolved === "unresolved"}
+        onClick={() => setSearchResolved("unresolved")}
+      >
+        Resolved
+      </button>
+      // +++
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        results.map((result) => (
+          <a key={result.commentId} href={"#" + result.commentId}>
+            {result.content}
+          </a>
+        ))
+      )}
+    </>
+  );
+}
+```
 
 ### useDeleteThread [@badge=RoomProvider]
 
