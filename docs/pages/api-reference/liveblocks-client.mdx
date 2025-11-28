@@ -128,14 +128,14 @@ const client = createClient({
   >
     The URL of your back end’s [authentication endpoint](/docs/authentication)
     as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
     about [using a URL string](#createClientAuthEndpoint) and [using a
     callback](#createClientCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
     The public API key taken from your project’s
     [dashboard](/dashboard/apikeys). Generally not recommended for production
-    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    use. Either `authEndpoint` or `publicApiKey` are required. [Learn
     more](#createClientPublicKey).
   </PropertiesListItem>
   <PropertiesListItem name="throttle" type="number" defaultValue="100">
@@ -571,7 +571,7 @@ component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
-via `href`, but the room ID might not be enough for you to construct the URL ,
+via `href`, but the room ID might not be enough for you to construct the URL,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
@@ -1606,7 +1606,7 @@ console.log(status);
     The current room’s Storage status. `status` can be one of four types.
     </div>
 
-    - `"not-loaded` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
+    - `"not-loaded"` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
     - `"loading"` Storage is currently loading for the first time.
     - `"synchronizing"` Local Storage changes are currently being synchronized.
     - `"synchronized"` Local Storage changes have been synchronized.
@@ -1783,7 +1783,7 @@ const unsubscribe = room.subscribe(root, (updatedRoot) => {
 });
 ```
 
-If the order of updates is imporant in your application, and it’s important to
+If the order of updates is important in your application, and it’s important to
 ensure that your `async` function doesn’t start before the previous one
 finishes, you can use a package such as
 [`async-mutex`](https://www.npmjs.com/package/async-mutex) to help you with
@@ -2151,7 +2151,7 @@ let indicator = "⚪";
 const unsubscribe = room.subscribe("status", (status) => {
   switch (status) {
     case "connecting":
-      indiciator = "🟡";
+      indicator = "🟡";
       break;
     case "connected":
       indicator = "🟢";
@@ -3399,7 +3399,7 @@ attachments. Learn more about
 ```ts
 const comment = await room.editComment({
   threadId: "th_xxx",
-  commentId: "cm_xxx"
+  commentId: "cm_xxx",
   body: {
     version: 1,
     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
@@ -3417,7 +3417,7 @@ const comment = await room.editComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
   <PropertiesListItem name="attachmentIds" type="string">
@@ -3447,7 +3447,7 @@ await room.deleteComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
 </PropertiesList>
@@ -3474,7 +3474,7 @@ const reaction = await room.addReaction({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment to add a reaction to.
   </PropertiesListItem>
   <PropertiesListItem name="emoji" type="string" required>
@@ -3500,7 +3500,7 @@ await room.removeReaction({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment to remove a reaction from.
   </PropertiesListItem>
   <PropertiesListItem name="emoji" type="string" required>
@@ -3745,7 +3745,7 @@ await client.markAllInboxNotificationsAsRead();
 Marks an inbox notification as read, for the current user.
 
 ```ts
-await client.markAllInboxNotificationsAsRead("in_xxx");
+await client.markInboxNotificationAsRead("in_xxx");
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -5113,8 +5113,8 @@ Returns the number of elements.
 ```ts
 const list = new LiveList(["adrien", "jonathan"]);
 
-// 3
-list.length; // equals
+// 2
+list.length;
 ```
 
 <PropertiesList title="Returns">
@@ -5288,7 +5288,7 @@ list.toImmutable();
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="immutableStructure" type="object">
-    Returns a JavaScript object in the shape of your data structure.`ListList`
+    Returns a JavaScript object in the shape of your data structure. `ListList`
     is converted to an array, `LiveObject` to an object, and `LiveMap` to a map.
   </PropertiesListItem>
 </PropertiesList>

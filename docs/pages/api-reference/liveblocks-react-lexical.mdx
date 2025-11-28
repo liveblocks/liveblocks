@@ -177,7 +177,7 @@ import {
   FloatingComposer,
   // +++
   Toolbar,
-  //+++
+  // +++
 } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
@@ -755,7 +755,7 @@ import {
   FloatingComposer,
   // +++
   FloatingToolbar,
-  //+++
+  // +++
 } from "@liveblocks/react-lexical";
 
 const initialConfig = liveblocksConfig({
@@ -1020,8 +1020,8 @@ function Toolbar() {
 
 #### Customization [#FloatingComposer-customization]
 
-The `FloatingComposer` components acts as a wrapper around a [`Composer`][],
-near the current selection. You can treat the component like you would a `form`,
+The `FloatingComposer` component acts as a wrapper around a [`Composer`][], near
+the current selection. You can treat the component like you would a `form`,
 using classes, listeners, and more.
 
 ```tsx
@@ -1084,9 +1084,9 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   style={{ width: "350px" }}
   components={{
     Composer: () => (
-        <Composer.Form
+      <Composer.Form
         // +++
-          onComposerSubmit={(message, event) => {
+          onComposerSubmit={(comment, event) => {
             event.preventDefault();
 
             const thread = createThread({
@@ -1292,7 +1292,7 @@ function ThreadOverlay() {
 
   // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1536,7 +1536,7 @@ function ThreadOverlay() {
 
   // +++
   return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1793,7 +1793,7 @@ const isActive = useIsThreadActive(thread.id);
 ```
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="threadId" type="strinng" required>
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread.
   </PropertiesListItem>
 </PropertiesList>
@@ -1886,7 +1886,7 @@ The `isBlockNodeActive` helper is particularly useful for adding custom
 [`Toolbar.BlockSelector`][] items.
 
 ```tsx
-//+++
+// +++
 import { isBlockNodeActive, Toolbar } from "@liveblocks/react-lexical";
 // +++
 import { $setBlocksType } from "@lexical/selection";

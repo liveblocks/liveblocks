@@ -328,14 +328,14 @@ function App() {
   >
     The URL of your back end’s [authentication endpoint](/docs/authentication)
     as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
     about [using a URL string](#LiveblocksProviderAuthEndpoint) and [using a
     callback](#LiveblocksProviderCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
     The public API key taken from your project’s
     [dashboard](/dashboard/apikeys). Generally not recommended for production
-    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    use. Either `authEndpoint` or `publicApiKey` are required. [Learn
     more](#LiveblocksProviderPublicKey).
   </PropertiesListItem>
   <PropertiesListItem name="throttle" type="number" defaultValue="100">
@@ -856,7 +856,7 @@ component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
-via `href`, but the room ID might not be enough for you to construct the URL ,
+via `href`, but the room ID might not be enough for you to construct the URL,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
@@ -2968,7 +2968,7 @@ updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 
 #### Other ways to use presence
 
-`useMyPresence` is a more convenient way to update and view presence, reather
+`useMyPresence` is a more convenient way to update and view presence, rather
 than using [`useSelf`][] and [`useUpdateMyPresence`][] in combination.
 
 ```tsx
@@ -4533,24 +4533,6 @@ updateSettings({
     notifications.
   </PropertiesListItem>
 </PropertiesList>
-
-#### Error handling [#useSubscribeToThread-error-handling]
-
-`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
-that the subscription appears inactive instantly, before Liveblocks has
-confirmed a successful unsubscription. To catch any errors that occur, add
-[`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
-
-```tsx
-import { useErrorListener } from "@liveblocks/react/suspense";
-
-useErrorListener((error) => {
-  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
-    const { roomId, threadId } = error.context;
-    console.log(`Problem subscribing to thread ${threadId}`);
-  }
-});
-```
 
 ### useUnsubscribeFromThread [@badge=RoomProvider]
 

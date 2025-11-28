@@ -196,7 +196,7 @@ import { useAiChat } from "@liveblocks/react";
 
 function ChatWithTitle({ chatId }: { chatId: string }) {
   // +++
-  const { chat, error, isLoading } = useAiChat();
+  const { chat, error, isLoading } = useAiChat(chatId);
   // +++
 
   if (isLoading) {
@@ -1663,7 +1663,7 @@ function MyComposer() {
       attachments,
       metadata: {},
     });
-    //+++
+    // +++
   }
 
   return (
@@ -2973,7 +2973,7 @@ you can render each activity inside a single notification.
   inboxNotification={inboxNotification}
   kinds={{
     $alert: (props) => {
-      // Eached batched `activityData` is added to the `activities` array
+      // Each batched `activityData` is added to the `activities` array
       const { activities } = props.inboxNotification;
 
       return (

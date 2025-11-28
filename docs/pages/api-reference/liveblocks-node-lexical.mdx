@@ -72,7 +72,7 @@ const textContent = await withLexicalDocument(
 );
 
 // "My content"
-console.log(TextContent);
+console.log(textContent);
 ```
 
 ### Custom nodes
@@ -232,7 +232,7 @@ const docAsJSON = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
   // +++
   async (doc) => {
-    return doc.toJson();
+    return doc.toJSON();
   }
   // +++
 );

@@ -174,7 +174,7 @@ For more complex customization, instead read
 By passing elements as children, it’s possible to create a fully custom toolbar.
 
 ```tsx highlight="7"
-import { Toolbar } from "@liveblocks/react-lexical";
+import { Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 
 function CustomToolbar({ editor }: { editor: Editor | null }) {
@@ -938,8 +938,8 @@ function Toolbar({ editor }: { editor: Editor | null }) {
 
 #### Customization [#FloatingComposer-customization]
 
-The `FloatingComposer` components acts as a wrapper around a [`Composer`][],
-near the current selection. You can treat the component like you would a `form`,
+The `FloatingComposer` component acts as a wrapper around a [`Composer`][], near
+the current selection. You can treat the component like you would a `form`,
 using classes, listeners, and more.
 
 ```tsx
@@ -1008,9 +1008,9 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   style={{ width: "350px" }}
   components={{
     Composer: () => (
-        <Composer.Form
+      <Composer.Form
         // +++
-          onComposerSubmit={(message, event) => {
+          onComposerSubmit={(comment, event) => {
             event.preventDefault();
 
             const thread = createThread({
@@ -1226,7 +1226,7 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1483,7 +1483,7 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -1629,8 +1629,7 @@ offset that’s added when a thread is selected.
 
 The `HistoryVersionPreview` component allows you to display a preview of a
 specific version of your Tiptap editor’s content. It also contains a button and
-logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
-render a list of versions, see
+logic for restoring. To render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
 #### Usage [#HistoryVersionPreview-usage]
@@ -1990,7 +1989,7 @@ const liveblocks = useLiveblocksExtension({
     defaultValue="false"
     type="boolean"
   >
-    Experimental. Enable offline support using IndexedDB. This means the after
+    Experimental. Enable offline support using IndexedDB. This means that after
     the first load, documents will be stored locally and load instantly. [Learn
     more](#Offline-support).
   </PropertiesListItem>
@@ -2099,7 +2098,7 @@ It’s possible to enable offline support in your editor with an experimental
 option. This means that once a document has been opened, it’s saved locally on
 the browser, and can be shown instantly without a loading screen. As soon as
 Liveblocks connects, any remote changes will be synchronized, without any load
-spinner. Enable this by passing a `offlineSupport_experimental ` value.
+spinner. Enable this by passing a `offlineSupport_experimental` value.
 
 ```tsx
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
@@ -2324,7 +2323,6 @@ Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
 learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
-[`LiveblocksPlugin`]: #LiveblocksPlugin
 [`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
