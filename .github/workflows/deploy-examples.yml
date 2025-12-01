@@ -66,6 +66,9 @@ jobs:
           echo Triggering deployment for nextjs-comments-primitives
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_OEUy8nEYDuKAfOtVKyNy4w3mxoFb/FtJGZAxTFm; echo
 
+          echo Triggering deployment for nextjs-comments-search
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Spr2FA4X6qq9AVT072XA6RbpOndc/h4fqsUj4Il; echo
+
           echo Triggering deployment for nextjs-comments-tiptap
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_uNQF4JRW3CMnoA08UWmLfSVVev5K/NusDhfUIma; echo
 
