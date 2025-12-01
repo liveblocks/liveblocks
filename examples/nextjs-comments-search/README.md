@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments
+# Comments search
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments/preview">
@@ -20,7 +20,8 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build comments with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
+This example shows how to build searchable comments with
+[Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
 
@@ -29,7 +30,7 @@ This example shows how to build comments with [Liveblocks](https://liveblocks.io
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-comments --api-key
+npx create-liveblocks-app@latest --example nextjs-comments-search --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -64,7 +65,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-comments --vercel
+npx create-liveblocks-app@latest --example nextjs-comments-search --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -79,7 +80,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-comments)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-comments-search)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 

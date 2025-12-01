@@ -27,7 +27,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-search");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments");
 
   return (
     <RoomProvider id={roomId}>
