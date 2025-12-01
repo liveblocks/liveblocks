@@ -18,6 +18,7 @@ body {
     Droid Sans,
     Helvetica Neue,
     sans-serif;
+  font-size: 16px;
 }
 
 * {
@@ -54,7 +55,9 @@ main {
 }
 
 .thread,
-.composer {
+.composer,
+.search-results,
+.search-input {
   position: relative;
   border-radius: 0.75rem;
   overflow: hidden;
@@ -62,6 +65,51 @@ main {
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 4%),
     0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.search-input {
+  border: 0;
+  padding: 16px;
+  font-size: inherit;
+  outline-offset: -2px;
+
+  &::placeholder {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--lb-background);
+}
+
+.search-loading,
+.search-results-title {
+  font-weight: 400;
+  padding: 8px 12px 0;
+  color: var(--lb-foreground-tertiary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.search-loading {
+  padding-bottom: 4px;
+}
+
+.search-result {
+  display: block;
+  text-decoration: none;
+  color: var(--lb-foreground);
+  line-height: 1.5;
+  border-radius: 0.6rem;
+  margin: 4px;
+  padding: 6px 8px;
+
+  &:hover {
+    background-color: var(--lb-foreground-subtle);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
