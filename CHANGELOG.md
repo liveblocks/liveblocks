@@ -1,3 +1,65 @@
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
+
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
+
+## v3.10.1
+
+### `@liveblocks/lexical`
+
+- Fix a bug where a fresh provider is required by Lexical in order to initialize
+  properly by always requieting a new provider in the factory function
+
+### `@liveblocks/yjs`
+
+- Add `forceNewProvider` option to `getYjsProviderForRoom` and destroy existing
+  provider when requested
+
+## v3.10.0
+
+### `@liveblocks/client`
+
+- Tweak reconnection logic to not retry on specific 400 level error codes
+
+### `@liveblocks/node`
+
+- Prevents certain 400 level errors from being reported as a 403
+
+### `@liveblocks/react-ui`
+
+- Add `dropdownItems` prop to `Comment` (`commentDropdownItems` prop on
+  `Thread`) to allow customizing comments’ dropdown items in the default
+  components.
+- Fix scroll issues in some scenarios where `AiChat` would be rendered but
+  hidden.
+
+### `@liveblocks/react-tiptap`
+
+- Support for Tiptap v3.
+
+## v3.9.2
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support newer Claude variants:
+  Opus 4.1, Sonnet 4.5, and Haiku 4.5.
+
+## v3.9.1
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5 variants.
+
 ## v3.9.0
 
 ### `@liveblocks/react-ui`
@@ -239,8 +301,8 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## v3.4.0
 

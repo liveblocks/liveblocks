@@ -4,6 +4,7 @@ import {
   createSerializedList,
   createSerializedMap,
   createSerializedObject,
+  createSerializedRoot,
   prepareStorageTest,
 } from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
@@ -15,7 +16,7 @@ describe("Storage", () => {
   describe("subscribe generic", () => {
     test("simple action", async () => {
       const { room, storage } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
+        [createSerializedRoot({ a: 0 })],
         1
       );
 
@@ -42,7 +43,7 @@ describe("Storage", () => {
     test("remote action", async () => {
       const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{ a: number }>(
-          [createSerializedObject("0:0", { a: 0 })],
+          [createSerializedRoot({ a: 0 })],
           1
         );
 
@@ -51,13 +52,13 @@ describe("Storage", () => {
       const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "root" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "root" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -73,7 +74,7 @@ describe("Storage", () => {
     test("remote action with multipe updates on same object", async () => {
       const { room, storage, applyRemoteOperations } =
         await prepareStorageTest<{ a: number }>(
-          [createSerializedObject("0:0", { a: 0 })],
+          [createSerializedRoot({ a: 0 })],
           1
         );
 
@@ -82,14 +83,14 @@ describe("Storage", () => {
       const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
-        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "root" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "root" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -106,7 +107,7 @@ describe("Storage", () => {
       const { room, storage, assertUndoRedo } = await prepareStorageTest<{
         a: number;
         b: number;
-      }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
+      }>([createSerializedRoot({ a: 0, b: 0 })], 1);
 
       const callback = vi.fn();
 
@@ -144,8 +145,8 @@ describe("Storage", () => {
         child: LiveObject<{ b: number }>;
       }>(
         [
-          createSerializedObject("0:0", { a: 0 }),
-          createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+          createSerializedRoot({ a: 0 }),
+          createSerializedObject("0:1", { b: 0 }, "root", "child"),
         ],
         1
       );
@@ -184,10 +185,10 @@ describe("Storage", () => {
         childMap: LiveMap<string, string>;
       }>(
         [
-          createSerializedObject("0:0", { a: 0 }),
-          createSerializedObject("0:1", { b: 0 }, "0:0", "childObj"),
-          createSerializedList("0:2", "0:0", "childList"),
-          createSerializedMap("0:3", "0:0", "childMap"),
+          createSerializedRoot({ a: 0 }),
+          createSerializedObject("0:1", { b: 0 }, "root", "childObj"),
+          createSerializedList("0:2", "root", "childList"),
+          createSerializedMap("0:3", "root", "childMap"),
         ],
         1
       );
@@ -236,10 +237,7 @@ describe("Storage", () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -272,10 +270,7 @@ describe("Storage", () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -322,10 +317,7 @@ describe("Storage", () => {
       const { room, storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -344,7 +336,7 @@ describe("Storage", () => {
 
     test("calling undo during a batch should throw", async () => {
       const { room } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
+        [createSerializedRoot({ a: 0 })],
         1
       );
 
@@ -355,7 +347,7 @@ describe("Storage", () => {
 
     test("calling redo during a batch should throw", async () => {
       const { room } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
+        [createSerializedRoot({ a: 0 })],
         1
       );
 
@@ -372,8 +364,8 @@ describe("Storage", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -398,7 +390,7 @@ describe("Storage", () => {
     test("max undo-redo stack", async () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      }>([createSerializedRoot({ a: 0 })], 1);
 
       for (let i = 0; i < 100; i++) {
         storage.root.set("a", i + 1);
@@ -420,10 +412,7 @@ describe("Storage", () => {
       const { room, storage, expectStorage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 

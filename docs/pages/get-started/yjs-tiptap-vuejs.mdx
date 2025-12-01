@@ -2,7 +2,8 @@
 meta:
   title: "Get started with Liveblocks, Tiptap, Yjs, and Vue.js"
   parentTitle: "Get started"
-  description: "Learn how to get started Liveblocks, Tiptap, Yjs, and Vue.js."
+  description:
+    "Learn how to get started with Liveblocks, Tiptap, Yjs, and Vue.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -77,7 +78,7 @@ collaboration to your Vue.js application using the APIs from the
         extensions: [
           StarterKit.configure({
             // The Collaboration extension comes with its own history handling
-            history: false,
+            undoRedo: false,
           }),
           // Register the Yjs document with Tiptap
           Collaboration.configure({

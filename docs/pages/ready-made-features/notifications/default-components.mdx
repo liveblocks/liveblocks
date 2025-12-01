@@ -11,8 +11,9 @@ notification components.
 
 - Fully styled notification components, with an optional dark mode.
 - Customize through CSS variables and class names.
-- Receive notifications automatically triggered by Liveblocks
-  [Comments](/docs/ready-made-features/comments).
+- Receive collaboration notifications automatically triggered by Liveblocks
+  [Comments](/docs/ready-made-features/comments) or
+  [text editors](/docs/ready-made-features/multiplayer-editing/text-editor).
 - Receive fully custom notifications.
 
 ## InboxNotification
@@ -55,7 +56,13 @@ function Component() {
 
 #### Room titles
 
-Room titles displayed in notifications are obtained using the [`resolveRoomsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo) function in [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider). This allows you to display meaningful document or room names instead of room IDs in your notifications. Learn more in our guide on [how to customize room names in inbox notifications](/guides/how-to-customize-room-names-in-inbox-notifications).
+Room titles displayed in notifications are obtained using the
+[`resolveRoomsInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo)
+function in
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+This allows you to display meaningful document or room names instead of room IDs
+in your notifications. Learn more in our guide on
+[how to customize room names in inbox notifications](/guides/how-to-customize-room-names-in-inbox-notifications).
 
 #### Rendering different components
 

@@ -19,11 +19,17 @@ const providersMap = new WeakMap<OpaqueRoom, LiveblocksYjsProvider>();
  */
 const getYjsProviderForRoom = (
   room: OpaqueRoom,
-  options: ProviderOptions = {}
+  options: ProviderOptions = {},
+  forceNewProvider: boolean = false
 ): LiveblocksYjsProvider => {
   const provider = providersMap.get(room);
   if (provider !== undefined) {
-    return provider;
+    if (!forceNewProvider) {
+      return provider;
+    }
+    // we're going to get a new provider, so we need to destroy the old one
+    provider.destroy();
+    providersMap.delete(room);
   }
   const doc = new Doc();
   const newProvider = new LiveblocksYjsProvider(room, doc, options);

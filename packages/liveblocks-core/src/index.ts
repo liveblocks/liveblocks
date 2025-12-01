@@ -233,6 +233,7 @@ export type {
 } from "./protocol/Comments";
 export type { QueryMetadata } from "./protocol/Comments";
 export type {
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDataWithDeleteInfo,
@@ -298,11 +299,11 @@ export type {
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
 export { CrdtType } from "./protocol/SerializedCrdt";
-export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
+  RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,

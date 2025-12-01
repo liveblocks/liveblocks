@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
         pkg:
           [
             "@liveblocks/core",
@@ -87,7 +87,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -131,7 +131,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -175,7 +175,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 
@@ -210,7 +210,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.4.1]
+        node-version: [22.21.0]
 
     timeout-minutes: 60
 

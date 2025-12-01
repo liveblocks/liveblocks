@@ -328,14 +328,14 @@ function App() {
   >
     The URL of your back end’s [authentication endpoint](/docs/authentication)
     as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
     about [using a URL string](#LiveblocksProviderAuthEndpoint) and [using a
     callback](#LiveblocksProviderCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
     The public API key taken from your project’s
     [dashboard](/dashboard/apikeys). Generally not recommended for production
-    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    use. Either `authEndpoint` or `publicApiKey` are required. [Learn
     more](#LiveblocksProviderPublicKey).
   </PropertiesListItem>
   <PropertiesListItem name="throttle" type="number" defaultValue="100">
@@ -856,7 +856,7 @@ component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
-via `href`, but the room ID might not be enough for you to construct the URL ,
+via `href`, but the room ID might not be enough for you to construct the URL,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
@@ -952,7 +952,7 @@ function App() {
 }
 ```
 
-#### Group mentions
+##### Group mentions
 
 To support group mentions in [Comments](/docs/ready-made-features/comments) and
 [Text Editor](/docs/ready-made-features/text-editor), you can return a list of
@@ -1012,7 +1012,7 @@ ID or group ID), etc.
 {
   kind: "group",
   id: "here",
-  members: ["user-1", "user-2"],
+  userIds: ["user-1", "user-2"],
 }
 ```
 
@@ -1274,13 +1274,13 @@ const { chats, error, isLoading } = useAiChats();
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="chats" type="AiChat[]">
+  <PropertiesListItem name="chats" type="AiChat[] | undefined">
     An array of AI chats created by the current user.
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the chats are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the chats. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-error-handling).
   </PropertiesListItem>
@@ -1296,7 +1296,7 @@ const { chats, error, isLoading } = useAiChats();
     Whether more chats are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more chats. [Learn
     more](/docs/api-reference/liveblocks-react#useAiChats-pagination).
   </PropertiesListItem>
@@ -1493,7 +1493,7 @@ chat, and the AI’s response.
 hook are available.
 
 ```tsx
-import { useAiChat } from "@liveblocks/react/suspense";
+import { useAiChat } from "@liveblocks/react";
 
 const { chat, error, isLoading } = useAiChat("my-chat-id");
 ```
@@ -1505,13 +1505,13 @@ const { chat, error, isLoading } = useAiChat("my-chat-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="chat" type="AiChat | null">
+  <PropertiesListItem name="chat" type="AiChat | undefined">
     The AI chat object containing title, metadata, and other properties.
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the chat information is currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the chat information.
   </PropertiesListItem>
 </PropertiesList>
@@ -1523,7 +1523,7 @@ has not been set yet. You can display a default title in this case, and the
 title will be displayed once generated.
 
 ```tsx
-import { useAiChat } from "@liveblocks/react/suspense";
+import { useAiChat } from "@liveblocks/react";
 
 function ChatTitle() {
   const { chat, error, isLoading } = useAiChat("my-chat-id");
@@ -1711,6 +1711,9 @@ import { useSendAiMessage } from "@liveblocks/react";
 
 const sendAiMessage = useSendAiMessage("my-chat-id");
 const message = sendAiMessage("Hello world");
+
+//  { id: "ms_gw1wEn...", chatId: "my-chat-id", content: [...], ...}
+console.log(message);
 ```
 
 ### useAiChatMessages
@@ -1731,13 +1734,60 @@ const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="messages" type="AiChatMessage[]">
+  <PropertiesListItem name="messages" type="AiChatMessage[] | undefined">
     An array of messages in the AI chat.
+
+    <div className="-mt-1">
+    ```tsx isCollapsable isCollapsed title="Example messages"
+    [
+      {
+        "id": "ms_gw1wENvliU471QuojwVbO",
+        "chatId": "my-chat-id",
+        "parentId": null,
+        "createdAt": "2025-09-30T15:37:01.000Z",
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello"
+          }
+        ],
+        "navigation": {
+          "parent": null,
+          "prev": null,
+          "next": null
+        }
+      },
+      {
+        "id": "ms_dwoLgXARKgJT4zAjkktv6",
+        "chatId": "my-chat-id",
+        "parentId": "ms_gw1wENvliU471QuojwVbO",
+        "createdAt": "2025-09-30T15:37:01.000Z",
+        "copilotId": "co_lxYkxUdt08d01sJIBUZhg",
+        "role": "assistant",
+        "status": "completed",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hi there! How can I help you today?\n",
+            "t": 2783
+          }
+        ],
+        "navigation": {
+          "parent": "ms_gw1wENvliU471QuojwVbO",
+          "prev": null,
+          "next": null
+        }
+      }
+    ]
+    ```
+    </div>
+
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the messages are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the messages.
   </PropertiesListItem>
 </PropertiesList>
@@ -2031,11 +2081,11 @@ function Whiteboard() {
 #### Props [#RegisterAiKnowledge-props]
 
 <PropertiesList>
-  <PropertiesListItem name="description" type="string" isRequired>
+  <PropertiesListItem name="description" type="string" required>
     A clear description of what this knowledge represents. This helps the AI
     understand the context and relevance of the provided information.
   </PropertiesListItem>
-  <PropertiesListItem name="value" type="Json" isRequired>
+  <PropertiesListItem name="value" type="Json" required>
     The actual data or information to share with the AI. Can be a string,
     object, array, or any JSON-serializable information that offers context
     relevant to your application or user.
@@ -2207,11 +2257,11 @@ function Chat() {
 #### Props [#RegisterAiTool-props]
 
 <PropertiesList>
-  <PropertiesListItem name="name" type="string" isRequired>
+  <PropertiesListItem name="name" type="string" required>
     Unique name for the tool. This is used internally to identify and manage the
     tool.
   </PropertiesListItem>
-  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" isRequired>
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" required>
     The tool definition created with
     [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool).
   </PropertiesListItem>
@@ -2918,7 +2968,7 @@ updateMyPresence({ selectedId: "xxx" }, { addToHistory: true });
 
 #### Other ways to use presence
 
-`useMyPresence` is a more convenient way to update and view presence, reather
+`useMyPresence` is a more convenient way to update and view presence, rather
 than using [`useSelf`][] and [`useUpdateMyPresence`][] in combination.
 
 ```tsx
@@ -3880,7 +3930,7 @@ the latest 50 threads.
 hook are available.
 
 ```tsx
-import { useThreads } from "@liveblocks/react/suspense";
+import { useThreads } from "@liveblocks/react";
 
 const { threads, error, isLoading } = useThreads();
 ```
@@ -3925,13 +3975,14 @@ function Component() {
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="threads" type="ThreadData[]">
-    An array of threads within the current room.
+  <PropertiesListItem name="threads" type="ThreadData[] | undefined">
+    An array of threads within the current room, or `undefined` if not yet
+    loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the threads are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the threads.
   </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
@@ -3946,7 +3997,7 @@ function Component() {
     Whether more threads are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more threads. [Learn
     more](/docs/api-reference/liveblocks-react#useThreads-pagination).
   </PropertiesListItem>
@@ -4070,7 +4121,7 @@ loading errors and errors that occur when fetching more threads.
 
 ```tsx
 import { Thread } from "@liveblocks/react-ui";
-import { useThreads } from "@liveblocks/react/suspense";
+import { useThreads } from "@liveblocks/react";
 
 function Inbox() {
   const { threads, error, fetchMore, fetchMoreError } = useThreads();
@@ -4149,11 +4200,191 @@ for the `CREATE_THREAD_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "CREATE_THREAD_ERROR") {
+  if (error.context.type === "CREATE_THREAD_ERROR") {
     const { roomId, threadId, commentId, body, metadata } = error.context;
     console.log(`Problem creating thread ${threadId}`);
   }
 });
+```
+
+### useSearchComments [@badge=RoomProvider]
+
+Search comments in the current room using semantic search and various filters.
+Returns a list of results, including the ID and the plain text content of
+matched comments, and the thread ID of the comment’s parent. Use it to
+[create a search bar](#create-a-comments-search-bar).
+
+```tsx
+import { useSearchComments } from "@liveblocks/react";
+
+const { results, error, isLoading } = useSearchComments({
+  query: { text: "fruit" },
+});
+
+// [{ content: "I like apples", threadId: "th_xxx", commentId: "cm_xxx"  }, ...]
+console.log(results);
+```
+
+Its semantic search finds results based on meaning, so a query like “fruit” also
+brings up related items such as “apples” or “oranges”, even if the exact words
+don’t match.
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options" type="object">
+    Configuration object.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.query" type="SearchCommentsQuery">
+    Optional query to filter comments by metadata and resolved status of the
+    parent thread, and presence and absence of attachments and mentions in the
+    comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.query.text" type="string" required>
+    Text to search within comment content. Uses rich text and vector search for
+    relevance.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.query.threadMetadata"
+    type="Partial<QueryMetadata>"
+  >
+    Metadata to filter threads by.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.query.threadResolved" type="boolean">
+    Whether to only return comments from threads that have attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.query.hasAttachments" type="boolean">
+    Whether to only return comments that have attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.query.hasMentions" type="boolean">
+    Whether to only return comments that have mentions.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="results" type="ThreadData[] | undefined">
+    An array of matched comments with the parent thread they belong to.
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the results are currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while searching the threads.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Create a comments search bar
+
+`useSearchComments` allows you to create a search bar for comments that exist
+within the current room. Linking to the `commentId` with a hash will highlight
+the comment on the page.
+
+```tsx
+import { useSearchComments } from "@liveblocks/react";
+import { useState } from "react";
+
+function SearchBar() {
+  const [search, setSearch] = useState("");
+
+  // +++
+  const { results, isLoading, error } = useSearchComments({
+    query: { text: search },
+  });
+  // +++
+
+  return (
+    <>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        results.map((result) => (
+          // +++
+          <a key={result.commentId} href={"#" + result.commentId}>
+            {result.content}
+          </a>
+          // +++
+        ))
+      )}
+    </>
+  );
+}
+```
+
+You could also add buttons that apply various filters, such as “Resolved” and
+“Unresolved”.
+
+```tsx title="Resolved/unresolved filter" isCollapsable isCollapsed
+import { useSearchComments } from "@liveblocks/react";
+import { useState } from "react";
+
+type ThreadResolved = "all" | "resolved" | "unresolved";
+
+function SearchBar() {
+  const [search, setSearch] = useState("");
+  // +++
+  const [searchResolved, searchResolved] = useState<ThreadResolved>("all");
+  // +++
+
+  // +++
+  const searchThreadResolved =
+    threadResolved === "all"
+      ? undefined
+      : threadResolved === "resolved"
+        ? true
+        : false;
+  // +++
+
+  const { results, isLoading, error } = useSearchComments({
+    query: {
+      text: search,
+      // +++
+      threadResolved: searchThreadResolved,
+      // +++
+    },
+  });
+
+  return (
+    <>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      // +++
+      <button
+        data-active={searchResolved === "all"}
+        onClick={() => setSearchResolved("all")}
+      >
+        All
+      </button>
+      <button
+        data-active={searchResolved === "resolved"}
+        onClick={() => setSearchResolved("resolved")}
+      >
+        Resolved
+      </button>
+      <button
+        data-active={searchResolved === "unresolved"}
+        onClick={() => setSearchResolved("unresolved")}
+      >
+        Resolved
+      </button>
+      // +++
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
+        results.map((result) => (
+          <a key={result.commentId} href={"#" + result.commentId}>
+            {result.content}
+          </a>
+        ))
+      )}
+    </>
+  );
+}
 ```
 
 ### useDeleteThread [@badge=RoomProvider]
@@ -4185,7 +4416,7 @@ for the `DELETE_THREAD_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_THREAD_ERROR") {
+  if (error.context.type === "DELETE_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem deleting thread ${threadId}`);
   }
@@ -4226,7 +4457,7 @@ look for the `EDIT_THREAD_METADATA_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "EDIT_THREAD_METADATA_ERROR") {
+  if (error.context.type === "EDIT_THREAD_METADATA_ERROR") {
     const { roomId, threadId, metadata } = error.context;
     console.log(`Problem editing thread metadata ${threadId}`);
   }
@@ -4264,7 +4495,7 @@ successful status change. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_THREAD_AS_RESOLVED_ERROR") {
+  if (error.context.type === "MARK_THREAD_AS_RESOLVED_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem marking thread as resolved ${threadId}`);
   }
@@ -4302,7 +4533,7 @@ the successful status change. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_THREAD_AS_UNRESOLVED_ERROR") {
+  if (error.context.type === "MARK_THREAD_AS_UNRESOLVED_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem marking thread as unresolved ${threadId}`);
   }
@@ -4389,7 +4620,7 @@ successful subscription. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
+  if (error.context.type === "SUBSCRIBE_TO_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem subscribing to thread ${threadId}`);
   }
@@ -4427,24 +4658,6 @@ updateSettings({
     notifications.
   </PropertiesListItem>
 </PropertiesList>
-
-#### Error handling [#useSubscribeToThread-error-handling]
-
-`useUnsubscribeFromThread` unsubscribes from threads optimistically, meaning
-that the subscription appears inactive instantly, before Liveblocks has
-confirmed a successful unsubscription. To catch any errors that occur, add
-[`useErrorListener`][] and look for the `UNSUBSCRIBE_FROM_THREAD_ERROR` type.
-
-```tsx
-import { useErrorListener } from "@liveblocks/react/suspense";
-
-useErrorListener((error) => {
-  if (error.context.case === "SUBSCRIBE_TO_THREAD_ERROR") {
-    const { roomId, threadId } = error.context;
-    console.log(`Problem subscribing to thread ${threadId}`);
-  }
-});
-```
 
 ### useUnsubscribeFromThread [@badge=RoomProvider]
 
@@ -4501,7 +4714,7 @@ confirmed a successful unsubscription. To catch any errors that occur, add
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
+  if (error.context.type === "UNSUBSCRIBE_FROM_THREAD_ERROR") {
     const { roomId, threadId } = error.context;
     console.log(`Problem unsubscribing from thread ${threadId}`);
   }
@@ -4544,7 +4757,7 @@ look for the `CREATE_COMMENT_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "CREATE_COMMENT_ERROR") {
+  if (error.context.type === "CREATE_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem creating comment ${commentId}`);
   }
@@ -4587,7 +4800,7 @@ catch any errors that occur, add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "EDIT_COMMENT_ERROR") {
+  if (error.context.type === "EDIT_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem editing comment ${commentId}`);
   }
@@ -4627,7 +4840,7 @@ for the `DELETE_COMMENT_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_COMMENT_ERROR") {
+  if (error.context.type === "DELETE_COMMENT_ERROR") {
     const { roomId, threadId, commentId } = error.context;
     console.log(`Problem deleting comment ${commentId}`);
   }
@@ -4667,7 +4880,7 @@ for the `ADD_REACTION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "ADD_REACTION_ERROR") {
+  if (error.context.type === "ADD_REACTION_ERROR") {
     const { roomId, threadId, commentId, emoji } = error.context;
     console.log(`Problem adding reaction ${emoji} to comment ${commentId}`);
   }
@@ -4707,7 +4920,7 @@ the `REMOVE_REACTION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "REMOVE_REACTION_ERROR") {
+  if (error.context.type === "REMOVE_REACTION_ERROR") {
     const { roomId, threadId, commentId, emoji } = error.context;
     console.log(`Problem removing reaction ${emoji} from comment ${commentId}`);
   }
@@ -4722,7 +4935,7 @@ Returns a presigned URL for an attachment by its ID.
 hook are available.
 
 ```tsx
-import { useAttachmentUrl } from "@liveblocks/react/suspense";
+import { useAttachmentUrl } from "@liveblocks/react";
 
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
@@ -4734,13 +4947,14 @@ const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="url" type="string | null">
-    The presigned URL for the attachment, or null if not yet loaded.
+  <PropertiesListItem name="url" type="string | undefined">
+    The presigned URL for the attachment, or `undefined` if not found or not yet
+    loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the URL is currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the URL.
   </PropertiesListItem>
 </PropertiesList>
@@ -4755,7 +4969,7 @@ fetches the latest 50 items. Inbox notifications are
 meaning notifications from outside the current room are received.
 
 ```tsx
-import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { useInboxNotifications } from "@liveblocks/react";
 
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
@@ -4792,20 +5006,24 @@ function Inbox() {
   <PropertiesListItem name="options" type="object">
     Optional configuration object.
   </PropertiesListItem>
-  <PropertiesListItem name="option.query" type="InboxNotificationsQuery">
+  <PropertiesListItem name="options.query" type="InboxNotificationsQuery">
     Optional query to filter notifications by room ID or kind. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-query).
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
-    An array of inbox notifications for the current user.
+  <PropertiesListItem
+    name="inboxNotifications"
+    type="InboxNotificationData[] | undefined"
+  >
+    An array of inbox notifications for the current user, or `undefined` if not
+    yet loaded (in non-Suspense version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the notifications are currently being loaded.
   </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | null">
+  <PropertiesListItem name="error" type="Error | undefined">
     Any error that occurred while loading the notifications.
   </PropertiesListItem>
   <PropertiesListItem name="hasFetchedAll" type="boolean">
@@ -4820,7 +5038,7 @@ function Inbox() {
     Whether more notifications are currently being fetched. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
   </PropertiesListItem>
-  <PropertiesListItem name="fetchMoreError" type="Error | null">
+  <PropertiesListItem name="fetchMoreError" type="Error | undefined">
     Any error that occurred while fetching more notifications. [Learn
     more](/docs/api-reference/liveblocks-react#useInboxNotifications-pagination).
   </PropertiesListItem>
@@ -4922,7 +5140,7 @@ loading errors and errors that occur when fetching more inbox notifications.
 
 ```tsx
 import { InboxNotification } from "@liveblocks/react-ui";
-import { useInboxNotifications } from "@liveblocks/react/suspense";
+import { useInboxNotifications } from "@liveblocks/react";
 
 function Inbox() {
   const { inboxNotifications, error, fetchMore, fetchMoreError } =
@@ -5003,7 +5221,7 @@ Returns the number of unread inbox notifications for the current user.
 hook are available.
 
 ```tsx
-import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react";
 
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
@@ -5024,8 +5242,16 @@ const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="count" type="number">
-    The number of unread inbox notifications for the current user.
+  <PropertiesListItem name="count" type="number | undefined">
+    The number of unread inbox notifications for the current user, or
+    `undefined` if not yet loaded (in non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the number of unread inbox notifications is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the number of unread inbox
+    notifications.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5080,7 +5306,7 @@ type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
+  if (error.context.type === "MARK_INBOX_NOTIFICATION_AS_READ_ERROR") {
     const { inboxNotificationId, roomId } = error.context;
     console.log(`Problem marking notification as read ${inboxNotificationId}`);
   }
@@ -5117,7 +5343,7 @@ occur, add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR") {
+  if (error.context.type === "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR") {
     console.log("Problem marking all notifications as read");
   }
 });
@@ -5154,7 +5380,7 @@ and look for the `DELETE_INBOX_NOTIFICATION_ERROR` type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_INBOX_NOTIFICATION_ERROR") {
+  if (error.context.type === "DELETE_INBOX_NOTIFICATION_ERROR") {
     const { inboxNotificationId } = error.context;
     console.log(`Problem deleting notification ${inboxNotificationId}`);
   }
@@ -5190,7 +5416,7 @@ type.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR") {
+  if (error.context.type === "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR") {
     console.log("Problem deleting all notifications");
   }
 });
@@ -5308,7 +5534,7 @@ add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+  if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
     const { roomId } = error.context;
     console.log(`Problem updating subscription settings for room ${roomId}`);
   }
@@ -5371,7 +5597,7 @@ add [`useErrorListener`][] and look for the
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  if (error.context.case === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+  if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
     const { roomId } = error.context;
     console.log(`Problem updating subscription settings for room ${roomId}`);
   }
@@ -5622,7 +5848,7 @@ resolver function to the [`resolveUsers`][] option in [`createClient`][] or
 hook are available.
 
 ```tsx
-import { useUser } from "@liveblocks/react/suspense";
+import { useUser } from "@liveblocks/react";
 
 const { user, error, isLoading } = useUser("user-id");
 ```
@@ -5634,8 +5860,15 @@ const { user, error, isLoading } = useUser("user-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="user" type="User | null">
-    The user information, or null if not found.
+  <PropertiesListItem name="user" type="User | undefined">
+    The user information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the user information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the user information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5649,7 +5882,7 @@ or [`LiveblocksProvider`][].
 hook are available.
 
 ```tsx
-import { useRoomInfo } from "@liveblocks/react/suspense";
+import { useRoomInfo } from "@liveblocks/react";
 
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
@@ -5661,8 +5894,15 @@ const { info, error, isLoading } = useRoomInfo("room-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="info" type="RoomInfo | null">
-    The room information, or null if not found.
+  <PropertiesListItem name="info" type="RoomInfo | undefined">
+    The room information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the room information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the room information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5676,7 +5916,7 @@ provide a resolver function to the [`resolveGroupsInfo`][] option in
 hook are available.
 
 ```tsx
-import { useGroupInfo } from "@liveblocks/react/suspense";
+import { useGroupInfo } from "@liveblocks/react";
 
 const { info, error, isLoading } = useGroupInfo("group-id");
 ```
@@ -5688,8 +5928,15 @@ const { info, error, isLoading } = useGroupInfo("group-id");
 </PropertiesList>
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="info" type="GroupInfo | null">
-    The group information, or null if not found.
+  <PropertiesListItem name="info" type="GroupInfo | undefined">
+    The group information, or `undefined` if not found or not yet loaded (in
+    non-Suspense version).
+  </PropertiesListItem>
+  <PropertiesListItem name="isLoading" type="boolean">
+    Whether the group information is currently being loaded.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the group information.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5701,7 +5948,7 @@ Returns metadata for a given URL.
 hook are available.
 
 ```tsx
-import { useUrlMetadata } from "@liveblocks/react/suspense";
+import { useUrlMetadata } from "@liveblocks/react";
 
 const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
 
@@ -5716,13 +5963,14 @@ const { metadata, error, isLoading } = useUrlMetadata("https://liveblocks.io");
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="metadata" type="UrlMetadata | undefined">
-    The metadata for the URL.
-  </PropertiesListItem>
-  <PropertiesListItem name="error" type="Error | undefined">
-    Any error that occurred while loading the metadata.
+    The metadata for the URL, or `undefined` if not yet loaded (in non-Suspense
+    version).
   </PropertiesListItem>
   <PropertiesListItem name="isLoading" type="boolean">
     Whether the metadata is currently loading.
+  </PropertiesListItem>
+  <PropertiesListItem name="error" type="Error | undefined">
+    Any error that occurred while loading the metadata.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -6138,107 +6386,6 @@ And the following timeline:
   `root.animals` gets re-evaluated, and now it returns `["🦁", "🦊"]`.
 - Because the previous value and this value are different, the component will
   rerender, seeing the updated value.
-
-## Deprecated
-
-### useStorageStatus [@badge=RoomProvider]
-
-<Banner title="Deprecated" type="error">
-
-This is no longer supported. Starting with 2.12, we recommend using
-[`useSyncStatus`][] instead for tracking sync status, because it will reflect
-sync status of all parts of Liveblocks, not just Storage.
-
-</Banner>
-
-Returns the current storage status of the room, and will re-render your
-component whenever it changes. A `{ smooth: true }` option is also available,
-which prevents quick changes between states, making it ideal for
-[rendering a synchronization badge in your app](#display-synchronization-badge).
-
-```ts
-import { useStorageStatus } from "@liveblocks/react";
-
-const storageStatus = useStorageStatus();
-
-// "not-loaded" | "loading" | "synchronizing" | "synchronized"
-console.log(storageStatus);
-```
-
-👉 A [Suspense version][] of this hook is also available.
-
-```ts
-import { useStorageStatus } from "@liveblocks/react/suspense";
-
-const storageStatus = useStorageStatus();
-
-// "synchronizing" | "synchronized"
-console.log(storageStatus);
-```
-
-### useBatch [@badge=RoomProvider]
-
-<Banner title="Deprecated" type="error">
-
-This is no longer supported. Starting with 0.18, we recommend using
-[`useMutation`][] for writing to Storage, which will automatically batch all
-mutations.
-
-</Banner>
-
-Returns a function that batches Storage and Presence modifications made during
-the given function. Each modification is grouped together, which means that
-other clients receive the changes as a single message after the batch function
-has run. Every modification made during the batch is merged into a single
-history item (undo/redo).
-
-```tsx
-import { useBatch } from "@liveblocks/react/suspense";
-
-const batch = useBatch();
-batch(() => {
-  // All modifications made in this callback are batched
-});
-```
-
-Note that `batch` cannot take an `async` function.
-
-```tsx
-// ❌ Won't work
-batch(async () => /* ... */);
-
-// ✅ Will work
-batch(() => /*... */);
-```
-
-### useRoomNotificationSettings [@badge=RoomProvider]
-
-<Banner title="Deprecated" type="error">
-
-This hook was renamed to [`useRoomSubscriptionSettings`][] in 2.24 and removed
-in 3.0, read more in our [migration guide](/docs/platform/upgrading/2.24).
-
-</Banner>
-
-Returns the user’s subscription settings for the current room and a function to
-update them. Updating this setting will change which
-[`inboxNotifications`](#useInboxNotifications) the current user receives in the
-current room.
-
-### useUpdateRoomNotificationSettings [@badge=RoomProvider]
-
-<Banner title="Deprecated" type="error">
-
-This hook was renamed to [`useUpdateRoomSubscriptionSettings`][] in 2.24 and
-removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
-
-</Banner>
-
-Returns a function that updates the user’s subscription settings for the current
-room. Updating this setting will change which
-[`inboxNotifications`](#useInboxNotifications) the current user receives in the
-current room.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext

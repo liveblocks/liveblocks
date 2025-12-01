@@ -72,7 +72,7 @@ function App() {
 ### Realtime editing
 
 Your document can be edited in real-time by multiple users at once. Each user
-renders a cursors on screen that updates live as they move, select, and edit.
+renders a cursor on screen that updates live as they move, select, and edit.
 
 <Figure>
   <Image
@@ -85,8 +85,8 @@ renders a cursors on screen that updates live as they move, select, and edit.
 
 When [authenticating your users](/docs/authentication) with
 [`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) or
-[`identifyUsers`](/docs/api-reference/liveblocks-node#id-tokens), pass `name`
-and `color` properties to their `userInfo` to add their cursor information.
+[`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens), pass `name` and
+`color` properties to their `userInfo` to add their cursor information.
 
 ```js
 userInfo: {
@@ -111,9 +111,7 @@ as seen below.
   />
 </Figure>
 
-Add
-[`Toolbar`](http://localhost:3001/docs/api-reference/liveblocks-react-tiptap#Toolbar)
-and
+Add [`Toolbar`](/docs/api-reference/liveblocks-react-tiptap#Toolbar) and
 [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
 to enable these features.
 
@@ -202,7 +200,7 @@ Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
 alongside
 [`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads)
 and
-[`Anchoredthreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads)
+[`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads)
 to render your comments to the page.
 
 ```tsx
@@ -316,7 +314,7 @@ Learn more about
 Liveblocks Tiptap has an experimental option that enables offline support.
 Offline support means that once a document has been opened, it’s saved locally
 on the browser, and can be shown instantly without a loading screen. Enable this
-by passing a `offlineSupport_experimental ` value.
+by passing a `offlineSupport_experimental` value.
 
 ```tsx
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";

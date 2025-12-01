@@ -3,7 +3,7 @@ meta:
   title: "Get started with Liveblocks, Tiptap, Yjs, and JavaScript"
   parentTitle: "Get started"
   description:
-    "Learn how to get started Liveblocks, Tiptap, Yjs, and JavaScript."
+    "Learn how to get started with Liveblocks, Tiptap, Yjs, and JavaScript."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -79,13 +79,13 @@ collaboration to your JavaScript application using the APIs from the
       const yDoc = yProvider.getYDoc();
 
       // Set up the Tiptap editor
-      const element = document.querySelector("editor");
+      const element = document.querySelector("#editor");
       const editor = new Editor({
         element,
         extensions: [
           StarterKit.configure({
             // The Collaboration extension comes with its own history handling
-            history: false,
+            undoRedo: false,
           }),
           // Register the Yjs document with Tiptap
           Collaboration.configure({

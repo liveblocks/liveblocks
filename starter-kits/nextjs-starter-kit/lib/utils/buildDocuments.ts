@@ -42,6 +42,7 @@ export function buildDocument(room: RoomData): Document {
   const groups: Document["accesses"]["groups"] = {};
   Object.entries(room.groupsAccesses).map(([id, accessValue]) => {
     if (accessValue) {
+      // @ts-ignore
       groups[id] = roomAccessesToDocumentAccess(accessValue);
     }
   });
@@ -49,6 +50,7 @@ export function buildDocument(room: RoomData): Document {
   const users: Document["accesses"]["users"] = {};
   Object.entries(room.usersAccesses).map(([id, accessValue]) => {
     if (accessValue) {
+      // @ts-ignore
       users[id] = roomAccessesToDocumentAccess(accessValue);
     }
   });

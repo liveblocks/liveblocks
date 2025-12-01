@@ -5,28 +5,16 @@ meta:
   description: "Learn more about tenants"
 ---
 
-Tenants allow you to compartmentalize Liveblocks resources, such as rooms (and
-everything associated with a room, including comments and storage), as well as
-inbox notifications and AI Copilot Knowledge (soon).
+Tenants allow you to compartmentalize Liveblocks resources, such as inbox
+notifications, rooms, and everything associated with rooms such as threads, text
+editors, Yjs, Storage. Each tenant represents a separate organization or
+customer in your system, meaning you can easily add a workspace/org switcher to
+your application, with each workspace having its own notification inbox.
 
-Tenants represent organizations or customers in your system. They are mainly
-used for authorization. If you are using tenants, when you generate a client
-token, it will only give access to one specified tenant.
+<Banner title="Tenants is optional">
 
-Tenants can be used with both [Access Tokens](/docs/authentication/access-token)
-and [ID Tokens](/docs/authentication/id-token).
-
-<Banner title="The use of tenants is optional">
-
-If you don't set up anything, all resources of a project belong to the same
-tenant `default`, and you don't have to configure anything.
-
-</Banner>
-
-<Banner title="Multi-tenant support" type="warning">
-
-Multi-tenant support is an enterprise feature. You can only use it if you are on
-the [Enterprise plan](https://liveblocks.io/pricing).
+If you don’t specify a tenant, no configuration is needed. By default, resources
+belong to the `default` tenant ID.
 
 </Banner>
 
@@ -42,39 +30,82 @@ the [Enterprise plan](https://liveblocks.io/pricing).
 
 ### Setting up tenants
 
-To set up tenants, you just need to set a `tenantId` when creating a resource.
+To set up Tenants, you just need to set a `tenantId` when creating a resource,
+for example, when creating a room.
 
-For example, to create a room with a specific tenant, you can do:
-
-```ts highlight="2"
-const room = await liveblocks.createRoom("room1", {
-  tenantId: "tenant123",
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
 });
 ```
 
-When a room, or any other resource is created with a tenant, it's not possible
-to change it later. You need to migrate the room into another one in the right
-tenant.
+<Banner title="You can’t change a resource’s tenant" type="warning">
 
-You can set the `tenantId` for those resources:
+It’s not possible to change a resource’s `tenantId` after creation. You will
+need to migrate the resource into a new room in the correct tenant.
 
-- Rooms (it includes Comments and Storage)
-- Inbox notifications
-- Mention groups
-- AI Copilots knowledge sources (soon)
+</Banner>
+
+#### Resources using tenants
+
+A number of Liveblocks resources use tenants, such as rooms, comments, text
+editors, Yjs, Storage, inbox notifications, mention groups.
+
+```ts
+const { data: rooms, nextCursor } = await liveblocks.getRooms({
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+await liveblocks.triggerInboxNotification({
+  userId: "steven@example.com",
+  kind: "$fileUploaded",
+  subjectId: "my-file",
+  activityData: {},
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+await liveblocks.deleteAllInboxNotifications({
+  userId: "steven@example.com",
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+const { data, nextCursor } = await liveblocks.getUserRoomSubscriptionSettings({
+  userId: "steven@example.com",
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+```
+
+Above you can see [`getRooms`](/docs/api-reference/liveblocks-node#get-rooms),
+[`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger),
+[`deleteAllInboxNotifications`](/docs/api-reference/liveblocks-node#delete-users-userId-inboxNotifications)
+and
+[`getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings)
+using tenants. Tenants can also be used with the
+[REST API](/docs/api-reference/rest-api-endpoints).
 
 ### Authentication
 
-Tenants are mainly used for authorization. They have a role to play when you
-generate tokens for your users. You can use them with both Access Tokens and ID
-Tokens.
+When authorizing a user with Liveblocks, you can specify the tenant they belong
+to. Each user is only authorized for one tenant at a time, meaning they need to
+re-authenticate to access resources in another tenant, such as notifications.
+Tenants can be used with both [Access Token](/docs/authentication/access-token)
+and [ID Token](/docs/authentication/id-token) authentication.
 
-#### With Access tokens
+#### With access tokens
 
-When using Access tokens, you can set the tenantId when you prepare a session.
-When a token is generated for a specific tenant, it will only give access to
-resources inside this tenant, even if the token has permissions to rooms in
-other tenants.
+When using access tokens, you can set the `tenantId` when you prepare a session.
+Tokens generated for a specific tenant, will only allow access to resources
+inside this tenant, even if the token has permissions to rooms in other tenants.
 
 ```ts highlight="2"
 const session = liveblocks.prepareSession("olivier@example.com", {
@@ -90,16 +121,13 @@ session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 const { body, status } = await session.authorize();
 ```
 
-You can check more details about
-[Access tokens](/docs/authentication/access-token).
+Learn more about [access tokens](/docs/authentication/access-token).
 
 #### With ID tokens
 
 When using ID tokens, you can set the `tenantId` when using `identifyUser`.
-
-When a token is generated for a specific tenant, it will only give access to
-resources inside this tenant, even if the user has access to rooms in other
-tenants.
+Tokens generated for a specific tenant, will only allow access to resources
+inside this tenant, even if the user has access to rooms in other tenants.
 
 ```ts highlight="3"
 const { body, status } = await liveblocks.identifyUser({
@@ -111,4 +139,10 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-You can check more details about [ID tokens](/docs/authentication/id-token).
+Learn more about [ID tokens](/docs/authentication/id-token).
+
+#### Switching tenants
+
+The easiest way to switch tenants is to refresh the page, for example with
+`location.reload()`, then pass a new `tenantId` to your chosen authentication
+method.
