@@ -1,7 +1,7 @@
 import type { Relax } from "../lib/Relax";
 
 export type MentionData = Relax<
-  UserMentionData | GroupMentionData | CopilotMentionData
+  UserMentionData | GroupMentionData | AgentMentionData
 >;
 
 export type TextMentionData = Relax<UserMentionData | GroupMentionData>;
@@ -16,7 +16,7 @@ export type GroupMentionData = {
   userIds?: string[];
 };
 
-export type CopilotMentionData = {
-  kind: "copilot";
+export type AgentMentionData = {
+  kind: "agent";
   id: string;
 };

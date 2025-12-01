@@ -418,15 +418,15 @@ describe("useMentionSuggestions", () => {
         { kind: "user", id: "a" },
         { kind: "user", id: "b" },
         { kind: "group", id: "here", userIds: ["a", "b"] },
-        { kind: "copilot", id: "copilot-1" },
-        { kind: "copilot", id: "copilot-2" },
+        { kind: "agent", id: "agent-1" },
+        { kind: "agent", id: "agent-2" },
       ],
     });
 
     const { result, unmount } = renderHook(
       () => ({
         mentionSuggestions: useMentionSuggestions(roomId, "", {
-          excludedKinds: { copilot: true },
+          excludedKinds: { agent: true },
         }),
       }),
       {
@@ -442,7 +442,7 @@ describe("useMentionSuggestions", () => {
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
-    // Should exclude copilot mentions but include user and group
+    // Should exclude agent mentions but include user and group
     expect(result.current.mentionSuggestions).toEqual([
       { kind: "user", id: "a" },
       { kind: "user", id: "b" },
@@ -461,8 +461,8 @@ describe("useMentionSuggestions", () => {
           { kind: "user", id: "a" },
           { kind: "user", id: "b" },
           { kind: "group", id: "here", userIds: ["a", "b"] },
-          { kind: "copilot", id: "copilot-1" },
-          { kind: "copilot", id: "copilot-2" },
+          { kind: "agent", id: "agent-1" },
+          { kind: "agent", id: "agent-2" },
         ])
     );
 
@@ -490,7 +490,7 @@ describe("useMentionSuggestions", () => {
     const { result: result2, unmount: unmount2 } = renderHook(
       () => ({
         mentionSuggestions: useMentionSuggestions(roomId, "test", {
-          excludedKinds: { copilot: true },
+          excludedKinds: { agent: true },
         }),
       }),
       {
@@ -509,11 +509,11 @@ describe("useMentionSuggestions", () => {
       { kind: "user", id: "a" },
       { kind: "user", id: "b" },
       { kind: "group", id: "here", userIds: ["a", "b"] },
-      { kind: "copilot", id: "copilot-1" },
-      { kind: "copilot", id: "copilot-2" },
+      { kind: "agent", id: "agent-1" },
+      { kind: "agent", id: "agent-2" },
     ]);
 
-    // Second hook excluded copilot mentions
+    // Second hook excluded agent mentions
     expect(result2.current.mentionSuggestions).toEqual([
       { kind: "user", id: "a" },
       { kind: "user", id: "b" },

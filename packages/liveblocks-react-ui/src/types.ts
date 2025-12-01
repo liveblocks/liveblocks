@@ -60,7 +60,7 @@ export type ComposerBodyCustomLink = {
 export type ComposerBodyMention = Relax<
   | ComposerBodyUserMention
   | ComposerBodyGroupMention
-  | ComposerBodyCopilotMention
+  | ComposerBodyAgentMention
 >;
 
 type ComposerBodyUserMention = {
@@ -78,9 +78,9 @@ type ComposerBodyGroupMention = {
   children: [SlateEmptyText];
 };
 
-type ComposerBodyCopilotMention = {
+type ComposerBodyAgentMention = {
   type: "mention";
-  kind: "copilot";
+  kind: "agent";
   id: string;
   children: [SlateEmptyText];
 };

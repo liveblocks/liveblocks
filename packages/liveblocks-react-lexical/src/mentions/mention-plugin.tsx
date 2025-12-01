@@ -176,7 +176,7 @@ export function MentionPlugin() {
   const matchingString = match?.[3];
 
   const suggestions = useMentionSuggestions(room.id, matchingString, {
-    excludedKinds: { copilot: true },
+    excludedKinds: { agent: true },
   });
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();

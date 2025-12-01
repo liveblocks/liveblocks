@@ -44,7 +44,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
     const [selectedIndex, setSelectedIndex] = useState(0);
     const room = useRoom();
     const suggestions = useMentionSuggestions(room.id, props.query, {
-      excludedKinds: { copilot: true },
+      excludedKinds: { agent: true },
     });
     const { onMouseEnter, onClick } = props;
     const {

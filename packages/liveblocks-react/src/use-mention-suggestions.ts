@@ -50,8 +50,8 @@ type NarrowedMentionData<
         | (K extends { group: true }
             ? Extract<MentionData, { kind: "group" }>
             : never)
-        | (K extends { copilot: true }
-            ? Extract<MentionData, { kind: "copilot" }>
+        | (K extends { agent: true }
+            ? Extract<MentionData, { kind: "agent" }>
             : never)
       >
     : MentionData;
@@ -71,7 +71,7 @@ export function useMentionSuggestions<
 ): NarrowedMentionData<K>[] | undefined {
   const excludeUserMentions = options?.excludedKinds?.user ?? false;
   const excludeGroupMentions = options?.excludedKinds?.group ?? false;
-  const excludeCopilotMentions = options?.excludedKinds?.copilot ?? false;
+  const excludeAgentMentions = options?.excludedKinds?.agent ?? false;
   const [mentionSuggestions, setMentionSuggestions] = useState<MentionData[]>();
   // Filtering happens per hook rather than in the cache to still allow
   // sharing cached suggestions between different filter options (e.g. Comments and Text Editor)
@@ -81,7 +81,7 @@ export function useMentionSuggestions<
         return (
           (!excludeUserMentions && mention.kind === "user") ||
           (!excludeGroupMentions && mention.kind === "group") ||
-          (!excludeCopilotMentions && mention.kind === "copilot")
+          (!excludeAgentMentions && mention.kind === "agent")
         );
       }
     );
@@ -89,7 +89,7 @@ export function useMentionSuggestions<
     mentionSuggestions,
     excludeUserMentions,
     excludeGroupMentions,
-    excludeCopilotMentions,
+    excludeAgentMentions,
   ]);
   const lastInvokedAt = useRef<number>();
 

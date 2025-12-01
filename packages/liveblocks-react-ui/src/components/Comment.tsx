@@ -269,7 +269,7 @@ function CommentGroupMention({
   );
 }
 
-function CommentCopilotMention({
+function CommentAgentMention({
   mention,
   className,
   ...props
@@ -280,7 +280,7 @@ function CommentCopilotMention({
       {...props}
     >
       <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
-      {/* TODO: Use the copilot's name */}
+      {/* TODO: Use the agent's name */}
       <span>@{mention.id}</span>
     </CommentPrimitive.Mention>
   );
@@ -294,8 +294,8 @@ export function CommentMention({ mention, ...props }: CommentMentionProps) {
     case "group":
       return <CommentGroupMention mention={mention} {...props} />;
 
-    case "copilot":
-      return <CommentCopilotMention mention={mention} {...props} />;
+    case "agent":
+      return <CommentAgentMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
