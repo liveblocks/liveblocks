@@ -10,11 +10,24 @@ import { ErrorBoundary } from "react-error-boundary";
 
 /**
  * Displays a list of threads, along with a composer for creating
- * new threads.
+ * new threads, and a search bar.
  */
 
 function Example() {
   const { threads } = useThreads();
+
+  return (
+    <main>
+      <CommentsSearch />
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} className="thread" />
+      ))}
+      <Composer className="composer" />
+    </main>
+  );
+}
+
+function CommentsSearch() {
   const [text, setText] = useState("");
   const { results, isLoading, error } = useSearchComments({ query: { text } });
 
@@ -23,41 +36,35 @@ function Example() {
   }
 
   return (
-    <main>
-      <div className="search-results lb-root">
-        <input
-          type="search"
-          className="search-input"
-          placeholder="Search comments…"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        {text.length ? (
-          <>
-            {isLoading ? (
-              <div className="search-loading">Searching…</div>
-            ) : (
-              <div>
-                <div className="search-results-title">Search results</div>
-                {results.map((result) => (
-                  <a
-                    key={result.commentId}
-                    href={"#" + result.commentId}
-                    className="search-result"
-                  >
-                    {result.content}
-                  </a>
-                ))}
-              </div>
-            )}
-          </>
-        ) : null}
-      </div>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
-      ))}
-      <Composer className="composer" />
-    </main>
+    <div className="search-results lb-root">
+      <input
+        type="search"
+        className="search-input"
+        placeholder="Search comments…"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      {text.length ? (
+        <>
+          {isLoading ? (
+            <div className="search-loading">Searching…</div>
+          ) : (
+            <div>
+              <div className="search-results-title">Search results</div>
+              {results.map((result) => (
+                <a
+                  key={result.commentId}
+                  href={"#" + result.commentId}
+                  className="search-result"
+                >
+                  {result.content}
+                </a>
+              ))}
+            </div>
+          )}
+        </>
+      ) : null}
+    </div>
   );
 }
 
