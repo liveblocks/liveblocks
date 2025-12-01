@@ -85,7 +85,7 @@ main {
   background: var(--lb-background);
 }
 
-.search-loading,
+.search-message,
 .search-results-title {
   font-weight: 400;
   padding: 8px 12px 0;
@@ -94,7 +94,7 @@ main {
   margin-bottom: 8px;
 }
 
-.search-loading {
+.search-message {
   padding-bottom: 4px;
 }
 

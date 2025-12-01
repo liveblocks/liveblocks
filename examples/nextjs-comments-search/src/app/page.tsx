@@ -47,8 +47,8 @@ function CommentsSearch() {
       {text.length ? (
         <>
           {isLoading ? (
-            <div className="search-loading">Searching…</div>
-          ) : (
+            <div className="search-message">Searching…</div>
+          ) : results.length > 0 ? (
             <div>
               <div className="search-results-title">Search results</div>
               {results.map((result) => (
@@ -61,6 +61,8 @@ function CommentsSearch() {
                 </a>
               ))}
             </div>
+          ) : (
+            <div className="search-message">No results found</div>
           )}
         </>
       ) : null}
