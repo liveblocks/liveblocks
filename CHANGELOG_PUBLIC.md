@@ -26,7 +26,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Showcase
 
-- [Search through comments](https://liveblocks.io/showcase/search-through-comments).
+- New item: [Search through comments](https://liveblocks.io/showcase/search-through-comments).
 
 ## Contributors
 
