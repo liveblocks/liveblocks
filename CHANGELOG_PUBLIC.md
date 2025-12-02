@@ -24,6 +24,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - New example: [Comments search](https://liveblocks.io/examples/comments-search).
 
+## Showcase
+
+- [Search through comments](https://liveblocks.io/showcase/search-through-comments).
+
 ## Contributors
 
 ctnicholas
