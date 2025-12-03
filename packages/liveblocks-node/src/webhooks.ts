@@ -234,6 +234,7 @@ type WebhookEvent =
   | CommentDeletedEvent
   | CommentReactionAdded
   | CommentReactionRemoved
+  | CommentMetadataUpdatedEvent
   | ThreadMetadataUpdatedEvent
   | NotificationEvent
   | ThreadCreatedEvent
@@ -425,6 +426,26 @@ type ThreadMetadataUpdatedEvent = {
   };
 };
 
+type CommentMetadataUpdatedEvent = {
+  type: "commentMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedAt: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    updatedBy: string;
+  };
+};
+
 type ThreadCreatedEvent = {
   type: "threadCreated";
   data: {
@@ -574,6 +595,7 @@ export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
   CommentEditedEvent,
+  CommentMetadataUpdatedEvent,
   CommentReactionAdded,
   CommentReactionRemoved,
   CustomNotificationEvent,
