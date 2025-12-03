@@ -86,6 +86,7 @@ import type {
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
+  EditCommentMetadataOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
   HistoryVersionDataAsyncResult,
@@ -419,7 +420,14 @@ function makeRoomContextBundle<
     useThreads,
     useSearchComments,
 
-    useCreateThread,
+    useCreateThread: useCreateThread as RoomContextBundle<
+      P,
+      S,
+      U,
+      E,
+      TM,
+      CM
+    >["useCreateThread"],
     useDeleteThread,
     useEditThreadMetadata,
     useMarkThreadAsResolved,
@@ -428,6 +436,7 @@ function makeRoomContextBundle<
     useUnsubscribeFromThread,
     useCreateComment,
     useEditComment,
+    useEditCommentMetadata,
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
@@ -483,7 +492,14 @@ function makeRoomContextBundle<
 
       useThreads: useThreadsSuspense,
 
-      useCreateThread,
+      useCreateThread: useCreateThread as RoomContextBundle<
+        P,
+        S,
+        U,
+        E,
+        TM,
+        CM
+      >["suspense"]["useCreateThread"],
       useDeleteThread,
       useEditThreadMetadata,
       useMarkThreadAsResolved,
@@ -492,6 +508,7 @@ function makeRoomContextBundle<
       useUnsubscribeFromThread,
       useCreateComment,
       useEditComment,
+      useEditCommentMetadata,
       useDeleteComment,
       useAddReaction,
       useRemoveReaction,
@@ -681,6 +698,7 @@ function RoomProviderInner<
         case ServerMsgCode.COMMENT_REACTION_ADDED:
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_DELETED:
+        case ServerMsgCode.COMMENT_METADATA_UPDATED:
           // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
           if (!existingThread) break;
 
@@ -1373,7 +1391,7 @@ function useSearchComments<TM extends BaseMetadata>(
 }
 
 function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
-  options: CreateThreadOptions<TM>
+  options: CreateThreadOptions<TM, CM>
 ) => ThreadData<TM, CM> {
   return useCreateRoomThread(useRoom().id);
 }
@@ -1383,20 +1401,20 @@ function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
  */
 function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
   roomId: string
-): (options: CreateThreadOptions<TM>) => ThreadData<TM, CM> {
+): (options: CreateThreadOptions<TM, CM>) => ThreadData<TM, CM> {
   const client = useClient();
 
   return useCallback(
-    (options: CreateThreadOptions<TM>): ThreadData<TM, CM> => {
+    (options: CreateThreadOptions<TM, CM>): ThreadData<TM, CM> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as TM);
+      const commentMetadata = options.commentMetadata ?? ({} as CM);
       const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      // @ts-expect-error - TODO: Add `metadata`
       const newComment: CommentData<CM> = {
         id: commentId,
         threadId,
@@ -1407,6 +1425,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
         body,
         reactions: [],
         attachments: attachments ?? [],
+        metadata: commentMetadata,
       };
       const newThread: ThreadData<TM, CM> = {
         id: threadId,
@@ -1435,6 +1454,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
           commentId,
           body,
           metadata,
+          commentMetadata,
           attachmentIds,
         })
         .then(
@@ -1452,6 +1472,7 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
                 commentId,
                 body,
                 metadata,
+                commentMetadata,
               },
               err
             )
@@ -1551,6 +1572,62 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
   );
 }
 
+function useEditCommentMetadata<CM extends BaseMetadata>() {
+  return useEditRoomCommentMetadata<CM>(useRoom().id);
+}
+
+function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
+  const client = useClient();
+  return useCallback(
+    (options: EditCommentMetadataOptions<CM>): void => {
+      if (!options.metadata) {
+        return;
+      }
+
+      const threadId = options.threadId;
+      const commentId = options.commentId;
+      const metadata = options.metadata;
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const optimisticId = store.optimisticUpdates.add({
+        type: "edit-comment-metadata",
+        threadId,
+        commentId,
+        metadata,
+        updatedAt,
+      });
+
+      client[kInternal].httpClient
+        .editCommentMetadata({ roomId, threadId, commentId, metadata })
+        .then(
+          (updatedMetadata) =>
+            // Replace the optimistic update by the real thing
+            store.editCommentMetadata(
+              threadId,
+              commentId,
+              optimisticId,
+              updatedMetadata,
+              updatedAt
+            ),
+          (err: Error) =>
+            onMutationFailure(
+              optimisticId,
+              {
+                type: "EDIT_COMMENT_METADATA_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                metadata,
+              },
+              err
+            )
+        );
+    },
+    [client, roomId]
+  );
+}
+
 /**
  * Returns a function that adds a comment to a thread.
  *
@@ -1558,7 +1635,9 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
  * const createComment = useCreateComment();
  * createComment({ threadId: "th_xxx", body: {} });
  */
-function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+function useCreateComment<CM extends BaseMetadata>(): (
+  options: CreateCommentOptions<CM>
+) => CommentData<CM> {
   return useCreateRoomComment(useRoom().id);
 }
 
@@ -1567,18 +1646,16 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
  */
 function useCreateRoomComment<CM extends BaseMetadata>(
   roomId: string
-): (options: CreateCommentOptions) => CommentData<CM> {
+): (options: CreateCommentOptions<CM>) => CommentData<CM> {
   const client = useClient();
   return useCallback(
-    ({
-      threadId,
-      body,
-      attachments,
-    }: CreateCommentOptions): CommentData<CM> => {
+    (options: CreateCommentOptions<CM>): CommentData<CM> => {
+      const { threadId, body } = options;
+      const metadata = options.metadata ?? ({} as CM);
+      const attachments = options.attachments ?? [];
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      // @ts-expect-error - TODO: Add `metadata`
       const comment: CommentData<CM> = {
         id: commentId,
         threadId,
@@ -1589,6 +1666,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
         body,
         reactions: [],
         attachments: attachments ?? [],
+        metadata,
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1600,7 +1678,14 @@ function useCreateRoomComment<CM extends BaseMetadata>(
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .createComment({ roomId, threadId, commentId, body, attachmentIds })
+        .createComment({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          metadata,
+          attachmentIds,
+        })
         .then(
           (newComment) => {
             // Replace the optimistic update by the real thing
@@ -1615,6 +1700,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
                 threadId,
                 commentId,
                 body,
+                metadata,
               },
               err
             )
@@ -1691,7 +1777,15 @@ function useEditRoomComment(
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              { type: "EDIT_COMMENT_ERROR", roomId, threadId, commentId, body },
+              {
+                type: "EDIT_COMMENT_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+                // TODO: Allow editing metadata in all `editComment` APIs: vanilla, React, REST, etc.
+                metadata: {},
+              },
               err
             )
         );

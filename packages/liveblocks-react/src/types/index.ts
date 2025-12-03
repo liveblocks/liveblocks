@@ -226,10 +226,11 @@ export type GroupAsyncResult = AsyncResult<GroupData | undefined, "group">;
 export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 
 // prettier-ignore
-export type CreateThreadOptions<TM extends BaseMetadata> =
+export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
     { body: CommentBody, attachments?: CommentAttachment[]; }
     & PartialUnless<TM, { metadata: TM }>
+    & PartialUnless<CM, { commentMetadata: CM }>
   >;
 
 export type EditThreadMetadataOptions<TM extends BaseMetadata> = {
@@ -237,9 +238,10 @@ export type EditThreadMetadataOptions<TM extends BaseMetadata> = {
   metadata: Patchable<TM>;
 };
 
-export type CreateCommentOptions = {
+export type CreateCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   body: CommentBody;
+  metadata?: CM;
   attachments?: CommentAttachment[];
 };
 
@@ -248,6 +250,12 @@ export type EditCommentOptions = {
   commentId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
+};
+
+export type EditCommentMetadataOptions<CM extends BaseMetadata> = {
+  threadId: string;
+  commentId: string;
+  metadata: Patchable<CM>;
 };
 
 export type DeleteCommentOptions = {
@@ -916,7 +924,9 @@ type RoomContextBundleCommon<
    * const createThread = useCreateThread();
    * createThread({ body: {}, metadata: {} });
    */
-  useCreateThread(): (options: CreateThreadOptions<TM>) => ThreadData<TM, CM>;
+  useCreateThread(): (
+    options: CreateThreadOptions<TM, CM>
+  ) => ThreadData<TM, CM>;
 
   /**
    * Returns a function that deletes a thread and its associated comments.
@@ -981,7 +991,7 @@ type RoomContextBundleCommon<
    * const createComment = useCreateComment();
    * createComment({ threadId: "th_xxx", body: {} });
    */
-  useCreateComment(): (options: CreateCommentOptions) => CommentData;
+  useCreateComment(): (options: CreateCommentOptions<CM>) => CommentData<CM>;
 
   /**
    * Returns a function that edits a comment's body.
@@ -991,6 +1001,15 @@ type RoomContextBundleCommon<
    * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
    */
   useEditComment(): (options: EditCommentOptions) => void;
+
+  /**
+   * Returns a function that edits a comment's metadata.
+   *
+   * @example
+   * const editCommentMetadata = useEditCommentMetadata();
+   * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+   */
+  useEditCommentMetadata(): (options: EditCommentMetadataOptions<CM>) => void;
 
   /**
    * Returns a function that deletes a comment.

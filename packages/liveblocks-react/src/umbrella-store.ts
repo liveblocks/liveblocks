@@ -81,6 +81,7 @@ type OptimisticUpdate<TM extends BaseMetadata, CM extends BaseMetadata> =
   | UnsubscribeFromThreadOptimisticUpdate
   | CreateCommentOptimisticUpdate<CM>
   | EditCommentOptimisticUpdate<CM>
+  | EditCommentMetadataOptimisticUpdate<CM>
   | DeleteCommentOptimisticUpdate
   | AddReactionOptimisticUpdate
   | RemoveReactionOptimisticUpdate
@@ -155,6 +156,15 @@ type EditCommentOptimisticUpdate<CM extends BaseMetadata> = {
   type: "edit-comment";
   id: string;
   comment: CommentData<CM>;
+};
+
+type EditCommentMetadataOptimisticUpdate<CM extends BaseMetadata> = {
+  type: "edit-comment-metadata";
+  id: string;
+  threadId: string;
+  commentId: string;
+  metadata: Resolve<Patchable<CM>>;
+  updatedAt: Date;
 };
 
 type DeleteCommentOptimisticUpdate = {
@@ -1872,6 +1882,33 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
     );
   }
 
+  public editCommentMetadata(
+    threadId: string,
+    commentId: string,
+    optimisticId: string,
+    updatedMetadata: CM,
+    updatedAt: Date
+  ): void {
+    return this.#updateThread(
+      threadId,
+      optimisticId,
+      (thread) => {
+        const comment = thread.comments.find((c) => c.id === commentId);
+        if (comment === undefined) {
+          return thread;
+        }
+        return {
+          ...thread,
+          updatedAt,
+          comments: thread.comments.map((c) =>
+            c.id === commentId ? { ...c, metadata: updatedMetadata } : c
+          ),
+        };
+      },
+      updatedAt
+    );
+  }
+
   public deleteComment(
     threadId: string,
     optimisticId: string,
@@ -2169,6 +2206,40 @@ function applyOptimisticUpdates_forThreadifications<
         if (thread === undefined) break;
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
+        break;
+      }
+
+      case "edit-comment-metadata": {
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
+
+        // If the thread has been updated since the optimistic update, we do not apply the update
+        if (thread.updatedAt > optimisticUpdate.updatedAt) {
+          break;
+        }
+
+        // TODO: If we allow editing metadata in `editComment` APIs: also take the comment's editedAt into account
+
+        const comment = thread.comments.find(
+          (c) => c.id === optimisticUpdate.commentId
+        );
+        if (comment === undefined) break;
+
+        threadsDB.upsert({
+          ...thread,
+          updatedAt: optimisticUpdate.updatedAt,
+          comments: thread.comments.map((c) =>
+            c.id === optimisticUpdate.commentId
+              ? {
+                  ...c,
+                  metadata: {
+                    ...c.metadata,
+                    ...optimisticUpdate.metadata,
+                  },
+                }
+              : c
+          ),
+        });
         break;
       }
 
