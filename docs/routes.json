@@ -259,16 +259,16 @@
         ]
       },
       {
+        "title": "Concepts",
+        "path": "/concepts"
+      },
+      {
         "title": "Authentication",
         "path": "/authentication",
         "routes": [
           {
             "title": "Access token",
             "path": "/authentication/access-token"
-          },
-          {
-            "title": "ID token",
-            "path": "/authentication/id-token"
           },
           {
             "title": "Tenants",
@@ -339,59 +339,8 @@
     ]
   },
   {
-    "title": "Concepts",
-    "routes": [
-      {
-        "title": "Why Liveblocks",
-        "path": "/concepts/why-liveblocks"
-      },
-      {
-        "title": "How Liveblocks works",
-        "path": "/concepts/how-liveblocks-works"
-      }
-    ]
-  },
-  {
     "title": "Ready-made features",
     "routes": [
-      {
-        "title": "AI Copilots",
-        "path": "/ready-made-features/ai-copilots",
-        "routes": [
-          {
-            "title": "Features",
-            "path": "/ready-made-features/ai-copilots/features"
-          },
-          {
-            "title": "Copilots",
-            "path": "/ready-made-features/ai-copilots/copilots"
-          },
-          {
-            "title": "Default components",
-            "path": "/ready-made-features/ai-copilots/default-components"
-          },
-          {
-            "title": "Hooks",
-            "path": "/ready-made-features/ai-copilots/hooks"
-          },
-          {
-            "title": "Knowledge",
-            "path": "/ready-made-features/ai-copilots/knowledge"
-          },
-          {
-            "title": "Tools",
-            "path": "/ready-made-features/ai-copilots/tools"
-          },
-          {
-            "title": "Styling and customization",
-            "path": "/ready-made-features/ai-copilots/styling-and-customization"
-          },
-          {
-            "title": "Troubleshooting",
-            "path": "/ready-made-features/ai-copilots/troubleshooting"
-          }
-        ]
-      },
       {
         "title": "Comments",
         "path": "/ready-made-features/comments",
@@ -431,38 +380,82 @@
         ]
       },
       {
-        "title": "Multiplayer Editing",
-        "path": "/ready-made-features/multiplayer-editing",
+        "title": "Multiplayer",
+        "path": "/ready-made-features/multiplayer",
         "routes": [
           {
             "title": "Text editor",
-            "path": "/ready-made-features/multiplayer-editing/text-editor",
+            "path": "/ready-made-features/multiplayer/text-editor",
             "routes": [
               {
                 "title": "Tiptap",
-                "path": "/ready-made-features/multiplayer-editing/text-editor/tiptap"
+                "path": "/ready-made-features/multiplayer/text-editor/tiptap"
               },
               {
                 "title": "BlockNote",
-                "path": "/ready-made-features/multiplayer-editing/text-editor/blocknote"
+                "path": "/ready-made-features/multiplayer/text-editor/blocknote"
               },
               {
                 "title": "Lexical",
-                "path": "/ready-made-features/multiplayer-editing/text-editor/lexical"
+                "path": "/ready-made-features/multiplayer/text-editor/lexical"
               }
             ]
           },
           {
             "title": "Sync engine",
-            "path": "/ready-made-features/multiplayer-editing/sync-engine",
+            "path": "/ready-made-features/multiplayer/sync-engine",
             "routes": [
               {
                 "title": "Yjs",
-                "path": "/ready-made-features/multiplayer-editing/sync-engine/liveblocks-yjs"
+                "path": "/ready-made-features/multiplayer/sync-engine/liveblocks-yjs"
               },
               {
                 "title": "Storage",
-                "path": "/ready-made-features/multiplayer-editing/sync-engine/liveblocks-storage"
+                "path": "/ready-made-features/multiplayer/sync-engine/liveblocks-storage"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "AI Agents",
+        "path": "/ready-made-features/ai-agents",
+        "routes": [
+          {
+            "title": "Liveblocks AI Copilots",
+            "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots",
+            "routes": [
+              {
+                "title": "Features",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/features"
+              },
+              {
+                "title": "Copilots",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/copilots"
+              },
+              {
+                "title": "Default components",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/default-components"
+              },
+              {
+                "title": "Hooks",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/hooks"
+              },
+              {
+                "title": "Knowledge",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/knowledge"
+              },
+              {
+                "title": "Tools",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/tools"
+              },
+              {
+                "title": "Styling and customization",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/styling-and-customization"
+              },
+              {
+                "title": "Troubleshooting",
+                "path": "/ready-made-features/ai-agents/liveblocks-ai-copilots/troubleshooting"
               }
             ]
           }
@@ -493,19 +486,6 @@
             "path": "/ready-made-features/notifications/email-notifications"
           }
         ]
-      },
-      {
-        "title": "Presence",
-        "path": "/ready-made-features/presence"
-      }
-    ]
-  },
-  {
-    "title": "Rooms",
-    "routes": [
-      {
-        "title": "Metadata",
-        "path": "/rooms/metadata"
       }
     ]
   },
@@ -568,88 +548,6 @@
     ]
   },
   {
-    "title": "Tools",
-    "routes": [
-      {
-        "title": "DevTools",
-        "path": "/tools/devtools"
-      },
-      {
-        "title": "Next.js Starter Kit",
-        "path": "/tools/nextjs-starter-kit"
-      },
-      {
-        "title": "MCP server",
-        "path": "/tools/mcp-server"
-      }
-    ]
-  },
-  {
-    "title": "API Reference",
-    "routes": [
-      {
-        "title": "@liveblocks/client",
-        "path": "/api-reference/liveblocks-client"
-      },
-      {
-        "title": "@liveblocks/react",
-        "path": "/api-reference/liveblocks-react"
-      },
-      {
-        "title": "@liveblocks/react-ui",
-        "path": "/api-reference/liveblocks-react-ui"
-      },
-      {
-        "title": "@liveblocks/react-tiptap",
-        "path": "/api-reference/liveblocks-react-tiptap"
-      },
-      {
-        "title": "@liveblocks/react-blocknote",
-        "path": "/api-reference/liveblocks-react-blocknote"
-      },
-      {
-        "title": "@liveblocks/node-prosemirror",
-        "path": "/api-reference/liveblocks-node-prosemirror"
-      },
-      {
-        "title": "@liveblocks/react-lexical",
-        "path": "/api-reference/liveblocks-react-lexical"
-      },
-      {
-        "title": "@liveblocks/node-lexical",
-        "path": "/api-reference/liveblocks-node-lexical"
-      },
-      {
-        "title": "@liveblocks/redux",
-        "path": "/api-reference/liveblocks-redux"
-      },
-      {
-        "title": "@liveblocks/zustand",
-        "path": "/api-reference/liveblocks-zustand"
-      },
-      {
-        "title": "@liveblocks/yjs",
-        "path": "/api-reference/liveblocks-yjs"
-      },
-      {
-        "title": "@liveblocks/node",
-        "path": "/api-reference/liveblocks-node"
-      },
-      {
-        "title": "@liveblocks/emails",
-        "path": "/api-reference/liveblocks-emails"
-      },
-      {
-        "title": "REST API",
-        "href": "/api-reference/rest-api-endpoints"
-      },
-      {
-        "title": "Frimousse",
-        "href": "https://frimousse.liveblocks.io"
-      }
-    ]
-  },
-  {
     "title": "Platform",
     "routes": [
       {
@@ -675,6 +573,18 @@
       {
         "title": "REST API",
         "path": "/platform/rest-api"
+      },
+      {
+        "title": "DevTools",
+        "path": "/platform/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/platform/nextjs-starter-kit"
+      },
+      {
+        "title": "MCP server",
+        "path": "/platform/mcp-server"
       },
       {
         "title": "Account management",
@@ -741,6 +651,71 @@
       {
         "title": "Troubleshooting",
         "path": "/platform/troubleshooting"
+      }
+    ]
+  },
+  {
+    "title": "API Reference",
+    "routes": [
+      {
+        "title": "@liveblocks/client",
+        "path": "/api-reference/liveblocks-client"
+      },
+      {
+        "title": "@liveblocks/react",
+        "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/react-ui",
+        "path": "/api-reference/liveblocks-react-ui"
+      },
+      {
+        "title": "@liveblocks/react-tiptap",
+        "path": "/api-reference/liveblocks-react-tiptap"
+      },
+      {
+        "title": "@liveblocks/react-blocknote",
+        "path": "/api-reference/liveblocks-react-blocknote"
+      },
+      {
+        "title": "@liveblocks/node-prosemirror",
+        "path": "/api-reference/liveblocks-node-prosemirror"
+      },
+      {
+        "title": "@liveblocks/react-lexical",
+        "path": "/api-reference/liveblocks-react-lexical"
+      },
+      {
+        "title": "@liveblocks/node-lexical",
+        "path": "/api-reference/liveblocks-node-lexical"
+      },
+      {
+        "title": "@liveblocks/redux",
+        "path": "/api-reference/liveblocks-redux"
+      },
+      {
+        "title": "@liveblocks/zustand",
+        "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/yjs",
+        "path": "/api-reference/liveblocks-yjs"
+      },
+      {
+        "title": "@liveblocks/node",
+        "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "@liveblocks/emails",
+        "path": "/api-reference/liveblocks-emails"
+      },
+      {
+        "title": "REST API",
+        "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
       }
     ]
   }

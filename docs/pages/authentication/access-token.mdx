@@ -1,15 +1,15 @@
 ---
 meta:
-  title: "Authenticate with access tokens"
+  title: "Authenticate users with access tokens"
   parentTitle: "Authentication"
-  description: "Learn more about access token permissions"
+  description: "Authenticate your users in your application with access tokens."
 ---
 
-Access token authentication allows you to handle permissions yourself. When a
-user authenticates, it’s up to you to let Liveblocks know which rooms they
-should be allowed inside. This means that you need to manually keep track of
-which users should be allowed in which rooms, and apply these permissions
-yourself each time a user connects.
+Access token authentication is an alternative method to authenticate your users
+in your application. With access tokens, when a user authenticates, it’s up to
+you to let Liveblocks know which rooms they should be allowed inside. This means
+that you need to manually keep track of which users should be allowed in which
+rooms, and apply these permissions yourself each time a user connects.
 
 <Figure>
   <Image
@@ -21,12 +21,12 @@ yourself each time a user connects.
   />
 </Figure>
 
-<Banner title="Looking for more complex permissions?" type="warning">
+<Banner title="We recommend using ID tokens" type="warning">
 
+Access tokens have [limitations when granting nested permissions](#limitations).
 If you’re looking to build an application with permissions at organization,
-group, and user levels, we recommend using
-[ID tokens](/docs/authentication/id-token) instead. Access tokens have
-[limitations when granting nested permissions](#limitations).
+group, and user levels, we recommend using [ID tokens](/docs/authentication)
+instead.
 
 </Banner>
 
