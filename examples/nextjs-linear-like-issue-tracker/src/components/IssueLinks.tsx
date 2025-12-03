@@ -5,10 +5,10 @@ import {
   useMutation,
   useStorage,
 } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useUrlMetadata } from "@liveblocks/react";
+import { useState } from "react";
 import Link from "next/link";
 import { RubbishIcon } from "@/icons/RubbishIcon";
-import { getPreviewData, LinkPreviewMetadata } from "@/actions/preview";
 import { DeleteIcon } from "@/icons/DeleteIcon";
 import { PlusIcon } from "@/icons/PlusIcon";
 import { SubmitIcon } from "@/icons/SubmitIcon";
@@ -29,7 +29,7 @@ export function IssueLinks({
           {storageFallback.links ? (
             <div>
               {storageFallback.links.toReversed().map((link: string) => (
-                <LinkPreview key={link} link={link} onlyPlaceholder={true} />
+                <LinkPreview key={link} link={link} />
               ))}
             </div>
           ) : null}
@@ -119,39 +119,12 @@ function Links() {
 
 function LinkPreview({
   link,
-  onlyPlaceholder = false,
   onRemove,
 }: {
   link: string;
-  onlyPlaceholder?: boolean;
   onRemove?: () => void;
 }) {
-  const [loading, setLoading] = useState(true);
-
-  const [metadata, setMetadata] = useState<LinkPreviewMetadata>({
-    title: null,
-    description: null,
-    canonical: null,
-  });
-
-  useEffect(() => {
-    if (onlyPlaceholder) {
-      return;
-    }
-
-    async function run() {
-      const { data, error } = await getPreviewData(link);
-      setLoading(false);
-
-      if (error || !data) {
-        return;
-      }
-
-      setMetadata(data);
-    }
-
-    run();
-  }, [link, onlyPlaceholder]);
+  const { metadata, error, isLoading } = useUrlMetadata(link);
 
   return (
     <div className="isolate relative h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
@@ -161,7 +134,7 @@ function LinkPreview({
         rel="noopener noreferrer"
         className="inset-0 absolute"
       />
-      {loading ? (
+      {isLoading ? (
         <div className="flex w-full justify-between items-center px-3 py-2 gap-2">
           <span className="flex items-center gap-2">
             <div className="animate-pulse w-4 h-4 bg-neutral-100 rounded"></div>
@@ -175,14 +148,15 @@ function LinkPreview({
         <>
           <div className="flex items-center gap-2 whitespace-nowrap flex-grow-1 flex-shrink-1 truncate px-3 py-2">
             <img
-              src={`https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`}
+              src={
+                metadata?.icon ||
+                `https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`
+              }
               alt=""
               className="w-4 h-4 flex-shrink-0 flex-grow-0"
             />
-            <span className="font-medium">
-              {metadata.title || metadata.canonical || link}
-            </span>
-            {metadata.description ? (
+            <span className="font-medium">{metadata?.title || link}</span>
+            {metadata?.description ? (
               <span className="truncate text-neutral-500 flex-shrink-[100]">
                 {metadata.description}
               </span>
