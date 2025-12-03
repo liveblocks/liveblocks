@@ -10,10 +10,11 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  DCM,
   DE,
-  DM,
   DP,
   DS,
+  DTM,
   DU,
   OpaqueClient,
   OpaqueRoom,
@@ -85,7 +86,7 @@ export type WithLiveblocks<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  TM extends BaseMetadata = DM,
+  TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 > = TState & {
   readonly liveblocks: LiveblocksContext<P, S, U, E, TM, CM>;
