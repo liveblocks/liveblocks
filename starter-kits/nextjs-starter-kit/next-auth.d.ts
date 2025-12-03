@@ -9,6 +9,8 @@ declare module "next-auth" {
       // The type of extra info taken from your database and sent to front end from auth endpoint
       // See /pages/api/auth/[...nextauth].ts
       info: User;
+      // The currently selected workspace/tenant ID
+      currentWorkspaceId?: string;
     };
   }
 }

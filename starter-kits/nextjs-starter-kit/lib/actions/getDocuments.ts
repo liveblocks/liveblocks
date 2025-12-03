@@ -41,6 +41,21 @@ export async function getDocuments({
   drafts = false,
   limit = 20,
 }: GetDocumentsProps) {
+  const session = await auth();
+
+  // Check user is logged in
+  if (!session) {
+    return {
+      error: {
+        code: 401,
+        message: "Not signed in",
+        suggestion: "Sign in to get documents",
+      },
+    };
+  }
+
+  const tenantId = session.user.currentWorkspaceId;
+
   // Build getRooms arguments
   let query: string | undefined = undefined;
 
@@ -49,6 +64,8 @@ export async function getDocuments({
   }
 
   let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
+    // @ts-expect-error
+    tenantId,
     limit,
     query,
   };
@@ -70,16 +87,10 @@ export async function getDocuments({
     };
   }
 
-  let session;
   let getRoomsResponse;
   try {
-    // Get session and rooms
-    const result = await Promise.all([
-      auth(),
-      liveblocks.getRooms(getRoomsOptions),
-    ]);
-    session = result[0];
-    getRoomsResponse = result[1];
+    // Get rooms
+    getRoomsResponse = await liveblocks.getRooms(getRoomsOptions);
   } catch (err) {
     console.log(err);
     return {
@@ -87,17 +98,6 @@ export async function getDocuments({
         code: 500,
         message: "Error fetching rooms",
         suggestion: "Refresh the page and try again",
-      },
-    };
-  }
-
-  // Check user is logged in
-  if (!session) {
-    return {
-      error: {
-        code: 401,
-        message: "Not signed in",
-        suggestion: "Sign in to get documents",
       },
     };
   }

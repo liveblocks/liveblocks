@@ -28,7 +28,11 @@ Check that you've added the user to data/users.ts, for example:
   }
 
   const color = getRandom(colors, userId);
-  return { color, ...user };
+  return {
+    color,
+    ...user,
+    workspaceIds: user.workspaceIds || [],
+  };
 }
 
 export function getRandom<T>(array: T[], seed?: string): T {

@@ -19,16 +19,15 @@ type Props = {
  * @param nextCursor - nextCursor, retrieved from getDocumentByGroup
  */
 export async function getNextDocuments({ nextCursor }: Props) {
-  let session;
+  const session = await auth();
+  const tenantId = session?.user.currentWorkspaceId || "default";
   let getRoomsResponse;
   try {
-    // Get session and rooms
-    const result = await Promise.all([
-      auth(),
-      liveblocks.getRooms({ startingAfter: nextCursor }),
-    ]);
-    session = result[0];
-    getRoomsResponse = result[1];
+    // Get rooms
+    getRoomsResponse = await liveblocks.getRooms({
+      startingAfter: nextCursor,
+      tenantId,
+    });
   } catch (err) {
     console.log(err);
     return {

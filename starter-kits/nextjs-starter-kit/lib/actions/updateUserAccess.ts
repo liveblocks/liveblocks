@@ -29,19 +29,18 @@ type Props = {
  * @param access - The access level of the user
  */
 export async function updateUserAccess({ userId, documentId, access }: Props) {
-  let session;
+  const session = await auth();
+  const tenantId = session?.user.currentWorkspaceId || "default";
   let room;
   let user;
   try {
-    // Get session and room
+    // Get room and user
     const result = await Promise.all([
-      auth(),
       liveblocks.getRoom(documentId),
       getUser(userId),
     ]);
-    session = result[0];
-    room = result[1];
-    user = result[2];
+    room = result[0];
+    user = result[1];
   } catch (err) {
     console.error(err);
     return {
@@ -161,6 +160,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
       kind: "$addedToDocument",
       subjectId: document.id,
       roomId: room.id,
+      tenantId,
       activityData: {
         documentId: document.id,
       },

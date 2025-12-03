@@ -1,6 +1,7 @@
 "use server";
 
 import { LiveblocksError } from "@liveblocks/node";
+import { auth } from "@/auth";
 import { getGroups } from "@/lib/database";
 import { liveblocks } from "@/liveblocks.server.config";
 
@@ -11,6 +12,9 @@ import { liveblocks } from "@/liveblocks.server.config";
  */
 export async function syncLiveblocksGroups() {
   const groups = (await getGroups()).filter((group) => group !== null);
+  // Get workspace ID - this will be "default" if no session exists
+  const session = await auth();
+  const tenantId = session?.user.currentWorkspaceId || "default";
 
   for (const group of groups) {
     const localMemberIds = new Set(group.memberIds ?? []);
@@ -18,9 +22,9 @@ export async function syncLiveblocksGroups() {
     // Sync group members if the group already exists on Liveblocks
     try {
       const liveblocksMemberIds = new Set(
-        (await liveblocks.getGroup({ groupId: group.id })).members.map(
-          (member) => member.id
-        )
+        (
+          await liveblocks.getGroup({ groupId: group.id, tenantId })
+        ).members.map((member) => member.id)
       );
       const memberIdsToAdd: string[] = [];
       const memberIdsToRemove: string[] = [];
@@ -41,6 +45,7 @@ export async function syncLiveblocksGroups() {
         await liveblocks.addGroupMembers({
           groupId: group.id,
           memberIds: memberIdsToAdd,
+          tenantId,
         });
       }
 
@@ -48,6 +53,7 @@ export async function syncLiveblocksGroups() {
         await liveblocks.removeGroupMembers({
           groupId: group.id,
           memberIds: memberIdsToRemove,
+          tenantId,
         });
       }
     } catch (error) {
@@ -60,6 +66,7 @@ export async function syncLiveblocksGroups() {
       await liveblocks.createGroup({
         groupId: group.id,
         memberIds: Array.from(localMemberIds),
+        tenantId,
       });
     }
   }
