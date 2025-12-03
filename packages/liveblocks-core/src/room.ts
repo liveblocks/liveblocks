@@ -827,6 +827,7 @@ export type Room<
     commentId?: string;
     metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
   }): Promise<ThreadData<TM, CM>>;
 
@@ -849,6 +850,19 @@ export type Room<
     metadata: Patchable<TM>;
     threadId: string;
   }): Promise<TM>;
+
+  /**
+   * Edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+   */
+  editCommentMetadata(options: {
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
 
   /**
    * Marks a thread as resolved.
@@ -898,8 +912,9 @@ export type Room<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Edits a comment.
@@ -2850,6 +2865,8 @@ export function createRoom<
     threadId?: string;
     commentId?: string;
     metadata: TM | undefined;
+    // TODO: Finalize API design
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
@@ -2859,6 +2876,7 @@ export function createRoom<
       commentId: options.commentId,
       metadata: options.metadata,
       body: options.body,
+      commentMetadata: options.commentMetadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -2876,6 +2894,24 @@ export function createRoom<
     threadId: string;
   }) {
     return httpClient.editThreadMetadata({ roomId, threadId, metadata });
+  }
+
+  async function editCommentMetadata({
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return httpClient.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      metadata,
+    });
   }
 
   async function markThreadAsResolved(threadId: string) {
@@ -2901,6 +2937,7 @@ export function createRoom<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     return httpClient.createComment({
@@ -2908,6 +2945,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -3160,6 +3198,7 @@ export function createRoom<
       unsubscribeFromThread,
       createComment,
       editComment,
+      editCommentMetadata,
       deleteComment,
       addReaction,
       removeReaction,

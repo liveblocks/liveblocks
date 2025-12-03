@@ -136,12 +136,15 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     body,
     commentId,
     threadId,
+    commentMetadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId?: string;
     commentId?: string;
     metadata: TM | undefined;
+    // TODO: Finalize API design
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
   }): Promise<ThreadData<TM, CM>>;
@@ -170,17 +173,31 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId: string;
   }): Promise<TM>;
 
+  editCommentMetadata({
+    roomId,
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
+
   createComment({
     roomId,
     threadId,
     commentId,
     body,
+    metadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }): Promise<CommentData<CM>>;
 
@@ -720,6 +737,7 @@ export function createApiClient<
     commentId?: string;
     metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
@@ -736,6 +754,7 @@ export function createApiClient<
         comment: {
           id: commentId,
           body: options.body,
+          metadata: options.commentMetadata,
           attachmentIds: options.attachmentIds,
         },
         metadata: options.metadata,
@@ -808,11 +827,28 @@ export function createApiClient<
     );
   }
 
+  async function editCommentMetadata(options: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return await httpClient.post<CM>(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      options.metadata
+    );
+  }
+
   async function createComment(options: {
     roomId: string;
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
@@ -825,6 +861,7 @@ export function createApiClient<
       {
         id: commentId,
         body: options.body,
+        metadata: options.metadata,
         attachmentIds: options.attachmentIds,
       }
     );
@@ -1951,6 +1988,7 @@ export function createApiClient<
     editThreadMetadata,
     createComment,
     editComment,
+    editCommentMetadata,
     deleteComment,
     addReaction,
     removeReaction,
