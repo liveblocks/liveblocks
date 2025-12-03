@@ -1,8 +1,17 @@
-## vNEXT (not released yet)
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
 
 ### `@liveblocks/client`
 
 - Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
 
 ## v3.10.1
 
@@ -292,8 +301,8 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## v3.4.0
 

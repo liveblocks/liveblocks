@@ -4,6 +4,7 @@ import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
+  createSerializedRoot,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
@@ -26,7 +27,7 @@ describe("LiveObject", () => {
 
     test("should be the associated room id if attached", async () => {
       const { root } = await prepareIsolatedStorageTest(
-        [createSerializedObject("root", {})],
+        [createSerializedRoot()],
         1
       );
 
@@ -38,7 +39,7 @@ describe("LiveObject", () => {
         child: LiveObject<{ a: number }>;
       }>(
         [
-          createSerializedObject("root", {}),
+          createSerializedRoot(),
           createSerializedObject("0:0", { a: 0 }, "root", "child"),
         ],
         1
@@ -56,7 +57,7 @@ describe("LiveObject", () => {
 
   test("update non existing property", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedObject("0:0", {})]
+      [createSerializedRoot()]
     );
 
     expectStorage({});
@@ -71,7 +72,7 @@ describe("LiveObject", () => {
 
   test("update non existing property with null", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedObject("0:0", {})]
+      [createSerializedRoot()]
     );
 
     expectStorage({});
@@ -86,7 +87,7 @@ describe("LiveObject", () => {
 
   test("update throws on read-only", async () => {
     const { storage } = await prepareStorageTest(
-      [createSerializedObject("0:0", { a: 0 })],
+      [createSerializedRoot({ a: 0 })],
       1,
       [Permission.Read, Permission.PresenceWrite]
     );
@@ -98,7 +99,7 @@ describe("LiveObject", () => {
 
   test("update existing property", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedObject("0:0", { a: 0 })]
+      [createSerializedRoot({ a: 0 })]
     );
 
     expectStorage({ a: 0 });
@@ -113,7 +114,7 @@ describe("LiveObject", () => {
 
   test("update existing property with null", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedObject("0:0", { a: 0 })]
+      [createSerializedRoot({ a: 0 })]
     );
 
     expectStorage({ a: 0 });
@@ -128,7 +129,7 @@ describe("LiveObject", () => {
 
   test("update root", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedObject("0:0", { a: 0 })]
+      [createSerializedRoot({ a: 0 })]
     );
 
     expectStorage({
@@ -150,11 +151,10 @@ describe("LiveObject", () => {
   });
 
   test("set throws on read-only", async () => {
-    const { storage } = await prepareStorageTest(
-      [createSerializedObject("0:0", {})],
-      1,
-      [Permission.Read, Permission.PresenceWrite]
-    );
+    const { storage } = await prepareStorageTest([createSerializedRoot()], 1, [
+      Permission.Read,
+      Permission.PresenceWrite,
+    ]);
 
     expect(() => storage.root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -164,7 +164,7 @@ describe("LiveObject", () => {
   test("update with LiveObject", async () => {
     const { room, storage, expectStorage, operations, assertUndoRedo } =
       await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
-        [createSerializedObject("0:0", { child: null })],
+        [createSerializedRoot({ child: null })],
         1
       );
 
@@ -184,7 +184,7 @@ describe("LiveObject", () => {
     expect(room[kInternal].undoStack[0]).toEqual([
       {
         type: OpCode.UPDATE_OBJECT,
-        id: "0:0",
+        id: "root",
         data: {
           child: null,
         },
@@ -198,7 +198,7 @@ describe("LiveObject", () => {
         id: "1:0",
         opId: "1:1",
         data: { a: 0 },
-        parentId: "0:0",
+        parentId: "root",
         parentKey: "child",
       },
     ]);
@@ -213,7 +213,7 @@ describe("LiveObject", () => {
         type: OpCode.CREATE_OBJECT,
         id: "1:0",
         data: { a: 0 },
-        parentId: "0:0",
+        parentId: "root",
         parentKey: "child",
       },
     ]);
@@ -230,8 +230,8 @@ describe("LiveObject", () => {
           grandChild: LiveObject<{ c: number }>;
         }> | null;
       }>([
-        createSerializedObject("0:0", { a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedRoot({ a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "root", "child"),
         createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
       ]);
 
@@ -262,8 +262,8 @@ describe("LiveObject", () => {
         a: number;
         child: LiveObject<{ b: number }> | null;
       }>([
-        createSerializedObject("0:0", { a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedRoot({ a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "root", "child"),
       ]);
 
     expectStorage({
@@ -286,7 +286,7 @@ describe("LiveObject", () => {
 
   test("add nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest([createSerializedObject("0:0", {})], 1);
+      await prepareStorageTest([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -307,7 +307,7 @@ describe("LiveObject", () => {
 
   test("replace nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest([createSerializedObject("0:0", {})], 1);
+      await prepareStorageTest([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -342,8 +342,8 @@ describe("LiveObject", () => {
         a: number;
         child: LiveObject<{ b: number }>;
       }>([
-        createSerializedObject("0:0", { a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedRoot({ a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "root", "child"),
       ]);
 
     const root = storage.root;
@@ -373,8 +373,8 @@ describe("LiveObject", () => {
         a: number;
         child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
       }>([
-        createSerializedObject("0:0", { a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedRoot({ a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "root", "child"),
         createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
       ]);
 
@@ -417,8 +417,8 @@ describe("LiveObject", () => {
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: "initial" }, "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", { a: "initial" }, "root", "items"),
         ]);
 
       const items = root.get("items");
@@ -460,7 +460,7 @@ describe("LiveObject", () => {
       test("when value is not a crdt", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ a: number }>(
-            [createSerializedObject("0:0", { a: 0 })],
+            [createSerializedRoot({ a: 0 })],
             1
           );
 
@@ -474,7 +474,7 @@ describe("LiveObject", () => {
           {
             type: OpCode.UPDATE_OBJECT,
             data: { a: 2 },
-            id: "0:0",
+            id: "root",
             opId: "external",
           },
         ]);
@@ -488,8 +488,8 @@ describe("LiveObject", () => {
             a: LiveObject<{ subA: number }>;
           }>(
             [
-              createSerializedObject("0:0", {}),
-              createSerializedObject("0:1", { subA: 0 }, "0:0", "a"),
+              createSerializedRoot(),
+              createSerializedObject("0:1", { subA: 0 }, "root", "a"),
             ],
             1
           );
@@ -506,7 +506,7 @@ describe("LiveObject", () => {
             data: { subA: 2 },
             id: "2:0",
             parentKey: "a",
-            parentId: "0:0",
+            parentId: "root",
             opId: "external",
           },
         ]);
@@ -519,10 +519,7 @@ describe("LiveObject", () => {
           await prepareIsolatedStorageTest<{
             a: LiveList<LiveObject<{ b: number }>>;
           }>(
-            [
-              createSerializedObject("0:0", {}),
-              createSerializedList("0:1", "0:0", "a"),
-            ],
+            [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
             1
           );
 
@@ -539,7 +536,7 @@ describe("LiveObject", () => {
             type: OpCode.CREATE_LIST,
             id: "2:0",
             parentKey: "a",
-            parentId: "0:0",
+            parentId: "root",
             opId: "external",
           },
         ]);
@@ -555,8 +552,8 @@ describe("LiveObject", () => {
         child: LiveObject<{ a: number }>;
       }>(
         [
-          createSerializedObject("0:0", { a: 1 }),
-          createSerializedObject("0:1", { b: 2 }, "0:0", "child"),
+          createSerializedRoot({ a: 1 }),
+          createSerializedObject("0:1", { b: 2 }, "root", "child"),
         ],
         1,
         [Permission.Read, Permission.PresenceWrite]
@@ -577,7 +574,7 @@ describe("LiveObject", () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           a?: number;
-        }>([createSerializedObject("0:0", { a: 0 })]);
+        }>([createSerializedRoot({ a: 0 })]);
       expectStorage({ a: 0 });
 
       storage.root.delete("a");
@@ -591,8 +588,8 @@ describe("LiveObject", () => {
         await prepareStorageTest<{
           child?: LiveObject<{ a: number }>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", { a: 0 }, "root", "child"),
         ]);
 
       expectStorage({ child: { a: 0 } });
@@ -606,7 +603,7 @@ describe("LiveObject", () => {
     test("should not notify if property does not exist", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
-      }>([createSerializedObject("0:0", {})]);
+      }>([createSerializedRoot()]);
 
       const callback = vi.fn();
       room.subscribe(root, callback);
@@ -619,7 +616,7 @@ describe("LiveObject", () => {
     test("should notify if property has been deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
-      }>([createSerializedObject("0:0", { a: 1 })]);
+      }>([createSerializedRoot({ a: 1 })]);
 
       const callback = vi.fn();
       room.subscribe(root, callback);
@@ -634,14 +631,14 @@ describe("LiveObject", () => {
     test("should not notify if property does not exist", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
-          createSerializedObject("0:0", {}),
+          createSerializedRoot(),
         ]);
 
       const callback = vi.fn();
       room.subscribe(root, callback);
 
       applyRemoteOperations([
-        { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
+        { type: OpCode.DELETE_OBJECT_KEY, id: "root", key: "a" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(0);
@@ -650,14 +647,14 @@ describe("LiveObject", () => {
     test("should notify if property has been deleted", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
-          createSerializedObject("0:0", { a: 1 }),
+          createSerializedRoot({ a: 1 }),
         ]);
 
       const callback = vi.fn();
       room.subscribe(root, callback);
 
       applyRemoteOperations([
-        { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
+        { type: OpCode.DELETE_OBJECT_KEY, id: "root", key: "a" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -667,7 +664,7 @@ describe("LiveObject", () => {
   describe("subscriptions", () => {
     test("simple action", async () => {
       const { room, storage } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
+        [createSerializedRoot({ a: 0 })],
         1
       );
 
@@ -689,9 +686,9 @@ describe("LiveObject", () => {
         child2: LiveObject<{ a: number }>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
-          createSerializedObject("0:2", { a: 0 }, "0:0", "child2"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", { a: 0 }, "root", "child"),
+          createSerializedObject("0:2", { a: 0 }, "root", "child2"),
         ],
         1
       );
@@ -719,8 +716,8 @@ describe("LiveObject", () => {
         child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", { a: 0 }, "root", "child"),
           createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
         ],
         1
@@ -765,8 +762,8 @@ describe("LiveObject", () => {
           }>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "child"),
             createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
           ],
           1
@@ -819,8 +816,8 @@ describe("LiveObject", () => {
           }>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "child"),
             createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
           ],
           1
@@ -863,8 +860,8 @@ describe("LiveObject", () => {
           child: LiveObject<{ a?: number; b?: number }>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: -1, b: -2 }, "0:0", "child"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: -1, b: -2 }, "root", "child"),
           ],
           1
         );
@@ -915,8 +912,8 @@ describe("LiveObject", () => {
           obj: LiveObject<{ a: number }>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 1 }, "root", "obj"),
           ],
           1
         );
@@ -930,13 +927,13 @@ describe("LiveObject", () => {
       expectStorage({ obj: { a: 1 } });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
           {
             type: CrdtType.OBJECT,
             data: { a: 2 },
-            parentId: "0:0",
+            parentId: "root",
             parentKey: "obj",
           },
         ],
@@ -968,8 +965,8 @@ describe("LiveObject", () => {
           obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 1 }, "root", "obj"),
           ],
           1
         );
@@ -983,13 +980,13 @@ describe("LiveObject", () => {
       expectStorage({ obj: { a: 1 } });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
           {
             type: CrdtType.OBJECT,
             data: { a: 1 },
-            parentId: "0:0",
+            parentId: "root",
             parentKey: "obj",
           },
         ],
@@ -1031,7 +1028,7 @@ describe("LiveObject", () => {
     test("subscription should gives the right update", async () => {
       const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
         a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      }>([createSerializedRoot({ a: 0 })], 1);
 
       expectStorage({ a: 0 });
       root.set("a", 1);
@@ -1058,8 +1055,8 @@ describe("LiveObject", () => {
         }>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", {}, "0:0", "obj"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", {}, "root", "obj"),
           createSerializedObject("0:2", { subA: 1 }, "0:1", "a"),
           createSerializedObject("0:3", { subA: 2 }, "0:1", "b"),
         ],

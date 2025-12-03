@@ -51,11 +51,3 @@ export type SerializedRegister = {
   readonly parentKey: string;
   readonly data: Json;
 };
-
-export function isRootCrdt(crdt: SerializedCrdt): crdt is SerializedRootObject {
-  return crdt.type === CrdtType.OBJECT && !isChildCrdt(crdt);
-}
-
-export function isChildCrdt(crdt: SerializedCrdt): crdt is SerializedChild {
-  return crdt.parentId !== undefined && crdt.parentKey !== undefined;
-}

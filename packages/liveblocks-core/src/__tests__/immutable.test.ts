@@ -32,6 +32,7 @@ import {
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
+  createSerializedRoot,
   FIRST_POSITION,
   FOURTH_POSITION,
   parseAsClientMsgs,
@@ -166,7 +167,7 @@ describe("2 ways tests with two clients", () => {
       const { storage, state, expectStorageAndState } =
         await prepareStorageImmutableTest<{
           syncObj: { a: number };
-        }>([createSerializedObject("0:0", {})], 1);
+        }>([createSerializedRoot()], 1);
 
       expect(state).toEqual({});
 
@@ -190,8 +191,8 @@ describe("2 ways tests with two clients", () => {
           syncObj: { a: number };
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "syncObj"),
           ],
           1
         );
@@ -218,8 +219,8 @@ describe("2 ways tests with two clients", () => {
           syncObj: { a: any };
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "syncObj"),
           ],
           1
         );
@@ -246,8 +247,8 @@ describe("2 ways tests with two clients", () => {
           doc: any;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", {}, "0:0", "doc"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", {}, "root", "doc"),
           ],
           1
         );
@@ -269,8 +270,8 @@ describe("2 ways tests with two clients", () => {
           doc: any;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", {}, "0:0", "doc"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", {}, "root", "doc"),
           ],
           1
         );
@@ -292,8 +293,8 @@ describe("2 ways tests with two clients", () => {
           doc: any;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", {}, "0:0", "doc"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", {}, "root", "doc"),
           ],
           1
         );
@@ -315,8 +316,8 @@ describe("2 ways tests with two clients", () => {
           syncObj: { a?: number };
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "syncObj"),
           ],
           1
         );
@@ -345,8 +346,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<number>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, 1),
@@ -374,8 +375,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
           ],
           1
         );
@@ -400,8 +401,8 @@ describe("2 ways tests with two clients", () => {
           list: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "list"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "list"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -424,8 +425,8 @@ describe("2 ways tests with two clients", () => {
           list: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "list"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "list"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -448,8 +449,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
           ],
           1
@@ -475,8 +476,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
@@ -505,8 +506,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
           ],
           1
@@ -532,8 +533,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
           ],
@@ -560,8 +561,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
           ],
@@ -588,8 +589,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
@@ -617,8 +618,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
@@ -646,8 +647,8 @@ describe("2 ways tests with two clients", () => {
           syncList: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "syncList"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "syncList"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
@@ -688,8 +689,8 @@ describe("2 ways tests with two clients", () => {
       const { storage, state, expectStorage } =
         await prepareStorageImmutableTest<{ syncObj: { a: any } }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+            createSerializedRoot(),
+            createSerializedObject("0:1", { a: 0 }, "root", "syncObj"),
           ],
           1
         );
@@ -717,8 +718,8 @@ describe("2 ways tests with two clients", () => {
         syncObj: { a: any };
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+          createSerializedRoot(),
+          createSerializedObject("0:1", { a: 0 }, "root", "syncObj"),
         ],
         1
       );

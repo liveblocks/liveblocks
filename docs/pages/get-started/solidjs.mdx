@@ -93,7 +93,7 @@ please let us know about it on this
       import { room } from "./room.js";
 
       export function Room() {
-        const [other, setOthers] = createSignal(room.getOthers());
+        const [others, setOthers] = createSignal(room.getOthers());
 
         onMount(() => {
           const unsubscribeOthers = room.subscribe("others", (updatedOthers) => {
@@ -103,7 +103,7 @@ please let us know about it on this
           onCleanup(() => {
             unsubscribeOthers();
           });
-        })
+        });
 
         return (
           <div>There are {others.length} other user(s) online</div>

@@ -72,7 +72,7 @@ function App() {
 ### Realtime editing
 
 Your document can be edited in real-time by multiple users at once. Each user
-renders a cursors on screen that updates live as they move, select, and edit.
+renders a cursor on screen that updates live as they move, select, and edit.
 
 <Figure>
   <Image
@@ -85,8 +85,8 @@ renders a cursors on screen that updates live as they move, select, and edit.
 
 When [authenticating your users](/docs/authentication) with
 [`prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) or
-[`identifyUsers`](/docs/api-reference/liveblocks-node#id-tokens), pass `name`
-and `color` properties to their `userInfo` to add their cursor information.
+[`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens), pass `name` and
+`color` properties to their `userInfo` to add their cursor information.
 
 ```js
 userInfo: {
@@ -111,9 +111,7 @@ as seen below.
   />
 </Figure>
 
-Add
-[`Toolbar`](http://localhost:3001/docs/api-reference/liveblocks-react-lexical#Toolbar)
-and
+Add [`Toolbar`](/docs/api-reference/liveblocks-react-lexical#Toolbar) and
 [`FloatingToolbar`](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar)
 to enable these features.
 
@@ -196,7 +194,7 @@ Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
 alongside
 [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
 and
-[`Anchoredthreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+[`AnchoredThreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
 to render your comments to the page.
 
 ```tsx

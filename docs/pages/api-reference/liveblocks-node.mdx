@@ -373,15 +373,9 @@ paginates your API requests.
 
 #### Liveblocks.iterRooms [#iter-rooms]
 
-Like `.getRooms()`, but returns an asynchronous iterator, which will help you
-iterate over all (matching) rooms in your project, without having to manually
-paginate over those results. List `.getRooms()`, but returns an asynchronous
-iterator, which will help you iterate over all (matching) rooms in your project,
-without having to manually paginate over those results. Returns a list of rooms
-that are in the current project. Works similarly to
-[`liveblocks.getRooms`](#get-rooms), but instead returns an asynchronous
-iterator, which helps you iterate over all selected rooms in your project,
-without having to manually paginate through the results.
+Works similarly to [`liveblocks.getRooms`](#get-rooms), but instead returns an
+asynchronous iterator, which helps you iterate over all selected rooms in your
+project, without having to manually paginate through the results.
 
 ```ts
 const roomsIterator = liveblocks.iterRooms();
@@ -428,7 +422,9 @@ instead of a `query` object.
 
 ##### Mass deleting rooms
 
-You can use `iterRooms` to efficiently delete multiple rooms at once. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+You can use `iterRooms` to efficiently delete multiple rooms at once. This
+example shows how to delete rooms in batches of 50 concurrent deletions at a
+time:
 
 ```ts
 const MAX_CONCURRENT = 50;
@@ -441,17 +437,21 @@ for await (const room of liveblocks.iterRooms({
   if (queue.length >= MAX_CONCURRENT) {
     await Promise.race(queue);
   }
-  
-  const promise = liveblocks.deleteRoom(room.id)
+
+  const promise = liveblocks
+    .deleteRoom(room.id)
     .finally(() => queue.splice(queue.indexOf(promise), 1));
-  
+
   queue.push(promise);
 }
 
 await Promise.all(queue);
 ```
 
-This approach is useful when you need to delete a large number of rooms, as it automatically handles pagination and allows you to control the concurrency of deletions. You can use any of the filtering options shown above to select which rooms to delete.
+This approach is useful when you need to delete a large number of rooms, as it
+automatically handles pagination and allows you to control the concurrency of
+deletions. You can use any of the filtering options shown above to select which
+rooms to delete.
 
 #### Liveblocks.createRoom [#post-rooms]
 
@@ -689,7 +689,10 @@ await liveblocks.deleteRoom("my-room-id");
 
 ##### Mass deleting rooms
 
-If you need to delete multiple rooms at once, you can use [`liveblocks.iterRooms`](#iter-rooms) to efficiently iterate through rooms and delete them in batches. This example shows how to delete rooms in batches of 50 concurrent deletions at a time:
+If you need to delete multiple rooms at once, you can use
+[`liveblocks.iterRooms`](#iter-rooms) to efficiently iterate through rooms and
+delete them in batches. This example shows how to delete rooms in batches of 50
+concurrent deletions at a time:
 
 ```ts
 const MAX_CONCURRENT = 50;
@@ -702,17 +705,20 @@ for await (const room of liveblocks.iterRooms({
   if (queue.length >= MAX_CONCURRENT) {
     await Promise.race(queue);
   }
-  
-  const promise = liveblocks.deleteRoom(room.id)
+
+  const promise = liveblocks
+    .deleteRoom(room.id)
     .finally(() => queue.splice(queue.indexOf(promise), 1));
-  
+
   queue.push(promise);
 }
 
 await Promise.all(queue);
 ```
 
-You can use any of the filtering options available in [`liveblocks.iterRooms`](#iter-rooms) to select which rooms to delete, such as filtering by metadata, room ID prefix, or user/group access.
+You can use any of the filtering options available in
+[`liveblocks.iterRooms`](#iter-rooms) to select which rooms to delete, such as
+filtering by metadata, room ID prefix, or user/group access.
 
 #### Liveblocks.prewarmRoom [#get-rooms-roomId-prewarm]
 
@@ -773,9 +779,8 @@ the user releases their pointer.
 #### Liveblocks.updateRoomId [#post-rooms-update-roomId]
 
 Permanently updates a room’s ID. `newRoomId` will replace `currentRoomId`. Note
-that this will disconnect connected users from the room, but this currentRoomId
-be worked around. Throws an error if the room isn’t found. This is a wrapper
-around the
+that this will disconnect connected users from the room, but this can be worked
+around. Throws an error if the room isn’t found. This is a wrapper around the
 [Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
 and returns the same response.
 
@@ -1989,7 +1994,7 @@ await liveblocks.updateRoomSubscriptionSettings({
 });
 
 // 2. Disables notifications just for this thread, "th_d75sF3..."
-await liveblocks.unsubscribeToThread({
+await liveblocks.unsubscribeFromThread({
   roomId,
   threadId: "th_d75sF3...",
   data: { userId },
@@ -2028,7 +2033,7 @@ console.log(subscriptions);
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
 comment and the content of the comment. This method is a wrapper around the
-[Get Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
+[Create Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments)
 and returns the new comment.
 
 ```ts
@@ -3631,69 +3636,6 @@ if (isCustomNotificationEvent(event)) {
 ```
 
 The check is made against the event type and event data kind.
-
-## Deprecated
-
-### authorize [#authorize] [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This is no longer supported. Adopt
-  [`Liveblocks.prepareSession`](#access-tokens) or
-  [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
-</Banner>
-
-The purpose of `authorize()` was to help you implement your custom
-authentication back end. It generates old-style single-room tokens.
-
-Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
-using the `authorize` function in your back end, and adopt
-[`Liveblocks.prepareSession`](#access-tokens) or
-[`Liveblocks.identifyUser`](#id-tokens) APIs instead.
-
-#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants] [@badge=Deprecated]
-
-Returns a list of participants found inside a thread. A participant is a user
-who has commented or been mentioned in the thread. Throws an error if the room
-or thread isn’t found. This is a wrapper around the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
-and returns the same response.
-
-This method is deprecated, prefer using
-[`getMentionsFromCommentBody`](#get-mentions-from-comment-body) to extract
-mentions from comments and threads, or
-[`Liveblocks.getThreadSubscriptions`](#get-rooms-roomId-threads-threadId-subscriptions)
-to get the list of users who are subscribed to a thread.
-
-```ts
-const { participantIds } = await liveblocks.getThreadParticipants({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-});
-
-// ["chris@example.com", "nimesh@example.com", ...]
-console.log(participantIds);
-```
-
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.getRoomSubscriptionSettings`](#get-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
-
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.updateRoomSubscriptionSettings`](#post-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
-
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
-
-This method was renamed to
-[`Liveblocks.deleteRoomSubscriptionSettings`](#delete-rooms-roomId-users-userId-subscription-settings)
-in 2.24 and removed in 3.0, read more in our
-[migration guide](/docs/platform/upgrading/2.24).
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token

@@ -326,7 +326,7 @@ function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -576,7 +576,7 @@ function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
       style={{ width: "350px" }}
     />
   );
-  //+++
+  // +++
 }
 
 export function useIsMobile() {
@@ -722,8 +722,7 @@ offset that’s added when a thread is selected.
 
 The `HistoryVersionPreview` component allows you to display a preview of a
 specific version of your BlockNote editor’s content. It also contains a button
-and logic for restoring. It must be used inside the `<LiveblocksPlugin>`
-context. To render a list of versions, see
+and logic for restoring. To render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
 #### Usage [#HistoryVersionPreview-usage]
@@ -842,7 +841,7 @@ const editor = useCreateBlockNoteWithLiveblocks(
     defaultValue="false"
     type="boolean"
   >
-    Experimental. Enable offline support using IndexedDB. This means the after
+    Experimental. Enable offline support using IndexedDB. This means that after
     the first load, documents will be stored locally and load instantly. [Learn
     more](#Offline-support).
   </PropertiesListItem>
@@ -948,7 +947,7 @@ It’s possible to enable offline support in your editor with an experimental
 option. This means that once a document has been opened, it’s saved locally on
 the browser, and can be shown instantly without a loading screen. As soon as
 Liveblocks connects, any remote changes will be synchronized, without any load
-spinner. Enable this by passing a `offlineSupport_experimental ` value.
+spinner. Enable this by passing a `offlineSupport_experimental` value.
 
 ```tsx
 import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
@@ -985,7 +984,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 import { BlockNoteEditor } from "@blocknote/core";
 
-export function TiptapEditor() {
+export function BlockNoteEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
@@ -1072,8 +1071,6 @@ Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
 learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
-[`LiveblocksPlugin`]: #LiveblocksPlugin
-[`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads

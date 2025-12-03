@@ -18,6 +18,38 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 48 (2025-11-28)
+
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
+
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
+
+## Examples
+
+- Updated Next.js Starter Kit to use Tiptap v3 and BlockNote 0.42.
+
+## Documentation
+
+- New guide: [Can I use my own database with Yjs?](https://liveblocks.io/docs/guides/can-i-use-my-own-database-with-yjs)
+- New guide: [Why you can’t delete Yjs documents](https://liveblocks.io/docs/guides/why-you-cant-delete-yjs-documents).
+- Add info on mass deleting rooms.
+- Rename "Liveblocks" notification kinds as "Collaboration" kinds.
+
+## Contributors
+
+ctnicholas, nvie, nimeshnayaju, ofoucherot, marcbouchenoire
+
 # Week 47 (2025-11-21)
 
 ### Documentation
@@ -484,8 +516,8 @@ pierrelevaillant, nvie, jrowny, nimeshnayaju, marcbouchenoire
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## Website
 

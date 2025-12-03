@@ -2,7 +2,8 @@
 meta:
   title: "Get started with Liveblocks, Quill, Yjs, and Vue.js"
   parentTitle: "Get started"
-  description: "Learn how to get started Liveblocks, Quill, Yjs, and Vue.js."
+  description:
+    "Learn how to get started with Liveblocks, Quill, Yjs, and Vue.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -69,9 +70,9 @@ collaboration to your Vue.js application using the APIs from the
       leave.value = info.leave;
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
-      const yText = yDoc.getText("quill");
       const yProvider = getYjsProviderForRoom(room);
       const yDoc = yProvider.getYDoc();
+      const yText = yDoc.getText("quill");
 
       // Attach cursors plugin
       Quill.register("modules/cursors", QuillCursors);
@@ -134,9 +135,9 @@ collaboration to your Vue.js application using the APIs from the
 
 ## What to read next
 
-Congratulations! You now have set up the foundation for your collaborative
-Tiptap text editor inside your Vue.js application.
+Congratulations! You now have set up the foundation for your collaborative Quill
+text editor inside your Vue.js application.
 
 - [@liveblocks/yjs API Reference](/docs/api-reference/liveblocks-yjs)
 - [@liveblocks/client API Reference](/docs/api-reference/liveblocks-client)
-- [Tiptap website](https://tiptap.dev)
+- [Quill website](https://quilljs.com)

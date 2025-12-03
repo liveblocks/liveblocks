@@ -134,7 +134,7 @@ collaboration to your React application using the APIs from the
         const yDoc = yProvider.getYDoc();
         const yText = yDoc.getText("quill");
 
-        return <QuillEditor yText={yText} provider={provider} />;
+        return <QuillEditor yText={yText} provider={yProvider} />;
       }
 
       type EditorProps = {
