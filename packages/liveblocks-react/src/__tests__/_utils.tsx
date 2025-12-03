@@ -63,7 +63,10 @@ function customRenderHook<Result, Props>(
   return renderHook(render, { wrapper: AllTheProviders, ...options });
 }
 
-export function createContextsForTest<M extends BaseMetadata>(
+export function createContextsForTest<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
   {
     userId,
     ...options
@@ -90,10 +93,10 @@ export function createContextsForTest<M extends BaseMetadata>(
   }
 
   const client = createClient(clientOptions);
-  const { store: umbrellaStore } = getLiveblocksExtrasForClient<M>(client);
+  const { store: umbrellaStore } = getLiveblocksExtrasForClient<TM, CM>(client);
 
   return {
-    room: createRoomContext<JsonObject, never, never, never, M>(client),
+    room: createRoomContext<JsonObject, never, never, never, TM, CM>(client),
     liveblocks: createLiveblocksContext(client),
     client,
     umbrellaStore,

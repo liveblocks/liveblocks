@@ -20,10 +20,11 @@ import { shallow } from "@liveblocks/client";
 import type {
   AsyncResult,
   CommentsEventServerMsg,
+  DCM,
   DE,
-  DM,
   DP,
   DS,
+  DTM,
   DU,
   EnterOptions,
   IYjsProvider,
@@ -137,8 +138,9 @@ function makeMutationContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(room: Room<P, S, U, E, TM, CM>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
   const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
   const needsStorage = `${cannotUseUntil} storage has been loaded`;
@@ -186,7 +188,14 @@ const _extras = new WeakMap<
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
-  RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
+  RoomContextBundle<
+    JsonObject,
+    LsonObject,
+    BaseUserMeta,
+    Json,
+    BaseMetadata,
+    BaseMetadata
+  >
 >();
 
 function getOrCreateRoomContextBundle<
@@ -194,20 +203,24 @@ function getOrCreateRoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeRoomContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, M>;
+  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function getRoomExtrasForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeRoomExtrasForClient(client);
@@ -215,7 +228,7 @@ function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: UmbrellaStore<M>;
+    store: UmbrellaStore<TM, CM>;
   };
 }
 
@@ -328,9 +341,10 @@ type RoomLeavePair<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = {
-  room: Room<P, S, U, E, M>;
+  room: Room<P, S, U, E, TM, CM>;
   leave: () => void;
 };
 
@@ -339,9 +353,10 @@ function makeRoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(client: Client<U>): RoomContextBundle<P, S, U, E, M> {
-  type TRoom = Room<P, S, U, E, M>;
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM> {
+  type TRoom = Room<P, S, U, E, TM, CM>;
 
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
@@ -363,7 +378,7 @@ function makeRoomContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: RoomContextBundle<P, S, U, E, M> = {
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: RoomContext as Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
@@ -392,7 +407,14 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
+    useMutation: useMutation as RoomContextBundle<
+      P,
+      S,
+      U,
+      E,
+      TM,
+      CM
+    >["useMutation"],
 
     useThreads,
     useSearchComments,
@@ -455,7 +477,8 @@ function makeRoomContextBundle<
         S,
         U,
         E,
-        M
+        TM,
+        CM
       >["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
@@ -496,25 +519,26 @@ function RoomProvider<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(props: RoomProviderProps<P, S>) {
   const client = useClient<U>();
   const [cache] = useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E, M>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, M> = useCallback(
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM> = useCallback(
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, M> => {
+    ): RoomLeavePair<P, S, U, E, TM, CM> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, M>(roomId, options);
+      const rv = client.enterRoom<P, S, E, TM, CM>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -549,7 +573,7 @@ function RoomProvider<
   // Room to not be freed and destroyed when the component unmounts later.
   //
   return (
-    <RoomProviderInner<P, S, U, E, M>
+    <RoomProviderInner<P, S, U, E, TM, CM>
       {...(props as any)}
       stableEnterRoom={stableEnterRoom}
     />
@@ -561,11 +585,12 @@ type EnterRoomType<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = (
   roomId: string,
   options: EnterOptions<P, S>
-) => RoomLeavePair<P, S, U, E, M>;
+) => RoomLeavePair<P, S, U, E, TM, CM>;
 
 /** @internal */
 function RoomProviderInner<
@@ -573,10 +598,11 @@ function RoomProviderInner<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: EnterRoomType<P, S, U, E, M>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
   }
 ) {
   const client = useClient<U>();
@@ -713,23 +739,26 @@ function useRoom<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null {
-  const room = useRoomOrNull<P, S, U, E, M>();
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM>();
   if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
@@ -1190,10 +1219,12 @@ function useMutation<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  // TODO: Investigate breaking change in generic ordering
+  CM extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-  const room = useRoom<P, S, U, E, M>();
+  const room = useRoom<P, S, U, E, TM, CM>();
   return useMemo(
     () => {
       return ((...args) =>
@@ -1201,7 +1232,7 @@ function useMutation<
         room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           callback(
-            makeMutationContext<P, S, U, E, M>(room),
+            makeMutationContext<P, S, U, E, TM, CM>(room),
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             ...args
           )
@@ -1212,15 +1243,17 @@ function useMutation<
   );
 }
 
-function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {}
-): ThreadsAsyncResult<M> {
+function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncResult<TM, CM> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
   const room = useRoom();
-  const { store, getOrCreateThreadsPollerForRoomId } =
-    getRoomExtrasForClient<M>(client);
+  const { store, getOrCreateThreadsPollerForRoomId } = getRoomExtrasForClient<
+    TM,
+    CM
+  >(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
@@ -1255,8 +1288,8 @@ function useThreads<M extends BaseMetadata>(
   return result;
 }
 
-function useSearchComments<M extends BaseMetadata>(
-  options: UseSearchCommentsOptions<M>
+function useSearchComments<TM extends BaseMetadata>(
+  options: UseSearchCommentsOptions<TM>
 ): SearchCommentsAsyncResult {
   const [result, setResult] = useState<SearchCommentsAsyncResult>({
     isLoading: true,
@@ -1339,31 +1372,32 @@ function useSearchComments<M extends BaseMetadata>(
   return result;
 }
 
-function useCreateThread<M extends BaseMetadata>(): (
-  options: CreateThreadOptions<M>
-) => ThreadData<M> {
+function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
+  options: CreateThreadOptions<TM>
+) => ThreadData<TM, CM> {
   return useCreateRoomThread(useRoom().id);
 }
 
 /**
  * @private
  */
-function useCreateRoomThread<M extends BaseMetadata>(
+function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
   roomId: string
-): (options: CreateThreadOptions<M>) => ThreadData<M> {
+): (options: CreateThreadOptions<TM>) => ThreadData<TM, CM> {
   const client = useClient();
 
   return useCallback(
-    (options: CreateThreadOptions<M>): ThreadData<M> => {
+    (options: CreateThreadOptions<TM>): ThreadData<TM, CM> => {
       const body = options.body;
-      const metadata = options.metadata ?? ({} as M);
+      const metadata = options.metadata ?? ({} as TM);
       const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const newComment: CommentData = {
+      // @ts-expect-error - TODO: Add `metadata`
+      const newComment: CommentData<CM> = {
         id: commentId,
         threadId,
         roomId,
@@ -1374,7 +1408,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
         reactions: [],
         attachments: attachments ?? [],
       };
-      const newThread: ThreadData<M> = {
+      const newThread: ThreadData<TM, CM> = {
         id: threadId,
         type: "thread",
         createdAt,
@@ -1470,14 +1504,14 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   );
 }
 
-function useEditThreadMetadata<M extends BaseMetadata>() {
-  return useEditRoomThreadMetadata<M>(useRoom().id);
+function useEditThreadMetadata<TM extends BaseMetadata>() {
+  return useEditRoomThreadMetadata<TM>(useRoom().id);
 }
 
-function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
+function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
   const client = useClient();
   return useCallback(
-    (options: EditThreadMetadataOptions<M>): void => {
+    (options: EditThreadMetadataOptions<TM>): void => {
       if (!options.metadata) {
         return;
       }
@@ -1531,16 +1565,21 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 /**
  * @private
  */
-function useCreateRoomComment(
+function useCreateRoomComment<CM extends BaseMetadata>(
   roomId: string
-): (options: CreateCommentOptions) => CommentData {
+): (options: CreateCommentOptions) => CommentData<CM> {
   const client = useClient();
   return useCallback(
-    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
+    ({
+      threadId,
+      body,
+      attachments,
+    }: CreateCommentOptions): CommentData<CM> => {
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const comment: CommentData = {
+      // @ts-expect-error - TODO: Add `metadata`
+      const comment: CommentData<CM> = {
         id: commentId,
         threadId,
         roomId,
@@ -1712,21 +1751,21 @@ function useDeleteRoomComment(roomId: string) {
   );
 }
 
-function useAddReaction<M extends BaseMetadata>() {
-  return useAddRoomCommentReaction<M>(useRoom().id);
+function useAddReaction() {
+  return useAddRoomCommentReaction(useRoom().id);
 }
 
 /**
  * @private
  */
-function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
+function useAddRoomCommentReaction(roomId: string) {
   const client = useClient();
   return useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
       const userId = getCurrentUserId(client);
 
-      const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const optimisticId = store.optimisticUpdates.add({
         type: "add-reaction",
@@ -2507,21 +2546,22 @@ function useStorageSuspense<S extends LsonObject, T>(
   ) as T;
 }
 
-function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {}
-): ThreadsAsyncSuccess<M> {
+function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
   const room = useRoom();
 
-  const { store } = getRoomExtrasForClient<M>(client);
+  const { store } = getRoomExtrasForClient<TM, CM>(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useThreads(options);
+  // TODO: Breaking change? CM can't be inferred from the params so the generics are now required
+  const result = useThreads<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -2648,10 +2688,11 @@ export function useRoomContextBundleOrNull(): RoomContextBundle<
   LsonObject,
   BaseUserMeta,
   Json,
+  BaseMetadata,
   BaseMetadata
 > | null {
   const client = useClientOrNull();
-  const room = useRoomOrNull<never, never, never, never, never>();
+  const room = useRoomOrNull<never, never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
 }
 
@@ -2665,6 +2706,7 @@ export function useRoomContextBundle(): RoomContextBundle<
   LsonObject,
   BaseUserMeta,
   Json,
+  BaseMetadata,
   BaseMetadata
 > {
   const client = useClient();
@@ -2681,12 +2723,13 @@ export function createRoomContext<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
-  return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
+  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM>(client);
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
 
 /**
  * Makes a Room available in the component hierarchy below.

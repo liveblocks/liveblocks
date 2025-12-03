@@ -71,16 +71,16 @@ import type {
   UrlMetadataAsyncResult,
 } from "./types";
 
-type OptimisticUpdate<M extends BaseMetadata> =
-  | CreateThreadOptimisticUpdate<M>
+type OptimisticUpdate<TM extends BaseMetadata, CM extends BaseMetadata> =
+  | CreateThreadOptimisticUpdate<TM, CM>
   | DeleteThreadOptimisticUpdate
-  | EditThreadMetadataOptimisticUpdate<M>
+  | EditThreadMetadataOptimisticUpdate<TM>
   | MarkThreadAsResolvedOptimisticUpdate
   | MarkThreadAsUnresolvedOptimisticUpdate
   | SubscribeToThreadOptimisticUpdate
   | UnsubscribeFromThreadOptimisticUpdate
-  | CreateCommentOptimisticUpdate
-  | EditCommentOptimisticUpdate
+  | CreateCommentOptimisticUpdate<CM>
+  | EditCommentOptimisticUpdate<CM>
   | DeleteCommentOptimisticUpdate
   | AddReactionOptimisticUpdate
   | RemoveReactionOptimisticUpdate
@@ -91,11 +91,14 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | UpdateRoomSubscriptionSettingsOptimisticUpdate
   | UpdateNotificationSettingsOptimisticUpdate;
 
-type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
+type CreateThreadOptimisticUpdate<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   type: "create-thread";
   id: string;
   roomId: string;
-  thread: ThreadData<M>;
+  thread: ThreadData<TM, CM>;
 };
 
 type DeleteThreadOptimisticUpdate = {
@@ -106,11 +109,11 @@ type DeleteThreadOptimisticUpdate = {
   deletedAt: Date;
 };
 
-type EditThreadMetadataOptimisticUpdate<M extends BaseMetadata> = {
+type EditThreadMetadataOptimisticUpdate<TM extends BaseMetadata> = {
   type: "edit-thread-metadata";
   id: string;
   threadId: string;
-  metadata: Resolve<Patchable<M>>;
+  metadata: Resolve<Patchable<TM>>;
   updatedAt: Date;
 };
 
@@ -142,16 +145,16 @@ type UnsubscribeFromThreadOptimisticUpdate = {
   unsubscribedAt: Date;
 };
 
-type CreateCommentOptimisticUpdate = {
+type CreateCommentOptimisticUpdate<CM extends BaseMetadata> = {
   type: "create-comment";
   id: string;
-  comment: CommentData;
+  comment: CommentData<CM>;
 };
 
-type EditCommentOptimisticUpdate = {
+type EditCommentOptimisticUpdate<CM extends BaseMetadata> = {
   type: "edit-comment";
   id: string;
-  comment: CommentData;
+  comment: CommentData<CM>;
 };
 
 type DeleteCommentOptimisticUpdate = {
@@ -612,19 +615,22 @@ type RoomSubscriptionSettingsByRoomId = Record<
 
 export type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
-export type CleanThreadifications<M extends BaseMetadata> =
+export type CleanThreadifications<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> =
   // Threads + Notifications = Threadifications
-  CleanThreads<M> &
+  CleanThreads<TM, CM> &
     //
     CleanNotifications;
 
-export type CleanThreads<M extends BaseMetadata> = {
+export type CleanThreads<TM extends BaseMetadata, CM extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  threadsDB: ReadonlyThreadDB<M>;
+  threadsDB: ReadonlyThreadDB<TM, CM>;
 };
 
 export type CleanNotifications = {
@@ -777,8 +783,8 @@ function createStore_forUnreadNotificationsCount() {
 }
 
 function createStore_forSubscriptions(
-  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>,
-  threads: ReadonlyThreadDB<BaseMetadata>
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]>,
+  threads: ReadonlyThreadDB<BaseMetadata, BaseMetadata>
 ) {
   const baseSignal = new MutableSignal<SubscriptionsLUT>(new Map());
 
@@ -828,7 +834,7 @@ function createStore_forSubscriptions(
 }
 
 function createStore_forRoomSubscriptionSettings(
-  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]>
 ) {
   const baseSignal = new MutableSignal<RoomSubscriptionSettingsLUT>(new Map());
 
@@ -944,7 +950,7 @@ function createStore_forPermissionHints() {
  * e.g. {} when before the first successful fetch.
  */
 function createStore_forNotificationSettings(
-  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]>
 ) {
   const signal = new Signal<NotificationSettings>(
     createNotificationSettings({})
@@ -963,10 +969,11 @@ function createStore_forNotificationSettings(
   };
 }
 
-function createStore_forOptimistic<M extends BaseMetadata>(
-  client: Client<BaseUserMeta, M>
-) {
-  const signal = new Signal<readonly OptimisticUpdate<M>[]>([]);
+function createStore_forOptimistic<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: Client<BaseUserMeta, TM, CM>) {
+  const signal = new Signal<readonly OptimisticUpdate<TM, CM>[]>([]);
   const syncSource = client[kInternal].createSyncSource();
 
   // Automatically update the global sync status as an effect whenever there
@@ -978,10 +985,10 @@ function createStore_forOptimistic<M extends BaseMetadata>(
   );
 
   function add(
-    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<TM, CM>, "id">
   ): string {
     const id = nanoid();
-    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
+    const newUpdate: OptimisticUpdate<TM, CM> = { ...optimisticUpdate, id };
     signal.set((state) => [...state, newUpdate]);
     return id;
   }
@@ -999,8 +1006,8 @@ function createStore_forOptimistic<M extends BaseMetadata>(
   };
 }
 
-export class UmbrellaStore<M extends BaseMetadata> {
-  #client: Client<BaseUserMeta, M>;
+export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
+  #client: Client<BaseUserMeta, TM, CM>;
 
   //
   // Internally, the UmbrellaStore keeps track of a few source signals that can
@@ -1036,7 +1043,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // XXX_vincent Now that we have createStore_forX, we should probably also change
   // `threads` to this pattern, ie create a createStore_forThreads helper as
   // well. It almost works like that already anyway!
-  readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  readonly threads: ThreadDB<TM, CM>; // Exposes its signal under `.signal` prop
   readonly notifications: ReturnType<typeof createStore_forNotifications>;
   readonly subscriptions: ReturnType<typeof createStore_forSubscriptions>;
   readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
@@ -1049,7 +1056,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly notificationSettings: ReturnType<
     typeof createStore_forNotificationSettings
   >;
-  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
+  readonly optimisticUpdates: ReturnType<
+    typeof createStore_forOptimistic<TM, CM>
+  >;
 
   //
   // Output signals.
@@ -1060,15 +1069,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // be updated whenever either of them change.
   //
   readonly outputs: {
-    readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
-    readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
+    readonly threadifications: DerivedSignal<CleanThreadifications<TM, CM>>;
+    readonly threads: DerivedSignal<ReadonlyThreadDB<TM, CM>>;
     readonly loadingRoomThreads: DefaultMap<
       RoomQueryKey,
-      LoadableResource<ThreadsAsyncResult<M>>
+      LoadableResource<ThreadsAsyncResult<TM, CM>>
     >;
     readonly loadingUserThreads: DefaultMap<
       UserQueryKey,
-      LoadableResource<ThreadsAsyncResult<M>>
+      LoadableResource<ThreadsAsyncResult<TM, CM>>
     >;
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly threadSubscriptions: DerivedSignal<CleanThreadSubscriptions>;
@@ -1124,9 +1133,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #notificationSettings: SinglePageResource;
 
   constructor(client: OpaqueClient) {
-    this.#client = client[kInternal].as<M>();
+    this.#client = client[kInternal].as<TM, CM>();
 
-    this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
+    this.optimisticUpdates = createStore_forOptimistic<TM, CM>(this.#client);
     this.permissionHints = createStore_forPermissionHints();
 
     const notificationSettingsFetcher = async (): Promise<void> => {
@@ -1186,8 +1195,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     const loadingUserThreads = new DefaultMap(
-      (queryKey: UserQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
-        const query = JSON.parse(queryKey) as ThreadsQuery<M>;
+      (
+        queryKey: UserQueryKey
+      ): LoadableResource<ThreadsAsyncResult<TM, CM>> => {
+        const query = JSON.parse(queryKey) as ThreadsQuery<TM>;
 
         const resource = new PaginatedResource(async (cursor?: string) => {
           const result = await this.#client[
@@ -1212,7 +1223,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           return result.nextCursor;
         });
 
-        const signal = DerivedSignal.from((): ThreadsAsyncResult<M> => {
+        const signal = DerivedSignal.from((): ThreadsAsyncResult<TM, CM> => {
           const result = resource.get();
           if (result.isLoading || result.error) {
             return result;
@@ -1243,10 +1254,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     const loadingRoomThreads = new DefaultMap(
-      (queryKey: RoomQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
+      (
+        queryKey: RoomQueryKey
+      ): LoadableResource<ThreadsAsyncResult<TM, CM>> => {
         const [roomId, query] = JSON.parse(queryKey) as [
           roomId: RoomId,
-          query: ThreadsQuery<M>,
+          query: ThreadsQuery<TM>,
         ];
 
         const resource = new PaginatedResource(async (cursor?: string) => {
@@ -1285,7 +1298,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           return result.nextCursor;
         });
 
-        const signal = DerivedSignal.from((): ThreadsAsyncResult<M> => {
+        const signal = DerivedSignal.from((): ThreadsAsyncResult<TM, CM> => {
           const result = resource.get();
           if (result.isLoading || result.error) {
             return result;
@@ -1715,7 +1728,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public createThread(
     optimisticId: string,
-    thread: Readonly<ThreadDataWithDeleteInfo<M>>
+    thread: Readonly<ThreadDataWithDeleteInfo<TM, CM>>
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
@@ -1737,8 +1750,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     threadId: string,
     optimisticId: string | null,
     callback: (
-      thread: Readonly<ThreadDataWithDeleteInfo<M>>
-    ) => Readonly<ThreadDataWithDeleteInfo<M>>,
+      thread: Readonly<ThreadDataWithDeleteInfo<TM, CM>>
+    ) => Readonly<ThreadDataWithDeleteInfo<TM, CM>>,
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     batch(() => {
@@ -1759,7 +1772,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticId: string | null,
     patch: {
       // Only these fields are currently supported to patch
-      metadata?: M;
+      metadata?: TM;
       resolved?: boolean;
     },
     updatedAt: Date // TODO We could look this up from the optimisticUpdate instead?
@@ -1826,7 +1839,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an existing comment and ensures the associated notification is
    * updated correctly, replacing the corresponding optimistic update.
    */
-  public createComment(newComment: CommentData, optimisticId: string): void {
+  public createComment(
+    newComment: CommentData<CM>,
+    optimisticId: string
+  ): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
     batch(() => {
       // 1️⃣
@@ -1849,7 +1865,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public editComment(
     threadId: string,
     optimisticId: string,
-    editedComment: CommentData
+    editedComment: CommentData<CM>
   ): void {
     return this.#updateThread(threadId, optimisticId, (thread) =>
       applyUpsertComment(thread, editedComment)
@@ -1871,7 +1887,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public updateThreadifications(
-    threads: ThreadData<M>[],
+    threads: ThreadData<TM, CM>[],
     notifications: InboxNotificationData[],
     subscriptions: SubscriptionData[],
     deletedThreads: ThreadDeleteInfo[] = [],
@@ -2069,11 +2085,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
-  baseThreadsDB: ThreadDB<M>,
+function applyOptimisticUpdates_forThreadifications<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  baseThreadsDB: ThreadDB<TM, CM>,
   notificationsLUT: NotificationsLUT,
-  optimisticUpdates: readonly OptimisticUpdate<M>[]
-): CleanThreadifications<M> {
+  optimisticUpdates: readonly OptimisticUpdate<TM, CM>[]
+): CleanThreadifications<TM, CM> {
   const threadsDB = baseThreadsDB.clone();
   let notificationsById = Object.fromEntries(notificationsLUT);
 
@@ -2272,7 +2291,7 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
  */
 function applyOptimisticUpdates_forRoomSubscriptionSettings(
   settingsLUT: RoomSubscriptionSettingsLUT,
-  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]
 ): RoomSubscriptionSettingsByRoomId {
   const roomSubscriptionSettingsByRoomId = Object.fromEntries(settingsLUT);
 
@@ -2302,8 +2321,8 @@ function applyOptimisticUpdates_forRoomSubscriptionSettings(
  */
 function applyOptimisticUpdates_forSubscriptions(
   subscriptionsLUT: SubscriptionsLUT,
-  threads: ReadonlyThreadDB<BaseMetadata>,
-  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+  threads: ReadonlyThreadDB<BaseMetadata, BaseMetadata>,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]
 ): SubscriptionsByKey {
   const subscriptions = Object.fromEntries(subscriptionsLUT);
 
@@ -2380,7 +2399,7 @@ function applyOptimisticUpdates_forSubscriptions(
  */
 export function applyOptimisticUpdates_forNotificationSettings(
   settings: NotificationSettings,
-  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata, BaseMetadata>[]
 ): NotificationSettings {
   let outcoming: NotificationSettings = settings;
 
@@ -2425,10 +2444,13 @@ export function compareInboxNotifications(
 }
 
 /** @internal Exported for unit tests only. */
-export function applyUpsertComment<M extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<M>,
-  comment: CommentData
-): ThreadDataWithDeleteInfo<M> {
+export function applyUpsertComment<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  thread: ThreadDataWithDeleteInfo<TM, CM>,
+  comment: CommentData<CM>
+): ThreadDataWithDeleteInfo<TM, CM> {
   // If the thread has been deleted, we do not apply the update
   if (thread.deletedAt !== undefined) {
     // Note: only the unit tests are passing in deleted threads here. In all
@@ -2498,11 +2520,14 @@ export function applyUpsertComment<M extends BaseMetadata>(
 }
 
 /** @internal Exported for unit tests only. */
-export function applyDeleteComment<M extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<M>,
+export function applyDeleteComment<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  thread: ThreadDataWithDeleteInfo<TM, CM>,
   commentId: string,
   deletedAt: Date
-): ThreadDataWithDeleteInfo<M> {
+): ThreadDataWithDeleteInfo<TM, CM> {
   // If the thread has been deleted, we do not delete the comment
   if (thread.deletedAt !== undefined) {
     return thread;
@@ -2552,11 +2577,14 @@ export function applyDeleteComment<M extends BaseMetadata>(
 }
 
 /** @internal Exported for unit tests only. */
-export function applyAddReaction<M extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<M>,
+export function applyAddReaction<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  thread: ThreadDataWithDeleteInfo<TM, CM>,
   commentId: string,
   reaction: CommentUserReaction
-): ThreadDataWithDeleteInfo<M> {
+): ThreadDataWithDeleteInfo<TM, CM> {
   // If the thread has been deleted, we do not add the reaction
   if (thread.deletedAt !== undefined) {
     return thread;
@@ -2595,13 +2623,16 @@ export function applyAddReaction<M extends BaseMetadata>(
 }
 
 /** @internal Exported for unit tests only. */
-export function applyRemoveReaction<M extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<M>,
+export function applyRemoveReaction<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  thread: ThreadDataWithDeleteInfo<TM, CM>,
   commentId: string,
   emoji: string,
   userId: string,
   removedAt: Date
-): ThreadDataWithDeleteInfo<M> {
+): ThreadDataWithDeleteInfo<TM, CM> {
   // If the thread has been deleted, we do not remove the reaction
   if (thread.deletedAt !== undefined) {
     return thread;

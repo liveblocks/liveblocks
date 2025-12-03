@@ -16,7 +16,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
@@ -467,12 +467,12 @@ type SubscribeFn<
   (type: "comments", listener: Callback<CommentsEventServerMsg>): () => void;
 };
 
-export type GetThreadsOptions<M extends BaseMetadata> = {
+export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
     subscribed?: boolean;
-    metadata?: Partial<QueryMetadata<M>>;
+    metadata?: Partial<QueryMetadata<TM>>;
   };
 };
 
@@ -512,7 +512,8 @@ export type Room<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
 > = {
   /**
    * @private
@@ -764,8 +765,8 @@ export type Room<
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
-    threads: ThreadData<M>[];
+  getThreads(options?: GetThreadsOptions<TM>): Promise<{
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     requestedAt: Date;
@@ -783,7 +784,7 @@ export type Room<
    */
   getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
@@ -805,7 +806,7 @@ export type Room<
    * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
-    thread?: ThreadData<M>;
+    thread?: ThreadData<TM, CM>;
     inboxNotification?: InboxNotificationData;
     subscription?: SubscriptionData;
   }>;
@@ -824,10 +825,10 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
+  }): Promise<ThreadData<TM, CM>>;
 
   /**
    * Deletes a thread.
@@ -845,9 +846,9 @@ export type Room<
    * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
    */
   editThreadMetadata(options: {
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
-  }): Promise<M>;
+  }): Promise<TM>;
 
   /**
    * Marks a thread as resolved.
@@ -1257,7 +1258,7 @@ export type LargeMessageStrategy =
   | "experimental-fallback-to-http";
 
 /** @internal */
-export type RoomConfig<M extends BaseMetadata> = {
+export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   delegates: RoomDelegates;
 
   roomId: string;
@@ -1270,7 +1271,7 @@ export type RoomConfig<M extends BaseMetadata> = {
 
   polyfills?: Polyfills;
 
-  roomHttpClient: RoomHttpApi<M>;
+  roomHttpClient: RoomHttpApi<TM, CM>;
 
   baseUrl: string;
   enableDebugLogging?: boolean;
@@ -1341,11 +1342,12 @@ export function createRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   options: { initialPresence: P; initialStorage: S },
-  config: RoomConfig<M>
-): Room<P, S, U, E, M> {
+  config: RoomConfig<TM, CM>
+): Room<P, S, U, E, TM, CM> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -2831,7 +2833,7 @@ export function createRoom<
     });
   }
 
-  async function getThreads(options?: GetThreadsOptions<M>) {
+  async function getThreads(options?: GetThreadsOptions<TM>) {
     return httpClient.getThreads({
       roomId,
       query: options?.query,
@@ -2847,7 +2849,7 @@ export function createRoom<
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
@@ -2870,7 +2872,7 @@ export function createRoom<
     threadId,
   }: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
   }) {
     return httpClient.editThreadMetadata({ roomId, threadId, metadata });
@@ -3190,10 +3192,11 @@ function makeClassicSubscribeFn<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   roomId: string,
-  events: Room<P, S, U, E, M>["events"],
+  events: Room<P, S, U, E, TM, CM>["events"],
   errorEvents: EventSource<LiveblocksError>
 ): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API

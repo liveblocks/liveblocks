@@ -101,9 +101,9 @@ export function mockDeleteComment(
   );
 }
 
-export function mockEditThreadMetadata<M extends BaseMetadata>(
+export function mockEditThreadMetadata<TM extends BaseMetadata>(
   params: { threadId: string },
-  resolver: ResponseResolver<RestRequest<never, never>, RestContext, M>
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, TM>
 ) {
   return rest.post(
     `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/metadata`,

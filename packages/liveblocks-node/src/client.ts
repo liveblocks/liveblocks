@@ -144,11 +144,11 @@ export type ThreadParticipants = {
   participantIds: string[];
 };
 
-export type CreateThreadOptions<M extends BaseMetadata> = {
+export type CreateThreadOptions<TM extends BaseMetadata> = {
   roomId: string;
   data: {
     comment: { userId: string; createdAt?: Date; body: CommentBody };
-  } & PartialUnless<M, { metadata: M }>;
+  } & PartialUnless<M, { metadata: TM }>;
 };
 
 export type RoomPermission =

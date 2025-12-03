@@ -75,7 +75,10 @@ const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
   return new WebSocket("");
 };
 
-function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
+function createDefaultRoomConfig<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(): RoomConfig<TM, CM> {
   return {
     enableDebugLogging: false,
     roomId: "room-id",
@@ -102,12 +105,12 @@ function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
   };
 }
 
-function makeRoomConfig<M extends BaseMetadata>(
+function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
   mockedDelegates: RoomDelegates,
-  defaults?: Partial<RoomConfig<M>>
-): RoomConfig<M> {
+  defaults?: Partial<RoomConfig<TM, CM>>
+): RoomConfig<TM, CM> {
   return {
-    ...createDefaultRoomConfig<M>(),
+    ...createDefaultRoomConfig<TM, CM>(),
     ...defaults,
     delegates: mockedDelegates,
   };
@@ -123,18 +126,19 @@ function createTestableRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   initialPresence: P,
   authBehavior = AUTH_SUCCESS,
   socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
-  config?: Partial<RoomConfig<M>>,
+  config?: Partial<RoomConfig<TM, CM>>,
   initialStorage?: S
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
-  const roomConfig = makeRoomConfig(delegates, config);
-  const room = createRoom<P, S, U, E, M>(
+  const roomConfig = makeRoomConfig<TM, CM>(delegates, config);
+  const room = createRoom<P, S, U, E, TM, CM>(
     { initialPresence, initialStorage: initialStorage ?? ({} as S) },
     roomConfig
   );

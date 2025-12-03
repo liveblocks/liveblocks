@@ -11,9 +11,9 @@ import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
 
-function sanitizeThread<M extends BaseMetadata>(
-  thread: ThreadDataWithDeleteInfo<M>
-): ThreadDataWithDeleteInfo<M> {
+function sanitizeThread<TM extends BaseMetadata, CM extends BaseMetadata>(
+  thread: ThreadDataWithDeleteInfo<TM, CM>
+): ThreadDataWithDeleteInfo<TM, CM> {
   // First, if a thread has a deletedAt date, it should not have any comments
   if (thread.deletedAt) {
     // Thread is deleted, it should wipe all comments
@@ -32,10 +32,10 @@ function sanitizeThread<M extends BaseMetadata>(
   return thread;
 }
 
-export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
-  ThreadDB<M>,
-  "upsert" | "delete" | "signal"
->;
+export type ReadonlyThreadDB<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = Omit<ThreadDB<TM, CM>, "upsert" | "delete" | "signal">;
 
 /**
  * This class implements a lightweight, in-memory, "database" for all Thread
@@ -54,22 +54,22 @@ export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
  *          optimistic updates without losing the original thread contents.
  *
  */
-export class ThreadDB<M extends BaseMetadata> {
-  #byId: Map<string, ThreadDataWithDeleteInfo<M>>;
-  #asc: SortedList<ThreadData<M>>;
-  #desc: SortedList<ThreadData<M>>;
+export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
+  #byId: Map<string, ThreadDataWithDeleteInfo<TM, CM>>;
+  #asc: SortedList<ThreadData<TM, CM>>;
+  #desc: SortedList<ThreadData<TM, CM>>;
 
   // This signal will be notified on every mutation
   public readonly signal: MutableSignal<this>;
 
   constructor() {
-    this.#asc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
+    this.#asc = SortedList.from<ThreadData<TM, CM>>([], (t1, t2) => {
       const d1 = t1.createdAt;
       const d2 = t2.createdAt;
       return d1 < d2 ? true : d1 === d2 ? t1.id < t2.id : false;
     });
 
-    this.#desc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
+    this.#desc = SortedList.from<ThreadData<TM, CM>>([], (t1, t2) => {
       const d2 = t2.updatedAt;
       const d1 = t1.updatedAt;
       return d2 < d1 ? true : d2 === d1 ? t2.id < t1.id : false;
@@ -84,8 +84,8 @@ export class ThreadDB<M extends BaseMetadata> {
   // Public APIs
   //
 
-  public clone(): ThreadDB<M> {
-    const newPool = new ThreadDB<M>();
+  public clone(): ThreadDB<TM, CM> {
+    const newPool = new ThreadDB<TM, CM>();
     newPool.#byId = new Map(this.#byId);
     newPool.#asc = this.#asc.clone();
     newPool.#desc = this.#desc.clone();
@@ -93,7 +93,7 @@ export class ThreadDB<M extends BaseMetadata> {
   }
 
   /** Returns an existing thread by ID. Will never return a deleted thread. */
-  public get(threadId: string): ThreadData<M> | undefined {
+  public get(threadId: string): ThreadData<TM, CM> | undefined {
     const thread = this.getEvenIfDeleted(threadId);
     return thread?.deletedAt ? undefined : thread;
   }
@@ -101,12 +101,12 @@ export class ThreadDB<M extends BaseMetadata> {
   /** Returns the (possibly deleted) thread by ID. */
   public getEvenIfDeleted(
     threadId: string
-  ): ThreadDataWithDeleteInfo<M> | undefined {
+  ): ThreadDataWithDeleteInfo<TM, CM> | undefined {
     return this.#byId.get(threadId);
   }
 
   /** Adds or updates a thread in the DB. If the newly given thread is a deleted one, it will get deleted. */
-  public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
+  public upsert(thread: ThreadDataWithDeleteInfo<TM, CM>): void {
     this.signal.mutate(() => {
       thread = sanitizeThread(thread);
 
@@ -133,7 +133,7 @@ export class ThreadDB<M extends BaseMetadata> {
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */
   // TODO Consider renaming this to just .upsert(). I'm not sure if we really
   // TODO need the raw .upsert(). Would be nice if this behavior was the default.
-  public upsertIfNewer(thread: ThreadDataWithDeleteInfo<M>): void {
+  public upsertIfNewer(thread: ThreadDataWithDeleteInfo<TM, CM>): void {
     const existing = this.get(thread.id);
     if (!existing || thread.updatedAt >= existing.updatedAt) {
       this.upsert(thread);
@@ -141,7 +141,7 @@ export class ThreadDB<M extends BaseMetadata> {
   }
 
   public applyDelta(
-    newThreads: ThreadData<M>[],
+    newThreads: ThreadData<TM, CM>[],
     deletedThreads: ThreadDeleteInfo[]
   ): void {
     batch(() => {
@@ -186,12 +186,12 @@ export class ThreadDB<M extends BaseMetadata> {
   public findMany(
     // TODO: Implement caching here
     roomId: string | undefined,
-    query: ThreadsQuery<M> | undefined,
+    query: ThreadsQuery<TM> | undefined,
     direction: "asc" | "desc",
     subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
-  ): ThreadData<M>[] {
+  ): ThreadData<TM, CM>[] {
     const index = direction === "desc" ? this.#desc : this.#asc;
-    const crit: ((thread: ThreadData<M>) => boolean)[] = [];
+    const crit: ((thread: ThreadData<TM, CM>) => boolean)[] = [];
     if (roomId !== undefined) {
       crit.push((t) => t.roomId === roomId);
     }

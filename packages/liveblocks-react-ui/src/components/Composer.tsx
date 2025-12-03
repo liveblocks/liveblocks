@@ -4,7 +4,8 @@ import type {
   BaseMetadata,
   CommentAttachment,
   CommentMixedAttachment,
-  DM,
+  DCM,
+  DTM,
   GroupMentionData,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
@@ -97,23 +98,27 @@ interface MarkToggleProps extends ComposerMarkToggleProps {
   shortcut?: string;
 }
 
-type ComposerCreateThreadProps<M extends BaseMetadata> = {
+type ComposerCreateThreadProps<TM extends BaseMetadata> = {
   threadId?: never;
   commentId?: never;
 
   /**
    * The metadata of the thread to create.
    */
-  metadata?: M;
+  metadata?: TM;
 };
 
-type ComposerCreateCommentProps = {
+type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to reply to.
    */
   threadId: string;
   commentId?: never;
-  metadata?: never;
+
+  /**
+   * The metadata of the comment to create.
+   */
+  metadata?: CM;
 };
 
 type ComposerEditCommentProps = {
@@ -129,13 +134,13 @@ type ComposerEditCommentProps = {
   metadata?: never;
 };
 
-export type ComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComponentPropsWithoutRef<"form">,
-  "defaultValue"
-> &
+export type ComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
   (
-    | ComposerCreateThreadProps<M>
-    | ComposerCreateCommentProps
+    | ComposerCreateThreadProps<TM>
+    | ComposerCreateCommentProps<CM>
     | ComposerEditCommentProps
   ) & {
     /**
@@ -686,7 +691,7 @@ export const ComposerRoomIdContext = createContext<string | null>(null);
  * <Composer />
  */
 export const Composer = forwardRef(
-  <M extends BaseMetadata = DM>(
+  <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
     {
       threadId,
       commentId,
@@ -710,7 +715,7 @@ export const Composer = forwardRef(
       showAttribution,
       roomId: _roomId,
       ...props
-    }: ComposerProps<M>,
+    }: ComposerProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const room = useRoom({ allowOutsideRoom: true });
@@ -890,6 +895,6 @@ export const Composer = forwardRef(
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = DM>(
-  props: ComposerProps<M> & RefAttributes<HTMLFormElement>
+) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
+  props: ComposerProps<TM, CM> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;

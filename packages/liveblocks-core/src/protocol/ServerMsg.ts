@@ -28,6 +28,7 @@ export enum ServerMsgCode {
   COMMENT_DELETED = 404,
   COMMENT_REACTION_ADDED = 405,
   COMMENT_REACTION_REMOVED = 406,
+  COMMENT_METADATA_UPDATED = 409,
 
   // Error codes
   REJECT_STORAGE_OP = 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
@@ -66,7 +67,8 @@ export type CommentsEventServerMsg =
   | CommentEditedEvent
   | CommentDeletedEvent
   | CommentReactionAdded
-  | CommentReactionRemoved;
+  | CommentReactionRemoved
+  | CommentMetadataUpdatedEvent;
 
 type ThreadCreatedEvent = {
   type: ServerMsgCode.THREAD_CREATED;
@@ -118,6 +120,12 @@ type CommentReactionRemoved = {
   threadId: string;
   commentId: string;
   emoji: string;
+};
+
+type CommentMetadataUpdatedEvent = {
+  type: ServerMsgCode.COMMENT_METADATA_UPDATED;
+  threadId: string;
+  commentId: string;
 };
 
 /**
