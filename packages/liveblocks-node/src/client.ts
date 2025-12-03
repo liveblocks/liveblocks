@@ -154,7 +154,8 @@ export type CreateThreadOptions<M extends BaseMetadata> = {
 export type RoomPermission =
   | []
   | ["room:write"]
-  | ["room:read", "room:presence:write"];
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"];
 export type RoomAccesses = Record<
   string,
   | ["room:write"]
