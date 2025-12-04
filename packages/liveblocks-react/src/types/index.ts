@@ -1004,6 +1004,7 @@ type RoomContextBundleCommon<
 
   /**
    * Returns a function that edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
    *
    * @example
    * const editCommentMetadata = useEditCommentMetadata();

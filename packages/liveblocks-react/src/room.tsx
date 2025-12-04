@@ -2955,6 +2955,17 @@ const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
 
 /**
+ * Returns a function that edits a comment's metadata.
+ * To delete an existing metadata property, set its value to `null`.
+ *
+ * @example
+ * const editCommentMetadata = useEditCommentMetadata();
+ * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+ */
+const _useEditCommentMetadata: TypedBundle["useEditCommentMetadata"] =
+  useEditCommentMetadata;
+
+/**
  * useEventListener is a React hook that allows you to respond to events broadcast
  * by other users in the room.
  *
@@ -3384,6 +3395,7 @@ export {
   useDeleteTextMention,
   _useDeleteThread as useDeleteThread,
   useEditComment,
+  _useEditCommentMetadata as useEditCommentMetadata,
   useEditRoomComment,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,

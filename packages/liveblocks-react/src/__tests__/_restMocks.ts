@@ -111,6 +111,16 @@ export function mockEditThreadMetadata<TM extends BaseMetadata>(
   );
 }
 
+export function mockEditCommentMetadata<CM extends BaseMetadata>(
+  params: { threadId: string; commentId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext, CM>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/comments/${params.commentId}/metadata`,
+    resolver
+  );
+}
+
 export function mockMarkThreadAsResolved(
   params: { threadId: string },
   resolver: ResponseResolver<RestRequest<never, never>, RestContext>

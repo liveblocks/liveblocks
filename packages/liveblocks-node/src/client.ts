@@ -159,6 +159,16 @@ export type CreateThreadOptions<
   } & PartialUnless<TM, { metadata: TM }>; // Thread metadata (data.metadata)
 };
 
+export type CreateCommentOptions<CM extends BaseMetadata> = {
+  roomId: string;
+  threadId: string;
+  data: {
+    userId: string;
+    createdAt?: Date;
+    body: CommentBody;
+  } & PartialUnless<CM, { metadata: CM }>;
+};
+
 export type RoomPermission =
   | []
   | ["room:write"]
@@ -1587,7 +1597,7 @@ export class Liveblocks {
   public async getComment(
     params: { roomId: string; threadId: string; commentId: string },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.#get(
@@ -1598,7 +1608,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1614,18 +1624,9 @@ export class Liveblocks {
    * @returns The created comment.
    */
   public async createComment(
-    params: {
-      roomId: string;
-      threadId: string;
-      data: {
-        userId: string;
-        createdAt?: Date;
-        body: CommentBody;
-        metadata?: BaseMetadata;
-      };
-    },
+    params: CreateCommentOptions<CM>,
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1639,7 +1640,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1660,7 +1661,7 @@ export class Liveblocks {
       data: { body: CommentBody; editedAt?: Date };
     },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId, data } = params;
 
     const res = await this.#post(
@@ -1672,7 +1673,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1710,10 +1711,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
-  public async createThread<
-    TM extends BaseMetadata = BaseMetadata,
-    CM extends BaseMetadata = BaseMetadata,
-  >(
+  public async createThread(
     params: CreateThreadOptions<TM, CM>,
     options?: RequestOptions
   ): Promise<ThreadData<TM, CM>> {
@@ -1878,7 +1876,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated thread metadata.
    */
-  public async editThreadMetadata<TM extends BaseMetadata = BaseMetadata>(
+  public async editThreadMetadata(
     params: {
       roomId: string;
       threadId: string;

@@ -278,6 +278,114 @@ async () => {
     expectType<CommentData[]>(thread.comments);
   }
 
+  // .createComment()
+  {
+    const roomId = "my-room";
+    const threadId = "th_xxx";
+    const userId = "user-123";
+
+    // Invalid calls
+    expectError(client.createComment({ roomId }));
+    expectError(client.createComment({ threadId }));
+    expectError(
+      client.createComment({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        data: {},
+      })
+    );
+    expectError(
+      client.createComment({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        data: { userId },
+      })
+    );
+
+    const comment = await client.createComment({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        body: { version: 1, content: [] },
+      },
+    });
+
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+    expectType<string | number | boolean | undefined>(comment.metadata.foo);
+
+    const commentWithMetadata = await client.createComment({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        body: { version: 1, content: [] },
+        metadata: { status: "pending", priority: 1 },
+      },
+    });
+
+    expectType<"comment">(commentWithMetadata.type);
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.status
+    );
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.priority
+    );
+  }
+
+  // .editCommentMetadata()
+  {
+    const roomId = "my-room";
+    const threadId = "th_xxx";
+    const commentId = "cm_xxx";
+    const userId = "user-123";
+
+    // Invalid calls
+    expectError(client.editCommentMetadata({ roomId }));
+    expectError(client.editCommentMetadata({ threadId }));
+    expectError(client.editCommentMetadata({ commentId }));
+    expectError(
+      client.editCommentMetadata({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        data: {},
+      })
+    );
+    expectError(
+      client.editCommentMetadata({
+        roomId,
+        threadId,
+        commentId,
+        data: { userId },
+      })
+    );
+
+    // Arbitrary metadata updates are fine in an unaugmented world
+    await client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: { userId, metadata: { foo: "bar", status: null } },
+    });
+
+    await client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+    });
+
+    await client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: { userId, metadata: { status: "resolved", priority: null } },
+    });
+  }
+
   // .addCommentReaction()
   {
     const reaction = await client.addCommentReaction({

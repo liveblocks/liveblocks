@@ -198,4 +198,110 @@ describe("useCreateThread", () => {
 
     unmount();
   });
+
+  test("should create a thread with comment metadata optimistically", async () => {
+    const roomId = nanoid();
+    const fakeCreatedAt = addMinutes(new Date(), 5);
+    const commentMetadata = { priority: 1, reviewed: false };
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [],
+            inboxNotifications: [],
+            subscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
+            },
+          })
+        );
+      }),
+      mockCreateThread(
+        async (
+          req: RestRequest,
+          res: ResponseComposition<ThreadData<any>>,
+          ctx: RestContext
+        ) => {
+          const json = await req.json<{
+            id: string;
+            comment: { id: string; body: CommentBody; metadata?: Record<string, string | number | boolean> };
+          }>();
+
+          const comment = dummyCommentData({
+            roomId,
+            threadId: json.id,
+            id: json.comment.id,
+            body: json.comment.body,
+            createdAt: fakeCreatedAt,
+            metadata: json.comment.metadata ?? {},
+          });
+
+          const thread = dummyThreadData({
+            roomId,
+            id: json.id,
+            comments: [comment],
+            createdAt: fakeCreatedAt,
+          });
+
+          return res(ctx.json(thread));
+        }
+      )
+    );
+
+    const {
+      room: { RoomProvider, useThreads, useCreateThread },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threadData: useThreads(),
+        createThread: useCreateThread(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threadData).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current.threadData).toEqual({
+        isLoading: false,
+        threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    const thread = await act(() =>
+      result.current.createThread({
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+        commentMetadata,
+      })
+    );
+
+    expect(result.current.threadData.threads?.[0]).toEqual(thread);
+    expect(thread.comments[0]?.metadata).toEqual(commentMetadata);
+
+    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    await waitFor(() => {
+      const serverThread = result.current.threadData.threads?.[0];
+      expect(serverThread?.createdAt).toEqual(fakeCreatedAt);
+      expect(serverThread?.comments[0]?.metadata).toEqual(commentMetadata);
+    });
+
+    unmount();
+  });
 });

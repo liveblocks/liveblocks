@@ -218,6 +218,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -262,6 +263,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -657,6 +659,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectType<"comment">(comment.type);
     expectType<string>(comment.id);
     expectType<string>(comment.threadId);
+    expectType<string | number | boolean | undefined>(comment.metadata.foo);
+
+    const commentWithMetadata = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: { status: "pending", priority: 1 },
+    });
+
+    expectType<"comment">(commentWithMetadata.type);
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.status
+    );
+    expectType<string | number | boolean | undefined>(
+      commentWithMetadata.metadata.priority
+    );
   }
 }
 
@@ -676,6 +696,21 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<"comment">(comment.type);
   expectType<string>(comment.id);
   expectType<string>(comment.threadId);
+  expectType<string | number | boolean | undefined>(comment.metadata.foo);
+
+  const commentWithMetadata = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { status: "resolved" },
+  });
+
+  expectType<"comment">(commentWithMetadata.type);
+  expectType<string | number | boolean | undefined>(
+    commentWithMetadata.metadata.status
+  );
 }
 
 // ---------------------------------------------------------
@@ -704,6 +739,56 @@ import { expectAssignable, expectError, expectType } from "tsd";
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useEditCommentMetadata() hook
+{
+  const editMetadata = classic.useEditCommentMetadata();
+  expectError(editMetadata({}));
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+}
+
+// The useEditCommentMetadata() hook (suspense)
+{
+  const editMetadata = suspense.useEditCommentMetadata();
+  expectError(editMetadata({}));
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
     })
   );
 }
