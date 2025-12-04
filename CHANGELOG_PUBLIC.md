@@ -23,6 +23,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Examples
 
 - New example: [Comments search](https://liveblocks.io/examples/comments-search).
+- Add custom “Copy link” comment dropdown item to the [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker) example.
 
 ## Showcase
 
