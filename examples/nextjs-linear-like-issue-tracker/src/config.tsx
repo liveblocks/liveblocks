@@ -120,8 +120,14 @@ export type ProgressState = (typeof PROGRESS_STATES)[number]["id"];
 export type PriorityState = (typeof PRIORITY_STATES)[number]["id"];
 export type Label = (typeof LABELS)[number]["id"];
 
+const ROOM_PREFIX = "liveblocks:examples:nextjs-project-manager-";
+
 export function getRoomId(issueId: string) {
-  return `liveblocks:examples:nextjs-project-manager-${issueId}`;
+  return `${ROOM_PREFIX}${issueId}`;
+}
+
+export function getIssueId(roomId: string) {
+  return roomId.split(ROOM_PREFIX)[1];
 }
 
 export type Metadata = {
