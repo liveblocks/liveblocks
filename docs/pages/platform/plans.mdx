@@ -5,66 +5,60 @@ meta:
   description: "Learn about the different plans available on Liveblocks."
 ---
 
-Liveblocks offers two plans: Pro, and Enterprise. The Pro plans comes with a
-free sandbox environment, allowing you to prototype with Liveblocks before
-putting it into production. The Enterprise plan offers higher limits, enhanced
-features, and resources. Both plans include our
-[first day free policy](#first-day-free-policy), meaning you only pay for
-returning users.
+Liveblocks offers three plans: Free, Pro, and Enterprise. Each plan is designed
+to meet the needs of different types of developers, from personal projects to
+large enterprises.
 
-## Pro plan
+## Free
 
-The Pro plan is designed for companies putting AI and collaboration into
-production. It allows you to purchase each of our ready-made features
-separately, meaning you only pay for what you use. Start with a single product
-and scale up as you need.
+The Free plan is ideal for personal projects, prototyping, and testing. It
+includes access to Liveblocks’ collaboration infrastructure, ready-made features
+(Comments, Multiplayer, AI Agents, Notifications), and pre-built components,
+with up to <Limits.FreeMaxMonthlyActiveRooms /> monthly active rooms included.
+Projects on the Free plan show a small “Powered by Liveblocks” badge. When you
+exceed your free limits, users won’t be able to join rooms.
 
-- [AI Copilots](/docs/ready-made-features/ai-copilots): Easily embed advanced AI
-  chats and copilots into your product.
-- [Comments](/docs/ready-made-features/comments): Integrate pre-built commenting
-  into your app, enhancing collaboration.
-- [Notifications](/docs/ready-made-features/notifications): Add an inbox into
-  your app, updating users about unread comments and more.
-- [Multiplayer Editing](/docs/ready-made-features/multiplayer-editing): Let
-  users collaborate in realtime within text editors, custom apps, and more.
-- [Presence](/docs/ready-made-features/presence): Create live presence
-  indicators such as cursors and avatar stacks.
+## Pro
 
-Typical range is around **$180–$1,680 per month** depending on usage and
-features activated. The Pro plan comes with:
+The Pro plan is designed for teams shipping a collaborative experiences in
+production with the ability to scale. It includes everything in Free, but
+enables you to remove the “Powered by Liveblocks” badge, and allows you to go
+beyond the
+included{/* prettier-ignore */} <Limits.ProMonthlyActiveRoomsIncluded /> monthly active rooms via pay-as-you-go overage, and unlocks access to enterprise add-ons.
 
-- Pre-built components
-- Realtime infrastructure
-- SOC 2 Type 2
-- Multi-factor auth
-- Email support
+### Add-ons
 
-<Banner title="No credit card required for a fully-featured development environment" type="info">
+| Add-on                    | Price                                                     |
+| ------------------------- | --------------------------------------------------------- |
+| Unlimited Version History | $100 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| SAML SSO                  | $300 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| SOC 2 report              | $150 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| HIPAA BAA                 | $350 per month <InfoTooltip>Billed annually</InfoTooltip> |
 
-The Pro plan comes with a free development environment, allowing you to
-prototype with Liveblocks before putting it into production. All Liveblocks
-features are available in the sandbox environment, at a
-[lower limit](/docs/platform/limits#Sandbox-limits).
+## Enterprise
 
-</Banner>
+The Enterprise plan is tailored for organizations with advanced security,
+compliance, and scalability requirements. It includes everything in Pro, plus
+multi-region hosting, a management API, SCIM/directory sync, advanced
+permissions, custom usage allocations, and higher-touch support options such as
+SLAs and solution engineering.
 
-## Enterprise plan
+## General billing information
 
-The Enterprise plan is tailored for organizations with custom needs and advanced
-security. In addition to all features listed above, it also includes:
+### Where do I understand my usage?
 
-- Tiered usage pricing
-- Volume discounts
-- Multi-region hosting
-- Multi-tenant support
-- Custom security reviews and DPA
-- HIPAA compliance with BAA
-- SAML SSO and directory sync
-- Dedicated technical & design support
-- Support SLA
-- 99.9% Uptime SLA
+You can monitor usage for your projects on the [usage page](/dashboard/usage) of
+your dashboard.
 
-## Limits
+### What happens when I reach 100% usage?
 
-To learn more about each plan’s technical limits, visit the
-[Limits](/docs/platform/limits) page.
+All plans receive notifications by email when they are approaching and exceed
+their [usage limits](/docs/platform/limits).
+
+Free plans will be paused when they exceed the included free tier usage.
+
+For Pro and Enterprise plans, when you reach 100% usage your projects are not
+automatically stopped. Rather, Liveblocks enables you to incur on-demand usage
+as your application grows. It’s important to be aware of
+[the usage page](/dashboard/usage) of your dashboard to see if you are
+approaching your limit.
