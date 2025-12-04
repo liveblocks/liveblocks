@@ -15,42 +15,78 @@ Liveblocks as the collaboration architecture your product never had.
 This page introduces the core concepts behind Liveblocks so you understand how
 everything fits together.
 
+<Figure>
+  <Image
+    src="/assets/concepts/liveblocks-collaboration-infrastructure.png"
+    alt="Liveblocks collaboration infrastructure"
+    width={672}
+    height={867}
+    quality={100}
+  />
+</Figure>
+
 ## What is Liveblocks?
 
 Liveblocks is built on a small set of foundational concepts:
 
-- **Projects** — top-level container for your application
-- **Tenants** - compartmentalize rooms and notifications per organization
-- **Rooms** — spaces in your product where collaboration happens
-- **Collaborators** — people (users) and AI agents doing work together
-- **Ready-made features** — collaboration building blocks like Comments,
-  Multiplayer, Notifications, and AI Agents
-- **Platform** — the realtime backend, admin dashboard, and SDKs that make
-  collaboration possible at scale
+| Concept             | Description                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| Projects            | Top-level container for your application                                                  |
+| Tenants             | Compartmentalize rooms and notifications per organization                                 |
+| Rooms               | Spaces in your product where collaboration happens                                        |
+| Collaborators       | People (users) and AI agents doing work together                                          |
+| Ready-made features | Collaboration building blocks like Comments, Multiplayer, Notifications, and AI Agents    |
+| Platform            | The realtime backend, admin dashboard, and SDKs that make collaboration possible at scale |
 
 These concepts work together to let people and AI collaborate inside your app,
 without changing your existing authentication, backend, or data model.
 
 ## Projects
 
-A project is the top-level container in your Liveblocks account.
-
-Each project includes:
+A project is the top-level container in your Liveblocks team workspace that
+usually maps to an application. Each project includes:
 
 - API keys
 - Rooms
 - AI Agents
+- Usage metrics
+- Event logs
 - Webhook settings
 - Notification settings
 - Region and environment settings
-- Usage metrics and monitoring
+
+### Regions
+
+When creating a project, you can choose to locate it in one of the following
+regions:
+
+| Region | Data hosted                                           | Availability                |
+| ------ | ----------------------------------------------------- | --------------------------- |
+| Earth  | Globally on Cloudflare edge servers and AWS us‑east‑1 | All plans                   |
+| US     | US only with Cloudflare FedRAMP and AWS us‑east‑1     | [Enterprise plan](/pricing) |
+| EU     | EU only with Cloudflare EU and AWS eu‑central‑1       | [Enterprise plan](/pricing) |
+
+### Environments
+
+You can also assign one of the following environment tags to a project:
+
+| Environment | Description                               |
+| ----------- | ----------------------------------------- |
+| Development | For development, testing, and prototyping |
+| Production  | For production                            |
 
 Teams typically create separate projects for production, staging, and
-development.
+development. Encrypted keys and higher limits apply to production environment
+projects.
 
 ## Tenants
 
-[insert something about tenants]
+Tenants allow you to compartmentalize Liveblocks resources, such as inbox
+notifications, rooms, and everything associated with rooms such as comment
+threads, realtime data stored, and more. Each tenant represents a separate
+organization or customer in your system, meaning you can easily add a
+workspace/org switcher to your application, with each workspace having its own
+notification inbox.
 
 ## Rooms
 
