@@ -75,6 +75,7 @@ export function dummyCommentData({
     createdAt: now,
     reactions: [],
     attachments: [],
+    metadata: {},
     ...overrides,
     ...conditionalProperties,
   };

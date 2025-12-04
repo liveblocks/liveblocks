@@ -149,6 +149,7 @@ export class WebhookHandler {
         "commentDeleted",
         "commentReactionAdded",
         "commentReactionRemoved",
+        "commentMetadataUpdated",
         "threadMetadataUpdated",
         "threadCreated",
         "threadDeleted",

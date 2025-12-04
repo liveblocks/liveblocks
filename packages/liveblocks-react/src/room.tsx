@@ -2955,6 +2955,15 @@ const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
 
 /**
+ * Returns a function that adds a comment to a thread.
+ *
+ * @example
+ * const createComment = useCreateComment();
+ * createComment({ threadId: "th_xxx", body: {} });
+ */
+const _useCreateComment: TypedBundle["useCreateComment"] = useCreateComment;
+
+/**
  * Returns a function that edits a comment's metadata.
  * To delete an existing metadata property, set its value to `null`.
  *
@@ -3384,7 +3393,7 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
-  useCreateComment,
+  _useCreateComment as useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
   useCreateTextMention,
@@ -3397,6 +3406,7 @@ export {
   useEditComment,
   _useEditCommentMetadata as useEditCommentMetadata,
   useEditRoomComment,
+  useEditRoomCommentMetadata,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,

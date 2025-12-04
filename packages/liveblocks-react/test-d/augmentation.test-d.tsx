@@ -371,6 +371,7 @@ declare global {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -674,6 +675,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
@@ -708,6 +710,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
