@@ -10,24 +10,26 @@ meta:
 Liveblocks is the collaboration layer for your product. It provides the
 architecture, realtime backend, and ready-made features that let humans and AI
 collaborate inside your app—both in real time and asynchronously. Think of
-Liveblocks as the collaboration architecture your product never had.
-
-This page introduces the core concepts behind Liveblocks so you understand how
-everything fits together.
+Liveblocks as the collaboration architecture your product never had. This page
+introduces the core concepts behind Liveblocks so you understand how everything
+fits together.
 
 <Figure>
   <Image
     src="/assets/concepts/liveblocks-collaboration-infrastructure.png"
     alt="Liveblocks collaboration infrastructure"
-    width={672}
-    height={867}
+    width={1344}
+    height={1734}
     quality={100}
   />
 </Figure>
 
 ## What is Liveblocks?
 
-Liveblocks is built on a small set of foundational concepts:
+Liveblocks is the collaboration layer for your product. It’s built on a small
+set of foundational concepts list below. These concepts work together to let
+people and AI collaborate inside your app, without changing your existing
+authentication, backend, or data model.
 
 | Concept             | Description                                                                               |
 | ------------------- | ----------------------------------------------------------------------------------------- |
@@ -38,27 +40,17 @@ Liveblocks is built on a small set of foundational concepts:
 | Ready-made features | Collaboration building blocks like Comments, Multiplayer, Notifications, and AI Agents    |
 | Platform            | The realtime backend, admin dashboard, and SDKs that make collaboration possible at scale |
 
-These concepts work together to let people and AI collaborate inside your app,
-without changing your existing authentication, backend, or data model.
-
 ## Projects
 
 A project is the top-level container in your Liveblocks team workspace that
-usually maps to an application. Each project includes:
-
-- API keys
-- Rooms
-- AI Agents
-- Usage metrics
-- Event logs
-- Webhook settings
-- Notification settings
-- Region and environment settings
+usually maps to an application. Each project includes things like API keys,
+rooms, AI agents, usage metrics, event logs, webhook settings, notification
+settings, region and environment settings,and more.
 
 ### Regions
 
-When creating a project, you can choose to locate it in one of the following
-regions:
+You can choose to locate a project in one of the following regions. The region
+cannot be changed once the project has been created.
 
 | Region | Data hosted                                           | Availability                |
 | ------ | ----------------------------------------------------- | --------------------------- |
@@ -68,16 +60,15 @@ regions:
 
 ### Environments
 
-You can also assign one of the following environment tags to a project:
+You can assign one of the following environment tags to a project. The
+environment tag cannot be changed once the project has been created. Teams
+typically create separate projects for production, staging, and development.
+Encrypted keys and higher limits apply to production environment projects.
 
 | Environment | Description                               |
 | ----------- | ----------------------------------------- |
 | Development | For development, testing, and prototyping |
 | Production  | For production                            |
-
-Teams typically create separate projects for production, staging, and
-development. Encrypted keys and higher limits apply to production environment
-projects.
 
 ## Tenants
 
@@ -91,37 +82,60 @@ notification inbox.
 ## Rooms
 
 A room is the space where people and AI collaborate together. Inside a room, you
-can enable:
+can enable things like presence, shared state for multiplayer interactions,
+contextual comment threads, @ mentions and actions that trigger notifications.
 
-- presence (who’s online, live cursors, live selections)
-- shared state for multiplayer interactions
-- contextual comment threads
-- @ mentions and actions that trigger notifications
+<Figure>
+  <Image
+    src="/assets/concepts/liveblocks-rooms.png"
+    alt="Liveblocks rooms. The space where people and AI collaborate."
+    width={1536}
+    height={880}
+    quality={100}
+  />
+</Figure>
 
 Rooms typically map to artifacts people and AI can create inside your product,
-such as:
+such as text documents, workflow diagrams, spreadsheets, whiteboards, forms, 3D
+files, video editors, design files, presentations, and more.
 
-- a text document
-- a workflow diagram
-- a spreadsheet
-- a whiteboard
-- a form builder
-- a 3D file
-- a video editor
-- a design file
-- a presentation
+## Ready-made features
+
+Liveblocks includes a set of collaboration building blocks you can use
+individually or together. These ready-made features provide pre-built
+components, hooks, and APIs that handle the complexity of real-time
+collaboration, allowing you to focus on building your product's unique
+experience.
+
+<ListGrid columns={2}>
+  <DocsCardFeature
+    feature="comments"
+    href="/docs/ready-made-features/comments"
+  />
+  <DocsCardFeature
+    feature="multiplayer"
+    href="/docs/ready-made-features/multiplayer"
+  />
+  <DocsCardFeature
+    feature="ai-agents"
+    href="/docs/ready-made-features/ai-agents"
+  />
+  <DocsCardFeature
+    feature="notifications"
+    href="/docs/ready-made-features/notifications"
+  />
+</ListGrid>
 
 ## Collaborators
 
-Collaborators are the entities that do work together. You bring them —
-Liveblocks provides the environment and capabilities they use to collaborate.
+Collaborators are the entities that do work together in your application.
+Liveblocks provides the infrastructure and ready-made features they use to
+collaborate. There are two types of collaborators: users (people) and AI agents.
 
 ### Users
 
-Users are the authenticated people using your application. You keep ownership of
-the authentication system, Liveblocks only needs a user ID.
-
-Users can:
+Users are the authenticated people using your application. Liveblocks only needs
+a `userId` to identify them. Users can:
 
 - view and edit content
 - see presence and activity
@@ -132,11 +146,8 @@ Users can:
 ### AI Agents
 
 AI agents are AI-driven collaborators that can act inside your product.
-
-Liveblocks supports two types of agents:
-
-- Liveblocks AI Copilots
-- Framework agents (n8n, LangChain, etc.)
+Liveblocks supports two types of agents: Liveblocks AI Copilots and framework
+agents (private beta).
 
 #### Liveblocks AI Copilots
 
@@ -149,102 +160,135 @@ behavior.
 - Acts on behalf of a user to take actions inside your app
 - Accessed through chat (not via @ mentions)
 
-#### Framework agents
+#### Framework agents (private beta)
 
 Use external agents powered by your own infrastructure or tools like n8n,
-LangChain, Crew AI, and more. Framework agents behave like true collaborators:
+LangChain, Crew AI, and more. Framework agents behave like true collaborators.
 
 - They appear in rooms with presence
 - Users can @mention them in comments or text documents
 - Room events (mentions, edits, messages) are sent to your webhook endpoint
 - Your agent returns actions that update UI, create comments, or drive workflows
 
-## Ready-made features
-
-Liveblocks includes a set of collaboration building blocks you can use
-individually or together.
-
-### AI Agents
-
-Let AI collaborate with your users. Agents can chat, respond to mentions, take
-actions, or help users complete tasks.
-
-### Comments
-
-Threaded, contextual discussions attached to any part of your UI.
-
-- Threads and replies
-- @ mentions
-- Reactions and metadata
-- Attachments
-- Fully customizable React components
-
-### Notifications
-
-Keep users informed about collaboration happening in rooms. Notifications can be
-triggered by:
-
-- comments and mentions
-- AI agent actions
-- multiplayer activity
-- custom events from your backend
-
-They can be delivered via different channels:
-
-- in-app inbox
-- email
-- Slack (via webhook)
-- Microsoft Teams (via webhook)
-- Web Push (via webhook)
-
-### Multiplayer
-
-Realtime collaboration primitives built on conflict-free sync.
-
-- presence (avatar stacks, live cursors, live selections)
-- shared persisted state
-- multiplayer undo/redo
-- version history
-
-Under the hood, multiplayer relies on sync engines:
-
-- Liveblocks Storage - a built-in CRDT engine designed for ease of use,
-  performance, and interoperability with Liveblocks features.
-- Yjs - an open-source CRDT engine designed for text editors like Notion and
-  Google Docs.
-
 ## Platform
 
-The Liveblocks Platform powers collaboration at runtime. It includes:
+The Liveblocks Platform powers collaboration at runtime through a realtime
+backend with WebSocket infrastructure that handles presence and connection
+management, low-latency messaging, and room orchestration. Async pipelines
+manage notification delivery, webhooks, and event batching and grouping. An
+admin dashboard provides usage and monitoring, project and API keys management,
+webhook management, notification channel management, hosting regions, and event
+logs. The platform also includes a
+[DevTools browser extension](/docs/platform/devtools) and a comprehensive set of
+SDKs and packages.
 
-- Realtime backend
-  - WebSocket infrastructure
-  - Presence and connection management
-  - Low-latency messaging
-  - Room orchestration
-- Async pipelines
-  - Notification delivery
-  - Webhooks
-  - Event batching and grouping
-- Admin dashboard
-  - Usage and monitoring
-  - Project and API keys management
-  - Webhook management
-  - Notification channel management
-  - Hosting regions
-  - Event logs
-- DevTools browser extension
-- SDKs and packages
-  - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
-  - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
-  - [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
-  - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
-  - [`@liveblocks/react-blocknote`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote)
-  - [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
-  - [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
-  - [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror)
-  - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
-  - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
-  - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
-  - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
-  - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+### SDKs and packages
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="JavaScript"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React UI"
+    href="/docs/api-reference/liveblocks-react-ui"
+    description="@liveblocks/react-ui"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Tiptap"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React BlockNote"
+    href="/docs/api-reference/liveblocks-react-blocknote"
+    description="@liveblocks/react-blocknote"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js ProseMirror"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="React Lexical"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js Lexical"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/api-reference/liveblocks-yjs"
+    description="@liveblocks/yjs"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js"
+    href="/docs/api-reference/liveblocks-node"
+    description="@liveblocks/node"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Node.js Emails"
+    href="/docs/api-reference/liveblocks-emails"
+    description="@liveblocks/emails"
+    visual={<DocsNodejsIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="REST API"
+    href="/docs/api-reference/rest-api-endpoints"
+    description="HTTP endpoints"
+    visual={<DocsApiIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
