@@ -1,4 +1,4 @@
-import type { CommentBody, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, CommentBody, ThreadData } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
@@ -229,7 +229,7 @@ describe("useCreateThread", () => {
         ) => {
           const json = await req.json<{
             id: string;
-            comment: { id: string; body: CommentBody; metadata?: Record<string, string | number | boolean> };
+            comment: { id: string; body: CommentBody; metadata?: BaseMetadata };
           }>();
 
           const comment = dummyCommentData({

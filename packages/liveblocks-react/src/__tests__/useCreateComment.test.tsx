@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/core";
+import type { BaseMetadata, CommentBody } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
@@ -320,7 +320,7 @@ describe("useCreateComment", () => {
           const json = await req.json<{
             id: string;
             body: CommentBody;
-            metadata?: Record<string, string | number | boolean>;
+            metadata?: BaseMetadata;
           }>();
 
           const comment = dummyCommentData({

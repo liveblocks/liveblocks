@@ -1767,9 +1767,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
         metadata !== undefined
           ? {
               ...comment.metadata,
-              ...Object.fromEntries(
-                Object.entries(metadata).filter(([, value]) => value !== null)
-              ),
+              ...metadata,
             }
           : comment.metadata;
 
