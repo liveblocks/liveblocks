@@ -2680,7 +2680,7 @@
                       "name": "bob",
                       "avatar": "https://example.org/images/user123.jpg"
                     },
-                    "tenantId": "tenant-123",
+                    "tenantId": "acme-corp",
                     "permissions": {
                       "my-room-1": ["room:write"],
                       "my-room-2": ["room:write"],
@@ -2732,7 +2732,7 @@
                 "example": {
                   "value": {
                     "userId": "user-123",
-                    "tenantId": "tenant-123",
+                    "tenantId": "acme-corp",
                     "groupIds": ["marketing", "engineering"],
                     "userInfo": {
                       "name": "bob",
