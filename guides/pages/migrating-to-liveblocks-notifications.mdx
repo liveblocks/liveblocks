@@ -32,7 +32,7 @@ for a comprehensive overview.
 Liveblocks provides two types of notifications: collaboration notifications and
 custom notifications.
 
-**Collaboration notifications** are built in and designed to cover the most
+**Collaboration notifications** are built-in and designed to cover the most
 common collaboration patterns out of the box. They automatically handle things
 like mentions, replies, and comment activity across your app. For example, when
 someone tags a teammate or replies in a thread, a collaboration notification is
@@ -55,7 +55,7 @@ wherever your product needs a more tailored experience.
 
 - An **inbox notification** refers to an in-app message or icon shown to a user
   to indicate they’ve received a notification (similar to a notifications tray).
-- A **notification** refers to a channel-based message (e.g. slack, teams,
+- A **notification** refers to a channel-based message (e.g. Slack, Teams,
   email, web push) triggered if the inbox notification goes unread for a period
   of time, or immediately if the notification throttle is instantaneous.
 - The **project notification settings** refer to how channel notifications can
@@ -90,7 +90,7 @@ wherever your product needs a more tailored experience.
   Update the configuration for each notification channel and kind.
 
 - The **user notification settings** refer to how a user can choose which
-  notifications to receive on which channel (email, slack, teams, and more).
+  notifications to receive on which channel (email, Slack, Teams, and more).
 
   <Figure>
     <Image
@@ -170,7 +170,7 @@ Batching allows you to group multiple activities into a single notification.
 This is useful for reducing the number of notifications that are sent to the
 user, and can be enabled on custom notification kinds.
 
-Within the "Notifications" page in the
+Within the “Notifications” page in the
 [dashboard](https://liveblocks.io/dashboard), you can add a custom kind and
 enable batching. When it’s enabled, triggering an inbox notification activity
 for a specific `subjectId`, will update the existing inbox notification instead
@@ -226,7 +226,7 @@ console.log(inboxNotifications[0]);
 With this information, go through each of your notification types and map them
 to Liveblocks.
 
-For each type of notification, decide its kind, the subjectId, and whether it
+For each type of notification, decide its kind, the `subjectId`, and whether it
 will be batched. Use the `activityData` to pass in the content that would be
 relevant to display to the user.
 
@@ -235,39 +235,39 @@ relevant to display to the user.
 
 ```tsx
 export interface LiveblocksActivity {
-  /** Unique ID for this activity within the notification */
+  // Unique ID for this activity within the notification
   id: string;
 
-  /** When the activity occurred */
+  // When the activity occurred
   createdAt: string; // ISO 8601 timestamp
 
-  /** Custom data payload sent when triggering the notification */
+  // Custom data payload sent when triggering the notification
   data: Record<string, string | number | boolean | null>;
 }
 
 export interface LiveblocksInboxNotification {
-  /** Unique inbox notification ID */
+  // Unique inbox notification ID
   id: string;
 
-  /** The tenant ID (useful in multi-tenant setups) */
+  // The tenant ID (useful in multi-tenant setups)
   tenantId: string;
 
-  /** Notification kind — for custom notifications, must start with "$" */
+  // Notification kind — for custom notifications, must start with "$"
   kind: string; // e.g., "$alert"
 
-  /** Identifier used to group notifications */
+  // Identifier used to group notifications
   subjectId: string;
 
-  /** When the notification was first sent */
+  // When the notification was first sent
   notifiedAt: string;
 
-  /** When the user marked it as read (null if unread) */
+  // When the user marked it as read (null if unread)
   readAt: string | null;
 
-  /** Optional room or project scope */
+  // Optional room or project scope
   roomId: string | null;
 
-  /** Ordered list of activities within the notification */
+  // Ordered list of activities within the notification
   activities: LiveblocksActivity[];
 }
 ```
@@ -342,14 +342,14 @@ the Liveblocks notification, then add the corresponding Liveblocks ID to the
 created legacy notification.
 
 ```tsx
-// server: dual-write
+// Server: dual-write
 import { Liveblocks } from "@liveblocks/node";
 const liveblocks = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET! });
 
 async function createNotificationDualWrite(input: LegacyNotification) {
   const liveblocksData = mapLegacyToLiveblocks(input);
 
-  // 1) write to Liveblocks
+  // 1. Write to Liveblocks
   const { id: liveblocksId } = await liveblocks.triggerInboxNotification({
     userId: liveblocksData.userId,
     kind: liveblocksData.kind,
@@ -358,7 +358,7 @@ async function createNotificationDualWrite(input: LegacyNotification) {
     activityData: liveblocksData.activityData,
   });
 
-  // 2) write to legacy
+  // 2. Write to legacy
   const legacy = await legacyNotifications.insert({
     ...input,
     // We add the liveblocksId to mark notifications as read later
@@ -373,7 +373,7 @@ Now whenever the user marks a notification as read you can also mark it as read
 in Liveblocks.
 
 ```tsx
-// server: dual-write
+// Server: dual-write
 import { Liveblocks } from "@liveblocks/node";
 const liveblocks = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET! });
 
@@ -396,7 +396,7 @@ changes must be reflected in Liveblocks. You will use the
 `updateNotificationSettings` API to do that.
 
 ```tsx
-// server: dual-write user channel settings
+// Server: dual-write user channel settings
 async function updateUserChannelSettings(userId: string, settings) {
   await legacyUserSettings.set(userId, settings);
 
@@ -421,7 +421,7 @@ Go through all your users’ settings and update the notification settings in
 Liveblocks.
 
 ```tsx
-// server: backfill user channel settings
+// Server: backfill user channel settings
 async function updateUserChannelSettings(userId: string) {
   const settings = await legacyUserSettings.get(userId);
 
