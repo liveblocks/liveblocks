@@ -27,14 +27,6 @@ In most cases, sensitive or personal information can be excluded from what's
 sent to Liveblocks. Additionally, expanded storage configuration and data
 control features are under active development for enterprise customers.
 
-### AI Copilots
-
-- **Data stored**: Prompt configuration, LLM connection parameters (including
-  API keys), message history, tool results, token usage, model usage, chat
-  names, and metadata. Back-end knowledge is an optional add-on that requires
-  saving text and vectors to support knowledge recall.
-- **Retention**: Persists until the user or client deletes a chat.
-
 ### Comments
 
 - **Data stored**: Comment body, author ID, timestamps, mentions, tags, and
@@ -44,22 +36,34 @@ control features are under active development for enterprise customers.
 
 ### Multiplayer
 
+#### Realtime data storage
+
 - **Data stored**: Collaborative state written in text editor and sync engine
   integrations. This includes Tiptap, BlockNote, Lexical, Storage (e.g.
   `LiveObject`), and Yjs (e.g. `Y.Doc`).
 - **Retention**: Persists until the room is explicitly deleted. Storage (e.g.
   `LiveObject`) data can be deleted without deleting the room.
 
-### Notifications
-
-- **Data stored**: Notification message, delivery state, and recipient user ID.
-- **Retention**: Persists until each notification is explicitly deleted.
-
-### Presence
+#### Presence
 
 - **Data stored**: Room ID, user ID, and approximate geolocation (based on IP
   address). This is used to display session events in the Liveblocks Dashboard.
 - **Retention**: Persists until a deletion request is submitted.
+
+### AI Agents
+
+#### Liveblocks AI Copilots
+
+- **Data stored**: Prompt configuration, LLM connection parameters (including
+  API keys), message history, tool results, token usage, model usage, chat
+  names, and metadata. Back-end knowledge is an optional add-on that requires
+  saving text and vectors to support knowledge recall.
+- **Retention**: Persists until the user or client deletes a chat.
+
+### Notifications
+
+- **Data stored**: Notification message, delivery state, and recipient user ID.
+- **Retention**: Persists until each notification is explicitly deleted.
 
 ### Webhooks
 
@@ -125,11 +129,6 @@ Svix is used to deliver webhook messages.
 
 ## Data deletion
 
-### AI Copilots
-
-Chat data is deleted by the user or client calling
-[`useDeleteAiChat`](/docs/api-reference/liveblocks-react#useDeleteAiChat).
-
 ### Comments
 
 Comment data persists until the room is deleted with
@@ -147,6 +146,8 @@ in a thread are deleted, the thread is deleted too.
 
 ### Multiplayer
 
+#### Realtime data storage
+
 Multiplayer data is deleted when the associated room is removed with
 [`deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomId) or
 [Delete Room REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId).
@@ -155,16 +156,23 @@ Additionally, Storage data can be explicitly deleted with
 or
 [Delete Storage Document REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-storage).
 
+#### Presence
+
+Presence data persists until a deletion request is submitted.
+
+### AI Agents
+
+#### Liveblocks AI Copilots
+
+Chat data is deleted by the user or client calling
+[`useDeleteAiChat`](/docs/api-reference/liveblocks-react#useDeleteAiChat).
+
 ### Notifications
 
 Notifications are persisted until explicitly deleted with
 [`deleteInboxNotification`](/docs/api-reference/liveblocks-node#delete-users-userId-inboxNotifications-inboxNotificationId)
 or
 [Delete Inbox Notification REST API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications-inboxNotificationId).
-
-### Presence
-
-Presence data persists until a deletion request is submitted.
 
 ### Webhooks
 
