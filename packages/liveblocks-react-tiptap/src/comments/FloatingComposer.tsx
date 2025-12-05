@@ -10,7 +10,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { BaseMetadata } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -28,19 +28,17 @@ import type {
 import { forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
-import type {
-  ExtendedChainedCommands,
-} from "../types";
+import type { ExtendedChainedCommands } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
 
 type FloatingComposerComponents = {
   Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
 };
 
-export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
-> & {
+export type FloatingComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = Omit<ComposerProps<TM, CM>, "threadId" | "commentId"> & {
   /**
    * Override the component's components.
    */
@@ -69,12 +67,15 @@ export const FloatingComposer = forwardRef<
       selector: (ctx) => {
         if (!ctx.editor) {
           return undefined;
-        };
+        }
 
-        const hasPendingComment = ctx.editor.storage.liveblocksComments.pendingComment;
+        const hasPendingComment =
+          ctx.editor.storage.liveblocksComments.pendingComment;
         const isEmpty = ctx.editor.state.selection.empty;
 
-        return hasPendingComment && !isEmpty ? ctx.editor.state.selection : undefined;
+        return hasPendingComment && !isEmpty
+          ? ctx.editor.state.selection
+          : undefined;
       },
       equalityFn: compareSelections,
     }) ?? undefined;

@@ -31,7 +31,9 @@ import type {
  * @param data The plain comment data object (usually returned by the API)
  * @returns The rich comment data object that can be used by the client.
  */
-export function convertToCommentData(data: CommentDataPlain): CommentData {
+export function convertToCommentData<CM extends BaseMetadata>(
+  data: CommentDataPlain<CM>
+): CommentData<CM> {
   const editedAt = data.editedAt ? new Date(data.editedAt) : undefined;
   const createdAt = new Date(data.createdAt);
   const reactions = data.reactions.map((reaction) => ({
@@ -64,9 +66,10 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
  * @param data The plain thread data object (usually returned by the API)
  * @returns The rich thread data object that can be used by the client.
  */
-export function convertToThreadData<M extends BaseMetadata>(
-  data: ThreadDataPlain<M>
-): ThreadData<M> {
+export function convertToThreadData<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(data: ThreadDataPlain<TM, CM>): ThreadData<TM, CM> {
   const createdAt = new Date(data.createdAt);
   const updatedAt = new Date(data.updatedAt);
 
