@@ -619,18 +619,6 @@
         ]
       },
       {
-        "title": "DevTools extension",
-        "path": "/platform/devtools"
-      },
-      {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
-      },
-      {
-        "title": "MCP server",
-        "path": "/platform/mcp-server"
-      },
-      {
         "title": "Upgrading",
         "path": "/platform/upgrading",
         "sort": "descending",
@@ -653,10 +641,27 @@
           { "title": "Upgrading to 3.0", "path": "/platform/upgrading/3.0" },
           { "title": "Upgrading to 3.10", "path": "/platform/upgrading/3.10" }
         ]
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "routes": [
+      {
+        "title": "DevTools extension",
+        "path": "/tools/devtools"
       },
       {
-        "title": "Troubleshooting",
-        "path": "/platform/troubleshooting"
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
+      },
+      {
+        "title": "MCP server",
+        "path": "/tools/mcp-server"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
       }
     ]
   },
@@ -720,8 +725,8 @@
         "href": "/api-reference/rest-api-endpoints"
       },
       {
-        "title": "Frimousse",
-        "href": "https://frimousse.liveblocks.io"
+        "title": "Troubleshooting",
+        "path": "/api-reference/troubleshooting"
       }
     ]
   }
