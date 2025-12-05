@@ -9,7 +9,7 @@ meta:
 
 Liveblocks is the collaboration layer for your product. It provides the
 architecture, realtime backend, and ready-made features that let humans and AI
-collaborate inside your app—both in real time and asynchronously. Think of
+collaborate inside your app—both in realtime and asynchronously. Think of
 Liveblocks as the collaboration architecture your product never had. This page
 introduces the core concepts behind Liveblocks so you understand how everything
 fits together.
@@ -45,7 +45,7 @@ authentication, backend, or data model.
 A project is the top-level container in your Liveblocks team workspace that
 usually maps to an application. Each project includes things like API keys,
 rooms, AI agents, usage metrics, event logs, webhook settings, notification
-settings, region and environment settings,and more.
+settings, region and environment settings, and more.
 
 ### Regions
 
@@ -77,7 +77,8 @@ notifications, rooms, and everything associated with rooms such as comment
 threads, realtime data stored, and more. Each tenant represents a separate
 organization or customer in your system, meaning you can easily add a
 workspace/org switcher to your application, with each workspace having its own
-notification inbox.
+notification inbox. Each project can have multiple tenants, though only one is
+required.
 
 ## Rooms
 
@@ -103,8 +104,8 @@ files, video editors, design files, presentations, and more.
 
 Liveblocks includes a set of collaboration building blocks you can use
 individually or together. These ready-made features provide pre-built
-components, hooks, and APIs that handle the complexity of real-time
-collaboration, allowing you to focus on building your product's unique
+components, hooks, and APIs that handle the complexity of realtime
+collaboration, allowing you to focus on building your product’s unique
 experience.
 
 <ListGrid columns={2}>
@@ -137,11 +138,11 @@ collaborate. There are two types of collaborators: users (people) and AI agents.
 Users are the authenticated people using your application. Liveblocks only needs
 a `userId` to identify them. Users can:
 
-- view and edit content
-- see presence and activity
-- leave contextual comments
-- @ mention users, groups, and AI agents
-- receive notifications
+- View and edit content.
+- See presence and activity.
+- Leave contextual comments.
+- @ mention users, groups, and AI agents.
+- Receive notifications.
 
 ### AI Agents
 
@@ -154,29 +155,34 @@ agents (private beta).
 Configured directly in the dashboard. Ideal for chatbot-style assistive
 behavior.
 
-- Works with any LLM (OpenAI, Anthropic, Gemini, or custom)
-- Supports knowledge RAG from PDFs, images, websites, and text
-- Fully compatible with the `<AiChat />` component
-- Acts on behalf of a user to take actions inside your app
-- Accessed through chat (not via @ mentions)
+- Works with any LLM (OpenAI, Anthropic, Gemini, or custom).
+- Supports RAG knowledge from PDFs, images, websites, and text.
+- Fully compatible with the
+  [`<AiChat />`](/docs/ready-made-features/ai-agents/liveblocks-ai-copilots/default-components#AiChat)
+  component.
+- Acts on behalf of a user to take actions inside your app.
+- Accessed through chat (not via @ mentions).
 
 #### Framework agents (private beta)
 
-Use external agents powered by your own infrastructure or tools like n8n,
-LangChain, Crew AI, and more. Framework agents behave like true collaborators.
+Use external agents powered by your own infrastructure or tools like
+[n8n](https://n8n.io/), [LangChain](https://www.langchain.com/),
+[Crew AI](https://crewai.com/), and more. Framework agents behave like true
+collaborators.
 
-- They appear in rooms with presence
-- Users can @mention them in comments or text documents
-- Room events (mentions, edits, messages) are sent to your webhook endpoint
-- Your agent returns actions that update UI, create comments, or drive workflows
+- They appear in rooms with presence.
+- Users can @mention them in comments or text documents.
+- Room events (mentions, edits, messages) are sent to your webhook endpoint.
+- Your agent returns actions that update UI, create comments, or drive
+  workflows.
 
 ## Platform
 
-The Liveblocks Platform powers collaboration at runtime through a realtime
-backend with WebSocket infrastructure that handles presence and connection
-management, low-latency messaging, and room orchestration. Async pipelines
-manage notification delivery, webhooks, and event batching and grouping. An
-admin dashboard provides usage and monitoring, project and API keys management,
+The Liveblocks Platform powers collaboration at runtime through a realtime back
+end, using WebSocket infrastructure to handle presence, connection management,
+low-latency messaging, and room orchestration. Async pipelines manage
+notification delivery, webhooks, and event batching and grouping. An admin
+dashboard provides usage and monitoring, project and API keys management,
 webhook management, notification channel management, hosting regions, and event
 logs. The platform also includes a
 [DevTools browser extension](/docs/platform/devtools) and a comprehensive set of
