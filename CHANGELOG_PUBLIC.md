@@ -18,6 +18,21 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 49 (2025-12-05)
+
+## Examples
+
+- New example: [Comments search](https://liveblocks.io/examples/comments-search).
+- Add custom “Copy link” comment dropdown item to the [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker) example.
+
+## Showcase
+
+- New item: [Search through comments](https://liveblocks.io/showcase/search-through-comments).
+
+## Contributors
+
+ctnicholas
+
 # Week 48 (2025-11-28)
 
 ## v3.11.0
