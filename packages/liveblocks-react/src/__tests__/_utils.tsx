@@ -135,16 +135,13 @@ const parser = new QueryParser({
   allowNull: true,
 });
 
-function getFieldValue(
-  thread: ThreadData<BaseMetadata>,
-  field: AST.Field
-): unknown {
+function getFieldValue(thread: ThreadData, field: AST.Field): unknown {
   switch (field._kind) {
     case "DirectField":
-      return thread[field.ref.name as keyof ThreadData<BaseMetadata>];
+      return thread[field.ref.name as keyof ThreadData];
 
     case "KeyedField": {
-      const base = thread[field.base.name as keyof ThreadData<BaseMetadata>];
+      const base = thread[field.base.name as keyof ThreadData];
       return isPlainObject(base) ? base?.[field.key] : undefined;
     }
 
@@ -155,7 +152,7 @@ function getFieldValue(
 
 function matchesConditionGroup(
   cond: AST.ConditionGroup,
-  thread: ThreadData<BaseMetadata>
+  thread: ThreadData
 ): boolean {
   switch (cond._kind) {
     case "OrCondition":
@@ -196,14 +193,11 @@ function matchesConditionGroup(
   }
 }
 
-function matchesQuery(
-  query: AST.Query,
-  thread: ThreadData<BaseMetadata>
-): boolean {
+function matchesQuery(query: AST.Query, thread: ThreadData): boolean {
   return query.allOf.every((group) => matchesConditionGroup(group, thread));
 }
 
 export const makeThreadFilter = (queryText: string) => {
   const query = parser.parse(queryText).query;
-  return (thread: ThreadData<BaseMetadata>) => matchesQuery(query, thread);
+  return (thread: ThreadData) => matchesQuery(query, thread);
 };

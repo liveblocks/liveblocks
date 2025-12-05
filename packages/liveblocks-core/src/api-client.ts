@@ -207,12 +207,14 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     commentId,
     body,
     attachmentIds,
+    metadata,
   }: {
     roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
+    metadata?: Patchable<CM>;
   }): Promise<CommentData<CM>>;
 
   deleteComment({
@@ -874,6 +876,7 @@ export function createApiClient<
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
+    metadata?: Patchable<CM>;
   }) {
     const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
@@ -884,6 +887,7 @@ export function createApiClient<
       {
         body: options.body,
         attachmentIds: options.attachmentIds,
+        metadata: options.metadata,
       }
     );
 

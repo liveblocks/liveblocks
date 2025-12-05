@@ -29,6 +29,7 @@ import type {
   CommentData,
   DGI,
   DRI,
+  DTM,
   GroupData,
   HistoryVersion,
   InboxNotificationData,
@@ -118,7 +119,7 @@ export type UseAiChatsOptions = {
   query?: AiChatsQuery;
 };
 
-export type ThreadsQuery<TM extends BaseMetadata> = {
+export type ThreadsQuery<TM extends BaseMetadata = DTM> = {
   /**
    * Whether to only return threads marked as resolved or unresolved. If not provided,
    * all threads will be returned.
@@ -245,11 +246,12 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
   attachments?: CommentAttachment[];
 };
 
-export type EditCommentOptions = {
+export type EditCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   commentId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
+  metadata?: Patchable<CM>;
 };
 
 export type EditCommentMetadataOptions<CM extends BaseMetadata> = {
@@ -994,13 +996,13 @@ type RoomContextBundleCommon<
   useCreateComment(): (options: CreateCommentOptions<CM>) => CommentData<CM>;
 
   /**
-   * Returns a function that edits a comment's body.
+   * Returns a function that edits a comment.
    *
    * @example
    * const editComment = useEditComment()
    * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
    */
-  useEditComment(): (options: EditCommentOptions) => void;
+  useEditComment(): (options: EditCommentOptions<CM>) => void;
 
   /**
    * Returns a function that edits a comment's metadata.

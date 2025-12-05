@@ -189,8 +189,8 @@ describe("useEditCommentMetadata", () => {
 
     expect(result.current.threads).toBeDefined();
     expect(result.current.threads?.[0]?.comments[0]?.metadata).toEqual({
-      reviewed: null,
       priority: 2,
+      reviewed: null,
     });
 
     // Comment metadata is not updated by the server response so exceptionally,

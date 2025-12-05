@@ -382,7 +382,7 @@ async () => {
       roomId,
       threadId,
       commentId,
-      data: { userId, metadata: { status: "resolved", priority: null } },
+      data: { userId, metadata: { priority: 2, reviewed: null } },
     });
   }
 

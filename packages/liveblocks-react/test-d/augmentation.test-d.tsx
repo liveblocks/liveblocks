@@ -857,6 +857,24 @@ declare global {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -869,6 +887,24 @@ declare global {
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
     })
   );
 }

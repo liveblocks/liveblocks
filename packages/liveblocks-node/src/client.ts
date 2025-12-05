@@ -1649,6 +1649,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID to edit the comment in.
    * @param params.commentId The comment ID to edit.
    * @param params.data.body The body of the comment.
+   * @param params.data.metadata (optional) The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
    * @param params.data.editedAt (optional) The date the comment was edited.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The edited comment.
@@ -1658,7 +1659,11 @@ export class Liveblocks {
       roomId: string;
       threadId: string;
       commentId: string;
-      data: { body: CommentBody; editedAt?: Date };
+      data: {
+        body: CommentBody;
+        metadata?: Patchable<CM>;
+        editedAt?: Date;
+      };
     },
     options?: RequestOptions
   ): Promise<CommentData<CM>> {
@@ -1666,7 +1671,11 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      { ...data, editedAt: data.editedAt?.toISOString() },
+      {
+        body: data.body,
+        editedAt: data.editedAt?.toISOString(),
+        metadata: data.metadata,
+      },
       options
     );
     if (!res.ok) {
@@ -1913,7 +1922,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated comment metadata.
    */
-  public async editCommentMetadata<CM extends BaseMetadata = BaseMetadata>(
+  public async editCommentMetadata(
     params: {
       roomId: string;
       threadId: string;

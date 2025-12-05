@@ -1,5 +1,4 @@
 import type {
-  BaseMetadata,
   CommentData,
   GroupData,
   InboxNotificationCustomData,
@@ -19,10 +18,7 @@ type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 export function dummyThreadData({
   roomId,
   ...overrides
-}: AtLeast<
-  ThreadDataWithDeleteInfo<BaseMetadata>,
-  "roomId"
->): ThreadData<BaseMetadata> {
+}: AtLeast<ThreadDataWithDeleteInfo, "roomId">): ThreadData {
   const threadId = overrides.id ?? createThreadId();
   const createdAt = overrides.createdAt ?? new Date();
   const updatedAt = overrides.updatedAt ?? createdAt;
@@ -33,15 +29,17 @@ export function dummyThreadData({
     updatedAt,
     roomId,
     metadata: {},
-    comments: [
-      dummyCommentData({
-        roomId,
-        threadId,
-        createdAt,
-      }),
-    ],
     resolved: false,
     ...overrides,
+    comments: overrides.comments
+      ? overrides.comments.map((comment) => ({ ...comment, threadId }))
+      : [
+          dummyCommentData({
+            roomId,
+            threadId,
+            createdAt,
+          }),
+        ],
   };
 }
 

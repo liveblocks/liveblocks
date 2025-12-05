@@ -704,7 +704,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       version: 1,
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
-    metadata: { status: "resolved" },
+    metadata: { priority: 2 },
   });
 
   expectType<"comment">(commentWithMetadata.type);
@@ -727,6 +727,15 @@ import { expectAssignable, expectError, expectType } from "tsd";
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -739,6 +748,15 @@ import { expectAssignable, expectError, expectType } from "tsd";
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
     })
   );
 }

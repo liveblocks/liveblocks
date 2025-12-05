@@ -30,8 +30,8 @@ export function makeThreadsFilter<
 }
 
 function matchesThreadsQuery(
-  thread: ThreadData<BaseMetadata, BaseMetadata>,
-  q: ThreadsQuery<BaseMetadata>,
+  thread: ThreadData,
+  q: ThreadsQuery,
   subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ) {
   let subscription = undefined;
@@ -47,10 +47,7 @@ function matchesThreadsQuery(
   );
 }
 
-function matchesMetadata(
-  thread: ThreadData<BaseMetadata>,
-  q: ThreadsQuery<BaseMetadata>
-) {
+function matchesMetadata(thread: ThreadData, q: ThreadsQuery) {
   // Boolean logic: query.metadata? => all metadata matches
   const metadata = thread.metadata;
   return (

@@ -979,6 +979,15 @@ ctx.useOthersListener(({ user, type }) => {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -991,6 +1000,15 @@ ctx.useOthersListener(({ user, type }) => {
       threadId: "th_xxx",
       commentId: "cm_xxx",
       body: { version: 1, content: [] },
+    })
+  );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
     })
   );
 }

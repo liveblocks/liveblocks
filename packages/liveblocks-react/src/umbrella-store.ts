@@ -262,14 +262,12 @@ type PaginationStatePatch =
  */
 export function makeRoomThreadsQueryKey(
   roomId: string,
-  query: ThreadsQuery<BaseMetadata> | undefined
+  query: ThreadsQuery | undefined
 ) {
   return stableStringify([roomId, query ?? {}]);
 }
 
-export function makeUserThreadsQueryKey(
-  query: ThreadsQuery<BaseMetadata> | undefined
-) {
+export function makeUserThreadsQueryKey(query: ThreadsQuery | undefined) {
   return stableStringify(query ?? {});
 }
 
@@ -2218,28 +2216,26 @@ function applyOptimisticUpdates_forThreadifications<
           break;
         }
 
-        // TODO: If we allow editing metadata in `editComment` APIs: also take the comment's editedAt into account
-
-        const comment = thread.comments.find(
+        const existingComment = thread.comments.find(
           (c) => c.id === optimisticUpdate.commentId
         );
-        if (comment === undefined) break;
+        if (existingComment === undefined) break;
 
-        threadsDB.upsert({
-          ...thread,
-          updatedAt: optimisticUpdate.updatedAt,
-          comments: thread.comments.map((c) =>
-            c.id === optimisticUpdate.commentId
-              ? {
-                  ...c,
-                  metadata: {
-                    ...c.metadata,
-                    ...optimisticUpdate.metadata,
-                  },
-                }
-              : c
-          ),
-        });
+        // TODO: Should we still allow updating metadata of a deleted comment?
+        // If the comment has been deleted, we do not apply the update
+        if (existingComment.deletedAt !== undefined) {
+          break;
+        }
+
+        threadsDB.upsert(
+          applyUpsertComment(thread, {
+            ...existingComment,
+            metadata: {
+              ...existingComment.metadata,
+              ...optimisticUpdate.metadata,
+            },
+          })
+        );
         break;
       }
 

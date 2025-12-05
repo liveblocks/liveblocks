@@ -187,7 +187,7 @@ function getUserIdsFromComments(comments: CommentData[]) {
 export function generateInboxNotificationThreadContents(
   client: Client,
   inboxNotification: InboxNotificationThreadData,
-  thread: ThreadData<BaseMetadata>,
+  thread: ThreadData,
   userId: string
 ): InboxNotificationThreadContents {
   const unreadComments = thread.comments.filter((comment) => {

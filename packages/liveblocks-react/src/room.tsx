@@ -1713,25 +1713,33 @@ function useCreateRoomComment<CM extends BaseMetadata>(
 }
 
 /**
- * Returns a function that edits a comment's body.
+ * Returns a function that edits a comment.
  *
  * @example
  * const editComment = useEditComment()
  * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
  */
-function useEditComment(): (options: EditCommentOptions) => void {
-  return useEditRoomComment(useRoom().id);
+function useEditComment<CM extends BaseMetadata>(): (
+  options: EditCommentOptions<CM>
+) => void {
+  return useEditRoomComment<CM>(useRoom().id);
 }
 
 /**
  * @private
  */
-function useEditRoomComment(
+function useEditRoomComment<CM extends BaseMetadata>(
   roomId: string
-): (options: EditCommentOptions) => void {
+): (options: EditCommentOptions<CM>) => void {
   const client = useClient();
   return useCallback(
-    ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
+    ({
+      threadId,
+      commentId,
+      body,
+      attachments,
+      metadata,
+    }: EditCommentOptions<CM>): void => {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1755,6 +1763,16 @@ function useEditRoomComment(
         return;
       }
 
+      const updatedMetadata =
+        metadata !== undefined
+          ? {
+              ...comment.metadata,
+              ...Object.fromEntries(
+                Object.entries(metadata).filter(([, value]) => value !== null)
+              ),
+            }
+          : comment.metadata;
+
       const optimisticId = store.optimisticUpdates.add({
         type: "edit-comment",
         comment: {
@@ -1762,13 +1780,21 @@ function useEditRoomComment(
           editedAt,
           body,
           attachments: attachments ?? [],
+          metadata: updatedMetadata,
         },
       });
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .editComment({ roomId, threadId, commentId, body, attachmentIds })
+        .editComment({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          attachmentIds,
+          metadata,
+        })
         .then(
           (editedComment) => {
             // Replace the optimistic update by the real thing
@@ -1783,8 +1809,7 @@ function useEditRoomComment(
                 threadId,
                 commentId,
                 body,
-                // TODO: Allow editing metadata in all `editComment` APIs: vanilla, React, REST, etc.
-                metadata: {},
+                metadata: updatedMetadata,
               },
               err
             )
@@ -2964,6 +2989,15 @@ const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
 const _useCreateComment: TypedBundle["useCreateComment"] = useCreateComment;
 
 /**
+ * Returns a function that edits a comment.
+ *
+ * @example
+ * const editComment = useEditComment()
+ * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
+ */
+const _useEditComment: TypedBundle["useEditComment"] = useEditComment;
+
+/**
  * Returns a function that edits a comment's metadata.
  * To delete an existing metadata property, set its value to `null`.
  *
@@ -3403,7 +3437,7 @@ export {
   useDeleteRoomThread,
   useDeleteTextMention,
   _useDeleteThread as useDeleteThread,
-  useEditComment,
+  _useEditComment as useEditComment,
   _useEditCommentMetadata as useEditCommentMetadata,
   useEditRoomComment,
   useEditRoomCommentMetadata,
