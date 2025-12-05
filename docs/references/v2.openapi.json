@@ -1968,6 +1968,22 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the thread subscription.",
@@ -2032,6 +2048,22 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success.",
