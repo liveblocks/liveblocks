@@ -575,18 +575,6 @@
         "path": "/platform/rest-api"
       },
       {
-        "title": "DevTools",
-        "path": "/platform/devtools"
-      },
-      {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
-      },
-      {
-        "title": "MCP server",
-        "path": "/platform/mcp-server"
-      },
-      {
         "title": "Account management",
         "path": "/platform/account-management",
         "routes": [
@@ -629,6 +617,18 @@
             "path": "/platform/limits/fair-use-guidelines"
           }
         ]
+      },
+      {
+        "title": "DevTools extension",
+        "path": "/platform/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/platform/nextjs-starter-kit"
+      },
+      {
+        "title": "MCP server",
+        "path": "/platform/mcp-server"
       },
       {
         "title": "Upgrading",

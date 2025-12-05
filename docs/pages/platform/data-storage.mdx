@@ -42,7 +42,7 @@ control features are under active development for enterprise customers.
 - **Retention**: Persists until the room or thread is explicitly deleted.
   Additionally, if all comments in a thread are removed, the thread is deleted.
 
-### Multiplayer Editing
+### Multiplayer
 
 - **Data stored**: Collaborative state written in text editor and sync engine
   integrations. This includes Tiptap, BlockNote, Lexical, Storage (e.g.
@@ -95,9 +95,9 @@ snapshots.
 
 ### Cloudflare
 
-Realtime collaboration data used in Multiplayer Editing and Presence is handled
-by Cloudflare’s global edge network. This data is handled on the edge, as close
-to the user as possible, to ensure low-latency performance. Because Cloudflare
+Realtime collaboration data used in Multiplayer and Presence is handled by
+Cloudflare’s global edge network. This data is handled on the edge, as close to
+the user as possible, to ensure low-latency performance. Because Cloudflare
 manages routing dynamically across its global edge network, data processed in
 WebSocket sessions is not guaranteed to remain within a specific geographic
 region, apart from when region-locking is enabled.
@@ -108,7 +108,7 @@ or `Cloudflare FedRAMP`, per project.
 
 #### Stored in Cloudflare
 
-- Multiplayer Editing data for text editor and sync engine integrations.
+- Multiplayer data for text editor and sync engine integrations.
 - AI Copilot message, tool, chat, and usage history.
 
 #### Encryption
@@ -145,9 +145,9 @@ Comments can also be deleted by their authors—when a single comment is deleted
 its body is cleared and marked with a `deletedAt` timestamp. When all comments
 in a thread are deleted, the thread is deleted too.
 
-### Multiplayer Editing
+### Multiplayer
 
-Multiplayer Editing data is deleted when the associated room is removed with
+Multiplayer data is deleted when the associated room is removed with
 [`deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomId) or
 [Delete Room REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId).
 Additionally, Storage data can be explicitly deleted with
