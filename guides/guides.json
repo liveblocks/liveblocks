@@ -412,6 +412,13 @@
     "date": "2025-10-15"
   },
   {
+    "title": "Migrating to Liveblocks Notifications",
+    "path": "/migrating-to-liveblocks-notifications",
+    "topics": ["notifications", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2025-12-05"
+  },
+  {
     "title": "Yjs best practices and tips",
     "path": "/yjs-best-practices-and-tips",
     "topics": ["tutorials", "data-fetching"],
