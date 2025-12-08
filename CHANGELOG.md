@@ -7,7 +7,7 @@
 
 ### `@liveblocks/yjs`
 
-- Fix an issue where a documen incorrectly reported its sync state.
+- Fix an issue where a document incorrectly reported its sync state.
 
 ## v3.11.0
 
