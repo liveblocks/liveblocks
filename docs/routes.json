@@ -335,6 +335,11 @@
             "hidden": true
           }
         ]
+      },
+      {
+        "title": "Upgrading",
+        "path": "/upgrading",
+        "hidden": true
       }
     ]
   },
@@ -549,6 +554,7 @@
   },
   {
     "title": "Platform",
+    "defaultCollapsed": true,
     "routes": [
       {
         "title": "Data storage",
@@ -605,10 +611,6 @@
         ]
       },
       {
-        "title": "Plans",
-        "path": "/platform/plans"
-      },
-      {
         "title": "Limits",
         "path": "/platform/limits",
         "routes": [
@@ -617,51 +619,82 @@
             "path": "/platform/limits/fair-use-guidelines"
           }
         ]
-      },
-      {
-        "title": "DevTools extension",
-        "path": "/platform/devtools"
-      },
-      {
-        "title": "Next.js Starter Kit",
-        "path": "/platform/nextjs-starter-kit"
-      },
-      {
-        "title": "MCP server",
-        "path": "/platform/mcp-server"
-      },
-      {
-        "title": "Upgrading",
-        "path": "/platform/upgrading",
-        "sort": "descending",
-        "routes": [
-          { "title": "Upgrading to 0.17", "path": "/platform/upgrading/0.17" },
-          { "title": "Upgrading to 0.18", "path": "/platform/upgrading/0.18" },
-          { "title": "Upgrading to 0.19", "path": "/platform/upgrading/0.19" },
-          { "title": "Upgrading to 1.0", "path": "/platform/upgrading/1.0" },
-          { "title": "Upgrading to 1.2", "path": "/platform/upgrading/1.2" },
-          { "title": "Upgrading to 1.5", "path": "/platform/upgrading/1.5" },
-          { "title": "Upgrading to 1.9", "path": "/platform/upgrading/1.9" },
-          { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" },
-          { "title": "Upgrading to 2.0", "path": "/platform/upgrading/2.0" },
-          { "title": "Upgrading to 2.2", "path": "/platform/upgrading/2.2" },
-          { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
-          { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" },
-          { "title": "Upgrading to 2.15", "path": "/platform/upgrading/2.15" },
-          { "title": "Upgrading to 2.16", "path": "/platform/upgrading/2.16" },
-          { "title": "Upgrading to 2.24", "path": "/platform/upgrading/2.24" },
-          { "title": "Upgrading to 3.0", "path": "/platform/upgrading/3.0" },
-          { "title": "Upgrading to 3.10", "path": "/platform/upgrading/3.10" }
-        ]
-      },
-      {
-        "title": "Troubleshooting",
-        "path": "/platform/troubleshooting"
       }
     ]
   },
   {
+    "title": "Pricing",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Plans",
+        "path": "/pricing/plans",
+        "routes": [
+          {
+            "title": "Free",
+            "path": "/pricing/plans/free"
+          },
+          {
+            "title": "Pro",
+            "path": "/pricing/plans/pro"
+          },
+          {
+            "title": "Enterprise",
+            "path": "/pricing/plans/enterprise"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Tools",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "DevTools extension",
+        "path": "/tools/devtools"
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/tools/nextjs-starter-kit"
+      },
+      {
+        "title": "MCP server",
+        "path": "/tools/mcp-server"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
+      }
+    ]
+  },
+  {
+    "title": "Upgrading",
+    "sort": "descending",
+    "defaultCollapsed": true,
+    "routes": [
+      { "title": "Upgrading to 0.17", "path": "/upgrading/0.17" },
+      { "title": "Upgrading to 0.18", "path": "/upgrading/0.18" },
+      { "title": "Upgrading to 0.19", "path": "/upgrading/0.19" },
+      { "title": "Upgrading to 1.0", "path": "/upgrading/1.0" },
+      { "title": "Upgrading to 1.2", "path": "/upgrading/1.2" },
+      { "title": "Upgrading to 1.5", "path": "/upgrading/1.5" },
+      { "title": "Upgrading to 1.9", "path": "/upgrading/1.9" },
+      { "title": "Upgrading to 1.10", "path": "/upgrading/1.10" },
+      { "title": "Upgrading to 2.0", "path": "/upgrading/2.0" },
+      { "title": "Upgrading to 2.2", "path": "/upgrading/2.2" },
+      { "title": "Upgrading to 2.8", "path": "/upgrading/2.8" },
+      { "title": "Upgrading to 2.9", "path": "/upgrading/2.9" },
+      { "title": "Upgrading to 2.15", "path": "/upgrading/2.15" },
+      { "title": "Upgrading to 2.16", "path": "/upgrading/2.16" },
+      { "title": "Upgrading to 2.24", "path": "/upgrading/2.24" },
+      { "title": "Upgrading to 3.0", "path": "/upgrading/3.0" },
+      { "title": "Upgrading to 3.10", "path": "/upgrading/3.10" }
+    ]
+  },
+  {
     "title": "API Reference",
+    "defaultCollapsed": true,
     "routes": [
       {
         "title": "@liveblocks/client",
@@ -720,8 +753,8 @@
         "href": "/api-reference/rest-api-endpoints"
       },
       {
-        "title": "Frimousse",
-        "href": "https://frimousse.liveblocks.io"
+        "title": "Troubleshooting",
+        "path": "/api-reference/troubleshooting"
       }
     ]
   }
