@@ -267,12 +267,12 @@
         "path": "/authentication",
         "routes": [
           {
-            "title": "Access token",
-            "path": "/authentication/access-token"
-          },
-          {
             "title": "Tenants",
             "path": "/authentication/tenants"
+          },
+          {
+            "title": "Access token",
+            "path": "/authentication/access-token"
           },
           {
             "title": "Next.js",

@@ -45,7 +45,7 @@ prototyping and public applications.
 
 ---
 
-## How ID tokens work
+## How ID token authentication works
 
 ID token authentication allows Liveblocks to handle permissions for you. This
 means that when you create or modify a room, you can set a user’s permissions on
@@ -80,7 +80,8 @@ Authenticating with ID tokens means creating a
 [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that’s used
 to verify the identity of the current user when connecting to a Liveblocks room.
 This token is created using
-[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens) or
+[`/identify-user`](/docs/api-reference/rest-api-endpoints#post-identify-user).
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
@@ -91,12 +92,62 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-## Permissions [#permissions]
+## Workspace permissions [#permissions]
+
+Using [tenants](/docs/authentication/tenants), you can create workspaces in your
+application, compartmentalizing all resources such as inbox notifications and
+rooms. This includes everything associated with rooms such as comment threads,
+realtime data stored, and more. This allows you to add a workspace switcher to
+your application.
+
+<Figure>
+  <Image
+    src="/assets/authentication/org-switcher.png"
+    alt="A workspace switcher"
+    width={1600}
+    height={1000}
+    quality={90}
+  />
+</Figure>
+
+### Set up workspace permissions
+
+To set up workspace permissions, pass a `tenantId` when authenticating a user,
+ensuring that the user will only have access to resources within this workspace.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+// '{ token: "eyJga7..." }'
+console.log(body);
+```
+
+When creating a resource on the server, such as a room, pass the `tenantId` to
+the resource, to allow the user access.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+## Room permissions
 
 ID token authentication allows you to set different permission types on rooms,
 assigned at three different levels: default, groups, and users. The system is
 flexible enough to enable you to build a permission system that’s helpful for
-building invite dialogs, workspaces, and more.
+building invite dialogs, private rooms, and more.
 
 <Figure>
   <img
