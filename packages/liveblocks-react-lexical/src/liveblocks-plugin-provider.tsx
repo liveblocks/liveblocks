@@ -31,7 +31,7 @@ export function useIsEditorReady(): boolean {
 
   const getSnapshot = useCallback(() => {
     const status = yjsProvider?.getStatus();
-    return status === "synchronizing" || status === "synchronized";
+    return status === "synchronized";
   }, [yjsProvider]);
 
   const subscribe = useCallback(
