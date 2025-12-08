@@ -98,7 +98,7 @@ Using [tenants](/docs/authentication/tenants), you can create workspaces in your
 application, compartmentalizing all resources such as inbox notifications and
 rooms. This includes everything associated with rooms such as comment threads,
 realtime data stored, and more. This allows you to add a workspace switcher to
-your application.
+your application, separating each of your customers/organizations.
 
 <Figure>
   <Image
@@ -395,27 +395,6 @@ const room = await liveblocks.getRoom("a32wQXid4A9");
 
 // { "ellen@acme.inc": ["room:write"] }
 console.log(room.data.usersAccesses);
-```
-
-## Tenants
-
-You can use [tenants](/docs/authentication/tenants) to compartmentalize your
-rooms per customers/organizations that you have.
-
-When using ID tokens, you can set the `tenantId` when using `identifyUser`.
-
-When a token is generated for a specific tenant, it will only give access to
-resources inside this tenant, even if the user has access to rooms in other
-tenants.
-
-```ts highlight="3"
-const { body, status } = await liveblocks.identifyUser({
-  userId: "olivier@example.com",
-  tenantId: "tenant123",
-});
-
-// '{ token: "eyJga7..." }'
-console.log(body);
 ```
 
 ## Select your framework [#select-your-framework]

@@ -99,8 +99,26 @@ using tenants. Tenants can also be used with the
 When authorizing a user with Liveblocks, you can specify the tenant they belong
 to. Each user is only authorized for one tenant at a time, meaning they need to
 re-authenticate to access resources in another tenant, such as notifications.
-Tenants can be used with both [Access Token](/docs/authentication/access-token)
-and [ID Token](/docs/authentication/id-token) authentication.
+Tenants can be used with both [ID Token](/docs/authentication/id-token) and
+[Access Token](/docs/authentication/access-token) authentication.
+
+#### With ID tokens
+
+When using ID tokens, you can set the `tenantId` when using `identifyUser`.
+Tokens generated for a specific tenant, will only allow access to resources
+inside this tenant, even if the user has access to rooms in other tenants.
+
+```ts highlight="3"
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+  tenantId: "tenant123",
+});
+
+// '{ token: "eyJga7..." }'
+console.log(body);
+```
+
+Learn more about [ID tokens](/docs/authentication/id-token).
 
 #### With access tokens
 
@@ -123,24 +141,6 @@ const { body, status } = await session.authorize();
 ```
 
 Learn more about [access tokens](/docs/authentication/access-token).
-
-#### With ID tokens
-
-When using ID tokens, you can set the `tenantId` when using `identifyUser`.
-Tokens generated for a specific tenant, will only allow access to resources
-inside this tenant, even if the user has access to rooms in other tenants.
-
-```ts highlight="3"
-const { body, status } = await liveblocks.identifyUser({
-  userId: "olivier@example.com",
-  tenantId: "tenant123",
-});
-
-// '{ token: "eyJga7..." }'
-console.log(body);
-```
-
-Learn more about [ID tokens](/docs/authentication/id-token).
 
 #### Switching tenants
 
