@@ -1,22 +1,51 @@
 ---
 meta:
-  title: "Authenticate users with ID tokens"
-  parentTitle: "Authentication"
+  title: "Authentication"
   description: "Authenticate your users in your application with ID tokens."
 ---
 
-Liveblocks provides different methods to authenticate users in your application.
-For any production application, we recommend using your secret key to enable
-authentication with [ID tokens](#id-tokens).
+For production applications, we recommend using your secret API key to
+authenticate users with **ID tokens**. Your public API key is only for
+prototyping and public applications.
 
-<Banner title="Public key is only for prototyping and landing pages" type="warning">
+## Quickstart
 
-We don’t recommend using your public API key in production, as it makes it
-possible for end users to access any room’s data. It’s also difficult for us to
-accurately measure your monthly collaborating users without any user
-information. We recommend using your secret key instead, see below.
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/id-token/nextjs"
+    visual={<DocsNextjsIcon />}
+  />
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/id-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/id-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/id-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/id-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/id-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
 
-</Banner>
+---
+
+## How ID tokens work
 
 ID token authentication allows Liveblocks to handle permissions for you. This
 means that when you create or modify a room, you can set a user’s permissions on
@@ -61,44 +90,6 @@ const { body, status } = await liveblocks.identifyUser({
 // '{ token: "eyJga7..." }'
 console.log(body);
 ```
-
-**Before using ID tokens, it’s recommended to read this entire page**, as it
-explains how to set up permissions in your Liveblocks app. However, if you’d
-like to quickly set up Liveblocks, you can select your framework and read more
-later.
-
-<ListGrid columns={3}>
-  <DocsCard
-    title="Next.js"
-    href="/docs/authentication/id-token/nextjs"
-    visual={<DocsNextjsIcon />}
-  />
-  <DocsCard
-    title="Remix"
-    href="/docs/authentication/id-token/remix"
-    visual={<DocsRemixIcon />}
-  />
-  <DocsCard
-    title="SvelteKit"
-    href="/docs/authentication/id-token/sveltekit"
-    visual={<DocsSvelteIcon />}
-  />
-  <DocsCard
-    title="Nuxt.js"
-    href="/docs/authentication/id-token/nuxtjs"
-    visual={<DocsNuxtjsIcon />}
-  />
-  <DocsCard
-    title="Express"
-    href="/docs/authentication/id-token/express"
-    visual={<DocsExpressIcon />}
-  />
-  <DocsCard
-    title="Firebase"
-    href="/docs/authentication/id-token/firebase"
-    visual={<DocsFirebaseIcon />}
-  />
-</ListGrid>
 
 ## Permissions [#permissions]
 

@@ -11,6 +11,15 @@ you to let Liveblocks know which rooms they should be allowed inside. This means
 that you need to manually keep track of which users should be allowed in which
 rooms, and apply these permissions yourself each time a user connects.
 
+<Banner title="We recommend ID tokens over access tokens" type="warning">
+
+Access tokens have [limitations when granting nested permissions](#limitations).
+If you’re looking to build an application with permissions at organization,
+group, and user levels, we recommend using [ID tokens](/docs/authentication)
+instead.
+
+</Banner>
+
 <Figure>
   <Image
     src="/assets/authentication/access-token-enter-room.png"
@@ -20,15 +29,6 @@ rooms, and apply these permissions yourself each time a user connects.
     quality={100}
   />
 </Figure>
-
-<Banner title="We recommend using ID tokens" type="warning">
-
-Access tokens have [limitations when granting nested permissions](#limitations).
-If you’re looking to build an application with permissions at organization,
-group, and user levels, we recommend using [ID tokens](/docs/authentication)
-instead.
-
-</Banner>
 
 ## Authenticating
 
