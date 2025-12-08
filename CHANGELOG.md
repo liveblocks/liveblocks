@@ -5,15 +5,9 @@
 - Log full error details when WebSocket connections to Liveblocks are getting
   blocked
 
-### `@liveblocks/react-tiptap`
+### `@liveblocks/yjs`
 
-- Fix an issue where `useIsEditorReady` reported while still in a synchronizing
-  state
-
-### `@liveblocks/react-lexical`
-
-- Fix an issue where `useIsEditorReady` reported while still in a synchronizing
-  state
+- Fix an issue where a documen incorrectly reported its sync state.
 
 ## v3.11.0
 
