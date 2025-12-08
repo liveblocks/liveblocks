@@ -1133,6 +1133,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
+  readonly meta?: Record<string, unknown>;
 };
 
 type RoomState<
@@ -2164,6 +2165,7 @@ export function createRoom<
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
+      meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
