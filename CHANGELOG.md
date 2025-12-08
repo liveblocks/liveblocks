@@ -1,3 +1,10 @@
+## vNEXT
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
 ## v3.11.0
 
 ### `@liveblocks/react`
