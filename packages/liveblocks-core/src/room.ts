@@ -1,5 +1,6 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
@@ -1276,6 +1277,8 @@ export type RoomConfig<M extends BaseMetadata> = {
   baseUrl: string;
   enableDebugLogging?: boolean;
 
+  badgeLocation?: "top-right" | "bottom-right" | "bottom-left" | "top-left";
+
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
@@ -2169,6 +2172,11 @@ export function createRoom<
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
+
+    // Inject brand badge if meta.showBrand is true
+    if (message.meta?.showBrand === true) {
+      injectBrandBadge(config.badgeLocation ?? "bottom-right");
+    }
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];

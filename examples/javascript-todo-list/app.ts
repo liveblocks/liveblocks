@@ -18,7 +18,8 @@ type Todo = {
 };
 
 async function run() {
-  let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+  let PUBLIC_KEY =
+    "pk_dev_9YkDY4Pe5N2E267kvt00Z-Y7LiVss5JkqAEUCXnOYWg3fglpeax_eLxF0XhSxEjv";
   let roomId = "javascript-todo-list";
 
   applyExampleRoomIdAndApiKey();
@@ -32,6 +33,7 @@ async function run() {
 
   const client = createClient({
     publicApiKey: PUBLIC_KEY,
+    badgeLocation: "top-right",
   });
 
   // If you no longer need the room (for example when you unmount your
