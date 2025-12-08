@@ -5,6 +5,10 @@
 - Log full error details when WebSocket connections to Liveblocks are getting
   blocked
 
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
 ## v3.11.0
 
 ### `@liveblocks/react`
