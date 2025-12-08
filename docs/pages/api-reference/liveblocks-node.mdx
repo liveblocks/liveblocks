@@ -23,17 +23,173 @@ const liveblocks = new Liveblocks({
 });
 ```
 
-### Authorization
+### Authentication [#Authorization]
 
-To authorize your users with Liveblocks, you have the choice between two
+To authenticate your users with Liveblocks, you have the choice between two
 different APIs.
 
-- [`Liveblocks.prepareSession`](#access-tokens) is recommended for most
-  applications.
-- [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
-  permissions with our REST API.
+- [`Liveblocks.identifyUser`](#id-tokens) ID token authentication is recommend
+  for most applications.
+- [`Liveblocks.prepareSession`](#access-tokens) Access token authentication is
+  best if you prefer handle permissions on your end, though it has
+  [limitations](/docs/authentication/access-token#limitations).
 
 #### Liveblocks.prepareSession [#access-tokens]
+
+Creates an access token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get Access Token API](/docs/api-reference/rest-api-endpoints#post-authorize-user)
+and returns the same response.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+```
+
+<Banner>
+  Learn how to [get started with access
+  tokens](/docs/authentication/access-token).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this tenant
+    tenantId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing"],
+
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+##### Granting access token permissions
+
+Using `session.allow()`, you can grant full or read-only permissions to the user
+to select rooms. Wildcards can be used to enable granting permissions to
+multiple rooms at once using
+[naming patterns](/docs/authentication/access-token#Naming-pattern).
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+
+// Giving access to an individual rooms
+session.allow("room-id-1", session.FULL_ACCESS);
+
+// Giving read-only access to this room
+session.allow("room-id-2", session.READ_ACCESS);
+
+// Giving access to multiple rooms with a wildcard
+// `design-room-1`, `design-room-2`, etc.
+session.allow("design-room:*", session.FULL_ACCESS);
+```
+
+<Banner>
+  Learn more about [access token
+  permissions](/docs/authentication/access-token#permissions).
+</Banner>
+
+Additionally, you can pass additional options to `prepareSession`, enabling you
+to create complex permissions using [tenants](/docs/authentication/tenants) and
+[accesses](/docs/authentication/access-tokens/permissions). For example, this
+user can only see resources in the `acme-corp` tenant, and they’re part of a
+`marketing` group within it.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this tenant
+    // +++
+    tenantId: "acme-corp",
+    // +++
+
+    // Optional, used to provision room access on group level
+    // +++
+    groupIds: ["marketing"],
+    // +++
+  }
+);
+```
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property of the
+session.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How access tokens work
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -175,6 +331,141 @@ export async function POST(request: Request) {
 ```
 
 #### Liveblocks.identifyUser [#id-tokens]
+
+Creates an ID token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get ID Token API](/docs/api-reference/rest-api-endpoints#post-identify-user)
+and returns the same response.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+});
+```
+
+<Banner>
+  Learn how to [get started with ID tokens](/docs/authentication).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+
+    // Optional, only view resources on this tenant
+    tenantId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing", "engineering"],
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+##### Granting ID token permissions
+
+You can pass additional options to `identifyUser`, enabling you to create
+complex permissions using [tenants](/docs/authentication/tenants) and
+[accesses](/docs/authentication/permissions). For example, this user can only
+see resources in the `acme-corp` tenant, and they’re part of a `marketing` group
+within it.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+
+  // Optional, only view resources on this tenant
+  // +++
+  tenantId: "acme-corp",
+  // +++
+
+  // Optional, used to provision room access on group level
+  // +++
+  groupIds: ["marketing"],
+  // +++
+});
+```
+
+<Banner>
+  Learn more about [ID token permissions](/docs/authentication#permissions).
+</Banner>
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How ID tokens work
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
