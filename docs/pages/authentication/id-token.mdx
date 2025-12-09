@@ -363,6 +363,87 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
+## A concrete example
+
+We will setup ID token authentication for an application that uses tenants and
+has users with different roles.
+
+### Roles
+
+We will use the following roles:
+
+- `admin` - can do everything
+- `commenter` - can comment on the document
+- `viewer` - can only view the document
+
+#### Permissions
+
+We will use the following permissions:
+
+- `room:write` - full access to the room
+- `room:read` - read access to the room
+- `room:presence:write` - edit presence (cursor position, avatar, name, etc.)
+- `room:comment:write` - comment on the document
+
+#### Mapping roles to permissions
+
+We will map the roles to the permissions as follows:
+
+| Role        | Permissions                                              |
+| ----------- | -------------------------------------------------------- |
+| `admin`     | `room:write`                                             |
+| `commenter` | `room:read`, `room:presence:write`, `room:comment:write` |
+| `viewer`    | `room:read`, `room:presence:write`                       |
+
+### Tenants
+
+Your applications has multiple organizations, each will have its own tenant. For
+our example we will have two tenants: `acme-inc` and `lumon`.
+
+`acme-inc` will have the following rooms:
+
+- `acme-inc:document:123`
+- `acme-inc:document:456`
+- `acme-inc:public:123`
+
+`lumon` will have the following rooms:
+
+- `lumon:document:123`
+- `lumon:document:456`
+- `lumon:public:123`
+
+#### Setting up rooms and tenants
+
+Each room will be setup as such:
+
+```ts
+const room = await liveblocks.createRoom(
+  "acme-inc:document:123", // or "lumon:document:123" for example, this is the room id
+  {
+    defaultAccesses: [], // no public access by default
+    tenantId: "acme-inc", // or "lumon" for example, this is the tenant id
+    groupsAccesses: {
+      admin: ["room:write"],
+      commenter: ["room:read", "room:presence:write", "room:comment:write"],
+      viewer: ["room:read", "room:presence:write"],
+    },
+  }
+);
+```
+
+<!-- TODO: add visual illustration of rooms and tenants -->
+
+### Users
+
+We will have the following users in our application:
+
+| Name          | User ID                     | Role in acme-inc | Role in lumon |
+| ------------- | --------------------------- | ---------------- | ------------- |
+| Mislav Abha   | `mislav.abha@example.com`   | admin            | commenter     |
+| Charlie Layne | `charlie.layne@example.com` | reader           | admin         |
+| Tatum Paolo   | `tatum.paolo@example.com`   | commenter        | reader        |
+| Anjali Wanda  | `anjali.wanda@example.com`  | reader           | commenter     |
+
 ## Select your framework [#select-your-framework]
 
 Select your framework for specific instructions on setting up ID token
