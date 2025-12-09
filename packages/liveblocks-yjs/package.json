@@ -46,7 +46,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "@testing-library/jest-dom": "^6.4.6",
-    "msw": "^2.7.3"
+    "msw": "^2.11.6"
   },
   "sideEffects": false,
   "bugs": {
