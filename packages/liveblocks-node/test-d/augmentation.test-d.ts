@@ -252,6 +252,7 @@ async () => {
         comment: {
           userId: "user-123",
           body: { version: 1, content: [] },
+          metadata: { priority: 1 },
         },
         metadata: { color: "red" },
       },
@@ -406,6 +407,7 @@ async () => {
       data: {
         userId,
         body: { version: 1, content: [] },
+        metadata: { priority: 1 },
       },
     });
 
