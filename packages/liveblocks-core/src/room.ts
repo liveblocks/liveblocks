@@ -99,6 +99,7 @@ import type {
 import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
+  BadgeLocation,
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
@@ -1277,7 +1278,7 @@ export type RoomConfig<M extends BaseMetadata> = {
   baseUrl: string;
   enableDebugLogging?: boolean;
 
-  badgeLocation?: "top-right" | "bottom-right" | "bottom-left" | "top-left";
+  badgeLocation?: BadgeLocation;
 
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
