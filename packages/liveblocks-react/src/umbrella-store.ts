@@ -2221,12 +2221,6 @@ function applyOptimisticUpdates_forThreadifications<
         );
         if (existingComment === undefined) break;
 
-        // TODO: Should we still allow updating metadata of a deleted comment?
-        // If the comment has been deleted, we do not apply the update
-        if (existingComment.deletedAt !== undefined) {
-          break;
-        }
-
         threadsDB.upsert(
           applyUpsertComment(thread, {
             ...existingComment,
@@ -2552,9 +2546,24 @@ export function applyUpsertComment<
     return updatedThread;
   }
 
-  // If the comment exists in the thread and has been deleted, do not apply the update
+  // If the comment exists in the thread and has been deleted, only update its metadata
   if (existingComment.deletedAt !== undefined) {
-    return thread;
+    const updatedComment = {
+      ...existingComment,
+      metadata: {
+        ...existingComment.metadata,
+        ...comment.metadata,
+      },
+    };
+
+    const updatedComments = thread.comments.map((c) =>
+      c.id === comment.id ? updatedComment : c
+    );
+
+    return {
+      ...thread,
+      comments: updatedComments,
+    };
   }
 
   // Proceed to update the comment if:
