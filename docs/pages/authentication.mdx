@@ -180,13 +180,16 @@ There are three permission values that you can set on rooms.
 <dl>
   <dt>`["room:write"]`</dt>
   <dd>
-    Full access. Enables people to view and edit the room. `isReadOnly` is
-    `false`.
+    Full access. Enables people to view and edit the room. On the client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `true`.
   </dd>
   <dt>`["room:read", "room:presence:write"]`</dt>
   <dd>
     Read access with presence. Enables people to edit their presence, but only
-    view the room&rsquo;s storage. `isReadOnly` is `true`.
+    view the room&rsquo;s storage. On the client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `false`.
   </dd>
   <dt>`[]`</dt>
   <dd>Private. No one can enter the room.</dd>

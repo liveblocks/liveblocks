@@ -5903,12 +5903,14 @@ const user = room.getSelf();
     The user’s Presence data.
   </PropertiesListItem>
   <PropertiesListItem name="canWrite" type="boolean">
-    True if the user can mutate the Room’s Storage and/or YDoc, false if they
-    can only read but not mutate it.
+    `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
+    they can only read but not mutate it. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
-    The ID of the User that has been set in the authentication endpoint. Useful
-    to get additional information about the connected user.
+    `true` if the user can leave a comment in the room, `false` if they can only
+    read comments but not leave them. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 
