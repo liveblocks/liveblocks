@@ -933,8 +933,9 @@ export type Room<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Deletes a comment.
@@ -2954,6 +2955,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
   }) {
     return httpClient.editComment({
@@ -2961,6 +2963,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
