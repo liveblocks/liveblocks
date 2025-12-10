@@ -26,7 +26,7 @@ export function makeThreadsFilter<
 ): (thread: ThreadData<TM, CM>) => boolean {
   return (thread: ThreadData<TM, CM>) =>
     matchesThreadsQuery(thread, query, subscriptions) &&
-    matchesMetadata(thread, query);
+    matchesThreadMetadata(thread, query);
 }
 
 function matchesThreadsQuery(
@@ -47,7 +47,7 @@ function matchesThreadsQuery(
   );
 }
 
-function matchesMetadata(thread: ThreadData, q: ThreadsQuery) {
+function matchesThreadMetadata(thread: ThreadData, q: ThreadsQuery) {
   // Boolean logic: query.metadata? => all metadata matches
   const metadata = thread.metadata;
   return (

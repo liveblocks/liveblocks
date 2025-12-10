@@ -1,5 +1,4 @@
 import type {
-  BaseMetadata,
   Client,
   CommentData,
   InboxNotificationThreadData,

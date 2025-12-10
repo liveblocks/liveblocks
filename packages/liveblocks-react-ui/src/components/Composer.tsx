@@ -831,6 +831,7 @@ export const Composer = forwardRef(
             commentId,
             threadId,
             body: comment.body,
+            metadata: metadata ?? {},
             attachments: comment.attachments,
           });
         } else if (threadId) {

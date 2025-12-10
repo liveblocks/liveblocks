@@ -408,26 +408,15 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: useMutation as RoomContextBundle<
-      P,
-      S,
-      U,
-      E,
-      TM,
-      CM
-    >["useMutation"],
+    // prettier-ignore
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
 
     useThreads,
     useSearchComments,
 
-    useCreateThread: useCreateThread as RoomContextBundle<
-      P,
-      S,
-      U,
-      E,
-      TM,
-      CM
-    >["useCreateThread"],
+    // prettier-ignore
+    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
+
     useDeleteThread,
     useEditThreadMetadata,
     useMarkThreadAsResolved,
@@ -481,25 +470,14 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation: useMutation as RoomContextBundle<
-        P,
-        S,
-        U,
-        E,
-        TM,
-        CM
-      >["suspense"]["useMutation"],
+      // prettier-ignore
+      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
 
-      useCreateThread: useCreateThread as RoomContextBundle<
-        P,
-        S,
-        U,
-        E,
-        TM,
-        CM
-      >["suspense"]["useCreateThread"],
+      // prettier-ignore
+      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
+
       useDeleteThread,
       useEditThreadMetadata,
       useMarkThreadAsResolved,

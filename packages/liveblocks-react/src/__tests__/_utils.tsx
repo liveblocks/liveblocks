@@ -193,11 +193,11 @@ function matchesConditionGroup(
   }
 }
 
-function matchesQuery(query: AST.Query, thread: ThreadData): boolean {
+function matchesThreadQuery(query: AST.Query, thread: ThreadData): boolean {
   return query.allOf.every((group) => matchesConditionGroup(group, thread));
 }
 
 export const makeThreadFilter = (queryText: string) => {
   const query = parser.parse(queryText).query;
-  return (thread: ThreadData) => matchesQuery(query, thread);
+  return (thread: ThreadData) => matchesThreadQuery(query, thread);
 };
