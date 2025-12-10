@@ -1891,10 +1891,10 @@ export function createApiClient<
     };
   }
 
-  async function getUserThreadsSince_experimental<
-    TM extends BaseMetadata,
-    CM extends BaseMetadata,
-  >(options: { since: Date; signal?: AbortSignal }) {
+  async function getUserThreadsSince_experimental(options: {
+    since: Date;
+    signal?: AbortSignal;
+  }) {
     const json = await httpClient.get<{
       threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
