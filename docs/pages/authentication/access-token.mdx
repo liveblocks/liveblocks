@@ -43,8 +43,8 @@ then by allowing access to certain rooms.
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving write access to one room, then read access to multiple rooms with a wildcard
-session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
-session.allow("Vu78Rt:product:*", session.READ_ACCESS);
+session.allow("design:9Hdu73", session.FULL_ACCESS);
+session.allow("product:*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
 
@@ -90,20 +90,65 @@ later.
   />
 </ListGrid>
 
-## Permissions [#permissions]
+## Workspace permissions [#permissions]
+
+Using [tenants](/docs/authentication/tenants), you can create workspaces in your
+application, compartmentalizing all resources such as inbox notifications and
+rooms. This includes everything associated with rooms such as comment threads,
+realtime data stored, and more. This allows you to add a workspace switcher to
+your application, separating each of your customers/organizations.
+
+<Figure>
+  <Image
+    src="/assets/authentication/org-switcher.png"
+    alt="A workspace switcher"
+    width={1600}
+    height={1000}
+    quality={90}
+  />
+</Figure>
+
+### Set up workspace permissions
+
+To set up workspace permissions, pass a `tenantId` when authenticating a user,
+ensuring that the user will only have access to resources within this workspace.
+
+```ts
+const session = liveblocks.prepareSession("olivier@example.com", {
+  // +++
+  tenantId: "acme",
+  // +++
+});
+```
+
+When creating a resource on the server, such as a room, pass the `tenantId` to
+the resource, to allow the user access.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+  // +++
+  tenantId: "acme",
+  // +++
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+## Room permissions
 
 When granting permissions using access tokens, it’s recommended to use a naming
 pattern for your room IDs. This makes it easy to use wildcard permissions,
 allowing you to authenticate access to multiple rooms at once. One scenario
-where this is helpful, is when rooms and users in your app are part of an
-organization (or workspace), and you need to permit users entry to each room
-that’s part of this.
+where this is helpful, is when rooms and users in your app are part of a team or
+group, and you need to permit users entry to each room that’s part of this.
 
-### Organization hierarchy
+### Group hierarchy
 
-Let’s picture an organization, a customer in your product. This organization has
-a number of groups (or teams), and each group can create documents that other
-members of the group can view.
+Let’s picture a tenant in your product, Acme, set up using
+[workspace permissions](#workspace-permissions). This customer has a number of
+group, and each group contains a number of documents.
 
 <Figure>
   <Image
@@ -116,17 +161,16 @@ members of the group can view.
   />
 </Figure>
 
-In your application, each organization, group, and document has a unique ID, and
-we can use these to create a naming pattern for your rooms. For example, in the
-diagram above, the Acme organization (`Vu78Rt`) has a Product group (`product`)
-with two documents inside (`6Dsw12`, `L2hr8p`).
+In your application, each group and document has a unique ID, and we can use
+these to create a naming pattern for your rooms. For example, in the diagram
+above, the Acme organization has a Product group (`product`) with two documents
+inside (`6Dsw12`, `L2hr8p`).
 
 ### Naming pattern
 
-An example of a naming pattern would be to combine the three IDs into a unique
-room ID separating them with symbols, such as
-`<organization_id>:<group_id>:<document_id>`. A room ID following this pattern
-may look like `Vu78Rt:product:6Dsw1z`.
+An example of a naming pattern would be to combine these IDs into a unique room
+ID separating them with symbols, such as `<group_id>:<document_id>`. A room ID
+following this pattern may look like `product:6Dsw1z`.
 
 <Figure>
   <Image
@@ -163,17 +207,16 @@ access to multiple rooms at once using wildcards.
 </Figure>
 
 In the image above, you can see that _Olivier_ has access to multiple _product_
-rooms, thanks to the `Vu78Rt:product:*` wildcard rule. This is how he was
-authorized:
+rooms, thanks to the `product:*` wildcard rule. This is how he was authorized:
 
 ```ts
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving full access to one room
-session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("design:9Hdu73", session.FULL_ACCESS);
 
-// Give full access to every room with an ID beginning with "Vu78Rt:product:"
-session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+// Give full access to every room with an ID beginning with "product:"
+session.allow("product:*", session.FULL_ACCESS);
 
 const { body, status } = await session.authorize();
 ```
@@ -182,28 +225,28 @@ Note that you can only use a wildcard at the end of a room ID.
 
 ```jsx
 // ❌ Wildcard must be at the end of the room ID
-session.allow("Vu78Rt:*:product", session.FULL_ACCESS);
+session.allow("*:product", session.FULL_ACCESS);
 
 // ✅ Valid wildcard
-session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+session.allow("product:*", session.FULL_ACCESS);
 ```
 
 ### Read-only access
 
-Should we wish to grant read-only access to each room in the organization, we
-then add another line to enable this.
+Should we wish to grant read-only access to each room, we then add another line
+to enable this.
 
 ```ts highlight="9-10"
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving full access to one room
-session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("design:9Hdu73", session.FULL_ACCESS);
 
-// Give full access to every room with an ID beginning with "Vu78Rt:product:"
-session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+// Give full access to every room with an ID beginning with "product:"
+session.allow("product:*", session.FULL_ACCESS);
 
-// Give read-only access to every room in the `Vu78Rt` organization
-session.allow("Vu78Rt:*", session.READ_ACCESS);
+// Give read-only access to every room in the current tenant
+session.allow("*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
 ```
@@ -212,11 +255,11 @@ const { body, status } = await session.authorize();
 
 There’s a limitation with access tokens related to granting access to individual
 rooms that are part of groups. Let’s say a user has been given access to every
-`product` room in their organization.
+`product` room in their tenants.
 
 ```tsx
 // Access to every `product` room
-session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+session.allow("product:*", session.FULL_ACCESS);
 ```
 
 This user is able to enter `product` rooms, but has no access to any `design`
@@ -238,7 +281,7 @@ grant them access?
 <Figure>
   <Image
     src="/assets/authentication/access-token-room-invite.png"
-    alt="Inviting Olivier to the `Vu78Rt:design:9Hdu73` room"
+    alt="Inviting Olivier to the `design:9Hdu73` room"
     width={1494}
     height={840}
     quality={100}
@@ -250,7 +293,7 @@ should only have permission for _one_.
 
 ```tsx
 // ❌ Access to every `design` room
-session.allow("Vu78Rt:design:*", session.FULL_ACCESS);
+session.allow("design:*", session.FULL_ACCESS);
 ```
 
 Instead, we would have to manually find the exact room ID without a wildcard,
@@ -258,7 +301,7 @@ and apply it ourselves—the naming pattern doesn’t work for this room.
 
 ```tsx
 // Access to just this `design` room, but not scalable
-session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("design:9Hdu73", session.FULL_ACCESS);
 ```
 
 To use access tokens you’d have to manually keep track of every room ID where
@@ -279,22 +322,6 @@ and no naming pattern is required.
 If your application already has rooms, it’s possible to rename their IDs to be
 compatible with a naming pattern. Learn more in our
 [room ID migration guide](/docs/guides/how-to-rename-room-ids-and-successfully-migrate-users).
-
-### Tenants
-
-You can use [tenants](/docs/authentication/tenants) to compartmentalize your
-rooms per customers/organizations that you have.
-
-When using Access tokens, you can set the `tenantId` when you prepare a session.
-When a token is generated for a specific tenant, it will only give access to
-resources inside this tenant, even if the token has permissions to rooms in
-other tenants.
-
-```ts highlight="2"
-const session = liveblocks.prepareSession("olivier@example.com", {
-  tenantId: "tenant123",
-});
-```
 
 ## Select your framework [#select-your-framework]
 
