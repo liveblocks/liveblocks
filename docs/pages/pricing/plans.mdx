@@ -12,11 +12,10 @@ large enterprises.
 ## Free
 
 The Free plan is ideal for personal projects, prototyping, and testing. It
-includes access to Liveblocks' collaboration infrastructure, ready-made features
+includes access to Liveblocks’ collaboration infrastructure, ready-made features
 (Comments, Multiplayer, AI Agents, Notifications), and pre-built components,
 with up to <Limits.FreeMaxMonthlyActiveRooms /> monthly active rooms included.
-Projects on the Free plan show a small "Powered by Liveblocks" badge. When you
-exceed your free limits, users won't be able to join rooms.
+When you exceed your free limits, users won’t be able to join rooms.
 
 [Learn more about the Free plan](/docs/pricing/plans/free)
 
@@ -68,3 +67,32 @@ automatically stopped. Rather, Liveblocks enables you to incur on-demand usage
 as your application grows. It’s important to be aware of
 [the usage page](/dashboard/usage) of your dashboard to see if you are
 approaching your limit.
+
+## Powered by Liveblocks branding
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx title="Set badge location"
+// "top-right", "bottom-right", "bottom-left", "top-left"
+<LiveblocksProvider badgeLocation="bottom-right">
+  <App />
+</LiveblocksProvider>
+```
+
+If you wish to remove remove the badge entirely, you can do so by following
+these steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team’s settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>

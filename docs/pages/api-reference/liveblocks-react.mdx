@@ -314,6 +314,10 @@ function App() {
           // WebSocket,
         }
       }
+      // ---
+      // Set the location of the "Powered by Liveblocks" badge
+      // "top-right", "bottom-right", "bottom-left", "top-left"
+      badgeLocation="bottom-right"
     >
       {/* children */}
     </LiveblocksProvider>
@@ -421,6 +425,14 @@ function App() {
       Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
     - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
 
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="badgeLocation"
+    detailedtype='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
+    defaultValue={`"bottom-right"`}
+  >
+    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
+    [Learn more](#Powered-by-Liveblocks-branding).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -1086,6 +1098,34 @@ function App() {
   );
 }
 ```
+
+#### Powered by Liveblocks branding
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on `LiveblocksProvider`.
+
+```tsx title="Set badge location"
+// "top-right", "bottom-right", "bottom-left", "top-left"
+<LiveblocksProvider badgeLocation="bottom-right">
+  <App />
+</LiveblocksProvider>
+```
+
+If you wish to remove remove the badge entirely, you can do so by following
+these steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team’s settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>
 
 ### createLiveblocksContext
 
@@ -4386,8 +4426,8 @@ function SearchBar() {
     threadResolved === "all"
       ? undefined
       : threadResolved === "resolved"
-        ? true
-        : false;
+      ? true
+      : false;
   // +++
 
   const { results, isLoading, error } = useSearchComments({
