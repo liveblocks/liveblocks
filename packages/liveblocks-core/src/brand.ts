@@ -21,6 +21,7 @@ const injectBrandBadge = (
   badgeDiv.style.position = "fixed";
   badgeDiv.style.opacity = "0";
   badgeDiv.style.transition = "opacity 300ms";
+  badgeDiv.style.zIndex = "9999";
 
   // Set position based on badgeLocation
   switch (badgeLocation) {
