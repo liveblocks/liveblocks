@@ -1,27 +1,27 @@
 ---
 meta:
-  title: "BlockNote"
+  title: "Tiptap"
   parentTitle: "Text editor"
-  description: "Learn about using Multiplayer Editing for Blocknote"
+  description: "Learn about using Multiplayer for Tiptap"
 ---
 
-A quick overview of the packages for BlockNote.
+A quick overview of the packages for Tiptap.
 
 ## Concepts
 
-Liveblocks BlockNote allows you add collaboration to any
-[BlockNote](https://blocknotejs.org/) text editor, along with a number of
-related features. Each
-[collaborative room](/docs/concepts/how-liveblocks-works#Rooms) in your
-application can store one document each, and these documents are persisted on
-the cloud, visible on [your dashboard](/dashboard), and are integrated into
-other Liveblocks products such as [Comments](/docs/ready-made-features/comments)
-and [Notifications](/docs/ready-made-features/notifications).
+Liveblocks Tiptap allows you to add collaboration to any
+[Tiptap](https://tiptap.dev/) text editor, along with a number of related
+features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
+in your application can store one document each, and these documents are
+persisted on the cloud, visible on [your dashboard](/dashboard), and are
+integrated into other Liveblocks products such as
+[Comments](/docs/ready-made-features/comments) and
+[Notifications](/docs/ready-made-features/notifications).
 
 ### Permanent storage
 
-All documents created with BlockNote are **permanently stored**. You don’t need
-to sync, scale, or maintain any infrastructure.
+All documents created with Tiptap are **permanently stored**. You don’t need to
+sync, scale, or maintain any infrastructure.
 
 ### Users and mentions
 
@@ -95,6 +95,84 @@ userInfo: {
 }
 ```
 
+## Toolbars
+
+Two toolbars are available allowing you to create a
+[static toolbar](/docs/api-reference/liveblocks-react-tiptap#Toolbar), or a
+[floating toolbar](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar),
+as seen below.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Add [`Toolbar`](/docs/api-reference/liveblocks-react-tiptap#Toolbar) and
+[`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
+to enable these features.
+
+```tsx
+<Toolbar editor={editor} />
+```
+
+It’s easy to
+[customize a toolbar’s content](/docs/api-reference/liveblocks-react-tiptap#toolbar-extending-the-defaults),
+piecing together sections like blocks.
+
+```tsx
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can also easily create
+[custom styled buttons](/docs/api-reference/liveblocks-react-tiptap#Toolbar.Button),
+and
+[more](/docs/api-reference/liveblocks-react-tiptap#creating-a-custom-toolbar),
+with any functionality you like.
+
+```tsx
+function CustomButton() {
+  return (
+    // +++
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+    // +++
+  );
+}
+```
+
+### AI features
+
+We’re working on AI features for Tiptap, such as a floating AI toolbar. To get
+involved, [request access to AI Copilots](/ai-copilots).
+
+<Figure>
+  <Image
+    src="/assets/text-editor/ai.png"
+    alt="AI suggestions"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
 ### Annotations and comments
 
 Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
@@ -112,7 +190,7 @@ inside each you can reply, use emoji reactions, mention others, and more.
 </Figure>
 
 Add a floating Comments composer to your text editor using
-[`FloatingComposer`](/docs/api-reference/liveblocks-react-blocknote#FloatingComposer).
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer).
 
 ```tsx
 <FloatingComposer editor={editor} />
@@ -120,9 +198,9 @@ Add a floating Comments composer to your text editor using
 
 Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
 alongside
-[`FloatingThreads`](/docs/api-reference/liveblocks-react-blocknote#FloatingThreads)
+[`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads)
 and
-[`AnchoredThreads`](/docs/api-reference/liveblocks-react-blocknote#AnchoredThreads)
+[`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads)
 to render your comments to the page.
 
 ```tsx
@@ -141,8 +219,8 @@ export function Threads({ editor }) {
 `FloatingThreads` displays floating threads below text highlights in the editor,
 ideal for mobile, whereas `AnchoredThreads` displays threads vertically
 alongside the editor which is great on desktop. To create a new thread use the
-button in the BlockNote toolbar, or
-[build a button yourself](/docs/api-reference/liveblocks-react-blocknote#Opening-the-composer).
+button in a [pre-built toolbar](#Toolbars), or
+[build a button yourself](/docs/api-reference/liveblocks-react-tiptap#Opening-the-composer).
 
 ### Notifications
 
@@ -187,58 +265,75 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
-### Multiple editors
+## Server-side modifications
 
-It’s possible to use multiple BlockNote editors on a single page, and each
-editor having its own collaboration and extensions. You can enable this by
-giving each editor a unique `field` value.
+Fetch and modify your text editor’s content from the server, enabling features
+such as AI agents. Easily make changes that update in real-time for every
+connected user. Use
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
+to get your editor’s content and make modifications live.
 
 ```tsx
-import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  async (api) => {
+    // get editor content
+    const text = api.getText();
+
+    await api.update((doc, tr) => {
+      // Make real-time updates
+      // ...
+    });
+  }
+);
+```
+
+### Multiple editors
+
+It’s possible to use multiple Tiptap editors on a single page, and each editor
+having its own collaboration and extensions. You can enable this by giving each
+editor a unique `field` value.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks(
-    {},
-    {
-      field: "editor-one",
-    }
-  );
+  const liveblocks = useLiveblocksExtension({
+    field: "editor-one",
+  });
 
   // ...
 }
 ```
 
 Learn more about
-[using multiple editors](/docs/api-reference/liveblocks-react-blocknote#Multiple-editors).
+[using multiple editors](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
 
 ### Offline support
 
-Liveblocks BlockNote has an experimental option that enables offline support.
+Liveblocks Tiptap has an experimental option that enables offline support.
 Offline support means that once a document has been opened, it’s saved locally
 on the browser, and can be shown instantly without a loading screen. Enable this
 by passing a `offlineSupport_experimental` value.
 
 ```tsx
-import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks(
-    {},
-    {
-      offlineSupport_experimental: true,
-    }
-  );
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
 
   // ...
 }
 ```
 
 Learn more about
-[offline support](/docs/api-reference/liveblocks-react-blocknote#Offline-support).
+[offline support](/docs/api-reference/liveblocks-react-tiptap#Offline-support).
 
 ### Version History
 
-Liveblocks BlockNote enables version history for your document. Versions can be
+Liveblocks Tiptap enables version history for your document. Versions can be
 automatically created when enabled in your project settings, or manually created
 using the
 [REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-version).
@@ -255,7 +350,7 @@ import {
   useHistoryVersions,
   HistoryVersionSummaryList,
 } from "@liveblocks/react";
-import { HistoryVersionPreview } from "@liveblocks/react-blocknote";
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
 
 function DocumentHistory() {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
@@ -308,19 +403,19 @@ In this example, `useHistoryVersions` fetches the version history,
 provides users with an interface to browse through the document's history and
 restore different versions.
 
-## BlockNote API Reference
+## Tiptap API Reference
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="BlockNote React"
-    href="/docs/api-reference/liveblocks-react-blocknote"
-    description="@liveblocks/react-blocknote"
+    title="Tiptap React"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
     visual={<DocsReactIcon />}
   />
   <DocsCard
     type="technology"
-    title="BlockNote/ProseMirror Node"
+    title="Tiptap/ProseMirror Node"
     href="/docs/api-reference/liveblocks-node-prosemirror"
     description="@liveblocks/node-prosemirror"
     visual={<DocsApiIcon />}
