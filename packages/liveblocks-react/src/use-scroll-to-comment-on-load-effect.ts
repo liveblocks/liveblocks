@@ -5,7 +5,7 @@ import type { ThreadsAsyncResult } from "./types";
 
 function handleScrollToCommentOnLoad(
   shouldScrollOnLoad: boolean,
-  state: ThreadsAsyncResult<BaseMetadata>
+  state: ThreadsAsyncResult<BaseMetadata, BaseMetadata>
 ) {
   if (shouldScrollOnLoad === false) return;
 
@@ -41,7 +41,7 @@ function handleScrollToCommentOnLoad(
  */
 export function useScrollToCommentOnLoadEffect(
   shouldScrollOnLoad: boolean,
-  state: ThreadsAsyncResult<BaseMetadata>
+  state: ThreadsAsyncResult<BaseMetadata, BaseMetadata>
 ) {
   useEffect(
     () => {

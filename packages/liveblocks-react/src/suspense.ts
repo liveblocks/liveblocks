@@ -50,6 +50,7 @@ export {
   useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
+  useEditCommentMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
   useSubscribeToThread,

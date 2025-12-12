@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
@@ -36,12 +36,14 @@ type AnchoredThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface AnchoredThreadsProps<M extends BaseMetadata = DM>
-  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+export interface AnchoredThreadsProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The threads to display.
    */
-  threads: ThreadData<M>[];
+  threads: ThreadData<TM, CM>[];
 
   /**
    * Override the component's components.

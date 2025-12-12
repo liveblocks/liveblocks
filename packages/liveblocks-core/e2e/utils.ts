@@ -24,7 +24,8 @@ async function initializeRoomForTest<
   S extends LsonObject = LsonObject,
   U extends BaseUserMeta = BaseUserMeta,
   E extends Json = Json,
-  M extends BaseMetadata = BaseMetadata,
+  TM extends BaseMetadata = BaseMetadata,
+  CM extends BaseMetadata = BaseMetadata,
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -85,7 +86,7 @@ async function initializeRoomForTest<
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
+  const { room, leave } = client.enterRoom<P, S, E, TM, CM>(roomId, {
     initialPresence,
     initialStorage,
   } as any);

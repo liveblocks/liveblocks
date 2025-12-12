@@ -97,12 +97,13 @@ export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
+  DCM,
   DE,
   DGI,
-  DM,
   DP,
   DRI,
   DS,
+  DTM,
   DU,
   KDAD,
 } from "./globals/augmentation";

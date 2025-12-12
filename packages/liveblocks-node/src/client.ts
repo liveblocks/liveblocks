@@ -14,9 +14,10 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
   DAD,
+  DCM,
   DE,
-  DM,
   DS,
+  DTM,
   DU,
   GroupData,
   GroupDataPlain,
@@ -144,11 +145,28 @@ export type ThreadParticipants = {
   participantIds: string[];
 };
 
-export type CreateThreadOptions<M extends BaseMetadata> = {
+export type CreateThreadOptions<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   roomId: string;
   data: {
-    comment: { userId: string; createdAt?: Date; body: CommentBody };
-  } & PartialUnless<M, { metadata: M }>;
+    comment: {
+      userId: string;
+      createdAt?: Date;
+      body: CommentBody;
+    } & PartialUnless<CM, { metadata: CM }>; // Comment metadata (data.comment.metadata)
+  } & PartialUnless<TM, { metadata: TM }>; // Thread metadata (data.metadata)
+};
+
+export type CreateCommentOptions<CM extends BaseMetadata> = {
+  roomId: string;
+  threadId: string;
+  data: {
+    userId: string;
+    createdAt?: Date;
+    body: CommentBody;
+  } & PartialUnless<CM, { metadata: CM }>;
 };
 
 export type RoomPermission =
@@ -333,7 +351,8 @@ export type MassMutateStorageOptions =
 // The idea is that we "start small" and could always add them in at the class
 // level later.
 type E = DE;
-type M = DM;
+type TM = DTM;
+type CM = DCM;
 type S = DS;
 type U = DU;
 
@@ -1449,12 +1468,12 @@ export class Liveblocks {
       query?:
         | string
         | {
-            metadata?: Partial<QueryMetadata<M>>;
+            metadata?: Partial<QueryMetadata<TM>>;
             resolved?: boolean;
           };
     },
     options?: RequestOptions
-  ): Promise<{ data: ThreadData<M>[] }> {
+  ): Promise<{ data: ThreadData<TM, CM>[] }> {
     const { roomId } = params;
 
     let query: string | undefined;
@@ -1473,7 +1492,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    const { data } = (await res.json()) as { data: ThreadDataPlain<M>[] };
+    const { data } = (await res.json()) as { data: ThreadDataPlain<TM, CM>[] };
     return {
       data: data.map((thread) => convertToThreadData(thread)),
     };
@@ -1490,7 +1509,7 @@ export class Liveblocks {
   public async getThread(
     params: { roomId: string; threadId: string },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#get(
@@ -1501,7 +1520,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1581,7 +1600,7 @@ export class Liveblocks {
   public async getComment(
     params: { roomId: string; threadId: string; commentId: string },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.#get(
@@ -1592,7 +1611,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1603,17 +1622,14 @@ export class Liveblocks {
    * @param params.data.userId The user ID of the user who is set to create the comment.
    * @param params.data.createdAt (optional) The date the comment is set to be created.
    * @param params.data.body The body of the comment.
+   * @param params.data.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created comment.
    */
   public async createComment(
-    params: {
-      roomId: string;
-      threadId: string;
-      data: { userId: string; createdAt?: Date; body: CommentBody };
-    },
+    params: CreateCommentOptions<CM>,
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1627,7 +1643,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1636,6 +1652,7 @@ export class Liveblocks {
    * @param params.threadId The thread ID to edit the comment in.
    * @param params.commentId The comment ID to edit.
    * @param params.data.body The body of the comment.
+   * @param params.data.metadata (optional) The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
    * @param params.data.editedAt (optional) The date the comment was edited.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The edited comment.
@@ -1645,22 +1662,30 @@ export class Liveblocks {
       roomId: string;
       threadId: string;
       commentId: string;
-      data: { body: CommentBody; editedAt?: Date };
+      data: {
+        body: CommentBody;
+        metadata?: Patchable<CM>;
+        editedAt?: Date;
+      };
     },
     options?: RequestOptions
-  ): Promise<CommentData> {
+  ): Promise<CommentData<CM>> {
     const { roomId, threadId, commentId, data } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      { ...data, editedAt: data.editedAt?.toISOString() },
+      {
+        body: data.body,
+        editedAt: data.editedAt?.toISOString(),
+        metadata: data.metadata,
+      },
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToCommentData((await res.json()) as CommentDataPlain);
+    return convertToCommentData<CM>((await res.json()) as CommentDataPlain<CM>);
   }
 
   /**
@@ -1694,13 +1719,14 @@ export class Liveblocks {
    * @param params.thread.comment.userId The user ID of the user who created the comment.
    * @param params.thread.comment.createdAt (optional) The date the comment was created.
    * @param params.thread.comment.body The body of the comment.
+   * @param params.thread.comment.metadata (optional) The metadata for the comment.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
   public async createThread(
-    params: CreateThreadOptions<M>,
+    params: CreateThreadOptions<TM, CM>,
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, data } = params;
 
     const res = await this.#post(
@@ -1719,7 +1745,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1756,7 +1782,7 @@ export class Liveblocks {
   public async markThreadAsResolved(
     params: { roomId: string; threadId: string; data: { userId: string } },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
@@ -1769,7 +1795,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1783,7 +1809,7 @@ export class Liveblocks {
   public async markThreadAsUnresolved(
     params: { roomId: string; threadId: string; data: { userId: string } },
     options?: RequestOptions
-  ): Promise<ThreadData<M>> {
+  ): Promise<ThreadData<TM, CM>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
@@ -1796,7 +1822,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+    return convertToThreadData((await res.json()) as ThreadDataPlain<TM, CM>);
   }
 
   /**
@@ -1866,10 +1892,10 @@ export class Liveblocks {
     params: {
       roomId: string;
       threadId: string;
-      data: { metadata: Patchable<M>; userId: string; updatedAt?: Date };
+      data: { metadata: Patchable<TM>; userId: string; updatedAt?: Date };
     },
     options?: RequestOptions
-  ): Promise<M> {
+  ): Promise<TM> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1885,7 +1911,45 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as M;
+    return (await res.json()) as TM;
+  }
+
+  /**
+   * Updates the metadata of the specified comment in a room.
+   * @param params.roomId The room ID to update the comment in.
+   * @param params.threadId The thread ID to update the comment in.
+   * @param params.commentId The comment ID to update.
+   * @param params.data.metadata The metadata for the comment. Value must be a string, boolean or number. Use null to delete a key.
+   * @param params.data.userId The user ID of the user who updated the comment.
+   * @param params.data.updatedAt (optional) The date the comment metadata is set to be updated.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated comment metadata.
+   */
+  public async editCommentMetadata(
+    params: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      data: { metadata: Patchable<CM>; userId: string; updatedAt?: Date };
+    },
+    options?: RequestOptions
+  ): Promise<CM> {
+    const { roomId, threadId, commentId, data } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/metadata`,
+      {
+        ...data,
+        updatedAt: data.updatedAt?.toISOString(),
+      },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as CM;
   }
 
   /**
