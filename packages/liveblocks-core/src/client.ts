@@ -59,6 +59,7 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
+import type { BadgeLocation } from "./types/Others";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -526,6 +527,12 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   preventUnsavedChanges?: boolean;
 
   /**
+   * The location where the brand badge should be displayed when using a free plan.
+   * Default is "bottom-right".
+   */
+  badgeLocation?: BadgeLocation;
+
+  /**
    * @internal To point the client to a different Liveblocks server. Only
    * useful for Liveblocks developers. Not for end users.
    */
@@ -744,6 +751,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
+        badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
       }
     );
 
