@@ -54,7 +54,7 @@ export async function getDocuments({
     };
   }
 
-  const tenantId = session.user.currentWorkspaceId;
+  const tenantId = session.user.currentOrganizationId;
 
   // Build getRooms arguments
   let query: string | undefined = undefined;
@@ -64,7 +64,6 @@ export async function getDocuments({
   }
 
   let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
-    // @ts-expect-error
     tenantId,
     limit,
     query,
@@ -123,6 +122,7 @@ export async function getDocuments({
         userId: session.user.info.id,
         groupIds: session.user.info.groupIds,
         room,
+        tenantId,
       })
     ) {
       finalRooms.push(room);

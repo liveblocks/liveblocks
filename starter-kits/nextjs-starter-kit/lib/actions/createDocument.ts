@@ -87,7 +87,7 @@ export async function createDocument(
       usersAccesses,
       groupsAccesses,
       defaultAccesses: [],
-      tenantId: session.user.currentWorkspaceId,
+      tenantId: session.user.currentOrganizationId,
     });
   } catch (err) {
     return {

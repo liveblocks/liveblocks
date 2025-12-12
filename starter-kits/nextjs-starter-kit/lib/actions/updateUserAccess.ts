@@ -30,7 +30,8 @@ type Props = {
  */
 export async function updateUserAccess({ userId, documentId, access }: Props) {
   const session = await auth();
-  const tenantId = session?.user.currentWorkspaceId || "default";
+  // Default to personal workspace for authenticated users
+  const tenantId = session?.user.currentOrganizationId ?? "default";
   let room;
   let user;
   try {

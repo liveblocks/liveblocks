@@ -27,7 +27,7 @@ export function DashboardLayout({
       <header className={styles.header}>
         <DashboardHeader isOpen={isMenuOpen} onMenuClick={handleMenuClick} />
       </header>
-      <aside className={styles.aside} data-open={isMenuOpen || undefined}>
+      <aside className={styles.aside}>
         <DashboardSidebar groups={groups} />
       </aside>
       <main className={styles.main}>{children}</main>

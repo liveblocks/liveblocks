@@ -31,7 +31,7 @@ Check that you've added the user to data/users.ts, for example:
   return {
     color,
     ...user,
-    workspaceIds: user.workspaceIds || [],
+    organizationIds: user.organizationIds || [],
   };
 }
 

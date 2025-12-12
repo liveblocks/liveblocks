@@ -8,7 +8,7 @@ export type User = {
   avatar?: string;
   color: string;
   groupIds: string[];
-  workspaceIds: string[];
+  organizationIds: string[];
 };
 
 export type Group = {
@@ -16,7 +16,8 @@ export type Group = {
   name: string;
 };
 
-export type Workspace = {
+export type Organization = {
   id: string;
   name: string;
+  avatar: string;
 };

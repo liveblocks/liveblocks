@@ -1,0 +1,73 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-light);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  transition: var(--transition);
+  transition-property: background, color;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+
+.trigger:hover,
+.trigger:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+  background: var(--color-border);
+}
+
+.organizationName {
+  white-space: nowrap;
+}
+
+.popover {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: var(--space-2);
+}
+
+.organizationItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  transition-property: background, color;
+  outline: none;
+  text-align: left;
+  width: 100%;
+}
+
+.organizationItem:hover,
+.organizationItem:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.checkIcon {
+  margin-left: auto;
+  flex: none;
+  color: var(--color-text);
+}

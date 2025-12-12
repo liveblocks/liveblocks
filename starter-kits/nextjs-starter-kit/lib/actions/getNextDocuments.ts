@@ -20,7 +20,8 @@ type Props = {
  */
 export async function getNextDocuments({ nextCursor }: Props) {
   const session = await auth();
-  const tenantId = session?.user.currentWorkspaceId || "default";
+  // Default to personal workspace for authenticated users
+  const tenantId = session?.user.currentOrganizationId ?? "liveblocks";
   let getRoomsResponse;
   try {
     // Get rooms

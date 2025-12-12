@@ -15,7 +15,7 @@ export async function authorizeLiveblocks() {
     name: "Anonymous",
     color: "#ff0000",
     groupIds: [],
-    workspaceIds: [],
+    organizationIds: [],
   };
 
   // Get current user info from session (defined in /auth.config.ts)
@@ -28,10 +28,11 @@ export async function authorizeLiveblocks() {
     groupIds = [],
   } = session?.user.info ?? anonymousUser;
 
-  // Get current workspace from session, or use default tenant if not set
-  const currentWorkspaceId = session?.user.currentWorkspaceId || "default";
+  // Get current organization from session
 
-  console.log("currentWorkspaceId", currentWorkspaceId);
+  // For anonymous users, use default as fallback
+  const currentOrganizationId =
+    session?.user.currentOrganizationId ?? "default";
 
   const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
 
@@ -40,7 +41,7 @@ export async function authorizeLiveblocks() {
     {
       userId: id,
       groupIds: groupIdsWithDraftsGroup,
-      tenantId: currentWorkspaceId,
+      tenantId: currentOrganizationId,
     },
     {
       userInfo: { name, color, avatar },

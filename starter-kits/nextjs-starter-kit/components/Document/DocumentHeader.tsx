@@ -1,15 +1,17 @@
+"use client";
+
 import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
-import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ComponentProps } from "react";
+import { OrganizationPopoverContent } from "@/components/Dashboard/OrganizationPopover";
 import { InboxPopover } from "@/components/Inbox";
 import { ShareIcon } from "@/icons";
 import { renameDocument } from "@/lib/actions";
-import { useInitialDocument } from "@/lib/hooks";
 import { Button } from "@/primitives/Button";
+import { Popover } from "@/primitives/Popover";
 import { Skeleton } from "@/primitives/Skeleton";
 import { Document } from "@/types";
-import { Logo } from "../Logo";
 import { ShareDialog } from "../ShareDialog";
 import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
 import { DocumentHeaderName } from "./DocumentHeaderName";
@@ -26,24 +28,35 @@ export function DocumentHeader({
   className,
   ...props
 }: Props) {
-  const initialDocument = useInitialDocument();
+  const { data: session } = useSession();
 
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
-        <Link href="/dashboard" className={styles.logoLink}>
-          <Logo />
-        </Link>
+        {session && (
+          <Popover
+            align="start"
+            alignOffset={-6}
+            content={<OrganizationPopoverContent />}
+            side="bottom"
+            sideOffset={6}
+          >
+            <button className={styles.profileButton}>
+              <img
+                src={session.user.info.avatar}
+                alt={session.user.info.name}
+                className={styles.profileAvatar}
+              />
+              <span className={styles.profileButtonName}>
+                {session.user.info.name}
+              </span>
+            </button>
+          </Popover>
+        )}
       </div>
       <div className={styles.document}>
         {showTitle ? (
-          <ClientSideSuspense
-            fallback={
-              <span className={styles.documentNameFallback}>
-                {initialDocument.name}
-              </span>
-            }
-          >
+          <ClientSideSuspense fallback={null}>
             <DocumentHeaderName
               onDocumentRename={(name) => renameDocument({ documentId, name })}
             />
@@ -80,11 +93,7 @@ export function DocumentHeaderSkeleton({
 }: ComponentProps<"header">) {
   return (
     <header className={clsx(className, styles.header)} {...props}>
-      <div className={styles.logo}>
-        <Link href="/">
-          <Logo />
-        </Link>
-      </div>
+      <div className={styles.logo}></div>
       <div className={styles.document}>
         <Skeleton style={{ width: 120 }} />
       </div>
