@@ -27,7 +27,7 @@
     "date-fns": "^4.1.0",
     "jotai": "^2.12.5",
     "lucide-react": "^0.525.0",
-    "next": "^14.2.4",
+    "next": "14.2.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.0.0",
