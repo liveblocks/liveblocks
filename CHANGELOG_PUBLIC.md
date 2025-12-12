@@ -20,7 +20,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 50 (2025-12-12)
 
+## v3.11.1
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
 ## Contributors
+
+jrowny
 
 # Week 49 (2025-12-05)
 
