@@ -1,3 +1,5 @@
+"use client";
+
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useMemo } from "react";

@@ -14,6 +14,7 @@ export async function authorizeLiveblocks() {
     id: "anonymous",
     name: "Anonymous",
     color: "#ff0000",
+    avatar: "",
     groupIds: [],
     organizationIds: [],
   };

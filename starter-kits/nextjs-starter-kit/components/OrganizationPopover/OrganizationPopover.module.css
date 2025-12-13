@@ -37,10 +37,30 @@
   background: var(--color-border);
 }
 
+.profileButtonIcon {
+  flex: none;
+  margin-right: calc(-1 * var(--space-3));
+  opacity: 0.4;
+}
+
 .profilePopoverAvatar {
   margin-top: 12px;
   width: 46px;
   height: 46px;
+}
+
+.profileButtonPlaceholderAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.profileButtonPlaceholderName {
+  width: 71.5px;
+  height: 14px;
+  background: var(--color-surface);
+  border-radius: var(--radius-xs);
 }
 
 .profilePopover {

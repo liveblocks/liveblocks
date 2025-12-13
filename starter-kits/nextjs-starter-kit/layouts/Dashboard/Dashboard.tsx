@@ -1,5 +1,3 @@
-"use client";
-
 import clsx from "clsx";
 import { ComponentProps } from "react";
 import { DashboardSidebar } from "@/components/Dashboard";

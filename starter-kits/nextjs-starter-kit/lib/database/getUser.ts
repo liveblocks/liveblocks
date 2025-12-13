@@ -28,14 +28,10 @@ Check that you've added the user to data/users.ts, for example:
   }
 
   const color = getRandom(colors, userId);
-  return {
-    color,
-    ...user,
-    organizationIds: user.organizationIds || [],
-  };
+  return { color, ...user };
 }
 
-export function getRandom<T>(array: T[], seed?: string): T {
+function getRandom<T>(array: T[], seed?: string): T {
   const index = seed
     ? Math.abs(hashCode(seed)) % array.length
     : Math.floor(Math.random() * array.length);

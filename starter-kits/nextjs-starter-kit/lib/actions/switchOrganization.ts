@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
+import { getOrganizations } from "../database/getOrganizations";
 
 const ORGANIZATION_COOKIE_NAME = "currentOrganizationId";
 
@@ -26,17 +27,17 @@ export async function switchOrganization(organizationId: string) {
     };
   }
 
-  // Verify user has access to this organization
-  // Users always have access to their personal organization (their own ID)
-  const userOrganizationIds = session.user.info.organizationIds || [];
-  const isPersonalOrg = organizationId === session.user.info.id;
+  // Verify user has access to the organization
+  const userOrganizations = await getOrganizations({
+    userId: session.user.info.id,
+  });
 
-  if (!isPersonalOrg && !userOrganizationIds.includes(organizationId)) {
+  if (!userOrganizations.some((org) => org.id === organizationId)) {
     return {
       error: {
         code: 403,
         message: "Access denied",
-        suggestion: "You don't have access to this organization",
+        suggestion: `You don't have access to this organization: ${organizationId}`,
       },
     };
   }
