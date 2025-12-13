@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
-import { getOrganizationIdFromCookie } from "@/lib/actions/switchOrganization";
+import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
 import { getUser } from "@/lib/database/getUser";
 
 // Your NextAuth secret (generate a new one for production)
@@ -33,7 +33,7 @@ export const {
 
       // Get current organization from cookie (set by switchOrganization action)
       // Fallback to token, then default to first organization if user has organizations
-      const organizationFromCookie = await getOrganizationIdFromCookie();
+      const organizationFromCookie = await getCurrentOrganization();
       if (organizationFromCookie) {
         // Verify user has access to this organization
         // Users always have access to their personal organization (their own ID)
@@ -75,7 +75,7 @@ export const {
         const userInfo = await getUser(user.email);
         if (userInfo) {
           // Check cookie first, otherwise use first organization or personal
-          const organizationFromCookie = await getOrganizationIdFromCookie();
+          const organizationFromCookie = await getCurrentOrganization();
           const userOrganizationIds = userInfo.organizationIds || [];
           const isPersonalOrg = organizationFromCookie === userInfo.id;
 

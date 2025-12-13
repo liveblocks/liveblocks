@@ -16,6 +16,10 @@
   cursor: pointer;
 }
 
+.profileButton[data-loading] {
+  pointer-events: none;
+}
+
 .profileButton:hover,
 .profileButton:focus-visible {
   background: var(--color-surface);

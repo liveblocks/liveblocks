@@ -1,3 +1,4 @@
+import liveblocks from "@/public/liveblocks.png";
 import { Organization } from "@/types";
 
 /**
@@ -9,6 +10,6 @@ export const organizations: Organization[] = [
   {
     id: "liveblocks",
     name: "Liveblocks",
-    avatar: "https://liveblocks.io/favicon.ico",
+    avatar: liveblocks.src,
   },
 ];

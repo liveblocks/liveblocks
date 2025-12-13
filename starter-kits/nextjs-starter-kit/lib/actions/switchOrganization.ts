@@ -54,16 +54,3 @@ export async function switchOrganization(organizationId: string) {
 
   return { success: true };
 }
-
-/**
- * Get Organization ID from Cookie
- *
- * Gets the current organization/tenant ID from the cookie.
- * Used in server-side auth callbacks.
- *
- * @returns The organization/tenant ID or null if not set
- */
-export async function getOrganizationIdFromCookie(): Promise<string | null> {
-  const cookieStore = await cookies();
-  return cookieStore.get(ORGANIZATION_COOKIE_NAME)?.value || null;
-}

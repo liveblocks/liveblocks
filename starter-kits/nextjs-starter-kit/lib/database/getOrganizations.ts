@@ -23,15 +23,15 @@ export async function getOrganizations({
     return [];
   }
 
+  // Add user's organizations from your database
+  userOrganizations.push(...organizations);
+
   // Each user has a personal organization
   userOrganizations.push({
     id: userId,
     name: "Personal",
     avatar: user.avatar,
   });
-
-  // Add user's organizations from your database
-  userOrganizations.push(...organizations);
 
   return userOrganizations;
 }

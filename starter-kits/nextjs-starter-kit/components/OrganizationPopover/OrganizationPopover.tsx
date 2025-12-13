@@ -131,7 +131,10 @@ export function OrganizationPopover() {
       side="bottom"
       sideOffset={6}
     >
-      <button className={styles.profileButton}>
+      <button
+        className={styles.profileButton}
+        data-loading={!currentOrganization || undefined}
+      >
         {currentOrganization ? (
           <>
             <Image
