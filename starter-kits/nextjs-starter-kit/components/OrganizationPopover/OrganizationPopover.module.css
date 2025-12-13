@@ -2,7 +2,7 @@
   margin-left: calc(0px - var(--space-4));
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
   height: var(--space-13);
   padding: 0 var(--space-7) 0 var(--space-5);
   border-radius: var(--radius-sm);
@@ -32,9 +32,10 @@
 }
 
 .profileAvatar,
-.profilePopoverAvatar {
-  width: 24px;
-  height: 24px;
+.profilePopoverAvatar,
+.profileButtonPlaceholderAvatar {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   flex: none;
   object-fit: cover;
@@ -54,9 +55,6 @@
 }
 
 .profileButtonPlaceholderAvatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
   background: var(--color-surface);
 }
 
