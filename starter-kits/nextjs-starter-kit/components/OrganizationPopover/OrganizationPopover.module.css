@@ -1,0 +1,152 @@
+.profileButton {
+  margin-left: calc(0px - var(--space-4));
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  height: var(--space-13);
+  padding: 0 var(--space-7) 0 var(--space-5);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-light);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  transition: var(--transition);
+  transition-property: background, color, opacity;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+
+.profileButton:hover,
+.profileButton:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-text);
+  opacity: 1;
+}
+
+.profileButtonName {
+  white-space: nowrap;
+}
+
+.profileAvatar,
+.profilePopoverAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+  background: var(--color-border);
+}
+
+.profilePopoverAvatar {
+  margin-top: 12px;
+  width: 46px;
+  height: 46px;
+}
+
+.profilePopover {
+  display: flex;
+  min-width: 180px;
+  max-width: 320px;
+  flex-direction: column;
+}
+
+.profilePopoverHeader {
+  display: flex;
+}
+
+.profilePopoverInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-7);
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+}
+
+.profilePopoverInfoText {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.profilePopoverName,
+.profilePopoverId {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profilePopoverName {
+  font-weight: 500;
+  font-size: var(--size-sm);
+}
+
+.profilePopoverId {
+  color: var(--color-text-lighter);
+  font-size: var(--size-xs);
+}
+
+.profilePopoverActions {
+  padding: var(--space-3);
+}
+
+.profilePopoverButton {
+  width: 100%;
+  place-content: center;
+}
+
+.organizationsSection {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.organizationsLabel {
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-lighter);
+  font-size: var(--size-xs);
+}
+
+.organizationItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  transition-property: background, color;
+  outline: none;
+  text-align: left;
+  width: 100%;
+}
+
+.organizationItem:hover,
+.organizationItem:focus-visible {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.organizationItemAvatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+}
+
+.organizationItemName {
+  flex: 1;
+}
+
+.checkIcon {
+  margin-left: auto;
+  flex: none;
+  color: var(--color-text);
+}

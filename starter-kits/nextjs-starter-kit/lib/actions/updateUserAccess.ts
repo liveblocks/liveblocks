@@ -71,6 +71,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
       checkAccessLevel: "user",
       userId: session.user.info.id,
       groupIds: [],
+      tenantId,
       room,
     })
   ) {
@@ -122,7 +123,10 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   const userAccess = documentAccessToRoomAccesses(access);
   const usersAccesses: Record<
     string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
+    | ["room:write"]
+    | ["room:read", "room:presence:write"]
+    | ["room:read", "room:presence:write", "comments:write"]
+    | null
   > = {
     [userId]: userAccess.length === 0 ? null : userAccess,
   };

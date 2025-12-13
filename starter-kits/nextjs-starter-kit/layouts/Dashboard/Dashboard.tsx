@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { ComponentProps, useCallback, useState } from "react";
-import { DashboardHeader, DashboardSidebar } from "@/components/Dashboard";
+import { ComponentProps } from "react";
+import { DashboardSidebar } from "@/components/Dashboard";
+import { DocumentHeader } from "@/components/Document";
 import { Group } from "@/types";
 import styles from "./Dashboard.module.css";
 
@@ -16,16 +17,10 @@ export function DashboardLayout({
   className,
   ...props
 }: Props) {
-  const [isMenuOpen, setMenuOpen] = useState(false);
-
-  const handleMenuClick = useCallback(() => {
-    setMenuOpen((isOpen) => !isOpen);
-  }, []);
-
   return (
     <div className={clsx(className, styles.container)} {...props}>
       <header className={styles.header}>
-        <DashboardHeader isOpen={isMenuOpen} onMenuClick={handleMenuClick} />
+        <DocumentHeader documentId={null} />
       </header>
       <aside className={styles.aside}>
         <DashboardSidebar groups={groups} />

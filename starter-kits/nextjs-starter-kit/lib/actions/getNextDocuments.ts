@@ -72,6 +72,7 @@ export async function getNextDocuments({ nextCursor }: Props) {
         userId: session.user.info.id,
         groupIds: session.user.info.groupIds,
         room: room,
+        tenantId,
       })
     ) {
       finalRooms.push(room);

@@ -1,24 +1,29 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useCallback, useMemo } from "react";
 import { CheckIcon, SignOutIcon } from "@/icons";
 import { getUserOrganizations } from "@/lib/actions/getUserOrganizations";
 import { switchOrganization } from "@/lib/actions/switchOrganization";
-import { Button } from "@/primitives/Button";
-import { Organization } from "@/types";
-import styles from "./DashboardHeader.module.css";
+import { useDocumentsFunctionSWR } from "@/lib/hooks/useDocumentsFunctionSWR";
+import { Popover } from "@/primitives/Popover";
+import styles from "./OrganizationPopover.module.css";
 
-export function OrganizationPopoverContent() {
+function OrganizationPopoverContent() {
   const { data: session } = useSession();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
 
-  useEffect(() => {
-    getUserOrganizations().then(setOrganizations);
-  }, []);
+  // Get a list of organizations for the current user
+  const {
+    data: organizations,
+    // mutate: revalidateOrganizations,
+    // error: organizationsError,
+  } = useDocumentsFunctionSWR([getUserOrganizations, []], {
+    refreshInterval: 0,
+  });
 
   const currentOrganization = useMemo(() => {
-    if (!session) {
+    if (!session || !organizations) {
       return null;
     }
 
@@ -41,7 +46,7 @@ export function OrganizationPopoverContent() {
         return;
       }
 
-      // Refresh the page to re-authenticate with Liveblocks for the new tenant
+      // Refresh the page to re-authenticate with Liveblocks for the new organization
       // This will cause the auth callback to read the new organization from the cookie
       window.location.reload();
     },
@@ -55,12 +60,24 @@ export function OrganizationPopoverContent() {
   return (
     <div className={styles.profilePopover}>
       <div className={styles.profilePopoverInfo}>
-        <span className={styles.profilePopoverName}>
-          {session.user.info.name}
-        </span>
-        <span className={styles.profilePopoverId}>{session.user.info.id}</span>
+        <Image
+          width={40}
+          height={40}
+          src={session.user.info.avatar ?? ""}
+          alt={session.user.info.name}
+          className={styles.profilePopoverAvatar}
+        />
+        <div className={styles.profilePopoverInfoText}>
+          <span className={styles.profilePopoverName}>
+            {session.user.info.name}
+          </span>
+          <span className={styles.profilePopoverId}>
+            {session.user.info.id}
+          </span>
+        </div>
       </div>
-      {organizations.length > 0 && (
+
+      {organizations && organizations.length > 0 && (
         <div className={styles.organizationsSection}>
           <div className={styles.organizationsLabel}>Workplaces</div>
           {organizations.map((organization) => {
@@ -77,8 +94,10 @@ export function OrganizationPopoverContent() {
                 onClick={() => handleOrganizationChange(organization.id)}
               >
                 {avatar && (
-                  <img
+                  <Image
                     src={avatar}
+                    width={20}
+                    height={20}
                     alt={organization.name}
                     className={styles.organizationItemAvatar}
                   />
@@ -92,15 +111,44 @@ export function OrganizationPopoverContent() {
           })}
         </div>
       )}
+
       <div className={styles.profilePopoverActions}>
-        <Button
-          className={styles.profilePopoverButton}
-          icon={<SignOutIcon />}
-          onClick={() => signOut()}
-        >
+        <div className={styles.organizationItem}>
+          <SignOutIcon className={styles.organizationItemAvatar} />
           Sign out
-        </Button>
+        </div>
       </div>
     </div>
+  );
+}
+
+export function OrganizationPopover() {
+  const { data: session } = useSession();
+
+  if (!session) {
+    return null;
+  }
+
+  return (
+    <Popover
+      align="start"
+      alignOffset={-6}
+      content={<OrganizationPopoverContent />}
+      side="bottom"
+      sideOffset={6}
+    >
+      <button className={styles.profileButton}>
+        <Image
+          width={24}
+          height={24}
+          src={session.user.info.avatar ?? ""}
+          alt={session.user.info.name}
+          className={styles.profileAvatar}
+        />
+        <span className={styles.profileButtonName}>
+          {session.user.info.name}
+        </span>
+      </button>
+    </Popover>
   );
 }

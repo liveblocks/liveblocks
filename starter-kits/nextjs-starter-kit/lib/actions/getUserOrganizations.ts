@@ -2,23 +2,22 @@
 
 import { auth } from "@/auth";
 import { getOrganizations as getOrganizationsFromDb } from "@/lib/database/getOrganizations";
-import { Organization } from "@/types";
 
 /**
  * Get Organizations
  *
  * Fetch organizations for the current authenticated user from your database
  */
-export async function getUserOrganizations(): Promise<Organization[]> {
+export async function getUserOrganizations() {
   const session = await auth();
 
   if (!session) {
-    return [];
+    return { data: [] };
   }
 
   const organizations = await getOrganizationsFromDb({
     userId: session.user.info.id,
   });
 
-  return organizations;
+  return { data: organizations };
 }
