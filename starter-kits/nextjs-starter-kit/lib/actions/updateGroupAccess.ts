@@ -8,6 +8,7 @@ import {
   getDraftsGroupName,
   userAllowedInRoom,
 } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document, DocumentAccess, DocumentGroup } from "@/types";
 
@@ -68,12 +69,13 @@ export async function updateGroupAccess({
   }
 
   // Check current logged-in user has edit access to the room
+  const groupIds = await getCurrentOrganizationGroupIds(session.user.info.id);
   if (
     !userAllowedInRoom({
       accessAllowed: "write",
       checkAccessLevel: "user",
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      groupIds,
       room,
       tenantId: session.user.currentOrganizationId,
     })

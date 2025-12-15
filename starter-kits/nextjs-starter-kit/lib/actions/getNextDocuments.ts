@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { GetDocumentsResponse } from "@/lib/actions/getDocuments";
 import { buildDocuments, userAllowedInRoom } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 
 type Props = {
@@ -64,13 +65,14 @@ export async function getNextDocuments({ nextCursor }: Props) {
   }
 
   // In case a room has changed, filter rooms the user no longer has access to
+  const groupIds = await getCurrentOrganizationGroupIds(session.user.info.id);
   const finalRooms = [];
   for (const room of rooms) {
     if (
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
+        groupIds,
         room: room,
         tenantId,
       })

@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { UserIcon, UsersIcon } from "@/icons";
 import {
+  getCurrentOrganizationGroupIds,
   getDocument,
   getDocumentGroups,
   getDocumentUsers,
@@ -59,6 +60,12 @@ export function ShareDialog({ children, ...props }: Props) {
     refreshInterval: 0,
   });
 
+  // Get current organization group IDs
+  const { data: groupIds = [] } = useDocumentsFunctionSWR(
+    session ? [getCurrentOrganizationGroupIds, session.user.info.id] : null,
+    { refreshInterval: 0 }
+  );
+
   // Get default access value from document, or the default value from the property
   const defaultAccess = document
     ? document.accesses.default
@@ -78,7 +85,7 @@ export function ShareDialog({ children, ...props }: Props) {
     const accessLevel = getDocumentAccess({
       documentAccesses: document.accesses,
       userId: session?.user?.info.id ?? "",
-      groupIds: session?.user?.info.groupIds ?? [],
+      groupIds: groupIds,
     });
 
     // Reload if current user has no access (will show error page)
@@ -99,7 +106,7 @@ export function ShareDialog({ children, ...props }: Props) {
     }
 
     setCurrentUserAccess(accessLevel);
-  }, [document, session, currentUserAccess]);
+  }, [document, session, currentUserAccess, groupIds]);
 
   useEffect(() => {
     revalidateCurrentUserAccess();

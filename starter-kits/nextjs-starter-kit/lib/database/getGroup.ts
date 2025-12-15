@@ -1,5 +1,5 @@
+import { auth } from "@/auth";
 import { organizations } from "@/data/organizations";
-import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
 import { Group } from "@/types";
 
 /**
@@ -10,6 +10,8 @@ import { Group } from "@/types";
  * @param id - The group's id
  */
 export async function getGroup(groupId: string): Promise<Group | null> {
+  const session = await auth();
+
   // Special cases for `@everyone` and `@here` as they're not "real" groups
   if (groupId === "everyone") {
     return {
@@ -26,7 +28,7 @@ export async function getGroup(groupId: string): Promise<Group | null> {
   }
 
   // Get current organization from cookie
-  const organizationId = await getCurrentOrganization();
+  const organizationId = session?.user.currentOrganizationId ?? null;
 
   if (!organizationId) {
     return null;

@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { auth } from "@/auth";
 import { DashboardLayout } from "@/layouts/Dashboard";
 import { getGroups } from "@/lib/actions";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 
 export default async function Dashboard({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -12,7 +13,8 @@ export default async function Dashboard({ children }: { children: ReactNode }) {
     redirect("/");
   }
 
-  const groups = await getGroups(session?.user.info.groupIds ?? []);
+  const groupIds = await getCurrentOrganizationGroupIds(session.user.info.id);
+  const groups = await getGroups(groupIds);
 
   return <DashboardLayout groups={groups}>{children}</DashboardLayout>;
 }

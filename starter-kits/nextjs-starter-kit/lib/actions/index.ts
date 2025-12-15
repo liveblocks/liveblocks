@@ -1,6 +1,7 @@
 export * from "./authorizeLiveblocks";
 export * from "./createDocument";
 export * from "./deleteDocument";
+export * from "./getCurrentOrganizationGroupIds";
 export * from "./getDocument";
 export * from "./getDocumentGroups";
 export * from "./getDocuments";

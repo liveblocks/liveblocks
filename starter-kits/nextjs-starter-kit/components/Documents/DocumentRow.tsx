@@ -12,7 +12,8 @@ import {
 } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
-import { useGroupsInfo } from "@/lib/hooks";
+import { getCurrentOrganizationGroupIds } from "@/lib/actions";
+import { useDocumentsFunctionSWR, useGroupsInfo } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
@@ -47,6 +48,12 @@ export function DocumentRow({
     DocumentAccess.NONE
   );
 
+  // Get current organization group IDs
+  const { data: currentOrganizationGroupIds = [] } = useDocumentsFunctionSWR(
+    session ? [getCurrentOrganizationGroupIds, session.user.info.id] : null,
+    { refreshInterval: 0 }
+  );
+
   // Check if current user has access to edit the room
   useEffect(() => {
     if (!session) {
@@ -56,10 +63,10 @@ export function DocumentRow({
     const access = getDocumentAccess({
       documentAccesses: document.accesses,
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      groupIds: currentOrganizationGroupIds,
     });
     setCurrentUserAccess(access);
-  }, [session, document]);
+  }, [session, document, currentOrganizationGroupIds]);
 
   const [isMoreOpen, setMoreOpen] = useState(false);
 

@@ -6,6 +6,7 @@ import {
   documentAccessToRoomAccesses,
   userAllowedInRoom,
 } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document, DocumentAccess } from "@/types";
 
@@ -64,11 +65,12 @@ export async function updateDefaultAccess({ documentId, access }: Props) {
   }
 
   // Check current logged-in user has write access to the room
+  const groupIds = await getCurrentOrganizationGroupIds(session.user.info.id);
   if (
     !userAllowedInRoom({
       accessAllowed: "write",
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      groupIds,
       room,
     })
   ) {

@@ -20,7 +20,7 @@ Check that you've added the user to data/users.ts, for example:
   id: "${userId}",
   name: "Tchoka Ahoki",
   avatar: "https://liveblocks.io/avatars/avatar-7.png",
-  groupIds: ["product", "engineering", "design"],
+  organizationIds: ["liveblocks", "${userId}"],
 },
  
 `);

@@ -7,7 +7,6 @@ export type User = {
   name: string;
   avatar: string;
   color: string;
-  groupIds: string[];
   organizationIds: string[];
 };
 

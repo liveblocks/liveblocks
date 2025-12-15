@@ -1,5 +1,4 @@
 import { organizations } from "@/data/organizations";
-import { users } from "@/data/users";
 import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
 import { Group } from "@/types";
 import { getGroup } from "./getGroup";
@@ -68,9 +67,7 @@ export async function getGroups({ groupIds, search }: Props = {}): Promise<
     group
       ? {
           ...group,
-          memberIds: users
-            .filter((user) => user.groupIds.includes(group.id))
-            .map((user) => user.id),
+          memberIds: [],
         }
       : group
   );

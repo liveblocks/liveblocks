@@ -6,6 +6,7 @@ import {
   getDraftsGroupName,
   userAllowedInRoom,
 } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
 
@@ -79,9 +80,10 @@ export async function getDocuments({
     };
   } else {
     // Not a draft, use other info
+    const filteredGroupIds = groupIds.filter((id) => id !== draftGroupName);
     getRoomsOptions = {
       ...getRoomsOptions,
-      groupIds: groupIds.filter((id) => id !== draftGroupName),
+      ...(filteredGroupIds.length > 0 && { groupIds: filteredGroupIds }),
       userId: userId,
     };
   }
@@ -114,13 +116,16 @@ export async function getDocuments({
   }
 
   // In case a room has changed, filter rooms the user no longer has access to
+  const currentOrganizationGroupIds = await getCurrentOrganizationGroupIds(
+    session.user.info.id
+  );
   const finalRooms = [];
   for (const room of rooms) {
     if (
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
+        groupIds: currentOrganizationGroupIds,
         room,
         tenantId,
       })

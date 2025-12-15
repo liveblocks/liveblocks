@@ -15,26 +15,18 @@ export async function authorizeLiveblocks() {
     name: "Anonymous",
     color: "#ff0000",
     avatar: "",
-    groupIds: [],
     organizationIds: [],
   };
 
   // Get current user info from session (defined in /auth.config.ts)
   // If no session found, this is a logged out/anonymous user
-  const {
-    name,
-    avatar,
-    color,
-    id,
-    groupIds = [],
-  } = session?.user.info ?? anonymousUser;
+  const { name, avatar, color, id } = session?.user.info ?? anonymousUser;
 
-  // Get current organization from session
+  const currentOrganizationId = session?.user.currentOrganizationId ?? null;
 
-  // For anonymous users, use default as fallback
-  const currentOrganizationId =
-    session?.user.currentOrganizationId ?? "default";
-
+  // Get groups from the current organization
+  const organization = getUserOrganization(session.user.currentOrganizationId);
+  const groupIds = organization?.groups.map((group) => group.id) ?? [];
   const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
 
   // Get Liveblocks ID token

@@ -2,7 +2,11 @@ import clsx from "clsx";
 import { useSession } from "next-auth/react";
 import { ComponentProps, FormEvent, useState } from "react";
 import { PlusIcon } from "@/icons";
-import { updateGroupAccess } from "@/lib/actions";
+import {
+  getCurrentOrganizationGroupIds,
+  updateGroupAccess,
+} from "@/lib/actions";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import { Button } from "@/primitives/Button";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
@@ -30,6 +34,12 @@ export function ShareDialogInviteGroup({
   const [isInviteLoading, setInviteLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
 
+  // Get current organization group IDs
+  const { data: groupIds = [] } = useDocumentsFunctionSWR(
+    session ? [getCurrentOrganizationGroupIds, session.user.info.id] : null,
+    { refreshInterval: 0 }
+  );
+
   // Add a group to the room
   async function handleAddDocumentGroup(id: DocumentGroup["id"]) {
     setErrorMessage(undefined);
@@ -51,8 +61,8 @@ export function ShareDialogInviteGroup({
     onSetGroups();
   }
 
-  const invitableGroupIds = (session?.user.info.groupIds ?? []).filter(
-    (groupId) => currentGroups.every((group) => group.id !== groupId)
+  const invitableGroupIds = groupIds.filter((groupId) =>
+    currentGroups.every((group) => group.id !== groupId)
   );
 
   return (

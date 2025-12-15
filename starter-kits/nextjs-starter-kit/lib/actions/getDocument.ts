@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { buildDocument, userAllowedInRoom } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
 
@@ -45,11 +46,14 @@ export async function getDocument({ documentId }: Props) {
   }
 
   // Check current user has access to the room (if not logged in, use empty values)
+  const groupIds = session?.user.info.id
+    ? await getCurrentOrganizationGroupIds(session.user.info.id)
+    : [];
   if (
     !userAllowedInRoom({
       accessAllowed: "read",
       userId: session?.user.info.id ?? "",
-      groupIds: session?.user.info.groupIds ?? [],
+      groupIds,
       room,
     })
   ) {

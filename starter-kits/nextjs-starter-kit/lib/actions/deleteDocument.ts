@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { userAllowedInRoom } from "@/lib/utils";
+import { getCurrentOrganizationGroupIds } from "@/lib/utils/getCurrentOrganizationGroupIds";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
 
@@ -47,11 +48,14 @@ export async function deleteDocument({ documentId }: Props) {
   }
 
   // Check current user has write access on the room (if not logged in, use empty values)
+  const groupIds = session?.user.info.id
+    ? await getCurrentOrganizationGroupIds(session.user.info.id)
+    : [];
   if (
     !userAllowedInRoom({
       accessAllowed: "write",
       userId: session?.user.info.id ?? "",
-      groupIds: session?.user.info.groupIds ?? [],
+      groupIds,
       room,
     })
   ) {

@@ -9,8 +9,11 @@ import {
 } from "@/components/Documents";
 import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
 import { PlusIcon } from "@/icons";
-import { GetDocumentsProps } from "@/lib/actions";
-import { usePaginatedDocumentsSWR } from "@/lib/hooks";
+import {
+  GetDocumentsProps,
+  getCurrentOrganizationGroupIds,
+} from "@/lib/actions";
+import { useDocumentsFunctionSWR, usePaginatedDocumentsSWR } from "@/lib/hooks";
 import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";
@@ -35,6 +38,12 @@ export function DocumentsList({
 }: Props) {
   const { data: session } = useSession();
   const [documentType, setDocumentType] = useState<DocumentType | "all">("all");
+
+  // Get current organization group IDs
+  const { data: groupIds = [] } = useDocumentsFunctionSWR(
+    session ? [getCurrentOrganizationGroupIds, session.user.info.id] : null,
+    { refreshInterval: 0 }
+  );
 
   // Return `getDocuments` params for the current filters/group
   const getDocumentsOptions: GetDocumentsProps | null = useMemo(() => {
@@ -68,10 +77,10 @@ export function DocumentsList({
     return {
       documentType: currentDocumentType,
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      groupIds: groupIds,
       limit: DOCUMENT_LOAD_LIMIT,
     };
-  }, [filter, group, session, documentType]);
+  }, [filter, group, session, documentType, groupIds]);
 
   // When session is found, find pages of documents with the above document options
   const {

@@ -1,9 +1,9 @@
-import { Document, DocumentAccess, User } from "@/types";
+import { Document, DocumentAccess } from "@/types";
 
 interface Props {
   documentAccesses: Document["accesses"];
-  groupIds: User["groupIds"];
-  userId: User["id"];
+  groupIds: string[];
+  userId: string;
 }
 
 const accessLevelHierarchy = [
