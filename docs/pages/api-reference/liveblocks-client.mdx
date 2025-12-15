@@ -112,6 +112,10 @@ const client = createClient({
     // fetch,
     // WebSocket,
   },
+
+  // Set the location of the "Powered by Liveblocks" badge
+  // "top-right", "bottom-right", "bottom-left", "top-left"
+  badgeLocation: "bottom-right",
 });
 ```
 
@@ -219,6 +223,14 @@ const client = createClient({
     - `"split"` Break the message up into chunks each of which is smaller than the maximum message size. Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
     - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets. This strategy is marked experimental, as it can make the client appear as "synchronizing" indefinitely when used with Liveblocks Storage or Yjs.
 
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="badgeLocation"
+    detailedType='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
+    defaultValue={`"bottom-right"`}
+  >
+    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
+    [Learn more](#createClientBadgeLocation).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -769,6 +781,38 @@ const client = createClient({
   // ...
 });
 ```
+
+### Powered by Liveblocks branding [#createClientBadgeLocation]
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on `createClient`.
+
+```ts title="Set badge location"
+import { createClient } from "@liveblocks/client";
+
+// "top-right", "bottom-right", "bottom-left", "top-left"
+const client = createClient({
+  badgeLocation: "bottom-right",
+
+  // ...
+});
+```
+
+If you wish to remove the badge entirely, you can do so by following these
+steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team's settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>
 
 ## Client
 
@@ -2993,8 +3037,9 @@ Returns a thread and its associated inbox notification and subscription, from
 its ID, if it exists.
 
 ```ts
-const { thread, inboxNotification, subscription } =
-  await room.getThread("th_xxx");
+const { thread, inboxNotification, subscription } = await room.getThread(
+  "th_xxx"
+);
 ```
 
 The thread ID can be retrieved from existing threads.
@@ -3098,8 +3143,8 @@ const thread = await room.createThread({ body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the
-> **[Liveblocks](https://liveblocks.io)** website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
+> website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -3368,8 +3413,8 @@ const comment = await room.createComment({ threadId: thread.id, body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the
-> **[Liveblocks](https://liveblocks.io)** website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
+> website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -5496,7 +5541,9 @@ const stringComment = await stringifyCommentBody(comment.body, {
     // Optional, override the `mention` element.
     // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
     mention: ({ element, user, group }) =>
-      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${element.id}</a>`,
+      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${
+        element.id
+      }</a>`,
   },
 
   // Optional, get your user’s names and info from their ID to be displayed in mentions
@@ -5903,12 +5950,14 @@ const user = room.getSelf();
     The user’s Presence data.
   </PropertiesListItem>
   <PropertiesListItem name="canWrite" type="boolean">
-    True if the user can mutate the Room’s Storage and/or YDoc, false if they
-    can only read but not mutate it.
+    `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
+    they can only read but not mutate it. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
-    The ID of the User that has been set in the authentication endpoint. Useful
-    to get additional information about the connected user.
+    `true` if the user can leave a comment in the room, `false` if they can only
+    read comments but not leave them. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
 </PropertiesList>
 
