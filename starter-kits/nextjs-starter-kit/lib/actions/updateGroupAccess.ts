@@ -75,6 +75,7 @@ export async function updateGroupAccess({
       userId: session.user.info.id,
       groupIds: session.user.info.groupIds,
       room,
+      tenantId: session.user.currentOrganizationId,
     })
   ) {
     return {
@@ -150,6 +151,7 @@ export async function updateGroupAccess({
   }
 
   // If successful, convert room to a list of groups and send
+  // organizationId is fetched from cookie in buildDocumentGroups
   const result: DocumentGroup[] = await buildDocumentGroups(updatedRoom);
   return { data: result };
 }

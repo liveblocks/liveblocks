@@ -11,10 +11,12 @@ import { liveblocks } from "@/liveblocks.server.config";
  * Groups on Liveblocks are currently used for group mentions in comments and text editors.
  */
 export async function syncLiveblocksGroups() {
-  const groups = (await getGroups()).filter((group) => group !== null);
   // Get organization ID - defaults to personal workspace for authenticated users
   const session = await auth();
   const tenantId = session?.user.currentOrganizationId ?? "liveblocks";
+
+  // Get groups for the current organization (fetched from cookie in getGroups)
+  const groups = (await getGroups()).filter((group) => group !== null);
 
   for (const group of groups) {
     const localMemberIds = new Set(group.memberIds ?? []);

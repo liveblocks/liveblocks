@@ -17,6 +17,8 @@ export async function getGroups(groupIds: DocumentGroup["id"][]) {
     groupIds.map((groupId) => getGroup(groupId))
   );
 
+  console.log(groups);
+
   // Filter out draft groups or any that didn't return
   return groups.filter((group) => group) as Group[];
 }

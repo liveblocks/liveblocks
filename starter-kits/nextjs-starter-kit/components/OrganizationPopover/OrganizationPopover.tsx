@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import { CheckIcon, SelectIcon, SignOutIcon } from "@/icons";
 import { getUserOrganizations } from "@/lib/actions/getUserOrganizations";
@@ -121,10 +121,13 @@ export function OrganizationPopover() {
           )}
 
           <div className={styles.profilePopoverActions}>
-            <div className={styles.organizationItem}>
+            <button
+              className={styles.organizationItem}
+              onClick={() => signOut()}
+            >
               <SignOutIcon className={styles.organizationItemAvatar} />
               Sign out
-            </div>
+            </button>
           </div>
         </div>
       }

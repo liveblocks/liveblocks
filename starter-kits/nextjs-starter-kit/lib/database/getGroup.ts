@@ -1,4 +1,5 @@
-import { groups } from "@/data/groups";
+import { organizations } from "@/data/organizations";
+import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
 import { Group } from "@/types";
 
 /**
@@ -8,21 +9,37 @@ import { Group } from "@/types";
  *
  * @param id - The group's id
  */
-export async function getGroup(id: string): Promise<Group | null> {
+export async function getGroup(groupId: string): Promise<Group | null> {
   // Special cases for `@everyone` and `@here` as they're not "real" groups
-  if (id === "everyone") {
+  if (groupId === "everyone") {
     return {
       id: "everyone",
       name: "Everyone",
     };
   }
 
-  if (id === "here") {
+  if (groupId === "here") {
     return {
       id: "here",
       name: "Here",
     };
   }
 
-  return groups.find((group) => group.id === id) ?? null;
+  // Get current organization from cookie
+  const organizationId = await getCurrentOrganization();
+
+  if (!organizationId) {
+    return null;
+  }
+
+  // Search in the current organization
+  const organization = organizations.find((org) => org.id === organizationId);
+
+  if (!organization) {
+    return null;
+  }
+
+  console.log(organization.groups, groupId);
+
+  return organization.groups.find((group) => group.id === groupId) ?? null;
 }

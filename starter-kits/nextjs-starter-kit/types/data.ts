@@ -20,4 +20,5 @@ export type Organization = {
   id: string;
   name: string;
   avatar: string;
+  groups: Group[];
 };

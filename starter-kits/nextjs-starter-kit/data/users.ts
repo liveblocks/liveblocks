@@ -17,7 +17,7 @@ export const users: Omit<User, "color">[] = [
     name: "[YOUR DISPLAY NAME]",
     avatar: "https://liveblocks.io/avatars/avatar-0.png",
     groupIds: ["product", "engineering", "design"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "[YOUR EMAIL ADDRESS]"],
   },
   */
   {
@@ -25,34 +25,34 @@ export const users: Omit<User, "color">[] = [
     name: "Charlie Layne",
     avatar: "https://liveblocks.io/avatars/avatar-2.png",
     groupIds: ["product", "engineering", "design"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "charlie.layne@example.com"],
   },
   {
     id: "mislav.abha@example.com",
     name: "Mislav Abha",
     avatar: "https://liveblocks.io/avatars/avatar-3.png",
     groupIds: ["engineering"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "mislav.abha@example.com"],
   },
   {
     id: "tatum.paolo@example.com",
     name: "Tatum Paolo",
     avatar: "https://liveblocks.io/avatars/avatar-4.png",
     groupIds: ["engineering", "design"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "tatum.paolo@example.com"],
   },
   {
     id: "anjali.wanda@example.com",
     name: "Anjali Wanda",
     avatar: "https://liveblocks.io/avatars/avatar-5.png",
     groupIds: ["product"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "anjali.wanda@example.com"],
   },
   {
     id: "emil.joyce@example.com",
     name: "Emil Joyce",
     avatar: "https://liveblocks.io/avatars/avatar-6.png",
     groupIds: ["product", "design"],
-    organizationIds: ["liveblocks"],
+    organizationIds: ["liveblocks", "emil.joyce@example.com"],
   },
 ];

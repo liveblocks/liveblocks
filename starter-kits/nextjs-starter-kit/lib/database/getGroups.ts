@@ -1,5 +1,6 @@
-import { groups } from "@/data/groups";
+import { organizations } from "@/data/organizations";
 import { users } from "@/data/users";
+import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
 import { Group } from "@/types";
 import { getGroup } from "./getGroup";
 
@@ -23,15 +24,22 @@ type GroupWithMembers = Group & {
 export async function getGroups({ groupIds, search }: Props = {}): Promise<
   (GroupWithMembers | null)[]
 > {
+  // Get current organization from cookie (or first organization if not set)
+  const organizationId = await getCurrentOrganization();
+
+  // Get all groups from the current organization
+  const organization = organizations.find((org) => org.id === organizationId);
+  const allGroups = organization?.groups ?? [];
+
   const groupsPromises: Promise<Group | null>[] = [];
 
-  // Filter by userIds or get all users
+  // Filter by groupIds or get all groups
   if (groupIds) {
     for (const groupId of groupIds) {
       groupsPromises.push(getGroup(groupId));
     }
   } else {
-    const allGroupIds = groups.map((group) => group.id);
+    const allGroupIds = allGroups.map((group) => group.id);
 
     for (const groupId of allGroupIds) {
       groupsPromises.push(getGroup(groupId));

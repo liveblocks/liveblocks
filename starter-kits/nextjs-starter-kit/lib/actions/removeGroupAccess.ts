@@ -64,6 +64,7 @@ export async function removeGroupAccess({ groupId, documentId }: Props) {
       userId: session.user.info.id,
       groupIds: [],
       room,
+      tenantId: session.user.currentOrganizationId,
     })
   ) {
     return {

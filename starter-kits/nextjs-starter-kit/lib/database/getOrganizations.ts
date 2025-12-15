@@ -16,7 +16,6 @@ type Props = {
 export async function getOrganizations({
   userId,
 }: Props): Promise<Organization[]> {
-  const userOrganizations: Organization[] = [];
   const user = await getUser(userId);
 
   if (!user) {
@@ -24,14 +23,9 @@ export async function getOrganizations({
   }
 
   // Add user's organizations from your database
-  userOrganizations.push(...organizations);
-
-  // Each user has a personal organization
-  userOrganizations.push({
-    id: userId,
-    name: "Personal",
-    avatar: user.avatar,
-  });
+  const userOrganizations = organizations.filter((organization) =>
+    user.organizationIds.includes(organization.id)
+  );
 
   return userOrganizations;
 }
