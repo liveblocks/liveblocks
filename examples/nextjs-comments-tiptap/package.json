@@ -31,7 +31,7 @@
     "@types/react-dom": "18.2.5",
     "clsx": "^2.0.0",
     "nanoid": "^5.0.1",
-    "next": "^13.4.12",
+    "next": "14.2.35",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-error-boundary": "^4.0.11"
