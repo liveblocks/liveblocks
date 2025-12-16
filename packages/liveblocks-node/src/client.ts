@@ -172,7 +172,8 @@ export type CreateCommentOptions<CM extends BaseMetadata> = {
 export type RoomPermission =
   | []
   | ["room:write"]
-  | ["room:read", "room:presence:write"];
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"];
 export type RoomAccesses = Record<
   string,
   | ["room:write"]
@@ -356,6 +357,7 @@ type S = DS;
 type U = DU;
 
 export type RoomsQueryCriteria = {
+  tenantId?: string;
   userId?: string;
   groupIds?: string[];
   /**
@@ -912,6 +914,7 @@ export class Liveblocks {
       limit: params.limit,
       startingAfter: params.startingAfter,
       userId: params.userId,
+      tenantId: params.tenantId,
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       query,
     };

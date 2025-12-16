@@ -248,12 +248,13 @@ describe("client", () => {
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
           const url = new URL(request.url);
 
-          expect(url.searchParams.size).toEqual(5);
+          expect(url.searchParams.size).toEqual(6);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual("2");
           expect(url.searchParams.get("query")).toEqual(
             "roomId^'liveblocks:' metadata['color']:'blue'"
           );
+          expect(url.searchParams.get("tenantId")).toEqual("tenant1");
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
@@ -273,6 +274,7 @@ describe("client", () => {
         client.getRooms({
           limit: 10,
           startingAfter: "2",
+          tenantId: "tenant1",
           query: {
             roomId: {
               startsWith: "liveblocks:",
