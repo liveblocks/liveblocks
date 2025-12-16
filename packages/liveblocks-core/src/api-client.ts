@@ -143,7 +143,6 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     threadId?: string;
     commentId?: string;
     metadata: TM | undefined;
-    // TODO: Finalize API design
     commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];

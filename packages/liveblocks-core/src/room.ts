@@ -2861,12 +2861,26 @@ export function createRoom<
     return httpClient.getThread({ roomId, threadId });
   }
 
+  // TODO 4.0: Update API to be similar to `@liveblocks/node`'s `createThread` method.
+  // Instead of a flat list of options (`commentId`, `metadata`, `body`, `commentMetadata`, etc.),
+  // we could move to using a nested `comment` object to differentiate between thread and comment properties.
+  //
+  // {
+  //   roomId: string;
+  //   threadId?: string;
+  //   metadata: TM | undefined;
+  //   comment: {
+  //     id?: string;
+  //     metadata: CM | undefined;
+  //     body: CommentBody;
+  //     attachmentIds?: string[];
+  //   };
+  // }
   async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
     metadata: TM | undefined;
-    // TODO: Finalize API design
     commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
