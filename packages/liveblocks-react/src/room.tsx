@@ -1216,7 +1216,6 @@ function useMutation<
   U extends BaseUserMeta,
   E extends Json,
   TM extends BaseMetadata,
-  // TODO: Investigate breaking change in generic ordering
   CM extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
@@ -2655,7 +2654,6 @@ function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
 
   use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  // TODO: Breaking change? CM can't be inferred from the params so the generics are now required
   const result = useThreads<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");

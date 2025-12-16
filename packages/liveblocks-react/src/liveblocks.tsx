@@ -233,7 +233,7 @@ function getOrCreateContextBundle<
     bundle = makeLiveblocksContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as LiveblocksContextBundle<U, TM, CM>;
+  return bundle as unknown as LiveblocksContextBundle<U, TM, CM>;
 }
 
 /**
@@ -1956,7 +1956,6 @@ function useUserThreadsSuspense_experimental<
 
   use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  // TODO: Breaking change? CM can't be inferred from the params so the generics are now required
   const result = useUserThreads_experimental<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
