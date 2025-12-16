@@ -260,14 +260,16 @@ type PaginationStatePatch =
  * makeRoomThreadsQueryKey('room-abc', { xyz: 123, abc: "red" })
  * → '["room-abc",{"color":"red","xyz":123}]'
  */
-export function makeRoomThreadsQueryKey(
+export function makeRoomThreadsQueryKey<TM extends BaseMetadata>(
   roomId: string,
-  query: ThreadsQuery | undefined
+  query: ThreadsQuery<TM> | undefined
 ) {
   return stableStringify([roomId, query ?? {}]);
 }
 
-export function makeUserThreadsQueryKey(query: ThreadsQuery | undefined) {
+export function makeUserThreadsQueryKey<TM extends BaseMetadata>(
+  query: ThreadsQuery<TM> | undefined
+) {
   return stableStringify(query ?? {});
 }
 

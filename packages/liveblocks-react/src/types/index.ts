@@ -29,7 +29,6 @@ import type {
   CommentData,
   DGI,
   DRI,
-  DTM,
   GroupData,
   HistoryVersion,
   InboxNotificationData,
@@ -119,7 +118,7 @@ export type UseAiChatsOptions = {
   query?: AiChatsQuery;
 };
 
-export type ThreadsQuery<TM extends BaseMetadata = DTM> = {
+export type ThreadsQuery<TM extends BaseMetadata> = {
   /**
    * Whether to only return threads marked as resolved or unresolved. If not provided,
    * all threads will be returned.
