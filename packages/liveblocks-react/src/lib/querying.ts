@@ -7,6 +7,7 @@ import {
   getSubscriptionKey,
   isNumberOperator,
   isStartsWithOperator,
+  type QueryMetadata,
   type SubscriptionData,
   type SubscriptionKey,
 } from "@liveblocks/core";
@@ -29,9 +30,9 @@ export function makeThreadsFilter<
     matchesThreadMetadata(thread, query);
 }
 
-function matchesThreadsQuery(
-  thread: ThreadData,
-  q: ThreadsQuery,
+function matchesThreadsQuery<TM extends BaseMetadata, CM extends BaseMetadata>(
+  thread: ThreadData<TM, CM>,
+  q: ThreadsQuery<TM>,
   subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ) {
   let subscription = undefined;
@@ -47,13 +48,16 @@ function matchesThreadsQuery(
   );
 }
 
-function matchesThreadMetadata(thread: ThreadData, q: ThreadsQuery) {
+function matchesThreadMetadata<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(thread: ThreadData<TM, CM>, q: ThreadsQuery<TM>) {
   // Boolean logic: query.metadata? => all metadata matches
   const metadata = thread.metadata;
   return (
     q.metadata === undefined ||
     Object.entries(q.metadata).every(
-      ([key, op]) =>
+      ([key, op]: [keyof TM, QueryMetadata<TM>[keyof TM] | undefined]) =>
         // Ignore explicit-undefined filters
         // Boolean logic: op? => value matches the operator
         op === undefined || matchesOperator(metadata[key], op)
