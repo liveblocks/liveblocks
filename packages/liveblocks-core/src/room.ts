@@ -2399,7 +2399,8 @@ export function createRoom<
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_CREATED:
         case ServerMsgCode.COMMENT_EDITED:
-        case ServerMsgCode.COMMENT_DELETED: {
+        case ServerMsgCode.COMMENT_DELETED:
+        case ServerMsgCode.COMMENT_METADATA_UPDATED: {
           eventHub.comments.notify(message);
           break;
         }
