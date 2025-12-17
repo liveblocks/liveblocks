@@ -1,5 +1,7 @@
 ## vNEXT
 
+## v3.11.1
+
 ### `@liveblocks/core`
 
 - Log full error details when WebSocket connections to Liveblocks are getting

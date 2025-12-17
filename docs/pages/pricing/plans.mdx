@@ -1,0 +1,98 @@
+---
+meta:
+  title: "Plans"
+  parentTitle: "Pricing"
+  description: "Learn about the different plans available on Liveblocks."
+---
+
+Liveblocks offers three plans: Free, Pro, and Enterprise. Each plan is designed
+to meet the needs of different types of developers, from personal projects to
+large enterprises.
+
+## Free
+
+The Free plan is ideal for personal projects, prototyping, and testing. It
+includes access to Liveblocks’ collaboration infrastructure, ready-made features
+(Comments, Multiplayer, AI Agents, Notifications), and pre-built components,
+with up to <Limits.FreeMaxMonthlyActiveRooms /> monthly active rooms included.
+When you exceed your free limits, users won’t be able to join rooms.
+
+[Learn more about the Free plan](/docs/pricing/plans/free)
+
+## Pro
+
+The Pro plan is designed for teams shipping a collaborative experiences in
+production with the ability to scale. It includes everything in Free, but
+enables you to remove the "Powered by Liveblocks" badge, and allows you to go
+beyond the
+included{/* prettier-ignore */} <Limits.ProMonthlyActiveRoomsIncluded /> monthly active rooms via pay-as-you-go overage, and unlocks access to enterprise add-ons.
+
+[Learn more about the Pro plan](/docs/pricing/plans/pro)
+
+### Add-ons
+
+| Add-on                    | Price                                                     |
+| ------------------------- | --------------------------------------------------------- |
+| Unlimited Version History | $100 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| SAML SSO                  | $300 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| SOC 2 report              | $150 per month <InfoTooltip>Billed annually</InfoTooltip> |
+| HIPAA BAA                 | $350 per month <InfoTooltip>Billed annually</InfoTooltip> |
+
+## Enterprise
+
+The Enterprise plan is tailored for organizations with advanced security,
+compliance, and scalability requirements. It includes everything in Pro, plus
+multi-region hosting, a management API, SCIM/directory sync, advanced
+permissions, custom usage allocations, and higher-touch support options such as
+SLAs and solution engineering.
+
+[Learn more about the Enterprise plan](/docs/pricing/plans/enterprise)
+
+## General billing information
+
+### Where do I understand my usage?
+
+You can monitor usage for your projects on the [usage page](/dashboard/usage) of
+your dashboard.
+
+### What happens when I reach 100% usage?
+
+All plans receive notifications by email when they are approaching and exceed
+their [usage limits](/docs/platform/limits).
+
+Free plans will be paused when they exceed the included free tier usage.
+
+For Pro and Enterprise plans, when you reach 100% usage your projects are not
+automatically stopped. Rather, Liveblocks enables you to incur on-demand usage
+as your application grows. It’s important to be aware of
+[the usage page](/dashboard/usage) of your dashboard to see if you are
+approaching your limit.
+
+## Powered by Liveblocks branding
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx title="Set badge location"
+// "top-right", "bottom-right", "bottom-left", "top-left"
+<LiveblocksProvider badgeLocation="bottom-right">
+  <App />
+</LiveblocksProvider>
+```
+
+If you wish to remove remove the badge entirely, you can do so by following
+these steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team’s settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>
