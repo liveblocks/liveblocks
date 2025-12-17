@@ -7,6 +7,7 @@ import type {
   DCM,
   DTM,
   GroupMentionData,
+  Patchable,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -100,12 +101,15 @@ interface MarkToggleProps extends ComposerMarkToggleProps {
 
 type ComposerCreateThreadProps<TM extends BaseMetadata> = {
   threadId?: never;
+
   commentId?: never;
 
   /**
    * The metadata of the thread to create.
    */
   metadata?: TM;
+
+  commentMetadata?: never;
 };
 
 type ComposerCreateCommentProps<CM extends BaseMetadata> = {
@@ -113,15 +117,18 @@ type ComposerCreateCommentProps<CM extends BaseMetadata> = {
    * The ID of the thread to reply to.
    */
   threadId: string;
+
   commentId?: never;
+
+  metadata?: never;
 
   /**
    * The metadata of the comment to create.
    */
-  metadata?: CM;
+  commentMetadata?: CM;
 };
 
-type ComposerEditCommentProps = {
+type ComposerEditCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to edit a comment in.
    */
@@ -131,7 +138,13 @@ type ComposerEditCommentProps = {
    * The ID of the comment to edit.
    */
   commentId: string;
+
   metadata?: never;
+
+  /**
+   * The metadata of the comment to edit.
+   */
+  commentMetadata?: Patchable<CM>;
 };
 
 export type ComposerProps<
@@ -141,7 +154,7 @@ export type ComposerProps<
   (
     | ComposerCreateThreadProps<TM>
     | ComposerCreateCommentProps<CM>
-    | ComposerEditCommentProps
+    | ComposerEditCommentProps<CM>
   ) & {
     /**
      * The event handler called when the composer is submitted.
@@ -696,6 +709,7 @@ export const Composer = forwardRef(
       threadId,
       commentId,
       metadata,
+      commentMetadata,
       defaultValue,
       defaultAttachments,
       onComposerSubmit,
@@ -831,20 +845,21 @@ export const Composer = forwardRef(
             commentId,
             threadId,
             body: comment.body,
-            metadata: metadata ?? {},
+            metadata: commentMetadata,
             attachments: comment.attachments,
           });
         } else if (threadId) {
           createComment({
             threadId,
             body: comment.body,
-            metadata: metadata ?? {},
+            metadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
         } else {
           createThread({
             body: comment.body,
-            metadata: metadata ?? {},
+            metadata,
+            commentMetadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
         }
@@ -854,6 +869,7 @@ export const Composer = forwardRef(
         createComment,
         createThread,
         editComment,
+        commentMetadata,
         metadata,
         onComposerSubmit,
         threadId,
