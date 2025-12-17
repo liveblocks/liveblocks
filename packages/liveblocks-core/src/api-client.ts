@@ -931,7 +931,7 @@ export function createApiClient<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient.delete<CommentDataPlain>(
+    await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",

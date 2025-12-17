@@ -733,7 +733,9 @@ function createStore_forNotifications() {
     });
   }
 
-  function updateAssociatedNotification(newComment: CommentData) {
+  function updateAssociatedNotification<CM extends BaseMetadata>(
+    newComment: CommentData<CM>
+  ) {
     signal.mutate((lut) => {
       const existing = find(
         lut.values(),

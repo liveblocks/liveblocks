@@ -89,7 +89,7 @@ export type CommentData<CM extends BaseMetadata = DCM> = {
 } & Relax<{ body: CommentBody } | { deletedAt: Date }>;
 
 export type CommentDataPlain<CM extends BaseMetadata = DCM> = Omit<
-  DateToString<CommentData>,
+  DateToString<CommentData<CM>>,
   "reactions" | "body" | "metadata"
 > & {
   reactions: DateToString<CommentReaction>[];
