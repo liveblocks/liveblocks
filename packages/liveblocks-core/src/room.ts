@@ -1135,7 +1135,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
-  readonly meta?: Record<string, Json>;
+  readonly meta: JsonObject;
 };
 
 type RoomState<
@@ -2175,7 +2175,7 @@ export function createRoom<
     notifySelfChanged();
 
     // Inject brand badge if meta.showBrand is true
-    if (message.meta?.showBrand === true) {
+    if (message.meta.showBrand === true) {
       injectBrandBadge(config.badgeLocation ?? "bottom-right");
     }
 
