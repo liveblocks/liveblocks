@@ -1135,7 +1135,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
-  readonly meta?: Record<string, unknown>;
+  readonly meta?: Record<string, Json>;
 };
 
 type RoomState<

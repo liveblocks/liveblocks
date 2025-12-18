@@ -279,7 +279,7 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
   /**
    * Optional metadata sent from the server to the client.
    */
-  readonly meta?: Record<string, unknown>;
+  readonly meta?: Record<string, Json>;
 };
 
 /**
