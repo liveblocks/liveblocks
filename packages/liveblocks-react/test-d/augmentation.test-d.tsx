@@ -35,6 +35,11 @@ declare global {
       pinned?: boolean;
     };
 
+    CommentMetadata: {
+      priority: number;
+      reviewed?: boolean;
+    };
+
     RoomInfo: {
       name: string;
       url?: string;
@@ -321,6 +326,7 @@ declare global {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -365,6 +371,7 @@ declare global {
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
       | "EDIT_THREAD_METADATA_ERROR"
+      | "EDIT_COMMENT_METADATA_ERROR"
       | "MARK_THREAD_AS_RESOLVED_ERROR"
       | "MARK_THREAD_AS_UNRESOLVED_ERROR"
       | "SUBSCRIBE_TO_THREAD_ERROR"
@@ -668,6 +675,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
@@ -702,6 +710,7 @@ declare global {
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
     metadata: { color: "red" },
+    commentMetadata: { priority: 1 },
   });
 
   expectType<"thread">(thread.type);
@@ -782,6 +791,24 @@ declare global {
     expectType<"comment">(comment.type);
     expectType<string>(comment.id);
     expectType<string>(comment.threadId);
+
+    const commentWithMetadata = createComment({
+      threadId: "th_xxx",
+      body: {
+        version: 1,
+        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+      },
+      metadata: {
+        priority: 2,
+        reviewed: false,
+      },
+    });
+
+    expectType<"comment">(commentWithMetadata.type);
+    expectType<string>(commentWithMetadata.id);
+    expectType<number>(commentWithMetadata.metadata.priority);
+    expectType<boolean | undefined>(commentWithMetadata.metadata.reviewed);
+    expectError(commentWithMetadata.metadata.nonexisting);
   }
 }
 
@@ -801,6 +828,19 @@ declare global {
   expectType<"comment">(comment.type);
   expectType<string>(comment.id);
   expectType<string>(comment.threadId);
+
+  const commentWithMetadata = createComment({
+    threadId: "th_xxx",
+    body: {
+      version: 1,
+      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
+    },
+    metadata: { priority: 1 },
+  });
+
+  expectType<"comment">(commentWithMetadata.type);
+  expectType<number>(commentWithMetadata.metadata.priority);
+  expectError(commentWithMetadata.metadata.nonexisting);
 }
 
 // ---------------------------------------------------------
@@ -817,6 +857,24 @@ declare global {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
+    })
+  );
 }
 
 // The useEditComment() hook (suspense)
@@ -831,6 +889,106 @@ declare global {
       body: { version: 1, content: [] },
     })
   );
+
+  expectType<void>(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { priority: 2 },
+    })
+  );
+
+  expectError(
+    editComment({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      body: { version: 1, content: [] },
+      metadata: { nonexisting: null },
+    })
+  );
+}
+
+// ---------------------------------------------------------
+
+// The useEditCommentMetadata() hook
+{
+  const editMetadata = classic.useEditCommentMetadata();
+  expectError(editMetadata({})); // no body = error
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: null },
+    })
+  ); // priority isn't optional, so it cannot be wiped
+}
+
+// The useEditCommentMetadata() hook (suspense)
+{
+  const editMetadata = suspense.useEditCommentMetadata();
+  expectError(editMetadata({})); // no body = error
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: null },
+    })
+  );
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { nonexisting: 123 },
+    })
+  );
+
+  expectType<void>(
+    editMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: {} })
+  );
+  expectType<void>(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: 2, reviewed: null },
+    })
+  );
+
+  expectError(
+    editMetadata({
+      threadId: "th_xxx",
+      commentId: "cm_xxx",
+      metadata: { priority: null },
+    })
+  ); // priority isn't optional, so it cannot be wiped
 }
 
 // ---------------------------------------------------------

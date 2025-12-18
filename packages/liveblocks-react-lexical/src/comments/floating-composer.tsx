@@ -11,7 +11,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -70,10 +70,10 @@ export const ATTACH_THREAD_COMMAND: LexicalCommand<string> = createCommand(
   "ATTACH_THREAD_COMMAND"
 );
 
-export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
-> & {
+export type FloatingComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = Omit<ComposerProps<TM, CM>, "threadId" | "commentId"> & {
   /**
    * Override the component's components.
    */

@@ -29,6 +29,7 @@ type CommentsOrNotificationsErrorContext =
       commentId: string;
       body: CommentBody;
       metadata: BaseMetadata;
+      commentMetadata: BaseMetadata;
     }
   | {
       type: "DELETE_THREAD_ERROR";
@@ -39,6 +40,13 @@ type CommentsOrNotificationsErrorContext =
       type: "EDIT_THREAD_METADATA_ERROR";
       roomId: string;
       threadId: string;
+      metadata: Patchable<BaseMetadata>;
+    }
+  | {
+      type: "EDIT_COMMENT_METADATA_ERROR";
+      roomId: string;
+      threadId: string;
+      commentId: string;
       metadata: Patchable<BaseMetadata>;
     }
   | {
@@ -56,6 +64,7 @@ type CommentsOrNotificationsErrorContext =
       threadId: string;
       commentId: string;
       body: CommentBody;
+      metadata: BaseMetadata;
     }
   | {
       type: "DELETE_COMMENT_ERROR";
@@ -156,6 +165,7 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "CREATE_THREAD_ERROR": return "Could not create new thread";
     case "DELETE_THREAD_ERROR": return "Could not delete thread";
     case "EDIT_THREAD_METADATA_ERROR": return "Could not edit thread metadata";
+    case "EDIT_COMMENT_METADATA_ERROR": return "Could not edit comment metadata";
     case "MARK_THREAD_AS_RESOLVED_ERROR": return "Could not mark thread as resolved";
     case "MARK_THREAD_AS_UNRESOLVED_ERROR": return "Could not mark thread as unresolved";
     case "SUBSCRIBE_TO_THREAD_ERROR": return "Could not subscribe to thread";
