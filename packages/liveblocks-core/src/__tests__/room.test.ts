@@ -648,6 +648,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -692,6 +693,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:read"] },
           },
+          meta: {},
         })
       );
 
@@ -737,6 +739,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -817,6 +820,7 @@ describe("room", () => {
             "1": { scopes: ["room:write"] },
             "2": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -874,6 +878,7 @@ describe("room", () => {
         users: {
           "1": { scopes: ["room:write"] },
         },
+        meta: {},
       })
     );
 
@@ -1630,6 +1635,7 @@ describe("room", () => {
           nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: { 1: { scopes: ["room:write"] } },
+          meta: {},
         })
       );
 
@@ -1686,6 +1692,7 @@ describe("room", () => {
                 scopes: ["room:write"],
               },
             },
+            meta: {},
           })
         );
 
@@ -1746,6 +1753,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-2",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
 
@@ -2441,6 +2449,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
         await waitUntilStatus(room, "connected");
@@ -2462,6 +2471,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
 
@@ -2498,6 +2508,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-2",
             scopes: ["room:write"],
             users: { "1": { id: undefined, scopes: ["room:write"] } },
+            meta: {},
           })
         );
 
