@@ -1,15 +1,28 @@
 import type { Json, JsonObject } from "../lib/Json";
 
-export enum OpCode {
-  INIT = 0,
-  SET_PARENT_KEY = 1,
-  CREATE_LIST = 2,
-  UPDATE_OBJECT = 3,
-  CREATE_OBJECT = 4,
-  DELETE_CRDT = 5,
-  DELETE_OBJECT_KEY = 6,
-  CREATE_MAP = 7,
-  CREATE_REGISTER = 8,
+export type OpCode = (typeof OpCode)[keyof typeof OpCode];
+export const OpCode = Object.freeze({
+  INIT: 0,
+  SET_PARENT_KEY: 1,
+  CREATE_LIST: 2,
+  UPDATE_OBJECT: 3,
+  CREATE_OBJECT: 4,
+  DELETE_CRDT: 5,
+  DELETE_OBJECT_KEY: 6,
+  CREATE_MAP: 7,
+  CREATE_REGISTER: 8,
+});
+
+export namespace OpCode {
+  export type INIT = typeof OpCode.INIT;
+  export type SET_PARENT_KEY = typeof OpCode.SET_PARENT_KEY;
+  export type CREATE_LIST = typeof OpCode.CREATE_LIST;
+  export type UPDATE_OBJECT = typeof OpCode.UPDATE_OBJECT;
+  export type CREATE_OBJECT = typeof OpCode.CREATE_OBJECT;
+  export type DELETE_CRDT = typeof OpCode.DELETE_CRDT;
+  export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
+  export type CREATE_MAP = typeof OpCode.CREATE_MAP;
+  export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
 }
 
 /**
