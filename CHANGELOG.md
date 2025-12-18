@@ -4,14 +4,14 @@
 
 ### `@liveblocks/core`
 
-- Liveblocks branding will appear for free plans
+- Liveblocks branding will appear for free plans.
 - Added badgeLocation option for the client library to control the branding
-  location for free plans
+  location for free plans.
 
 ### `@liveblocks/react`
 
 - Added badgeLocation option to LiveblocksProvider to control the branding
-  location for free plans
+  location for free plans.
 
 ## v3.11.1
 
