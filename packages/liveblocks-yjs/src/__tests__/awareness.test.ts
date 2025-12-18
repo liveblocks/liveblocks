@@ -119,6 +119,7 @@ describe("presence", () => {
         actor: 2,
         nonce: "nonce-for-actor-2",
         scopes: ["room:write"],
+        meta: {},
       } as RoomStateServerMsg<BaseUserMeta>),
     } as MessageEvent);
 
