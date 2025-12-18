@@ -40,18 +40,22 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type INITIAL_STORAGE_STATE = typeof ServerMsgCode.INITIAL_STORAGE_STATE;
+  export type INITIAL_STORAGE_STATE =
+    typeof ServerMsgCode.INITIAL_STORAGE_STATE;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
   export type THREAD_DELETED = typeof ServerMsgCode.THREAD_DELETED;
-  export type THREAD_METADATA_UPDATED = typeof ServerMsgCode.THREAD_METADATA_UPDATED;
+  export type THREAD_METADATA_UPDATED =
+    typeof ServerMsgCode.THREAD_METADATA_UPDATED;
   export type THREAD_UPDATED = typeof ServerMsgCode.THREAD_UPDATED;
   export type COMMENT_CREATED = typeof ServerMsgCode.COMMENT_CREATED;
   export type COMMENT_EDITED = typeof ServerMsgCode.COMMENT_EDITED;
   export type COMMENT_DELETED = typeof ServerMsgCode.COMMENT_DELETED;
-  export type COMMENT_REACTION_ADDED = typeof ServerMsgCode.COMMENT_REACTION_ADDED;
-  export type COMMENT_REACTION_REMOVED = typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type COMMENT_REACTION_ADDED =
+    typeof ServerMsgCode.COMMENT_REACTION_ADDED;
+  export type COMMENT_REACTION_REMOVED =
+    typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
