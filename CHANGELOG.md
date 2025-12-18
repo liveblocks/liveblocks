@@ -1,5 +1,11 @@
 ## vNEXT
 
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve an internal type definition.
+
 ## v3.12.0
 
 ### `@liveblocks/client`
