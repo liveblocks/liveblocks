@@ -2,7 +2,7 @@
 
 ## v3.12.0
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Liveblocks branding will appear for free plans.
 - Added badgeLocation option for the client library to control the branding
