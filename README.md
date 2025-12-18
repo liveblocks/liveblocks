@@ -21,13 +21,10 @@
   </a>
 </p>
 
-<p align="center">
 **[Liveblocks](https://liveblocks.io) gives you the building blocks and
 infrastructure to enable people and AI to work together inside your app.**
 
 **[Get started for free](https://liveblocks.io/signup)**
-
-</p>
 
 <img src="./assets/concepts/liveblocks-collaboration-infrastructure.png" alt="Liveblocks Collaboration Infrastructure"   />
 
