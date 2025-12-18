@@ -275,6 +275,11 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly users: {
     readonly [otherActor: number]: U & { scopes: string[] };
   };
+
+  /**
+   * Optional metadata sent from the server to the client.
+   */
+  readonly meta?: Record<string, Json>;
 };
 
 /**

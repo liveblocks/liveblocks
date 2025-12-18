@@ -1,5 +1,6 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
@@ -98,6 +99,7 @@ import type {
 import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
+  BadgeLocation,
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
@@ -1133,6 +1135,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
+  readonly meta?: Record<string, Json>;
 };
 
 type RoomState<
@@ -1274,6 +1277,8 @@ export type RoomConfig<M extends BaseMetadata> = {
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  badgeLocation?: BadgeLocation;
 
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
@@ -2164,9 +2169,15 @@ export function createRoom<
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
+      meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
+
+    // Inject brand badge if meta.showBrand is true
+    if (message.meta?.showBrand === true) {
+      injectBrandBadge(config.badgeLocation ?? "bottom-right");
+    }
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
