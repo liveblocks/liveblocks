@@ -69,7 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import { isAck, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
@@ -2020,7 +2020,7 @@ export function createRoom<
   function applyOp(op: Op, source: OpSource): ApplyResult {
     // Explicit case to handle incoming "AckOp"s, which are supposed to be
     // no-ops.
-    if (isAckOp(op)) {
+    if (isAck(op)) {
       return { modified: false };
     }
 

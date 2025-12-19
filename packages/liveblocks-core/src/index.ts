@@ -271,7 +271,8 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOp,
+  AckOpV7,
+  AckOpV8,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
