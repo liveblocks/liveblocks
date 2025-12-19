@@ -111,32 +111,6 @@ export type AckOp = {
   readonly opId: string;
 };
 
-/**
- * Create an Op that can be used as an acknowledgement for the given opId, to
- * send back to the originating client in cases where the server decided to
- * ignore the Op and not forward it.
- *
- * Why?
- * It's important for the client to receive an acknowledgement for this, so
- * that it can correctly update its own unacknowledged Ops administration.
- * Otherwise it could get in "synchronizing" state indefinitely.
- *
- * CLEVER HACK
- * Introducing a new Op type for this would not be backward-compatible as
- * receiving such Op would crash old clients :(
- * So the clever backward-compatible hack pulled here is that we codify the
- * acknowledgement as a "deletion Op" for the non-existing node id "ACK". In
- * old clients such Op is accepted, but will effectively be a no-op as that
- * node does not exist, but as a side-effect the Op will get acknowledged.
- */
-export function ackOp(opId: string): AckOp {
-  return {
-    type: OpCode.DELETE_CRDT,
-    id: "ACK", // (H)ACK
-    opId,
-  };
-}
-
 export function isAckOp(op: Op): op is AckOp {
   return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
