@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "3.12.0",
+  "version": "3.12.1-enums1",
   "description": "A store enhancer to integrate Liveblocks into Redux stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -33,8 +33,8 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.12.0",
-    "@liveblocks/core": "3.12.0"
+    "@liveblocks/client": "3.12.1-enums1",
+    "@liveblocks/core": "3.12.1-enums1"
   },
   "peerDependencies": {
     "redux": "^4 || ^5"
