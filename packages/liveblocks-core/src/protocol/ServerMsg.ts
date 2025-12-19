@@ -3,34 +3,60 @@ import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
-export enum ServerMsgCode {
+export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
+export const ServerMsgCode = Object.freeze({
   // For Presence
-  UPDATE_PRESENCE = 100,
-  USER_JOINED = 101,
-  USER_LEFT = 102,
-  BROADCASTED_EVENT = 103,
-  ROOM_STATE = 104,
+  UPDATE_PRESENCE: 100,
+  USER_JOINED: 101,
+  USER_LEFT: 102,
+  BROADCASTED_EVENT: 103,
+  ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE = 200,
-  UPDATE_STORAGE = 201,
+  INITIAL_STORAGE_STATE: 200,
+  UPDATE_STORAGE: 201,
 
   // For Yjs Docs
-  UPDATE_YDOC = 300,
+  UPDATE_YDOC: 300,
 
   // For Comments
-  THREAD_CREATED = 400,
-  THREAD_DELETED = 407,
-  THREAD_METADATA_UPDATED = 401,
-  THREAD_UPDATED = 408,
-  COMMENT_CREATED = 402,
-  COMMENT_EDITED = 403,
-  COMMENT_DELETED = 404,
-  COMMENT_REACTION_ADDED = 405,
-  COMMENT_REACTION_REMOVED = 406,
+  THREAD_CREATED: 400,
+  THREAD_DELETED: 407,
+  THREAD_METADATA_UPDATED: 401,
+  THREAD_UPDATED: 408,
+  COMMENT_CREATED: 402,
+  COMMENT_EDITED: 403,
+  COMMENT_DELETED: 404,
+  COMMENT_REACTION_ADDED: 405,
+  COMMENT_REACTION_REMOVED: 406,
 
   // Error codes
-  REJECT_STORAGE_OP = 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
+  REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
+});
+
+export namespace ServerMsgCode {
+  export type UPDATE_PRESENCE = typeof ServerMsgCode.UPDATE_PRESENCE;
+  export type USER_JOINED = typeof ServerMsgCode.USER_JOINED;
+  export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
+  export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
+  export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
+  export type INITIAL_STORAGE_STATE =
+    typeof ServerMsgCode.INITIAL_STORAGE_STATE;
+  export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
+  export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
+  export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
+  export type THREAD_DELETED = typeof ServerMsgCode.THREAD_DELETED;
+  export type THREAD_METADATA_UPDATED =
+    typeof ServerMsgCode.THREAD_METADATA_UPDATED;
+  export type THREAD_UPDATED = typeof ServerMsgCode.THREAD_UPDATED;
+  export type COMMENT_CREATED = typeof ServerMsgCode.COMMENT_CREATED;
+  export type COMMENT_EDITED = typeof ServerMsgCode.COMMENT_EDITED;
+  export type COMMENT_DELETED = typeof ServerMsgCode.COMMENT_DELETED;
+  export type COMMENT_REACTION_ADDED =
+    typeof ServerMsgCode.COMMENT_REACTION_ADDED;
+  export type COMMENT_REACTION_REMOVED =
+    typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
 /**
