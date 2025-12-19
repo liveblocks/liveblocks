@@ -11,6 +11,7 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
+  ACK: 9, // Will only appear in v8+
 });
 
 export namespace OpCode {
@@ -23,6 +24,7 @@ export namespace OpCode {
   export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
   export type CREATE_MAP = typeof OpCode.CREATE_MAP;
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
+  export type ACK = typeof OpCode.ACK;
 }
 
 /**
