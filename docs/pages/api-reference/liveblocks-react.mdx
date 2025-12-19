@@ -4017,7 +4017,7 @@ the dependency arrays of your `useMutation` calls:
 ### useThreads [@badge=RoomProvider]
 
 Returns a paginated list of threads within the current room. Initially fetches
-the latest 50 threads.
+the oldest 50 threads.
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -4029,7 +4029,7 @@ const { threads, error, isLoading } = useThreads();
 ```
 
 Use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component to
-render the latest 50 threads with our default UI.
+render the oldest 50 threads with our default UI.
 
 ```tsx
 import { Thread } from "@liveblocks/react-ui";
