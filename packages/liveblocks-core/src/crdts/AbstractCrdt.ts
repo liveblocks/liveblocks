@@ -125,7 +125,7 @@ export function createManagedPool(
 export enum OpSource {
   UNDOREDO_RECONNECT,
   REMOTE,
-  ACK,
+  FIXOP,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
