@@ -75,7 +75,7 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialDocumentStateServerMsg // For a single client
+  | InitialStorageStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -313,7 +313,7 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
  * sending a FetchStorageClientMsg message, to provide the initial Storage
  * state of the Room. The payload includes the entire Storage document.
  */
-export type InitialDocumentStateServerMsg = {
+export type InitialStorageStateServerMsg = {
   readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
   readonly items: IdTuple<SerializedCrdt>[];
 };
