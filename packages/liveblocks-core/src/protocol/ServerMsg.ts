@@ -15,6 +15,7 @@ export const ServerMsgCode = Object.freeze({
   // For Storage
   INITIAL_STORAGE_STATE: 200,
   UPDATE_STORAGE: 201,
+  STORAGE_ACK: 202,
 
   // For Yjs Docs
   UPDATE_YDOC: 300,
@@ -43,6 +44,7 @@ export namespace ServerMsgCode {
   export type INITIAL_STORAGE_STATE =
     typeof ServerMsgCode.INITIAL_STORAGE_STATE;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
+  export type STORAGE_ACK = typeof ServerMsgCode.STORAGE_ACK;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
   export type THREAD_DELETED = typeof ServerMsgCode.THREAD_DELETED;
@@ -77,6 +79,7 @@ export type ServerMsg<
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
+  | StorageAckServerMsg // Response to a storage op initiated from this client only
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
 
@@ -328,6 +331,15 @@ export type InitialDocumentStateServerMsg = {
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
   readonly ops: Op[];
+};
+
+/**
+ * Sent back to client that initiated a storage mutation, to acknowledge which
+ * mutations have been persisted.
+ */
+export type StorageAckServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_ACK;
+  readonly opIds: string[];
 };
 
 /**
