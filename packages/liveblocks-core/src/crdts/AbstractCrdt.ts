@@ -122,9 +122,29 @@ export function createManagedPool(
   };
 }
 
+/**
+ * When applying an op to a CRDT, we need to know where it came from to apply
+ * it correctly.
+ */
 export enum OpSource {
+  /**
+   * Optimistic update applied locally (from an undo, redo, or reconnect). Not
+   * yet acknowledged by the server. Will be sent to server and needs to be
+   * tracked for conflict resolution.
+   */
   LOCAL,
+
+  /**
+   * Op received from server, originated from another client. Apply it, unless
+   * there's a pending local op for the same key (local ops take precedence
+   * until acknowledged).
+   */
   REMOTE,
+
+  /**
+   * Op received from server, originated from THIS client. Server echoed it
+   * back to confirm.
+   */
   ACK,
 }
 
