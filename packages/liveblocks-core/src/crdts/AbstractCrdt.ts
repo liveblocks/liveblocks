@@ -132,7 +132,7 @@ export enum OpSource {
    * yet acknowledged by the server. Will be sent to server and needs to be
    * tracked for conflict resolution.
    */
-  UNDOREDO_RECONNECT,
+  LOCAL,
 
   /**
    * Op received from server, originated from another client. Apply it, unless
