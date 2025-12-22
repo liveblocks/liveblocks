@@ -123,7 +123,7 @@ export function createManagedPool(
 }
 
 export enum OpSource {
-  UNDOREDO_RECONNECT,
+  LOCAL,
   REMOTE,
   ACK,
 }

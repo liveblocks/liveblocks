@@ -1972,7 +1972,7 @@ export function createRoom<
         let source: OpSource;
 
         if (isLocal) {
-          source = OpSource.UNDOREDO_RECONNECT;
+          source = OpSource.LOCAL;
         } else {
           const opId = nn(op.opId);
           const deleted = context.unacknowledgedOps.delete(opId);
@@ -2035,7 +2035,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.LOCAL);
       }
 
       case OpCode.SET_PARENT_KEY: {
