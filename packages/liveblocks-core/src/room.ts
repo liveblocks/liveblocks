@@ -2019,14 +2019,6 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // On protocol V7, "acks" appeared as incoming Ops in "storage mutation" messages
-    // On protocol V8+, acks are a proper new message type
-    // TODO Remove this after switching to /v8. On /v8, all incoming Ops are
-    // actually expected to be real storage mutations/fixes, not acks.
-    if (isAckOp(op)) {
-      return { modified: false };
-    }
-
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
@@ -3393,7 +3385,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7"; // TODO When switching to /v8 here, remove the isAckOp check!
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

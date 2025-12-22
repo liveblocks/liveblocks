@@ -113,10 +113,6 @@ export type AckOp = {
   readonly opId: string;
 };
 
-export function isAckOp(op: Op): op is AckOp {
-  return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
-}
-
 export type SetParentKeyOp = {
   readonly opId?: string;
   readonly id: string;
