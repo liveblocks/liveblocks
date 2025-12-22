@@ -2552,7 +2552,7 @@ export function createRoom<
     ) {
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
-      messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      messages.push({ type: ClientMsgCode.FETCH_STORAGE, stream: true });
     }
 
     if (options.flush) {
