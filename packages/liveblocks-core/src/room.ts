@@ -74,7 +74,7 @@ import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettin
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
+  InitialStorageStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -1804,7 +1804,7 @@ export function createRoom<
   );
 
   function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
+    message: InitialStorageStateServerMsg
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
@@ -2526,7 +2526,7 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+  function processInitialStorage(message: InitialStorageStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
     applyAndSendOps(unacknowledgedOps);
