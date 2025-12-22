@@ -310,8 +310,8 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
 
 /**
  * Sent by the WebSocket server to a single client in response to the client
- * joining the Room, to provide the initial Storage state of the Room. The
- * payload includes the entire Storage document.
+ * sending a FetchStorageClientMsg message, to provide the initial Storage
+ * state of the Room. The payload includes the entire Storage document.
  */
 export type InitialDocumentStateServerMsg = {
   readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
