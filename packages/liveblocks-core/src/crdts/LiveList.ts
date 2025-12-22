@@ -253,7 +253,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  #applySetAck(op: CreateOp): ApplyResult {
+  #applySetFixop(op: CreateOp): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
@@ -409,7 +409,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  #applyInsertAck(op: CreateOp): ApplyResult {
+  #applyInsertFixop(op: CreateOp): ApplyResult {
     const existingItem = this.#items.find((item) => item._id === op.id);
     const key = asPos(op.parentKey);
 
@@ -575,7 +575,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (source === OpSource.REMOTE) {
         result = this.#applySetRemote(op);
       } else if (source === OpSource.FIXOP) {
-        result = this.#applySetAck(op);
+        result = this.#applySetFixop(op);
       } else {
         result = this.#applySetUndoRedo(op);
       }
@@ -583,7 +583,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (source === OpSource.REMOTE) {
         result = this.#applyRemoteInsert(op);
       } else if (source === OpSource.FIXOP) {
-        result = this.#applyInsertAck(op);
+        result = this.#applyInsertFixop(op);
       } else {
         result = this.#applyInsertUndoRedo(op);
       }
@@ -695,7 +695,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  #applySetChildKeyAck(newKey: Pos, child: LiveNode): ApplyResult {
+  #applySetChildKeyFixop(newKey: Pos, child: LiveNode): ApplyResult {
     const previousKey = nn(child._parentKey);
 
     if (this.#implicitlyDeletedItems.has(child)) {
@@ -804,7 +804,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (source === OpSource.REMOTE) {
       return this.#applySetChildKeyRemote(newKey, child);
     } else if (source === OpSource.FIXOP) {
-      return this.#applySetChildKeyAck(newKey, child);
+      return this.#applySetChildKeyFixop(newKey, child);
     } else {
       return this.#applySetChildKeyUndoRedo(newKey, child);
     }
