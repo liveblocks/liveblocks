@@ -1935,6 +1935,13 @@ export function createRoom<
 
     // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
     // that right now first.
+    // -----------------------------------------------------------------------
+    // XXX [1] I _think_ rawOps should only be mapped over if isLocal is true,
+    // but need to double-check that later. Currently, the XXX [1] below
+    // assumes that opId on fix-ops is always present, but the server does not
+    // currently send those! This .map() patches those missing opIds, but
+    // I think... accidentally!
+    // -----------------------------------------------------------------------
     const ops = rawOps.map((op) => {
       if (op.type !== "presence" && !op.opId) {
         return { ...op, opId: context.pool.generateOpId() };
@@ -1974,6 +1981,10 @@ export function createRoom<
         if (isLocal) {
           source = OpSource.LOCAL;
         } else {
+          // XXX [1] Currently an invalid assumption here! Server does NOT send
+          // .opId on generated fix-ops! (But it should.) This code path only
+          // does not throw because the .map() above patches missing opIds
+          // (unintentionally I think).
           const opId = nn(op.opId);
           const deleted = context.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.OURS : OpSource.THEIRS;
