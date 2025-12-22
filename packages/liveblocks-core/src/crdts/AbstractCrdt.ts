@@ -138,14 +138,18 @@ export enum OpSource {
    * Op received from server, originated from another client. Apply it, unless
    * there's a pending local op for the same key (local ops take precedence
    * until acknowledged).
+   *
+   * Note that a "fix Op" sent by the server in response to a local mutation
+   * that caused a conflict will also be classified as a THEIRS-like mutation.
+   * (As if another client resolved the conflict.)
    */
-  REMOTE,
+  THEIRS,
 
   /**
    * Op received from server, originated from THIS client. Server echoed it
    * back to confirm.
    */
-  ACK,
+  OURS,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only

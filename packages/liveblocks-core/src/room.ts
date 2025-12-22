@@ -1850,7 +1850,7 @@ export function createRoom<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = applyOps(ops, false);
+    const result = applyOps(ops, /* isLocal */ false);
 
     notify(result.updates);
   }
@@ -1976,7 +1976,7 @@ export function createRoom<
         } else {
           const opId = nn(op.opId);
           const deleted = context.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+          source = deleted ? OpSource.OURS : OpSource.THEIRS;
         }
 
         const applyOpResult = applyOp(op, source);
@@ -2266,7 +2266,7 @@ export function createRoom<
 
     const inOps = Array.from(offlineOps.values());
 
-    const result = applyOps(inOps, true);
+    const result = applyOps(inOps, /* isLocal */ true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2357,7 +2357,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, false);
+          const applyResult = applyOps(message.ops, /* isLocal */ false);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2644,7 +2644,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyOps(historyOps, /* isLocal */ true);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
@@ -2669,7 +2669,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyOps(historyOps, /* isLocal */ true);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
