@@ -1,4 +1,8 @@
-## vNEXT
+## v3.13.0 (Not yet released)
+
+### `@liveblocks/client`
+
+- Internal: improve ACK efficiency.
 
 ## v3.12.1
 
