@@ -227,7 +227,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return { modified: false };
     }
 
-    if (source === OpSource.UNDOREDO_RECONNECT) {
+    if (source === OpSource.LOCAL) {
       this.#propToLastUpdate.set(key, nn(opId));
     } else if (this.#propToLastUpdate.get(key) === undefined) {
       // Remote operation with no local change => apply operation

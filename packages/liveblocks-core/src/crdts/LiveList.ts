@@ -572,17 +572,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     let result: ApplyResult;
 
     if (op.intent === "set") {
-      if (source === OpSource.REMOTE) {
+      if (source === OpSource.THEIRS) {
         result = this.#applySetRemote(op);
-      } else if (source === OpSource.ACK) {
+      } else if (source === OpSource.OURS) {
         result = this.#applySetAck(op);
       } else {
         result = this.#applySetUndoRedo(op);
       }
     } else {
-      if (source === OpSource.REMOTE) {
+      if (source === OpSource.THEIRS) {
         result = this.#applyRemoteInsert(op);
-      } else if (source === OpSource.ACK) {
+      } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {
         result = this.#applyInsertUndoRedo(op);
@@ -801,9 +801,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _setChildKey(newKey: Pos, child: LiveNode, source: OpSource): ApplyResult {
-    if (source === OpSource.REMOTE) {
+    if (source === OpSource.THEIRS) {
       return this.#applySetChildKeyRemote(newKey, child);
-    } else if (source === OpSource.ACK) {
+    } else if (source === OpSource.OURS) {
       return this.#applySetChildKeyAck(newKey, child);
     } else {
       return this.#applySetChildKeyUndoRedo(newKey, child);
