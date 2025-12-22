@@ -271,8 +271,7 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOpV7,
-  AckOpV8,
+  AckOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -307,6 +306,7 @@ export type {
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
+  StorageAckServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
