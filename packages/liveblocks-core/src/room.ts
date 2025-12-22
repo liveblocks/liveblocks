@@ -69,7 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
-import { isAck, OpCode } from "./protocol/Op";
+import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
@@ -2018,9 +2018,11 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // Explicit case to handle incoming "AckOp"s, which are supposed to be
-    // no-ops.
-    if (isAck(op)) {
+    // On protocol V7, "acks" appeared as incoming Ops in "storage mutation" messages
+    // On protocol V8+, acks are a proper new message type
+    // TODO Remove this after switching to /v8. On /v8, all incoming Ops are
+    // actually expected to be real storage mutations/fixes, not acks.
+    if (isAckOp(op)) {
       return { modified: false };
     }
 
@@ -2353,7 +2355,7 @@ export function createRoom<
           processInitialStorage(message);
           break;
         }
-        // Write event
+
         case ServerMsgCode.UPDATE_STORAGE: {
           const applyResult = applyOps(message.ops, false);
           for (const [key, value] of applyResult.updates.storageUpdates) {
@@ -3381,7 +3383,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v7"; // TODO When switching to /v8 here, remove the isAckOp check!
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
