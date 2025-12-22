@@ -44,7 +44,7 @@
     "@liveblocks/vitest-config": "*",
     "@reduxjs/toolkit": "^2.8.2",
     "@testing-library/dom": "^10.4.0",
-    "msw": "^2.10.4",
+    "msw": "^2.11.6",
     "redux": "^5.0.1"
   },
   "sideEffects": false,
