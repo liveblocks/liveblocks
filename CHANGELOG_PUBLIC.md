@@ -39,9 +39,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Added `badgeLocation` option to `LiveblocksProvider` to control the branding
   location for free plans.
 
+## Documentation
+
+- Fix `useThreads` API reference, it returns _oldest_ threads first, not _newest_ threads.
+
 ## Contributors
 
-jrowny, nvie
+jrowny, nvie, flowflorent
 
 # Week 50 (2025-12-12)
 
