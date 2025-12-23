@@ -43,7 +43,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - We've been doing lots of prep work to enable a new opt-in storage engine for Liveblocks
   rooms that will bring performance benefits like faster room connection speed and larger
-  document sizes to everyone — stay tuned! 👀
+  document sizes to everyone—stay tuned!
 
 ## Documentation
 
