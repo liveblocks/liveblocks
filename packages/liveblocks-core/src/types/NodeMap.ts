@@ -12,6 +12,8 @@ export type NodeMap = Map<
   SerializedCrdt
 >;
 
+export type NodeStream = Iterable<IdTuple<SerializedCrdt>>;
+
 /**
  * Reverse lookup table for all child nodes (= list of SerializedCrdt values)
  * by their parent node's IDs.
