@@ -39,6 +39,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Added `badgeLocation` option to `LiveblocksProvider` to control the branding
   location for free plans.
 
+## Infrastructure
+
+- We've been doing lots of prep work to enable a new opt-in storage engine for Liveblocks
+  rooms that will bring performance benefits like faster room connection speed and larger
+  document sizes to everyone — stay tuned! 👀
+
 ## Documentation
 
 - Fix `useThreads` API reference, it returns _oldest_ threads first, not _newest_ threads.
