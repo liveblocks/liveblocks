@@ -71,10 +71,8 @@ import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
-  InitialStorageStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -97,7 +95,7 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
+import type { NodeMap, NodeStream } from "./types/NodeMap";
 import type {
   BadgeLocation,
   InternalOthersEvent,
@@ -1337,6 +1335,22 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+function makePartialNodeMap() {
+  let map: NodeMap = new Map();
+  return {
+    append(chunk: NodeStream) {
+      for (const [id, node] of chunk) {
+        map.set(id, node);
+      }
+    },
+    clear(): NodeMap {
+      const result = map;
+      map = new Map();
+      return result;
+    },
+  };
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1429,6 +1443,11 @@ export function createRoom<
     activeBatch: null,
     unacknowledgedOps: new Map<string, Op>(),
   };
+
+  // Accumulates nodes as initial storage arrives in chunks via
+  // INITIAL_STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // done: true), the complete map is passed to processInitialStorage().
+  const partialNodes = makePartialNodeMap();
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
@@ -1803,17 +1822,11 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(
-    message: InitialStorageStateServerMsg
-  ) {
-    if (message.items.length === 0) {
-      throw new Error("Internal error: cannot load storage without items");
-    }
-
+  function createOrUpdateRootFromMessage(nodes: NodeStream) {
     if (context.root !== undefined) {
-      updateRoot(message.items);
+      updateRoot(new Map(nodes));
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, context.pool);
+      context.root = LiveObject._fromItems<S>(nodes, context.pool);
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1837,7 +1850,11 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+  function updateRoot(nodes: NodeMap) {
+    if (nodes.size === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
     if (context.root === undefined) {
       return;
     }
@@ -1848,7 +1865,7 @@ export function createRoom<
     }
 
     // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
+    const ops = getTreesDiffOperations(currentItems, nodes);
 
     const result = applyOps(ops, /* isLocal */ false);
 
@@ -2350,7 +2367,15 @@ export function createRoom<
         case ServerMsgCode.INITIAL_STORAGE_STATE: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message);
+          processInitialStorage(message.items);
+          break;
+        }
+
+        case ServerMsgCode.INITIAL_STORAGE_CHUNK: {
+          partialNodes.append(message.nodes);
+          if (message.done) {
+            processInitialStorage(partialNodes.clear());
+          }
           break;
         }
 
@@ -2526,9 +2551,9 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: InitialStorageStateServerMsg) {
+  function processInitialStorage(nodes: NodeStream) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message);
+    createOrUpdateRootFromMessage(nodes);
     applyAndSendOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
@@ -2538,8 +2563,8 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+    const nodes = new Map(await httpClient.streamStorage({ roomId }));
+    processInitialStorage(nodes);
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2553,6 +2578,7 @@ export function createRoom<
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE, stream: true });
+      partialNodes.clear(); // Reset any partial state from previous fetch
     }
 
     if (options.flush) {

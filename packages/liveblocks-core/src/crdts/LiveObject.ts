@@ -21,7 +21,7 @@ import type {
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ParentToChildNodeMap } from "../types/NodeMap";
+import type { NodeStream, ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {
@@ -77,7 +77,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
+    items: NodeStream
   ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: SerializedRootObject | null = null;
@@ -105,11 +105,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @private Do not use this API directly */
   static _fromItems<O extends LsonObject>(
-    items: IdTuple<SerializedCrdt>[],
+    nodes: NodeStream,
     pool: ManagedPool
   ): LiveObject<O> {
     const [root, parentToChildren] =
-      LiveObject.#buildRootAndParentToChildren(items);
+      LiveObject.#buildRootAndParentToChildren(nodes);
     return LiveObject._deserialize(
       ["root", root],
       parentToChildren,
