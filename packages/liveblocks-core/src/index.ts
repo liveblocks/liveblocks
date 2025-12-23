@@ -303,7 +303,8 @@ export { CrdtType } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
+  InitialStorageChunkServerMsg,
+  InitialStorageStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
