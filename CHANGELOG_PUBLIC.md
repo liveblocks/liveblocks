@@ -18,6 +18,31 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 51 (2025-12-19)
+
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve some internal type definitions
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added `badgeLocation` option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added `badgeLocation` option to `LiveblocksProvider` to control the branding
+  location for free plans.
+
+## Contributors
+
+jrowny, nvie
+
 # Week 50 (2025-12-12)
 
 ## v3.11.1
