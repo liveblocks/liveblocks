@@ -1,0 +1,78 @@
+{
+  "name": "@liveblocks/nextjs",
+  "version": "3.12.1",
+  "description": "Set of utilities that lets your set up Liveblocks with Next.js",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "start": "tsup --watch",
+    "format": "(eslint --fix src/ || true) && prettier --write src/",
+    "lint": "eslint src/",
+    "lint:package": "publint --strict && attw --pack",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test:types": "ls test-d/* | xargs -n1 tsd --files",
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
+  },
+  "dependencies": {
+    "@liveblocks/node": "3.12.1"
+  },
+  "peerDependencies": {
+    "next": "^16 || ^15 || ^14"
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/vitest-config": "*"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-emails"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "webhooks",
+    "nextjs",
+    "node",
+    "react",
+    "comments",
+    "threads",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}
