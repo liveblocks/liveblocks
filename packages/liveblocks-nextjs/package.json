@@ -51,7 +51,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/liveblocks-emails"
+    "directory": "packages/liveblocks-nextjs"
   },
   "homepage": "https://liveblocks.io",
   "keywords": [
