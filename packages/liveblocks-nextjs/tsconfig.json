@@ -1,0 +1,8 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+  "compilerOptions": {
+    "lib": ["dom"]
+  },
+  "include": ["src"]
+}
