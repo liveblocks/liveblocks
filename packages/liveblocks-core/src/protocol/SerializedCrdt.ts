@@ -2,11 +2,19 @@ import type { Json, JsonObject } from "../lib/Json";
 
 export type IdTuple<T> = [id: string, value: T];
 
-export enum CrdtType {
-  OBJECT = 0,
-  LIST = 1,
-  MAP = 2,
-  REGISTER = 3,
+export type CrdtType = (typeof CrdtType)[keyof typeof CrdtType];
+export const CrdtType = Object.freeze({
+  OBJECT: 0,
+  LIST: 1,
+  MAP: 2,
+  REGISTER: 3,
+});
+
+export namespace CrdtType {
+  export type OBJECT = typeof CrdtType.OBJECT;
+  export type LIST = typeof CrdtType.LIST;
+  export type MAP = typeof CrdtType.MAP;
+  export type REGISTER = typeof CrdtType.REGISTER;
 }
 
 export type SerializedCrdt = SerializedRootObject | SerializedChild;

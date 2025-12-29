@@ -359,6 +359,7 @@ export async function prepareStorageTest<
       nonce: `nonce-for-actor-${currentActor}`,
       scopes,
       users: { [currentActor]: { scopes: ["room:write"] } },
+      meta: {},
     })
   );
 
