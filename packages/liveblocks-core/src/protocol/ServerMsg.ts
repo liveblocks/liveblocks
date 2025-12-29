@@ -57,6 +57,8 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.COMMENT_REACTION_ADDED;
   export type COMMENT_REACTION_REMOVED =
     typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type COMMENT_METADATA_UPDATED =
+    typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
