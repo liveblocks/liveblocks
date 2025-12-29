@@ -186,7 +186,7 @@ start building your own security logic in Next.js’ `/app` directory.
               info: {
                 name: string;
                 avatar: string;
-                colors: string[];
+                color: string;
               }
             }
 
@@ -213,7 +213,7 @@ start building your own security logic in Next.js’ `/app` directory.
             userInfo: {
               name: user.name,
               avatar: user.avatarUrl,
-              colors: user.colorArray,
+              color: user.color,
             }
           },
         );
@@ -226,7 +226,7 @@ start building your own security logic in Next.js’ `/app` directory.
         export { useSelf } from "@liveblocks/react/suspense";
 
         function Component() {
-          const { name, avatar, colors } = useSelf((me) => me.info);
+          const { name, avatar, color } = useSelf((me) => me.info);
         }
         ```
 
