@@ -35,8 +35,21 @@ import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
+type ExcludeProps<T, K extends Record<string, unknown>> = Omit<
+  Exclude<T, T & K>,
+  keyof K
+>;
+
+type ComposerPropsCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = ExcludeProps<
+  ComposerProps<TM, CM>,
+  { threadId: string; commentId: string }
+>;
+
 type FloatingComposerComponents = {
-  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+  Composer: ComponentType<ComposerPropsCreateThread<DTM, DCM>>;
 };
 
 /**
@@ -73,7 +86,7 @@ export const ATTACH_THREAD_COMMAND: LexicalCommand<string> = createCommand(
 export type FloatingComposerProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> = Omit<ComposerProps<TM, CM>, "threadId" | "commentId"> & {
+> = ComposerPropsCreateThread<TM, CM> & {
   /**
    * Override the component's components.
    */

@@ -99,7 +99,10 @@ interface MarkToggleProps extends ComposerMarkToggleProps {
   shortcut?: string;
 }
 
-type ComposerCreateThreadProps<TM extends BaseMetadata> = {
+type ComposerCreateThreadProps<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   threadId?: never;
 
   commentId?: never;
@@ -109,7 +112,10 @@ type ComposerCreateThreadProps<TM extends BaseMetadata> = {
    */
   metadata?: TM;
 
-  commentMetadata?: never;
+  /**
+   * The metadata of the comment to create.
+   */
+  commentMetadata?: CM;
 };
 
 type ComposerCreateCommentProps<CM extends BaseMetadata> = {
@@ -152,7 +158,7 @@ export type ComposerProps<
   CM extends BaseMetadata = DCM,
 > = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
   (
-    | ComposerCreateThreadProps<TM>
+    | ComposerCreateThreadProps<TM, CM>
     | ComposerCreateCommentProps<CM>
     | ComposerEditCommentProps<CM>
   ) & {

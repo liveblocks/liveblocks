@@ -31,14 +31,27 @@ import { createPortal } from "react-dom";
 import type { ExtendedChainedCommands } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
 
+type ExcludeProps<T, K extends Record<string, unknown>> = Omit<
+  Exclude<T, T & K>,
+  keyof K
+>;
+
+type ComposerPropsCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = ExcludeProps<
+  ComposerProps<TM, CM>,
+  { threadId: string; commentId: string }
+>;
+
 type FloatingComposerComponents = {
-  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+  Composer: ComponentType<ComposerPropsCreateThread<DTM, DCM>>;
 };
 
 export type FloatingComposerProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> = Omit<ComposerProps<TM, CM>, "threadId" | "commentId"> & {
+> = ComposerPropsCreateThread<TM, CM> & {
   /**
    * Override the component's components.
    */
