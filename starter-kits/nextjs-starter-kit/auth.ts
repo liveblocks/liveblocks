@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
-import { getCurrentOrganization } from "@/lib/actions/getCurrentOrganization";
+import { getCurrentOrganization, switchOrganization } from "@/lib/actions";
 import { getUser } from "@/lib/database/getUser";
 
 // Your NextAuth secret (generate a new one for production)
@@ -28,66 +28,36 @@ export const {
       }
 
       session.user.info = userInfo;
+      session.user.currentOrganizationId = token.organizationId;
 
-      // TODO IMPORTANT sort out this mess
+      // On every load, check current org and if user has access
+      const currentOrganizationId = await getCurrentOrganization();
 
-      // Get current organization from cookie (set by switchOrganization action)
-      // Fallback to token, then default to first organization if user has organizations
-      const organizationFromCookie = await getCurrentOrganization();
-      if (organizationFromCookie) {
-        // Verify user has access to this organization
-        // Users always have access to their personal organization (their own ID)
-        const userOrganizationIds = userInfo.organizationIds || [];
-        const isPersonalOrg = organizationFromCookie === userInfo.id;
-
-        if (
-          isPersonalOrg ||
-          userOrganizationIds.includes(organizationFromCookie)
-        ) {
-          session.user.currentOrganizationId = organizationFromCookie;
-        } else {
-          // Personal workspace is always the default
-          session.user.currentOrganizationId = userInfo.id;
+      if (currentOrganizationId) {
+        if (userInfo.organizationIds.includes(currentOrganizationId)) {
+          session.user.currentOrganizationId = currentOrganizationId;
         }
-      } else if (token.organizationId) {
-        // Verify token organization is valid
-        const userOrganizationIds = userInfo.organizationIds || [];
-        const isPersonalOrg = token.organizationId === userInfo.id;
-        if (
-          isPersonalOrg ||
-          userOrganizationIds.includes(token.organizationId)
-        ) {
-          session.user.currentOrganizationId = token.organizationId;
-        } else {
-          // Personal workspace is always the default
-          session.user.currentOrganizationId = userInfo.id;
-        }
-      } else {
-        // Personal workspace is always the default
-        session.user.currentOrganizationId = userInfo.id;
       }
 
       return session;
     },
     async jwt({ token, user }) {
-      // On sign in, get user info and set the default organization
+      // Once on sign in, get user and current org. Set an org if not set already.
       if (user && user.email) {
         const userInfo = await getUser(user.email);
+
         if (userInfo) {
-          // Check cookie first, otherwise use first organization or personal
-          const organizationFromCookie = await getCurrentOrganization();
-          const userOrganizationIds = userInfo.organizationIds || [];
-          const isPersonalOrg = organizationFromCookie === userInfo.id;
+          const currentOrganizationId = await getCurrentOrganization();
 
           if (
-            organizationFromCookie &&
-            (isPersonalOrg ||
-              userOrganizationIds.includes(organizationFromCookie))
+            currentOrganizationId &&
+            userInfo.organizationIds.includes(currentOrganizationId)
           ) {
-            token.organizationId = organizationFromCookie;
+            token.organizationId = currentOrganizationId;
           } else {
-            // Personal workspace is always the default
-            token.organizationId = userInfo.id;
+            const firstOrganization = userInfo.organizationIds[0];
+            token.organizationId = firstOrganization;
+            await switchOrganization(firstOrganization);
           }
         }
       }

@@ -1,6 +1,7 @@
 export * from "./authorizeLiveblocks";
 export * from "./createDocument";
 export * from "./deleteDocument";
+export * from "./getCurrentOrganization";
 export * from "./getDocument";
 export * from "./getDocumentGroups";
 export * from "./getDocuments";
@@ -12,6 +13,7 @@ export * from "./getSpecificDocuments";
 export * from "./removeGroupAccess";
 export * from "./removeUserAccess";
 export * from "./renameDocument";
+export * from "./switchOrganization";
 export * from "./updateDefaultAccess";
 export * from "./updateGroupAccess";
 export * from "./updateUserAccess";
