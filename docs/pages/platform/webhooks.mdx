@@ -678,7 +678,7 @@ Events available for use include:
 - `UserEntered/UserLeft`
 - `RoomCreated/RoomDeleted`
 - `YDocUpdated`
-- `CommentCreated/CommentEdited/CommentDeleted`
+- `CommentCreated/CommentEdited/CommentDeleted/CommentMetadataUpdated`
 - `CommentReactionAdded/CommentReactionRemoved`
 - `ThreadCreated/ThreadDeleted/ThreadMetadataUpdated`
 - `Notification`
@@ -1134,6 +1134,39 @@ const threadMetadataUpdatedEvent = {
     projectId: "my-project-id",
     roomId: "my-room-id",
     threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
+#### CommentMetadataUpdatedEvent
+
+An event is triggered when a comment’s metadata is updated. This event is not
+throttled.
+
+```ts
+// Schema
+type CommentMetadataUpdatedEvent = {
+  type: "commentMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const commentMetadataUpdatedEvent = {
+  type: "commentMetadataUpdated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
     updatedAt: "2021-10-06T01:45:56.558Z",
     updatedBy: "my-user-id",
   },
