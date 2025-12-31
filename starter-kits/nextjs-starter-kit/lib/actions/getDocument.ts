@@ -49,8 +49,8 @@ export async function getDocument({ documentId }: Props) {
     !userAllowedInRoom({
       accessAllowed: "read",
       userId: session?.user.info.id ?? "",
-      groupIds: session?.user.info.groupIds ?? [],
       room,
+      tenantId: session?.user.currentOrganizationId ?? "default",
     })
   ) {
     return {

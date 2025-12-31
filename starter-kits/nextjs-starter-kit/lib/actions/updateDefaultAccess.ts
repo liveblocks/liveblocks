@@ -68,8 +68,8 @@ export async function updateDefaultAccess({ documentId, access }: Props) {
     !userAllowedInRoom({
       accessAllowed: "write",
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
       room,
+      tenantId: session.user.currentOrganizationId,
     })
   ) {
     return {

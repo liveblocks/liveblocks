@@ -1,19 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  buildDocuments,
-  getDraftsGroupName,
-  userAllowedInRoom,
-} from "@/lib/utils";
+import { buildDocuments, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
+import { Document, DocumentType, DocumentUser } from "@/types";
 
 export type GetDocumentsProps = {
-  groupIds?: DocumentGroup["id"][];
   userId?: DocumentUser["id"];
   documentType?: DocumentType;
-  drafts?: boolean;
   limit?: number;
 };
 
@@ -25,20 +19,16 @@ export type GetDocumentsResponse = {
 /**
  * Get Documents
  *
- * Get a list of documents by groupId, userId, and metadata
+ * Get a list of documents by userId and metadata
  * Uses custom API endpoint
  *
- * @param groupIds - The groups to filter for
  * @param userId - The user to filter for
  * @param documentType - The document type to filter for
- * @param drafts - Get only drafts
  * @param limit - The amount of documents to retrieve
  */
 export async function getDocuments({
-  groupIds = [],
   userId = undefined,
   documentType,
-  drafts = false,
   limit = 20,
 }: GetDocumentsProps) {
   const session = await auth();
@@ -63,28 +53,12 @@ export async function getDocuments({
     query = `metadata["type"]:${JSON.stringify(documentType)}`;
   }
 
-  let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
+  const getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
     tenantId,
     limit,
     query,
+    userId: userId,
   };
-
-  const draftGroupName = getDraftsGroupName(userId || "");
-
-  if (drafts) {
-    // Drafts are stored as a group that uses the userId
-    getRoomsOptions = {
-      ...getRoomsOptions,
-      groupIds: [draftGroupName],
-    };
-  } else {
-    // Not a draft, use other info
-    getRoomsOptions = {
-      ...getRoomsOptions,
-      groupIds: groupIds.filter((id) => id !== draftGroupName),
-      userId: userId,
-    };
-  }
 
   let getRoomsResponse;
   try {
@@ -120,7 +94,6 @@ export async function getDocuments({
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
         room,
         tenantId,
       })

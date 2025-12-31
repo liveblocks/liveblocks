@@ -1,4 +1,3 @@
-import { groups } from "@/data/groups";
 import { Group } from "@/types";
 
 /**
@@ -24,5 +23,7 @@ export async function getGroup(id: string): Promise<Group | null> {
     };
   }
 
-  return groups.find((group) => group.id === id) ?? null;
+  return null;
+
+  // return groups.find((group) => group.id === id) ?? null;
 }

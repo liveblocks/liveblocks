@@ -3,16 +3,9 @@ import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import {
-  ComponentProps,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
-import { useGroupsInfo } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
@@ -36,12 +29,6 @@ export function DocumentRow({
   revalidateDocuments,
   ...props
 }: Props) {
-  const groupIds = useMemo(
-    () => Object.keys(document.accesses.groups),
-    [document]
-  );
-  const groups = useGroupsInfo(groupIds);
-
   const { data: session } = useSession();
   const [currentUserAccess, setCurrentUserAccess] = useState(
     DocumentAccess.NONE
@@ -56,7 +43,6 @@ export function DocumentRow({
     const access = getDocumentAccess({
       documentAccesses: document.accesses,
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
     });
     setCurrentUserAccess(access);
   }, [session, document]);
@@ -81,15 +67,6 @@ export function DocumentRow({
         <div className={styles.info}>
           <span className={styles.documentName}>
             <span>{document.name}</span>
-            {groups.length > 0 ? (
-              <span className={styles.groups}>
-                {groups.map((group) => (
-                  <span key={group.id} className={styles.group}>
-                    {group.name}
-                  </span>
-                ))}
-              </span>
-            ) : null}
           </span>
           <span className={styles.documentDate}>
             Edited {formatDistanceToNow(date)} ago

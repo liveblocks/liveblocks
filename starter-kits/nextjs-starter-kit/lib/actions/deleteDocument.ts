@@ -51,8 +51,8 @@ export async function deleteDocument({ documentId }: Props) {
     !userAllowedInRoom({
       accessAllowed: "write",
       userId: session?.user.info.id ?? "",
-      groupIds: session?.user.info.groupIds ?? [],
       room,
+      tenantId: session?.user.currentOrganizationId ?? "default",
     })
   ) {
     return {

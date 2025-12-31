@@ -3,20 +3,13 @@
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useMemo } from "react";
-import {
-  DASHBOARD_DRAFTS_URL,
-  DASHBOARD_GROUP_URL,
-  DASHBOARD_URL,
-} from "@/constants";
-import { FileIcon, FolderIcon } from "@/icons";
+import { DASHBOARD_URL } from "@/constants";
+import { FileIcon } from "@/icons";
 import { LinkButton } from "@/primitives/Button";
-import { Group } from "@/types";
 import { normalizeTrailingSlash } from "@/utils";
 import styles from "./DashboardSidebar.module.css";
 
-interface Props extends ComponentProps<"div"> {
-  groups: Group[];
-}
+interface Props extends ComponentProps<"div"> {}
 
 interface SidebarLinkProps extends Omit<
   ComponentProps<typeof LinkButton>,
@@ -50,7 +43,7 @@ function SidebarLink({
   );
 }
 
-export function DashboardSidebar({ className, groups, ...props }: Props) {
+export function DashboardSidebar({ className, ...props }: Props) {
   return (
     <div className={clsx(className, styles.sidebar)} {...props}>
       <nav className={styles.navigation}>
@@ -61,13 +54,9 @@ export function DashboardSidebar({ className, groups, ...props }: Props) {
                 All
               </SidebarLink>
             </li>
-            <li>
-              <SidebarLink href={DASHBOARD_DRAFTS_URL} icon={<FileIcon />}>
-                Drafts
-              </SidebarLink>
-            </li>
-          </ul>
-        </div>
+            {/* TODO private, public, etc 
+
+
         <div className={styles.category}>
           <span className={styles.categoryTitle}>Groups</span>
           <ul className={styles.list}>
@@ -82,7 +71,8 @@ export function DashboardSidebar({ className, groups, ...props }: Props) {
                   </SidebarLink>
                 </li>
               );
-            })}
+            
+            */}
           </ul>
         </div>
       </nav>

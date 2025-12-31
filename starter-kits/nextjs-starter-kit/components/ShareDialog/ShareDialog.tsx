@@ -5,11 +5,7 @@ import {
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { CheckIcon, LinkIcon } from "@/icons";
-import {
-  getDocument,
-  getDocumentGroups,
-  getDocumentUsers,
-} from "@/lib/actions";
+import { getDocument, getDocumentUsers } from "@/lib/actions";
 import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { Button } from "@/primitives/Button";
@@ -36,15 +32,6 @@ export function ShareDialog({ children, ...props }: Props) {
     mutate: revalidateUsers,
     // error: usersError,
   } = useDocumentsFunctionSWR([getDocumentUsers, { documentId }], {
-    refreshInterval: 0,
-  });
-
-  // Get a list of groups attached to the document (+ their info)
-  const {
-    data: groups,
-    mutate: revalidateGroups,
-    // error: groupsError,
-  } = useDocumentsFunctionSWR([getDocumentGroups, { documentId }], {
     refreshInterval: 0,
   });
 
@@ -76,7 +63,6 @@ export function ShareDialog({ children, ...props }: Props) {
     const accessLevel = getDocumentAccess({
       documentAccesses: document.accesses,
       userId: session?.user?.info.id ?? "",
-      groupIds: session?.user?.info.groupIds ?? [],
     });
 
     // Reload if current user has no access (will show error page)
@@ -106,7 +92,6 @@ export function ShareDialog({ children, ...props }: Props) {
   // Revalidate all access data
   function revalidateAll() {
     revalidateUsers();
-    revalidateGroups();
     revalidateDefaultAccess();
     revalidateCurrentUserAccess();
   }

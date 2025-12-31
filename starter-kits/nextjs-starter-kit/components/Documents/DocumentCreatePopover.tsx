@@ -3,23 +3,15 @@ import { PlusIcon } from "@/icons";
 import { createDocument } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
-import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
+import { Document, DocumentType, DocumentUser } from "@/types";
 import styles from "./DocumentCreatePopover.module.css";
 
 interface Props extends Omit<ComponentProps<typeof Popover>, "content"> {
   documentName?: Document["name"];
-  draft: Document["draft"];
-  groupIds?: DocumentGroup["id"][];
   userId: DocumentUser["id"];
 }
 
-export function DocumentCreatePopover({
-  groupIds,
-  userId,
-  draft,
-  children,
-  ...props
-}: Props) {
+export function DocumentCreatePopover({ userId, children, ...props }: Props) {
   const [disableButtons, setDisableButtons] = useState(false);
 
   // Create a new document, then navigate to the document's URL location
@@ -30,8 +22,6 @@ export function DocumentCreatePopover({
         name,
         type,
         userId,
-        draft,
-        groupIds: draft ? undefined : groupIds,
       },
       true
     );

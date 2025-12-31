@@ -18,7 +18,6 @@ export function buildDocuments(rooms: RoomData[]): Document[] {
 export function buildDocument(room: RoomData): Document {
   let name: Document["name"] = "Untitled";
   let owner: Document["owner"] = "";
-  let draft: Document["draft"] = false;
 
   // Get document info from metadata
   const metadata = room.metadata as DocumentRoomMetadata;
@@ -31,21 +30,9 @@ export function buildDocument(room: RoomData): Document {
     owner = metadata.owner;
   }
 
-  if (metadata.draft === "yes") {
-    draft = true;
-  }
-
-  // Get default, group, and user access from metadata
+  // Get default and user access from metadata
   const defaultAccess: Document["accesses"]["default"] =
     roomAccessesToDocumentAccess(room.defaultAccesses);
-
-  const groups: Document["accesses"]["groups"] = {};
-  Object.entries(room.groupsAccesses).map(([id, accessValue]) => {
-    if (accessValue) {
-      // @ts-ignore
-      groups[id] = roomAccessesToDocumentAccess(accessValue);
-    }
-  });
 
   const users: Document["accesses"]["users"] = {};
   Object.entries(room.usersAccesses).map(([id, accessValue]) => {
@@ -68,10 +55,8 @@ export function buildDocument(room: RoomData): Document {
     type: metadata.type,
     name,
     owner,
-    draft,
     accesses: {
       default: defaultAccess,
-      groups: groups,
       users: users,
     },
   };

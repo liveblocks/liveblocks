@@ -1,7 +1,6 @@
 "use server";
 
 import { auth } from "@/auth";
-import { getDraftsGroupName } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 
@@ -21,13 +20,7 @@ export async function authorizeLiveblocks() {
 
   // Get current user info from session (defined in /auth.config.ts)
   // If no session found, this is a logged out/anonymous user
-  const {
-    name,
-    avatar,
-    color,
-    id,
-    groupIds = [],
-  } = session?.user.info ?? anonymousUser;
+  const { name, avatar, color, id } = session?.user.info ?? anonymousUser;
 
   // Get current organization from session
 
@@ -35,13 +28,11 @@ export async function authorizeLiveblocks() {
   const currentOrganizationId =
     session?.user.currentOrganizationId ?? "default";
 
-  const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
-
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
     {
       userId: id,
-      groupIds: groupIdsWithDraftsGroup,
+      groupIds: [currentOrganizationId],
       tenantId: currentOrganizationId,
     },
     {

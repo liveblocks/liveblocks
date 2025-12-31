@@ -70,7 +70,6 @@ export async function getNextDocuments({ nextCursor }: Props) {
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
         room: room,
         tenantId,
       })

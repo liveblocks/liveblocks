@@ -1,4 +1,4 @@
-import { Group, User } from "./data";
+import { User } from "./data";
 
 /**
  * This is the main type of your Documents.
@@ -24,18 +24,11 @@ export type Document = {
   // When the last user connected (Date.toString())
   lastConnection: string;
 
-  // If the room is a draft (which has no groups or public access) or not
-  draft: boolean;
-
   // The type of document e.g. "canvas"
   type: DocumentType;
 };
 
 export type DocumentType = "text" | "whiteboard" | "canvas" | "note";
-
-export type DocumentGroup = Group & {
-  access: DocumentAccess;
-};
 
 export type DocumentUser = User & {
   access: DocumentAccess;
@@ -58,7 +51,6 @@ export enum DocumentAccess {
 
 export type DocumentAccesses = {
   default: DocumentAccess;
-  groups: Record<DocumentGroup["id"], DocumentAccess>;
   users: Record<DocumentUser["id"], DocumentAccess>;
 };
 
@@ -70,7 +62,6 @@ export interface DocumentRoomMetadata extends Record<
   name: Document["name"];
   type: DocumentType;
   owner: User["id"];
-  draft: "yes" | "no";
 }
 
 export type ErrorData = {
