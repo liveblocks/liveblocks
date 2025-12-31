@@ -67,7 +67,7 @@ export function userAllowedInRoom({
     tenantId,
   });
 
-  const defaultAllowed = checkDefaultAccess({
+  const generalAllowed = checkGeneralAccess({
     accessAllowed,
     userId,
     room,
@@ -75,7 +75,7 @@ export function userAllowedInRoom({
   });
 
   if (checkAccessLevel === "any") {
-    return userAllowed || defaultAllowed;
+    return userAllowed || generalAllowed;
   }
 
   if (checkAccessLevel === "user") {
@@ -83,24 +83,24 @@ export function userAllowedInRoom({
   }
 
   if (checkAccessLevel === "default") {
-    return defaultAllowed;
+    return generalAllowed;
   }
 
   return false;
 }
 
-function checkDefaultAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
-  const defaultAccess = room.defaultAccesses as string[];
+function checkGeneralAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
+  const generalAccess = room.defaultAccesses as string[];
   if (accessAllowed === "write") {
-    if (defaultAccess.includes("room:write")) {
+    if (generalAccess.includes("room:write")) {
       return true;
     }
   }
 
   if (accessAllowed === "read") {
     if (
-      defaultAccess.includes("room:write") ||
-      defaultAccess.includes("room:read")
+      generalAccess.includes("room:write") ||
+      generalAccess.includes("room:read")
     ) {
       return true;
     }

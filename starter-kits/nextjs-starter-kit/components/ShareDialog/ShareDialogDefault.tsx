@@ -1,81 +1,74 @@
 import clsx from "clsx";
 import { ComponentProps, useEffect, useState } from "react";
-import { updateDefaultAccess } from "@/lib/actions";
+import { updateGeneralAccess } from "@/lib/actions";
 import { Select } from "@/primitives/Select";
-import { Document, DocumentAccess } from "@/types";
+import {
+  Document,
+  DocumentPermissionGroup,
+  DocumentPermissionType,
+  DocumentPermissions,
+} from "@/types";
 import styles from "./ShareDialogDefault.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  defaultAccess: DocumentAccess;
+  generalPermissions: DocumentPermissions;
   documentId: Document["id"];
   fullAccess: boolean;
   onSetDefaultAccess: () => void;
 }
 
+// TODO tidy up this, add spinner, remember why fullAccess was passed
+
 export function ShareDialogDefault({
   documentId,
   fullAccess,
-  defaultAccess,
+  generalPermissions,
   onSetDefaultAccess,
   className,
   ...props
 }: Props) {
-  const [publicRead, setPublicRead] = useState(false);
-  const [isPublicReadLoading, setPublicReadLoading] = useState(false);
-  const [publicEdit, setPublicEdit] = useState(false);
-  const [isPublicEditLoading, setPublicEditLoading] = useState(false);
+  const [permissionsGroup, setPermissionsGroup] =
+    useState<DocumentPermissionGroup>(generalPermissions.group);
+  const [permissionType, setPermissionType] = useState<DocumentPermissionType>(
+    generalPermissions.type
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Toggle between public accesses: READONLY/NONE
-  async function handlePublicRead(newPublicRead: boolean) {
-    setPublicReadLoading(true);
-
-    const accessValue = newPublicRead
-      ? DocumentAccess.READONLY
-      : DocumentAccess.NONE;
-
-    const { data, error } = await updateDefaultAccess({
-      documentId: documentId,
-      access: accessValue,
-    });
-
-    if (error || !data) {
-      return;
-    }
-
-    setPublicRead(newPublicRead);
-    setPublicReadLoading(false);
-    onSetDefaultAccess();
-  }
-
-  // Toggle between public accesses: EDIT/READONLY
-  async function handlePublicEdit(newPublicEdit: boolean) {
-    setPublicEditLoading(true);
-
-    const accessValue = newPublicEdit
-      ? DocumentAccess.EDIT
-      : DocumentAccess.READONLY;
-
-    const { data, error } = await updateDefaultAccess({
-      documentId: documentId,
-      access: accessValue,
-    });
-
-    if (error || !data) {
-      return;
-    }
-
-    setPublicEdit(newPublicEdit);
-    setPublicEditLoading(false);
-    onSetDefaultAccess();
-  }
-
-  // When default access change by another, update UI
+  // When default access changed by another connected user, update UI
   useEffect(() => {
-    setPublicRead(defaultAccess !== DocumentAccess.NONE);
-    setPublicEdit(defaultAccess === DocumentAccess.EDIT);
-  }, [defaultAccess]);
+    setPermissionsGroup(generalPermissions.group);
+    setPermissionType(generalPermissions.type);
+  }, [generalPermissions]);
 
-  const [generalAccess, setGeneralAccess] = useState("private");
+  // Handle permission change
+  async function handlePermissionChange({
+    group,
+    type,
+  }: {
+    group: DocumentPermissionGroup;
+    type: DocumentPermissionType;
+  }) {
+    setIsLoading(true);
+    setPermissionsGroup(group);
+    setPermissionType(type);
+
+    const { data, error } = await updateGeneralAccess({
+      documentId: documentId,
+      permissionGroup: group,
+      permissionType: type,
+    });
+
+    if (error || !data) {
+      // Revert on error
+      setPermissionsGroup(generalPermissions.group);
+      setPermissionType(generalPermissions.type);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(false);
+    onSetDefaultAccess();
+  }
 
   return (
     <>
@@ -85,10 +78,11 @@ export function ShareDialogDefault({
             <div className={styles.sectionIcon}></div>
             <div>
               <Select
+                disabled={isLoading}
                 inlineDescription
                 variant="subtle"
                 aboveOverlay
-                value={generalAccess}
+                value={permissionsGroup}
                 items={[
                   {
                     title: "Private",
@@ -106,41 +100,42 @@ export function ShareDialogDefault({
                     description: "Anyone on the internet can view/edit",
                   },
                 ]}
-                onChange={(value) => {
-                  setGeneralAccess(value);
-                  // handleDefaultAccessChange(value as DocumentAccess);
+                onChange={(value: DocumentPermissionGroup) => {
+                  // When changing the group, always set to "read" first
+                  handlePermissionChange({
+                    group: value,
+                    type: "read",
+                  });
                 }}
               />
-              {/* <div className={styles.sectionDescription}>
-                {generalAccess === "organization"
-                  ? "Anyone in this group can view/edit"
-                  : generalAccess === "public"
-                    ? "Anyone on the internet can view/edit"
-                    : "Only you can open and edit"}
-              </div> */}
             </div>
           </div>
           <div className={styles.sectionAction}>
-            {generalAccess !== "private" ? (
+            {permissionsGroup !== "private" ? (
               <Select
+                disabled={isLoading}
                 aboveOverlay
-                initialValue={DocumentAccess.READONLY}
+                initialValue={permissionType}
                 items={[
                   {
                     title: "Can edit",
-                    value: DocumentAccess.FULL,
+                    value: "write",
                     description: "User can read, edit, and share the document",
                   },
                   {
                     title: "Can read",
-                    value: DocumentAccess.READONLY,
+                    value: "read",
                     description: "User can only read the document",
                   },
                 ]}
-                onChange={(value) => {
-                  // handleDefaultAccessChange(value as DocumentAccess);
+                onChange={(value: DocumentPermissionType) => {
+                  // Updates the current group's permission type
+                  handlePermissionChange({
+                    group: permissionsGroup,
+                    type: value,
+                  });
                 }}
-                value={defaultAccess}
+                value={permissionType}
               />
             ) : null}
           </div>

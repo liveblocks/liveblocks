@@ -5,17 +5,17 @@ import { getUser } from "@/lib/database/getUser";
 import {
   buildDocument,
   buildDocumentUsers,
-  documentAccessToRoomAccesses,
   isUserDocumentOwner,
+  permissionTypeToRoomAccesses,
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, DocumentAccess, DocumentUser } from "@/types";
+import { Document, DocumentPermissionType, DocumentUser } from "@/types";
 
 type Props = {
   userId: DocumentUser["id"];
   documentId: Document["id"];
-  access: DocumentAccess;
+  access: DocumentPermissionType;
 };
 
 /**
@@ -32,6 +32,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   const session = await auth();
   // Default to personal workspace for authenticated users
   const tenantId = session?.user.currentOrganizationId ?? "default";
+
   let room;
   let user;
   try {
@@ -119,15 +120,15 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   }
 
   // If room exists, create userAccesses element for new collaborator with passed access level
-  const userAccess = documentAccessToRoomAccesses(access);
+  const userAccess = permissionTypeToRoomAccesses(access);
   const usersAccesses: Record<
     string,
-    | ["room:write"]
-    | ["room:read", "room:presence:write"]
-    | ["room:read", "room:presence:write", "comments:write"]
-    | null
+    ["room:write"] | ["room:read", "room:presence:write"] | null
   > = {
-    [userId]: userAccess.length === 0 ? null : userAccess,
+    [userId]:
+      userAccess.length === 0
+        ? null
+        : (userAccess as ["room:write"] | ["room:read", "room:presence:write"]),
   };
 
   // Send userAccesses to room and remove user
@@ -157,8 +158,8 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   }
 
   // If the user previously had no access to document, send a notification saying they've been added
-  const previousAccessLevel = document.accesses.users[userId];
-  if (!previousAccessLevel || previousAccessLevel === DocumentAccess.NONE) {
+  const previousAccess = room.usersAccesses?.[userId];
+  if (!previousAccess) {
     liveblocks.triggerInboxNotification({
       userId,
       kind: "$addedToDocument",

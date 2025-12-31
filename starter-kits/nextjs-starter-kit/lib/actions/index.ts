@@ -11,5 +11,5 @@ export * from "./getSpecificDocuments";
 export * from "./removeUserAccess";
 export * from "./renameDocument";
 export * from "./switchOrganization";
-export * from "./updateDefaultAccess";
+export * from "./updateGeneralAccess";
 export * from "./updateUserAccess";

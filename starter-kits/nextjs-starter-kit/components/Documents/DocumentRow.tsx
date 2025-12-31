@@ -11,7 +11,7 @@ import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Skeleton } from "@/primitives/Skeleton";
-import { Document, DocumentAccess } from "@/types";
+import { Document, DocumentPermissionType } from "@/types";
 import { DocumentDeleteDialog } from "./DocumentDeleteDialog";
 import { DocumentIcon } from "./DocumentIcon";
 import styles from "./DocumentRow.module.css";
@@ -30,9 +30,8 @@ export function DocumentRow({
   ...props
 }: Props) {
   const { data: session } = useSession();
-  const [currentUserAccess, setCurrentUserAccess] = useState(
-    DocumentAccess.NONE
-  );
+  const [currentUserAccess, setCurrentUserAccess] =
+    useState<DocumentPermissionType>("read");
 
   // Check if current user has access to edit the room
   useEffect(() => {
@@ -41,7 +40,7 @@ export function DocumentRow({
     }
 
     const access = getDocumentAccess({
-      documentAccesses: document.accesses,
+      document,
       userId: session.user.info.id,
     });
     setCurrentUserAccess(access);
@@ -86,7 +85,7 @@ export function DocumentRow({
           </div>
         )}
       </Link>
-      {currentUserAccess === DocumentAccess.FULL ? (
+      {currentUserAccess === "write" ? (
         <div className={styles.more}>
           <Popover
             align="end"

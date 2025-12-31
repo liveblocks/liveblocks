@@ -1,6 +1,11 @@
 import { RoomData } from "@liveblocks/node";
-import { Document, DocumentRoomMetadata } from "@/types";
-import { roomAccessesToDocumentAccess } from "./convertAccessType";
+import {
+  Document,
+  DocumentPermissionType,
+  DocumentPermissions,
+  DocumentRoomMetadata,
+} from "@/types";
+import { roomAccessesToPermissionType } from "./convertAccessType";
 
 /**
  * Convert Liveblocks rooms into our custom document format
@@ -16,36 +21,38 @@ export function buildDocuments(rooms: RoomData[]): Document[] {
 }
 
 export function buildDocument(room: RoomData): Document {
-  let name: Document["name"] = "Untitled";
-  let owner: Document["owner"] = "";
-
-  // Get document info from metadata
+  // Get document info from metadatachat
   const metadata = room.metadata as DocumentRoomMetadata;
 
-  if (metadata.name) {
-    name = metadata.name;
+  // Check all metadata fields exist
+  const requiredKeys = ["name", "owner", "permissionGroup", "permissionType"];
+  if (
+    !requiredKeys.every((key) =>
+      Object.prototype.hasOwnProperty.call(metadata, key)
+    )
+  ) {
+    throw new Error(
+      `Missing required metadata fields here: ${JSON.stringify(metadata)}`
+    );
   }
 
-  if (metadata.owner) {
-    owner = metadata.owner;
-  }
-
-  // Get default and user access from metadata
-  const defaultAccess: Document["accesses"]["default"] =
-    roomAccessesToDocumentAccess(room.defaultAccesses);
-
-  const users: Document["accesses"]["users"] = {};
-  Object.entries(room.usersAccesses).map(([id, accessValue]) => {
-    if (accessValue) {
-      // @ts-ignore
-      users[id] = roomAccessesToDocumentAccess(accessValue);
-    }
-  });
-
+  // Add times to document
   const created = room.createdAt.toString();
   const lastConnection = room.lastConnectionAt
     ? room.lastConnectionAt.toString()
     : created;
+
+  // Add general permissions
+  const generalPermissions: DocumentPermissions = {
+    group: metadata.permissionGroup,
+    type: metadata.permissionType,
+  };
+
+  // Add individual user permissions
+  const userPermissions: Record<string, DocumentPermissionType> = {};
+  for (const [userId, accessValue] of Object.entries(room.usersAccesses)) {
+    userPermissions[userId] = roomAccessesToPermissionType(accessValue);
+  }
 
   // Return our custom Document format
   return {
@@ -53,11 +60,9 @@ export function buildDocument(room: RoomData): Document {
     created,
     lastConnection,
     type: metadata.type,
-    name,
-    owner,
-    accesses: {
-      default: defaultAccess,
-      users: users,
-    },
+    name: metadata.name || "Untitled",
+    owner: metadata.owner,
+    generalPermissions,
+    userPermissions,
   };
 }

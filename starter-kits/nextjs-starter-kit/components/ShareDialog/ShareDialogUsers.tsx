@@ -3,7 +3,7 @@ import { ComponentProps } from "react";
 import { removeUserAccess, updateUserAccess } from "@/lib/actions";
 import { Avatar } from "@/primitives/Avatar";
 import { Select } from "@/primitives/Select";
-import { Document, DocumentAccess, DocumentUser } from "@/types";
+import { Document, DocumentPermissionType, DocumentUser } from "@/types";
 import styles from "./ShareDialogRows.module.css";
 
 interface Props extends ComponentProps<"div"> {
@@ -40,7 +40,7 @@ export function ShareDialogUsers({
   // Update a collaborator in the room using email as user id
   async function handleUpdateDocumentUser(
     id: DocumentUser["id"],
-    access: DocumentAccess
+    access: DocumentPermissionType
   ) {
     const { data, error } = await updateUserAccess({
       userId: id,
@@ -97,18 +97,18 @@ export function ShareDialogUsers({
                   items={[
                     {
                       title: "Can edit",
-                      value: DocumentAccess.FULL,
+                      value: "write",
                       description:
                         "User can read, edit, and share the document",
                     },
                     {
                       title: "Can read",
-                      value: DocumentAccess.READONLY,
+                      value: "read",
                       description: "User can only read the document",
                     },
                   ]}
-                  onChange={(value) => {
-                    handleUpdateDocumentUser(id, value as DocumentAccess);
+                  onChange={(value: DocumentPermissionType) => {
+                    handleUpdateDocumentUser(id, value);
                   }}
                   value={access}
                 />

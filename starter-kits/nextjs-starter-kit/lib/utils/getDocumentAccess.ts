@@ -1,34 +1,29 @@
-import { Document, DocumentAccess, User } from "@/types";
+import { Document, DocumentPermissionType, User } from "@/types";
 
 interface Props {
-  documentAccesses: Document["accesses"];
+  document: Document;
   userId: User["id"];
 }
 
-const accessLevelHierarchy = [
-  DocumentAccess.NONE,
-  DocumentAccess.READONLY,
-  DocumentAccess.EDIT,
-  DocumentAccess.FULL,
-];
-
-export function getDocumentAccess({ documentAccesses, userId }: Props) {
-  let accessLevel = documentAccesses.default;
-
-  let userAccess = documentAccesses.users[userId];
-
-  // If EDIT access set at user level, give FULL access
-  if (userAccess === DocumentAccess.EDIT) {
-    userAccess = DocumentAccess.FULL;
+/**
+ * Get the user's permission type for a document. Not secure, used for UI purposes only.
+ * Checks user-specific access first, then falls back to default access based on permission group
+ */
+export function getDocumentAccess({
+  document,
+  userId,
+}: Props): DocumentPermissionType {
+  // If user is the owner they have write access
+  if (document.owner === userId) {
+    return "write";
   }
 
-  // If a user id is higher than default access, use this
-  if (
-    accessLevelHierarchy.indexOf(userAccess) >
-    accessLevelHierarchy.indexOf(accessLevel)
-  ) {
-    accessLevel = userAccess;
+  // Check if user has specific permission for this document
+  const userPermission = document.userPermissions[userId];
+  if (userPermission) {
+    return userPermission;
   }
 
-  return accessLevel;
+  // Otherwise, return the document's permission type
+  return document.generalPermissions.type;
 }

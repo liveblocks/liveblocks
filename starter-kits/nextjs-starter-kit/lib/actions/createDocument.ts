@@ -48,14 +48,18 @@ export async function createDocument(
     };
   }
 
-  // Custom metadata for our document
+  const tenantId = session.user.currentOrganizationId;
+
+  // Custom metadata for our document. Documents always start private.
   const metadata: DocumentRoomMetadata = {
     name: name,
     type: type,
     owner: userId,
+    permissionGroup: "private",
+    permissionType: "write",
   };
 
-  // Give creator of document full access
+  // Give owner of document write access
   const usersAccesses: RoomAccesses = {
     [userId]: ["room:write"],
   };
@@ -67,9 +71,8 @@ export async function createDocument(
     room = await liveblocks.createRoom(roomId, {
       metadata,
       usersAccesses,
-      groupsAccesses: {},
       defaultAccesses: [],
-      tenantId: session.user.currentOrganizationId,
+      tenantId,
     });
   } catch (err) {
     return {

@@ -10,7 +10,7 @@ import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
-import { DocumentAccess } from "@/types";
+import { DocumentPermissionType } from "@/types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
@@ -19,12 +19,19 @@ import styles from "./ShareDialog.module.css";
 type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
-  const { id: documentId, accesses: documentAccesses } = useInitialDocument();
-
   const { data: session } = useSession();
-  const [currentUserAccess, setCurrentUserAccess] = useState(
-    DocumentAccess.NONE
-  );
+  const {
+    id: documentId,
+    generalPermissions,
+    userPermissions,
+    owner,
+  } = useInitialDocument();
+  const fullAccess = owner === session?.user?.info.id;
+
+  const [currentUserAccess, setCurrentUserAccess] =
+    useState<DocumentPermissionType>(
+      userPermissions[session?.user?.info.id ?? ""] || "read"
+    );
 
   // Get a list of users attached to the document (+ their info)
   const {
@@ -38,19 +45,14 @@ export function ShareDialog({ children, ...props }: Props) {
   // Get the current document
   const {
     data: document,
-    error: defaultAccessError,
+    error: generalAccessError,
     mutate: revalidateDefaultAccess,
   } = useDocumentsFunctionSWR([getDocument, { documentId }], {
     refreshInterval: 0,
   });
 
-  // Get default access value from document, or the default value from the property
-  const defaultAccess = document
-    ? document.accesses.default
-    : documentAccesses.default;
-
   // If you have no access to this room, refresh
-  if (defaultAccessError && defaultAccessError.code === 403) {
+  if (generalAccessError && generalAccessError.code === 403) {
     window.location.reload();
   }
 
@@ -61,23 +63,20 @@ export function ShareDialog({ children, ...props }: Props) {
     }
 
     const accessLevel = getDocumentAccess({
-      documentAccesses: document.accesses,
+      document,
       userId: session?.user?.info.id ?? "",
     });
 
+    // TODO remember why this was here
     // Reload if current user has no access (will show error page)
-    if (accessLevel === DocumentAccess.NONE) {
+    if (accessLevel === "none") {
       window.location.reload();
       return;
     }
 
     // Reload app if current user swapping between READONLY and EDIT/FULL (will reconnect to app with new access level)
     const accessChanges = new Set([currentUserAccess, accessLevel]);
-    if (
-      accessChanges.has(DocumentAccess.READONLY) &&
-      (accessChanges.has(DocumentAccess.EDIT) ||
-        accessChanges.has(DocumentAccess.FULL))
-    ) {
+    if (accessChanges.has("read") && accessChanges.has("write")) {
       window.location.reload();
       return;
     }
@@ -113,7 +112,7 @@ export function ShareDialog({ children, ...props }: Props) {
           <ShareDialogInviteUser
             className={styles.dialogSection}
             documentId={documentId}
-            fullAccess={currentUserAccess === DocumentAccess.FULL}
+            fullAccess={fullAccess}
             onSetUsers={() => {
               revalidateAll();
               broadcast({ type: "SHARE_DIALOG_UPDATE" });
@@ -125,7 +124,7 @@ export function ShareDialog({ children, ...props }: Props) {
               className={styles.dialogSection}
               documentId={documentId}
               documentOwner={document?.owner || ""}
-              fullAccess={currentUserAccess === DocumentAccess.FULL}
+              fullAccess={fullAccess}
               onSetUsers={() => {
                 revalidateAll();
                 broadcast({ type: "SHARE_DIALOG_UPDATE" });
@@ -138,9 +137,9 @@ export function ShareDialog({ children, ...props }: Props) {
 
           <ShareDialogDefault
             className={styles.dialogSection}
-            defaultAccess={defaultAccess}
+            generalPermissions={generalPermissions}
             documentId={documentId}
-            fullAccess={currentUserAccess === DocumentAccess.FULL}
+            fullAccess={fullAccess}
             onSetDefaultAccess={() => {
               revalidateAll();
               broadcast({ type: "SHARE_DIALOG_UPDATE" });
