@@ -20,6 +20,7 @@ interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
   aboveOverlay?: boolean;
   inlineDescription?: boolean;
   className?: RadixSelect.SelectTriggerProps["className"];
+  style?: CSSProperties;
 }
 
 export function Select({
@@ -32,6 +33,7 @@ export function Select({
   aboveOverlay,
   inlineDescription,
   className,
+  style,
   ...props
 }: Props) {
   const [internalValue, setInternalValue] = useState(initialValue);
@@ -61,6 +63,7 @@ export function Select({
         className={clsx(className, styles.trigger, {
           [styles.triggerSubtle]: variant === "subtle",
         })}
+        style={style}
         data-inline-description={inlineDescription ?? undefined}
       >
         <div className={styles.itemInfo}>

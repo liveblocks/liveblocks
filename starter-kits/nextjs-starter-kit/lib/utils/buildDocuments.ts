@@ -64,5 +64,6 @@ export function buildDocument(room: RoomData): Document {
     owner: metadata.owner,
     generalPermissions,
     userPermissions,
+    organization: "liveblocks", // TODO add when APIs updated: room.tenantId,
   };
 }

@@ -20,12 +20,8 @@ type Props = Omit<ComponentProps<typeof Dialog>, "content" | "title">;
 
 export function ShareDialog({ children, ...props }: Props) {
   const { data: session } = useSession();
-  const {
-    id: documentId,
-    generalPermissions,
-    userPermissions,
-    owner,
-  } = useInitialDocument();
+  const initialDocument = useInitialDocument();
+  const { id: documentId, userPermissions, owner } = initialDocument;
   const fullAccess = owner === session?.user?.info.id;
 
   const [currentUserAccess, setCurrentUserAccess] =
@@ -138,8 +134,7 @@ export function ShareDialog({ children, ...props }: Props) {
 
           <ShareDialogGeneral
             className={styles.dialogSection}
-            generalPermissions={generalPermissions}
-            documentId={documentId}
+            document={document ?? initialDocument}
             fullAccess={fullAccess}
             onSetDefaultAccess={() => {
               revalidateAll();

@@ -13,9 +13,7 @@ type Props = {
  *
  * @param userId - The user id to get organizations for
  */
-export async function getOrganizations({
-  userId,
-}: Props): Promise<Organization[]> {
+export async function getUserOrganizations({ userId }: Props) {
   const userOrganizations: Organization[] = [];
   const user = await getUser(userId);
 

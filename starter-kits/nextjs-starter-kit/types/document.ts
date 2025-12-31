@@ -21,6 +21,9 @@ export type Document = {
   // The user if of the document's creator
   owner: DocumentUser["id"];
 
+  // The organization id of the document
+  organization: string;
+
   // When the document was created (Date.toString())
   created: string;
 

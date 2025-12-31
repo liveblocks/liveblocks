@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { getOrganizations as getOrganizationsFromDb } from "@/lib/database/getOrganizations";
+import { getUserOrganizations as getOrganizationsFromDb } from "@/lib/database/getUserOrganizations";
 
 /**
  * Get Organizations

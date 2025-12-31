@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { auth } from "@/auth";
-import { getOrganizations } from "../database/getOrganizations";
+import { getUserOrganizations } from "../database/getUserOrganizations";
 
 const ORGANIZATION_COOKIE_NAME = "currentOrganizationId";
 
@@ -28,7 +28,7 @@ export async function switchOrganization(organizationId: string) {
   }
 
   // Verify user has access to the organization
-  const userOrganizations = await getOrganizations({
+  const userOrganizations = await getUserOrganizations({
     userId: session.user.info.id,
   });
 

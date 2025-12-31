@@ -6,6 +6,8 @@ export * from "./getDocument";
 export * from "./getDocuments";
 export * from "./getDocumentUsers";
 export * from "./getLiveUsers";
+export * from "./getOrganizations";
+export * from "./getUserOrganizations";
 export * from "./getNextDocuments";
 export * from "./getSpecificDocuments";
 export * from "./removeUserAccess";

@@ -1,18 +1,19 @@
 import clsx from "clsx";
+import Image from "next/image";
 import { ComponentProps, useEffect, useState } from "react";
-import { updateGeneralAccess } from "@/lib/actions";
+import { EarthIcon, LockIcon } from "@/icons";
+import { getOrganizations, updateGeneralAccess } from "@/lib/actions";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import { Select } from "@/primitives/Select";
 import {
   Document,
   DocumentPermissionGroup,
   DocumentPermissionType,
-  DocumentPermissions,
 } from "@/types";
 import styles from "./ShareDialogGeneral.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  generalPermissions: DocumentPermissions;
-  documentId: Document["id"];
+  document: Document;
   fullAccess: boolean;
   onSetDefaultAccess: () => void;
 }
@@ -20,25 +21,24 @@ interface Props extends ComponentProps<"div"> {
 // TODO tidy up this, add spinner, remember why fullAccess was passed
 
 export function ShareDialogGeneral({
-  documentId,
+  document,
   fullAccess,
-  generalPermissions,
   onSetDefaultAccess,
   className,
   ...props
 }: Props) {
   const [permissionsGroup, setPermissionsGroup] =
-    useState<DocumentPermissionGroup>(generalPermissions.group);
+    useState<DocumentPermissionGroup>(document.generalPermissions.group);
   const [permissionType, setPermissionType] = useState<DocumentPermissionType>(
-    generalPermissions.type
+    document.generalPermissions.type
   );
   const [isLoading, setIsLoading] = useState(false);
 
   // When default access changed by another connected user, update UI
   useEffect(() => {
-    setPermissionsGroup(generalPermissions.group);
-    setPermissionType(generalPermissions.type);
-  }, [generalPermissions]);
+    setPermissionsGroup(document.generalPermissions.group);
+    setPermissionType(document.generalPermissions.type);
+  }, [document]);
 
   // Handle permission change
   async function handlePermissionChange({
@@ -53,15 +53,15 @@ export function ShareDialogGeneral({
     setPermissionType(type);
 
     const { data, error } = await updateGeneralAccess({
-      documentId: documentId,
+      documentId: document.id,
       permissionGroup: group,
       permissionType: type,
     });
 
     if (error || !data) {
       // Revert on error
-      setPermissionsGroup(generalPermissions.group);
-      setPermissionType(generalPermissions.type);
+      setPermissionsGroup(document.generalPermissions.group);
+      setPermissionType(document.generalPermissions.type);
       setIsLoading(false);
       return;
     }
@@ -70,15 +70,41 @@ export function ShareDialogGeneral({
     onSetDefaultAccess();
   }
 
+  // Get the organization this document belongs to
+  const { data: organizations, isLoading: isLoadingOrganizations } =
+    useDocumentsFunctionSWR(
+      [getOrganizations, { organizationIds: [document.organization] }],
+      {
+        refreshInterval: 0,
+      }
+    );
+  const documentOrganization = organizations?.[0] ?? null;
+
   return (
     <>
       <div className={clsx(className, styles.default)} {...props}>
         <div className={styles.section}>
           <div className={styles.sectionStart}>
-            <div className={styles.sectionIcon}></div>
+            <div className={styles.sectionIcon}>
+              {permissionsGroup === "private" ? <LockIcon /> : null}
+
+              {permissionsGroup === "organization" ? (
+                !isLoadingOrganizations && documentOrganization ? (
+                  <Image
+                    src={documentOrganization?.avatar ?? ""}
+                    alt={documentOrganization?.name ?? ""}
+                    width={24}
+                    height={24}
+                  />
+                ) : null
+              ) : null}
+
+              {permissionsGroup === "public" ? <EarthIcon /> : null}
+            </div>
             <div>
               <Select
                 disabled={isLoading}
+                style={{ pointerEvents: fullAccess ? undefined : "none" }}
                 inlineDescription
                 variant="subtle"
                 aboveOverlay
@@ -87,17 +113,19 @@ export function ShareDialogGeneral({
                   {
                     title: "Private",
                     value: "private",
-                    description: "Only you can open and edit",
+                    description: "Only you have access",
                   },
                   {
-                    title: "Liveblocks",
+                    title: isLoadingOrganizations
+                      ? "Loading…"
+                      : (documentOrganization?.name ?? "Undefined"),
                     value: "organization",
-                    description: "Only members can view/edit",
+                    description: `Only organization members have access`,
                   },
                   {
-                    title: "Anyone with link",
+                    title: "Anyone with a link",
                     value: "public",
-                    description: "Anyone on the internet can view/edit",
+                    description: `Anyone on the internet can access`,
                   },
                 ]}
                 onChange={(value: DocumentPermissionGroup) => {
@@ -114,6 +142,7 @@ export function ShareDialogGeneral({
             {permissionsGroup !== "private" ? (
               <Select
                 disabled={isLoading}
+                style={{ pointerEvents: fullAccess ? undefined : "none" }}
                 aboveOverlay
                 initialValue={permissionType}
                 items={[
