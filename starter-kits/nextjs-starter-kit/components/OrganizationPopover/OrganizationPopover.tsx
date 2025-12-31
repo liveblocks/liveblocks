@@ -13,6 +13,7 @@ import { Popover } from "@/primitives/Popover";
 import styles from "./OrganizationPopover.module.css";
 
 export function OrganizationPopover() {
+  const router = useRouter();
   const { data: session } = useSession();
 
   // Get a list of organizations for the current user
@@ -38,8 +39,6 @@ export function OrganizationPopover() {
 
     return organizations[0];
   }, [organizations, session]);
-
-  const router = useRouter();
 
   // Changes organizations then go to dashboard
   const handleOrganizationChange = useCallback(
