@@ -2,10 +2,9 @@ import {
   useBroadcastEvent,
   useEventListener,
 } from "@liveblocks/react/suspense";
-import * as Tabs from "@radix-ui/react-tabs";
 import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
-import { UserIcon, UsersIcon } from "@/icons";
+import { CheckIcon, LinkIcon } from "@/icons";
 import {
   getDocument,
   getDocumentGroups,
@@ -13,11 +12,10 @@ import {
 } from "@/lib/actions";
 import { useDocumentsFunctionSWR, useInitialDocument } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
+import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
 import { DocumentAccess } from "@/types";
 import { ShareDialogDefault } from "./ShareDialogDefault";
-import { ShareDialogGroups } from "./ShareDialogGroups";
-import { ShareDialogInviteGroup } from "./ShareDialogInviteGroup";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
 import styles from "./ShareDialog.module.css";
@@ -127,70 +125,32 @@ export function ShareDialog({ children, ...props }: Props) {
     <Dialog
       content={
         <div className={styles.dialog}>
-          <Tabs.Root className={styles.dialogTabs} defaultValue="users">
-            <Tabs.List className={styles.dialogTabList}>
-              <Tabs.Trigger className={styles.dialogTab} value="users">
-                <span className={styles.dialogTabLabel}>
-                  <UserIcon className={styles.dialogTabIcon} />
-                  <span>Users</span>
-                </span>
-              </Tabs.Trigger>
-              <Tabs.Trigger className={styles.dialogTab} value="groups">
-                <span className={styles.dialogTabLabel}>
-                  <UsersIcon className={styles.dialogTabIcon} />
-                  <span>Groups</span>
-                </span>
-              </Tabs.Trigger>
-            </Tabs.List>
-            <Tabs.Content value="users" className={styles.dialogTabContent}>
-              <ShareDialogInviteUser
-                className={styles.dialogSection}
-                documentId={documentId}
-                fullAccess={currentUserAccess === DocumentAccess.FULL}
-                onSetUsers={() => {
-                  revalidateAll();
-                  broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                }}
-              />
-              {users?.length ? (
-                <ShareDialogUsers
-                  className={styles.dialogSection}
-                  documentId={documentId}
-                  documentOwner={document?.owner || ""}
-                  fullAccess={currentUserAccess === DocumentAccess.FULL}
-                  onSetUsers={() => {
-                    revalidateAll();
-                    broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                  }}
-                  users={users}
-                />
-              ) : null}
-            </Tabs.Content>
-            <Tabs.Content value="groups" className={styles.dialogTabContent}>
-              <ShareDialogInviteGroup
-                className={styles.dialogSection}
-                documentId={documentId}
-                fullAccess={currentUserAccess === DocumentAccess.FULL}
-                currentGroups={groups || []}
-                onSetGroups={() => {
-                  revalidateAll();
-                  broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                }}
-              />
-              {groups?.length ? (
-                <ShareDialogGroups
-                  className={styles.dialogSection}
-                  documentId={documentId}
-                  fullAccess={currentUserAccess === DocumentAccess.FULL}
-                  groups={groups}
-                  onSetGroups={() => {
-                    revalidateAll();
-                    broadcast({ type: "SHARE_DIALOG_UPDATE" });
-                  }}
-                />
-              ) : null}
-            </Tabs.Content>
-          </Tabs.Root>
+          <ShareDialogInviteUser
+            className={styles.dialogSection}
+            documentId={documentId}
+            fullAccess={currentUserAccess === DocumentAccess.FULL}
+            onSetUsers={() => {
+              revalidateAll();
+              broadcast({ type: "SHARE_DIALOG_UPDATE" });
+            }}
+          />
+
+          {users?.length ? (
+            <ShareDialogUsers
+              className={styles.dialogSection}
+              documentId={documentId}
+              documentOwner={document?.owner || ""}
+              fullAccess={currentUserAccess === DocumentAccess.FULL}
+              onSetUsers={() => {
+                revalidateAll();
+                broadcast({ type: "SHARE_DIALOG_UPDATE" });
+              }}
+              users={users}
+            />
+          ) : null}
+
+          <div className={styles.dialogDivider}>General access</div>
+
           <ShareDialogDefault
             className={styles.dialogSection}
             defaultAccess={defaultAccess}
@@ -204,9 +164,49 @@ export function ShareDialog({ children, ...props }: Props) {
         </div>
       }
       title="Share document"
+      titleButton={<CopyToClipboardButton />}
       {...props}
     >
       {children}
     </Dialog>
+  );
+}
+
+// "Copy link" button
+let copyToClipboardTimeout: number;
+function CopyToClipboardButton() {
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
+
+  // Show "Copied" for 3 seconds after copying
+  const handleCopyToClipboard = useCallback(async () => {
+    try {
+      const thisUrl = window.location.origin + window.location.pathname;
+      await navigator.clipboard.writeText(thisUrl);
+
+      setCopiedToClipboard(true);
+      window.clearTimeout(copyToClipboardTimeout);
+      copyToClipboardTimeout = window.setTimeout(() => {
+        setCopiedToClipboard(false);
+      }, 3000);
+    } catch {
+      return;
+    }
+  }, []);
+
+  return (
+    <Button
+      icon={
+        copiedToClipboard ? (
+          <CheckIcon height={16} width={16} />
+        ) : (
+          <LinkIcon height={16} width={16} />
+        )
+      }
+      variant="subtle"
+      onClick={handleCopyToClipboard}
+      style={{ pointerEvents: copiedToClipboard ? "none" : "auto" }}
+    >
+      {copiedToClipboard ? "Copied" : "Copy link"}
+    </Button>
   );
 }

@@ -14,8 +14,13 @@
   outline: none;
 }
 
+.trigger[data-inline-description] {
+  height: var(--space-16);
+}
+
 .triggerSubtle {
   background: none;
+  padding: 0 var(--space-5);
 }
 
 .trigger:hover,
@@ -32,7 +37,7 @@
 
 .triggerIcon {
   flex: none;
-  margin-right: calc(-1 * var(--space-3));
+  margin-right: calc(-1 * var(--space-2));
   margin-left: auto;
   opacity: 0.4;
 }
@@ -76,13 +81,14 @@
 .itemInfo {
   display: flex;
   flex-direction: column;
+  align-items: start;
   gap: var(--space-1);
 }
 
 .itemDescription {
   font-size: var(--size-xs);
   font-weight: 400;
-  opacity: 0.6;
+  color: var(--color-text-lightest);
 }
 
 .item[data-highlighted] {

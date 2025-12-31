@@ -18,6 +18,7 @@ interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
   onChange?: RadixSelect.SelectProps["onValueChange"];
   placeholder?: RadixSelect.SelectValueProps["placeholder"];
   aboveOverlay?: boolean;
+  inlineDescription?: boolean;
   className?: RadixSelect.SelectTriggerProps["className"];
 }
 
@@ -29,6 +30,7 @@ export function Select({
   onChange,
   placeholder,
   aboveOverlay,
+  inlineDescription,
   className,
   ...props
 }: Props) {
@@ -59,11 +61,19 @@ export function Select({
         className={clsx(className, styles.trigger, {
           [styles.triggerSubtle]: variant === "subtle",
         })}
+        data-inline-description={inlineDescription ?? undefined}
       >
-        <RadixSelect.Value
-          placeholder={placeholder}
-          className={styles.triggerValue}
-        />
+        <div className={styles.itemInfo}>
+          <RadixSelect.Value
+            placeholder={placeholder}
+            className={styles.itemTitle}
+          />
+          {inlineDescription && internalValue && (
+            <span className={styles.itemDescription}>
+              {items.find((item) => item.value === internalValue)?.description}
+            </span>
+          )}
+        </div>
         <RadixSelect.Icon className={styles.triggerIcon}>
           <SelectIcon />
         </RadixSelect.Icon>

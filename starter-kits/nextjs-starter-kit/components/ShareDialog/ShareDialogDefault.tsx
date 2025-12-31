@@ -1,17 +1,7 @@
 import clsx from "clsx";
-import {
-  ComponentProps,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { CheckIcon, CopyIcon, EditIcon, LinkIcon } from "@/icons";
+import { ComponentProps, useEffect, useState } from "react";
 import { updateDefaultAccess } from "@/lib/actions";
-import { Button } from "@/primitives/Button";
-import { Checkbox } from "@/primitives/Checkbox";
-import { Input } from "@/primitives/Input";
-import { Spinner } from "@/primitives/Spinner";
+import { Select } from "@/primitives/Select";
 import { Document, DocumentAccess } from "@/types";
 import styles from "./ShareDialogDefault.module.css";
 
@@ -22,8 +12,6 @@ interface Props extends ComponentProps<"div"> {
   onSetDefaultAccess: () => void;
 }
 
-let copyToClipboardTimeout: number;
-
 export function ShareDialogDefault({
   documentId,
   fullAccess,
@@ -32,8 +20,6 @@ export function ShareDialogDefault({
   className,
   ...props
 }: Props) {
-  const shareInputRef = useRef<HTMLInputElement>(null);
-  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const [publicRead, setPublicRead] = useState(false);
   const [isPublicReadLoading, setPublicReadLoading] = useState(false);
   const [publicEdit, setPublicEdit] = useState(false);
@@ -89,25 +75,78 @@ export function ShareDialogDefault({
     setPublicEdit(defaultAccess === DocumentAccess.EDIT);
   }, [defaultAccess]);
 
-  const handleCopyToClipboard = useCallback(async () => {
-    if (!shareInputRef.current) return;
-
-    try {
-      await navigator.clipboard.writeText(shareInputRef.current.value);
-      shareInputRef.current.select();
-
-      setCopiedToClipboard(true);
-      window.clearTimeout(copyToClipboardTimeout);
-      copyToClipboardTimeout = window.setTimeout(() => {
-        setCopiedToClipboard(false);
-      }, 3000);
-    } catch {
-      return;
-    }
-  }, []);
+  const [generalAccess, setGeneralAccess] = useState("private");
 
   return (
-    <div className={clsx(className, styles.default)} {...props}>
+    <>
+      <div className={clsx(className, styles.default)} {...props}>
+        <div className={styles.section}>
+          <div className={styles.sectionStart}>
+            <div className={styles.sectionIcon}></div>
+            <div>
+              <Select
+                inlineDescription
+                variant="subtle"
+                aboveOverlay
+                value={generalAccess}
+                items={[
+                  {
+                    title: "Private",
+                    value: "private",
+                    description: "Only you can open and edit",
+                  },
+                  {
+                    title: "Liveblocks",
+                    value: "organization",
+                    description: "Only members can view/edit",
+                  },
+                  {
+                    title: "Anyone with link",
+                    value: "public",
+                    description: "Anyone on the internet can view/edit",
+                  },
+                ]}
+                onChange={(value) => {
+                  setGeneralAccess(value);
+                  // handleDefaultAccessChange(value as DocumentAccess);
+                }}
+              />
+              {/* <div className={styles.sectionDescription}>
+                {generalAccess === "organization"
+                  ? "Anyone in this group can view/edit"
+                  : generalAccess === "public"
+                    ? "Anyone on the internet can view/edit"
+                    : "Only you can open and edit"}
+              </div> */}
+            </div>
+          </div>
+          <div className={styles.sectionAction}>
+            {generalAccess !== "private" ? (
+              <Select
+                aboveOverlay
+                initialValue={DocumentAccess.READONLY}
+                items={[
+                  {
+                    title: "Can edit",
+                    value: DocumentAccess.FULL,
+                    description: "User can read, edit, and share the document",
+                  },
+                  {
+                    title: "Can read",
+                    value: DocumentAccess.READONLY,
+                    description: "User can only read the document",
+                  },
+                ]}
+                onChange={(value) => {
+                  // handleDefaultAccessChange(value as DocumentAccess);
+                }}
+                value={defaultAccess}
+              />
+            ) : null}
+          </div>
+        </div>
+
+        {/*
       <div className={styles.section}>
         <label
           className={styles.sectionLabel}
@@ -132,6 +171,7 @@ export function ShareDialogDefault({
           )}
         </div>
       </div>
+
       {defaultAccess !== DocumentAccess.NONE ? (
         <>
           <div className={styles.section}>
@@ -158,22 +198,10 @@ export function ShareDialogDefault({
               )}
             </div>
           </div>
-          <div className={clsx(styles.section, styles.shareLinkSection)}>
-            <Input
-              className={styles.shareLinkInput}
-              readOnly
-              ref={shareInputRef}
-              value={window.location.href}
-            />
-            <Button
-              icon={copiedToClipboard ? <CheckIcon /> : <CopyIcon />}
-              onClick={handleCopyToClipboard}
-            >
-              Copy
-            </Button>
-          </div>
         </>
       ) : null}
-    </div>
+      */}
+      </div>
+    </>
   );
 }
