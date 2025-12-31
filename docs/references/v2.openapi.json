@@ -1832,7 +1832,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateThread"
+                "$ref": "#/components/schemas/UpdateThreadMetadata"
               },
               "examples": {
                 "example": {
@@ -2631,6 +2631,90 @@
                     "emoji": "👨‍👩‍👧",
                     "userId": "alice",
                     "removedAt": "2022-07-13T14:32:50.697Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/metadata": {
+      "post": {
+        "summary": "Edit comment metadata",
+        "tags": ["Comments"],
+        "description": "This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).",
+        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-metadata",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the comment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentMetadata"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "tag": "important",
+                      "reviewed": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-comment"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCommentMetadata"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "metadata": {
+                      "tag": null,
+                      "reviewed": true
+                    },
+                    "userId": "alice",
+                    "updatedAt": "2023-07-13T14:32:50.697Z"
                   }
                 }
               }
@@ -5278,8 +5362,8 @@
         ],
         "description": ""
       },
-      "UpdateThread": {
-        "title": "UpdateThread",
+      "UpdateThreadMetadata": {
+        "title": "UpdateThreadMetadata",
         "type": "object",
         "properties": {
           "metadata": {
@@ -5316,6 +5400,48 @@
           {
             "color": "blue",
             "age": 25
+          }
+        ],
+        "description": ""
+      },
+      "CommentMetadata": {
+        "type": "object",
+        "title": "CommentMetadata",
+        "properties": {
+          "type": "object"
+        },
+        "required": [],
+        "examples": [
+          {
+            "tag": "important",
+            "reviewed": true
+          }
+        ],
+        "description": ""
+      },
+      "UpdateCommentMetadata": {
+        "title": "UpdateCommentMetadata",
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "type": "object"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["metadata", "userId"],
+        "examples": [
+          {
+            "metadata": {
+              "tag": "important"
+            },
+            "userId": "alice",
+            "updatedAt": "2023-07-13T14:32:50.697Z"
           }
         ],
         "description": ""
