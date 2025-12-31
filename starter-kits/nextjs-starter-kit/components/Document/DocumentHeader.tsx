@@ -5,11 +5,12 @@ import {
   useIsInsideRoom,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
+import { useSession } from "next-auth/react";
 import { ComponentProps } from "react";
 import { InboxPopover } from "@/components/Inbox";
 import { OrganizationPopover } from "@/components/OrganizationPopover";
-import { ShareIcon } from "@/icons";
-import { renameDocument } from "@/lib/actions";
+import { ShareIcon, SignInIcon } from "@/icons";
+import { renameDocument, signIn } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Skeleton } from "@/primitives/Skeleton";
 import { Document } from "@/types";
@@ -30,11 +31,22 @@ export function DocumentHeader({
   ...props
 }: Props) {
   const isInsideRoom = useIsInsideRoom();
+  const { status } = useSession();
 
   return (
     <header className={clsx(className, styles.header)} {...props}>
       <div className={styles.logo}>
-        <OrganizationPopover />
+        {status === "authenticated" ? (
+          <OrganizationPopover />
+        ) : (
+          <Button
+            icon={<SignInIcon />}
+            variant="secondary"
+            onClick={() => signIn()}
+          >
+            Sign in
+          </Button>
+        )}
       </div>
       <div className={styles.document}>
         {showTitle ? (
@@ -70,8 +82,9 @@ export function DocumentHeader({
             </ClientSideSuspense>
           ) : null}
         </ClientSideSuspense>
-
-        <InboxPopover align="end" sideOffset={4} />
+        {status === "authenticated" ? (
+          <InboxPopover align="end" sideOffset={4} />
+        ) : null}
       </div>
     </header>
   );
