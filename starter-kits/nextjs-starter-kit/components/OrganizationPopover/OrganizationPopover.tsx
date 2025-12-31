@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import { DASHBOARD_URL } from "@/constants";
@@ -38,10 +39,14 @@ export function OrganizationPopover() {
     return organizations[0];
   }, [organizations, session]);
 
+  const router = useRouter();
+
   // Changes organizations then go to dashboard
   const handleOrganizationChange = useCallback(
     async (organizationId: string) => {
       if (organizationId === session?.user.currentOrganizationId) {
+        // If current organization is clicked, go to dashboard
+        router.push(DASHBOARD_URL);
         return;
       }
 
@@ -57,7 +62,7 @@ export function OrganizationPopover() {
       // read the new organization from the cookie. Goes to the dashboard.
       window.location.replace(DASHBOARD_URL);
     },
-    [session]
+    [session, router]
   );
 
   if (!session) {
