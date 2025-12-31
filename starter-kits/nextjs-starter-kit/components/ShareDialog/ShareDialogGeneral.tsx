@@ -8,7 +8,7 @@ import {
   DocumentPermissionType,
   DocumentPermissions,
 } from "@/types";
-import styles from "./ShareDialogDefault.module.css";
+import styles from "./ShareDialogGeneral.module.css";
 
 interface Props extends ComponentProps<"div"> {
   generalPermissions: DocumentPermissions;
@@ -19,7 +19,7 @@ interface Props extends ComponentProps<"div"> {
 
 // TODO tidy up this, add spinner, remember why fullAccess was passed
 
-export function ShareDialogDefault({
+export function ShareDialogGeneral({
   documentId,
   fullAccess,
   generalPermissions,

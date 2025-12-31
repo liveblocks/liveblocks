@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { ANONYMOUS_USER_ID } from "@/constants";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 
@@ -10,7 +11,7 @@ export async function authorizeLiveblocks() {
 
   // Anonymous user info
   const anonymousUser: User = {
-    id: "anonymous",
+    id: ANONYMOUS_USER_ID,
     name: "Anonymous",
     color: "#ff0000",
     avatar: "",
@@ -22,11 +23,13 @@ export async function authorizeLiveblocks() {
   // If no session found, this is a logged out/anonymous user
   const { name, avatar, color, id } = session?.user.info ?? anonymousUser;
 
+  // TODO remove "liveblocks"
   // Get current organization from session
-
-  // For anonymous users, use default as fallback
   const currentOrganizationId =
-    session?.user.currentOrganizationId ?? "default";
+    session?.user.currentOrganizationId ?? "liveblocks";
+
+  // TODO insert the room's organization id into the thing above
+  // The correct id needs to be inserted even for anonymous users
 
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(

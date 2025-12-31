@@ -11,7 +11,7 @@ import { getDocumentAccess } from "@/lib/utils";
 import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
 import { DocumentPermissionType } from "@/types";
-import { ShareDialogDefault } from "./ShareDialogDefault";
+import { ShareDialogGeneral } from "./ShareDialogGeneral";
 import { ShareDialogInviteUser } from "./ShareDialogInviteUser";
 import { ShareDialogUsers } from "./ShareDialogUsers";
 import styles from "./ShareDialog.module.css";
@@ -77,7 +77,8 @@ export function ShareDialog({ children, ...props }: Props) {
     // Reload app if current user swapping between READONLY and EDIT/FULL (will reconnect to app with new access level)
     const accessChanges = new Set([currentUserAccess, accessLevel]);
     if (accessChanges.has("read") && accessChanges.has("write")) {
-      window.location.reload();
+      // TODO fix for anon users
+      // window.location.reload();
       return;
     }
 
@@ -135,7 +136,7 @@ export function ShareDialog({ children, ...props }: Props) {
 
           <div className={styles.dialogDivider}>General access</div>
 
-          <ShareDialogDefault
+          <ShareDialogGeneral
             className={styles.dialogSection}
             generalPermissions={generalPermissions}
             documentId={documentId}
