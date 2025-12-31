@@ -5336,6 +5336,9 @@
                     }
                   }
                 }
+              },
+              "metadata": {
+                "$ref": "#/components/schemas/CommentMetadata"
               }
             },
             "required": ["userId", "body"]
@@ -5353,6 +5356,10 @@
               "body": {
                 "version": 1,
                 "content": []
+              },
+              "metadata": {
+                "tag": "important",
+                "reviewed": false
               }
             },
             "metadata": {
@@ -5482,6 +5489,9 @@
           },
           "body": {
             "type": "object"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CommentMetadata"
           }
         },
         "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
@@ -5495,7 +5505,11 @@
             "createdAt": "2019-08-24T14:15:22Z",
             "editedAt": "2019-08-24T14:15:22Z",
             "deletedAt": "2019-08-24T14:15:22Z",
-            "body": {}
+            "body": {},
+            "metadata": {
+              "tag": "important",
+              "reviewed": false
+            }
           }
         ]
       },
@@ -5523,6 +5537,9 @@
                 }
               }
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CommentMetadata"
           }
         },
         "required": ["userId", "body"],
@@ -5533,6 +5550,10 @@
             "body": {
               "version": 1,
               "content": []
+            },
+            "metadata": {
+              "tag": "important",
+              "reviewed": false
             }
           }
         ],
@@ -5559,6 +5580,9 @@
                 }
               }
             }
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/CommentMetadata"
           }
         },
         "required": ["body"],
@@ -5568,6 +5592,10 @@
             "body": {
               "version": 1,
               "content": []
+            },
+            "metadata": {
+              "tag": "important",
+              "reviewed": true
             }
           }
         ],
