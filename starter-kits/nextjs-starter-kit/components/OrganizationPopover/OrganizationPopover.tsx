@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
+import { DASHBOARD_URL } from "@/constants";
 import { CheckIcon, SelectIcon, SignOutIcon } from "@/icons";
 import { getUserOrganizations } from "@/lib/actions/getUserOrganizations";
 import { switchOrganization } from "@/lib/actions/switchOrganization";
@@ -37,6 +38,7 @@ export function OrganizationPopover() {
     return organizations[0];
   }, [organizations, session]);
 
+  // Changes organizations then go to dashboard
   const handleOrganizationChange = useCallback(
     async (organizationId: string) => {
       if (organizationId === session?.user.currentOrganizationId) {
@@ -50,9 +52,10 @@ export function OrganizationPopover() {
         return;
       }
 
-      // Refresh the page to re-authenticate with Liveblocks for the new organization
-      // This will cause the auth callback to read the new organization from the cookie
-      window.location.reload();
+      // Always hard refresh/replace the page to re-authenticate with Liveblocks
+      // for a new organization. This will cause the Liveblocks auth callback to
+      // read the new organization from the cookie. Goes to the dashboard.
+      window.location.replace(DASHBOARD_URL);
     },
     [session]
   );
