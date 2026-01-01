@@ -76,7 +76,7 @@ export function ShareDialogUsers({
             />
             <div className={styles.rowInfo}>
               <span className={styles.rowName}>{name}</span>
-              {!isCurrentUser && fullAccess ? (
+              {fullAccess ? (
                 <>
                   {id !== documentOwner ? (
                     <button
@@ -86,15 +86,24 @@ export function ShareDialogUsers({
                       Remove
                     </button>
                   ) : (
-                    <span className={styles.rowDescription}>Owner</span>
+                    <span className={styles.rowDescription}>
+                      {isCurrentUser ? "You are owner" : "Owner"}
+                    </span>
                   )}
                 </>
-              ) : null}
-              {isCurrentUser ? (
-                <span className={styles.rowDescription}>This is you</span>
-              ) : null}
+              ) : (
+                <>
+                  {isCurrentUser ? (
+                    <span className={styles.rowDescription}>This is you</span>
+                  ) : (
+                    <span className={styles.rowDescription}>
+                      {id === documentOwner ? "Owner" : "Member"}
+                    </span>
+                  )}
+                </>
+              )}
             </div>
-            {!isCurrentUser && id !== documentOwner ? (
+            {id !== documentOwner ? (
               <div className={styles.rowAccessSelect}>
                 <Select
                   loading={isLoading === id}

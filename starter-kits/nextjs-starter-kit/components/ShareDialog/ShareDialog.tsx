@@ -1,5 +1,6 @@
 import {
   useBroadcastEvent,
+  useErrorListener,
   useEventListener,
 } from "@liveblocks/react/suspense";
 import { useSession } from "next-auth/react";
@@ -47,10 +48,20 @@ export function ShareDialog({ children, ...props }: Props) {
     refreshInterval: 0,
   });
 
-  // If you have no access to this room, refresh and show error page
+  // If document says you have no access to this room, refresh and show error page
   if (generalAccessError && generalAccessError.code === 403) {
     window.location.reload();
   }
+
+  // If WebSocket says you have no access to this room, refresh and show error page
+  useErrorListener((error) => {
+    if (
+      error.context.type === "ROOM_CONNECTION_ERROR" &&
+      error.context.code === 4001
+    ) {
+      window.location.reload();
+    }
+  });
 
   // Refresh the current user's access level
   const revalidateCurrentUserAccess = useCallback(() => {
