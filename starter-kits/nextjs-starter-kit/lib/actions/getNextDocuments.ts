@@ -20,8 +20,20 @@ type Props = {
  */
 export async function getNextDocuments({ nextCursor }: Props) {
   const session = await auth();
-  // Default to personal workspace for authenticated users
-  const tenantId = session?.user.currentOrganizationId ?? "liveblocks";
+
+  // Check user is logged in
+  if (!session) {
+    return {
+      error: {
+        code: 401,
+        message: "Not signed in",
+        suggestion: "Sign in to get documents",
+      },
+    };
+  }
+
+  const tenantId = session.user.currentOrganizationId;
+
   let getRoomsResponse;
   try {
     // Get rooms
@@ -36,17 +48,6 @@ export async function getNextDocuments({ nextCursor }: Props) {
         code: 500,
         message: "Error fetching rooms",
         suggestion: "Refresh the page and try again",
-      },
-    };
-  }
-
-  // Check user is logged in
-  if (!session) {
-    return {
-      error: {
-        code: 401,
-        message: "Not signed in",
-        suggestion: "Sign in to get documents",
       },
     };
   }

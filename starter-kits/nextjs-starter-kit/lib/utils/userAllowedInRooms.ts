@@ -7,7 +7,7 @@ import { RoomData } from "@liveblocks/node";
 
 interface UserAccessProps {
   accessAllowed: "write" | "read";
-  checkAccessLevel?: "any" | "user" | "default";
+  checkAccessLevel?: "any" | "user" | "organization" | "general";
   tenantId: string;
   userId: string;
 }
@@ -67,6 +67,13 @@ export function userAllowedInRoom({
     tenantId,
   });
 
+  const organizationAllowed = checkOrganizationAccess({
+    accessAllowed,
+    userId,
+    room,
+    tenantId,
+  });
+
   const generalAllowed = checkGeneralAccess({
     accessAllowed,
     userId,
@@ -75,14 +82,18 @@ export function userAllowedInRoom({
   });
 
   if (checkAccessLevel === "any") {
-    return userAllowed || generalAllowed;
+    return userAllowed || organizationAllowed || generalAllowed;
   }
 
   if (checkAccessLevel === "user") {
     return userAllowed;
   }
 
-  if (checkAccessLevel === "default") {
+  if (checkAccessLevel === "organization") {
+    return organizationAllowed;
+  }
+
+  if (checkAccessLevel === "general") {
     return generalAllowed;
   }
 
@@ -109,14 +120,16 @@ function checkGeneralAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
   return false;
 }
 
-function checkTenantAccess({
+function checkOrganizationAccess({
   room,
   accessAllowed,
   tenantId,
 }: UserAllowedInRoomProps) {
+  // TODO
   const roomTenantId = room.tenantId;
 
   // TODO a way to check the tenantId of a room then give a user access
+  return tenantId === "liveblocks";
 }
 
 function checkUserAccess({

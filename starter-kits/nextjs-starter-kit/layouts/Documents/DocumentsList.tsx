@@ -44,7 +44,6 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
     // Get all documents for the current user
     return {
       documentType: currentDocumentType,
-      userId: session.user.info.id,
       limit: DOCUMENT_LOAD_LIMIT,
     };
   }, [session, documentType]);
