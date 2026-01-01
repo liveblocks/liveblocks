@@ -92,6 +92,35 @@
   gap: var(--space-1);
 }
 
+.itemIcon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  margin-right: var(--space-7);
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  place-items: center;
+  place-content: center;
+  background-color: var(--color-surface);
+}
+
+.item:hover .itemIcon {
+  background-color: var(--color-surface-hover);
+}
+
+.itemIcon > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.itemIcon > svg {
+  width: 50%;
+  height: 50%;
+  opacity: 0.5;
+}
+
 .itemDescription {
   font-size: var(--size-xs);
   font-weight: 400;

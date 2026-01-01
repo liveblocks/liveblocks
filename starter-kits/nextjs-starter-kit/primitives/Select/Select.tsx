@@ -1,6 +1,12 @@
 import * as RadixSelect from "@radix-ui/react-select";
 import clsx from "clsx";
-import { CSSProperties, useCallback, useEffect, useState } from "react";
+import {
+  CSSProperties,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { CheckIcon, SelectIcon } from "../../icons";
 import { Spinner } from "../Spinner";
 import styles from "./Select.module.css";
@@ -9,6 +15,7 @@ interface Item extends RadixSelect.SelectItemProps {
   value: string;
   title?: string;
   description?: string;
+  icon?: ReactNode;
 }
 
 interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
@@ -96,7 +103,7 @@ export function Select({
           }
         >
           <RadixSelect.Viewport>
-            {items.map(({ value, title, description, ...props }) => (
+            {items.map(({ value, title, description, icon, ...props }) => (
               <RadixSelect.Item
                 key={value}
                 value={value}
@@ -115,6 +122,7 @@ export function Select({
                     </svg>
                   </RadixSelect.ItemIndicator>
                 </div>
+                {icon && <div className={styles.itemIcon}>{icon}</div>}
                 <div className={styles.itemInfo}>
                   <RadixSelect.ItemText className={styles.itemTitle}>
                     {title ?? value}

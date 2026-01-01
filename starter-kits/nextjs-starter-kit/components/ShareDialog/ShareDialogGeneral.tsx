@@ -79,7 +79,17 @@ export function ShareDialogGeneral({
         refreshInterval: 0,
       }
     );
+
   const documentOrganization = organizations?.[0] ?? null;
+  const organizationIcon =
+    !isLoadingOrganizations && documentOrganization ? (
+      <Image
+        src={documentOrganization?.avatar ?? ""}
+        alt={documentOrganization?.name ?? ""}
+        width={24}
+        height={24}
+      />
+    ) : null;
 
   return (
     <>
@@ -88,18 +98,7 @@ export function ShareDialogGeneral({
           <div className={styles.sectionStart}>
             <div className={styles.sectionIcon}>
               {permissionsGroup === "private" ? <LockIcon /> : null}
-
-              {permissionsGroup === "organization" ? (
-                !isLoadingOrganizations && documentOrganization ? (
-                  <Image
-                    src={documentOrganization?.avatar ?? ""}
-                    alt={documentOrganization?.name ?? ""}
-                    width={24}
-                    height={24}
-                  />
-                ) : null
-              ) : null}
-
+              {permissionsGroup === "organization" ? organizationIcon : null}
               {permissionsGroup === "public" ? <EarthIcon /> : null}
             </div>
 
@@ -116,6 +115,7 @@ export function ShareDialogGeneral({
                     title: "Private",
                     value: "private",
                     description: "Only you have access",
+                    icon: <LockIcon />,
                   },
                   {
                     title: isLoadingOrganizations
@@ -123,11 +123,13 @@ export function ShareDialogGeneral({
                       : (documentOrganization?.name ?? "Undefined"),
                     value: "organization",
                     description: `Only organization members have access`,
+                    icon: organizationIcon,
                   },
                   {
                     title: "Anyone with a link",
                     value: "public",
                     description: `Anyone on the internet can access`,
+                    icon: <EarthIcon />,
                   },
                 ]}
                 onChange={(value: DocumentPermissionGroup) => {
