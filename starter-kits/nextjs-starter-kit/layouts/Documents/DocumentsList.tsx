@@ -23,7 +23,7 @@ import styles from "./DocumentsList.module.css";
 const DOCUMENT_LOAD_LIMIT = 10;
 
 interface Props extends ComponentProps<"div"> {
-  filter?: "all";
+  filter?: "all" | "private" | "organization" | "public";
 }
 
 export function DocumentsList({ filter = "all", className, ...props }: Props) {
@@ -44,9 +44,10 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
     // Get all documents for the current user
     return {
       documentType: currentDocumentType,
+      permissionGroup: filter !== "all" ? filter : undefined,
       limit: DOCUMENT_LOAD_LIMIT,
     };
-  }, [session, documentType]);
+  }, [session, documentType, filter]);
 
   // When session is found, find pages of documents with the above document options
   const {
