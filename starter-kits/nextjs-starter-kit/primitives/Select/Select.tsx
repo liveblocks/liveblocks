@@ -112,14 +112,7 @@ export function Select({
               >
                 <div className={styles.itemIndicator}>
                   <RadixSelect.ItemIndicator>
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <CheckIcon />
-                    </svg>
+                    <CheckIcon />
                   </RadixSelect.ItemIndicator>
                 </div>
                 {icon && <div className={styles.itemIcon}>{icon}</div>}
