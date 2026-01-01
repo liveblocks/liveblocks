@@ -25,8 +25,8 @@ export function ShareDialog({ children, ...props }: Props) {
   const fullAccess = owner === session?.user?.info.id;
 
   const [currentUserAccess, setCurrentUserAccess] =
-    useState<DocumentPermissionType>(
-      userPermissions[session?.user?.info.id ?? ""] || "read"
+    useState<DocumentPermissionType | null>(
+      userPermissions[session?.user?.info.id ?? ""] || null
     );
 
   // Get a list of users attached to the document (+ their info)
@@ -47,7 +47,7 @@ export function ShareDialog({ children, ...props }: Props) {
     refreshInterval: 0,
   });
 
-  // If you have no access to this room, refresh
+  // If you have no access to this room, refresh and show error page
   if (generalAccessError && generalAccessError.code === 403) {
     window.location.reload();
   }
@@ -63,18 +63,14 @@ export function ShareDialog({ children, ...props }: Props) {
       userId: session?.user?.info.id ?? "",
     });
 
-    // TODO remember why this was here
-    // Reload if current user has no access (will show error page)
-    if (accessLevel === "none") {
-      window.location.reload();
-      return;
-    }
-
     // Reload app if current user swapping between READONLY and EDIT/FULL (will reconnect to app with new access level)
     const accessChanges = new Set([currentUserAccess, accessLevel]);
-    if (accessChanges.has("read") && accessChanges.has("write")) {
-      // TODO fix for anon users
-      // window.location.reload();
+    if (
+      !accessChanges.has(null) &&
+      accessChanges.has("read") &&
+      accessChanges.has("write")
+    ) {
+      window.location.reload();
       return;
     }
 
