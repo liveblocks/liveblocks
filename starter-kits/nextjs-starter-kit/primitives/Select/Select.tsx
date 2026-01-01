@@ -2,6 +2,7 @@ import * as RadixSelect from "@radix-ui/react-select";
 import clsx from "clsx";
 import { CSSProperties, useCallback, useEffect, useState } from "react";
 import { CheckIcon, SelectIcon } from "../../icons";
+import { Spinner } from "../Spinner";
 import styles from "./Select.module.css";
 
 interface Item extends RadixSelect.SelectItemProps {
@@ -21,6 +22,7 @@ interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
   inlineDescription?: boolean;
   className?: RadixSelect.SelectTriggerProps["className"];
   style?: CSSProperties;
+  loading?: boolean;
 }
 
 export function Select({
@@ -34,6 +36,7 @@ export function Select({
   inlineDescription,
   className,
   style,
+  loading,
   ...props
 }: Props) {
   const [internalValue, setInternalValue] = useState(initialValue);
@@ -65,6 +68,8 @@ export function Select({
         })}
         style={style}
         data-inline-description={inlineDescription ?? undefined}
+        data-loading={loading === true || undefined}
+        data-disabled={props.disabled ?? undefined}
       >
         <div className={styles.itemInfo}>
           <RadixSelect.Value
@@ -78,7 +83,7 @@ export function Select({
           )}
         </div>
         <RadixSelect.Icon className={styles.triggerIcon}>
-          <SelectIcon />
+          {loading ? <Spinner /> : <SelectIcon />}
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>

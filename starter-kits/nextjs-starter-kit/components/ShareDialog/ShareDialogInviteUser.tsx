@@ -81,7 +81,7 @@ export function ShareDialogInviteUser({
         </>
       ) : (
         <div className={styles.error}>
-          You need full access to invite others.
+          You don’t have access to change permissions.
         </div>
       )}
     </div>

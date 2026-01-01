@@ -32,7 +32,6 @@ export function ShareDialogGeneral({
   const [permissionType, setPermissionType] = useState<DocumentPermissionType>(
     document.generalPermissions.type
   );
-  const [isLoading, setIsLoading] = useState(false);
 
   // When default access changed by another connected user, update UI
   useEffect(() => {
@@ -40,17 +39,21 @@ export function ShareDialogGeneral({
     setPermissionType(document.generalPermissions.type);
   }, [document]);
 
+  const [isLoading, setIsLoading] = useState<"group" | "type" | null>(null);
+
   // Handle permission change
   async function handlePermissionChange({
     group,
     type,
+    loading,
   }: {
     group: DocumentPermissionGroup;
     type: DocumentPermissionType;
+    loading: "group" | "type";
   }) {
-    setIsLoading(true);
     setPermissionsGroup(group);
     setPermissionType(type);
+    setIsLoading(loading);
 
     const { data, error } = await updateGeneralAccess({
       documentId: document.id,
@@ -58,15 +61,15 @@ export function ShareDialogGeneral({
       permissionType: type,
     });
 
+    setIsLoading(null);
+
     if (error || !data) {
       // Revert on error
       setPermissionsGroup(document.generalPermissions.group);
       setPermissionType(document.generalPermissions.type);
-      setIsLoading(false);
       return;
     }
 
-    setIsLoading(false);
     onSetDefaultAccess();
   }
 
@@ -103,8 +106,8 @@ export function ShareDialogGeneral({
             </div>
             <div>
               <Select
-                disabled={isLoading}
-                style={{ pointerEvents: fullAccess ? undefined : "none" }}
+                loading={isLoading === "group"}
+                disabled={!fullAccess}
                 inlineDescription
                 variant="subtle"
                 aboveOverlay
@@ -133,6 +136,7 @@ export function ShareDialogGeneral({
                   handlePermissionChange({
                     group: value,
                     type: "read",
+                    loading: "group",
                   });
                 }}
               />
@@ -141,8 +145,8 @@ export function ShareDialogGeneral({
           <div className={styles.sectionAction}>
             {permissionsGroup !== "private" ? (
               <Select
-                disabled={isLoading}
-                style={{ pointerEvents: fullAccess ? undefined : "none" }}
+                loading={isLoading === "type"}
+                disabled={!fullAccess}
                 aboveOverlay
                 initialValue={permissionType}
                 items={[
@@ -162,6 +166,7 @@ export function ShareDialogGeneral({
                   handlePermissionChange({
                     group: permissionsGroup,
                     type: value,
+                    loading: "type",
                   });
                 }}
                 value={permissionType}

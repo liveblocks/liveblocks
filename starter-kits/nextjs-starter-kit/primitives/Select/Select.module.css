@@ -14,8 +14,25 @@
   outline: none;
 }
 
+.trigger[data-placeholder] {
+  color: var(--color-text-lightest);
+  font-weight: 400;
+}
+
+.trigger[data-disabled] {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
 .trigger[data-inline-description] {
   height: var(--space-16);
+}
+
+.trigger[data-loading] {
+  transition: none;
+  pointer-events: none;
+  opacity: 0.75;
 }
 
 .triggerSubtle {
@@ -40,16 +57,6 @@
   margin-right: calc(-1 * var(--space-2));
   margin-left: auto;
   opacity: 0.4;
-}
-
-.trigger[data-placeholder] {
-  color: var(--color-text-lightest);
-  font-weight: 400;
-}
-
-.trigger[data-disabled] {
-  cursor: default;
-  opacity: var(--opacity-disabled);
 }
 
 .select {

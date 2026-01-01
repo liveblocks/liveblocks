@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { ComponentProps } from "react";
+import { ComponentProps, useState } from "react";
 import { removeUserAccess, updateUserAccess } from "@/lib/actions";
 import { Avatar } from "@/primitives/Avatar";
 import { Select } from "@/primitives/Select";
@@ -23,6 +23,8 @@ export function ShareDialogUsers({
   className,
   ...props
 }: Props) {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
   // Remove a collaborator from the room
   async function handleRemoveDocumentUser(id: DocumentUser["id"]) {
     const { data, error } = await removeUserAccess({
@@ -42,11 +44,15 @@ export function ShareDialogUsers({
     id: DocumentUser["id"],
     access: DocumentPermissionType
   ) {
+    setIsLoading(id);
+
     const { data, error } = await updateUserAccess({
       userId: id,
       documentId: documentId,
       access: access,
     });
+
+    setIsLoading(null);
 
     if (error || !data) {
       return;
@@ -91,6 +97,7 @@ export function ShareDialogUsers({
             {!isCurrentUser && id !== documentOwner ? (
               <div className={styles.rowAccessSelect}>
                 <Select
+                  loading={isLoading === id}
                   aboveOverlay
                   disabled={!fullAccess}
                   initialValue={access}
