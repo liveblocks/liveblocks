@@ -18,8 +18,6 @@ interface Props extends ComponentProps<"div"> {
   onSetDefaultAccess: () => void;
 }
 
-// TODO tidy up this, add spinner, remember why fullAccess was passed
-
 export function ShareDialogGeneral({
   document,
   fullAccess,
@@ -104,6 +102,7 @@ export function ShareDialogGeneral({
 
               {permissionsGroup === "public" ? <EarthIcon /> : null}
             </div>
+
             <div>
               <Select
                 loading={isLoading === "group"}
@@ -142,6 +141,7 @@ export function ShareDialogGeneral({
               />
             </div>
           </div>
+
           <div className={styles.sectionAction}>
             {permissionsGroup !== "private" ? (
               <Select
@@ -174,62 +174,6 @@ export function ShareDialogGeneral({
             ) : null}
           </div>
         </div>
-
-        {/*
-      <div className={styles.section}>
-        <label
-          className={styles.sectionLabel}
-          data-disabled={fullAccess ? undefined : true}
-          htmlFor="public-read-checkbox"
-        >
-          <LinkIcon className={styles.sectionLabelIcon} />
-          <span>Enable public share link</span>
-        </label>
-        <div className={styles.sectionAction}>
-          {isPublicReadLoading ? (
-            <Spinner size={18} />
-          ) : (
-            <Checkbox
-              checked={publicRead}
-              disabled={!fullAccess}
-              id="public-read-checkbox"
-              initialValue={defaultAccess !== DocumentAccess.NONE}
-              name="public-read-checkbox"
-              onValueChange={handlePublicRead}
-            />
-          )}
-        </div>
-      </div>
-
-      {defaultAccess !== DocumentAccess.NONE ? (
-        <>
-          <div className={styles.section}>
-            <label
-              className={styles.sectionLabel}
-              data-disabled={fullAccess ? undefined : true}
-              htmlFor="public-edit-checkbox"
-            >
-              <EditIcon className={styles.sectionLabelIcon} />
-              <span> Allow anyone to edit</span>
-            </label>
-            <div className={styles.sectionAction}>
-              {isPublicEditLoading ? (
-                <Spinner size={18} />
-              ) : (
-                <Checkbox
-                  checked={publicEdit}
-                  disabled={!fullAccess || isPublicEditLoading}
-                  id="public-edit-checkbox"
-                  initialValue={defaultAccess === DocumentAccess.EDIT}
-                  name="public-edit-checkbox"
-                  onValueChange={handlePublicEdit}
-                />
-              )}
-            </div>
-          </div>
-        </>
-      ) : null}
-      */}
       </div>
     </>
   );
