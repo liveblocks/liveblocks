@@ -67,9 +67,9 @@ export function Select({
           [styles.triggerSubtle]: variant === "subtle",
         })}
         style={style}
-        data-inline-description={inlineDescription ?? undefined}
+        data-inline-description={inlineDescription === true || undefined}
         data-loading={loading === true || undefined}
-        data-disabled={props.disabled ?? undefined}
+        data-disabled={props.disabled === true || undefined}
       >
         <div className={styles.itemInfo}>
           <RadixSelect.Value
