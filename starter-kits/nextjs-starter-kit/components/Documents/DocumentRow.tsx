@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { DeleteIcon, MoreIcon } from "@/icons";
+import { getOrganizations } from "@/lib/actions";
+import { useDocumentsFunctionSWR } from "@/lib/hooks";
 import { getDocumentAccess } from "@/lib/utils";
 import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
@@ -57,6 +59,15 @@ export function DocumentRow({
     }
   }, []);
 
+  const { data: organizations } = useDocumentsFunctionSWR(
+    [getOrganizations, { organizationIds: [document.organization] }],
+    {
+      refreshInterval: 0,
+    }
+  );
+
+  const organization = organizations?.[0] ?? null;
+
   return (
     <div className={clsx(className, styles.row)} {...props}>
       <Link className={clsx(styles.container, styles.link)} href={url}>
@@ -66,11 +77,24 @@ export function DocumentRow({
         <div className={styles.info}>
           <span className={styles.documentName}>
             <span>{document.name}</span>
+            {document.generalPermissions.group === "public" ? (
+              <span className={styles.permissionsGroup}>Public</span>
+            ) : null}
+            {organization &&
+            document.generalPermissions.group === "organization" ? (
+              <span className={styles.permissionsGroup}>
+                {organization.name}
+              </span>
+            ) : null}
+            {document.generalPermissions.group === "private" ? (
+              <span className={styles.permissionsGroup}>Private</span>
+            ) : null}
           </span>
           <span className={styles.documentDate}>
             Edited {formatDistanceToNow(date)} ago
           </span>
         </div>
+
         {others && (
           <div className={styles.presence}>
             <AvatarStack
@@ -85,6 +109,7 @@ export function DocumentRow({
           </div>
         )}
       </Link>
+
       {currentUserAccess === "write" ? (
         <div className={styles.more}>
           <Popover
