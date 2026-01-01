@@ -15,13 +15,13 @@ import styles from "./ShareDialogGeneral.module.css";
 interface Props extends ComponentProps<"div"> {
   document: Document;
   fullAccess: boolean;
-  onSetDefaultAccess: () => void;
+  onSetGeneralAccess: () => void;
 }
 
 export function ShareDialogGeneral({
   document,
   fullAccess,
-  onSetDefaultAccess,
+  onSetGeneralAccess,
   className,
   ...props
 }: Props) {
@@ -68,7 +68,7 @@ export function ShareDialogGeneral({
       return;
     }
 
-    onSetDefaultAccess();
+    onSetGeneralAccess();
   }
 
   // Get the organization this document belongs to

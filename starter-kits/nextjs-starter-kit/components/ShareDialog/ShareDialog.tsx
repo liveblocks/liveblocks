@@ -143,7 +143,7 @@ export function ShareDialog({ children, ...props }: Props) {
             className={styles.dialogSection}
             document={document ?? initialDocument}
             fullAccess={fullAccess}
-            onSetDefaultAccess={() => {
+            onSetGeneralAccess={() => {
               revalidateAll();
               broadcast({ type: "SHARE_DIALOG_UPDATE" });
             }}
