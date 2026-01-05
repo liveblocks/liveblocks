@@ -1,4 +1,6 @@
 import {
+  type RoomCreatedEvent,
+  type RoomDeletedEvent,
   type StorageUpdatedEvent,
   type UserEnteredEvent,
   type UserLeftEvent,
@@ -28,6 +30,14 @@ export type WebhookOptions = {
    * Triggered when a user left a room.
    */
   onUserLeft?: (event: UserLeftEvent) => Promise<void>;
+  /**
+   * Triggered when a room was created.
+   */
+  onRoomCreated?: (event: RoomCreatedEvent) => Promise<void>;
+  /**
+   * Triggered when a room was deleted.
+   */
+  onRoomDeleted?: (event: RoomDeletedEvent) => Promise<void>;
 };
 
 /**
@@ -83,6 +93,18 @@ export function Webhook(
         case "userLeft": {
           if (options.onUserLeft) {
             promises.push(options.onUserLeft(event));
+          }
+          break;
+        }
+        case "roomCreated": {
+          if (options.onRoomCreated) {
+            promises.push(options.onRoomCreated(event));
+          }
+          break;
+        }
+        case "roomDeleted": {
+          if (options.onRoomDeleted) {
+            promises.push(options.onRoomDeleted(event));
           }
           break;
         }
