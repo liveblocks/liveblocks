@@ -7,6 +7,10 @@ import {
   type RoomCreatedEvent,
   type RoomDeletedEvent,
   type StorageUpdatedEvent,
+  type ThreadCreatedEvent,
+  type ThreadDeletedEvent,
+  type ThreadMarkedAsResolvedEvent,
+  type ThreadMarkedAsUnresolvedEvent,
   type ThreadMetadataUpdatedEvent,
   type UserEnteredEvent,
   type UserLeftEvent,
@@ -74,6 +78,26 @@ export type WebhookOptions = {
    */
   onThreadMetadataUpdated?: (
     event: ThreadMetadataUpdatedEvent
+  ) => Promise<void>;
+  /**
+   * Triggered when a thread was created.
+   */
+  onThreadCreated?: (event: ThreadCreatedEvent) => Promise<void>;
+  /**
+   * Triggered when a thread was deleted.
+   */
+  onThreadDeleted?: (event: ThreadDeletedEvent) => Promise<void>;
+  /**
+   * Triggered when a thread was marked as resolved.
+   */
+  onThreadMarkedAsResolved?: (
+    event: ThreadMarkedAsResolvedEvent
+  ) => Promise<void>;
+  /**
+   * Triggered when a thread was marked as unresolved.
+   */
+  onThreadMarkedAsUnresolved?: (
+    event: ThreadMarkedAsUnresolvedEvent
   ) => Promise<void>;
 };
 
@@ -184,6 +208,30 @@ export function Webhook(
         case "threadMetadataUpdated": {
           if (options.onThreadMetadataUpdated) {
             promises.push(options.onThreadMetadataUpdated(event));
+          }
+          break;
+        }
+        case "threadCreated": {
+          if (options.onThreadCreated) {
+            promises.push(options.onThreadCreated(event));
+          }
+          break;
+        }
+        case "threadDeleted": {
+          if (options.onThreadDeleted) {
+            promises.push(options.onThreadDeleted(event));
+          }
+          break;
+        }
+        case "threadMarkedAsResolved": {
+          if (options.onThreadMarkedAsResolved) {
+            promises.push(options.onThreadMarkedAsResolved(event));
+          }
+          break;
+        }
+        case "threadMarkedAsUnresolved": {
+          if (options.onThreadMarkedAsUnresolved) {
+            promises.push(options.onThreadMarkedAsUnresolved(event));
           }
           break;
         }
