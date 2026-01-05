@@ -23,6 +23,8 @@ export type WebhookOptions = {
  *   webhookSecret: process.env.WEBHOOK_SECRET,
  *   onEvent: async (event) => {
  *     console.log(event);
+ *     // Handle the event
+ *     // no need to return an acknowledgement response
  *   },
  * })
  */
