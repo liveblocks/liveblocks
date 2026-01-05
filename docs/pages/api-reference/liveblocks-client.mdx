@@ -3037,9 +3037,8 @@ Returns a thread and its associated inbox notification and subscription, from
 its ID, if it exists.
 
 ```ts
-const { thread, inboxNotification, subscription } = await room.getThread(
-  "th_xxx"
-);
+const { thread, inboxNotification, subscription } =
+  await room.getThread("th_xxx");
 ```
 
 The thread ID can be retrieved from existing threads.
@@ -3143,8 +3142,8 @@ const thread = await room.createThread({ body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
-> website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -3413,8 +3412,8 @@ const comment = await room.createComment({ threadId: thread.id, body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
-> website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -3471,6 +3470,47 @@ const comment = await room.editComment({
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.editCommentMetadata
+
+Edits a comment’s custom metadata. Metadata can be a `string`, `number`, or
+`boolean`. To delete an existing metadata property, set its value to `null`.
+
+```ts
+await room.editCommentMetadata({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  metadata: {
+    tag: "important",
+    priority: 2,
+    flagged: true,
+  },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="metadata" type="CommentMetadata">
+    The comment metadata.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="threadId" type="string" required>
+    The ID of the thread containing the comment.
+  </PropertiesListItem>
+  <PropertiesListItem name="commentId" type="string" required>
+    The ID of the comment.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="metadata"
+    type="Patchable<CommentMetadata>"
+    required
+  >
+    An object containing the metadata properties to update. Metadata can be a
+    `string`, `number`, or `boolean`. To delete an existing metadata property,
+    set its value to `null`.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5661,6 +5701,9 @@ declare global {
     // Custom metadata set on threads
     ThreadMetadata: {};
 
+    // Custom metadata set on comments
+    CommentMetadata: {};
+
     // Custom room info set with resolveRoomsInfo
     RoomInfo: {};
 
@@ -5714,6 +5757,12 @@ declare global {
       // Example, attaching coordinates to a thread
       x: number;
       y: number;
+    };
+
+    // Custom metadata set on comments
+    CommentMetadata: {
+      // Example, attaching a tag to a comment
+      tag: string;
     };
 
     // Custom room info set with resolveRoomsInfo
