@@ -281,6 +281,7 @@ describe("middleware", () => {
         },
         {
           type: ClientMsgCode.FETCH_STORAGE,
+          stream: true,
         },
       ]);
 
@@ -311,6 +312,7 @@ describe("middleware", () => {
         },
         {
           type: ClientMsgCode.FETCH_STORAGE,
+          stream: true,
         },
       ]);
     });
@@ -332,6 +334,7 @@ describe("middleware", () => {
         },
         {
           type: ClientMsgCode.FETCH_STORAGE,
+          stream: true,
         },
       ]);
 
@@ -364,6 +367,7 @@ describe("middleware", () => {
         },
         {
           type: ClientMsgCode.FETCH_STORAGE,
+          stream: true,
         },
       ]);
 
