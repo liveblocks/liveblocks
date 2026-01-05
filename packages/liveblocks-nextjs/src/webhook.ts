@@ -1,5 +1,7 @@
 import {
   type StorageUpdatedEvent,
+  type UserEnteredEvent,
+  type UserLeftEvent,
   type WebhookEvent,
   WebhookHandler,
 } from "@liveblocks/node";
@@ -18,6 +20,14 @@ export type WebhookOptions = {
    * Triggered when the storage of a room has been updated.
    */
   onStorageUpdated?: (event: StorageUpdatedEvent) => Promise<void>;
+  /**
+   * Triggered when a user entered a room.
+   */
+  onUserEntered?: (event: UserEnteredEvent) => Promise<void>;
+  /**
+   * Triggered when a user left a room.
+   */
+  onUserLeft?: (event: UserLeftEvent) => Promise<void>;
 };
 
 /**
@@ -62,6 +72,19 @@ export function Webhook(
           if (options.onStorageUpdated) {
             promises.push(options.onStorageUpdated(event));
           }
+          break;
+        }
+        case "userEntered": {
+          if (options.onUserEntered) {
+            promises.push(options.onUserEntered(event));
+          }
+          break;
+        }
+        case "userLeft": {
+          if (options.onUserLeft) {
+            promises.push(options.onUserLeft(event));
+          }
+          break;
         }
       }
 
