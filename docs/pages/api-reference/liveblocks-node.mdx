@@ -969,7 +969,7 @@ more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. If the room doesn't exist, or has already been deleted, no error
+Deletes a room. If the room doesn’t exist, or has already been deleted, no error
 will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
@@ -1196,7 +1196,7 @@ const group = await liveblocks.createGroup({
 
 #### Liveblocks.getGroup [#get-group]
 
-Returns a group by its ID. Throws an error if the group isn't found. This is a
+Returns a group by its ID. Throws an error if the group isn’t found. This is a
 wrapper around the
 [Get Group API](/docs/api-reference/rest-api-endpoints#get-groups-groupId) and
 returns the same response.
@@ -1300,7 +1300,7 @@ console.log(updatedGroup);
 
 #### Liveblocks.deleteGroup [#delete-group]
 
-Deletes a group. If the group doesn't exist, no error will be thrown. This is a
+Deletes a group. If the group doesn’t exist, no error will be thrown. This is a
 wrapper around the
 [Delete Group API](/docs/api-reference/rest-api-endpoints#delete-groups-groupId)
 and returns no response.
@@ -2133,6 +2133,67 @@ const editedMetadata = await liveblocks.editThreadMetadata({
 });
 
 // { title: "My thread title", page: 3, pinned: true }
+console.log(editedMetadata);
+```
+
+#### Liveblocks.editCommentMetadata [#post-rooms-roomId-threads-threadId-comments-commentId-metadata]
+
+Updates the metadata of a specific comment within a thread. This method allows
+you to modify the metadata of a comment, including user information and the date
+of the last update. Throws an error if the room, thread, or comment isn’t found.
+This is a wrapper around the
+[Update Comment Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-metadata)
+and returns the updated metadata.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    metadata: {
+      reviewed: true,
+    },
+    userId: "stacy@example.com",
+    updatedAt: new Date(), // Optional
+  },
+});
+
+// { reviewed: true }
+console.log(editedMetadata);
+```
+
+Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
+remove metadata from a comment. Here’s an example using every option.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    // Custom metadata
+    metadata: {
+      // Metadata can be a string, number, or boolean
+      tag: "important",
+      priority: 2,
+      flagged: true,
+
+      // Remove metadata with null
+      reviewed: null,
+    },
+
+    // The ID of the user that updated the metadata
+    userId: "stacy@example.com",
+
+    // Optional, the time the user updated the metadata
+    updatedAt: new Date(),
+  },
+});
+
+// { tag: "important", priority: 2, flagged: true }
 console.log(editedMetadata);
 ```
 
@@ -3192,7 +3253,7 @@ await liveblocks.createAiCopilot({
 
 #### Liveblocks.getAiCopilot [#get-ai-copilot]
 
-Returns an AI copilot by its ID. Throws an error if the copilot isn't found.
+Returns an AI copilot by its ID. Throws an error if the copilot isn’t found.
 This is a wrapper around the
 [Get AI Copilot API](/docs/api-reference/rest-api-endpoints#get-ai-copilot) and
 returns the same response.
@@ -3206,8 +3267,8 @@ console.log(copilot);
 
 #### Liveblocks.updateAiCopilot [#update-ai-copilot]
 
-Updates an existing AI copilot's configuration. You only need to pass the
-properties you want to update. Throws an error if the copilot isn't found. This
+Updates an existing AI copilot’s configuration. You only need to pass the
+properties you want to update. Throws an error if the copilot isn’t found. This
 is a wrapper around the
 [Update AI Copilot API](/docs/api-reference/rest-api-endpoints#update-ai-copilot)
 and returns the same response.
@@ -3277,7 +3338,7 @@ await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-Certain properties can be set to `null` to clear them from the copilot's
+Certain properties can be set to `null` to clear them from the copilot’s
 configuration. This includes `description`, `knowledgePrompt`, `settings`, and
 `providerOptions`.
 
@@ -3294,16 +3355,16 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-The method returns a 422 response if the update doesn't apply due to validation
+The method returns a 422 response if the update doesn’t apply due to validation
 failures. For example, if the existing copilot uses the "openai" provider and
 you attempt to update the provider model to an incompatible value for the
-provider, like "gemini-2.5-pro", you'll receive a 422 response with an error
+provider, like "gemini-2.5-pro", you’ll receive a 422 response with an error
 message explaining where the validation failed.
 
 #### Liveblocks.deleteAiCopilot [#delete-ai-copilot]
 
 Deletes an AI copilot by its ID. A deleted copilot is no longer accessible and
-cannot be restored. Throws an error if the copilot isn't found. This is a
+cannot be restored. Throws an error if the copilot isn’t found. This is a
 wrapper around the
 [Delete AI Copilot API](/docs/api-reference/rest-api-endpoints#delete-ai-copilot)
 and returns no response.
@@ -3409,7 +3470,7 @@ const { data: sources, nextCursor } = await liveblocks.getKnowledgeSources({
 #### Liveblocks.getKnowledgeSource [#get-knowledge-source]
 
 Returns a specific knowledge source by its ID. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Get Knowledge Source API](/docs/api-reference/rest-api-endpoints#get-knowledge-source)
 and returns the same response.
 
@@ -3428,7 +3489,7 @@ console.log(source);
 
 Returns the content of a file knowledge source as Markdown. This allows you to
 see what content the AI copilot has access to from uploaded files. Throws an
-error if the knowledge source isn't found. This is a wrapper around the
+error if the knowledge source isn’t found. This is a wrapper around the
 [Get File Knowledge Source Content API](/docs/api-reference/rest-api-endpoints#get-file-knowledge-source-content)
 and returns the content as a string.
 
@@ -3481,7 +3542,7 @@ const { data: links, nextCursor } = await liveblocks.getWebKnowledgeSourceLinks(
 
 Deletes a web knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this source. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete Web Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-web-knowledge-source)
 and returns no response.
 
@@ -3496,7 +3557,7 @@ await liveblocks.deleteWebKnowledgeSource({
 
 Deletes a file knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this file. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete File Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-file-knowledge-source)
 and returns no response.
 
@@ -3624,7 +3685,7 @@ console.log(mentions);
 
 <Banner title="Also available from @liveblocks/client">
 
-If you’d like to use this on the client side, it's also available from
+If you’d like to use this on the client side, it’s also available from
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client#get-mentions-from-comment-body).
 
 </Banner>
