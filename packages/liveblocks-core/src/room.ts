@@ -3366,7 +3366,8 @@ export function makeAuthDelegateForRoom(
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
   baseUrl: string,
-  WebSocketPolyfill?: IWebSocket
+  WebSocketPolyfill?: IWebSocket,
+  engine?: 1 | 2
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
@@ -3391,6 +3392,9 @@ export function makeCreateSocketDelegateForRoom(
       return assertNever(authValue, "Unhandled case");
     }
     url.searchParams.set("version", PKG_VERSION || "dev");
+    if (engine !== undefined) {
+      url.searchParams.set("e", String(engine));
+    }
     return new ws(url.toString());
   };
 }
