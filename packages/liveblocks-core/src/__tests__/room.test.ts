@@ -2574,7 +2574,7 @@ describe("room", () => {
       expect(wss.receivedMessages).toEqual([
         [
           { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
-          { type: ClientMsgCode.FETCH_STORAGE },
+          { type: ClientMsgCode.FETCH_STORAGE, stream: true },
         ],
         [
           {
