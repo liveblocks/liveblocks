@@ -1,4 +1,8 @@
-import { type WebhookEvent, WebhookHandler } from "@liveblocks/node";
+import {
+  type StorageUpdatedEvent,
+  type WebhookEvent,
+  WebhookHandler,
+} from "@liveblocks/node";
 
 export type WebhookOptions = {
   /**
@@ -10,6 +14,10 @@ export type WebhookOptions = {
    * Catch-all handler for any incoming Webhook event
    */
   onEvent?: (event: WebhookEvent) => Promise<void>;
+  /**
+   * Triggered when the storage of a room has been updated.
+   */
+  onStorageUpdated?: (event: StorageUpdatedEvent) => Promise<void>;
 };
 
 /**
@@ -49,7 +57,13 @@ export function Webhook(
         promises.push(options.onEvent(event));
       }
 
-      // TODO: add other handlers
+      switch (event.type) {
+        case "storageUpdated": {
+          if (options.onStorageUpdated) {
+            promises.push(options.onStorageUpdated(event));
+          }
+        }
+      }
 
       await Promise.all(promises);
 
