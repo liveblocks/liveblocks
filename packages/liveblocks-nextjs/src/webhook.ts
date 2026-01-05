@@ -44,6 +44,15 @@ export function Webhook(
         rawBody: JSON.stringify(body),
       });
 
+      const promises: Promise<void>[] = [];
+      if (options.onEvent) {
+        promises.push(options.onEvent(event));
+      }
+
+      // TODO: add other handlers
+
+      await Promise.all(promises);
+
       return new Response(null, { status: 200 });
     } catch (err) {
       const message = err instanceof Error ? err.message : JSON.stringify(err);
