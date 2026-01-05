@@ -11,6 +11,7 @@ import {
   type UserLeftEvent,
   type WebhookEvent,
   WebhookHandler,
+  type YDocUpdatedEvent,
 } from "@liveblocks/node";
 
 export type WebhookOptions = {
@@ -63,6 +64,10 @@ export type WebhookOptions = {
    * Triggered when a comment reaction was removed.
    */
   onCommentReactionRemoved?: (event: CommentReactionRemoved) => Promise<void>;
+  /**
+   * Triggered when a Yjs document of a room was updated.
+   */
+  onYDocUpdated?: (event: YDocUpdatedEvent) => Promise<void>;
 };
 
 /**
@@ -160,6 +165,12 @@ export function Webhook(
         case "commentReactionRemoved": {
           if (options.onCommentReactionRemoved) {
             promises.push(options.onCommentReactionRemoved(event));
+          }
+          break;
+        }
+        case "ydocUpdated": {
+          if (options.onYDocUpdated) {
+            promises.push(options.onYDocUpdated(event));
           }
           break;
         }
