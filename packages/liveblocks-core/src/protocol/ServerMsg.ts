@@ -15,7 +15,6 @@ export const ServerMsgCode = Object.freeze({
   // For Storage
   INITIAL_STORAGE_STATE: 200,
   UPDATE_STORAGE: 201,
-  INITIAL_STORAGE_CHUNK: 210,
 
   // For Yjs Docs
   UPDATE_YDOC: 300,
@@ -43,8 +42,6 @@ export namespace ServerMsgCode {
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
   export type INITIAL_STORAGE_STATE =
     typeof ServerMsgCode.INITIAL_STORAGE_STATE;
-  export type INITIAL_STORAGE_CHUNK =
-    typeof ServerMsgCode.INITIAL_STORAGE_CHUNK;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -78,8 +75,7 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialStorageStateServerMsg // For a single client (non-streaming)
-  | InitialStorageChunkServerMsg // For a single client (streaming)
+  | InitialStorageStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -314,27 +310,23 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
 
 /**
  * Sent by the WebSocket server to a single client in response to the client
- * sending a FetchStorageClientMsg message with stream=false, to provide the
- * initial Storage state of the Room. The payload includes the entire Storage
- * document.
+ * sending a FetchStorageClientMsg message, to provide the initial Storage
+ * state of the Room.
+ *
+ * The server will respond with 0 or more INITIAL_STORAGE_STATE messages with
+ * done=false, followed by exactly one INITIAL_STORAGE_STATE message with
+ * done=true.
+ *
+ * If the room is using the new storage engine that supports streaming, then
+ * potentially multiple chunks might get sent.
+ *
+ * If the room is using the old storage engine, then all nodes will be sent in
+ * a single/large chunk (non-streaming). (This is for backward compatibility.)
  */
 export type InitialStorageStateServerMsg = {
   readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  readonly items: IdTuple<SerializedCrdt>[];
-};
-
-/**
- * Sent by the WebSocket server on V8 to a single client in response to the
- * client sending a FetchStorageClientMsg message with stream=true, to provide
- * the initial Storage state of the Room.
- * The payload includes subset of all nodes that are part of the initial
- * Storage document. If the `done` field is false, more chunks will follow in
- * later messages. If `done` is true, this is the last chunk.
- */
-export type InitialStorageChunkServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_CHUNK;
-  readonly nodes: IdTuple<SerializedCrdt>[];
   readonly done: boolean;
+  readonly items: IdTuple<SerializedCrdt>[];
 };
 
 /**

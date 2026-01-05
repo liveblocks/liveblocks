@@ -2365,14 +2365,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message.items);
-          break;
-        }
-
-        case ServerMsgCode.INITIAL_STORAGE_CHUNK: {
-          partialNodes.append(message.nodes);
+          partialNodes.append(message.items);
           if (message.done) {
             processInitialStorage(partialNodes.clear());
           }
@@ -2577,7 +2570,7 @@ export function createRoom<
     ) {
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
-      messages.push({ type: ClientMsgCode.FETCH_STORAGE, stream: true });
+      messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       partialNodes.clear(); // Reset any partial state from previous fetch
     }
 
@@ -3408,7 +3401,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

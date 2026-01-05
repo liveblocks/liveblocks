@@ -89,7 +89,6 @@ export type UpdateStorageClientMsg = {
 
 export type FetchStorageClientMsg = {
   readonly type: ClientMsgCode.FETCH_STORAGE;
-  readonly stream: boolean;
 };
 
 export type FetchYDocClientMsg = {

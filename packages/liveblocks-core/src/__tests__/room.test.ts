@@ -985,6 +985,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+          done: true,
         })
       );
     });
@@ -1023,6 +1024,7 @@ describe("room", () => {
             //                                   NOTE: Storage is initially
             //                                   empty, so initialStorage keys
             //                                   will get added
+            done: true,
           })
         );
       });
@@ -1054,6 +1056,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          done: true,
         })
       );
     });
@@ -1157,6 +1160,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          done: true,
         })
       );
     });
@@ -1265,6 +1269,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          done: true,
         })
       );
     });
@@ -1303,6 +1308,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          done: true,
         })
       );
     });
@@ -1387,6 +1393,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.INITIAL_STORAGE_STATE,
             items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+            done: true,
           })
         );
       });
@@ -1910,6 +1917,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.INITIAL_STORAGE_STATE,
             items: newInitStorage,
+            done: true,
           })
         )
       );
@@ -2574,7 +2582,7 @@ describe("room", () => {
       expect(wss.receivedMessages).toEqual([
         [
           { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
-          { type: ClientMsgCode.FETCH_STORAGE, stream: true },
+          { type: ClientMsgCode.FETCH_STORAGE },
         ],
         [
           {
