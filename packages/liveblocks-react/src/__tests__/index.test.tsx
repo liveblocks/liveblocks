@@ -85,10 +85,7 @@ describe("RoomProvider", () => {
     expect(authEndpointMock).toHaveBeenCalled();
   });
 
-  // TODO: This behavior is a bug that should be fixed. Each createRoomContext()
-  // call should create its own isolated React context, allowing nested providers
-  // from different contexts to coexist independently.
-  test("nested providers from different contexts share the same React context", () => {
+  test("nested providers from different contexts should return their respective rooms", () => {
     const client = createClient({ authEndpoint: "/api/auth" });
 
     const contextA = createRoomContext(client);
@@ -121,9 +118,7 @@ describe("RoomProvider", () => {
       </contextA.RoomProvider>
     );
 
-    // All contexts share the same underlying RoomContext, so the innermost
-    // provider wins and both hooks return the same room
-    expect(getByTestId("room-a").textContent).toBe("room-b"); // TODO: Should be "room-a" once fixed
+    expect(getByTestId("room-a").textContent).toBe("room-a");
     expect(getByTestId("room-b").textContent).toBe("room-b");
   });
 });
