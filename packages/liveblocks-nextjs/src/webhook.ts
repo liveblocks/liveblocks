@@ -7,6 +7,7 @@ import {
   type RoomCreatedEvent,
   type RoomDeletedEvent,
   type StorageUpdatedEvent,
+  type ThreadMetadataUpdatedEvent,
   type UserEnteredEvent,
   type UserLeftEvent,
   type WebhookEvent,
@@ -68,6 +69,12 @@ export type WebhookOptions = {
    * Triggered when a Yjs document of a room was updated.
    */
   onYDocUpdated?: (event: YDocUpdatedEvent) => Promise<void>;
+  /**
+   * Triggered when a thread metadata was updated.
+   */
+  onThreadMetadataUpdated?: (
+    event: ThreadMetadataUpdatedEvent
+  ) => Promise<void>;
 };
 
 /**
@@ -171,6 +178,12 @@ export function Webhook(
         case "ydocUpdated": {
           if (options.onYDocUpdated) {
             promises.push(options.onYDocUpdated(event));
+          }
+          break;
+        }
+        case "threadMetadataUpdated": {
+          if (options.onThreadMetadataUpdated) {
+            promises.push(options.onThreadMetadataUpdated(event));
           }
           break;
         }
