@@ -4,14 +4,20 @@ import {
   type CommentEditedEvent,
   type CommentReactionAdded,
   type CommentReactionRemoved,
+  type CustomNotificationEvent,
+  isCustomNotificationEvent,
+  isTextMentionNotificationEvent,
+  isThreadNotificationEvent,
   type RoomCreatedEvent,
   type RoomDeletedEvent,
   type StorageUpdatedEvent,
+  type TextMentionNotificationEvent,
   type ThreadCreatedEvent,
   type ThreadDeletedEvent,
   type ThreadMarkedAsResolvedEvent,
   type ThreadMarkedAsUnresolvedEvent,
   type ThreadMetadataUpdatedEvent,
+  type ThreadNotificationEvent,
   type UserEnteredEvent,
   type UserLeftEvent,
   type WebhookEvent,
@@ -99,6 +105,20 @@ export type WebhookOptions = {
   onThreadMarkedAsUnresolved?: (
     event: ThreadMarkedAsUnresolvedEvent
   ) => Promise<void>;
+  /**
+   * Triggered when a thread notification was created.
+   */
+  onThreadNotification?: (event: ThreadNotificationEvent) => Promise<void>;
+  /**
+   * Triggered when a text mention notification was created.
+   */
+  onTextMentionNotification?: (
+    event: TextMentionNotificationEvent
+  ) => Promise<void>;
+  /**
+   * Triggered when a custom notification was created.
+   */
+  onCustomNotification?: (event: CustomNotificationEvent) => Promise<void>;
 };
 
 /**
@@ -232,6 +252,25 @@ export function Webhook(
         case "threadMarkedAsUnresolved": {
           if (options.onThreadMarkedAsUnresolved) {
             promises.push(options.onThreadMarkedAsUnresolved(event));
+          }
+          break;
+        }
+        case "notification": {
+          if (
+            isThreadNotificationEvent(event) &&
+            options.onThreadNotification
+          ) {
+            promises.push(options.onThreadNotification(event));
+          } else if (
+            isTextMentionNotificationEvent(event) &&
+            options.onTextMentionNotification
+          ) {
+            promises.push(options.onTextMentionNotification(event));
+          } else if (
+            isCustomNotificationEvent(event) &&
+            options.onCustomNotification
+          ) {
+            promises.push(options.onCustomNotification(event));
           }
           break;
         }
