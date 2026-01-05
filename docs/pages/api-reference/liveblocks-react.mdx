@@ -2517,6 +2517,7 @@ type Storage = {};
 type UserMeta = {};
 type RoomEvent = {};
 type ThreadMetadata = {};
+type CommentMetadata = {};
 
 // +++
 export const {
@@ -2525,9 +2526,14 @@ export const {
 
   // Other hooks
   // ...
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
-);
+} = createRoomContext<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent,
+  ThreadMetadata,
+  CommentMetadata
+>(client);
 // +++
 ```
 
@@ -2550,6 +2556,7 @@ type Storage = {};
 type UserMeta = {};
 type RoomEvent = {};
 type ThreadMetadata = {};
+type CommentMetadata = {};
 
 export const {
   // +++
@@ -2561,9 +2568,14 @@ export const {
     // ...
   },
   // +++
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
-);
+} = createRoomContext<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent,
+  ThreadMetadata,
+  CommentMetadata
+>(client);
 ```
 
 #### Typing createRoomContext
@@ -4423,11 +4435,7 @@ function SearchBar() {
 
   // +++
   const searchThreadResolved =
-    threadResolved === "all"
-      ? undefined
-      : threadResolved === "resolved"
-      ? true
-      : false;
+    searchResolved === "all" ? undefined : searchResolved === "resolved";
   // +++
 
   const { results, isLoading, error } = useSearchComments({
@@ -4896,6 +4904,51 @@ useErrorListener((error) => {
   if (error.context.type === "EDIT_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem editing comment ${commentId}`);
+  }
+});
+```
+
+### useEditCommentMetadata [@badge=RoomProvider]
+
+Returns a function that edits a comment’s metadata. To delete an existing
+metadata property, set its value to `null`. Passing `undefined` for a metadata
+property will ignore it.
+
+```tsx
+import { useEditCommentMetadata } from "@liveblocks/react/suspense";
+
+const editCommentMetadata = useEditCommentMetadata();
+editCommentMetadata({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  metadata: {},
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editCommentMetadata"
+    type="(options: { threadId: string; commentId: string; metadata: CommentMetadata }) => void"
+  >
+    A function that edits a comment’s metadata. To delete an existing metadata
+    property, set its value to `null`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Error handling [#useEditCommentMetadata-error-handling]
+
+`useEditCommentMetadata` edits comment metadata optimistically, meaning that the
+metadata appears updated instantly, before Liveblocks has confirmed a successful
+metadata update. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `EDIT_COMMENT_METADATA_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.type === "EDIT_COMMENT_METADATA_ERROR") {
+    const { roomId, threadId, commentId, metadata } = error.context;
+    console.log(`Problem editing comment metadata ${commentId}`);
   }
 });
 ```
