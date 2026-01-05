@@ -1,15 +1,6 @@
-import {
-  Liveblocks,
-  type WebhookEvent,
-  WebhookHandler,
-} from "@liveblocks/node";
+import { type WebhookEvent, WebhookHandler } from "@liveblocks/node";
 
 export type WebhookOptions = {
-  /**
-   * The Liveblocks secret key provided on the dashboard's API keys page
-   * @example "sk_..."
-   */
-  liveblocksSecret: string;
   /**
    * The webhook signing secret provided on the dashboard's webhooks page
    * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
@@ -35,12 +26,26 @@ export type WebhookOptions = {
  *   },
  * })
  */
-export function Webhook(options: WebhookOptions) {
-  const liveblocks = new Liveblocks({ secret: options.liveblocksSecret });
+export function Webhook(
+  options: WebhookOptions
+): (req: Request) => Promise<Response> {
   const webhookHandler = new WebhookHandler(options.webhookSecret);
 
   return async function (req: Request): Promise<Response> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const body = await req.json();
-    return new Response(null, { status: 200 });
+    const headers = req.headers;
+
+    try {
+      const event = webhookHandler.verifyRequest({
+        headers,
+        rawBody: JSON.stringify(body),
+      });
+
+      return new Response(null, { status: 200 });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : JSON.stringify(err);
+      return new Response(message, { status: 400 });
+    }
   };
 }
