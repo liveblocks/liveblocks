@@ -2,6 +2,8 @@ import {
   type CommentCreatedEvent,
   type CommentDeletedEvent,
   type CommentEditedEvent,
+  type CommentReactionAdded,
+  type CommentReactionRemoved,
   type RoomCreatedEvent,
   type RoomDeletedEvent,
   type StorageUpdatedEvent,
@@ -53,6 +55,14 @@ export type WebhookOptions = {
    * Triggered when a comment was deleted.
    */
   onCommentDeleted?: (event: CommentDeletedEvent) => Promise<void>;
+  /**
+   * Triggered when a comment reaction was added.
+   */
+  onCommentReactionAdded?: (event: CommentReactionAdded) => Promise<void>;
+  /**
+   * Triggered when a comment reaction was removed.
+   */
+  onCommentReactionRemoved?: (event: CommentReactionRemoved) => Promise<void>;
 };
 
 /**
@@ -138,6 +148,18 @@ export function Webhook(
         case "commentDeleted": {
           if (options.onCommentDeleted) {
             promises.push(options.onCommentDeleted(event));
+          }
+          break;
+        }
+        case "commentReactionAdded": {
+          if (options.onCommentReactionAdded) {
+            promises.push(options.onCommentReactionAdded(event));
+          }
+          break;
+        }
+        case "commentReactionRemoved": {
+          if (options.onCommentReactionRemoved) {
+            promises.push(options.onCommentReactionRemoved(event));
           }
           break;
         }
