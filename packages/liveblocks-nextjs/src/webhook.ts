@@ -6,12 +6,12 @@ import {
 
 export type WebhookOptions = {
   /**
-   * The webhook signing secret provided on the dashboard's webhooks page
+   * The webhook signing secret provided on the dashboard's webhooks page.
    * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
    */
   webhookSecret: string;
   /**
-   * Catch-all handler for any incoming Webhook event
+   * Catch-all handler for any incoming Webhook event.
    */
   onEvent?: (event: WebhookEvent) => Promise<void>;
   /**
