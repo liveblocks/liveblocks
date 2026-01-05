@@ -122,7 +122,14 @@ export type WebhookOptions = {
 };
 
 /**
- * A simple utility which resolves incoming webhook payloads by signing the webhook secret properly.
+ * A simple utility which resolves incoming webhook payloads by signing the webhook secret properly
+ * and verifying the webhook request payload.
+ *
+ * @param options The options to provide to handle the webhook request payload.
+ * Handlers are made to not return an acknowledgement response.
+ *
+ * It returns a 200 response if the webhook request payload is verified and handled successfully.
+ * It returns a 400 response if the webhook request payload is not verified or if an error occurs while handling the event.
  *
  * @example
  * import { Webhook } from "@liveblocks/nextjs";
@@ -132,8 +139,6 @@ export type WebhookOptions = {
  *   webhookSecret: process.env.WEBHOOK_SECRET,
  *   onEvent: async (event) => {
  *     console.log(event);
- *     // Handle the event
- *     // no need to return an acknowledgement response
  *   },
  * })
  */
