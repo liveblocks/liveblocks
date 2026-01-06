@@ -3366,12 +3366,15 @@ const comment = await room.createComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread that the comment will be added to.
   </PropertiesListItem>
-  <PropertiesListItem name="attachmentIds" type="string">
-    The IDs of the comment’s attachments.
-  </PropertiesListItem>
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="CommentMetadata">
+    Custom metadata to be attached to the comment.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3437,7 +3440,7 @@ const body: CommentBody = {
 ### Room.editComment
 
 Edits a comment, replacing its existing comment body and optionally updating its
-attachments. Learn more about
+attachments and metadata. Learn more about
 [creating comment content](#creating-comment-content).
 
 ```ts
@@ -3470,6 +3473,9 @@ const comment = await room.editComment({
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="CommentMetadata">
+    Custom metadata to be attached to the comment.
   </PropertiesListItem>
 </PropertiesList>
 

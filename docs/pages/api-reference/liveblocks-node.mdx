@@ -2437,7 +2437,7 @@ const comment = await liveblocks.createComment({
 ```
 
 This method has a number of options, including the option to add a custom
-creation date to the comment.
+creation date and metadata to the comment.
 
 ```ts
 const comment = await liveblocks.createComment({
@@ -2456,8 +2456,14 @@ const comment = await liveblocks.createComment({
     // The ID of the user that created the comment
     userId: "adrien@example.com",
 
-    // The time the comment was created
+    // Optional, the time the comment was created
     createdAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      reviewed: false,
+    },
   },
 });
 ```

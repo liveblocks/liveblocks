@@ -4275,13 +4275,18 @@ const { threads } = useThreads({ scrollOnLoad: false });
 ### useCreateThread [@badge=RoomProvider]
 
 Returns a function that optimistically creates a thread with an initial comment,
-and optionally some metadata.
+and optionally some thread and comment metadata.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
 
 const createThread = useCreateThread();
-const thread = createThread({ body: {}, attachments: [], metadata: {} });
+const thread = createThread({
+  body: {},
+  attachments: [],
+  metadata: {},
+  commentMetadata: {},
+});
 ```
 
 <PropertiesList title="Returns">
@@ -4289,8 +4294,8 @@ const thread = createThread({ body: {}, attachments: [], metadata: {} });
     name="createThread"
     type="(options: CreateThreadOptions) => ThreadData"
   >
-    A function that creates a thread with an initial comment and optional
-    metadata. Returns the optimistic thread object.
+    A function that creates a thread with an initial comment and optionally some
+    thread and comment metadata. Returns the optimistic thread object.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4834,6 +4839,7 @@ const comment = createComment({
   threadId: "th_xxx",
   body: {},
   attachments: [],
+  metadata: {},
 });
 ```
 
@@ -4867,7 +4873,8 @@ useErrorListener((error) => {
 
 ### useEditComment[@badge=RoomProvider]
 
-Returns a function that edits a comment’s body.
+Returns a function that edits a comment’s body and optionally its attachments
+and metadata.
 
 ```tsx
 import { useEditComment } from "@liveblocks/react/suspense";
@@ -4878,6 +4885,7 @@ editComment({
   commentId: "cm_xxx",
   body: {},
   attachments: [],
+  metadata: {},
 });
 ```
 
@@ -4886,7 +4894,8 @@ editComment({
     name="editComment"
     type="(options: EditCommentOptions) => void"
   >
-    A function that edits a comment’s body and attachments.
+    A function that edits a comment’s body and optionally its attachments and
+    metadata.
   </PropertiesListItem>
 </PropertiesList>
 
