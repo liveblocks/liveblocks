@@ -71,6 +71,7 @@ import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
+import type { NodeStream } from "./protocol/SerializedCrdt";
 import { compactNodesToNodeStream } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
@@ -97,7 +98,6 @@ import type {
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
-import type { NodeStream } from "./protocol/SerializedCrdt";
 import type {
   BadgeLocation,
   InternalOthersEvent,
