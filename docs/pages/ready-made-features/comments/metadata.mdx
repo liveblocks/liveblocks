@@ -143,7 +143,7 @@ Here’s one way to create a button that sets the `pinned` metadata property to
 `true` on a thread.
 
 ```tsx highlight="5,10-13"
-import { useEditThreadMetadata } from "../liveblocks.config";
+import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 
 // Button that sets `pinned` metadata to `true`
 function Component() {
@@ -169,7 +169,7 @@ These hooks are exported from your config file and provide full typing.
 Here’s an example of editing comment metadata:
 
 ```tsx highlight="5,10-15"
-import { useEditCommentMetadata } from "../liveblocks.config";
+import { useEditCommentMetadata } from "@liveblocks/react/suspense";
 
 // Button that sets `reviewed` metadata to `true` on a comment
 function Component() {

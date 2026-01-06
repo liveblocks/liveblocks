@@ -2045,6 +2045,12 @@ const thread = await liveblocks.createThread({
       // Optional, when the comment was created.
       createdAt: new Date(),
 
+      // Optional, custom comment metadata
+      metadata: {
+        tag: "important",
+        reviewed: false,
+      },
+
       // The comment's body, uses the `CommentBody` type
       body: {
         version: 1,
@@ -2502,14 +2508,22 @@ const editedComment = await liveblocks.editComment({
   commentId: "cm_agH76a...",
 
   data: {
+    userId: "alicia@example.com",
     body: {
       version: 1,
       content: [
         /* The comment's body text goes here, see below */
       ],
     },
-    userId: "alicia@example.com",
-    createdAt: new Date(), // Optional
+
+    // Optional, the time the comment was edited
+    editedAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      reviewed: true,
+    },
   },
 });
 
@@ -2521,9 +2535,10 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 an example of how to construct a comment’s body, which can be submitted under
 `data.body`.
 
-```tsx highlight="3-11,19"
+```tsx
 import { CommentBody } from "@liveblocks/node";
 
+// +++
 const body: CommentBody = {
   version: 1,
   content: [
@@ -2533,21 +2548,8 @@ const body: CommentBody = {
     },
   ],
 };
+// +++
 
-const comment = await liveblocks.createComment({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-
-  data: {
-    // The comment's body, uses the `CommentBody` type
-    body,
-
-    // ...
-  },
-});
-```
-
-```ts
 const editedComment = await liveblocks.editComment({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
@@ -2555,23 +2557,13 @@ const editedComment = await liveblocks.editComment({
 
   data: {
     // The comment's body, uses the `CommentBody` type
-    body: {
-      version: 1,
-      content: [
-        /* The comment's body text goes here, see above */
-      ],
-    },
+    // +++
+    body,
+    // +++
 
-    // The ID of the user that edited the comment
-    userId: "alicia@example.com",
-
-    // Optional, the time the comment was edited
-    editedAt: new Date(),
+    // ...
   },
 });
-
-// { type: "comment", threadId: "th_d75sF3...", ... }
-console.log(editedComment);
 ```
 
 #### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId]
