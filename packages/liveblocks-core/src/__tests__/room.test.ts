@@ -30,7 +30,7 @@ import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
@@ -983,9 +983,9 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
           done: true,
+          nodes: [["root", CrdtType.OBJECT, {}]],
         })
       );
     });
@@ -1018,13 +1018,12 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-            //                                              ^^
-            //                                   NOTE: Storage is initially
-            //                                   empty, so initialStorage keys
-            //                                   will get added
+            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
             done: true,
+            nodes: [["root", CrdtType.OBJECT, {}]],
+            //                                ^^
+            //                        NOTE: Storage is initially empty,
+            //                        so initialStorage keys will get added
           })
         );
       });
@@ -1054,9 +1053,9 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
           done: true,
+          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
       );
     });
@@ -1158,9 +1157,9 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
           done: true,
+          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
       );
     });
@@ -1267,9 +1266,9 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
           done: true,
+          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
       );
     });
@@ -1306,9 +1305,9 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
           done: true,
+          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
       );
     });
@@ -1391,9 +1390,9 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
             done: true,
+            nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
           })
         );
       });
@@ -1915,9 +1914,9 @@ describe("room", () => {
       wss.onConnection((conn) =>
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: newInitStorage,
+            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
             done: true,
+            nodes: Array.from(nodeStreamToCompactNodes(newInitStorage)),
           })
         )
       );
