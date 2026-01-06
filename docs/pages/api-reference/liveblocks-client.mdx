@@ -3098,8 +3098,12 @@ const thread = await room.createThread({
     The content of the comment, see [creating thread
     content](#creating-thread-content).
   </PropertiesListItem>
-  <PropertiesListItem name="attachmentIds" type="string">
+  <PropertiesListItem name="attachmentIds" type="string[]">
     The IDs of the comment’s attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="commentMetadata" type="CommentMetadata">
+    Custom metadata to be attached to the initial comment, see [defining comment
+    metadata](#defining-comment-metadata).
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     Custom metadata to be attached to the thread, see [defining thread
@@ -3170,9 +3174,7 @@ Custom metadata can be attached to each thread. `string`, `number`, and
 `boolean` properties are allowed.
 
 ```ts
-import { ThreadMetadata } from "@liveblocks/client";
-
-const metadata: ThreadMetadata = {
+const metadata: Liveblocks["ThreadMetadata"] = {
   color: "blue",
   page: 3,
   pinned: true,
@@ -3370,7 +3372,7 @@ const comment = await room.createComment({
     The content of the comment, see [creating comment
     content](#creating-comment-content).
   </PropertiesListItem>
-  <PropertiesListItem name="attachmentIds" type="string">
+  <PropertiesListItem name="attachmentIds" type="string[]">
     The IDs of the comment’s attachments.
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="CommentMetadata">
@@ -3437,6 +3439,24 @@ const body: CommentBody = {
 };
 ```
 
+#### Defining comment metadata [#defining-comment-metadata]
+
+Custom metadata can be attached to each comment. `string`, `number`, and
+`boolean` properties are allowed.
+
+```ts
+const metadata: Liveblocks["CommentMetadata"] = {
+  priority: 2,
+  reviewed: true,
+};
+
+const comment = await room.createComment({
+  threadId: "th_xxx",
+  body,
+  metadata,
+});
+```
+
 ### Room.editComment
 
 Edits a comment, replacing its existing comment body and optionally updating its
@@ -3467,12 +3487,12 @@ const comment = await room.editComment({
   <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
-  <PropertiesListItem name="attachmentIds" type="string">
-    The IDs of the comment’s attachments.
-  </PropertiesListItem>
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="attachmentIds" type="string[]">
+    The IDs of the comment’s attachments.
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="CommentMetadata">
     Custom metadata to be attached to the comment.
