@@ -35,6 +35,7 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
+    "@liveblocks/core": "3.12.1",
     "@liveblocks/node": "3.12.1"
   },
   "peerDependencies": {
