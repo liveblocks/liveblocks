@@ -285,6 +285,7 @@ export function Webhook(
 
       return new Response(null, { status: 200 });
     } catch (err) {
+      // XXX_TODO: Rework errors thrown from webhook handler to be more descriptive.
       const message = err instanceof Error ? err.message : JSON.stringify(err);
       return new Response(message, { status: 400 });
     }
