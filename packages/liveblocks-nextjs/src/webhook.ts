@@ -148,11 +148,11 @@ export function Webhook(
   const webhookHandler = new WebhookHandler(options.webhookSecret);
 
   return async function (req: Request): Promise<Response> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const body = await req.json();
-    const headers = req.headers;
-
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const body = await req.json();
+      const headers = req.headers;
+
       const event = webhookHandler.verifyRequest({
         headers,
         rawBody: JSON.stringify(body),
