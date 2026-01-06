@@ -289,6 +289,13 @@ export type {
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
   IdTuple,
   SerializedChild,
   SerializedCrdt,
@@ -298,11 +305,11 @@ export type {
   SerializedRegister,
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
+export { CrdtType, nodeStreamToCompactNodes } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
-  InitialStorageStateServerMsg,
+  InitialStorageChunkServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,

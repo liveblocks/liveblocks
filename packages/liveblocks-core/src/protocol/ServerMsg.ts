@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Op } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { CompactNode, IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
 export const ServerMsgCode = Object.freeze({
@@ -13,7 +13,8 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE: 200,
+  INITIAL_STORAGE_STATE_V7: 200, // Only sent in V7
+  INITIAL_STORAGE_CHUNK: 210, // Used in V8+
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -40,8 +41,10 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type INITIAL_STORAGE_STATE =
-    typeof ServerMsgCode.INITIAL_STORAGE_STATE;
+  export type INITIAL_STORAGE_STATE_V7 =
+    typeof ServerMsgCode.INITIAL_STORAGE_STATE_V7;
+  export type INITIAL_STORAGE_CHUNK =
+    typeof ServerMsgCode.INITIAL_STORAGE_CHUNK;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -75,7 +78,8 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialStorageStateServerMsg // For a single client
+  | InitialStorageStateServerMsg_V7 // Only used in protocol v7
+  | InitialStorageChunkServerMsg // Used in protocol v8+
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -279,33 +283,25 @@ export type BroadcastedEventServerMsg<E extends Json> = {
  */
 export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
-
-  /**
-   * Informs the client what their actor ID is going to be.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what their actor ID is going to be. */
   readonly actor: number;
-
-  /**
-   * Secure nonce for the current session.
-   * @since v1.2 (WS API v7)
-   */
+  /** Secure nonce for the current session. */
   readonly nonce: string;
-
-  /**
-   * Informs the client what permissions the current User (self) has.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what permissions the current User (self) has. */
   readonly scopes: string[];
-
   readonly users: {
     readonly [otherActor: number]: U & { scopes: string[] };
   };
-
-  /**
-   * Metadata sent from the server to the client.
-   */
+  /** Metadata sent from the server to the client. */
   readonly meta: JsonObject;
+};
+
+/**
+ * No longer used as of WS API v8.
+ */
+export type InitialStorageStateServerMsg_V7 = {
+  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE_V7;
+  readonly items: IdTuple<SerializedCrdt>[];
 };
 
 /**
@@ -313,20 +309,20 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
  * sending a FetchStorageClientMsg message, to provide the initial Storage
  * state of the Room.
  *
- * The server will respond with 0 or more INITIAL_STORAGE_STATE messages with
- * done=false, followed by exactly one INITIAL_STORAGE_STATE message with
+ * The server will respond with 0+ INITIAL_STORAGE_CHUNK messages with
+ * done=false, followed by exactly one INITIAL_STORAGE_CHUNK message with
  * done=true.
  *
  * If the room is using the new storage engine that supports streaming, then
  * potentially multiple chunks might get sent.
  *
  * If the room is using the old storage engine, then all nodes will be sent in
- * a single/large chunk (non-streaming). (This is for backward compatibility.)
+ * a single/large chunk (non-streaming).
  */
-export type InitialStorageStateServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
+export type InitialStorageChunkServerMsg = {
+  readonly type: ServerMsgCode.INITIAL_STORAGE_CHUNK;
   readonly done: boolean;
-  readonly items: IdTuple<SerializedCrdt>[];
+  readonly nodes: CompactNode[];
 };
 
 /**

@@ -71,6 +71,7 @@ import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
+import { compactNodesToNodeStream } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
@@ -2256,9 +2257,7 @@ export function createRoom<
     if (!isJsonObject(data)) {
       return null;
     }
-
     return data as ServerMsg<P, U, E>;
-    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
@@ -2364,8 +2363,8 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          partialNodes.append(message.items);
+        case ServerMsgCode.INITIAL_STORAGE_CHUNK: {
+          partialNodes.append(compactNodesToNodeStream(message.nodes));
           if (message.done) {
             processInitialStorage(partialNodes.clear());
           }
@@ -2415,6 +2414,7 @@ export function createRoom<
           break;
         }
 
+        case ServerMsgCode.INITIAL_STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
           break;
