@@ -1481,7 +1481,10 @@
                               "createdAt": "2019-08-24T14:15:22Z",
                               "editedAt": "2019-08-24T14:15:22Z",
                               "deletedAt": "2019-08-24T14:15:22Z",
-                              "body": {}
+                              "body": {},
+                              "metadata": {},
+                              "reactions": [],
+                              "attachments": []
                             }
                           ],
                           "createdAt": "2019-08-24T14:15:22Z",
@@ -1544,10 +1547,10 @@
                           "id": "comment-id",
                           "userId": "alice",
                           "createdAt": "2022-07-13T14:32:50.697Z",
-                          "body": {
-                            "version": 1,
-                            "content": []
-                          }
+                          "body": {},
+                          "metadata": {},
+                          "reactions": [],
+                          "attachments": []
                         }
                       ],
                       "createdAt": "2022-07-13T14:32:50.697Z",
@@ -1585,6 +1588,10 @@
                       "body": {
                         "version": 1,
                         "content": []
+                      },
+                      "metadata": {
+                        "tag": "important",
+                        "reviewed": false
                       }
                     },
                     "metadata": {
@@ -1648,7 +1655,10 @@
                           "createdAt": "2019-08-24T14:15:22Z",
                           "editedAt": "2019-08-24T14:15:22Z",
                           "deletedAt": "2019-08-24T14:15:22Z",
-                          "body": {}
+                          "body": {},
+                          "metadata": {},
+                          "reactions": [],
+                          "attachments": []
                         }
                       ],
                       "createdAt": "2019-08-24T14:15:22Z",
@@ -2219,10 +2229,10 @@
                       "id": "comment-id",
                       "userId": "alice",
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "body": {},
+                      "metadata": {},
+                      "reactions": [],
+                      "attachments": []
                     }
                   }
                 }
@@ -2246,7 +2256,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateComment"
+                "$ref": "#/components/schemas/UpdateComment"
               },
               "examples": {
                 "example": {
@@ -2256,6 +2266,10 @@
                     "body": {
                       "version": 1,
                       "content": []
+                    },
+                    "metadata": {
+                      "tag": "important",
+                      "reviewed": false
                     }
                   }
                 }
@@ -2319,7 +2333,10 @@
                       "createdAt": "2019-08-24T14:15:22Z",
                       "editedAt": "2019-08-24T14:15:22Z",
                       "deletedAt": "2019-08-24T14:15:22Z",
-                      "body": {}
+                      "body": {},
+                      "metadata": {},
+                      "reactions": [],
+                      "attachments": []
                     }
                   }
                 }
@@ -2388,10 +2405,10 @@
                       "id": "comment-id",
                       "userId": "alice",
                       "createdAt": "2023-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "body": {},
+                      "metadata": {},
+                      "reactions": [],
+                      "attachments": []
                     }
                   }
                 }
@@ -2415,7 +2432,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateComment"
+                "$ref": "#/components/schemas/UpdateComment"
               },
               "examples": {
                 "example": {
@@ -5299,7 +5316,10 @@
                 "createdAt": "2019-08-24T14:15:22Z",
                 "editedAt": "2019-08-24T14:15:22Z",
                 "deletedAt": "2019-08-24T14:15:22Z",
-                "body": {}
+                "body": {},
+                "metadata": {},
+                "reactions": [],
+                "attachments": []
               }
             ],
             "createdAt": "2019-08-24T14:15:22Z",
@@ -5411,6 +5431,21 @@
         ],
         "description": ""
       },
+      "CommentBody": {
+        "type": "object",
+        "title": "CommentBody",
+        "properties": {
+          "version": {
+            "type": "number"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
       "CommentMetadata": {
         "type": "object",
         "title": "CommentMetadata",
@@ -5488,7 +5523,7 @@
             "format": "date-time"
           },
           "body": {
-            "type": "object"
+            "$ref": "#/components/schemas/CommentBody"
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
@@ -5506,10 +5541,9 @@
             "editedAt": "2019-08-24T14:15:22Z",
             "deletedAt": "2019-08-24T14:15:22Z",
             "body": {},
-            "metadata": {
-              "tag": "important",
-              "reviewed": false
-            }
+            "metadata": {},
+            "reactions": [],
+            "attachments": []
           }
         ]
       },
@@ -5525,18 +5559,7 @@
             "format": "date-time"
           },
           "body": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number"
-              },
-              "content": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/CommentBody"
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
@@ -5568,18 +5591,7 @@
             "format": "date-time"
           },
           "body": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number"
-              },
-              "content": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/CommentBody"
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
