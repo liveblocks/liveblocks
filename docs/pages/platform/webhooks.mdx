@@ -651,15 +651,25 @@ the guide on
 ## Source IP Addresses [#source-ips]
 
 In case your webhook receiving endpoint is behind a firewall or NAT, you may
-need to allow traffic from
-[Svix's IP addresses](https://docs.svix.com/receiving/source-ips).
+need to allow traffic from the following IP addresses.
+
+### US
 
 ```
 44.228.126.217
 50.112.21.217
 52.24.126.164
 54.148.139.208
-2600:1f24:64:8000::/52
+2600:1f24:64:8000::/56
+```
+
+### EU
+
+```
+52.215.16.239
+54.216.8.72
+63.33.109.123
+2a05:d028:17:8000::/56
 ```
 
 ## Liveblocks events
