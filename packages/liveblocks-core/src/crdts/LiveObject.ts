@@ -14,6 +14,7 @@ import type {
 import { OpCode } from "../protocol/Op";
 import type {
   IdTuple,
+  NodeStream,
   SerializedChild,
   SerializedCrdt,
   SerializedObject,
@@ -21,7 +22,7 @@ import type {
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
-import type { NodeStream, ParentToChildNodeMap } from "../types/NodeMap";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {

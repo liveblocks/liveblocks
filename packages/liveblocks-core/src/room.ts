@@ -96,7 +96,8 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap, NodeStream } from "./types/NodeMap";
+import type { NodeMap } from "./types/NodeMap";
+import type { NodeStream } from "./protocol/SerializedCrdt";
 import type {
   BadgeLocation,
   InternalOthersEvent,

@@ -1,5 +1,4 @@
 import type { Json, JsonObject } from "../lib/Json";
-import type { NodeStream } from "../types/NodeMap";
 
 export type IdTuple<T> = [id: string, value: T];
 
@@ -25,6 +24,8 @@ export type SerializedChild =
   | SerializedList
   | SerializedMap
   | SerializedRegister;
+
+export type NodeStream = Iterable<IdTuple<SerializedCrdt>>;
 
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;
