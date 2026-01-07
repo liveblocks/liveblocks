@@ -482,8 +482,6 @@ const room = await liveblocks.createRoom(
 );
 ```
 
-<!-- TODO: add visual illustration of rooms and tenants -->
-
 ### Users
 
 We will have the following users in our application:
@@ -547,16 +545,22 @@ const lumonRoom = await liveblocks.updateRoom("lumon:document:123", {
 
 // Charlie Layne is a commenter in the Acme Inc. tenant except for the acme-inc:document:123 room, where he has admin access.
 // We update the room to give Charlie admin access.
-const acmeRoom = await liveblocks.updateRoom("acme-inc:document:123", {
+const acmeRoom = await liveblocks.updateRoom("acme-inc:document:456", {
   usersAccesses: {
-    "charlie.layne@example.com": [
-      "room:read",
-      "room:presence:write",
-      "comments:write",
-    ],
+    "charlie.layne@example.com": ["room:write"],
   },
 });
 ```
+
+<Figure>
+  <Image
+    src="/assets/authentication/concrete-example.png"
+    alt="Concrete example"
+    width={1494}
+    height={840}
+    quality={90}
+  />
+</Figure>
 
 ## Select your framework [#select-your-framework]
 
