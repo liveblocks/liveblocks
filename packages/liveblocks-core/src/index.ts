@@ -306,7 +306,6 @@ export type {
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageAckServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
