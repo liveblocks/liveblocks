@@ -608,6 +608,7 @@ function RoomProviderInner<
       initialPresence: props.initialPresence,
       initialStorage: props.initialStorage,
       autoConnect: props.autoConnect ?? typeof window !== "undefined",
+      engine: props.engine,
     },
     roomId
   ) as EnterOptions<P, S>;

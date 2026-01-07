@@ -335,6 +335,13 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * only on the client side.
      */
     autoConnect?: boolean;
+
+    /**
+     * @private Preferred storage engine version to use when creating the
+     * room. Only takes effect if the room doesn't exist yet. Version
+     * 2 supports streaming and will become the default in the future.
+     */
+    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be

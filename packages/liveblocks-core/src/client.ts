@@ -120,6 +120,13 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
+
+    /**
+     * @private Preferred storage engine version to use when creating the
+     * room. Only takes effect if the room doesn't exist yet. Version
+     * 2 supports streaming and will become the default in the future.
+     */
+    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -740,7 +747,8 @@ export function createClient<U extends BaseUserMeta = DU>(
           createSocket: makeCreateSocketDelegateForRoom(
             roomId,
             baseUrl,
-            clientOptions.polyfills?.WebSocket
+            clientOptions.polyfills?.WebSocket,
+            options.engine
           ),
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
