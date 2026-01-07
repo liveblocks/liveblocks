@@ -1,5 +1,24 @@
 ## vNEXT
 
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve an internal type definition.
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added badgeLocation option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added badgeLocation option to LiveblocksProvider to control the branding
+  location for free plans.
+
 ## v3.11.1
 
 ### `@liveblocks/core`

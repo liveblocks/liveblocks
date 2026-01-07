@@ -8,131 +8,66 @@ meta:
 
 ## General limits
 
-There are two Liveblocks plans, and each has its own set of limits.
+There are three plans: Free, Pro, and Enterprise. Each plan has its own set of
+limits.
 
-|                                                                                                                                                                                                                                                                     | Pro                                                                                              | Enterprise                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monthly active users <InfoTooltip><a href="#What-is-a-monthly-active-user-(MAU)" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip>                                                                                               | <Limits.ProMauMax /> <InfoTooltip><Limits.ProMauIncluded /> free, then pay per MAU</InfoTooltip> | <Limits.EnterpriseMauMax /> <InfoTooltip>Up to <Limits.EnterpriseMauMaxLimit /></InfoTooltip>                                                           |
-| Projects <InfoTooltip><a href="/docs/platform/projects" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                                                                                     | <Limits.ProMaxProjects />                                                                        | <Limits.EnterpriseMaxProjects />                                                                                                                        |
-| Team members per account <InfoTooltip><a href="/docs/platform/account-management/manage-team-members" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                                       | <Limits.ProTeamMembersPerAccount />                                                              | <Limits.EnterpriseTeamMembersPerAccount /> <InfoTooltip>Up to <Limits.EnterpriseTeamMembersPerAccountLimit /></InfoTooltip>                             |
-| Tenants <InfoTooltip><a href="/docs/authentication/tenants" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                                                                                 | 1                                                                                                | Unlimited                                                                                                                                               |
-| Average connections per MAU <InfoTooltip><a href="#What's-a-connection" className="text-product-brand font-medium">What's a connection?</a></InfoTooltip>                                                                                                           | <Limits.ProAvgConnectionsPerMau />                                                               | <Limits.EnterpriseAvgConnectionsPerMau /> <InfoTooltip>Up to <Limits.EnterpriseAvgConnectionsPerMauLimit /></InfoTooltip>                               |
-| Maximum data stored size per room <InfoTooltip>Combined data for Storage, Yjs, and text editors. <a href="#What's-a-room" className="text-product-brand font-medium">What's a room?</a></InfoTooltip>                                                               | <Limits.ProMaxStorageSizePerRoom />                                                              | <Limits.EnterpriseMaxStorageSizePerRoom /> <InfoTooltip>Up to <Limits.EnterpriseMaxStorageSizePerRoomLimit />, depending on usage</InfoTooltip>         |
-| Simultaneous connections per room <InfoTooltip><a href="#What's-a-simultaneous-connection-per-room" className="text-product-brand font-medium">What is this?</a></InfoTooltip>                                                                                      | <Limits.ProMaxConnectionsPerRoom />                                                              | <Limits.EnterpriseMaxConnectionsPerRoom /> <InfoTooltip>Up to <Limits.EnterpriseMaxConnectionsPerRoomLimit />, depending on usage</InfoTooltip>         |
-| Simultaneous connections per project <InfoTooltip><a href="#What's-a-simultaneous-connection-per-project" className="text-product-brand font-medium">What is this?</a></InfoTooltip>                                                                                | <Limits.ProMaxConnectionsPerProject />                                                           | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                           |
-| Monthly public key connections <InfoTooltip>Public key only recommended for prototyping. <a href="/docs/authentication" className="text-product-brand font-medium">Set up authentication</a>.</InfoTooltip>                                                         | <Limits.ProMaxAnonymousConnections />                                                            | <Limits.EnterpriseMaxAnonymousConnections /> <InfoTooltip>Up to <Limits.EnterpriseMaxAnonymousConnectionsLimit /></InfoTooltip>                         |
-| Monthly AI Copilots messages\* <InfoTooltip>Applies when AI Copilots add-on is purchased.</InfoTooltip>                                                                                                                                                             | <Limits.ProMaxAiCopilotMessages />                                                               | <Limits.EnterpriseMaxAiCopilotMessages /> <InfoTooltip>Up to <Limits.EnterpriseMaxAiCopilotMessagesLimit /></InfoTooltip>                               |
-| Monthly comments\* <InfoTooltip>Applies when Comments add-on is purchased.</InfoTooltip>                                                                                                                                                                            | <Limits.ProMaxComments />                                                                        | <Limits.EnterpriseMaxComments /> <InfoTooltip>Up to <Limits.EnterpriseMaxCommentsLimit /></InfoTooltip>                                                 |
-| Monthly notifications\* <InfoTooltip>Applies when Notifications add-on is purchased.</InfoTooltip>                                                                                                                                                                  | <Limits.ProMaxNotifications />                                                                   | <Limits.EnterpriseMaxNotifications /> <InfoTooltip>Up to <Limits.EnterpriseMaxNotificationsLimit /></InfoTooltip>                                       |
-| Total text editor data\* <InfoTooltip>Applies when Multiplayer Editing add-on is purchased. Data for Tiptap, Lexical, and BlockNote. <a href="#How-is-data-storage-calculated" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip> | <Limits.ProTotalTextEditorStored />                                                              | <Limits.EnterpriseTotalTextEditorStored /> <InfoTooltip>Up to <Limits.EnterpriseTotalTextEditorStoredLimit /></InfoTooltip>                             |
-| Total sync engine data\* <InfoTooltip>Applies when Multiplayer Editing add-on is purchased. Data for Yjs and Storage. <a href="#How-is-data-storage-calculated" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip>                | <Limits.ProTotalCustomAppStored />                                                               | <Limits.EnterpriseTotalCustomAppStored /> <InfoTooltip>Up to <Limits.EnterpriseTotalCustomAppStoredLimit /></InfoTooltip>                               |
-| `yDocUpdated` webhook event throttle <InfoTooltip><a href="/docs/platform/webhooks#YDocUpdatedEvent" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                                        | <Limits.ProYdocUpdatedWebhookEventThrottle />                                                    | <Limits.EnterpriseYdocUpdatedWebhookEventThrottle /> <InfoTooltip>Down to <Limits.EnterpriseYdocUpdatedWebhookEventThrottleLimit /></InfoTooltip>       |
-| `storageUpdated` webhook event throttle <InfoTooltip><a href="/docs/platform/webhooks#StorageUpdatedEvent" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                                  | <Limits.ProStorageUpdatedWebhookEventThrottle />                                                 | <Limits.EnterpriseStorageUpdatedWebhookEventThrottle /> <InfoTooltip>Down to <Limits.EnterpriseStorageUpdatedWebhookEventThrottleLimit /></InfoTooltip> |
-
-<div className="text-xs">
-
-\* Requires add-on purchase.
-
-</div>
-
-### First day free policy [#first-day-free-highlight]
-
-Both plans include our first day free policy, meaning you’ll only be charged for
-users who come back after their first visit.
-[Learn more](#first-day-free-policy).
-
-## Free development environment limits
-
-The Pro plan comes with a free, fully-featured, development environment,
-allowing you to prototype Liveblocks applications before making a purchase.
-There are usage limits.
-
-|                                                                                                                                                                                                             | Free development environment                         |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Monthly active users <InfoTooltip><a href="#What-is-a-monthly-active-user-(MAU)" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip>                                       | <Limits.StarterMauMax />                             |
-| Projects <InfoTooltip><a href="/docs/platform/projects" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                             | <Limits.StarterMaxProjects />                        |
-| Team members per account <InfoTooltip><a href="/docs/platform/account-management/manage-team-members" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                               | <Limits.StarterTeamMembersPerAccount />              |
-| Tenants <InfoTooltip><a href="/docs/authentication/tenants" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                                                         | 1                                                    |
-| Average connections per MAU <InfoTooltip><a href="#What's-a-connection" className="text-product-brand font-medium">What's a connection?</a></InfoTooltip>                                                   | <Limits.StarterAvgConnectionsPerMau />               |
-| Maximum data stored size per room <InfoTooltip><a href="#What's-a-room" className="text-product-brand font-medium">What's a room?</a></InfoTooltip>                                                         | <Limits.StarterMaxStorageSizePerRoom />              |
-| Simultaneous connections per room <InfoTooltip><a href="#What's-a-simultaneous-connection-per-room" className="text-product-brand font-medium">What is this?</a></InfoTooltip>                              | <Limits.StarterMaxConnectionsPerRoom />              |
-| Simultaneous connections per project <InfoTooltip><a href="#What's-a-simultaneous-connection-per-project" className="text-product-brand font-medium">What is this?</a></InfoTooltip>                        | <Limits.StarterMaxConnectionsPerProject />           |
-| Monthly public key connections <InfoTooltip>Public key only recommended for prototyping. <a href="/docs/authentication" className="text-product-brand font-medium">Set up authentication</a>.</InfoTooltip> | <Limits.StarterMaxAnonymousConnections />            |
-| Monthly AI Copilots messages                                                                                                                                                                                | <Limits.StarterMaxAiCopilotMessages />               |
-| Monthly comments                                                                                                                                                                                            | <Limits.StarterMaxComments />                        |
-| Monthly notifications                                                                                                                                                                                       | <Limits.StarterMaxNotifications />                   |
-| Total GB stored (text editors) <InfoTooltip><a href="#How-is-data-storage-calculated" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip>                                  | <Limits.StarterTotalTextEditorStored />              |
-| Total GB stored (sync datastores) <InfoTooltip><a href="#How-is-data-storage-calculated" className="text-product-brand font-medium">How is this calculated?</a></InfoTooltip>                               | <Limits.StarterTotalCustomAppStored />               |
-| `yDocUpdated` webhook event throttle <InfoTooltip><a href="/docs/platform/webhooks#YDocUpdatedEvent" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                                | <Limits.StarterYdocUpdatedWebhookEventThrottle />    |
-| `storageUpdated` webhook event throttle <InfoTooltip><a href="/docs/platform/webhooks#StorageUpdatedEvent" className="text-product-brand font-medium">Learn more</a></InfoTooltip>                          | <Limits.StarterStorageUpdatedWebhookEventThrottle /> |
-
-### Commercial usage
-
-The Pro plan’s free development environment is restricted to non-commercial use
-only. All commercial usage of the platform requires a paid Pro or Enterprise
-plan. Commercial usage refers to any usage of the Liveblocks platform in
-projects where financial gain is being sought by any party involved in the
-production, including paid employees or consultants.
+|                                                                                                                                                                                                                                                                                                        | Free                                              | Pro                                                                                                                                                   | Enterprise                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a href="#What-is-a-monthly-active-room">Monthly active rooms</a>                                                                                                                                                                                                                                      | <Limits.FreeMaxMonthlyActiveRooms />              | <Limits.ProMonthlyActiveRoomsIncluded /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProMonthlyActiveRoomsOverage /></span> | <Limits.EnterpriseMonthlyActiveRoomsIncluded /> <InfoTooltip>Up to <Limits.EnterpriseMaxMonthlyActiveRooms /></InfoTooltip>                           |
+| <a href="#What-is-a-monthly-active-user">Monthly active users</a>                                                                                                                                                                                                                                      | <Limits.FreeMaxMau />                             | <Limits.ProMaxMau />                                                                                                                                  | <Limits.EnterpriseMaxMau />                                                                                                                           |
+| <a href="/docs/platform/projects">Projects</a>                                                                                                                                                                                                                                                         | <Limits.FreeMaxProjects />                        | <Limits.ProMaxProjects />                                                                                                                             | <Limits.EnterpriseProjectsIncluded /> <InfoTooltip>Up to <Limits.EnterpriseMaxProjects /></InfoTooltip>                                               |
+| <a href="/docs/platform/account-management/manage-team-members">Team members</a>                                                                                                                                                                                                                       | <Limits.FreeMaxTeamMembersPerAccount />           | <Limits.ProTeamMembersPerAccount /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProTeamMembersPerAccountOverage /></span>   | <Limits.EnterpriseTeamMembersPerAccount /> <InfoTooltip>Up to <Limits.EnterpriseMaxTeamMembersPerAccount /></InfoTooltip>                             |
+| <a href="#What's-a-simultaneous-connection-per-room" title="Learn more">Simultaneous connections per room</a>                                                                                                                                                                                          | <Limits.FreeMaxConnectionsPerRoom />              | <Limits.ProMaxConnectionsPerRoom />                                                                                                                   | <Limits.EnterpriseMaxConnectionsPerRoom />                                                                                                            |
+| <a href="#What's-a-simultaneous-connection-per-project">Simultaneous connections per project</a>                                                                                                                                                                                                       | <Limits.FreeMaxConnectionsPerProject />           | <Limits.ProMaxConnectionsPerProject />                                                                                                                | <Limits.EnterpriseMaxConnectionsPerProject />                                                                                                         |
+| Monthly anonymous connections <InfoTooltip>Public key only recommended for prototyping. <a href="/docs/authentication" className="font-medium">Set up authentication</a>.</InfoTooltip>                                                                                                                | <Limits.FreeMaxAnonymousConnections />            | <Limits.ProMaxAnonymousConnections />                                                                                                                 | <Limits.EnterpriseMaxAnonymousConnections />                                                                                                          |
+| Realtime data storage <InfoTooltip>This is a cumulative calculation that represents all data that is currently stored. It does not reset monthly, and the total usage will continue to accrue over time as you add more content and data.</InfoTooltip>                                                | <Limits.FreeMaxRealtimeDataStorage />             | <Limits.ProRealtimeDataStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProRealtimeDataStorageOverage /></span>       | <Limits.EnterpriseRealtimeDataStorage /> <InfoTooltip>Up to <Limits.EnterpriseMaxRealtimeDataStorage /></InfoTooltip>                                 |
+| Realtime data stored per room                                                                                                                                                                                                                                                                          | <Limits.FreeMaxStorageSizePerRoom />              | <Limits.ProMaxStorageSizePerRoom />                                                                                                                   | <Limits.EnterpriseMaxStorageSizePerRoom />                                                                                                            |
+| File storage <InfoTooltip>This is a cumulative calculation that represents all files that are stored with Liveblocks. It does not reset monthly, and the total usage will continue to accrue over time as you add more files. Files can be uploaded as comment attachments for instance.</InfoTooltip> | <Limits.FreeMaxFileStorage />                     | <Limits.ProFileStorage /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProFileStorageOverage /></span>                       | <Limits.EnterpriseMaxFileStorage />                                                                                                                   |
+| Max file upload size                                                                                                                                                                                                                                                                                   | <Limits.FreeMaxFileUploadSize />                  | <Limits.ProMaxFileUploadSize />                                                                                                                       | <Limits.EnterpriseFileUploadSize /> <InfoTooltip>Up to <Limits.EnterpriseMaxFileUploadSize /></InfoTooltip>                                           |
+| Comments stored                                                                                                                                                                                                                                                                                        | <Limits.FreeMaxComments />                        | <Limits.ProMaxComments />                                                                                                                             | <Limits.EnterpriseMaxComments />                                                                                                                      |
+| Monthly collaboration notifications <InfoTooltip>Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.</InfoTooltip>                                                                                                                           | <Limits.FreeMaxCollaborationNotifications />      | <Limits.ProMaxCollaborationNotifications />                                                                                                           | <Limits.EnterpriseMaxCollaborationNotifications />                                                                                                    |
+| Monthly custom notifications <InfoTooltip>Non-collaborative notifications that can be triggered from your own code.</InfoTooltip>                                                                                                                                                                      | <Limits.FreeMaxCustomNotifications />             | <Limits.ProCustomNotifications /> included<br /><span className="text-xs text-product-subtlest"><Limits.ProCustomNotificationsOverage /></span>       | <Limits.EnterpriseCustomNotifications /> <InfoTooltip>Up to <Limits.EnterpriseMaxCustomNotifications /></InfoTooltip>                                 |
+| Webhook event frequency <InfoTooltip>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint. <a href="/docs/platform/webhooks#StorageUpdatedEvent" className="font-medium">Learn more</a></InfoTooltip>                         | <Limits.FreeStorageUpdatedWebhookEventThrottle /> | <Limits.ProStorageUpdatedWebhookEventThrottle />                                                                                                      | <Limits.EnterpriseStorageUpdatedWebhookEventThrottle /> <InfoTooltip>Down to <Limits.EnterpriseMaxStorageUpdatedWebhookEventThrottle /></InfoTooltip> |
+| Version history <InfoTooltip>APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.</InfoTooltip>                                                                                                                                                 | <Limits.FreeVersionHistory />                     | <Limits.ProVersionHistory /> <InfoTooltip>Unlimited with Version History Plus add‑on</InfoTooltip>                                                    | <Limits.EnterpriseVersionHistory />                                                                                                                   |
+| Event log retention                                                                                                                                                                                                                                                                                    | <Limits.FreeEventLogRetention />                  | <Limits.ProEventLogRetention />                                                                                                                       | <Limits.EnterpriseEventLogRetention /> <InfoTooltip>Up to <Limits.EnterpriseMaxEventLogRetention /></InfoTooltip>                                     |
 
 ## Other limits
 
-### `roomId` limit
-
-A `roomId` cannot exceed 128 characters.
-
-### `userId` limit
-
-A `userId` cannot exceed 128 characters. Each `userId` must be used to represent
-a single user.
-
-### `userInfo` limit
-
-`userInfo` sent from the authentication endpoint cannot exceed 1024 characters
-once serialized to JSON.
-
-### Broadcast event limit
-
-Broadcast event messages have a limit of 1 MB.
-
-### Liveblocks Storage limits
-
-- A `LiveObject` cannot exceed 128 kB when totalling the size of the keys and
-  values.
-- A `LiveMap` can be any size, so long as each individual value does not exceed
-  128kB.
-- A `LiveList` can be any size, so long as each individual value does not exceed
-  128kB.
+| Item                                                                                                                                                                                                  | Limit                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `roomId` <InfoTooltip>The unique identifier for a room. <a href="#What's-a-room" className="font-medium">What's a room?</a></InfoTooltip>                                                             | 128 characters                                                     |
+| `userId` <InfoTooltip>The unique identifier for a user. Each `userId` must be used to represent a single user.</InfoTooltip>                                                                          | 128 characters                                                     |
+| `userInfo` <InfoTooltip>User information sent from the authentication endpoint.</InfoTooltip>                                                                                                         | 1024 characters once serialized to JSON                            |
+| Broadcast event message <InfoTooltip>Messages sent via the broadcast API for real-time communication between clients.</InfoTooltip>                                                                   | 1 MB                                                               |
+| `LiveObject` <InfoTooltip>A realtime data structure that stores key-value pairs. <a href="/docs/api-reference/liveblocks-client#LiveObject" className="font-medium">Learn more</a></InfoTooltip>      | 128 kB when totalling the size of the keys and values              |
+| `LiveMap` <InfoTooltip>A realtime data structure that stores key-value pairs in a map. <a href="/docs/api-reference/liveblocks-client#LiveMap" className="font-medium">Learn more</a></InfoTooltip>   | Unlimited, so long as each individual value does not exceed 128 kB |
+| `LiveList` <InfoTooltip>A realtime data structure that stores an ordered list of items. <a href="/docs/api-reference/liveblocks-client#LiveList" className="font-medium">Learn more</a></InfoTooltip> | Unlimited, so long as each individual value does not exceed 128 kB |
 
 Note that when one realtime data structure is nested inside another, it does not
 count towards the limit. Only the JSON leaves of your data structure count
 towards the limit. For example, if a `LiveList` is nested inside a `LiveObject`,
-the `LiveList` and its contents do not count towards the `LiveObject`’s data
+the `LiveList` and its contents do not count towards the `LiveObject`'s data
 limit.
 
 ## FAQs
 
-### What is a monthly active user (MAU)?
+### What is a monthly active room?
 
-Monthly active users (MAU) represents the number of users that have used any
-Liveblocks features within a given month, with the exception of users that only
-connect one time, as they are [always free](#first-day-free-policy). Users are
-identified by the `userId` property provided in your
-[authentication endpoint](/docs/authentication). This `userId` generally comes
-from your database or your authentication provider.
+Monthly active rooms represents the number of rooms that have been used within a
+given month. Rooms are identified by the `roomId`.
+
+### What is a monthly active user?
+
+Monthly active users represents the number of users that have used any
+Liveblocks features within a given month. Users are identified by the `userId`
+property provided in your [authentication endpoint](/docs/authentication). This
+`userId` generally comes from your database or your authentication provider.
 
 One unique `userId` corresponds to one user, no matter how long they connect
 for. For example, a user that connects for 5 minutes on 2 different days is
 counted as 1 MAU, and a user that connects 8 hours a day for a month is also
 counted as 1 MAU. This applies so long as usage falls under our
 [Fair Use Policy](/docs/platform/limits/fair-use-policy).
-
-### First day free policy [#first-day-free-policy]
-
-Both plans include our first day free policy, meaning you only pay for returning
-users. In concrete terms, when a `userId` connects for the first time, they do
-not count towards your MAU limit. They are only counted when they connect to
-Liveblocks _again_ on another calendar day. For all users, days start at 00:00
-UTC and end at 23:59:59 UTC.
 
 ### What’s a connection?
 
@@ -161,10 +96,10 @@ handling simultaneous room connection limits in our guide about
 A simultaneous connection per project is when a user or multiple users are
 connected to the same project at the same time.
 
-### How is data storage calculated?
+### How is realtime data storage calculated?
 
-Storage for Text Editor and Sync Datastore is a cumulative calculation that
-represents all data that is currently stored. It does not reset monthly, and the
+Realtime data storage is a cumulative calculation that represents all realtime
+data that is currently stored in your rooms. It does not reset monthly, and the
 total usage will continue to accrue over time as you add more content and data.
 You can monitor your usage at any time in the [dashboard](/dashboard).
 
@@ -172,34 +107,9 @@ You can monitor your usage at any time in the [dashboard](/dashboard).
 
 Liveblocks returns a different error for each limit that a user might reach.
 That way, you can decide how to best handle those cases in your product.
-[Learn more about limits](/docs/platform/limits).
 
-### Do you count monthly active users during testing?
+### Do you count monthly active rooms during testing?
 
-If you connect to rooms and call the Liveblocks API during any automated
-testing, you may want to provide a static `userId` to avoid hitting limits.
-
-For example, you could do this by setting an environment variable and checking
-the process when you call `authorize` from `@liveblocks/node`.
-
-```dotenv file=".env.test"
- TEST_USERID="machine"
-```
-
-```ts file="liveblocks.config.ts"
-export default async function auth(req, res) {
-  const room = req.body.room;
-  const response = await authorize({
-    room,
-    secret,
-    userId:
-      process.env.NODE_ENV === "test" ? process.env.TEST_USERID : "user123",
-  });
-  return res.status(response.status).end(response.body);
-}
-```
-
-### Learn more
-
-For further information regarding acceptable use of our Services, please refer
-to our [Terms of Service](/terms) or your Enterprise Service Agreement.
+Yes, if test users connect to a room during automated testing, the room will be
+counted as a monthly active room. To prevet hitting limits during testing, you
+may want to provide a set of reusable `roomId`s.

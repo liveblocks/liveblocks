@@ -189,6 +189,7 @@ export function SOCKET_AUTOCONNECT_AND_ROOM_STATE(
           nonce: `nonce-for-actor-${actor}`,
           scopes,
           users: {},
+          meta: {},
         })
       );
     });
