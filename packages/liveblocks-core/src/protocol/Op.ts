@@ -37,7 +37,7 @@ export type Op =
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp
-  | AckOp; // Classic (H)Ack (sent on protocol v7, replaced by StorageAck message on v8+)
+  | AckOp; // (H)Ack
 
 export type CreateOp =
   | CreateObjectOp
