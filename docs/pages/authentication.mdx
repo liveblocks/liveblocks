@@ -191,6 +191,14 @@ There are three permission values that you can set on rooms.
     [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
     is `false`.
   </dd>
+  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
+  <dd>
+    Read access with presence and comments. Enables people to edit their
+    presence, view the room&rsquo;s storage, and comment on the document. On the
+    client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `false`.
+  </dd>
   <dt>`[]`</dt>
   <dd>Private. No one can enter the room.</dd>
 </dl>
@@ -400,6 +408,156 @@ const room = await liveblocks.getRoom("a32wQXid4A9");
 console.log(room.data.usersAccesses);
 ```
 
+## A concrete example
+
+We will setup ID token authentication for an application that uses tenants and
+has users with different roles.
+
+### Roles
+
+We will use the following roles:
+
+- `admin` - can do everything
+- `commenter` - can comment on the document
+- `viewer` - can only view the document
+
+#### Permissions
+
+We will use the following permissions:
+
+- `room:write` - full access to the room
+- `room:read` - read access to the room
+- `room:presence:write` - edit presence (cursor position, avatar, name, etc.)
+- `comments:write` - comment on the document
+
+#### Mapping roles to permissions
+
+We will map the roles to the permissions as follows:
+
+| Role        | Permissions                                          |
+| ----------- | ---------------------------------------------------- |
+| `admin`     | `room:write`                                         |
+| `commenter` | `room:read`, `room:presence:write`, `comments:write` |
+| `viewer`    | `room:read`, `room:presence:write`                   |
+
+### Tenants
+
+Your applications has multiple organizations, each will have its own tenant. For
+our example we will have two tenants, each corresponding to an organization.
+
+| Organization Name | Tenant     | Roles                          |
+| ----------------- | ---------- | ------------------------------ |
+| Acme Inc.         | `acme-inc` | `admin`, `commenter`, `viewer` |
+| Lumon             | `lumon`    | `admin`, `commenter`, `viewer` |
+
+#### Setting up rooms and tenants
+
+```ts
+// example for acme-inc:document:123
+const room = await liveblocks.createRoom(
+  "acme-inc:document:123", // room id
+  {
+    defaultAccesses: [], // no public access by default
+    tenantId: "acme-inc",
+    groupsAccesses: {
+      admin: ["room:write"],
+      commenter: ["room:read", "room:presence:write", "room:comment:write"],
+      viewer: ["room:read", "room:presence:write"],
+    },
+  }
+);
+
+// example for lumon:document:123
+const room = await liveblocks.createRoom(
+  "lumon:document:123", // room id
+  {
+    defaultAccesses: [], // no public access by default
+    tenantId: "lumon",
+    groupsAccesses: {
+      admin: ["room:write"],
+      commenter: ["room:read", "room:presence:write", "comments:write"],
+      viewer: ["room:read", "room:presence:write"],
+    },
+  }
+);
+```
+
+<!-- TODO: add visual illustration of rooms and tenants -->
+
+### Users
+
+We will have the following users in our application:
+
+| Name          | User ID                     |
+| ------------- | --------------------------- |
+| Mislav Abha   | `mislav.abha@example.com`   |
+| Charlie Layne | `charlie.layne@example.com` |
+
+#### Authentication
+
+Now each time a user accesses a tenant, you will identify them and set the
+desired role for them.
+
+```ts
+// Give Mislav Abha admin access in the Acme Inc. tenant
+const { status, body } = await liveblocks.identifyUser({
+  userId: "mislav.abha@example.com",
+  tenantId: "acme-inc",
+  groupIds: ["admin"],
+});
+
+// Give Mislav Abha commenter access in the Lumon tenant
+const { status, body } = await liveblocks.identifyUser({
+  userId: "mislav.abha@example.com",
+  tenantId: "lumon",
+  groupIds: ["commenter"],
+});
+```
+
+```ts
+// Give Charlie Layne admin access in the Lumon tenant
+const { status, body } = await liveblocks.identifyUser({
+  userId: "charlie.layne@example.com",
+  tenantId: "lumon",
+  groupIds: ["admin"],
+});
+
+// Give Charlie Layne viewer access in the Acme Inc. tenant
+const { status, body } = await liveblocks.identifyUser({
+  userId: "charlie.layne@example.com",
+  tenantId: "acme-inc",
+  groupIds: ["viewer"],
+});
+```
+
+#### Room specific access
+
+To give enhanced permissions to a user in a room you can set the user's `userId`
+as the key and the permissions as the value in the `usersAccesses` property when
+creating or updating a room.
+
+```ts
+// Mislav Abha is a commenter in the Lumon tenant except for the lumon:document:123 room, where he has admin access.
+// We update the room to give Mislav admin access.
+const lumonRoom = await liveblocks.updateRoom("lumon:document:123", {
+  usersAccesses: {
+    "mislav.abha@example.com": ["room:write"], // admin access to the room
+  },
+});
+
+// Charlie Layne is a commenter in the Acme Inc. tenant except for the acme-inc:document:123 room, where he has admin access.
+// We update the room to give Charlie admin access.
+const acmeRoom = await liveblocks.updateRoom("acme-inc:document:123", {
+  usersAccesses: {
+    "charlie.layne@example.com": [
+      "room:read",
+      "room:presence:write",
+      "comments:write",
+    ],
+  },
+});
+```
+
 ## Select your framework [#select-your-framework]
 
 Select your framework for specific instructions on setting up ID token
@@ -437,3 +595,4 @@ authentication.
     visual={<DocsFirebaseIcon />}
   />
 </ListGrid>
+```
