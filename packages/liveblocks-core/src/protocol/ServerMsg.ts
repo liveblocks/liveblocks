@@ -13,8 +13,8 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE_V7: 200, // Only sent in V7
-  INITIAL_STORAGE_CHUNK: 210, // Used in V8+
+  STORAGE_STATE_V7: 200, // Only sent in V7
+  STORAGE_CHUNK: 210, // Used in V8+
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -41,10 +41,8 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type INITIAL_STORAGE_STATE_V7 =
-    typeof ServerMsgCode.INITIAL_STORAGE_STATE_V7;
-  export type INITIAL_STORAGE_CHUNK =
-    typeof ServerMsgCode.INITIAL_STORAGE_CHUNK;
+  export type STORAGE_STATE_V7 = typeof ServerMsgCode.STORAGE_STATE_V7;
+  export type STORAGE_CHUNK = typeof ServerMsgCode.STORAGE_CHUNK;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -78,8 +76,8 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialStorageStateServerMsg_V7 // Only used in protocol v7
-  | InitialStorageChunkServerMsg // Used in protocol v8+
+  | StorageStateServerMsg_V7 // Only used in protocol v7
+  | StorageChunkServerMsg // Used in protocol v8+
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -299,8 +297,8 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
 /**
  * No longer used as of WS API v8.
  */
-export type InitialStorageStateServerMsg_V7 = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE_V7;
+export type StorageStateServerMsg_V7 = {
+  readonly type: ServerMsgCode.STORAGE_STATE_V7;
   readonly items: IdTuple<SerializedCrdt>[];
 };
 
@@ -309,8 +307,8 @@ export type InitialStorageStateServerMsg_V7 = {
  * sending a FetchStorageClientMsg message, to provide the initial Storage
  * state of the Room.
  *
- * The server will respond with 0+ INITIAL_STORAGE_CHUNK messages with
- * done=false, followed by exactly one INITIAL_STORAGE_CHUNK message with
+ * The server will respond with 0+ STORAGE_CHUNK messages with
+ * done=false, followed by exactly one STORAGE_CHUNK message with
  * done=true.
  *
  * If the room is using the new storage engine that supports streaming, then
@@ -319,8 +317,8 @@ export type InitialStorageStateServerMsg_V7 = {
  * If the room is using the old storage engine, then all nodes will be sent in
  * a single/large chunk (non-streaming).
  */
-export type InitialStorageChunkServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_CHUNK;
+export type StorageChunkServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_CHUNK;
   readonly done: boolean;
   readonly nodes: CompactNode[];
 };

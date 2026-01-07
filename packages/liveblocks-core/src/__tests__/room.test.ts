@@ -983,7 +983,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: [["root", CrdtType.OBJECT, {}]],
         })
@@ -1018,7 +1018,7 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+            type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
             nodes: [["root", CrdtType.OBJECT, {}]],
             //                                ^^
@@ -1053,7 +1053,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
@@ -1157,7 +1157,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
@@ -1266,7 +1266,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
@@ -1305,7 +1305,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
         })
@@ -1390,7 +1390,7 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+            type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
             nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
           })
@@ -1914,7 +1914,7 @@ describe("room", () => {
       wss.onConnection((conn) =>
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+            type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
             nodes: Array.from(nodeStreamToCompactNodes(newInitStorage)),
           })

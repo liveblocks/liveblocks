@@ -166,9 +166,9 @@ export function prepareRoomWithStorage_loadWithDelay<
   wss.onConnection((conn) => {
     const sendStorageMsg = () =>
       conn.server.send(
-        // Send INITIAL_STORAGE_CHUNK message as a single message (classic/non-streaming)
+        // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+          type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
           nodes: Array.from(nodeStreamToCompactNodes(clonedItems)),
         })
@@ -417,14 +417,14 @@ export async function prepareStorageTest<
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this INITIAL_STORAGE_CHUNK
+    // Next time a client socket connects, send this STORAGE_CHUNK
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
-          // Send INITIAL_STORAGE_CHUNK message as a single message (classic/non-streaming)
+          // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+            type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
             nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
           })
@@ -584,13 +584,13 @@ export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: IdTuple<SerializedCrdt>[]
 ) {
-  // Next time a client socket connects, send this INITIAL_STORAGE_CHUNK
+  // Next time a client socket connects, send this STORAGE_CHUNK
   // message
   wss.onConnection((conn) =>
     conn.server.send(
-      // Send INITIAL_STORAGE_CHUNK message as a single message (classic/non-streaming)
+      // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
       serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+        type: ServerMsgCode.STORAGE_CHUNK,
         done: true,
         nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
       })

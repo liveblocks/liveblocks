@@ -150,7 +150,7 @@ export async function websocketSimulator() {
 
   function simulateStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+      type: ServerMsgCode.STORAGE_CHUNK,
       done: true,
       nodes: [["root", CrdtType.OBJECT, {}]],
     });
@@ -158,7 +158,7 @@ export async function websocketSimulator() {
 
   function simulateExistingStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+      type: ServerMsgCode.STORAGE_CHUNK,
       done: true,
       nodes: [
         ["root", CrdtType.OBJECT, {}],

@@ -156,7 +156,7 @@ async function prepareWithStorage<TState>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+      type: ServerMsgCode.STORAGE_CHUNK,
       done: true,
       nodes: Array.from(nodeStreamToCompactNodes(options.items)),
     }),
@@ -212,7 +212,7 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.INITIAL_STORAGE_CHUNK,
+        type: ServerMsgCode.STORAGE_CHUNK,
         done: true,
         nodes: [["root", CrdtType.OBJECT, {}]],
       }),

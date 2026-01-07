@@ -1447,7 +1447,7 @@ export function createRoom<
   };
 
   // Accumulates nodes as initial storage arrives in chunks via
-  // INITIAL_STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // STORAGE_CHUNK messages. Once the final chunk arrives (with
   // done: true), the complete map is passed to processInitialStorage().
   const partialNodes = makePartialNodeMap();
 
@@ -2364,7 +2364,7 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_CHUNK: {
+        case ServerMsgCode.STORAGE_CHUNK: {
           partialNodes.append(compactNodesToNodeStream(message.nodes));
           if (message.done) {
             processInitialStorage(partialNodes.clear());
@@ -2415,7 +2415,7 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE_V7: // No longer used in V8
+        case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
           break;
