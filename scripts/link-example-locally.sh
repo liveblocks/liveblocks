@@ -10,24 +10,27 @@ err () {
 }
 
 usage () {
-    err "usage: link-example-locally.sh [-cfhn]"
+    err "usage: link-example-locally.sh [-bcfhn]"
     err
     err "Run this script from within an example directory. It will turn that example"
     err "from an standalone NPM project into a workspace, so that it will use the"
     err "local @liveblocks/* packages instead of the last published version on NPM."
     err
     err "Options:"
+    err "-b    Build all @liveblocks packages before linking (otherwise use Turborepo to run the example)"
     err "-c    Create Git commit with these changes (intended to be removed later)"
     err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
     err "-n    No-modify mode: reset all changes after linking (prevents accidental commits)"
 }
 
+build=0
 commit=0
 force=0
 no_modify=0
-while getopts cfhn flag; do
+while getopts bcfhn flag; do
     case "$flag" in
+        b) build=1 ;;
         c) commit=1 ;;
         f) force=1 ;;
         n) no_modify=1 ;;
@@ -64,11 +67,13 @@ for dep in $(jq -r '.dependencies | keys[]' package.json | grep -Ee '@liveblocks
     jq ".dependencies.\"$dep\" = \"file:../../packages/liveblocks-${dep#@liveblocks/}\"" package.json | sponge package.json
 done
 
-# Step 4: Build all @liveblocks packages to ensure they're up-to-date
-err "Building @liveblocks packages..."
-if ! ( cd ../../ && npm run build > /dev/null 2>&1 ); then
-    err "Warning: Some packages failed to build. This may cause version mismatch issues."
-    err "You can manually build packages with: npm run build"
+# Step 4: Build all @liveblocks packages to ensure they're up-to-date (optional)
+if [ "$build" -eq 1 ]; then
+    err "Building @liveblocks packages..."
+    if ! ( cd ../../ && npm run build > /dev/null 2>&1 ); then
+        err "Warning: Some packages failed to build. This may cause version mismatch issues."
+        err "You can manually build packages with: npm run build"
+    fi
 fi
 
 # Step 5: Add this example to the top-level package.json to officially make it
