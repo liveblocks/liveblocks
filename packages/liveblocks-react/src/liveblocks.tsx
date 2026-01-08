@@ -892,9 +892,9 @@ function useUpdateNotificationSettings_withClient(
 function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-    NotificationSettingsAsyncResult,
-    (settings: PartialNotificationSettings) => void,
-  ] {
+  NotificationSettingsAsyncResult,
+  (settings: PartialNotificationSettings) => void,
+] {
   const updateNotificationSettings =
     useUpdateNotificationSettings_withClient(client);
 
@@ -931,9 +931,9 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-    NotificationSettingsAsyncSuccess,
-    (settings: PartialNotificationSettings) => void,
-  ] {
+  NotificationSettingsAsyncSuccess,
+  (settings: PartialNotificationSettings) => void,
+] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 

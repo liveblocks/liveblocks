@@ -138,7 +138,7 @@ export class LiveMap<
       return { modified: false };
     }
 
-    if (source === OpSource.ACK) {
+    if (source === OpSource.OURS) {
       const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
@@ -148,7 +148,7 @@ export class LiveMap<
         // Another local set has overriden the value, so we do nothing
         return { modified: false };
       }
-    } else if (source === OpSource.REMOTE) {
+    } else if (source === OpSource.THEIRS) {
       // If a remote operation set an item,
       // delete the unacknowledgedSet associated to the key
       // to make sure any future ack can override it
