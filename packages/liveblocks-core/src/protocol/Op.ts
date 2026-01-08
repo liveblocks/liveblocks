@@ -37,8 +37,7 @@ export type Op =
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp
-  | AckOpV7 // Classic (H)Ack
-  | AckOpV8; // Proper Ack
+  | AckOp; // (H)Ack
 
 export type CreateOp =
   | CreateObjectOp
@@ -108,23 +107,14 @@ export type DeleteCrdtOp = {
 // way to trigger an acknowledgement for Ops that were seen by the server, but
 // deliberately ignored.
 //
-export type AckOpV7 = {
+export type AckOp = {
   readonly type: OpCode.DELETE_CRDT; // Not a typo!
-  readonly id: "ACK";
+  readonly id: "ACK"; // (H)ACK
   readonly opId: string;
 };
 
-// Proper Ack, this will be sent by V8+, instead of the hack above
-export type AckOpV8 = {
-  readonly type: OpCode.ACK;
-  readonly opId: string;
-};
-
-export function isAck(op: Op): op is AckOpV7 | AckOpV8 {
-  return (
-    op.type === OpCode.ACK || // >= v8
-    (op.type === OpCode.DELETE_CRDT && op.id === "ACK") // < v7
-  );
+export function isAckOp(op: Op): op is AckOp {
+  return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 
 export type SetParentKeyOp = {

@@ -444,6 +444,13 @@ export type CreateRoomOptions = {
   usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
   tenantId?: string;
+
+  /**
+   * @private Preferred storage engine version to use when creating the
+   * room. Only takes effect if the room doesn't exist yet. Version
+   * 2 supports streaming and will become the default in the future.
+   */
+  engine?: 1 | 2;
 };
 
 export type UpdateRoomOptions = {
@@ -992,6 +999,7 @@ export class Liveblocks {
       usersAccesses,
       metadata,
       tenantId,
+      engine,
     } = params;
 
     const res = await this.#post(
@@ -1003,6 +1011,7 @@ export class Liveblocks {
         usersAccesses,
         tenantId,
         metadata,
+        engine,
       },
       options
     );

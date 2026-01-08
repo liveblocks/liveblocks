@@ -150,7 +150,7 @@ async function prepareWithStorage<TState>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE,
       items: options.items,
     }),
   } as MessageEvent);
@@ -205,7 +205,7 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        type: ServerMsgCode.STORAGE_STATE,
         items: [obj("root", {})],
       }),
     } as MessageEvent);

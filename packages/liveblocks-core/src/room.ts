@@ -69,14 +69,14 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
-import { isAck, OpCode } from "./protocol/Op";
+import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
+  StorageStateServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
@@ -1821,9 +1821,7 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
-  ) {
+  function createOrUpdateRootFromMessage(message: StorageStateServerMsg) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
@@ -1868,7 +1866,7 @@ export function createRoom<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = applyOps(ops, false);
+    const result = applyOps(ops, /* isLocal */ false);
 
     notify(result.updates);
   }
@@ -1990,11 +1988,11 @@ export function createRoom<
         let source: OpSource;
 
         if (isLocal) {
-          source = OpSource.UNDOREDO_RECONNECT;
+          source = OpSource.LOCAL;
         } else {
           const opId = nn(op.opId);
           const deleted = context.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+          source = deleted ? OpSource.OURS : OpSource.THEIRS;
         }
 
         const applyOpResult = applyOp(op, source);
@@ -2038,7 +2036,7 @@ export function createRoom<
   function applyOp(op: Op, source: OpSource): ApplyResult {
     // Explicit case to handle incoming "AckOp"s, which are supposed to be
     // no-ops.
-    if (isAck(op)) {
+    if (isAckOp(op)) {
       return { modified: false };
     }
 
@@ -2051,7 +2049,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.LOCAL);
       }
 
       case OpCode.SET_PARENT_KEY: {
@@ -2282,7 +2280,7 @@ export function createRoom<
 
     const inOps = Array.from(offlineOps.values());
 
-    const result = applyOps(inOps, true);
+    const result = applyOps(inOps, /* isLocal */ true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2365,15 +2363,15 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
+        case ServerMsgCode.STORAGE_STATE: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           processInitialStorage(message);
           break;
         }
-        // Write event
+
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, false);
+          const applyResult = applyOps(message.ops, /* isLocal */ false);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2545,7 +2543,7 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+  function processInitialStorage(message: StorageStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
     applyAndSendOps(unacknowledgedOps);
@@ -2558,7 +2556,7 @@ export function createRoom<
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
     const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE, items });
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2661,7 +2659,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyOps(historyOps, /* isLocal */ true);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
@@ -2686,7 +2684,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyOps(historyOps, /* isLocal */ true);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
@@ -3426,7 +3424,8 @@ export function makeAuthDelegateForRoom(
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
   baseUrl: string,
-  WebSocketPolyfill?: IWebSocket
+  WebSocketPolyfill?: IWebSocket,
+  engine?: 1 | 2
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
@@ -3451,6 +3450,9 @@ export function makeCreateSocketDelegateForRoom(
       return assertNever(authValue, "Unhandled case");
     }
     url.searchParams.set("version", PKG_VERSION || "dev");
+    if (engine !== undefined) {
+      url.searchParams.set("e", String(engine));
+    }
     return new ws(url.toString());
   };
 }

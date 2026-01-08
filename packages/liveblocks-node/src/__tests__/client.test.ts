@@ -512,6 +512,7 @@ describe("client", () => {
         usersAccesses: undefined,
         tenantId,
         metadata: undefined,
+        engine: undefined,
       });
     });
 
@@ -540,6 +541,66 @@ describe("client", () => {
         usersAccesses: undefined,
         tenantId: undefined,
         metadata: undefined,
+        engine: undefined,
+      });
+    });
+
+    test("should pass engine to the request when createRoom is called with engine", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        engine: 2 as const,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId: undefined,
+        metadata: undefined,
+        engine: 2,
+      });
+    });
+
+    test("should not include engine in the request when createRoom is called without engine", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId: undefined,
+        metadata: undefined,
+        engine: undefined,
       });
     });
   });
