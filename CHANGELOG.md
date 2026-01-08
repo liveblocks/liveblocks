@@ -1,6 +1,8 @@
 ## v3.13.0 (not released yet)
 
-- ...
+### `@liveblocks/*`
+
+- Internal protocol optimizations to support larger storage documents
 
 ## v3.12.1
 

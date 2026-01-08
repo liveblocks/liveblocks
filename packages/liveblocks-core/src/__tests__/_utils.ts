@@ -32,7 +32,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
 } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
@@ -166,9 +166,11 @@ export function prepareRoomWithStorage_loadWithDelay<
   wss.onConnection((conn) => {
     const sendStorageMsg = () =>
       conn.server.send(
+        // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE,
-          items: clonedItems,
+          type: ServerMsgCode.STORAGE_CHUNK,
+          done: true,
+          nodes: Array.from(nodeStreamToCompactNodes(clonedItems)),
         })
       );
 
@@ -415,14 +417,16 @@ export async function prepareStorageTest<
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this STORAGE_STATE
+    // Next time a client socket connects, send this STORAGE_CHUNK
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
+          // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE,
-            items: nextStorageItems,
+            type: ServerMsgCode.STORAGE_CHUNK,
+            done: true,
+            nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
           })
         );
       }
@@ -580,13 +584,15 @@ export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: IdTuple<SerializedCrdt>[]
 ) {
-  // Next time a client socket connects, send this STORAGE_STATE
+  // Next time a client socket connects, send this STORAGE_CHUNK
   // message
   wss.onConnection((conn) =>
     conn.server.send(
+      // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
       serverMessage({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: nextStorageItems,
+        type: ServerMsgCode.STORAGE_CHUNK,
+        done: true,
+        nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
       })
     )
   );

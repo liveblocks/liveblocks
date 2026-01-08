@@ -150,25 +150,19 @@ export async function websocketSimulator() {
 
   function simulateStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.STORAGE_STATE,
-      items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+      type: ServerMsgCode.STORAGE_CHUNK,
+      done: true,
+      nodes: [["root", CrdtType.OBJECT, {}]],
     });
   }
 
   function simulateExistingStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.STORAGE_STATE,
-      items: [
-        ["root", { type: CrdtType.OBJECT, data: {} }],
-        [
-          "0:0",
-          {
-            type: CrdtType.OBJECT,
-            data: {},
-            parentId: "root",
-            parentKey: "obj",
-          },
-        ],
+      type: ServerMsgCode.STORAGE_CHUNK,
+      done: true,
+      nodes: [
+        ["root", CrdtType.OBJECT, {}],
+        ["0:0", CrdtType.OBJECT, "root", "obj", {}],
       ],
     });
   }

@@ -160,10 +160,7 @@ export function getTreesDiffOperations(
   currentItems.forEach((_, id) => {
     if (!newItems.get(id)) {
       // Delete crdt
-      ops.push({
-        type: OpCode.DELETE_CRDT,
-        id,
-      });
+      ops.push({ type: OpCode.DELETE_CRDT, id });
     }
   });
 

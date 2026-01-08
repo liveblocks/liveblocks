@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Op } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { CompactNode, IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
 export const ServerMsgCode = Object.freeze({
@@ -13,7 +13,8 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  STORAGE_STATE: 200,
+  STORAGE_STATE_V7: 200, // Only sent in V7
+  STORAGE_CHUNK: 210, // Used in V8+
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -40,7 +41,8 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type STORAGE_STATE = typeof ServerMsgCode.STORAGE_STATE;
+  export type STORAGE_STATE_V7 = typeof ServerMsgCode.STORAGE_STATE_V7;
+  export type STORAGE_CHUNK = typeof ServerMsgCode.STORAGE_CHUNK;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -74,7 +76,8 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | StorageStateServerMsg // For a single client
+  | StorageStateServerMsg_V7 // Only used in protocol v7
+  | StorageChunkServerMsg // Used in protocol v8+
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -278,43 +281,46 @@ export type BroadcastedEventServerMsg<E extends Json> = {
  */
 export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
-
-  /**
-   * Informs the client what their actor ID is going to be.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what their actor ID is going to be. */
   readonly actor: number;
-
-  /**
-   * Secure nonce for the current session.
-   * @since v1.2 (WS API v7)
-   */
+  /** Secure nonce for the current session. */
   readonly nonce: string;
-
-  /**
-   * Informs the client what permissions the current User (self) has.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what permissions the current User (self) has. */
   readonly scopes: string[];
-
   readonly users: {
     readonly [otherActor: number]: U & { scopes: string[] };
   };
-
-  /**
-   * Metadata sent from the server to the client.
-   */
+  /** Metadata sent from the server to the client. */
   readonly meta: JsonObject;
+};
+
+/**
+ * No longer used as of WS API v8.
+ */
+export type StorageStateServerMsg_V7 = {
+  readonly type: ServerMsgCode.STORAGE_STATE_V7;
+  readonly items: IdTuple<SerializedCrdt>[];
 };
 
 /**
  * Sent by the WebSocket server to a single client in response to the client
  * sending a FetchStorageClientMsg message, to provide the initial Storage
- * state of the Room. The payload includes the entire Storage document.
+ * state of the Room.
+ *
+ * The server will respond with 0+ STORAGE_CHUNK messages with
+ * done=false, followed by exactly one STORAGE_CHUNK message with
+ * done=true.
+ *
+ * If the room is using the new storage engine that supports streaming, then
+ * potentially multiple chunks might get sent.
+ *
+ * If the room is using the old storage engine, then all nodes will be sent in
+ * a single/large chunk (non-streaming).
  */
-export type StorageStateServerMsg = {
-  readonly type: ServerMsgCode.STORAGE_STATE;
-  readonly items: IdTuple<SerializedCrdt>[];
+export type StorageChunkServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_CHUNK;
+  readonly done: boolean;
+  readonly nodes: CompactNode[];
 };
 
 /**
