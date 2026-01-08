@@ -983,7 +983,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: {} }]],
         })
       );
@@ -1017,7 +1017,7 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            type: ServerMsgCode.STORAGE_STATE,
             items: [["root", { type: CrdtType.OBJECT, data: {} }]],
             //                                              ^^
             //                                   NOTE: Storage is initially
@@ -1052,7 +1052,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
         })
       );
@@ -1155,7 +1155,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
         })
       );
@@ -1263,7 +1263,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
         })
       );
@@ -1301,7 +1301,7 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
         })
       );
@@ -1385,7 +1385,7 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            type: ServerMsgCode.STORAGE_STATE,
             items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
           })
         );
@@ -1908,7 +1908,7 @@ describe("room", () => {
       wss.onConnection((conn) =>
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            type: ServerMsgCode.STORAGE_STATE,
             items: newInitStorage,
           })
         )

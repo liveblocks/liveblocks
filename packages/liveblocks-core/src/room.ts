@@ -2347,7 +2347,7 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
+        case ServerMsgCode.STORAGE_STATE: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           processInitialStorage(message);
@@ -2539,7 +2539,7 @@ export function createRoom<
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
     const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE, items });
   }
 
   function refreshStorage(options: { flush: boolean }) {

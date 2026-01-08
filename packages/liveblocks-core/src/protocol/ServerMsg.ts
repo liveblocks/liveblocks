@@ -13,7 +13,7 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE: 200,
+  STORAGE_STATE: 200,
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -40,8 +40,8 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type INITIAL_STORAGE_STATE =
-    typeof ServerMsgCode.INITIAL_STORAGE_STATE;
+  export type STORAGE_STATE =
+    typeof ServerMsgCode.STORAGE_STATE;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -314,7 +314,7 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
  * payload includes the entire Storage document.
  */
 export type InitialDocumentStateServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
+  readonly type: ServerMsgCode.STORAGE_STATE;
   readonly items: IdTuple<SerializedCrdt>[];
 };
 
