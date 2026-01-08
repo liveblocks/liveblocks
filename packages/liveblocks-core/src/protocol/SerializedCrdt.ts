@@ -70,11 +70,7 @@ export type CompactChildNode =
   | CompactMapNode
   | CompactRegisterNode;
 
-export type CompactRootNode = readonly [
-  id: "root",
-  type: CrdtType.OBJECT,
-  data: JsonObject,
-];
+export type CompactRootNode = readonly [id: "root", data: JsonObject];
 
 export type CompactObjectNode = readonly [
   id: string,
@@ -116,24 +112,27 @@ function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
 
 export function* compactNodesToNodeStream(nodes: CompactNode[]): NodeStream {
   for (const node of nodes) {
+    const id = node[0];
+    if (isRootNode(node)) {
+      yield [id, { type: CrdtType.OBJECT, data: node[1] }];
+      continue;
+    }
     switch (node[1]) {
       case CrdtType.OBJECT:
-        yield isRootNode(node)
-          ? [node[0], { type: CrdtType.OBJECT, data: node[2] }]
-          : // prettier-ignore
-            [node[0], { type: CrdtType.OBJECT, parentId: node[2], parentKey: node[3], data: node[4] }];
+        // prettier-ignore
+        yield [id, { type: CrdtType.OBJECT, parentId: node[2], parentKey: node[3], data: node[4] }];
         break;
       case CrdtType.LIST:
         // prettier-ignore
-        yield [node[0], { type: CrdtType.LIST, parentId: node[2], parentKey: node[3] }];
+        yield [id, { type: CrdtType.LIST, parentId: node[2], parentKey: node[3] }];
         break;
       case CrdtType.MAP:
         // prettier-ignore
-        yield [node[0], { type: CrdtType.MAP, parentId: node[2], parentKey: node[3] }];
+        yield [id, { type: CrdtType.MAP, parentId: node[2], parentKey: node[3] }];
         break;
       case CrdtType.REGISTER:
         // prettier-ignore
-        yield [node[0], {type: CrdtType.REGISTER, parentId: node[2], parentKey: node[3], data: node[4], }];
+        yield [id, {type: CrdtType.REGISTER, parentId: node[2], parentKey: node[3], data: node[4], }];
         break;
     }
   }
@@ -145,10 +144,11 @@ export function* nodeStreamToCompactNodes(
   for (const [id, node] of nodes) {
     switch (node.type) {
       case CrdtType.OBJECT:
-        if (isRootCrdt(id, node))
-          yield [id, CrdtType.OBJECT, node.data] as CompactRootNode;
-        else
+        if (isRootCrdt(id, node)) {
+          yield [id, node.data] as CompactRootNode;
+        } else {
           yield [id, CrdtType.OBJECT, node.parentId, node.parentKey, node.data];
+        }
         break;
       case CrdtType.LIST:
         // prettier-ignore

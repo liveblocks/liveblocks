@@ -985,7 +985,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
-          nodes: [["root", CrdtType.OBJECT, {}]],
+          nodes: [["root", {}]],
         })
       );
     });
@@ -1020,10 +1020,10 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
-            nodes: [["root", CrdtType.OBJECT, {}]],
-            //                                ^^
-            //                        NOTE: Storage is initially empty,
-            //                        so initialStorage keys will get added
+            nodes: [["root", {}]],
+            //               ^^
+            //       NOTE: Storage is initially empty,
+            //       so initialStorage keys will get added
           })
         );
       });
@@ -1055,7 +1055,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
-          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
+          nodes: [["root", { x: 0 }]],
         })
       );
     });
@@ -1159,7 +1159,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
-          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
+          nodes: [["root", { x: 0 }]],
         })
       );
     });
@@ -1268,7 +1268,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
-          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
+          nodes: [["root", { x: 0 }]],
         })
       );
     });
@@ -1307,7 +1307,7 @@ describe("room", () => {
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
           done: true,
-          nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
+          nodes: [["root", { x: 0 }]],
         })
       );
     });
@@ -1392,7 +1392,7 @@ describe("room", () => {
           serverMessage({
             type: ServerMsgCode.STORAGE_CHUNK,
             done: true,
-            nodes: [["root", CrdtType.OBJECT, { x: 0 }]],
+            nodes: [["root", { x: 0 }]],
           })
         );
       });
