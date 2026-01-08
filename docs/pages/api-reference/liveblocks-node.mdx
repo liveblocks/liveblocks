@@ -2048,7 +2048,7 @@ const thread = await liveblocks.createThread({
       // Optional, custom comment metadata
       metadata: {
         tag: "important",
-        reviewed: false,
+        spam: false,
       },
 
       // The comment's body, uses the `CommentBody` type
@@ -2159,14 +2159,14 @@ const editedMetadata = await liveblocks.editCommentMetadata({
 
   data: {
     metadata: {
-      reviewed: true,
+      spam: false,
     },
     userId: "stacy@example.com",
     updatedAt: new Date(), // Optional
   },
 });
 
-// { reviewed: true }
+// { spam: false }
 console.log(editedMetadata);
 ```
 
@@ -2185,10 +2185,10 @@ const editedMetadata = await liveblocks.editCommentMetadata({
       // Metadata can be a string, number, or boolean
       tag: "important",
       priority: 2,
-      flagged: true,
+      spam: true,
 
       // Remove metadata with null
-      reviewed: null,
+      assignedTo: null,
     },
 
     // The ID of the user that updated the metadata
@@ -2522,7 +2522,7 @@ const editedComment = await liveblocks.editComment({
     // Optional, custom comment metadata
     metadata: {
       tag: "important",
-      reviewed: true,
+      spam: false,
     },
   },
 });

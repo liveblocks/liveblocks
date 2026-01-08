@@ -3376,7 +3376,8 @@ const comment = await room.createComment({
     The IDs of the comment’s attachments.
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="CommentMetadata">
-    Custom metadata to be attached to the comment.
+    Custom metadata to be attached to the comment, see [defining comment
+    metadata](#defining-comment-metadata).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5787,8 +5788,9 @@ declare global {
 
     // Custom metadata set on comments
     CommentMetadata: {
-      // Example, attaching a tag to a comment
+      // Example, attaching a tag and a hidden flag to a comment
       tag: string;
+      spam: boolean;
     };
 
     // Custom room info set with resolveRoomsInfo

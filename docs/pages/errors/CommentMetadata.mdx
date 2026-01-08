@@ -17,7 +17,7 @@ declare global {
   interface Liveblocks {
     CommentMetadata: {
       // Your custom fields go here...
-      reviewed: boolean;
+      spam: boolean;
       tag: string | null; // ❌ Values may not be null
       slack: { channelId: string; messageId: string }; // ❌ Values must be simple
       priority?: number;
@@ -40,7 +40,7 @@ declare global {
   interface Liveblocks {
     CommentMetadata: {
       // Your custom fields go here...
-      reviewed: boolean;
+      spam: boolean;
       tag?: string; // ✅
       slackChannelId: string; // ✅
       slackMessageId: string; // ✅

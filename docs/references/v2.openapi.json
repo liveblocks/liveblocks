@@ -1591,7 +1591,7 @@
                       },
                       "metadata": {
                         "tag": "important",
-                        "reviewed": false
+                        "spam": false
                       }
                     },
                     "metadata": {
@@ -2269,7 +2269,7 @@
                     },
                     "metadata": {
                       "tag": "important",
-                      "reviewed": false
+                      "spam": false
                     }
                   }
                 }
@@ -5379,7 +5379,7 @@
               },
               "metadata": {
                 "tag": "important",
-                "reviewed": false
+                "spam": false
               }
             },
             "metadata": {
@@ -5456,7 +5456,7 @@
         "examples": [
           {
             "tag": "important",
-            "reviewed": true
+            "spam": false
           }
         ],
         "description": ""
@@ -5576,7 +5576,7 @@
             },
             "metadata": {
               "tag": "important",
-              "reviewed": false
+              "spam": false
             }
           }
         ],
@@ -5607,7 +5607,7 @@
             },
             "metadata": {
               "tag": "important",
-              "reviewed": true
+              "spam": false
             }
           }
         ],

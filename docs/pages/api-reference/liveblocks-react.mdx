@@ -4294,7 +4294,7 @@ const thread = createThread({
     name="createThread"
     type="(options: CreateThreadOptions) => ThreadData"
   >
-    A function that creates a thread with an initial comment and optionally some
+    A function that creates a thread with an initial comment, and optionally
     thread and comment metadata. Returns the optimistic thread object.
   </PropertiesListItem>
 </PropertiesList>
@@ -4873,7 +4873,7 @@ useErrorListener((error) => {
 
 ### useEditComment[@badge=RoomProvider]
 
-Returns a function that edits a comment’s body and optionally its attachments
+Returns a function that edits a comment’s body, and optionally its attachments
 and metadata.
 
 ```tsx
@@ -4894,7 +4894,7 @@ editComment({
     name="editComment"
     type="(options: EditCommentOptions) => void"
   >
-    A function that edits a comment’s body and optionally its attachments and
+    A function that edits a comment’s body, and optionally its attachments and
     metadata.
   </PropertiesListItem>
 </PropertiesList>

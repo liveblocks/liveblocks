@@ -1270,7 +1270,7 @@ declare global {
     CommentMetadata: {
       // Example types, e.g. tags, context, external IDs
       tag?: string;
-      reviewed: boolean;
+      spam: boolean;
       slackMessageTs: string;
     };
     // +++
@@ -1311,7 +1311,7 @@ function Component({ threadId }) {
       commentMetadata={{
         // Custom metadata here, e.g. tags, context, external IDs
         tag: "important",
-        reviewed: false,
+        spam: false,
       }}
     />
   );
