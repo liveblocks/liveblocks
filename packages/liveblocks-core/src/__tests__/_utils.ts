@@ -164,15 +164,16 @@ export function prepareRoomWithStorage_loadWithDelay<
 
   const clonedItems = deepClone(items);
   wss.onConnection((conn) => {
-    const sendStorageMsg = () =>
+    const sendStorageMsg = () => {
       conn.server.send(
         // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
         serverMessage({
           type: ServerMsgCode.STORAGE_CHUNK,
-          done: true,
           nodes: Array.from(nodeStreamToCompactNodes(clonedItems)),
         })
       );
+      conn.server.send(serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END }));
+    };
 
     if (delay) {
       setTimeout(() => sendStorageMsg(), delay);
@@ -425,10 +426,10 @@ export async function prepareStorageTest<
           // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
           serverMessage({
             type: ServerMsgCode.STORAGE_CHUNK,
-            done: true,
             nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
           })
         );
+        conn.server.send(serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END }));
       }
 
       // Other user in the room (refRoom) receives a "USER_JOINED" message.
@@ -586,16 +587,16 @@ export function replaceRemoteStorageAndReconnect(
 ) {
   // Next time a client socket connects, send this STORAGE_CHUNK
   // message
-  wss.onConnection((conn) =>
+  wss.onConnection((conn) => {
     conn.server.send(
       // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
       serverMessage({
         type: ServerMsgCode.STORAGE_CHUNK,
-        done: true,
         nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
       })
-    )
-  );
+    );
+    conn.server.send(serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END }));
+  });
 
   // Send a close from the WebSocket server, triggering an automatic reconnect
   // by the room.

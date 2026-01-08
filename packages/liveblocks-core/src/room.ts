@@ -2364,13 +2364,13 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.STORAGE_CHUNK: {
+        case ServerMsgCode.STORAGE_CHUNK:
           partialNodes.append(compactNodesToNodeStream(message.nodes));
-          if (message.done) {
-            processInitialStorage(partialNodes.clear());
-          }
           break;
-        }
+
+        case ServerMsgCode.STORAGE_STREAM_END:
+          processInitialStorage(partialNodes.clear());
+          break;
 
         case ServerMsgCode.UPDATE_STORAGE: {
           const applyResult = applyOps(message.ops, /* isLocal */ false);
