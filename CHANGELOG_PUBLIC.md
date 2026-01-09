@@ -20,7 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 2 (2026-01-09)
 
+## Dashboard
+
+- Added floating avatar on pricing page.
+- Fixed bug with linking integrations to `create-liveblocks-app` CLI.
+
 ## Contributors
+
+ctnicholas
 
 # Week 51 (2025-12-19)
 
