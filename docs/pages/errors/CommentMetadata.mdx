@@ -1,0 +1,81 @@
+---
+meta:
+  title:
+    "The type you provided for 'CommentMetadata' does not match its requirements"
+  parentTitle: "Error"
+  description:
+    "Your 'CommentMetadata' type is incorrect and needs to be updated"
+---
+
+## Why this error occurred
+
+You have provided a custom `CommentMetadata` type for your application, but the
+type you provided isn’t a (completely) valid definition.
+
+```ts highlight="4-8"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      // Your custom fields go here...
+      spam: boolean;
+      tag: string | null; // ❌ Values may not be null
+      slack: { channelId: string; messageId: string }; // ❌ Values must be simple
+      priority?: number;
+    };
+  }
+}
+```
+
+In the example above, there are two problems. Comment metadata may only contain
+simple key/value pairs, where the values must always be assignable to
+`string | number | boolean | undefined`.
+
+## How to fix it
+
+You’ll need to figure out what part of your provided `CommentMetadata` type
+definition isn’t valid. The example above could be fixed as such:
+
+```ts highlight="6-8"
+declare global {
+  interface Liveblocks {
+    CommentMetadata: {
+      // Your custom fields go here...
+      spam: boolean;
+      tag?: string; // ✅
+      slackChannelId: string; // ✅
+      slackMessageId: string; // ✅
+      priority?: number;
+    };
+  }
+}
+```
+
+## If you cannot find the root cause
+
+Sometimes types can be complex and the root cause is still unclear. In those
+cases, there is a small trick you can use. Try to assign your type to the
+required base type, with this line:
+
+```ts highlight="9-10"
+import type { BaseMetadata } from "@liveblocks/client";
+
+declare global {
+  interface Liveblocks {
+    CommentMetadata: MyCommentMetadata;
+  }
+}
+
+// Quick debugging snippet to find root cause
+const xxx: BaseMetadata = {} as MyCommentMetadata;
+//    ^?
+//    The error will appear here
+```
+
+Now TypeScript will explain why it thinks your type isn’t valid metadata:
+
+```error showLineNumbers={false}
+Type 'MyCommentMetadata' is not assignable to type 'BaseMetadata'.
+  Property 'tag' is incompatible with index signature.
+    Type 'string | null' is not assignable to type 'string | number | boolean | undefined'.
+      Type 'null' is not assignable to type 'string | number | boolean | undefined'.
+```
