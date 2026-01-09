@@ -26,7 +26,8 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
       const rect = ref.current.getBoundingClientRect();
 
       // Within 400px of right side of screen (i.e. too little space for a thread)
-      const nearRight = rect.left >= window.innerWidth - 320;
+      // 260px is sidebar width
+      const nearRight = rect.left >= window.innerWidth - 320 - 260;
 
       // In bottom half of screen
       const nearBottom = rect.top >= window.innerHeight / 2;
