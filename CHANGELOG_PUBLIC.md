@@ -22,6 +22,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Dashboard
 
+- Data refreshes much more quickly when viewing rooms.
 - Added floating avatar on pricing page.
 - Fixed bug with linking integrations to `create-liveblocks-app` CLI.
 
