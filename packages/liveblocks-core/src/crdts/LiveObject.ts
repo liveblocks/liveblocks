@@ -63,7 +63,7 @@ function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #map: Map<string, Lson>;
-  #propToLastUpdate: Map<string, string>;
+  #unackedOpsByKey: Map<string, string>;
 
   /**
    * Enable or disable detection of too large LiveObjects.
@@ -120,7 +120,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   constructor(obj: O = {} as O) {
     super();
 
-    this.#propToLastUpdate = new Map<string, string>();
+    this.#unackedOpsByKey = new Map();
 
     const o: RemoveUndefinedValues<LsonObject> = compactObject(obj);
     for (const key of Object.keys(o)) {
@@ -219,21 +219,21 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const child = creationOpToLson(op);
 
     if (this._pool.getNode(id) !== undefined) {
-      if (this.#propToLastUpdate.get(key) === opId) {
+      if (this.#unackedOpsByKey.get(key) === opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
       }
 
       return { modified: false };
     }
 
     if (source === OpSource.LOCAL) {
-      this.#propToLastUpdate.set(key, nn(opId));
-    } else if (this.#propToLastUpdate.get(key) === undefined) {
+      this.#unackedOpsByKey.set(key, nn(opId));
+    } else if (this.#unackedOpsByKey.get(key) === undefined) {
       // Remote operation with no local change => apply operation
-    } else if (this.#propToLastUpdate.get(key) === opId) {
+    } else if (this.#unackedOpsByKey.get(key) === opId) {
       // Acknowlegment from local operation
-      this.#propToLastUpdate.delete(key);
+      this.#unackedOpsByKey.delete(key);
       return { modified: false };
     } else {
       // Conflict, ignore remote operation
@@ -385,13 +385,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       if (isLocal) {
-        this.#propToLastUpdate.set(key, nn(op.opId));
-      } else if (this.#propToLastUpdate.get(key) === undefined) {
+        this.#unackedOpsByKey.set(key, nn(op.opId));
+      } else if (this.#unackedOpsByKey.get(key) === undefined) {
         // Not modified localy so we apply update
         isModified = true;
-      } else if (this.#propToLastUpdate.get(key) === op.opId) {
+      } else if (this.#unackedOpsByKey.get(key) === op.opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
         continue;
       } else {
         // Conflict, ignore remote operation
@@ -437,7 +437,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // If a local operation exists on the same key and we receive a remote
     // one prevent flickering by not applying delete op.
-    if (!isLocal && this.#propToLastUpdate.get(key) !== undefined) {
+    if (!isLocal && this.#unackedOpsByKey.get(key) !== undefined) {
       return { modified: false };
     }
 
@@ -664,13 +664,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
-          this.#propToLastUpdate.set(key, nn(createCrdtOp.opId));
+          this.#unackedOpsByKey.set(key, nn(createCrdtOp.opId));
         }
 
         ops.push(...newAttachChildOps);
       } else {
         updatedProps[key] = newValue;
-        this.#propToLastUpdate.set(key, opId);
+        this.#unackedOpsByKey.set(key, opId);
       }
 
       this.#map.set(key, newValue);
