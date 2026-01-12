@@ -1,7 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@plugin '@tailwindcss/typography';
+
+@theme {
+  --shadow-sm: 0 0 0 1px rgb(0 0 0 / 4%);
+  --shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 4px 16px rgb(0 0 0 / 6%);
+  --shadow-md: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+  --shadow-lg: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 6%),
+    0 8px 26px rgb(0 0 0 / 9%);
+  --shadow-xl: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
+    0 8px 26px rgb(0 0 0 / 12%);
+  --shadow-2xl: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%),
+    0 8px 26px rgb(0 0 0 / 12%), 0 12px 36px rgb(0 0 0 / 12%);
+}
 
 body {
   @apply bg-gray-100;
+}
+
+button {
+  @apply cursor-pointer;
 }

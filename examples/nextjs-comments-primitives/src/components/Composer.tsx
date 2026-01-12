@@ -73,11 +73,11 @@ export function Composer({
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="prose prose-sm min-h-[theme(spacing.9)] max-w-none flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 [&_[data-placeholder]]:opacity-50"
+        className="prose prose-sm min-h-9 max-w-none flex-1 rounded-md px-3 py-1.5 outline-solid outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 **:data-placeholder:opacity-50"
         components={{
           Mention: ({ mention }) => {
             return (
-              <ComposerPrimitive.Mention className="rounded bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-[selected]:bg-blue-500 data-[selected]:text-white">
+              <ComposerPrimitive.Mention className="rounded-sm bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-selected:bg-blue-500 data-selected:text-white">
                 @
                 <Suspense fallback={mention.id}>
                   <User userId={mention.id} />
@@ -93,7 +93,7 @@ export function Composer({
                     <ComposerPrimitive.SuggestionsListItem
                       key={mention.id}
                       value={mention.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-[selected]:bg-gray-100"
+                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-selected:bg-gray-100"
                     >
                       <Suspense
                         fallback={
