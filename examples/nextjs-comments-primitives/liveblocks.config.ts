@@ -11,7 +11,7 @@ declare global {
 
     // Custom metadata set on threads
     ThreadMetadata: {
-      priority?: number;
+      assignee?: string;
     };
 
     // Custom metadata set on comments

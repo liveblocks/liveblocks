@@ -9,6 +9,7 @@ import React, { Suspense } from "react";
 import { User } from "./User";
 import { Avatar } from "./Avatar";
 import { Button } from "./Button";
+import { Icon } from "@liveblocks/react-ui";
 
 /**
  * Custom composer that allows you to create new comments/threads.
@@ -73,11 +74,11 @@ export function Composer({
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="prose prose-sm min-h-9 max-w-none flex-1 rounded-md px-3 py-1.5 outline-solid outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 **:data-placeholder:opacity-50"
+        className="prose prose-sm outline-solid **:data-placeholder:opacity-50 min-h-9 max-w-none flex-1 rounded-md px-3 py-1.5 outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2"
         components={{
           Mention: ({ mention }) => {
             return (
-              <ComposerPrimitive.Mention className="rounded-sm bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-selected:bg-blue-500 data-selected:text-white">
+              <ComposerPrimitive.Mention className="data-selected:bg-blue-500 data-selected:text-white rounded-sm bg-blue-50 px-1 py-0.5 font-semibold text-blue-500">
                 @
                 <Suspense fallback={mention.id}>
                   <User userId={mention.id} />
@@ -93,7 +94,7 @@ export function Composer({
                     <ComposerPrimitive.SuggestionsListItem
                       key={mention.id}
                       value={mention.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-selected:bg-gray-100"
+                      className="data-selected:bg-gray-100 flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm"
                     >
                       <Suspense
                         fallback={
@@ -128,7 +129,10 @@ export function Composer({
       <ComposerAttachments />
       <div className="flex gap-4 self-end">
         <ComposerPrimitive.AttachFiles asChild>
-          <Button variant="secondary">Attach files</Button>
+          <Button variant="secondary">
+            <Icon.Attachment className="-ml-1 mr-1 h-5 w-5" />
+            Attach files
+          </Button>
         </ComposerPrimitive.AttachFiles>
         <ComposerPrimitive.Submit asChild>
           <Button>{submit}</Button>
