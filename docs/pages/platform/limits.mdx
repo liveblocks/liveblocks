@@ -54,7 +54,20 @@ limit.
 ### What is a monthly active room?
 
 Monthly active rooms represents the number of rooms that have been used within a
-given month. Rooms are identified by the `roomId`.
+given month. Rooms are identified by their `roomId`.
+
+Specifically, a room counts as active when any of these occur:
+
+- A user connects on the front-end.
+- A Comment is added or modified.
+- A document is updated. Any of the following: Storage, Tiptap, BlockNote,
+  Lexical, Yjs.
+- An attachment is uploaded.
+
+If a room contains content from the previous month, it is not active until it is
+used in the current month. For example, if a text document is created in
+January, it is not active in February until a user connects to the document or
+updates its content.
 
 ### What is a monthly active user?
 
