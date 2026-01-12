@@ -1950,14 +1950,16 @@ export function createRoom<
     const createdNodeIds = new Set<string>();
 
     // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
-    // that right now first.
-    const ops = rawOps.map((op) => {
-      if (op.type !== "presence" && !op.opId) {
-        return { ...op, opId: context.pool.generateOpId() };
-      } else {
-        return op;
-      }
-    });
+    // that right now first. Only do this for local ops, not remote ones!
+    const ops = isLocal
+      ? rawOps.map((op) => {
+          if (op.type !== "presence" && !op.opId) {
+            return { ...op, opId: context.pool.generateOpId() };
+          } else {
+            return op;
+          }
+        })
+      : Array.from(rawOps);
 
     for (const op of ops) {
       if (op.type === "presence") {
@@ -1989,10 +1991,13 @@ export function createRoom<
 
         if (isLocal) {
           source = OpSource.LOCAL;
+        } else if (op.opId !== undefined) {
+          context.unacknowledgedOps.delete(op.opId);
+          source = OpSource.OURS;
         } else {
-          const opId = nn(op.opId);
-          const deleted = context.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.OURS : OpSource.THEIRS;
+          // Remotely generated Ops (and fix Ops as a special case of that)
+          // don't have opId anymore.
+          source = OpSource.THEIRS;
         }
 
         const applyOpResult = applyOp(op, source);

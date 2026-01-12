@@ -63,7 +63,21 @@ function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #map: Map<string, Lson>;
-  #propToLastUpdate: Map<string, string>;
+
+  /**
+   * Tracks unacknowledged local changes per property to preserve optimistic
+   * updates. Maps property keys to their pending operation IDs.
+   *
+   * INVARIANT: Only locally-generated opIds are ever stored here. Remote opIds
+   * are only compared against (to detect ACKs), never stored.
+   *
+   * When a local change is made, the opId is stored here. When a remote op
+   * arrives for the same key:
+   * - If no entry exists → apply remote op
+   * - If opId matches → it's an ACK, clear the entry
+   * - If opId differs → ignore remote op to preserve optimistic update
+   */
+  #unackedOpsByKey: Map<string, string>;
 
   /**
    * Enable or disable detection of too large LiveObjects.
@@ -120,7 +134,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   constructor(obj: O = {} as O) {
     super();
 
-    this.#propToLastUpdate = new Map<string, string>();
+    this.#unackedOpsByKey = new Map();
 
     const o: RemoveUndefinedValues<LsonObject> = compactObject(obj);
     for (const key of Object.keys(o)) {
@@ -219,21 +233,22 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const child = creationOpToLson(op);
 
     if (this._pool.getNode(id) !== undefined) {
-      if (this.#propToLastUpdate.get(key) === opId) {
+      if (this.#unackedOpsByKey.get(key) === opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
       }
 
       return { modified: false };
     }
 
     if (source === OpSource.LOCAL) {
-      this.#propToLastUpdate.set(key, nn(opId));
-    } else if (this.#propToLastUpdate.get(key) === undefined) {
+      // Track locally-generated opId to preserve optimistic update
+      this.#unackedOpsByKey.set(key, nn(opId));
+    } else if (this.#unackedOpsByKey.get(key) === undefined) {
       // Remote operation with no local change => apply operation
-    } else if (this.#propToLastUpdate.get(key) === opId) {
+    } else if (this.#unackedOpsByKey.get(key) === opId) {
       // Acknowlegment from local operation
-      this.#propToLastUpdate.delete(key);
+      this.#unackedOpsByKey.delete(key);
       return { modified: false };
     } else {
       // Conflict, ignore remote operation
@@ -385,13 +400,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       if (isLocal) {
-        this.#propToLastUpdate.set(key, nn(op.opId));
-      } else if (this.#propToLastUpdate.get(key) === undefined) {
+        // Track locally-generated opId to preserve optimistic update
+        this.#unackedOpsByKey.set(key, nn(op.opId));
+      } else if (this.#unackedOpsByKey.get(key) === undefined) {
         // Not modified localy so we apply update
         isModified = true;
-      } else if (this.#propToLastUpdate.get(key) === op.opId) {
+      } else if (this.#unackedOpsByKey.get(key) === op.opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
         continue;
       } else {
         // Conflict, ignore remote operation
@@ -437,7 +453,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // If a local operation exists on the same key and we receive a remote
     // one prevent flickering by not applying delete op.
-    if (!isLocal && this.#propToLastUpdate.get(key) !== undefined) {
+    if (!isLocal && this.#unackedOpsByKey.get(key) !== undefined) {
       return { modified: false };
     }
 
@@ -664,13 +680,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
-          this.#propToLastUpdate.set(key, nn(createCrdtOp.opId));
+          // Track locally-generated opId to preserve optimistic update
+          this.#unackedOpsByKey.set(key, nn(createCrdtOp.opId));
         }
 
         ops.push(...newAttachChildOps);
       } else {
         updatedProps[key] = newValue;
-        this.#propToLastUpdate.set(key, opId);
+        // Track locally-generated opId to preserve optimistic update
+        this.#unackedOpsByKey.set(key, opId);
       }
 
       this.#map.set(key, newValue);

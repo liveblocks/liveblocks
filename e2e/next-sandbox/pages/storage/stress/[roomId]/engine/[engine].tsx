@@ -233,8 +233,8 @@ function Sandbox({ roomId }: { roomId: string }) {
 
   const grow = useMutation(
     ({ storage }, size: { depth: number; breadth: number }, times: number) => {
+      const points = collectAttachmentPoints(storage);
       for (let t = 0; t < times; t++) {
-        const points = collectAttachmentPoints(storage);
         const point = points[randomInt(points.length)];
         const newTree = createRandomTree(size.depth, size.breadth);
         const key = `k_${randomString(6)}`;
@@ -288,9 +288,8 @@ function Sandbox({ roomId }: { roomId: string }) {
   }, []);
 
   const change = useMutation(({ storage }, count: number, times: number) => {
+    const points = collectAttachmentPoints(storage);
     for (let t = 0; t < times; t++) {
-      const points = collectAttachmentPoints(storage);
-
       for (let i = 0; i < count; i++) {
         const point = points[randomInt(points.length)];
 
