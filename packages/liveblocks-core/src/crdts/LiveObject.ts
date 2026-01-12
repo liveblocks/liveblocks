@@ -63,6 +63,20 @@ function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #map: Map<string, Lson>;
+
+  /**
+   * Tracks unacknowledged local changes per property to preserve optimistic
+   * updates. Maps property keys to their pending operation IDs.
+   *
+   * INVARIANT: Only locally-generated opIds are ever stored here. Remote opIds
+   * are only compared against (to detect ACKs), never stored.
+   *
+   * When a local change is made, the opId is stored here. When a remote op
+   * arrives for the same key:
+   * - If no entry exists → apply remote op
+   * - If opId matches → it's an ACK, clear the entry
+   * - If opId differs → ignore remote op to preserve optimistic update
+   */
   #unackedOpsByKey: Map<string, string>;
 
   /**
@@ -228,6 +242,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     if (source === OpSource.LOCAL) {
+      // Track locally-generated opId to preserve optimistic update
       this.#unackedOpsByKey.set(key, nn(opId));
     } else if (this.#unackedOpsByKey.get(key) === undefined) {
       // Remote operation with no local change => apply operation
@@ -385,6 +400,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       if (isLocal) {
+        // Track locally-generated opId to preserve optimistic update
         this.#unackedOpsByKey.set(key, nn(op.opId));
       } else if (this.#unackedOpsByKey.get(key) === undefined) {
         // Not modified localy so we apply update
@@ -664,12 +680,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
+          // Track locally-generated opId to preserve optimistic update
           this.#unackedOpsByKey.set(key, nn(createCrdtOp.opId));
         }
 
         ops.push(...newAttachChildOps);
       } else {
         updatedProps[key] = newValue;
+        // Track locally-generated opId to preserve optimistic update
         this.#unackedOpsByKey.set(key, opId);
       }
 
