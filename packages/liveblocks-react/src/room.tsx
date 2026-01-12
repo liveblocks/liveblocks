@@ -2978,7 +2978,7 @@ const _useEditComment: TypedBundle["useEditComment"] = useEditComment;
  *
  * @example
  * const editCommentMetadata = useEditCommentMetadata();
- * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+ * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234  } })
  */
 const _useEditCommentMetadata: TypedBundle["useEditCommentMetadata"] =
   useEditCommentMetadata;

@@ -1016,7 +1016,7 @@ type RoomContextBundleCommon<
    *
    * @example
    * const editCommentMetadata = useEditCommentMetadata();
-   * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+   * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234  } })
    */
   useEditCommentMetadata(): (options: EditCommentMetadataOptions<CM>) => void;
 

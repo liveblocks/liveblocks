@@ -17,8 +17,8 @@ declare global {
   interface Liveblocks {
     CommentMetadata: {
       // Your custom fields go here...
-      spam: boolean;
-      tag: string | null; // ❌ Values may not be null
+      spoiler: boolean;
+      userAgent: string | null; // ❌ Values may not be null
       slack: { channelId: string; messageId: string }; // ❌ Values must be simple
       priority?: number;
     };
@@ -40,8 +40,8 @@ declare global {
   interface Liveblocks {
     CommentMetadata: {
       // Your custom fields go here...
-      spam: boolean;
-      tag?: string; // ✅
+      spoiler: boolean;
+      userAgent?: string; // ✅
       slackChannelId: string; // ✅
       slackMessageId: string; // ✅
       priority?: number;
@@ -75,7 +75,7 @@ Now TypeScript will explain why it thinks your type isn’t valid metadata:
 
 ```error showLineNumbers={false}
 Type 'MyCommentMetadata' is not assignable to type 'BaseMetadata'.
-  Property 'tag' is incompatible with index signature.
+  Property 'userAgent' is incompatible with index signature.
     Type 'string | null' is not assignable to type 'string | number | boolean | undefined'.
       Type 'null' is not assignable to type 'string | number | boolean | undefined'.
 ```

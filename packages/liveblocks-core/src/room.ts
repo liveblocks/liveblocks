@@ -858,7 +858,7 @@ export type Room<
    * To delete an existing metadata property, set its value to `null`.
    *
    * @example
-   * await room.editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { slackChannelId: "C024BE91L", slackMessageTs: "1700311782.001200" } })
+   * await room.editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234 } })
    */
   editCommentMetadata(options: {
     threadId: string;
