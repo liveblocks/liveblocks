@@ -1073,7 +1073,7 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
+  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1134,7 +1134,7 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-type HistoryOp<P extends JsonObject> =
+type Stackframe<P extends JsonObject> =
   | Op
   | {
       readonly type: "presence";
@@ -1202,14 +1202,14 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: HistoryOp<P>[][];
-  readonly redoStack: HistoryOp<P>[][];
+  readonly undoStack: Stackframe<P>[][];
+  readonly redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | Deque<HistoryOp<P>>;
+  pausedHistory: null | Deque<Stackframe<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -1217,7 +1217,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reverseOps: Deque<HistoryOp<P>>;
+    reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1871,21 +1871,21 @@ export function createRoom<
     notify(result.updates);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(historyOps);
+    context.undoStack.push(frames);
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOp<P>[]) {
+  function addToUndoStack(frames: Stackframe<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.pushLeft(historyOps);
+      context.pausedHistory.pushLeft(frames);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(frames);
     }
   }
 
@@ -1929,7 +1929,7 @@ export function createRoom<
     );
   }
 
-  function applyOps<O extends HistoryOp<P>>(
+  function applyOps<O extends Stackframe<P>>(
     rawOps: readonly O[],
     isLocal: boolean
   ): {
@@ -2658,13 +2658,13 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = context.undoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.undoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, /* isLocal */ true);
+    const result = applyOps(frames, /* isLocal */ true);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
@@ -2683,13 +2683,13 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = context.redoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.redoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, /* isLocal */ true);
+    const result = applyOps(frames, /* isLocal */ true);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
@@ -2763,10 +2763,10 @@ export function createRoom<
   }
 
   function resumeHistory() {
-    const historyOps = context.pausedHistory;
+    const frames = context.pausedHistory;
     context.pausedHistory = null;
-    if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(Array.from(historyOps));
+    if (frames !== null && frames.length > 0) {
+      _addToRealUndoStack(Array.from(frames));
     }
   }
 
