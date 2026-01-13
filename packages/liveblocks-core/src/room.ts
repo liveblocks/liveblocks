@@ -1931,13 +1931,9 @@ export function createRoom<
   }
 
   function applyLocalOps(frames: readonly Stackframe<P>[]): {
-    // Ops to send over the wire afterwards!
-    ops: ClientWireOp[];
-
-    // Reverse ops to add to the undo stack!
-    reverse: Stackframe<P>[];
-
-    // Notify about this!
+    opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
+    reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
+    // Updates to notify about afterwards
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
@@ -1947,7 +1943,7 @@ export function createRoom<
   }
 
   function applyRemoteOps(ops: readonly ServerWireOp[]): {
-    // Notify about this!
+    // Updates to notify about afterwards
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
@@ -1960,7 +1956,7 @@ export function createRoom<
     frames: readonly Stackframe<P>[],
     isLocal: boolean
   ): {
-    ops: ClientWireOp[];
+    opsToEmit: ClientWireOp[];
     reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
@@ -2056,7 +2052,7 @@ export function createRoom<
     }
 
     return {
-      ops: ops,
+      opsToEmit: ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
@@ -2313,7 +2309,7 @@ export function createRoom<
     const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops, // XXX Make stricter!
+      ops: result.opsToEmit, // XXX Make stricter!
     });
 
     notify(result.updates);
@@ -2703,7 +2699,7 @@ export function createRoom<
     context.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
+    for (const op of result.opsToEmit) {
       if (op.type !== "presence") {
         __debug_assertIsWireOp(op);
         context.buffer.storageOperations.push(op);
@@ -2729,7 +2725,7 @@ export function createRoom<
     context.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
+    for (const op of result.opsToEmit) {
       if (op.type !== "presence") {
         __debug_assertIsWireOp(op);
         context.buffer.storageOperations.push(op);
