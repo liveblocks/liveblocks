@@ -241,9 +241,8 @@ export type EditThreadMetadataOptions<TM extends BaseMetadata> = {
 export type CreateCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   body: CommentBody;
-  metadata?: CM;
   attachments?: CommentAttachment[];
-};
+} & PartialUnless<CM, { metadata: CM }>;
 
 export type EditCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
