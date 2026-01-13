@@ -20,10 +20,11 @@ import { shallow } from "@liveblocks/client";
 import type {
   AsyncResult,
   CommentsEventServerMsg,
+  DCM,
   DE,
-  DM,
   DP,
   DS,
+  DTM,
   DU,
   EnterOptions,
   IYjsProvider,
@@ -84,6 +85,7 @@ import type {
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
+  EditCommentMetadataOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
   HistoryVersionDataAsyncResult,
@@ -136,8 +138,9 @@ function makeMutationContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(room: Room<P, S, U, E, M>): MutationContext<P, S, U> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(room: Room<P, S, U, E, TM, CM>): MutationContext<P, S, U> {
   const cannotUseUntil = "This mutation cannot be used until";
   const needsPresence = `${cannotUseUntil} connected to the Liveblocks room`;
   const needsStorage = `${cannotUseUntil} storage has been loaded`;
@@ -185,7 +188,14 @@ const _extras = new WeakMap<
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
-  RoomContextBundle<JsonObject, LsonObject, BaseUserMeta, Json, BaseMetadata>
+  RoomContextBundle<
+    JsonObject,
+    LsonObject,
+    BaseUserMeta,
+    Json,
+    BaseMetadata,
+    BaseMetadata
+  >
 >();
 
 function getOrCreateRoomContextBundle<
@@ -193,20 +203,24 @@ function getOrCreateRoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeRoomContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, M>;
+  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function getRoomExtrasForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeRoomExtrasForClient(client);
@@ -214,7 +228,7 @@ function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: UmbrellaStore<M>;
+    store: UmbrellaStore<TM, CM>;
   };
 }
 
@@ -327,9 +341,10 @@ type RoomLeavePair<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = {
-  room: Room<P, S, U, E, M>;
+  room: Room<P, S, U, E, TM, CM>;
   leave: () => void;
 };
 
@@ -338,9 +353,10 @@ function makeRoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(client: Client<U>): RoomContextBundle<P, S, U, E, M> {
-  type TRoom = Room<P, S, U, E, M>;
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM> {
+  type TRoom = Room<P, S, U, E, TM, CM>;
 
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
@@ -362,7 +378,7 @@ function makeRoomContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: RoomContextBundle<P, S, U, E, M> = {
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: RoomContext as Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
@@ -391,12 +407,15 @@ function makeRoomContextBundle<
     useOthersConnectionIds,
     useOther,
 
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
+    // prettier-ignore
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
 
     useThreads,
     useSearchComments,
 
-    useCreateThread,
+    // prettier-ignore
+    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
+
     useDeleteThread,
     useEditThreadMetadata,
     useMarkThreadAsResolved,
@@ -405,6 +424,7 @@ function makeRoomContextBundle<
     useUnsubscribeFromThread,
     useCreateComment,
     useEditComment,
+    useEditCommentMetadata,
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
@@ -449,17 +469,14 @@ function makeRoomContextBundle<
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
-      useMutation: useMutation as RoomContextBundle<
-        P,
-        S,
-        U,
-        E,
-        M
-      >["suspense"]["useMutation"],
+      // prettier-ignore
+      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
 
-      useCreateThread,
+      // prettier-ignore
+      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
+
       useDeleteThread,
       useEditThreadMetadata,
       useMarkThreadAsResolved,
@@ -468,6 +485,7 @@ function makeRoomContextBundle<
       useUnsubscribeFromThread,
       useCreateComment,
       useEditComment,
+      useEditCommentMetadata,
       useDeleteComment,
       useAddReaction,
       useRemoveReaction,
@@ -495,25 +513,26 @@ function RoomProvider<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(props: RoomProviderProps<P, S>) {
   const client = useClient<U>();
   const [cache] = useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E, M>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, M> = useCallback(
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM> = useCallback(
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, M> => {
+    ): RoomLeavePair<P, S, U, E, TM, CM> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, M>(roomId, options);
+      const rv = client.enterRoom<P, S, E, TM, CM>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -548,7 +567,7 @@ function RoomProvider<
   // Room to not be freed and destroyed when the component unmounts later.
   //
   return (
-    <RoomProviderInner<P, S, U, E, M>
+    <RoomProviderInner<P, S, U, E, TM, CM>
       {...(props as any)}
       stableEnterRoom={stableEnterRoom}
     />
@@ -560,11 +579,12 @@ type EnterRoomType<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = (
   roomId: string,
   options: EnterOptions<P, S>
-) => RoomLeavePair<P, S, U, E, M>;
+) => RoomLeavePair<P, S, U, E, TM, CM>;
 
 /** @internal */
 function RoomProviderInner<
@@ -572,10 +592,11 @@ function RoomProviderInner<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: EnterRoomType<P, S, U, E, M>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
   }
 ) {
   const client = useClient<U>();
@@ -655,6 +676,7 @@ function RoomProviderInner<
         case ServerMsgCode.COMMENT_REACTION_ADDED:
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_DELETED:
+        case ServerMsgCode.COMMENT_METADATA_UPDATED:
           // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
           if (!existingThread) break;
 
@@ -713,23 +735,26 @@ function useRoom<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null {
-  const room = useRoomOrNull<P, S, U, E, M>();
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM>();
   if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
@@ -1190,10 +1215,11 @@ function useMutation<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-  const room = useRoom<P, S, U, E, M>();
+  const room = useRoom<P, S, U, E, TM, CM>();
   return useMemo(
     () => {
       return ((...args) =>
@@ -1201,7 +1227,7 @@ function useMutation<
         room.batch(() =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           callback(
-            makeMutationContext<P, S, U, E, M>(room),
+            makeMutationContext<P, S, U, E, TM, CM>(room),
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             ...args
           )
@@ -1212,15 +1238,17 @@ function useMutation<
   );
 }
 
-function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {}
-): ThreadsAsyncResult<M> {
+function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncResult<TM, CM> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
   const room = useRoom();
-  const { store, getOrCreateThreadsPollerForRoomId } =
-    getRoomExtrasForClient<M>(client);
+  const { store, getOrCreateThreadsPollerForRoomId } = getRoomExtrasForClient<
+    TM,
+    CM
+  >(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
@@ -1255,8 +1283,8 @@ function useThreads<M extends BaseMetadata>(
   return result;
 }
 
-function useSearchComments<M extends BaseMetadata>(
-  options: UseSearchCommentsOptions<M>
+function useSearchComments<TM extends BaseMetadata>(
+  options: UseSearchCommentsOptions<TM>
 ): SearchCommentsAsyncResult {
   const [result, setResult] = useState<SearchCommentsAsyncResult>({
     isLoading: true,
@@ -1339,31 +1367,32 @@ function useSearchComments<M extends BaseMetadata>(
   return result;
 }
 
-function useCreateThread<M extends BaseMetadata>(): (
-  options: CreateThreadOptions<M>
-) => ThreadData<M> {
+function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
+  options: CreateThreadOptions<TM, CM>
+) => ThreadData<TM, CM> {
   return useCreateRoomThread(useRoom().id);
 }
 
 /**
  * @private
  */
-function useCreateRoomThread<M extends BaseMetadata>(
+function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
   roomId: string
-): (options: CreateThreadOptions<M>) => ThreadData<M> {
+): (options: CreateThreadOptions<TM, CM>) => ThreadData<TM, CM> {
   const client = useClient();
 
   return useCallback(
-    (options: CreateThreadOptions<M>): ThreadData<M> => {
+    (options: CreateThreadOptions<TM, CM>): ThreadData<TM, CM> => {
       const body = options.body;
-      const metadata = options.metadata ?? ({} as M);
+      const metadata = options.metadata ?? ({} as TM);
+      const commentMetadata = options.commentMetadata ?? ({} as CM);
       const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const newComment: CommentData = {
+      const newComment: CommentData<CM> = {
         id: commentId,
         threadId,
         roomId,
@@ -1373,8 +1402,9 @@ function useCreateRoomThread<M extends BaseMetadata>(
         body,
         reactions: [],
         attachments: attachments ?? [],
+        metadata: commentMetadata,
       };
-      const newThread: ThreadData<M> = {
+      const newThread: ThreadData<TM, CM> = {
         id: threadId,
         type: "thread",
         createdAt,
@@ -1401,6 +1431,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
           commentId,
           body,
           metadata,
+          commentMetadata,
           attachmentIds,
         })
         .then(
@@ -1418,6 +1449,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
                 commentId,
                 body,
                 metadata,
+                commentMetadata,
               },
               err
             )
@@ -1470,14 +1502,14 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   );
 }
 
-function useEditThreadMetadata<M extends BaseMetadata>() {
-  return useEditRoomThreadMetadata<M>(useRoom().id);
+function useEditThreadMetadata<TM extends BaseMetadata>() {
+  return useEditRoomThreadMetadata<TM>(useRoom().id);
 }
 
-function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
+function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
   const client = useClient();
   return useCallback(
-    (options: EditThreadMetadataOptions<M>): void => {
+    (options: EditThreadMetadataOptions<TM>): void => {
       if (!options.metadata) {
         return;
       }
@@ -1517,6 +1549,62 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
   );
 }
 
+function useEditCommentMetadata<CM extends BaseMetadata>() {
+  return useEditRoomCommentMetadata<CM>(useRoom().id);
+}
+
+function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
+  const client = useClient();
+  return useCallback(
+    (options: EditCommentMetadataOptions<CM>): void => {
+      if (!options.metadata) {
+        return;
+      }
+
+      const threadId = options.threadId;
+      const commentId = options.commentId;
+      const metadata = options.metadata;
+      const updatedAt = new Date();
+
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const optimisticId = store.optimisticUpdates.add({
+        type: "edit-comment-metadata",
+        threadId,
+        commentId,
+        metadata,
+        updatedAt,
+      });
+
+      client[kInternal].httpClient
+        .editCommentMetadata({ roomId, threadId, commentId, metadata })
+        .then(
+          (updatedMetadata) =>
+            // Replace the optimistic update by the real thing
+            store.editCommentMetadata(
+              threadId,
+              commentId,
+              optimisticId,
+              updatedMetadata,
+              updatedAt
+            ),
+          (err: Error) =>
+            onMutationFailure(
+              optimisticId,
+              {
+                type: "EDIT_COMMENT_METADATA_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                metadata,
+              },
+              err
+            )
+        );
+    },
+    [client, roomId]
+  );
+}
+
 /**
  * Returns a function that adds a comment to a thread.
  *
@@ -1524,23 +1612,28 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
  * const createComment = useCreateComment();
  * createComment({ threadId: "th_xxx", body: {} });
  */
-function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+function useCreateComment<CM extends BaseMetadata>(): (
+  options: CreateCommentOptions<CM>
+) => CommentData<CM> {
   return useCreateRoomComment(useRoom().id);
 }
 
 /**
  * @private
  */
-function useCreateRoomComment(
+function useCreateRoomComment<CM extends BaseMetadata>(
   roomId: string
-): (options: CreateCommentOptions) => CommentData {
+): (options: CreateCommentOptions<CM>) => CommentData<CM> {
   const client = useClient();
   return useCallback(
-    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
+    (options: CreateCommentOptions<CM>): CommentData<CM> => {
+      const { threadId, body } = options;
+      const metadata = options.metadata ?? ({} as CM);
+      const attachments = options.attachments ?? [];
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const comment: CommentData = {
+      const comment: CommentData<CM> = {
         id: commentId,
         threadId,
         roomId,
@@ -1550,6 +1643,7 @@ function useCreateRoomComment(
         body,
         reactions: [],
         attachments: attachments ?? [],
+        metadata,
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1561,7 +1655,14 @@ function useCreateRoomComment(
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .createComment({ roomId, threadId, commentId, body, attachmentIds })
+        .createComment({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          metadata,
+          attachmentIds,
+        })
         .then(
           (newComment) => {
             // Replace the optimistic update by the real thing
@@ -1576,6 +1677,7 @@ function useCreateRoomComment(
                 threadId,
                 commentId,
                 body,
+                metadata,
               },
               err
             )
@@ -1588,25 +1690,33 @@ function useCreateRoomComment(
 }
 
 /**
- * Returns a function that edits a comment's body.
+ * Returns a function that edits a comment.
  *
  * @example
  * const editComment = useEditComment()
  * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
  */
-function useEditComment(): (options: EditCommentOptions) => void {
-  return useEditRoomComment(useRoom().id);
+function useEditComment<CM extends BaseMetadata>(): (
+  options: EditCommentOptions<CM>
+) => void {
+  return useEditRoomComment<CM>(useRoom().id);
 }
 
 /**
  * @private
  */
-function useEditRoomComment(
+function useEditRoomComment<CM extends BaseMetadata>(
   roomId: string
-): (options: EditCommentOptions) => void {
+): (options: EditCommentOptions<CM>) => void {
   const client = useClient();
   return useCallback(
-    ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
+    ({
+      threadId,
+      commentId,
+      body,
+      attachments,
+      metadata,
+    }: EditCommentOptions<CM>): void => {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1630,6 +1740,14 @@ function useEditRoomComment(
         return;
       }
 
+      const updatedMetadata =
+        metadata !== undefined
+          ? {
+              ...comment.metadata,
+              ...metadata,
+            }
+          : comment.metadata;
+
       const optimisticId = store.optimisticUpdates.add({
         type: "edit-comment",
         comment: {
@@ -1637,13 +1755,21 @@ function useEditRoomComment(
           editedAt,
           body,
           attachments: attachments ?? [],
+          metadata: updatedMetadata,
         },
       });
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .editComment({ roomId, threadId, commentId, body, attachmentIds })
+        .editComment({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          attachmentIds,
+          metadata,
+        })
         .then(
           (editedComment) => {
             // Replace the optimistic update by the real thing
@@ -1652,7 +1778,14 @@ function useEditRoomComment(
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              { type: "EDIT_COMMENT_ERROR", roomId, threadId, commentId, body },
+              {
+                type: "EDIT_COMMENT_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+                metadata: updatedMetadata,
+              },
               err
             )
         );
@@ -1712,21 +1845,21 @@ function useDeleteRoomComment(roomId: string) {
   );
 }
 
-function useAddReaction<M extends BaseMetadata>() {
-  return useAddRoomCommentReaction<M>(useRoom().id);
+function useAddReaction() {
+  return useAddRoomCommentReaction(useRoom().id);
 }
 
 /**
  * @private
  */
-function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
+function useAddRoomCommentReaction(roomId: string) {
   const client = useClient();
   return useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
       const userId = getCurrentUserId(client);
 
-      const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const optimisticId = store.optimisticUpdates.add({
         type: "add-reaction",
@@ -2507,21 +2640,21 @@ function useStorageSuspense<S extends LsonObject, T>(
   ) as T;
 }
 
-function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {}
-): ThreadsAsyncSuccess<M> {
+function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
   const room = useRoom();
 
-  const { store } = getRoomExtrasForClient<M>(client);
+  const { store } = getRoomExtrasForClient<TM, CM>(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useThreads(options);
+  const result = useThreads<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -2648,12 +2781,13 @@ export function createRoomContext<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
-  return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
+  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM>(client);
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
 
 /**
  * Makes a Room available in the component hierarchy below.
@@ -2783,6 +2917,35 @@ const _useDeleteThread: TypedBundle["useDeleteThread"] = useDeleteThread;
  */
 const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
   useEditThreadMetadata;
+
+/**
+ * Returns a function that adds a comment to a thread.
+ *
+ * @example
+ * const createComment = useCreateComment();
+ * createComment({ threadId: "th_xxx", body: {} });
+ */
+const _useCreateComment: TypedBundle["useCreateComment"] = useCreateComment;
+
+/**
+ * Returns a function that edits a comment.
+ *
+ * @example
+ * const editComment = useEditComment()
+ * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
+ */
+const _useEditComment: TypedBundle["useEditComment"] = useEditComment;
+
+/**
+ * Returns a function that edits a comment's metadata.
+ * To delete an existing metadata property, set its value to `null`.
+ *
+ * @example
+ * const editCommentMetadata = useEditCommentMetadata();
+ * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234  } })
+ */
+const _useEditCommentMetadata: TypedBundle["useEditCommentMetadata"] =
+  useEditCommentMetadata;
 
 /**
  * useEventListener is a React hook that allows you to respond to events broadcast
@@ -3203,7 +3366,7 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
-  useCreateComment,
+  _useCreateComment as useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
   useCreateTextMention,
@@ -3213,8 +3376,10 @@ export {
   useDeleteRoomThread,
   useDeleteTextMention,
   _useDeleteThread as useDeleteThread,
-  useEditComment,
+  _useEditComment as useEditComment,
+  _useEditCommentMetadata as useEditCommentMetadata,
   useEditRoomComment,
+  useEditRoomCommentMetadata,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,

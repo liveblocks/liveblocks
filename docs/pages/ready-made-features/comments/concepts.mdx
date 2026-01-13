@@ -48,7 +48,7 @@ Here’s an example of a thread object.
 }
 ```
 
-Threads can also store
+Threads can store
 [custom metadata](/docs/ready-made-features/comments/metadata), which is helpful
 for integrating them into your product.
 
@@ -71,7 +71,7 @@ a thread. The first comment in a thread is displayed at the top.
 
 Here’s an example of a single comment inside a thread object.
 
-```ts highlight="8-20"
+```ts highlight="8-24"
 {
   type: "thread",
   id: "th_sf8s6sh...",
@@ -91,6 +91,10 @@ Here’s an example of a single comment inside a thread object.
         // The comment's text in `CommentBody` format
         // ...
       },
+      metadata: {
+        // Your custom comment metadata
+        // ...
+      },
     },
 
     // Other comments in the thread
@@ -108,6 +112,10 @@ won’t need to use this, as we render it in React for you. We also provide a
 number of functions that allow you to easily
 [convert a comment’s body into Markdown, HTML, or plain text](/docs/api-reference/liveblocks-node#stringify-comment-body),
 which is especially helpful for creating email notifications.
+
+Similarly to threads, comments can also store
+[custom metadata](/docs/ready-made-features/comments/metadata), which is helpful
+for integrating them into your product.
 
 ### Deleted comments
 

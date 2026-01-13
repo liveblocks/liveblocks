@@ -1,4 +1,4 @@
-import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, DCM, DTM, ThreadData } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
@@ -23,12 +23,14 @@ type AnchoredThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface AnchoredThreadsProps<M extends BaseMetadata = DM>
-  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
+export interface AnchoredThreadsProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The threads to display.
    */
-  threads: ThreadData<M>[];
+  threads: ThreadData<TM, CM>[];
 
   /**
    * Override the component's components.
@@ -70,7 +72,7 @@ export function AnchoredThreads({
       if (!prev || !next) return false;
       return (
         prev.pluginState?.selectedThreadId ===
-        next.pluginState?.selectedThreadId &&
+          next.pluginState?.selectedThreadId &&
         prev.pluginState?.threadPositions === next.pluginState?.threadPositions
       ); // new map is made each time threadPos updates so shallow equality is fine
     },

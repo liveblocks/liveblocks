@@ -6,7 +6,16 @@ import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import type { DE, DGI, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import type {
+  DCM,
+  DE,
+  DGI,
+  DP,
+  DRI,
+  DS,
+  DTM,
+  DU,
+} from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -175,7 +184,11 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+export type PrivateClientApi<
+  U extends BaseUserMeta,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   readonly currentUserId: Signal<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, MentionData[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
@@ -183,16 +196,19 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly groupsInfoStore: BatchStore<DGI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly httpClient: LiveblocksHttpApi<M>;
+  readonly httpClient: LiveblocksHttpApi<TM, CM>;
   // Type-level helper
-  as<M2 extends BaseMetadata>(): Client<U, M2>;
+  as<TM2 extends BaseMetadata, CM2 extends BaseMetadata>(): Client<U, TM2, CM2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
   ai: Ai;
 };
 
-export type NotificationsApi<M extends BaseMetadata> = {
+export type NotificationsApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   /**
    * Gets a page (or the initial page) for user inbox notifications and their
    * associated threads and thread subscriptions.
@@ -216,7 +232,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
@@ -255,7 +271,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -346,7 +362,11 @@ export type NotificationsApi<M extends BaseMetadata> = {
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
+export type Client<
+  U extends BaseUserMeta = DU,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -356,10 +376,11 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M2 extends BaseMetadata = M,
+    TM2 extends BaseMetadata = TM,
+    CM2 extends BaseMetadata = CM,
   >(
     roomId: string
-  ): Room<P, S, U, E, M2> | null;
+  ): Room<P, S, U, E, TM2, CM2> | null;
 
   /**
    * Enter a room.
@@ -371,7 +392,8 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M2 extends BaseMetadata = M,
+    TM2 extends BaseMetadata = TM,
+    CM2 extends BaseMetadata = CM,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -379,7 +401,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M2>;
+    room: Room<P, S, U, E, TM2, CM2>;
     leave: () => void;
   };
 
@@ -452,7 +474,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U, M>;
+  readonly [kInternal]: PrivateClientApi<U, TM, CM>;
 
   /**
    * Returns the current global sync status of the Liveblocks client. If any
@@ -478,7 +500,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
   };
-} & NotificationsApi<M>;
+} & NotificationsApi<TM, CM>;
 
 export type AuthEndpoint =
   | string
@@ -673,11 +695,12 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
   >(
     details: RoomDetails
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, TM, CM>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -698,7 +721,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
     details.unsubs.add(leave);
     return {
-      room: details.room as Room<P, S, U, E, M>,
+      room: details.room as Room<P, S, U, E, TM, CM>,
       leave,
     };
   }
@@ -708,7 +731,8 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -716,7 +740,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, TM, CM>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -735,7 +759,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
 
-    const newRoom = createRoom<P, S, U, E, M>(
+    const newRoom = createRoom<P, S, U, E, TM, CM>(
       { initialPresence, initialStorage },
       {
         roomId,
@@ -757,7 +781,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         errorEventSource: liveblocksErrorSource,
         largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
-        roomHttpClient: httpClient as LiveblocksHttpApi<M>,
+        roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
         createSyncSource,
         badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
       }
@@ -796,10 +820,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
-  >(roomId: string): Room<P, S, U, E, M> | null {
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
+  >(roomId: string): Room<P, S, U, E, TM, CM> | null {
     const room = roomsById.get(roomId)?.room;
-    return room ? (room as Room<P, S, U, E, M>) : null;
+    return room ? (room as Room<P, S, U, E, TM, CM>) : null;
   }
 
   function logout() {
@@ -1026,7 +1051,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
         httpClient,
         // Type-level helper only, it's effectively only an identity-function at runtime
-        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
+        as: <TM2 extends BaseMetadata, CM2 extends BaseMetadata>() =>
+          client as Client<U, TM2, CM2>,
         createSyncSource,
         emitError: (context: LiveblocksErrorContext, cause?: Error) => {
           const error = LiveblocksError.from(context, cause);

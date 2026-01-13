@@ -11,7 +11,7 @@ type LinkButtonProps = SharedProps & ComponentProps<"a">;
 
 function buttonClassNames(variant: ButtonProps["variant"]) {
   return [
-    "flex h-9 items-center justify-center rounded-md px-4 text-sm font-semibold outline-none ring-offset-2 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
+    "flex h-9 items-center justify-center rounded-md px-4 text-sm font-semibold outline-hidden ring-offset-2 focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50",
     {
       "bg-blue-500 text-white ring-blue-300 enabled:hover:bg-blue-400 enabled:focus:bg-blue-400":
         variant === "primary",

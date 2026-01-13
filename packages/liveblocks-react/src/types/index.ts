@@ -118,7 +118,7 @@ export type UseAiChatsOptions = {
   query?: AiChatsQuery;
 };
 
-export type ThreadsQuery<M extends BaseMetadata> = {
+export type ThreadsQuery<TM extends BaseMetadata> = {
   /**
    * Whether to only return threads marked as resolved or unresolved. If not provided,
    * all threads will be returned.
@@ -135,23 +135,23 @@ export type ThreadsQuery<M extends BaseMetadata> = {
    * The metadata to filter the threads by. If provided, only threads with metadata that matches
    * the provided metadata will be returned. If not provided, all threads will be returned.
    */
-  metadata?: Partial<QueryMetadata<M>>;
+  metadata?: Partial<QueryMetadata<TM>>;
 };
 
-export type UseUserThreadsOptions<M extends BaseMetadata> = {
+export type UseUserThreadsOptions<TM extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: ThreadsQuery<M>;
+  query?: ThreadsQuery<TM>;
 };
 
-export type UseThreadsOptions<M extends BaseMetadata> = {
+export type UseThreadsOptions<TM extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: ThreadsQuery<M>;
+  query?: ThreadsQuery<TM>;
 
   /**
    * Whether to scroll to a comment on load based on the URL hash. Defaults to `true`.
@@ -163,11 +163,11 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-export type SearchCommentsQuery<M extends BaseMetadata> = {
+export type SearchCommentsQuery<TM extends BaseMetadata> = {
   /**
    * (Optional) Metadata to filter the threads by.
    */
-  threadMetadata?: Partial<QueryMetadata<M>>;
+  threadMetadata?: Partial<QueryMetadata<TM>>;
   /**
    * (Optional) Whether to only return comments from threads marked as resolved or unresolved.
    */
@@ -186,8 +186,8 @@ export type SearchCommentsQuery<M extends BaseMetadata> = {
   text: string;
 };
 
-export type UseSearchCommentsOptions<M extends BaseMetadata> = {
-  query: SearchCommentsQuery<M>;
+export type UseSearchCommentsOptions<TM extends BaseMetadata> = {
+  query: SearchCommentsQuery<TM>;
 };
 
 export type InboxNotificationsQuery = {
@@ -226,28 +226,36 @@ export type GroupAsyncResult = AsyncResult<GroupData | undefined, "group">;
 export type GroupAsyncSuccess = AsyncSuccess<GroupData | undefined, "group">;
 
 // prettier-ignore
-export type CreateThreadOptions<M extends BaseMetadata> =
+export type CreateThreadOptions<TM extends BaseMetadata, CM extends BaseMetadata > =
   Resolve<
     { body: CommentBody, attachments?: CommentAttachment[]; }
-    & PartialUnless<M, { metadata: M }>
+    & PartialUnless<TM, { metadata: TM }>
+    & PartialUnless<CM, { commentMetadata: CM }>
   >;
 
-export type EditThreadMetadataOptions<M extends BaseMetadata> = {
+export type EditThreadMetadataOptions<TM extends BaseMetadata> = {
   threadId: string;
-  metadata: Patchable<M>;
+  metadata: Patchable<TM>;
 };
 
-export type CreateCommentOptions = {
+export type CreateCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
-};
+} & PartialUnless<CM, { metadata: CM }>;
 
-export type EditCommentOptions = {
+export type EditCommentOptions<CM extends BaseMetadata> = {
   threadId: string;
   commentId: string;
   body: CommentBody;
   attachments?: CommentAttachment[];
+  metadata?: Patchable<CM>;
+};
+
+export type EditCommentMetadataOptions<CM extends BaseMetadata> = {
+  threadId: string;
+  commentId: string;
+  metadata: Patchable<CM>;
 };
 
 export type DeleteCommentOptions = {
@@ -280,8 +288,8 @@ export type PagedAsyncResult<T, F extends string> = Relax<
 
 // -----------------------------------------------------------------------
 
-export type ThreadsAsyncSuccess<M extends BaseMetadata> = PagedAsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
-export type ThreadsAsyncResult<M extends BaseMetadata> = PagedAsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncSuccess<TM extends BaseMetadata, CM extends BaseMetadata> = PagedAsyncSuccess<ThreadData<TM, CM>[], "threads">; // prettier-ignore
+export type ThreadsAsyncResult<TM extends BaseMetadata, CM extends BaseMetadata> = PagedAsyncResult<ThreadData<TM, CM>[], "threads">; // prettier-ignore
 
 export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>, "results">; // prettier-ignore
 
@@ -592,14 +600,15 @@ type RoomContextBundleCommon<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: Context<Room<P, S, U, E, M> | null>;
+  RoomContext: Context<Room<P, S, U, E, TM, CM> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -612,8 +621,10 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
-  useRoom(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
+  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
+  useRoom(options: {
+    allowOutsideRoom: boolean;
+  }): Room<P, S, U, E, TM, CM> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -920,7 +931,9 @@ type RoomContextBundleCommon<
    * const createThread = useCreateThread();
    * createThread({ body: {}, metadata: {} });
    */
-  useCreateThread(): (options: CreateThreadOptions<M>) => ThreadData<M>;
+  useCreateThread(): (
+    options: CreateThreadOptions<TM, CM>
+  ) => ThreadData<TM, CM>;
 
   /**
    * Returns a function that deletes a thread and its associated comments.
@@ -940,7 +953,7 @@ type RoomContextBundleCommon<
    * const editThreadMetadata = useEditThreadMetadata();
    * editThreadMetadata({ threadId: "th_xxx", metadata: {} })
    */
-  useEditThreadMetadata(): (options: EditThreadMetadataOptions<M>) => void;
+  useEditThreadMetadata(): (options: EditThreadMetadataOptions<TM>) => void;
 
   /**
    * Returns a function that marks a thread as resolved.
@@ -985,16 +998,26 @@ type RoomContextBundleCommon<
    * const createComment = useCreateComment();
    * createComment({ threadId: "th_xxx", body: {} });
    */
-  useCreateComment(): (options: CreateCommentOptions) => CommentData;
+  useCreateComment(): (options: CreateCommentOptions<CM>) => CommentData<CM>;
 
   /**
-   * Returns a function that edits a comment's body.
+   * Returns a function that edits a comment.
    *
    * @example
    * const editComment = useEditComment()
    * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
    */
-  useEditComment(): (options: EditCommentOptions) => void;
+  useEditComment(): (options: EditCommentOptions<CM>) => void;
+
+  /**
+   * Returns a function that edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * const editCommentMetadata = useEditCommentMetadata();
+   * editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234  } })
+   */
+  useEditCommentMetadata(): (options: EditCommentMetadataOptions<CM>) => void;
 
   /**
    * Returns a function that deletes a comment.
@@ -1060,9 +1083,10 @@ export type RoomContextBundle<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = Resolve<
-  RoomContextBundleCommon<P, S, U, E, M> &
+  RoomContextBundleCommon<P, S, U, E, TM, CM> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1133,7 +1157,7 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
+      useThreads(options?: UseThreadsOptions<TM>): ThreadsAsyncResult<TM, CM>;
 
       /**
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
@@ -1142,7 +1166,7 @@ export type RoomContextBundle<
        * const { results, error, isLoading } = useSearchComments({ query: { text: "hello"} });
        */
       useSearchComments(
-        options: UseSearchCommentsOptions<M>
+        options: UseSearchCommentsOptions<TM>
       ): SearchCommentsAsyncResult;
 
       /**
@@ -1182,7 +1206,7 @@ export type RoomContextBundle<
       useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
-        RoomContextBundleCommon<P, S, U, E, M> &
+        RoomContextBundleCommon<P, S, U, E, TM, CM> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1247,7 +1271,9 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
+            useThreads(
+              options?: UseThreadsOptions<TM>
+            ): ThreadsAsyncSuccess<TM, CM>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
@@ -1292,7 +1318,10 @@ export type RoomContextBundle<
 /**
  * Properties that are the same in LiveblocksContext and LiveblocksContext["suspense"].
  */
-type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
+type LiveblocksContextBundleCommon<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   /**
    * Makes Liveblocks features outside of rooms (e.g. Notifications) available
    * in the component hierarchy below.
@@ -1350,7 +1379,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * @example
    * const thread = useInboxNotificationThread("in_xxx");
    */
-  useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
+  useInboxNotificationThread(inboxNotificationId: string): ThreadData<TM, CM>;
 
   /**
    * Returns notification settings for the current user.
@@ -1492,9 +1521,10 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
 
 export type LiveblocksContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = Resolve<
-  LiveblocksContextBundleCommon<M> &
+  LiveblocksContextBundleCommon<TM, CM> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Returns the inbox notifications for the current user.
@@ -1523,8 +1553,8 @@ export type LiveblocksContextBundle<
        * Do not use unless explicitly recommended by the Liveblocks team.
        */
       useUserThreads_experimental(
-        options?: UseUserThreadsOptions<M>
-      ): ThreadsAsyncResult<M>;
+        options?: UseUserThreadsOptions<TM>
+      ): ThreadsAsyncResult<TM, CM>;
 
       /**
        * (Private beta)  Returns the chats for the current user.
@@ -1583,7 +1613,7 @@ export type LiveblocksContextBundle<
       useUrlMetadata(url: string): UrlMetadataAsyncResult;
 
       suspense: Resolve<
-        LiveblocksContextBundleCommon<M> &
+        LiveblocksContextBundleCommon<TM, CM> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Returns the inbox notifications for the current user.
@@ -1623,8 +1653,8 @@ export type LiveblocksContextBundle<
              * Do not use unless explicitly recommended by the Liveblocks team.
              */
             useUserThreads_experimental(
-              options?: UseUserThreadsOptions<M>
-            ): ThreadsAsyncSuccess<M>;
+              options?: UseUserThreadsOptions<TM>
+            ): ThreadsAsyncSuccess<TM, CM>;
 
             /**
              * (Private beta)  Returns the chats for the current user.

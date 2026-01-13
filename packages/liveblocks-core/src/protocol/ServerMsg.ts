@@ -29,6 +29,7 @@ export const ServerMsgCode = Object.freeze({
   COMMENT_DELETED: 404,
   COMMENT_REACTION_ADDED: 405,
   COMMENT_REACTION_REMOVED: 406,
+  COMMENT_METADATA_UPDATED: 409,
 
   // Error codes
   REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
@@ -55,6 +56,8 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.COMMENT_REACTION_ADDED;
   export type COMMENT_REACTION_REMOVED =
     typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type COMMENT_METADATA_UPDATED =
+    typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
@@ -91,7 +94,8 @@ export type CommentsEventServerMsg =
   | CommentEditedEvent
   | CommentDeletedEvent
   | CommentReactionAdded
-  | CommentReactionRemoved;
+  | CommentReactionRemoved
+  | CommentMetadataUpdatedEvent;
 
 type ThreadCreatedEvent = {
   type: ServerMsgCode.THREAD_CREATED;
@@ -143,6 +147,12 @@ type CommentReactionRemoved = {
   threadId: string;
   commentId: string;
   emoji: string;
+};
+
+type CommentMetadataUpdatedEvent = {
+  type: ServerMsgCode.COMMENT_METADATA_UPDATED;
+  threadId: string;
+  commentId: string;
 };
 
 /**

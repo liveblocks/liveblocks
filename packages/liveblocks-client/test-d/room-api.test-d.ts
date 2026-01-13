@@ -13,18 +13,20 @@ type Presence = JsonObject;
 type Storage = LsonObject;
 type UserMeta = BaseUserMeta;
 type RoomEvent = Json;
-type ThreadMeta = BaseMetadata;
+type ThreadMetadata = BaseMetadata;
+type CommentMetadata = BaseMetadata;
 
 type P = Presence;
 type S = Storage;
 type U = UserMeta;
 type E = RoomEvent;
-type M = ThreadMeta;
+type TM = ThreadMetadata;
+type CM = CommentMetadata;
 
 const client = createClient<U>({ publicApiKey: "pk_whatever" });
 
 // Test some Room types
-const { room, leave } = client.enterRoom<P, S, E, M>("my-room", {
+const { room, leave } = client.enterRoom<P, S, E, TM, CM>("my-room", {
   initialPresence: {},
 });
 expectType<string>(room.id);
