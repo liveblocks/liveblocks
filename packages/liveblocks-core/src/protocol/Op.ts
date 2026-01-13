@@ -35,8 +35,7 @@ export type Op =
   | UpdateObjectOp
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
-  | DeleteObjectKeyOp
-  | AckOp; // (H)Ack
+  | DeleteObjectKeyOp;
 
 export type CreateOp =
   | CreateObjectOp
@@ -112,7 +111,7 @@ export type AckOp = {
   readonly opId: string;
 };
 
-export function isAckOp(op: Op): op is AckOp {
+export function isAckOp(op: ServerWireOp): op is AckOp {
   return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 
@@ -140,7 +139,7 @@ export type DeleteObjectKeyOp = {
  * Ops sent from client → server. Always includes an opId so the server can
  * acknowledge the receipt.
  */
-export type ClientWireOp = Exclude<Op, AckOp> & { opId: string };
+export type ClientWireOp = Op & { opId: string };
 
 /**
  * ServerWireOp: Ops sent from server → client. Three variants:
@@ -150,5 +149,7 @@ export type ClientWireOp = Exclude<Op, AckOp> & { opId: string };
  */
 export type ServerWireOp =
   | ClientWireOp // "Our" Op echoed back in full to ACK (V7 response)
-  | AckOp // "Our" Op ignored, but acked (V7 response)
-  | DistributiveOmit<Exclude<Op, AckOp>, "opId">; // "Their" Op (V7 forward)
+  | AckOp // "Our" Op ignored, but acked with a classic V7 (h)ack response
+  | TheirOp; // "Their" Op (V7 forward)
+
+type TheirOp = DistributiveOmit<Op, "opId"> & { opId?: undefined };
