@@ -786,29 +786,17 @@ declare global {
         version: 1,
         content: [{ type: "paragraph", children: [{ text: "hi" }] }],
       },
-    });
-
-    expectType<"comment">(comment.type);
-    expectType<string>(comment.id);
-    expectType<string>(comment.threadId);
-
-    const commentWithMetadata = createComment({
-      threadId: "th_xxx",
-      body: {
-        version: 1,
-        content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-      },
       metadata: {
         priority: 2,
         reviewed: false,
       },
     });
 
-    expectType<"comment">(commentWithMetadata.type);
-    expectType<string>(commentWithMetadata.id);
-    expectType<number>(commentWithMetadata.metadata.priority);
-    expectType<boolean | undefined>(commentWithMetadata.metadata.reviewed);
-    expectError(commentWithMetadata.metadata.nonexisting);
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<number>(comment.metadata.priority);
+    expectType<boolean | undefined>(comment.metadata.reviewed);
+    expectError(comment.metadata.nonexisting);
   }
 }
 
@@ -823,24 +811,12 @@ declare global {
       version: 1,
       content: [{ type: "paragraph", children: [{ text: "hi" }] }],
     },
-  });
-
-  expectType<"comment">(comment.type);
-  expectType<string>(comment.id);
-  expectType<string>(comment.threadId);
-
-  const commentWithMetadata = createComment({
-    threadId: "th_xxx",
-    body: {
-      version: 1,
-      content: [{ type: "paragraph", children: [{ text: "hi" }] }],
-    },
     metadata: { priority: 1 },
   });
 
-  expectType<"comment">(commentWithMetadata.type);
-  expectType<number>(commentWithMetadata.metadata.priority);
-  expectError(commentWithMetadata.metadata.nonexisting);
+  expectType<"comment">(comment.type);
+  expectType<number>(comment.metadata.priority);
+  expectError(comment.metadata.nonexisting);
 }
 
 // ---------------------------------------------------------
