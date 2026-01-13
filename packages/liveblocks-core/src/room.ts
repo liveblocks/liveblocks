@@ -68,7 +68,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
-import type { ClientWireOp, Op } from "./protocol/Op";
+import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -1931,29 +1931,31 @@ export function createRoom<
   }
 
   function applyLocalOps<O extends Stackframe<P>>(
-    rawOps: readonly O[]
+    frames: readonly O[]
   ): {
+    // Ops to send over the wire afterwards!
     ops: O[];
+
+    // Reverse ops to add to the undo stack!
     reverse: O[];
+
+    // Notify about this!
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    return applyOps(rawOps, /* isLocal */ true);
+    return applyOps(frames, /* isLocal */ true);
   }
 
-  function applyRemoteOps<O extends Stackframe<P>>(
-    rawOps: readonly O[]
-  ): {
-    ops: O[];
-    reverse: O[];
+  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+    // Notify about this!
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    return applyOps(rawOps, /* isLocal */ false);
+    return applyOps(ops, /* isLocal */ false);
   }
 
   function applyOps<O extends Stackframe<P>>(
