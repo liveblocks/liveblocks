@@ -1,6 +1,6 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Op } from "./Op";
+import type { ServerWireOp } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
@@ -336,7 +336,7 @@ export type StorageStateServerMsg = {
  */
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
-  readonly ops: Op[];
+  readonly ops: ServerWireOp[];
 };
 
 /**

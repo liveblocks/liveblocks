@@ -1,4 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
+import type { DistributiveOmit } from "../lib/utils";
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];
 export const OpCode = Object.freeze({
@@ -128,3 +129,26 @@ export type DeleteObjectKeyOp = {
   readonly type: OpCode.DELETE_OBJECT_KEY;
   readonly key: string;
 };
+
+//
+// ------------------------------------------------------------------------------
+// Wire types for Ops sent over the network
+// ------------------------------------------------------------------------------
+//
+
+/**
+ * Ops sent from client → server. Always includes an opId so the server can
+ * acknowledge the receipt.
+ */
+export type ClientWireOp = Exclude<Op, AckOp> & { opId: string };
+
+/**
+ * ServerWireOp: Ops sent from server → client. Three variants:
+ * 1. ClientWireOp — Full echo back of our own op, confirming it was applied
+ * 2. AckOp — Our op was seen but intentionally ignored (still counts as ack)
+ * 3. Op without opId — Another client's op being forwarded to us
+ */
+export type ServerWireOp =
+  | ClientWireOp // "Our" Op echoed back in full to ACK (V7 response)
+  | AckOp // "Our" Op ignored, but acked (V7 response)
+  | DistributiveOmit<Exclude<Op, AckOp>, "opId">; // "Their" Op (V7 forward)
