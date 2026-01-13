@@ -2276,24 +2276,20 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(offlineOps: Map<string, Op>) {
-    if (offlineOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: Map<string, Op>) {
+    if (unackedOps.size === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-
-    const inOps = Array.from(offlineOps.values());
-
+    const inOps = Array.from(unackedOps.values());
     const result = applyOps(inOps, /* isLocal */ true);
-
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.ops,
     });
 
     notify(result.updates);
-
     sendMessages(messages);
   }
 
@@ -2551,7 +2547,7 @@ export function createRoom<
   function processInitialStorage(message: StorageStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
-    applyAndSendOps(unacknowledgedOps);
+    applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
