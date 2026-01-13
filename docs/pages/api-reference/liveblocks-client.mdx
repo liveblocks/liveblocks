@@ -112,6 +112,10 @@ const client = createClient({
     // fetch,
     // WebSocket,
   },
+
+  // Set the location of the "Powered by Liveblocks" badge
+  // "top-right", "bottom-right", "bottom-left", "top-left"
+  badgeLocation: "bottom-right",
 });
 ```
 
@@ -128,14 +132,14 @@ const client = createClient({
   >
     The URL of your back end’s [authentication endpoint](/docs/authentication)
     as a string, or an async callback function that returns a Liveblocks token
-    result. Either `authEndpoint` or `publicApikey` are required. Learn more
+    result. Either `authEndpoint` or `publicApiKey` are required. Learn more
     about [using a URL string](#createClientAuthEndpoint) and [using a
     callback](#createClientCallback).
   </PropertiesListItem>
   <PropertiesListItem name="publicApiKey" type="string">
     The public API key taken from your project’s
     [dashboard](/dashboard/apikeys). Generally not recommended for production
-    use. Either `authEndpoint` or `publicApikey` are required. [Learn
+    use. Either `authEndpoint` or `publicApiKey` are required. [Learn
     more](#createClientPublicKey).
   </PropertiesListItem>
   <PropertiesListItem name="throttle" type="number" defaultValue="100">
@@ -219,6 +223,14 @@ const client = createClient({
     - `"split"` Break the message up into chunks each of which is smaller than the maximum message size. Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
     - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets. This strategy is marked experimental, as it can make the client appear as "synchronizing" indefinitely when used with Liveblocks Storage or Yjs.
 
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="badgeLocation"
+    detailedType='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
+    defaultValue={`"bottom-right"`}
+  >
+    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
+    [Learn more](#createClientBadgeLocation).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -571,7 +583,7 @@ component will automatically use it. It’s possible to use an inbox
 notification’s `roomId` property to construct a room’s URL directly in React and
 set it on
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
-via `href`, but the room ID might not be enough for you to construct the URL ,
+via `href`, but the room ID might not be enough for you to construct the URL,
 you might need to call your backend for example. In that case, providing it via
 `resolveRoomsInfo` is the preferred way.
 
@@ -769,6 +781,38 @@ const client = createClient({
   // ...
 });
 ```
+
+### Powered by Liveblocks branding [#createClientBadgeLocation]
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on `createClient`.
+
+```ts title="Set badge location"
+import { createClient } from "@liveblocks/client";
+
+// "top-right", "bottom-right", "bottom-left", "top-left"
+const client = createClient({
+  badgeLocation: "bottom-right",
+
+  // ...
+});
+```
+
+If you wish to remove the badge entirely, you can do so by following these
+steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team's settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>
 
 ## Client
 
@@ -1019,11 +1063,11 @@ requires TypeScript 5.3+.
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="description" type="string" isRequired>
+  <PropertiesListItem name="description" type="string" required>
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
   </PropertiesListItem>
-  <PropertiesListItem name="parameters" type="JSONSchema7" isRequired>
+  <PropertiesListItem name="parameters" type="JSONSchema7" required>
     JSON Schema defining the tool’s input parameters. The AI will validate
     arguments against this schema.
   </PropertiesListItem>
@@ -1606,7 +1650,7 @@ console.log(status);
     The current room’s Storage status. `status` can be one of four types.
     </div>
 
-    - `"not-loaded` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
+    - `"not-loaded"` Storage has not been loaded yet as [`room.getStorage`][] has not been called.
     - `"loading"` Storage is currently loading for the first time.
     - `"synchronizing"` Local Storage changes are currently being synchronized.
     - `"synchronized"` Local Storage changes have been synchronized.
@@ -1783,7 +1827,7 @@ const unsubscribe = room.subscribe(root, (updatedRoot) => {
 });
 ```
 
-If the order of updates is imporant in your application, and it’s important to
+If the order of updates is important in your application, and it’s important to
 ensure that your `async` function doesn’t start before the previous one
 finishes, you can use a package such as
 [`async-mutex`](https://www.npmjs.com/package/async-mutex) to help you with
@@ -2151,7 +2195,7 @@ let indicator = "⚪";
 const unsubscribe = room.subscribe("status", (status) => {
   switch (status) {
     case "connecting":
-      indiciator = "🟡";
+      indicator = "🟡";
       break;
     case "connected":
       indicator = "🟢";
@@ -2993,8 +3037,9 @@ Returns a thread and its associated inbox notification and subscription, from
 its ID, if it exists.
 
 ```ts
-const { thread, inboxNotification, subscription } =
-  await room.getThread("th_xxx");
+const { thread, inboxNotification, subscription } = await room.getThread(
+  "th_xxx"
+);
 ```
 
 The thread ID can be retrieved from existing threads.
@@ -3098,8 +3143,8 @@ const thread = await room.createThread({ body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the
-> **[Liveblocks](https://liveblocks.io)** website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
+> website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -3368,8 +3413,8 @@ const comment = await room.createComment({ threadId: thread.id, body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the
-> **[Liveblocks](https://liveblocks.io)** website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
+> website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -3399,7 +3444,7 @@ attachments. Learn more about
 ```ts
 const comment = await room.editComment({
   threadId: "th_xxx",
-  commentId: "cm_xxx"
+  commentId: "cm_xxx",
   body: {
     version: 1,
     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
@@ -3417,7 +3462,7 @@ const comment = await room.editComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
   <PropertiesListItem name="attachmentIds" type="string">
@@ -3447,7 +3492,7 @@ await room.deleteComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
 </PropertiesList>
@@ -3474,7 +3519,7 @@ const reaction = await room.addReaction({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment to add a reaction to.
   </PropertiesListItem>
   <PropertiesListItem name="emoji" type="string" required>
@@ -3500,7 +3545,7 @@ await room.removeReaction({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string" required>
+  <PropertiesListItem name="commentId" type="string" required>
     The ID of the comment to remove a reaction from.
   </PropertiesListItem>
   <PropertiesListItem name="emoji" type="string" required>
@@ -3745,7 +3790,7 @@ await client.markAllInboxNotificationsAsRead();
 Marks an inbox notification as read, for the current user.
 
 ```ts
-await client.markAllInboxNotificationsAsRead("in_xxx");
+await client.markInboxNotificationAsRead("in_xxx");
 ```
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
@@ -4680,7 +4725,7 @@ map.size;
 
 Returns a new
 [Iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
-object that contains the the values for each element.
+object that contains the values for each element.
 
 ```ts
 for (const value of map.values()) {
@@ -5113,8 +5158,8 @@ Returns the number of elements.
 ```ts
 const list = new LiveList(["adrien", "jonathan"]);
 
-// 3
-list.length; // equals
+// 2
+list.length;
 ```
 
 <PropertiesList title="Returns">
@@ -5288,7 +5333,7 @@ list.toImmutable();
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="immutableStructure" type="object">
-    Returns a JavaScript object in the shape of your data structure.`ListList`
+    Returns a JavaScript object in the shape of your data structure. `ListList`
     is converted to an array, `LiveObject` to an object, and `LiveMap` to a map.
   </PropertiesListItem>
 </PropertiesList>
@@ -5496,7 +5541,9 @@ const stringComment = await stringifyCommentBody(comment.body, {
     // Optional, override the `mention` element.
     // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
     mention: ({ element, user, group }) =>
-      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${element.id}</a>`,
+      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${
+        element.id
+      }</a>`,
   },
 
   // Optional, get your user’s names and info from their ID to be displayed in mentions
@@ -5903,84 +5950,16 @@ const user = room.getSelf();
     The user’s Presence data.
   </PropertiesListItem>
   <PropertiesListItem name="canWrite" type="boolean">
-    True if the user can mutate the Room’s Storage and/or YDoc, false if they
-    can only read but not mutate it.
+    `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
+    they can only read but not mutate it. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
   <PropertiesListItem name="canComment" type="boolean">
-    The ID of the User that has been set in the authentication endpoint. Useful
-    to get additional information about the connected user.
+    `true` if the user can leave a comment in the room, `false` if they can only
+    read comments but not leave them. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
   </PropertiesListItem>
 </PropertiesList>
-
-## Deprecated
-
-### Client.enter [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This is no longer supported. We recommend using [`client.enterRoom`][]
-  instead.
-</Banner>
-
-Enters a room and returns its local `Room` instance.
-
-```ts
-// ❌ This API was recommended before 1.5
-const room = client.enter("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-client.leave(roomId);
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room", {
-  initialPresence: { cursor: null },
-  initialStorage: { todos: new LiveList() },
-});
-leave();
-```
-
-### Client.leave [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This is no longer supported. We recommend using [`client.enterRoom`][]
-  instead.
-</Banner>
-
-Leaves a room.
-
-```ts
-// ❌ This API was recommended before 1.5
-client.leave("my-room");
-
-// ✅ Prefer this instead
-const { room, leave } = client.enterRoom("my-room" /* options */);
-leave();
-```
-
-### Room.getNotificationSettings [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This method was renamed to [`room.getSubscriptionSettings`][] in 2.24 and
-  removed in 3.0, read more in our [migration
-  guide](/docs/platform/upgrading/2.24).
-</Banner>
-
-Gets the user’s subscription settings for the current room. This notates which
-[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
-the current user receives in the current room.
-
-### Room.updateNotificationSettings [@badge=Deprecated]
-
-<Banner title="Deprecated" type="error">
-  This method was renamed to [`room.updateSubscriptionSettings`][] in 2.24 and
-  removed in 3.0, read more in our [migration
-  guide](/docs/platform/upgrading/2.24).
-</Banner>
-
-Updates the user’s subscription settings for the current room. Updating this
-setting will change which
-[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
-the current user receives in the current room.
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64

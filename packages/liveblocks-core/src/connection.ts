@@ -249,14 +249,12 @@ function logPrematureErrorOrCloseEvent(e: IWebSocketEvent | Error) {
   // Produce a useful log message
   const conn = "Connection to Liveblocks websocket server";
   return (ctx: Readonly<Context>) => {
-    if (e instanceof Error) {
-      console.warn(`${conn} could not be established. ${String(e)}`);
-    } else {
+    if (isCloseEvent(e)) {
       console.warn(
-        isCloseEvent(e)
-          ? `${conn} closed prematurely (code: ${e.code}). Retrying in ${ctx.backoffDelay}ms.`
-          : `${conn} could not be established.`
+        `${conn} closed prematurely (code: ${e.code}). Retrying in ${ctx.backoffDelay}ms.`
       );
+    } else {
+      console.warn(`${conn} could not be established.`, e);
     }
   };
 }

@@ -484,7 +484,7 @@ end
 <StepTitle>Full example</StepTitle>
 <StepContent>
 
-Here’s the full code, as detailed to far.
+Here’s the full code, as detailed so far.
 
 ```elixir title="Plug example" isCollapsed isCollapsable
 defmodule App.Plugs.RequestValidator do
@@ -596,7 +596,7 @@ allow you to temporarily host your localhost server online.
 
 ### Using svix-cli
 
-The [`svix-cli`](https://github.com/svix/svix-webhooks/tree/main/svix-cli) 
+The [`svix-cli`](https://github.com/svix/svix-webhooks/tree/main/svix-cli)
 provides a `listen` command that creates a publicly accessible URL for testing
 webhooks without requiring any account setup or network configuration changes.
 
@@ -627,7 +627,7 @@ where tools like `localtunnel` or `ngrok` may be blocked by security policies.
 
 ### Using localtunnel or ngrok
 
-Alternatively, you can use tools such as 
+Alternatively, you can use tools such as
 [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
 [`ngrok`](https://www.npmjs.com/package/ngrok) which also allow you to
 temporarily host your localhost server online.
@@ -651,15 +651,25 @@ the guide on
 ## Source IP Addresses [#source-ips]
 
 In case your webhook receiving endpoint is behind a firewall or NAT, you may
-need to allow traffic from
-[Svix's IP addresses](https://docs.svix.com/receiving/source-ips).
+need to allow traffic from the following IP addresses.
+
+### Global and US
 
 ```
 44.228.126.217
 50.112.21.217
 52.24.126.164
 54.148.139.208
-2600:1f24:64:8000::/52
+2600:1f24:64:8000::/56
+```
+
+### EU
+
+```
+52.215.16.239
+54.216.8.72
+63.33.109.123
+2a05:d028:17:8000::/56
 ```
 
 ## Liveblocks events
@@ -1159,7 +1169,7 @@ type ThreadMarkedAsResolvedEvent = {
 };
 
 // Example
-const ThreadMarkedAsResolvedEvent = {
+const threadMarkedAsResolvedEvent = {
   type: "threadMarkedAsResolved",
   data: {
     projectId: "my-project-id",
@@ -1190,7 +1200,7 @@ type ThreadMarkedAsUnresolvedEvent = {
 };
 
 // Example
-const ThreadMarkedAsUnresolvedEvent = {
+const threadMarkedAsUnresolvedEvent = {
   type: "threadMarkedAsUnresolved",
   data: {
     projectId: "my-project-id",

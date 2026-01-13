@@ -154,7 +154,8 @@ export type CreateThreadOptions<M extends BaseMetadata> = {
 export type RoomPermission =
   | []
   | ["room:write"]
-  | ["room:read", "room:presence:write"];
+  | ["room:read", "room:presence:write"]
+  | ["room:read", "room:presence:write", "comments:write"];
 export type RoomAccesses = Record<
   string,
   | ["room:write"]
@@ -205,7 +206,10 @@ type OpenAiModel =
   | "gpt-5"
   | "gpt-5-mini"
   | "gpt-5-nano"
-  | "gpt-5-chat-latest";
+  | "gpt-5-chat-latest"
+  | "gpt-5.1"
+  | "gpt-5.1-mini"
+  | "gpt-5.1-chat-latest";
 
 type OpenAiProviderOptions = {
   openai: {
@@ -334,6 +338,7 @@ type S = DS;
 type U = DU;
 
 export type RoomsQueryCriteria = {
+  tenantId?: string;
   userId?: string;
   groupIds?: string[];
   /**
@@ -890,6 +895,7 @@ export class Liveblocks {
       limit: params.limit,
       startingAfter: params.startingAfter,
       userId: params.userId,
+      tenantId: params.tenantId,
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       query,
     };

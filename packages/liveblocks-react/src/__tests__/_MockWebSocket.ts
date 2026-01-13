@@ -55,6 +55,7 @@ export default class MockWebSocket {
           nonce: `nonce-for-actor-${actor}`,
           scopes: ["room:write"],
           users: {},
+          meta: {},
         };
         msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }

@@ -69,7 +69,7 @@ export const FloatingComposer = forwardRef<
       selector: (ctx) => {
         if (!ctx.editor) {
           return undefined;
-        };
+        }
 
         const hasPendingComment = ctx.editor.storage.liveblocksComments.pendingComment;
         const isEmpty = ctx.editor.state.selection.empty;

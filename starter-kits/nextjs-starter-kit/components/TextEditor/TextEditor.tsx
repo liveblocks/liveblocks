@@ -8,15 +8,14 @@ import {
   FloatingThreads,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
-import { CharacterCount } from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import Placeholder from "@tiptap/extension-placeholder";
-import TaskList from "@tiptap/extension-task-list";
+import { TaskList } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import Youtube from "@tiptap/extension-youtube";
+import { CharacterCount, Placeholder } from "@tiptap/extensions";
 import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
@@ -82,7 +81,7 @@ function TiptapEditor() {
           },
         },
         // The Collaboration extension comes with its own history handling
-        history: false,
+        undoRedo: false,
         horizontalRule: {
           HTMLAttributes: {
             class: "tiptap-hr",

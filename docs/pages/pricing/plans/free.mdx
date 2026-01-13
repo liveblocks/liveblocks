@@ -1,0 +1,39 @@
+---
+meta:
+  title: "Liveblocks Free plan"
+  parentTitle: "Plans"
+  description: "Learn about the Liveblocks Free plan."
+---
+
+The Free plan is aimed at developers with personal projects, and small-scale
+applications. It offers a generous set of features for individual users on a per
+month basis.
+
+|                                                                                                                                                                                                                                                                                                        | Free included usage                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
+| <a href="/docs/platform/limits#What-is-a-monthly-active-room">Monthly active rooms</a>                                                                                                                                                                                                                 | <Limits.FreeMaxMonthlyActiveRooms />              |
+| <a href="/docs/platform/limits#What-is-a-monthly-active-user">Monthly active users</a>                                                                                                                                                                                                                 | <Limits.FreeMaxMau />                             |
+| <a href="/docs/platform/projects">Projects</a>                                                                                                                                                                                                                                                         | <Limits.FreeMaxProjects />                        |
+| <a href="/docs/platform/account-management/manage-team-members">Team members</a>                                                                                                                                                                                                                       | <Limits.FreeMaxTeamMembersPerAccount />           |
+| <a href="/docs/platform/limits#What's-a-simultaneous-connection-per-room" title="Learn more">Simultaneous connections per room</a>                                                                                                                                                                     | <Limits.FreeMaxConnectionsPerRoom />              |
+| <a href="/docs/platform/limits#What's-a-simultaneous-connection-per-project">Simultaneous connections per project</a>                                                                                                                                                                                  | <Limits.FreeMaxConnectionsPerProject />           |
+| Monthly anonymous connections <InfoTooltip>Public key only recommended for prototyping. <a href="/docs/authentication" className="font-medium">Set up authentication</a>.</InfoTooltip>                                                                                                                | <Limits.FreeMaxAnonymousConnections />            |
+| Realtime data storage <InfoTooltip>This is a cumulative calculation that represents all data that is currently stored. It does not reset monthly, and the total usage will continue to accrue over time as you add more content and data.</InfoTooltip>                                                | <Limits.FreeMaxRealtimeDataStorage />             |
+| Realtime data stored per room                                                                                                                                                                                                                                                                          | <Limits.FreeMaxStorageSizePerRoom />              |
+| File storage <InfoTooltip>This is a cumulative calculation that represents all files that are stored with Liveblocks. It does not reset monthly, and the total usage will continue to accrue over time as you add more files. Files can be uploaded as comment attachments for instance.</InfoTooltip> | <Limits.FreeMaxFileStorage />                     |
+| Max file upload size                                                                                                                                                                                                                                                                                   | <Limits.FreeMaxFileUploadSize />                  |
+| Comments stored                                                                                                                                                                                                                                                                                        | <Limits.FreeMaxComments />                        |
+| Monthly collaboration notifications <InfoTooltip>Notifications automatically triggered from collaborative features like comment thread updates and @ mentions.</InfoTooltip>                                                                                                                           | <Limits.FreeMaxCollaborationNotifications />      |
+| Monthly custom notifications <InfoTooltip>Non-collaborative notifications that can be triggered from your own code.</InfoTooltip>                                                                                                                                                                      | <Limits.FreeMaxCustomNotifications />             |
+| Webhook event frequency <InfoTooltip>The frequency at which `yDocUpdated` (Yjs) and `storageUpdated` (Liveblocks Storage) events are sent to your webhook endpoint. <a href="/docs/platform/webhooks#StorageUpdatedEvent" className="font-medium">Learn more</a></InfoTooltip>                         | <Limits.FreeStorageUpdatedWebhookEventThrottle /> |
+| Version history <InfoTooltip>APIs, hooks, and pre-built components to access the previous versions of the realtime data stored in rooms.</InfoTooltip>                                                                                                                                                 | <Limits.FreeVersionHistory />                     |
+| Event log retention                                                                                                                                                                                                                                                                                    | <Limits.FreeEventLogRetention />                  |
+
+## Billing cycle
+
+Even though the Free plan has no cost, usage limits follow a monthly billing
+cycle that starts on the 1st of each month and ends on the last day of the
+month. If you exceed your usage limits, you’ll need to wait until the next
+calendar month for limits to reset. Alternatively, you can
+[upgrade to Pro](/dashboard/billing?plan=pro) to access pay-as-you-go overage
+and avoid waiting for the next billing cycle.

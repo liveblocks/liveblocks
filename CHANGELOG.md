@@ -1,4 +1,49 @@
-## vNEXT (not released yet)
+## vNEXT
+
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve an internal type definition.
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added badgeLocation option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added badgeLocation option to LiveblocksProvider to control the branding
+  location for free plans.
+
+## v3.11.1
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
+## v3.11.0
+
+### `@liveblocks/react`
+
+- Introduce `useSearchComments` hook that allows searching comments by text and
+  other filters.
+
+### `@liveblocks/client`
+
+- Fix regression: handle rejection messages from the server again.
+
+### `@liveblocks/node`
+
+- Update type definitions for provider models to support GPT-5.1 variants.
 
 ## v3.10.1
 
@@ -288,8 +333,8 @@ and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/react`
 
-- Update `useSendAiMessage` to use the the last used copilot id in a chat when
-  no copilot id is passed to the hook or the method returned by the hook.
+- Update `useSendAiMessage` to use the last used copilot id in a chat when no
+  copilot id is passed to the hook or the method returned by the hook.
 
 ## v3.4.0
 

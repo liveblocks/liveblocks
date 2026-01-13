@@ -1,63 +1,60 @@
 ---
 meta:
   title: "Authentication"
-  description: "Learn more about authenticating your Liveblocks application"
+  description: "Authenticate your users in your application with ID tokens."
 ---
 
-Liveblocks provides different methods to authenticate your application using
-your public and secret API keys. For any production application, you should use
-your secret key to enable [access token](#access-tokens) or
-[ID token](#id-tokens) authentication. These methods can be used to control
-access to your rooms and data.
+For production applications, we recommend using your secret API key to
+authenticate users with **ID tokens**. Your public API key is only for
+prototyping and public applications.
 
-<Banner title="Public key is only for prototyping and landing pages" type="warning">
+## Quickstart
 
-We don’t recommend using your public API key in production, as it makes it
-possible for end users to access any room’s data. It’s also difficult for us to
-accurately measure your monthly collaborating users without any user
-information. We recommend using your secret key instead, see below.
-
-</Banner>
-
-## Authentication methods
-
-Secret key authentication in Liveblocks relies on generating
-[JSON Web Tokens](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWTs), and then
-passing these to your client. There are two different types of authentication
-tokens you can generate and it’s important to decide on which you need before
-setting up your application.
-
-### Access tokens [#access-tokens]
-
-[Access token](/docs/authentication/access-token) authentication allows you to
-handle permissions yourself. When a user authenticates, it’s up to you to let
-Liveblocks know which rooms they should be allowed inside. This means that you
-need to manually keep track of which users should be allowed in which rooms, and
-apply these permissions yourself each time a user connects.
-
-<Figure>
-  <Image
-    src="/assets/authentication/access-token-enter-room.png"
-    alt="An access token granting entry to a room"
-    width={1494}
-    height={840}
-    quality={100}
+<ListGrid columns={3}>
+  <DocsCard
+    title="Next.js"
+    href="/docs/authentication/id-token/nextjs"
+    visual={<DocsNextjsIcon />}
   />
-</Figure>
+  <DocsCard
+    title="Remix"
+    href="/docs/authentication/id-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/id-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/id-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/id-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/id-token/firebase"
+    visual={<DocsFirebaseIcon />}
+  />
+</ListGrid>
 
-In the diagram above, you can see that `olivier@example.com`’s access token is
-allowing him into the `Vu78Rt:design:9Hdu73` room. A naming pattern like this is
-necessary for your rooms when using access tokens, and it works well for simple
-permissions. However, if you need complex permissions, we recommend ID tokens.
+---
 
-### ID tokens [#id-tokens]
+## How ID token authentication works
 
-[ID token](/docs/authentication/id-token) authentication allows Liveblocks to
-handle permissions for you. This means that when you create or modify a room,
-you can set a user’s permissions on the room itself, this acting as a source of
-truth. Later, when a user tries to enter a room, Liveblocks will automatically
-check if the user has permission, and deny them access if the permissions aren’t
-set.
+ID token authentication allows Liveblocks to handle permissions for you. This
+means that when you create or modify a room, you can set a user’s permissions on
+the room itself. This means the room acts as a source of truth. Later, when a
+user tries to enter a room, Liveblocks will automatically check if the user has
+permission, and deny them access if the permissions aren’t set.
+
+Permissions aren’t just for individual users, but can also be set for groups of
+users, or for the whole room at once.
 
 <Figure>
   <Image
@@ -69,59 +66,374 @@ set.
   />
 </Figure>
 
-In the diagram above, `olivier@example.com`’s ID token verifies his identity,
-and when he tries to enter the `a32wQXid4A9` room, his permissions are then
-checked on the room itself. ID tokens are best if you need complex permissions
-set on different levels (e.g. workspace → team → user).
+<Banner title="You prefer to handle permissions yourself?">
 
-## Choose a method
-
-- **Access token authentication** is best for prototyping, as it’s easy to set
-  up. It’s also ideal if you only need simple permissions, and you’d prefer
-  handle these without relying on Liveblocks.
-- **ID token authentication** is best if you’d like Liveblocks to automatically
-  prevent access to the wrong users. It allows you to set different levels of
-  permissions on different users and groups.
-
-<Banner title="Concept of tenants" type="info">
-
-You can use [tenants](/docs/authentication/tenants) to compartmentalize your
-rooms per customers/organizations that you have. Both Access tokens and ID
-tokens can be used with tenants.
+If you don’t need fine-grained permissions, or if you’d prefer storing
+individual room permissions in your own system, you can use
+[access tokens](/docs/authentication/access-token) instead.
 
 </Banner>
 
-<ListGrid columns={2}>
+## Authenticating
+
+Authenticating with ID tokens means creating a
+[JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token) (JWT) that’s used
+to verify the identity of the current user when connecting to a Liveblocks room.
+This token is created using
+[`liveblocks.identifyUser`](/docs/api-reference/liveblocks-node#id-tokens) or
+[`/identify-user`](/docs/api-reference/rest-api-endpoints#post-identify-user).
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+});
+
+// '{ token: "eyJga7..." }'
+console.log(body);
+```
+
+## Workspace permissions [#permissions]
+
+Using [tenants](/docs/authentication/tenants), you can create workspaces in your
+application, compartmentalizing all resources such as inbox notifications and
+rooms. This includes everything associated with rooms such as comment threads,
+realtime data stored, and more. This allows you to add a workspace switcher to
+your application, separating each of your customers/organizations.
+
+<Figure>
+  <Image
+    src="/assets/authentication/org-switcher.png"
+    alt="A workspace switcher"
+    width={1600}
+    height={1000}
+    quality={90}
+  />
+</Figure>
+
+### Set up workspace permissions
+
+To set up workspace permissions, pass a `tenantId` when authenticating a user,
+ensuring that the user will only have access to resources within this workspace.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+// '{ token: "eyJga7..." }'
+console.log(body);
+```
+
+When creating a resource on the server, such as a room, pass the `tenantId` to
+the resource, to allow the user access.
+
+```ts
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+  // +++
+  tenantId: "my-tenant-id",
+  // +++
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+## Room permissions
+
+ID token authentication allows you to set different permission types on rooms,
+assigned at three different levels: default, groups, and users. The system is
+flexible enough to enable you to build a permission system that’s helpful for
+building invite dialogs, private rooms, and more.
+
+<Figure>
+  <img
+    src="/assets/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+  />
+</Figure>
+
+To set room permissions, you can
+[create](/docs/api-reference/liveblocks-node#post-rooms) or
+[update](/docs/api-reference/liveblocks-node#post-rooms-roomId) a room, passing
+permission information in the options.
+
+```ts
+const room = await liveblocks.createRoom("a32wQXid4A9", {
+  // This is a private room
+  defaultAccesses: [],
+
+  // But Olivier can enter
+  usersAccesses: {
+    "olivier@example.com": ["room:read"],
+  },
+});
+```
+
+### Permission types [#permission-types]
+
+There are three permission values that you can set on rooms.
+
+<dl>
+  <dt>`["room:write"]`</dt>
+  <dd>
+    Full access. Enables people to view and edit the room. On the client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `true`.
+  </dd>
+  <dt>`["room:read", "room:presence:write"]`</dt>
+  <dd>
+    Read access with presence. Enables people to edit their presence, but only
+    view the room&rsquo;s storage. On the client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `false`.
+  </dd>
+  <dt>`[]`</dt>
+  <dd>Private. No one can enter the room.</dd>
+</dl>
+
+### Permission levels [#permission-types]
+
+Permission types can be applied at three different levels, enabling complex
+entry systems.
+
+<dl>
+  <dt>defaultAccesses</dt>
+  <dd>The default permission types to apply to the entire room.</dd>
+  <dt>groupsAccesses</dt>
+  <dd>Permission types to apply to specific groups of users.</dd>
+  <dt>usersAccesses</dt>
+  <dd>Permission types to apply to specific users.</dd>
+</dl>
+
+Each level further down will override access levels defined above, for example a
+room with private access will allow a user with `room:write` access to enter.
+
+### Default room permissions
+
+The `defaultAccesses` level is used to set the default permissions of the entire
+room.
+
+<Figure>
+  <Image
+    src="/assets/managing-rooms/rooms-access-denied.png"
+    alt="Access denied illustration"
+    width={820}
+    height={412}
+  />
+</Figure>
+
+When used in our APIs, this property takes an array, with an empty array `[]`
+signifying no access. Add permission types to this array to define the default
+access level to your room.
+
+```ts
+// Private - no one has access by default
+"defaultAccesses": []
+
+// Public - everyone can edit and view the room
+"defaultAccesses": ["room:write"]
+
+// Read-only - everyone can view the room, but only presence can be edited
+"defaultAccesses": ["room:read", "room:presence:write"]
+```
+
+#### Setting room access
+
+We can use the
+[`liveblocks.createRoom`](/docs/api-reference/rest-api-endpoints#post-rooms) to
+create a new room with public access levels:
+
+```ts highlight="2"
+const room = await liveblocks.createRoom("a32wQXid4A9", {
+  defaultAccesses: ["room:write"],
+});
+```
+
+The default permission types can later be modified with
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
+in this example turning the room private:
+
+```ts highlight="2"
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
+  defaultAccesses: [],
+});
+```
+
+### Groups permissions
+
+The `groupsAccesses` level is used to set the default permissions of any given
+group within room.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/assets/managing-rooms/rooms-groups.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+Groups are represented by a `groupId`—a custom string that represents a
+selection of users in your app. Groups can be attached to a user by passing an
+array of `groupId` values in `groupIds`, during authentication.
+
+```js highlight="10"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const { status, body } = await liveblocks.identifyUser({
+    userId: "marie@example.com",
+    groupIds: ["engineering"],
+  });
+
+  return new Response(body, { status });
+}
+```
+
+In our APIs you can then set group accesses by using the `groupId` as the key,
+and an array of permissions as the value.
+
+```ts
+// "engineering" group has access to view and edit
+"groupsAccesses": {
+  "engineering": ["room:write"],
+}
+```
+
+#### Modifying group access [#permissions-levels-groups-accesses-example]
+
+To allow an “engineering” group access to view a room, and modify their
+presence, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+with `engineering` as a `groupId`:
+
+```ts highlight="3"
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
+  groupsAccesses: {
+    engineering: ["room:read", "room:presence:write"],
+  },
+});
+```
+
+After calling this, every user in the “engineering” group will have read-only
+access. To remove a group’s permissions, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId)
+again, and set the permission type to `null`:
+
+```ts highlight="7"
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
+  groupsAccesses: {
+    engineering: null,
+  },
+});
+```
+
+### User permissions
+
+The `usersAccesses` level is used to set permissions of any given user within a
+room.
+
+<Figure>
+  <Image
+    src="/assets/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+    width={820}
+    height={412}
+  />
+</Figure>
+
+To use this, first a user is given a `userId` during authentication.
+
+```js highlight="9"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export async function POST(request: Request) {
+  const { status, body } = await liveblocks.identifyUser({
+    userId: "ellen@acme.inc",
+  });
+
+  return new Response(body, { status });
+}
+```
+
+Then, if you want the user with the `userId` id to make edits, set `userId` to
+`["room:write"]` within `usersAccesses` when creating or updating a room.
+
+```ts
+// user with userId "ellen@acme.inc" has access to view and edit
+"usersAccesses": {
+  "ellen@acme.inc": ["room:write"]
+}
+```
+
+#### Checking user access [#permissions-levels-users-accesses-example]
+
+To give them room permission, we can use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomId),
+setting write access on their `userId`:
+
+```ts highlight="3"
+const room = await liveblocks.updateRoom("a32wQXid4A9", {
+  usersAccesses: {
+    "ellen@acme.inc": ["room:write"],
+  },
+});
+```
+
+To check a user’s assigned permission types for this room, we can then use
+[`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomId)
+and check `usersAccesses`:
+
+```ts
+const room = await liveblocks.getRoom("a32wQXid4A9");
+
+// { "ellen@acme.inc": ["room:write"] }
+console.log(room.data.usersAccesses);
+```
+
+## Select your framework [#select-your-framework]
+
+Select your framework for specific instructions on setting up ID token
+authentication.
+
+<ListGrid columns={3}>
   <DocsCard
-    title="Access token authentication"
-    href="/docs/authentication/access-token"
-    type="image"
-    description="Simple and flexible global permission rules"
-    center={false}
-    visual={
-      <Image
-        src="/assets/authentication/access-token-enter-room.png"
-        alt="An access token granting entry to a room"
-        width={1494}
-        height={840}
-        quality={100}
-      />
-    }
+    title="Next.js"
+    href="/docs/authentication/id-token/nextjs"
+    visual={<DocsNextjsIcon />}
   />
   <DocsCard
-    title="ID token authentication"
-    href="/docs/authentication/id-token"
-    type="image"
-    description="Fine grained permissions at the room level"
-    center={false}
-    visual={
-      <Image
-        src="/assets/authentication/id-token-enter-room.png"
-        alt="An ID token granting entry to a room"
-        width={1494}
-        height={840}
-        quality={100}
-      />
-    }
+    title="Remix"
+    href="/docs/authentication/id-token/remix"
+    visual={<DocsRemixIcon />}
+  />
+  <DocsCard
+    title="SvelteKit"
+    href="/docs/authentication/id-token/sveltekit"
+    visual={<DocsSvelteIcon />}
+  />
+  <DocsCard
+    title="Nuxt.js"
+    href="/docs/authentication/id-token/nuxtjs"
+    visual={<DocsNuxtjsIcon />}
+  />
+  <DocsCard
+    title="Express"
+    href="/docs/authentication/id-token/express"
+    visual={<DocsExpressIcon />}
+  />
+  <DocsCard
+    title="Firebase"
+    href="/docs/authentication/id-token/firebase"
+    visual={<DocsFirebaseIcon />}
   />
 </ListGrid>

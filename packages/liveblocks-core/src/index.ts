@@ -234,6 +234,7 @@ export type {
 } from "./protocol/Comments";
 export type { QueryMetadata } from "./protocol/Comments";
 export type {
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDataWithDeleteInfo,
@@ -271,7 +272,8 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOp,
+  AckOpV7,
+  AckOpV8,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -283,7 +285,7 @@ export type {
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { ackOp, OpCode } from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
 export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
@@ -299,11 +301,11 @@ export type {
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
 export { CrdtType } from "./protocol/SerializedCrdt";
-export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
+  RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,

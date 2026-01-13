@@ -1,9 +1,9 @@
 ---
 meta:
   title: "Get started with Liveblocks, Monaco, Yjs, and JavaScript"
-  parentTitle: "Get started"
+  parentTitle: "Quickstart"
   description:
-    "Learn how to get started Liveblocks, Monaco, Yjs, and JavaScript."
+    "Learn how to get started with Liveblocks, Monaco, Yjs, and JavaScript."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -82,12 +82,12 @@ collaboration to your JavaScript application using the APIs from the
       const editor = monaco.editor.create(parent, {
         value: "",
         language: "javascript"
-      })
+      });
 
       // Attach Yjs to Monaco
       const monacoBinding = new MonacoBinding(
         yText,
-        editorRef.getModel(),
+        editor.getModel(),
         new Set([editor]),
         yProvider.awareness
       );

@@ -1,5 +1,6 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
@@ -68,7 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import { isAck, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
@@ -98,6 +99,7 @@ import type {
 import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
+  BadgeLocation,
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
@@ -1133,6 +1135,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
+  readonly meta: JsonObject;
 };
 
 type RoomState<
@@ -1274,6 +1277,8 @@ export type RoomConfig<M extends BaseMetadata> = {
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  badgeLocation?: BadgeLocation;
 
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
@@ -2015,7 +2020,7 @@ export function createRoom<
   function applyOp(op: Op, source: OpSource): ApplyResult {
     // Explicit case to handle incoming "AckOp"s, which are supposed to be
     // no-ops.
-    if (isAckOp(op)) {
+    if (isAck(op)) {
       return { modified: false };
     }
 
@@ -2164,9 +2169,15 @@ export function createRoom<
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
+      meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
+
+    // Inject brand badge if meta.showBrand is true
+    if (message.meta.showBrand === true) {
+      injectBrandBadge(config.badgeLocation ?? "bottom-right");
+    }
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
@@ -2351,6 +2362,25 @@ export function createRoom<
               mergeStorageUpdates(updates.storageUpdates.get(key), value)
             );
           }
+          break;
+        }
+
+        // Receiving a RejectedOps message in the client means that the server is no
+        // longer in sync with the client. Trying to synchronize the client again by
+        // rolling back particular Ops may be hard/impossible. It's fine to not try and
+        // accept the out-of-sync reality and throw an error.
+        case ServerMsgCode.REJECT_STORAGE_OP: {
+          console.errorWithTitle(
+            "Storage mutation rejection error",
+            message.reason
+          );
+
+          if (process.env.NODE_ENV !== "production") {
+            throw new Error(
+              `Storage mutations rejected by server: ${message.reason}`
+            );
+          }
+
           break;
         }
 

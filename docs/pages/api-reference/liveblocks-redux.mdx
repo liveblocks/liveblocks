@@ -131,7 +131,8 @@ const store = configureStore({
 
 ### ENTER [#actions-enter]
 
-Dispatch `enterRoom` action to enter a room and start sync it with Redux state.
+Dispatch `enterRoom` action to enter a room and start syncing it with Redux
+state.
 
 - `roomId`: The room’s ID.
 
@@ -183,7 +184,9 @@ const others = useSelector((state) => state.liveblocks.others);
 Whether the room storage is currently loading.
 
 ```js
-const connection = useSelector((state) => state.liveblocks.isStorageLoading);
+const isStorageLoading = useSelector(
+  (state) => state.liveblocks.isStorageLoading
+);
 ```
 
 ### status [#liveblocks-state-status]
@@ -196,8 +199,8 @@ const {
 } = useStore();
 ```
 
-The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
-`disconnected`.
+The possible values are: `initial`, `connecting`, `connected`, `reconnecting`,
+or `disconnected`.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`status`]: /docs/api-reference/liveblocks-redux#liveblocks-state-status

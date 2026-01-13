@@ -1968,6 +1968,22 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the thread subscription.",
@@ -2032,6 +2048,22 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success.",
@@ -2648,6 +2680,7 @@
                       "name": "bob",
                       "avatar": "https://example.org/images/user123.jpg"
                     },
+                    "tenantId": "acme-corp",
                     "permissions": {
                       "my-room-1": ["room:write"],
                       "my-room-2": ["room:write"],
@@ -2699,6 +2732,7 @@
                 "example": {
                   "value": {
                     "userId": "user-123",
+                    "tenantId": "acme-corp",
                     "groupIds": ["marketing", "engineering"],
                     "userInfo": {
                       "name": "bob",
@@ -4884,6 +4918,9 @@
           "userInfo": {
             "type": "object"
           },
+          "tenantId": {
+            "type": "string"
+          },
           "permissions": {
             "type": "object",
             "additionalProperties": {
@@ -4900,6 +4937,9 @@
         "type": "object",
         "properties": {
           "userId": {
+            "type": "string"
+          },
+          "tenantId": {
             "type": "string"
           },
           "groupIds": {
@@ -5721,7 +5761,10 @@
                   "gpt-5",
                   "gpt-5-mini",
                   "gpt-5-nano",
-                  "gpt-5-chat-latest"
+                  "gpt-5-chat-latest",
+                  "gpt-5.1",
+                  "gpt-5.1-mini",
+                  "gpt-5.1-chat-latest"
                 ]
               },
               "providerOptions": {

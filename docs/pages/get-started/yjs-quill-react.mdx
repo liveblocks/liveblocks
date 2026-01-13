@@ -1,7 +1,7 @@
 ---
 meta:
   title: "Get started with Liveblocks, Yjs, Quill, and React"
-  parentTitle: "Get started"
+  parentTitle: "Quickstart"
   description:
     "Learn how to get started with Liveblocks, Yjs, Quill, and React."
 ---
@@ -134,7 +134,7 @@ collaboration to your React application using the APIs from the
         const yDoc = yProvider.getYDoc();
         const yText = yDoc.getText("quill");
 
-        return <QuillEditor yText={yText} provider={provider} />;
+        return <QuillEditor yText={yText} provider={yProvider} />;
       }
 
       type EditorProps = {

@@ -40,34 +40,21 @@ your app, as this is necessary for Text Editor.
 Make sure to follow the metadata step in the guide, and attach the name of your
 user, the color of their cursor, and their avatar URL, as these properties will
 both be used in the [Text editor](/docs/ready-made-features/text-editor). Here’s
-an example using access token authentication, with an email address as a user’s
-ID.
+an example using ID token authentication, our recommended method, with an email
+address as a user’s ID.
 
-```ts title="Metadata in access tokens"
-const session = liveblocks.prepareSession("marc@example.com", {
-  userInfo: {
-    name: "Marc",
-    color: "#00ff00",
-    avatar: "https://example.com/marc.png",
-
-    // Your custom metadata
-    // ...
-  },
-});
-```
-
-If you’re using ID token authentication, it’ll look a little different.
-
-```ts title="Metadata in ID tokens" isCollapsed isCollapsable
+```ts title="Metadata in ID tokens"
 const { status, body } = await liveblocks.identifyUser(
   {
     userId: "marc@example.com",
-    groupIds: [], // Optional
+
+    // Optional
+    // tenantId: "org-id",
+    // groupIds: ["group-id-1", "group-id-2"],
   },
   {
     userInfo: {
       name: "Marc",
-      color: "#00ff00",
       avatar: "https://example.com/marc.png",
 
       // Your custom metadata
@@ -77,8 +64,8 @@ const { status, body } = await liveblocks.identifyUser(
 );
 ```
 
-Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
-the metadata format, adding type hints to your editor.
+Modify your `UserMeta` type in `liveblocks.config.ts` to match the metadata
+format, adding type hints to your editor.
 
 ```ts file="liveblocks.config.ts"
 declare global {
@@ -88,7 +75,6 @@ declare global {
 
       info: {
         name: string;
-        color: string;
         avatar: string;
 
         // Your custom metadata
@@ -172,7 +158,7 @@ To show each user’s name and color in their cursors, we need to use
       ```
 
       We’re only returning one user here, but make sure to return an
-      array containing  each user, in the same order you received the IDs.
+      array containing each user, in the same order you received the IDs.
 
     </StepContent>
 

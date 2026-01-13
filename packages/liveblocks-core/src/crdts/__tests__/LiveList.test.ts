@@ -10,6 +10,7 @@ import {
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
+  createSerializedRoot,
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
@@ -79,8 +80,8 @@ describe("LiveList", () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
       }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRoot(),
+        createSerializedList("0:1", "root", "items"),
       ]);
 
       expectStorage({
@@ -92,8 +93,8 @@ describe("LiveList", () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRoot(),
+        createSerializedList("0:1", "root", "items"),
         createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
         createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
         createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
@@ -110,10 +111,7 @@ describe("LiveList", () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -131,8 +129,8 @@ describe("LiveList", () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
         ]);
 
         root.get("items").push("a");
@@ -153,8 +151,8 @@ describe("LiveList", () => {
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -181,8 +179,8 @@ describe("LiveList", () => {
           items: LiveList<number>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -204,8 +202,8 @@ describe("LiveList", () => {
           items: LiveList<LiveMap<string, number>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -226,10 +224,7 @@ describe("LiveList", () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
 
@@ -247,10 +242,7 @@ describe("LiveList", () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -268,8 +260,8 @@ describe("LiveList", () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
         ]);
@@ -292,8 +284,8 @@ describe("LiveList", () => {
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
           ],
           1
@@ -319,10 +311,7 @@ describe("LiveList", () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -340,8 +329,8 @@ describe("LiveList", () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
         ]);
 
@@ -362,8 +351,8 @@ describe("LiveList", () => {
         await prepareStorageTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
         ]);
@@ -389,8 +378,8 @@ describe("LiveList", () => {
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedObject("0:2", {}, "0:1", "!"),
           createSerializedObject("0:3", { a: 0 }, "0:2", "child"),
         ]);
@@ -417,10 +406,7 @@ describe("LiveList", () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -438,8 +424,8 @@ describe("LiveList", () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
         ]);
@@ -461,8 +447,8 @@ describe("LiveList", () => {
         await prepareStorageTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
           createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -487,8 +473,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -515,8 +501,8 @@ describe("LiveList", () => {
         await prepareStorageTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
           createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -541,10 +527,7 @@ describe("LiveList", () => {
   describe("clear", () => {
     test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -562,8 +545,8 @@ describe("LiveList", () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
           createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
         ]);
@@ -602,8 +585,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -634,8 +617,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -661,10 +644,7 @@ describe("LiveList", () => {
   describe("set", () => {
     test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
+        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
       );
@@ -699,8 +679,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
             createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
@@ -728,8 +708,8 @@ describe("LiveList", () => {
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
           ],
           1
@@ -752,8 +732,8 @@ describe("LiveList", () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -795,8 +775,8 @@ describe("LiveList", () => {
       const { root, applyRemoteOperations, expectStorage } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -865,8 +845,8 @@ describe("LiveList", () => {
       const { room, root, expectStorage, applyRemoteOperations, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -881,8 +861,8 @@ describe("LiveList", () => {
       });
 
       replaceRemoteStorageAndReconnect(wss, [
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRoot(),
+        createSerializedList("0:1", "root", "items"),
         createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
       ]);
 
@@ -909,8 +889,8 @@ describe("LiveList", () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -953,8 +933,8 @@ describe("LiveList", () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
           ],
           1
         );
@@ -1007,7 +987,7 @@ describe("LiveList", () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("root", {}),
+            createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
           ],
           1
@@ -1084,7 +1064,7 @@ describe("LiveList", () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("root", {}),
+            createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
           ],
           1
@@ -1143,8 +1123,8 @@ describe("LiveList", () => {
         items: LiveList<string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
         ],
         1
@@ -1181,8 +1161,8 @@ describe("LiveList", () => {
         items: LiveList<string>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
         ],
         1
@@ -1212,8 +1192,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
           ],
           1
@@ -1232,8 +1212,8 @@ describe("LiveList", () => {
       expectStorage({ items: ["a"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
           "0:2",
           {
@@ -1294,8 +1274,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
           ],
@@ -1315,8 +1295,8 @@ describe("LiveList", () => {
       expectStorage({ items: ["a", "b"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
           "0:2",
           {
@@ -1365,8 +1345,8 @@ describe("LiveList", () => {
           items: LiveList<string>;
         }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
             createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
           ],
@@ -1386,8 +1366,8 @@ describe("LiveList", () => {
       expectStorage({ items: ["a", "b"] });
 
       const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        ["0:0", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
           "0:2",
           {
@@ -1428,8 +1408,8 @@ describe("LiveList", () => {
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
           createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
           createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
         ],
@@ -1465,7 +1445,7 @@ describe("LiveList", () => {
         const { expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
-              createSerializedObject("root", {}),
+              createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
               createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
             ],
@@ -1496,7 +1476,7 @@ describe("LiveList", () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
-              createSerializedObject("root", {}),
+              createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
               createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
             ],
@@ -1532,7 +1512,7 @@ describe("LiveList", () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
-              createSerializedObject("root", {}),
+              createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
               createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
             ],
@@ -1571,7 +1551,7 @@ describe("LiveList", () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
-              createSerializedObject("root", {}),
+              createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
               createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
             ],
@@ -1608,8 +1588,8 @@ describe("LiveList", () => {
         const { room, root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
-              createSerializedObject("0:0", {}),
-              createSerializedList("0:1", "0:0", "items"),
+              createSerializedRoot(),
+              createSerializedList("0:1", "root", "items"),
             ],
             1
           );

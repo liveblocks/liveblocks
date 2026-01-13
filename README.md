@@ -21,27 +21,31 @@
   </a>
 </p>
 
-**[Liveblocks](https://liveblocks.io) provides customizable pre-built features
-for human and AI collaboration, used to make your product multiplayer, engaging,
-and AI‑ready. All without derailing your roadmap.**
+**[Liveblocks](https://liveblocks.io) gives you the building blocks and
+infrastructure to enable people and AI to work together inside your app.**
 
-**[Get started now](https://liveblocks.io/signup)**
+**[Get started for free](https://liveblocks.io/signup)**
 
-<img src="./assets/concepts/ready-made-features.png" alt="Liveblocks ready-made features"   />
+<img src="./assets/concepts/liveblocks-collaboration-infrastructure.png" alt="Liveblocks Collaboration Infrastructure"   />
 
-### Ready-made features
+## Ready-made features
 
-Liveblocks provides ready‑to‑use features through customizable pre‑built
-components that can easily be dropped into your product to boost growth:
-[AI Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots),
-[Comments](https://liveblocks.io/docs/ready-made-features/comments),
-[Multiplayer Editing](https://liveblocks.io/docs/ready-made-features/multiplayer-editing),
-[Presence](https://liveblocks.io/docs/ready-made-features/presence), and
-[Notifications](https://liveblocks.io/docs/ready-made-features/notifications).
-You can decide features which you want to use based on your requirements and the
-collaborative experiences you’re looking to add.
+Liveblocks includes a set of collaboration building blocks you can use
+individually or together. These ready-made features provide pre-built
+components, hooks, and APIs that handle the complexity of realtime
+collaboration, allowing you to focus on building your product’s unique
+experience.
 
-### Packages and SDKs
+- [Comments](https://liveblocks.io/comments) - Add contextual comments directly
+  inside your product
+- [Multiplayer](https://liveblocks.io/multiplayer) - Add realtime collaboration
+  to your product experience
+- [AI Agents](https://liveblocks.io/ai-agents) - Add AI collaborators to your
+  product
+- [Notifications](https://liveblocks.io/notifications) - Add notifications to
+  your app to keep users coming back
+
+## SDKs and packages
 
 Packages for specific libraries and frameworks to add Liveblocks-powered
 collaborative experiences to your product. Integrations are designed to serve
@@ -61,16 +65,17 @@ notifications, and more.
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+- [`REST API`](https://liveblocks.io/docs/api-reference/rest-api-endpoints)
 
 ## Developers
 
 - [Documentation](https://liveblocks.io/docs) - [`/docs`](./docs)
 - [Guides](https://liveblocks.io/docs/guides) - [`/guides`](./guides)
-- [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started) - [`/tutorial`](./tutorial)
+- [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started) -
+  [`/tutorial`](./tutorial)
 - [Examples](https://liveblocks.io/examples) - [`/examples`](./examples)
-
-You can read our release notes
-[here](https://github.com/liveblocks/liveblocks/releases).
+- [Changelog](https://liveblocks.io/changelog)
 
 ## Community and support
 

@@ -353,6 +353,7 @@ export async function prepareStorageTest<
       nonce: `nonce-for-actor-${currentActor}`,
       scopes,
       users: { [currentActor]: { scopes: ["room:write"] } },
+      meta: {},
     })
   );
 
@@ -605,25 +606,18 @@ export function createSerializedObject(
   data: JsonObject,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedObject>;
-export function createSerializedObject(
-  id: string,
-  data: JsonObject
-): IdTuple<SerializedRootObject>;
-export function createSerializedObject(
-  id: string,
-  data: JsonObject,
-  parentId?: string,
-  parentKey?: string
-): IdTuple<SerializedObject | SerializedRootObject> {
-  return [
-    id,
-    parentId !== undefined && parentKey !== undefined
-      ? // Normal case
-        { type: CrdtType.OBJECT, data, parentId, parentKey }
-      : // Root object
-        { type: CrdtType.OBJECT, data },
-  ];
+): IdTuple<SerializedObject> {
+  return [id, { type: CrdtType.OBJECT, data, parentId, parentKey }];
+}
+
+/**
+ * Creates a serialized root object with the canonical "root" node ID.
+ * All Storage trees have their root at this ID.
+ */
+export function createSerializedRoot(
+  data: JsonObject = {}
+): IdTuple<SerializedRootObject> {
+  return ["root", { type: CrdtType.OBJECT, data }];
 }
 
 export function createSerializedList(

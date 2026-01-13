@@ -4,8 +4,10 @@ import { Button } from "@/primitives/Button";
 import { Dialog } from "@/primitives/Dialog";
 import styles from "./DocumentDeleteDialog.module.css";
 
-interface Props
-  extends Omit<ComponentProps<typeof Dialog>, "content" | "title"> {
+interface Props extends Omit<
+  ComponentProps<typeof Dialog>,
+  "content" | "title"
+> {
   documentId: string;
   onDeleteDocument: () => void;
 }

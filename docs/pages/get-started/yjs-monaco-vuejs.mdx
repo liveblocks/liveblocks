@@ -1,8 +1,9 @@
 ---
 meta:
   title: "Get started with Liveblocks, Monaco, Yjs, and Vue.js"
-  parentTitle: "Get started"
-  description: "Learn how to get started Liveblocks, Monaco, Yjs, and Vue.js."
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to get started with Liveblocks, Monaco, Yjs, and Vue.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -83,7 +84,7 @@ collaboration to your Vue.js application using the APIs from the
         // Attach Yjs to Monaco
         binding.value = new MonacoBinding(
           yText,
-          editorRef.getModel(),
+          editor.value.getModel(),
           new Set([editor]),
           yProvider.awareness
         );
@@ -91,7 +92,7 @@ collaboration to your Vue.js application using the APIs from the
 
       onUnmounted(() => {
         binding?.destroy();
-        editor?.dispose();
+        editor.value?.dispose();
         leave?.();
       });
       </script>

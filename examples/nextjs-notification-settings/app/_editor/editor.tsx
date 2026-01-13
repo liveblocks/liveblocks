@@ -28,7 +28,7 @@ export default function TiptapEditor() {
     },
     extensions: [
       StarterKit.configure({
-        history: false,
+        undoRedo: false,
       }),
       liveblocks,
     ],

@@ -1,0 +1,211 @@
+---
+meta:
+  title: "Multiplayer"
+  parentTitle: "Ready-made features"
+  description:
+    "Add realtime collaboration to any surface in your product—from text editors
+    to whiteboards, forms, and beyond."
+---
+
+Enable realtime collaboration across any surface in your product—just like in
+Figma, Notion, or Linear. With Liveblocks Multiplayer, you can make anything
+multiplayer: rich text editors, whiteboards, flowcharts, forms, spreadsheets, or
+fully custom interfaces.
+
+Liveblocks provides a permanent, realtime data store for your collaborative
+state—so you don’t need to synchronize, scale, or maintain any infrastructure
+yourself. All the hard parts of multiplayer—conflict resolution, presence,
+history, and storage—are handled for you.
+
+Depending on what you’re building, you can use purpose-built SDKs for rich text
+editors (like Tiptap, Lexical, or BlockNote), or more general packages like
+`@liveblocks/client`, `@liveblocks/react`, `@liveblocks/zustand`, or
+`@liveblocks/redux`.
+
+## Text editor integrations
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Tiptap"
+    href="/docs/ready-made-features/multiplayer/text-editor/tiptap"
+    description="Add multiplayer editing to Tiptap"
+    visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="BlockNote"
+    href="/docs/ready-made-features/multiplayer/text-editor/blocknote"
+    description="Add multiplayer editing to BlockNote"
+    visual={
+      <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical"
+    href="/docs/ready-made-features/multiplayer/text-editor/lexical"
+    description="Add multiplayer editing to Lexical"
+    visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Sync engine integrations
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Liveblocks Yjs"
+    href="/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs"
+    description="Build custom multiplayer experiences"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Liveblocks Storage"
+    href="/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage"
+    description="Build custom multiplayer experiences"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Multiplayer API Reference
+
+### Text editor SDKs
+
+Use these SDKs to add multiplayer editing to rich text editors.
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Tiptap React"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="BlockNote React"
+    href="/docs/api-reference/liveblocks-react-blocknote"
+    description="@liveblocks/react-blocknote"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical React"
+    href="/docs/api-reference/liveblocks-react-lexical"
+    description="@liveblocks/react-lexical"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="ProseMirror Node"
+    href="/docs/api-reference/liveblocks-node-prosemirror"
+    description="@liveblocks/node-prosemirror"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Lexical Node"
+    href="/docs/api-reference/liveblocks-node-lexical"
+    description="@liveblocks/node-lexical"
+    visual={<DocsNodejsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+### Sync engine SDKs
+
+Use these SDKs to add multiplayer editing to whiteboards, forms, tables, or any
+custom UI. These SDKs integrate directly with
+[Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+and
+[Liveblocks Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Client"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsJavascriptIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={
+      <img
+        alt=""
+        src="/assets/zustand.png"
+        width={24}
+        height={24}
+        loading="lazy"
+      />
+    }
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsReduxIcon />}
+  />
+</ListGrid>
+
+## Examples using Multiplayer
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative text editor",
+      slug: "collaborative-text-editor/lexical",
+      image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Advanced collaborative text editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Linear-like issue tracker",
+      slug: "linear-like-issue-tracker",
+      image: "/images/examples/thumbnails/linear-like-issue-tracker.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI editor",
+      slug: "notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Tldraw whiteboard",
+      slug: "tldraw-whiteboard",
+      image: "/images/examples/thumbnails/tldraw-whiteboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -19,7 +19,7 @@ import type {
   SerializedObject,
   SerializedRootObject,
 } from "../protocol/SerializedCrdt";
-import { CrdtType, isRootCrdt } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -52,6 +52,10 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
+function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
+  return id === "root";
+}
+
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
@@ -74,13 +78,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   static #buildRootAndParentToChildren(
     items: IdTuple<SerializedCrdt>[]
-  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+  ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
-    let root: IdTuple<SerializedRootObject> | null = null;
+    let root: SerializedRootObject | null = null;
 
     for (const [id, crdt] of items) {
-      if (isRootCrdt(crdt)) {
-        root = [id, crdt];
+      if (isRootCrdt(id, crdt)) {
+        root = crdt;
       } else {
         const tuple: IdTuple<SerializedChild> = [id, crdt];
         const children = parentToChildren.get(crdt.parentId);
@@ -107,7 +111,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const [root, parentToChildren] =
       LiveObject.#buildRootAndParentToChildren(items);
     return LiveObject._deserialize(
-      root,
+      ["root", root],
       parentToChildren,
       pool
     ) as LiveObject<O>;

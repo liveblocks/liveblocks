@@ -11,10 +11,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.7.1",
-    "@liveblocks/node": "^3.7.1",
-    "@liveblocks/react": "^3.7.1",
-    "@liveblocks/react-ui": "^3.7.1",
+    "@liveblocks/client": "^3.11.0",
+    "@liveblocks/node": "^3.11.0",
+    "@liveblocks/react": "^3.11.0",
+    "@liveblocks/react-ui": "^3.11.0",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-portal": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
@@ -22,7 +22,7 @@
     "@types/react-dom": "18.2.7",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.4",
-    "next": "^13.5.4",
+    "next": "14.2.34",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-error-boundary": "^4.0.11"

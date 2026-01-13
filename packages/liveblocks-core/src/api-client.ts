@@ -41,6 +41,7 @@ import type {
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
+  SearchCommentsResult,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -109,6 +110,24 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
+  }>;
+
+  searchComments(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        hasMentions?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ): Promise<{
+    data: Array<SearchCommentsResult>;
   }>;
 
   createThread({
@@ -648,6 +667,43 @@ export function createApiClient<M extends BaseMetadata>({
 
       throw err;
     }
+  }
+
+  async function searchComments(
+    options: {
+      roomId: string;
+      query: {
+        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadResolved?: boolean;
+        hasAttachments?: boolean;
+        hasMentions?: boolean;
+        text: string;
+      };
+    },
+    requestOptions?: {
+      signal?: AbortSignal;
+    }
+  ) {
+    const result = await httpClient.get<{
+      data: Array<SearchCommentsResult>;
+    }>(
+      url`/v2/c/rooms/${options.roomId}/threads/comments/search`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      {
+        text: options.query.text,
+        query: objectToQuery({
+          threadMetadata: options.query.threadMetadata,
+          threadResolved: options.query.threadResolved,
+          hasAttachments: options.query.hasAttachments,
+          hasMentions: options.query.hasMentions,
+        }),
+      },
+      { signal: requestOptions?.signal }
+    );
+    return result;
   }
 
   async function createThread(options: {
@@ -1879,6 +1935,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room threads
     getThreads,
     getThreadsSince,
+    searchComments,
     createThread,
     getThread,
     deleteThread,
