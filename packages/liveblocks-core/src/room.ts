@@ -1930,14 +1930,12 @@ export function createRoom<
     );
   }
 
-  function applyLocalOps<O extends Stackframe<P>>(
-    frames: readonly O[]
-  ): {
+  function applyLocalOps(frames: readonly Stackframe<P>[]): {
     // Ops to send over the wire afterwards!
-    ops: O[];
+    ops: ClientWireOp[];
 
     // Reverse ops to add to the undo stack!
-    reverse: O[];
+    reverse: Stackframe<P>[];
 
     // Notify about this!
     updates: {
@@ -1958,19 +1956,19 @@ export function createRoom<
     return applyOps(ops, /* isLocal */ false);
   }
 
-  function applyOps<O extends Stackframe<P>>(
-    rawOps: readonly O[],
+  function applyOps(
+    frames: readonly Stackframe<P>[],
     isLocal: boolean
   ): {
-    ops: O[];
-    reverse: O[];
+    ops: ClientWireOp[];
+    reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const output = {
-      reverse: new Deque<O>(),
+      reverse: new Deque<Stackframe<P>>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
@@ -1980,14 +1978,14 @@ export function createRoom<
     // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
     // that right now first. Only do this for local ops, not remote ones!
     const ops = isLocal
-      ? rawOps.map((op) => {
+      ? frames.map((op) => {
           if (op.type !== "presence" && !op.opId) {
             return { ...op, opId: context.pool.generateOpId() };
           } else {
             return op;
           }
         })
-      : Array.from(rawOps);
+      : Array.from(frames);
 
     for (const op of ops) {
       if (op.type === "presence") {
@@ -2012,7 +2010,7 @@ export function createRoom<
           }
         }
 
-        output.reverse.pushLeft(reverse as O);
+        output.reverse.pushLeft(reverse);
         output.presence = true;
       } else {
         let source: OpSource;
@@ -2043,7 +2041,7 @@ export function createRoom<
                 applyOpResult.modified
               )
             );
-            output.reverse.pushLeft(applyOpResult.reverse as O[]);
+            output.reverse.pushLeft(applyOpResult.reverse);
           }
 
           if (
@@ -2051,14 +2049,14 @@ export function createRoom<
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(nn(op.id));
+            createdNodeIds.add(op.id);
           }
         }
       }
     }
 
     return {
-      ops,
+      ops: ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
