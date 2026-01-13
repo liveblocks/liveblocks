@@ -36,6 +36,7 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  partition,
   raise,
   tryParseJson,
 } from "./lib/utils";
@@ -1134,9 +1135,7 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-type Stackframe<P extends JsonObject> =
-  | Op // XXX Can this now safely be ClientWireOp?
-  | PresenceStackframe<P>;
+type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
 
 type PresenceStackframe<P extends JsonObject> = {
   readonly type: "presence";
@@ -1939,7 +1938,24 @@ export function createRoom<
       presence: boolean;
     };
   } {
-    return applyOps(frames, /* isLocal */ true);
+    const [pframes, ops] = partition(
+      frames,
+      (f): f is PresenceStackframe<P> => f.type === "presence"
+    );
+
+    // Ensure all local ops have opIds assigned before applying them
+    const opsWithOpIds = ops.map((op: Op) =>
+      op.opId === undefined
+        ? { ...op, opId: context.pool.generateOpId() }
+        : (op as ClientWireOp)
+    );
+
+    const { reverse, updates } = applyOps(
+      pframes,
+      opsWithOpIds,
+      /* isLocal */ true
+    );
+    return { opsToEmit: opsWithOpIds, reverse, updates };
   }
 
   function applyRemoteOps(ops: readonly ServerWireOp[]): {
@@ -1949,14 +1965,14 @@ export function createRoom<
       presence: boolean;
     };
   } {
-    return applyOps(ops, /* isLocal */ false);
+    return applyOps([], ops, /* isLocal */ false);
   }
 
   function applyOps(
-    frames: readonly Stackframe<P>[],
+    pframes: readonly PresenceStackframe<P>[],
+    ops: readonly Op[],
     isLocal: boolean
   ): {
-    opsToEmit: ClientWireOp[];
     reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
@@ -1969,90 +1985,76 @@ export function createRoom<
       presence: false,
     };
 
-    const createdNodeIds = new Set<string>();
+    for (const pf of pframes) {
+      const reverse = {
+        type: "presence" as const,
+        data: {} as P,
+      };
 
-    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
-    // that right now first. Only do this for local ops, not remote ones!
-    const ops = isLocal
-      ? frames.map((op) => {
-          if (op.type !== "presence" && !op.opId) {
-            return { ...op, opId: context.pool.generateOpId() };
-          } else {
-            return op;
-          }
-        })
-      : Array.from(frames);
+      for (const key in pf.data) {
+        reverse.data[key] = context.myPresence.get()[key];
+      }
 
-    for (const op of ops) {
-      if (op.type === "presence") {
-        const reverse = {
-          type: "presence" as const,
-          data: {} as P,
-        };
+      context.myPresence.patch(pf.data);
 
-        for (const key in op.data) {
-          reverse.data[key] = context.myPresence.get()[key];
-        }
-
-        context.myPresence.patch(op.data);
-
-        if (context.buffer.presenceUpdates === null) {
-          context.buffer.presenceUpdates = { type: "partial", data: op.data };
-        } else {
-          // Merge the new fields with whatever is already queued up (doesn't
-          // matter whether its a partial or full update)
-          for (const key in op.data) {
-            context.buffer.presenceUpdates.data[key] = op.data[key];
-          }
-        }
-
-        output.reverse.pushLeft(reverse);
-        output.presence = true;
+      if (context.buffer.presenceUpdates === null) {
+        context.buffer.presenceUpdates = { type: "partial", data: pf.data };
       } else {
-        let source: OpSource;
+        // Merge the new fields with whatever is already queued up (doesn't
+        // matter whether its a partial or full update)
+        for (const key in pf.data) {
+          context.buffer.presenceUpdates.data[key] = pf.data[key];
+        }
+      }
 
-        if (isLocal) {
-          source = OpSource.LOCAL;
-        } else if (op.opId !== undefined) {
-          context.unacknowledgedOps.delete(op.opId);
-          source = OpSource.OURS;
-        } else {
-          // Remotely generated Ops (and fix Ops as a special case of that)
-          // don't have opId anymore.
-          source = OpSource.THEIRS;
+      output.reverse.pushLeft(reverse);
+      output.presence = true;
+    }
+
+    const createdNodeIds = new Set<string>();
+    for (const op of ops) {
+      let source: OpSource;
+
+      if (isLocal) {
+        source = OpSource.LOCAL;
+      } else if (op.opId !== undefined) {
+        context.unacknowledgedOps.delete(op.opId);
+        source = OpSource.OURS;
+      } else {
+        // Remotely generated Ops (and fix Ops as a special case of that)
+        // don't have opId anymore.
+        source = OpSource.THEIRS;
+      }
+
+      const applyOpResult = applyOp(op, source);
+      if (applyOpResult.modified) {
+        const nodeId = applyOpResult.modified.node._id;
+
+        // If the modified node was created in the same batch, we don't want
+        // to notify storage updates for it (children of newly created nodes
+        // shouldn't trigger separate updates).
+        if (!(nodeId && createdNodeIds.has(nodeId))) {
+          output.storageUpdates.set(
+            nn(applyOpResult.modified.node._id),
+            mergeStorageUpdates(
+              output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
+              applyOpResult.modified
+            )
+          );
+          output.reverse.pushLeft(applyOpResult.reverse);
         }
 
-        const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified) {
-          const nodeId = applyOpResult.modified.node._id;
-
-          // If the modified node was created in the same batch, we don't want
-          // to notify storage updates for it (children of newly created nodes
-          // shouldn't trigger separate updates).
-          if (!(nodeId && createdNodeIds.has(nodeId))) {
-            output.storageUpdates.set(
-              nn(applyOpResult.modified.node._id),
-              mergeStorageUpdates(
-                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
-                applyOpResult.modified
-              )
-            );
-            output.reverse.pushLeft(applyOpResult.reverse);
-          }
-
-          if (
-            op.type === OpCode.CREATE_LIST ||
-            op.type === OpCode.CREATE_MAP ||
-            op.type === OpCode.CREATE_OBJECT
-          ) {
-            createdNodeIds.add(op.id);
-          }
+        if (
+          op.type === OpCode.CREATE_LIST ||
+          op.type === OpCode.CREATE_MAP ||
+          op.type === OpCode.CREATE_OBJECT
+        ) {
+          createdNodeIds.add(op.id);
         }
       }
     }
 
     return {
-      opsToEmit: ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
@@ -2700,10 +2702,7 @@ export function createRoom<
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
-      if (op.type !== "presence") {
-        __debug_assertIsWireOp(op);
-        context.buffer.storageOperations.push(op);
-      }
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2726,10 +2725,7 @@ export function createRoom<
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
-      if (op.type !== "presence") {
-        __debug_assertIsWireOp(op);
-        context.buffer.storageOperations.push(op);
-      }
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
