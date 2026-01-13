@@ -64,8 +64,8 @@ function customRenderHook<Result, Props>(
 }
 
 export function createContextsForTest<
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
+  TM extends BaseMetadata = BaseMetadata,
+  CM extends BaseMetadata = BaseMetadata,
 >(
   {
     userId,

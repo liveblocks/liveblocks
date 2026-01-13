@@ -1616,11 +1616,14 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never, never>(
-        {},
-        undefined,
-        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
-      );
+      const { room, wss } = createTestableRoom<
+        P,
+        never,
+        never,
+        never,
+        never,
+        never
+      >({}, undefined, SOCKET_AUTOCONNECT_AND_ROOM_STATE());
       room.connect();
 
       let others: readonly User<P, never>[] | undefined;
@@ -2496,9 +2499,10 @@ describe("room", () => {
       type S = never;
       type U = never;
       type E = never;
-      type M = never;
+      type TM = never;
+      type CM = never;
 
-      const { room, wss } = createTestableRoom<P, S, U, E, M>(
+      const { room, wss } = createTestableRoom<P, S, U, E, TM, CM>(
         {},
         undefined,
         SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
