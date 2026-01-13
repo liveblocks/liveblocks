@@ -2032,8 +2032,9 @@ export function createRoom<
         if (applyOpResult.modified) {
           const nodeId = applyOpResult.modified.node._id;
 
-          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
-          // storage updates for the children.
+          // If the modified node was created in the same batch, we don't want
+          // to notify storage updates for it (children of newly created nodes
+          // shouldn't trigger separate updates).
           if (!(nodeId && createdNodeIds.has(nodeId))) {
             output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
