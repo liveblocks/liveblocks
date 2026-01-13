@@ -140,6 +140,7 @@ export type DeleteObjectKeyOp = {
  * acknowledge the receipt.
  */
 export type ClientWireOp = Op & { opId: string };
+export type ClientWireCreateOp = CreateOp & { opId: string };
 
 /**
  * ServerWireOp: Ops sent from server → client. Three variants:
