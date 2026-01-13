@@ -1033,7 +1033,7 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
@@ -1102,7 +1102,7 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
