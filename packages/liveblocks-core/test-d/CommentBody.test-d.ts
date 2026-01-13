@@ -84,6 +84,16 @@ import { expectAssignable, expectNotAssignable } from "tsd";
       },
     ],
   });
+  expectNotAssignable<CommentBody>({
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        // Missing `type: "mention"` so it's a text element
+        children: [{ text: "mention", kind: "user", id: "user123" }],
+      },
+    ],
+  });
 
   // Invalid link element
   expectNotAssignable<CommentBody>({
@@ -105,6 +115,16 @@ import { expectAssignable, expectNotAssignable } from "tsd";
       {
         type: "paragraph",
         children: [{ type: "link", url: "https://liveblocks.io", text: 123 }],
+      },
+    ],
+  });
+  expectNotAssignable<CommentBody>({
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        // Missing `type: "link"` so it's a text element
+        children: [{ text: "link elsewhere", url: "https://liveblocks.io" }],
       },
     ],
   });
