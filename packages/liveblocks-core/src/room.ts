@@ -2558,19 +2558,9 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  // XXX Remove this helper again at the end
-  function __debug_assertIsWireOp(op: Op): asserts op is ClientWireOp {
-    if (op.opId === undefined) {
-      throw new Error(
-        "Internal error: op is expecting to be a wire op, but doesn't have an opId yet"
-      );
-    }
-  }
-
   function dispatchOps(ops: Op[]) {
     const { storageOperations } = context.buffer;
     for (const op of ops) {
-      __debug_assertIsWireOp(op); // XXX Everything added to storageOperations MUST be a wire Op with an opId!
       storageOperations.push(op);
     }
     flushNowOrSoon();
