@@ -67,7 +67,6 @@ import { config } from "./config";
 import {
   RoomContext,
   useClient,
-  useClientOrNull,
   useIsInsideRoom,
   useRoomOrNull,
 } from "./contexts";
@@ -2770,41 +2769,6 @@ function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
   return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
-}
-
-/**
- * @private
- *
- * This is an internal API, use `createRoomContext` instead.
- */
-export function useRoomContextBundleOrNull(): RoomContextBundle<
-  JsonObject,
-  LsonObject,
-  BaseUserMeta,
-  Json,
-  BaseMetadata,
-  BaseMetadata
-> | null {
-  const client = useClientOrNull();
-  const room = useRoomOrNull<never, never, never, never, never, never>();
-  return client && room ? getOrCreateRoomContextBundle(client) : null;
-}
-
-/**
- * @private
- *
- * This is an internal API, use `createRoomContext` instead.
- */
-export function useRoomContextBundle(): RoomContextBundle<
-  JsonObject,
-  LsonObject,
-  BaseUserMeta,
-  Json,
-  BaseMetadata,
-  BaseMetadata
-> {
-  const client = useClient();
-  return getOrCreateRoomContextBundle(client);
 }
 
 /**

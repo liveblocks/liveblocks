@@ -188,7 +188,7 @@ export class ThreadDB<TM extends BaseMetadata, CM extends BaseMetadata> {
     roomId: string | undefined,
     query: ThreadsQuery<TM> | undefined,
     direction: "asc" | "desc",
-    subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
+    subscriptions?: Record<SubscriptionKey, SubscriptionData>
   ): ThreadData<TM, CM>[] {
     const index = direction === "desc" ? this.#desc : this.#asc;
     const crit: ((thread: ThreadData<TM, CM>) => boolean)[] = [];
