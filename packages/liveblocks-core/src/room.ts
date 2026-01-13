@@ -1866,8 +1866,7 @@ export function createRoom<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = applyOps(ops, /* isLocal */ false);
-
+    const result = applyRemoteOps(ops);
     notify(result.updates);
   }
 
@@ -1927,6 +1926,32 @@ export function createRoom<
     throw new Error(
       "Internal. Tried to get connection id but connection was never open"
     );
+  }
+
+  function applyLocalOps<O extends Stackframe<P>>(
+    rawOps: readonly O[]
+  ): {
+    ops: O[];
+    reverse: O[];
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    return applyOps(rawOps, /* isLocal */ true);
+  }
+
+  function applyRemoteOps<O extends Stackframe<P>>(
+    rawOps: readonly O[]
+  ): {
+    ops: O[];
+    reverse: O[];
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    return applyOps(rawOps, /* isLocal */ false);
   }
 
   function applyOps<O extends Stackframe<P>>(
@@ -2282,7 +2307,7 @@ export function createRoom<
 
     const messages: ClientMsg<P, E>[] = [];
     const inOps = Array.from(unackedOps.values());
-    const result = applyOps(inOps, /* isLocal */ true);
+    const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.ops, // XXX Make stricter!
@@ -2371,7 +2396,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, /* isLocal */ false);
+          const applyResult = applyRemoteOps(message.ops);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2659,7 +2684,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(frames, /* isLocal */ true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
@@ -2684,7 +2709,7 @@ export function createRoom<
     }
 
     context.pausedHistory = null;
-    const result = applyOps(frames, /* isLocal */ true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
