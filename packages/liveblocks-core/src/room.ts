@@ -1135,11 +1135,13 @@ function makeIdFactory(connectionId: number): IdFactory {
 }
 
 type Stackframe<P extends JsonObject> =
-  | Op
-  | {
-      readonly type: "presence";
-      readonly data: P;
-    };
+  | Op // XXX Can this now safely be ClientWireOp?
+  | PresenceStackframe<P>;
+
+type PresenceStackframe<P extends JsonObject> = {
+  readonly type: "presence";
+  readonly data: P;
+};
 
 type IdFactory = () => string;
 
@@ -1216,7 +1218,7 @@ type RoomState<
    * wire after the batch is ended.
    */
   activeBatch: {
-    ops: Op[];
+    ops: Op[]; // XXX Must be wire op?
     reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
