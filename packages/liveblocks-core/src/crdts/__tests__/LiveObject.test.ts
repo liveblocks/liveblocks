@@ -475,7 +475,6 @@ describe("LiveObject", () => {
             type: OpCode.UPDATE_OBJECT,
             data: { a: 2 },
             id: "root",
-            opId: "external",
           },
         ]);
 
@@ -507,7 +506,6 @@ describe("LiveObject", () => {
             id: "2:0",
             parentKey: "a",
             parentId: "root",
-            opId: "external",
           },
         ]);
 
@@ -537,7 +535,6 @@ describe("LiveObject", () => {
             id: "2:0",
             parentKey: "a",
             parentId: "root",
-            opId: "external",
           },
         ]);
 
