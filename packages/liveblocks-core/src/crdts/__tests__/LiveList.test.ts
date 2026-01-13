@@ -1426,7 +1426,6 @@ describe("LiveList", () => {
           {
             data: { a: 2 },
             id: "0:3",
-            opId: "1:0",
             parentId: "0:1",
             parentKey: SECOND_POSITION,
             type: OpCode.CREATE_OBJECT,
