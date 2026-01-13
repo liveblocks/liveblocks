@@ -68,7 +68,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
-import type { Op } from "./protocol/Op";
+import type { ClientWireOp, Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -1178,7 +1178,7 @@ type RoomState<
       | { type: "full"; data: P }
       | null;
     messages: ClientMsg<P, E>[];
-    storageOperations: Op[];
+    storageOperations: ClientWireOp[];
   };
 
   //
@@ -1227,7 +1227,7 @@ type RoomState<
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, ClientWireOp>;
 };
 
 export type Polyfills = {
@@ -1445,7 +1445,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -1933,7 +1933,6 @@ export function createRoom<
     rawOps: readonly O[],
     isLocal: boolean
   ): {
-    // Input Ops can get opIds assigned during application.
     ops: O[];
     reverse: O[];
     updates: {
@@ -2276,7 +2275,7 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOfflineOps(unackedOps: Map<string, Op>) {
+  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
     if (unackedOps.size === 0) {
       return;
     }
@@ -2428,7 +2427,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(nn(op.opId), op);
+        context.unacknowledgedOps.set(op.opId, op);
       }
       notifyStorageStatus();
     }
