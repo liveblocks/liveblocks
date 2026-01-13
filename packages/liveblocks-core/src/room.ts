@@ -2311,7 +2311,7 @@ export function createRoom<
     const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.opsToEmit, // XXX Make stricter!
+      ops: result.opsToEmit,
     });
 
     notify(result.updates);
@@ -2520,7 +2520,7 @@ export function createRoom<
     if (context.buffer.storageOperations.length > 0) {
       messages.push({
         type: ClientMsgCode.UPDATE_STORAGE,
-        ops: context.buffer.storageOperations, // XXX Make stricter!
+        ops: context.buffer.storageOperations,
       });
     }
     return messages;
