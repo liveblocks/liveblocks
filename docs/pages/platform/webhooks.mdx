@@ -651,15 +651,25 @@ the guide on
 ## Source IP Addresses [#source-ips]
 
 In case your webhook receiving endpoint is behind a firewall or NAT, you may
-need to allow traffic from
-[Svix's IP addresses](https://docs.svix.com/receiving/source-ips).
+need to allow traffic from the following IP addresses.
+
+### Global and US
 
 ```
 44.228.126.217
 50.112.21.217
 52.24.126.164
 54.148.139.208
-2600:1f24:64:8000::/52
+2600:1f24:64:8000::/56
+```
+
+### EU
+
+```
+52.215.16.239
+54.216.8.72
+63.33.109.123
+2a05:d028:17:8000::/56
 ```
 
 ## Liveblocks events
@@ -678,7 +688,7 @@ Events available for use include:
 - `UserEntered/UserLeft`
 - `RoomCreated/RoomDeleted`
 - `YDocUpdated`
-- `CommentCreated/CommentEdited/CommentDeleted`
+- `CommentCreated/CommentEdited/CommentDeleted/CommentMetadataUpdated`
 - `CommentReactionAdded/CommentReactionRemoved`
 - `ThreadCreated/ThreadDeleted/ThreadMetadataUpdated`
 - `Notification`
@@ -1134,6 +1144,39 @@ const threadMetadataUpdatedEvent = {
     projectId: "my-project-id",
     roomId: "my-room-id",
     threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
+#### CommentMetadataUpdatedEvent
+
+An event is triggered when a comment’s metadata is updated. This event is not
+throttled.
+
+```ts
+// Schema
+type CommentMetadataUpdatedEvent = {
+  type: "commentMetadataUpdated";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const commentMetadataUpdatedEvent = {
+  type: "commentMetadataUpdated",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    commentId: "my-comment-id",
     updatedAt: "2021-10-06T01:45:56.558Z",
     updatedBy: "my-user-id",
   },

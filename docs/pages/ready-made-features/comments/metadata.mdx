@@ -2,21 +2,22 @@
 meta:
   title: "Metadata"
   parentTitle: "Comments"
-  description: "Add custom metadata to threads"
+  description: "Add custom metadata to threads and comments"
 ---
 
-In Comments, each thread can be given custom metadata. This is helpful for
-integrating Comments into various applications, for example it can be used to
-store:
+In Comments, each thread and comment can be given custom metadata. This is
+helpful for integrating Comments into various applications, for example it can
+be used to store:
 
 - The priority, status, or category of a thread.
 - Coordinates or timestamps related to the thread.
 - Quoted text in a text editor.
+- Tags, context, or flags on a comment.
+- External IDs like Slack message IDs on comments to build two-way integrations.
 
 ## Valid metadata
 
-You can store any `string`, `boolean`, or `number` in thread metadata, for
-example:
+You can store any `string`, `boolean`, or `number` in metadata, for example:
 
 ```ts
 metadata: {
@@ -34,14 +35,14 @@ metadata: {
 }
 ```
 
-You can store up to 50 metadata properties per thread, and each property can be
-4000 characters long.
+You can store up to 50 metadata properties per thread or comment, and each
+property can be 4000 characters long.
 
 ## Setting metadata
 
 Metadata can be set using the default components, React hooks, or by editing
-thread using the REST APIs. But before making any changes, it’s recommended to
-set your metadata type in your config file.
+threads and comments using the REST APIs. But before making any changes, it’s
+recommended to set your metadata types in your config file.
 
 ```ts file="liveblocks.config.ts"
 declare global {
@@ -51,6 +52,11 @@ declare global {
       priority: string;
       pinned: boolean;
       timestamp: number;
+    };
+    CommentMetadata: {
+      slackMessageTs: string;
+      spam: boolean;
+      upvotes: number;
     };
     // +++
 
@@ -101,17 +107,43 @@ function Component() {
 }
 ```
 
+When using it to reply to a thread, you can also
+[pass custom metadata](/docs/api-reference/liveblocks-react-ui#Adding-comment-metadata),
+which will be attached to the comment.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new reply to an existing thread with custom metadata
+function Component({ threadId }) {
+  return (
+    <Composer
+      // +++
+      threadId={threadId}
+      commentMetadata={{
+        // Custom metadata here
+        tag: "engineering",
+        reviewed: false,
+      }}
+      // +++
+    />
+  );
+}
+```
+
 ### Mutation hooks
 
-Two [mutation hooks](/docs/ready-made-features/comments/hooks#mutation-hooks)
-allow you to edit thread metadata:
-[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+Several
+[mutation hooks](/docs/ready-made-features/comments/hooks#mutation-hooks) allow
+you to edit thread and comment metadata:
+[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata),
+[`useEditCommentMetadata`](/docs/api-reference/liveblocks-react#useEditCommentMetadata),
 and [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread).
 Here’s one way to create a button that sets the `pinned` metadata property to
-`true`.
+`true` on a thread.
 
 ```tsx highlight="5,10-13"
-import { useEditThreadMetadata } from "../liveblocks.config";
+import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 
 // Button that sets `pinned` metadata to `true`
 function Component() {
@@ -132,14 +164,38 @@ function Component() {
 }
 ```
 
-These hooks are exported from your config file and provide full typing.
+Here’s an example of editing comment metadata:
+
+```tsx highlight="5,10-15"
+import { useEditCommentMetadata } from "@liveblocks/react/suspense";
+
+// Button that sets `spam` metadata to `true` on a comment
+function Component() {
+  const editCommentMetadata = useEditCommentMetadata();
+
+  return (
+    <button
+      onClick={() =>
+        editCommentMetadata({
+          threadId: "th_d75sF3...",
+          commentId: "cm_agH76a...",
+          metadata: { spam: true },
+        })
+      }
+    >
+      Mark as spam
+    </button>
+  );
+}
+```
 
 ### REST APIs
 
 It’s possible to modify metadata from our REST APIs using the
 [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package. Here’s an
 example using
-[`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+[`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata)
+for threads.
 
 ```ts highlight="12-14"
 import { Liveblocks } from "@liveblocks/node";
@@ -161,6 +217,31 @@ await liveblocks.editThreadMetadata({
 });
 ```
 
+And here’s an example using
+[`liveblocks.editCommentMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata)
+for comments.
+
+```ts highlight="12-14"
+import { Liveblocks } from "@liveblocks/node";
+
+// Create a Node.js client
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
+
+// Edit a comment's `tag` metadata, passing the user ID that made the change
+await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    metadata: {
+      tag: "engineering",
+    },
+    userId: "florent@example.com",
+  },
+});
+```
+
 The same result can also be achieved directly through our
 [edit thread metadata](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
 REST API.
@@ -170,4 +251,15 @@ curl -X POST https://api.liveblocks.io/v2/rooms/my-room-id/threads/th_d75sF3.../
   -H "Authorization: Bearer YOUR_SECRET_KEY" \
   -H "Content-Type: application/json" \
   -d '{"metadata": {"priority": "IMPORTANT"}, "userId": "florent@example.com"}'
+```
+
+And our
+[edit comment metadata](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-metadata)
+REST API.
+
+```bash
+curl -X POST https://api.liveblocks.io/v2/rooms/my-room-id/threads/th_d75sF3.../comments/cm_agH76a.../metadata \
+  -H "Authorization: Bearer YOUR_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"metadata": {"tag": "engineering"}, "userId": "olivier@example.com"}'
 ```

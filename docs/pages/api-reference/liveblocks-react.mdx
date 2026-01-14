@@ -314,6 +314,10 @@ function App() {
           // WebSocket,
         }
       }
+      // ---
+      // Set the location of the "Powered by Liveblocks" badge
+      // "top-right", "bottom-right", "bottom-left", "top-left"
+      badgeLocation="bottom-right"
     >
       {/* children */}
     </LiveblocksProvider>
@@ -421,6 +425,14 @@ function App() {
       Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
     - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
 
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="badgeLocation"
+    detailedtype='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
+    defaultValue={`"bottom-right"`}
+  >
+    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
+    [Learn more](#Powered-by-Liveblocks-branding).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -1086,6 +1098,34 @@ function App() {
   );
 }
 ```
+
+#### Powered by Liveblocks branding
+
+By default, Liveblocks displays a "Powered by Liveblocks" badge in your
+application. You can adjust the position of the badge by setting the
+`badgeLocation` property on `LiveblocksProvider`.
+
+```tsx title="Set badge location"
+// "top-right", "bottom-right", "bottom-left", "top-left"
+<LiveblocksProvider badgeLocation="bottom-right">
+  <App />
+</LiveblocksProvider>
+```
+
+If you wish to remove remove the badge entirely, you can do so by following
+these steps:
+
+1. In the Liveblocks dashboard, navigate to your
+   [team’s settings](/dashboard/settings).
+2. Under **General**, toggle on the remove "Powered by Liveblocks" branding
+   option.
+
+<Banner title='Removing the "Powered by Liveblocks" badge'>
+
+Removing the "Powered by Liveblocks" badge on your projects requires a
+[paid plan](/pricing/). See the [pricing page](/pricing/) for more information.
+
+</Banner>
 
 ### createLiveblocksContext
 
@@ -2477,6 +2517,7 @@ type Storage = {};
 type UserMeta = {};
 type RoomEvent = {};
 type ThreadMetadata = {};
+type CommentMetadata = {};
 
 // +++
 export const {
@@ -2485,9 +2526,14 @@ export const {
 
   // Other hooks
   // ...
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
-);
+} = createRoomContext<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent,
+  ThreadMetadata,
+  CommentMetadata
+>(client);
 // +++
 ```
 
@@ -2510,6 +2556,7 @@ type Storage = {};
 type UserMeta = {};
 type RoomEvent = {};
 type ThreadMetadata = {};
+type CommentMetadata = {};
 
 export const {
   // +++
@@ -2521,9 +2568,14 @@ export const {
     // ...
   },
   // +++
-} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(
-  client
-);
+} = createRoomContext<
+  Presence,
+  Storage,
+  UserMeta,
+  RoomEvent,
+  ThreadMetadata,
+  CommentMetadata
+>(client);
 ```
 
 #### Typing createRoomContext
@@ -3052,6 +3104,59 @@ that particular selection changes. For full details, see [how selectors work][].
     if not connected to the room (in non-Suspense version).
   </PropertiesListItem>
 </PropertiesList>
+
+#### Checking user permissions
+
+It’s possible to check if a user has a specific permission by using the
+`canWrite` and `canComment` properties of the `User` object. This is set via
+your [room permissions](/docs/authentication#Room-permissions).
+
+```ts
+import { useSelf } from "@liveblocks/react/suspense";
+
+function PermissionBadge() {
+  const canWrite = useSelf((me) => me.canWrite);
+
+  if (canWrite) {
+    return <div>✏️ Full access</div>;
+  }
+
+  return <div>👀 Read-only access</div>;
+}
+```
+
+This is particularly helpful in combination with text editors, such as
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap) as you can prevent
+read-only users from editing the document.
+
+```tsx
+import { useSelf } from "@liveblocks/react/suspense";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  // +++
+  const canWrite = useSelf((me) => me.canWrite);
+  // +++
+
+  const editor = useEditor({
+    // +++
+    editable: canWrite,
+    // +++
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
 
 ### useOthers [@badge=RoomProvider]
 
@@ -3924,7 +4029,7 @@ the dependency arrays of your `useMutation` calls:
 ### useThreads [@badge=RoomProvider]
 
 Returns a paginated list of threads within the current room. Initially fetches
-the latest 50 threads.
+the oldest 50 threads.
 [Suspense](/docs/api-reference/liveblocks-react#Suspense-hooks) and
 [regular](/docs/api-reference/liveblocks-react#Regular-hooks) versions of this
 hook are available.
@@ -3936,7 +4041,7 @@ const { threads, error, isLoading } = useThreads();
 ```
 
 Use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component to
-render the latest 50 threads with our default UI.
+render the oldest 50 threads with our default UI.
 
 ```tsx
 import { Thread } from "@liveblocks/react-ui";
@@ -4170,13 +4275,18 @@ const { threads } = useThreads({ scrollOnLoad: false });
 ### useCreateThread [@badge=RoomProvider]
 
 Returns a function that optimistically creates a thread with an initial comment,
-and optionally some metadata.
+and optionally some thread and comment metadata.
 
 ```tsx
 import { useCreateThread } from "@liveblocks/react/suspense";
 
 const createThread = useCreateThread();
-const thread = createThread({ body: {}, attachments: [], metadata: {} });
+const thread = createThread({
+  body: {},
+  attachments: [],
+  metadata: {},
+  commentMetadata: {},
+});
 ```
 
 <PropertiesList title="Returns">
@@ -4184,8 +4294,8 @@ const thread = createThread({ body: {}, attachments: [], metadata: {} });
     name="createThread"
     type="(options: CreateThreadOptions) => ThreadData"
   >
-    A function that creates a thread with an initial comment and optional
-    metadata. Returns the optimistic thread object.
+    A function that creates a thread with an initial comment, and optionally
+    thread and comment metadata. Returns the optimistic thread object.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4330,11 +4440,7 @@ function SearchBar() {
 
   // +++
   const searchThreadResolved =
-    threadResolved === "all"
-      ? undefined
-      : threadResolved === "resolved"
-        ? true
-        : false;
+    searchResolved === "all" ? undefined : searchResolved === "resolved";
   // +++
 
   const { results, isLoading, error } = useSearchComments({
@@ -4733,6 +4839,7 @@ const comment = createComment({
   threadId: "th_xxx",
   body: {},
   attachments: [],
+  metadata: {},
 });
 ```
 
@@ -4766,7 +4873,8 @@ useErrorListener((error) => {
 
 ### useEditComment[@badge=RoomProvider]
 
-Returns a function that edits a comment’s body.
+Returns a function that edits a comment’s body, and optionally its attachments
+and metadata.
 
 ```tsx
 import { useEditComment } from "@liveblocks/react/suspense";
@@ -4777,6 +4885,7 @@ editComment({
   commentId: "cm_xxx",
   body: {},
   attachments: [],
+  metadata: {},
 });
 ```
 
@@ -4785,7 +4894,8 @@ editComment({
     name="editComment"
     type="(options: EditCommentOptions) => void"
   >
-    A function that edits a comment’s body and attachments.
+    A function that edits a comment’s body, and optionally its attachments and
+    metadata.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4803,6 +4913,51 @@ useErrorListener((error) => {
   if (error.context.type === "EDIT_COMMENT_ERROR") {
     const { roomId, threadId, commentId, body } = error.context;
     console.log(`Problem editing comment ${commentId}`);
+  }
+});
+```
+
+### useEditCommentMetadata [@badge=RoomProvider]
+
+Returns a function that edits a comment’s metadata. To delete an existing
+metadata property, set its value to `null`. Passing `undefined` for a metadata
+property will ignore it.
+
+```tsx
+import { useEditCommentMetadata } from "@liveblocks/react/suspense";
+
+const editCommentMetadata = useEditCommentMetadata();
+editCommentMetadata({
+  threadId: "th_xxx",
+  commentId: "cm_xxx",
+  metadata: {},
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="editCommentMetadata"
+    type="(options: { threadId: string; commentId: string; metadata: CommentMetadata }) => void"
+  >
+    A function that edits a comment’s metadata. To delete an existing metadata
+    property, set its value to `null`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Error handling [#useEditCommentMetadata-error-handling]
+
+`useEditCommentMetadata` edits comment metadata optimistically, meaning that the
+metadata appears updated instantly, before Liveblocks has confirmed a successful
+metadata update. To catch any errors that occur, add [`useErrorListener`][] and
+look for the `EDIT_COMMENT_METADATA_ERROR` type.
+
+```tsx
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  if (error.context.type === "EDIT_COMMENT_METADATA_ERROR") {
+    const { roomId, threadId, commentId, metadata } = error.context;
+    console.log(`Problem editing comment metadata ${commentId}`);
   }
 });
 ```
@@ -6160,6 +6315,87 @@ export const {
 
 To upgrade to Liveblocks 2.0 and the new typing system, follow the
 [2.0 migration guide](/docs/platform/upgrading/2.0).
+
+### User [#user-type]
+
+`User` is a type that’s returned by [`useSelf`][], [`useOthers`][], and other
+functions. Some of its values are set when
+[typing your room](#Typing-your-data), here are some example values:
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // Each user’s Presence
+    // +++
+    Presence: {
+      cursor: { x: number; y: number };
+    };
+    // +++
+
+    UserMeta: {
+      id: string;
+      // Custom user info set when authenticating with a secret key
+      // +++
+      info: {
+        name: string;
+        avatar: string;
+      };
+      // +++
+    };
+  }
+}
+```
+
+```ts
+const { room, leave } = client.enterRoom("my-room-id");
+
+// {
+//   connectionId: 52,
+//   +++
+//   presence: {
+//     cursor: { x: 263, y: 786 },
+//   },
+//   +++
+//   id: "mislav.abha@example.com",
+//   +++
+//   info: {
+//     name: "Mislav Abha",
+//     avatar: "/mislav.png",
+//   },
+//   +++
+//   canWrite: true,
+//   canComment: true,
+// }
+const user = room.getSelf();
+```
+
+<PropertiesList title="Properties">
+  <PropertiesListItem name="connectionId" type="number">
+    The connection ID of the User. It is unique and increments with every new
+    connection.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type={`UserMeta["id"]`}>
+    The ID of the User that has been set in the authentication endpoint. Useful
+    to get additional information about the connected user.
+  </PropertiesListItem>
+  <PropertiesListItem name="info" type={`UserMeta["info"]`}>
+    Additional user information that has been set in the authentication
+    endpoint.
+  </PropertiesListItem>
+  <PropertiesListItem name="presence" type={`TPresence`}>
+    The user’s Presence data.
+  </PropertiesListItem>
+  <PropertiesListItem name="canWrite" type="boolean">
+    `true` if the user can mutate the Room’s Storage and/or YDoc, `false` if
+    they can only read but not mutate it. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
+  </PropertiesListItem>
+  <PropertiesListItem name="canComment" type="boolean">
+    `true` if the user can leave a comment in the room, `false` if they can only
+    read comments but not leave them. Set via your [room
+    permissions](/docs/authentication#Room-permissions).
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Helpers
 

@@ -55,6 +55,7 @@ export default class MockWebSocket {
           nonce: `nonce-for-actor-${actor}`,
           scopes: ["room:write"],
           users: {},
+          meta: {},
         };
         msgCb({ data: JSON.stringify(msg) } as MessageEvent);
       }
@@ -149,14 +150,14 @@ export async function websocketSimulator() {
 
   function simulateStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE,
       items: [["root", { type: CrdtType.OBJECT, data: {} }]],
     });
   }
 
   function simulateExistingStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE,
       items: [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         [

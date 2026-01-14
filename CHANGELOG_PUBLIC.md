@@ -18,6 +18,70 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 2 (2026-01-09)
+
+## Dashboard
+
+- Data refreshes much more quickly when viewing rooms.
+- Added floating avatar on pricing page.
+- Fixed bug with linking integrations to `create-liveblocks-app` CLI.
+
+## Contributors
+
+ctnicholas
+
+# Week 51 (2025-12-19)
+
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve some internal type definitions
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added `badgeLocation` option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added `badgeLocation` option to `LiveblocksProvider` to control the branding
+  location for free plans.
+
+## Infrastructure
+
+- We've been doing lots of prep work to enable a new opt-in storage engine for Liveblocks
+  rooms that will bring performance benefits like faster room connection speed and larger
+  document sizes to everyone—stay tuned!
+
+## Documentation
+
+- Fix `useThreads` API reference, it returns _oldest_ threads first, not _newest_ threads.
+
+## Contributors
+
+jrowny, nvie, flowflorent
+
+# Week 50 (2025-12-12)
+
+## v3.11.1
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
+## Contributors
+
+jrowny
+
 # Week 49 (2025-12-05)
 
 ## Examples

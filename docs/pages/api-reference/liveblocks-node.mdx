@@ -23,17 +23,419 @@ const liveblocks = new Liveblocks({
 });
 ```
 
-### Authorization
+### Authentication [#Authorization]
 
-To authorize your users with Liveblocks, you have the choice between two
+To authenticate your users with Liveblocks, you have the choice between two
 different APIs.
 
-- [`Liveblocks.prepareSession`](#access-tokens) is recommended for most
-  applications.
-- [`Liveblocks.identifyUser`](#id-tokens) is best if you’re using fine-grained
-  permissions with our REST API.
+- [`Liveblocks.identifyUser`](#id-tokens) ID token authentication is recommend
+  for most applications.
+- [`Liveblocks.prepareSession`](#access-tokens) Access token authentication is
+  best if you prefer handle permissions on your end, though it has
+  [limitations](/docs/authentication/access-token#limitations).
+
+#### Liveblocks.identifyUser [#id-tokens]
+
+Creates an ID token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get ID Token API](/docs/api-reference/rest-api-endpoints#post-identify-user)
+and returns the same response.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+});
+```
+
+<Banner>
+  Learn how to [get started with ID tokens](/docs/authentication).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+
+    // Optional, only view resources on this tenant
+    tenantId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing", "engineering"],
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+##### Granting ID token permissions
+
+You can pass additional options to `identifyUser`, enabling you to create
+complex [workspace permissions](/docs/authentication#permissions) and
+[room permissions](/docs/authentication#Room-permissions). For example, this
+user can only see resources in the `acme-corp` workspace, and they’re part of a
+`marketing` rooms group within it.
+
+```ts
+const { body, status } = await liveblocks.identifyUser({
+  // Required, the current user's ID
+  userId: "marie@example.com",
+
+  // Optional, only view resources on this workspace
+  // +++
+  tenantId: "acme-corp",
+  // +++
+
+  // Optional, used to provision room access on group level
+  // +++
+  groupIds: ["marketing"],
+  // +++
+});
+```
+
+<Banner>
+  Learn more about [ID token permissions](/docs/authentication#permissions).
+</Banner>
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const { body, status } = await liveblocks.identifyUser(
+  {
+    // Required, the current user's ID
+    userId: "marie@example.com",
+  },
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How ID tokens work
+
+The purpose of this API is to help you implement your custom authentication back
+end (i.e. the _server_ part of the diagram). You use the
+`liveblocks.identifyUser()` API if you’d like to issue
+[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
+not grant any permissions in the token directly. Instead, it only securely
+identifies your user, and then uses any permissions set via the [Permissions
+REST API][] to decide whether to allow the user on a room-by-room basis.
+
+Use this approach if you’d like Liveblocks to be the source of truth for your
+user’s permissions.
+
+<Banner title="What are ID tokens?">
+  Issuing identity tokens is like issuing _membership cards_. Anyone with a
+  membership card can try to enter a room, but your permissions will be checked
+  at the door. The Liveblocks servers perform this authorization, so your
+  permissions need to be set up front using the Liveblocks REST API.
+</Banner>
+
+<Figure>
+  <Image
+    src="/assets/id-token-auth-diagram.png"
+    alt="Auth diagram"
+    width={768}
+    height={576}
+  />
+</Figure>
+
+Implement your back end endpoint as follows:
+
+```ts showLineNumbers={false}
+const { body, status } = await liveblocks.identifyUser(
+  {
+    userId: "marie@example.com", // Required, user ID from your DB
+    groupIds: ["marketing", "engineering"],
+    // Optional, identify the user in a specific tenant
+    tenantId: "acme-corp",
+  },
+
+  // Optional
+  {
+    userInfo: {
+      name: "Marie",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+
+return new Response(body, { status });
+```
+
+`userId` (required) is a string identifier to uniquely identify your user with
+Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
+dashboard. You can refer to these user IDs in the [Permissions REST API][] when
+assigning group permissions.
+
+`groupIds` (optional) can be used to specify which groups this user belongs to.
+These are arbitrary identifiers that make sense to your app, and that you can
+refer to in the [Permissions REST API][] when assigning group permissions.
+
+`tenantId` (optional) is the tenant for this user, will be set to `default` if
+not provided.
+
+`userInfo` (optional) is any custom JSON value, which you can use to attach
+static metadata to this user’s session. This will be publicly visible to all
+other people in the room. Useful for metadata like the user’s full name, or
+their avatar URL.
+
+##### ID tokens example
+
+Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
+You can find examples for other frameworks in our
+[authentication section](/docs/authentication/id-token).
+
+```ts file="Next.js"
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+export default async function auth(req, res) {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+
+  // Get the current user from your database
+  const user = __getUserFromDB__(req);
+
+  // Create an ID token for the user
+  const { body, status } = await liveblocks.identifyUser(
+    {
+      userId: user.id,
+    },
+    {
+      userInfo: {
+        name: user.fullName,
+        color: user.favoriteColor,
+      },
+    }
+  );
+
+  return new Response(body, { status });
+}
+```
 
 #### Liveblocks.prepareSession [#access-tokens]
+
+Creates an access token that is used to authenticate a user in your application.
+This is a wrapper around the
+[Get Access Token API](/docs/api-reference/rest-api-endpoints#post-authorize-user)
+and returns the same response.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+```
+
+<Banner>
+  Learn how to [get started with access
+  tokens](/docs/authentication/access-token).
+</Banner>
+
+A number of options are also available, enabling you to set up permissions and
+user metadata.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this tenant
+    tenantId: "acme-corp",
+
+    // Optional, used to provision room access on group level
+    groupIds: ["marketing"],
+
+    // Optional, custom user metadata
+    userInfo: {
+      name: "Marie",
+      color: "#00ff00",
+      avatar: "https://example.com/avatar/marie.jpg",
+    },
+  }
+);
+```
+
+##### Granting access token permissions
+
+Using `session.allow()`, you can grant full or read-only permissions to the user
+to select rooms. Wildcards can be used to enable granting permissions to
+multiple rooms at once using
+[naming patterns](/docs/authentication/access-token#Naming-pattern).
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com"
+);
+
+// Giving access to an individual rooms
+session.allow("room-id-1", session.FULL_ACCESS);
+
+// Giving read-only access to this room
+session.allow("room-id-2", session.READ_ACCESS);
+
+// Giving access to multiple rooms with a wildcard
+// `design-room-1`, `design-room-2`, etc.
+session.allow("design-room:*", session.FULL_ACCESS);
+```
+
+<Banner>
+  Learn more about [access token
+  permissions](/docs/authentication/access-token#permissions).
+</Banner>
+
+Additionally, you can pass additional options to `prepareSession`, enabling you
+to create complex permissions using [tenants](/docs/authentication/tenants) and
+[accesses](/docs/authentication/access-tokens/permissions). For example, this
+user can only see resources in the `acme-corp` tenant, and they’re part of a
+`marketing` group within it.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, only view resources on this tenant
+    // +++
+    tenantId: "acme-corp",
+    // +++
+
+    // Optional, used to provision room access on group level
+    // +++
+    groupIds: ["marketing"],
+    // +++
+  }
+);
+```
+
+##### Text editor user data
+
+When using
+[text editor integrations](/docs/ready-made-features/multiplayer#Text-editor-integrations),
+user data is inserted into their live cursor within the editor, showing their
+name and color. This data originates from the `userInfo` property of the
+session.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, user metadata
+    userInfo: {
+      // Used in text editor live carets
+      // +++
+      name: "Marie",
+      color: "#00ff00",
+      // +++
+    },
+  }
+);
+```
+
+##### Custom user metadata
+
+You can pass additional options to `prepareSession`, enabling you to add custom
+user metadata to the session. This metadata can be accessed by all users in the
+room, and is useful for building features such as live avatar stacks.
+
+```ts
+const session = liveblocks.prepareSession(
+  // Required, the current user's ID
+  "marie@example.com",
+  {
+    // Optional, custom user metadata
+    userInfo: {
+      // Add custom properties to use on front end, e.g. avatar stacks
+      // +++
+      avatar: "https://example.com/avatar/marie.jpg",
+      // +++
+      // ...
+    },
+  }
+);
+```
+
+To access it on the front end, use hooks such as
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) and
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers).
+
+```tsx
+const currentUser = useSelf();
+
+// "https://example.com/avatar/marie.jpg"
+console.log(currentUser.info.avatar);
+```
+
+##### How access tokens work
 
 The purpose of this API is to help you implement your custom authentication back
 end (i.e. the _server_ part of the diagram). You use the
@@ -170,117 +572,6 @@ export async function POST(request: Request) {
   // Retrieve a token from the Liveblocks servers and pass it to the
   // requesting client
   const { body, status } = await session.authorize();
-  return new Response(body, { status });
-}
-```
-
-#### Liveblocks.identifyUser [#id-tokens]
-
-The purpose of this API is to help you implement your custom authentication back
-end (i.e. the _server_ part of the diagram). You use the
-`liveblocks.identifyUser()` API if you’d like to issue
-[ID tokens](/docs/authentication/id-token) from your back end. An ID token does
-not grant any permissions in the token directly. Instead, it only securely
-identifies your user, and then uses any permissions set via the [Permissions
-REST API][] to decide whether to allow the user on a room-by-room basis.
-
-Use this approach if you’d like Liveblocks to be the source of truth for your
-user’s permissions.
-
-<Banner title="What are ID tokens?">
-  Issuing identity tokens is like issuing _membership cards_. Anyone with a
-  membership card can try to enter a room, but your permissions will be checked
-  at the door. The Liveblocks servers perform this authorization, so your
-  permissions need to be set up front using the Liveblocks REST API.
-</Banner>
-
-<Figure>
-  <Image
-    src="/assets/id-token-auth-diagram.png"
-    alt="Auth diagram"
-    width={768}
-    height={576}
-  />
-</Figure>
-
-Implement your back end endpoint as follows:
-
-```ts showLineNumbers={false}
-const { body, status } = await liveblocks.identifyUser(
-  {
-    userId: "marie@example.com", // Required, user ID from your DB
-    groupIds: ["marketing", "engineering"],
-    // Optional, identify the user in a specific tenant
-    tenantId: "acme-corp",
-  },
-
-  // Optional
-  {
-    userInfo: {
-      name: "Marie",
-      avatar: "https://example.com/avatar/marie.jpg",
-    },
-  }
-);
-
-return new Response(body, { status });
-```
-
-`userId` (required) is a string identifier to uniquely identify your user with
-Liveblocks. This value will be used when counting unique MAUs in your Liveblocks
-dashboard. You can refer to these user IDs in the [Permissions REST API][] when
-assigning group permissions.
-
-`groupIds` (optional) can be used to specify which groups this user belongs to.
-These are arbitrary identifiers that make sense to your app, and that you can
-refer to in the [Permissions REST API][] when assigning group permissions.
-
-`tenantId` (optional) is the tenant for this user, will be set to `default` if
-not provided.
-
-`userInfo` (optional) is any custom JSON value, which you can use to attach
-static metadata to this user’s session. This will be publicly visible to all
-other people in the room. Useful for metadata like the user’s full name, or
-their avatar URL.
-
-##### ID tokens example
-
-Here’s a real-world example of ID tokens in a Next.js route handler/endpoint.
-You can find examples for other frameworks in our
-[authentication section](/docs/authentication/id-token).
-
-```ts file="Next.js"
-import { Liveblocks } from "@liveblocks/node";
-
-const liveblocks = new Liveblocks({
-  secret: "{{SECRET_KEY}}",
-});
-
-export default async function auth(req, res) {
-  /**
-   * Implement your own security here.
-   *
-   * It's your responsibility to ensure that the caller of this endpoint
-   * is a valid user by validating the cookies or authentication headers
-   * and that it has access to the requested room.
-   */
-
-  // Get the current user from your database
-  const user = __getUserFromDB__(req);
-
-  // Create an ID token for the user
-  const { body, status } = await liveblocks.identifyUser(
-    {
-      userId: user.id,
-    },
-    {
-      userInfo: {
-        name: user.fullName,
-        color: user.favoriteColor,
-      },
-    }
-  );
-
   return new Response(body, { status });
 }
 ```
@@ -678,7 +969,7 @@ more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. If the room doesn't exist, or has already been deleted, no error
+Deletes a room. If the room doesn’t exist, or has already been deleted, no error
 will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
@@ -905,7 +1196,7 @@ const group = await liveblocks.createGroup({
 
 #### Liveblocks.getGroup [#get-group]
 
-Returns a group by its ID. Throws an error if the group isn't found. This is a
+Returns a group by its ID. Throws an error if the group isn’t found. This is a
 wrapper around the
 [Get Group API](/docs/api-reference/rest-api-endpoints#get-groups-groupId) and
 returns the same response.
@@ -1009,7 +1300,7 @@ console.log(updatedGroup);
 
 #### Liveblocks.deleteGroup [#delete-group]
 
-Deletes a group. If the group doesn't exist, no error will be thrown. This is a
+Deletes a group. If the group doesn’t exist, no error will be thrown. This is a
 wrapper around the
 [Delete Group API](/docs/api-reference/rest-api-endpoints#delete-groups-groupId)
 and returns no response.
@@ -1754,6 +2045,12 @@ const thread = await liveblocks.createThread({
       // Optional, when the comment was created.
       createdAt: new Date(),
 
+      // Optional, custom comment metadata
+      metadata: {
+        tag: "important",
+        spam: false,
+      },
+
       // The comment's body, uses the `CommentBody` type
       body: {
         version: 1,
@@ -1842,6 +2139,67 @@ const editedMetadata = await liveblocks.editThreadMetadata({
 });
 
 // { title: "My thread title", page: 3, pinned: true }
+console.log(editedMetadata);
+```
+
+#### Liveblocks.editCommentMetadata [#post-rooms-roomId-threads-threadId-comments-commentId-metadata]
+
+Updates the metadata of a specific comment within a thread. This method allows
+you to modify the metadata of a comment, including user information and the date
+of the last update. Throws an error if the room, thread, or comment isn’t found.
+This is a wrapper around the
+[Update Comment Metadata API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-metadata)
+and returns the updated metadata.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    metadata: {
+      spam: false,
+    },
+    userId: "stacy@example.com",
+    updatedAt: new Date(), // Optional
+  },
+});
+
+// { spam: false }
+console.log(editedMetadata);
+```
+
+Metadata can be a `string`, `number`, or `boolean`. You can also use `null` to
+remove metadata from a comment. Here’s an example using every option.
+
+```ts
+const editedMetadata = await liveblocks.editCommentMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  commentId: "cm_agH76a...",
+
+  data: {
+    // Custom metadata
+    metadata: {
+      // Metadata can be a string, number, or boolean
+      tag: "important",
+      priority: 2,
+      spam: true,
+
+      // Remove metadata with null
+      assignedTo: null,
+    },
+
+    // The ID of the user that updated the metadata
+    userId: "stacy@example.com",
+
+    // Optional, the time the user updated the metadata
+    updatedAt: new Date(),
+  },
+});
+
+// { tag: "important", priority: 2, flagged: true }
 console.log(editedMetadata);
 ```
 
@@ -2085,7 +2443,7 @@ const comment = await liveblocks.createComment({
 ```
 
 This method has a number of options, including the option to add a custom
-creation date to the comment.
+creation date and metadata to the comment.
 
 ```ts
 const comment = await liveblocks.createComment({
@@ -2104,8 +2462,14 @@ const comment = await liveblocks.createComment({
     // The ID of the user that created the comment
     userId: "adrien@example.com",
 
-    // The time the comment was created
+    // Optional, the time the comment was created
     createdAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      reviewed: false,
+    },
   },
 });
 ```
@@ -2144,14 +2508,22 @@ const editedComment = await liveblocks.editComment({
   commentId: "cm_agH76a...",
 
   data: {
+    userId: "alicia@example.com",
     body: {
       version: 1,
       content: [
         /* The comment's body text goes here, see below */
       ],
     },
-    userId: "alicia@example.com",
-    createdAt: new Date(), // Optional
+
+    // Optional, the time the comment was edited
+    editedAt: new Date(),
+
+    // Optional, custom comment metadata
+    metadata: {
+      tag: "important",
+      spam: false,
+    },
   },
 });
 
@@ -2163,9 +2535,10 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 an example of how to construct a comment’s body, which can be submitted under
 `data.body`.
 
-```tsx highlight="3-11,19"
+```tsx
 import { CommentBody } from "@liveblocks/node";
 
+// +++
 const body: CommentBody = {
   version: 1,
   content: [
@@ -2175,21 +2548,8 @@ const body: CommentBody = {
     },
   ],
 };
+// +++
 
-const comment = await liveblocks.createComment({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-
-  data: {
-    // The comment's body, uses the `CommentBody` type
-    body,
-
-    // ...
-  },
-});
-```
-
-```ts
 const editedComment = await liveblocks.editComment({
   roomId: "my-room-id",
   threadId: "th_d75sF3...",
@@ -2197,23 +2557,13 @@ const editedComment = await liveblocks.editComment({
 
   data: {
     // The comment's body, uses the `CommentBody` type
-    body: {
-      version: 1,
-      content: [
-        /* The comment's body text goes here, see above */
-      ],
-    },
+    // +++
+    body,
+    // +++
 
-    // The ID of the user that edited the comment
-    userId: "alicia@example.com",
-
-    // Optional, the time the comment was edited
-    editedAt: new Date(),
+    // ...
   },
 });
-
-// { type: "comment", threadId: "th_d75sF3...", ... }
-console.log(editedComment);
 ```
 
 #### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId]
@@ -2901,7 +3251,7 @@ await liveblocks.createAiCopilot({
 
 #### Liveblocks.getAiCopilot [#get-ai-copilot]
 
-Returns an AI copilot by its ID. Throws an error if the copilot isn't found.
+Returns an AI copilot by its ID. Throws an error if the copilot isn’t found.
 This is a wrapper around the
 [Get AI Copilot API](/docs/api-reference/rest-api-endpoints#get-ai-copilot) and
 returns the same response.
@@ -2915,8 +3265,8 @@ console.log(copilot);
 
 #### Liveblocks.updateAiCopilot [#update-ai-copilot]
 
-Updates an existing AI copilot's configuration. You only need to pass the
-properties you want to update. Throws an error if the copilot isn't found. This
+Updates an existing AI copilot’s configuration. You only need to pass the
+properties you want to update. Throws an error if the copilot isn’t found. This
 is a wrapper around the
 [Update AI Copilot API](/docs/api-reference/rest-api-endpoints#update-ai-copilot)
 and returns the same response.
@@ -2986,7 +3336,7 @@ await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-Certain properties can be set to `null` to clear them from the copilot's
+Certain properties can be set to `null` to clear them from the copilot’s
 configuration. This includes `description`, `knowledgePrompt`, `settings`, and
 `providerOptions`.
 
@@ -3003,16 +3353,16 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
 });
 ```
 
-The method returns a 422 response if the update doesn't apply due to validation
+The method returns a 422 response if the update doesn’t apply due to validation
 failures. For example, if the existing copilot uses the "openai" provider and
 you attempt to update the provider model to an incompatible value for the
-provider, like "gemini-2.5-pro", you'll receive a 422 response with an error
+provider, like "gemini-2.5-pro", you’ll receive a 422 response with an error
 message explaining where the validation failed.
 
 #### Liveblocks.deleteAiCopilot [#delete-ai-copilot]
 
 Deletes an AI copilot by its ID. A deleted copilot is no longer accessible and
-cannot be restored. Throws an error if the copilot isn't found. This is a
+cannot be restored. Throws an error if the copilot isn’t found. This is a
 wrapper around the
 [Delete AI Copilot API](/docs/api-reference/rest-api-endpoints#delete-ai-copilot)
 and returns no response.
@@ -3118,7 +3468,7 @@ const { data: sources, nextCursor } = await liveblocks.getKnowledgeSources({
 #### Liveblocks.getKnowledgeSource [#get-knowledge-source]
 
 Returns a specific knowledge source by its ID. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Get Knowledge Source API](/docs/api-reference/rest-api-endpoints#get-knowledge-source)
 and returns the same response.
 
@@ -3137,7 +3487,7 @@ console.log(source);
 
 Returns the content of a file knowledge source as Markdown. This allows you to
 see what content the AI copilot has access to from uploaded files. Throws an
-error if the knowledge source isn't found. This is a wrapper around the
+error if the knowledge source isn’t found. This is a wrapper around the
 [Get File Knowledge Source Content API](/docs/api-reference/rest-api-endpoints#get-file-knowledge-source-content)
 and returns the content as a string.
 
@@ -3190,7 +3540,7 @@ const { data: links, nextCursor } = await liveblocks.getWebKnowledgeSourceLinks(
 
 Deletes a web knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this source. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete Web Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-web-knowledge-source)
 and returns no response.
 
@@ -3205,7 +3555,7 @@ await liveblocks.deleteWebKnowledgeSource({
 
 Deletes a file knowledge source from an AI copilot. The copilot will no longer
 have access to the content from this file. Throws an error if the knowledge
-source isn't found. This is a wrapper around the
+source isn’t found. This is a wrapper around the
 [Delete File Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-file-knowledge-source)
 and returns no response.
 
@@ -3333,7 +3683,7 @@ console.log(mentions);
 
 <Banner title="Also available from @liveblocks/client">
 
-If you’d like to use this on the client side, it's also available from
+If you’d like to use this on the client side, it’s also available from
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client#get-mentions-from-comment-body).
 
 </Banner>

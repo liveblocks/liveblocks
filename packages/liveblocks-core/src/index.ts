@@ -97,12 +97,13 @@ export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
+  DCM,
   DE,
   DGI,
-  DM,
   DP,
   DRI,
   DS,
+  DTM,
   DU,
   KDAD,
 } from "./globals/augmentation";
@@ -272,6 +273,7 @@ export {
 } from "./protocol/NotificationSettings";
 export type {
   AckOp,
+  ClientWireOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -279,11 +281,13 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  HasOpId,
   Op,
+  ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { ackOp, OpCode } from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
 export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
@@ -302,10 +306,10 @@ export { CrdtType } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
+  StorageStateServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,

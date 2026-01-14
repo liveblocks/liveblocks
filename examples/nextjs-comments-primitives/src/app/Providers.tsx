@@ -2,6 +2,7 @@
 
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren } from "react";
+import { Tooltip } from "radix-ui";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -35,7 +36,7 @@ export function Providers({ children }: PropsWithChildren) {
         return userIds;
       }}
     >
-      {children}
+      <Tooltip.Provider>{children}</Tooltip.Provider>
     </LiveblocksProvider>
   );
 }

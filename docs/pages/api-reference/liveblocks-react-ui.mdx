@@ -1267,6 +1267,12 @@ declare global {
       x: number;
       y: number;
     };
+    CommentMetadata: {
+      // Example types, e.g. tags, context, external IDs
+      tag?: string;
+      spam: boolean;
+      slackMessageTs: string;
+    };
     // +++
 
     // Other types
@@ -1286,6 +1292,29 @@ import { Composer } from "@liveblocks/react-ui";
 // Adds a new comment to a thread
 function Component({ threadId }) {
   return <Composer threadId={threadId} />;
+}
+```
+
+##### Adding comment metadata
+
+If you’d like to attach custom metadata to a reply, you can add a
+`commentMetadata` prop.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new reply to an existing thread with custom metadata
+function Component({ threadId }) {
+  return (
+    <Composer
+      threadId={threadId}
+      commentMetadata={{
+        // Custom metadata here, e.g. tags, context, external IDs
+        tag: "important",
+        spam: false,
+      }}
+    />
+  );
 }
 ```
 
@@ -1349,6 +1378,12 @@ Learn more about mutation hooks under
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="commentMetadata"
+    type="CommentMetadata | Partial<CommentMetadata>"
+  >
+    The metadata of the comment to create or edit.
   </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
@@ -2784,6 +2819,7 @@ on the
 - [`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
 - [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
+- [`useEditCommentMetadata`](/docs/api-reference/liveblocks-react#useEditCommentMetadata)
 - [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
 - [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
 - [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)

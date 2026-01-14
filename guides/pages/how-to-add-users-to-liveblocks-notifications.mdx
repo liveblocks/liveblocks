@@ -40,28 +40,17 @@ your app, as this is necessary for Notifications.
 Make sure to follow the metadata step in the guide, and attach the name of your
 user, along with the URL of their avatar, as these properties will both be used
 in the [default components](/docs/ready-made-features/notifications#Components).
-Here’s an example using access token authentication, with an email address as a
-user’s ID.
+Here’s an example using ID token authentication, our recommended method, with an
+email address as a user’s ID.
 
-```ts title="Metadata in access tokens"
-const session = liveblocks.prepareSession("marc@example.com", {
-  userInfo: {
-    name: "Marc",
-    avatar: "https://example.com/marc.png",
-
-    // Your custom metadata
-    // ...
-  },
-});
-```
-
-If you’re using ID token authentication, it’ll look a little different.
-
-```ts title="Metadata in ID tokens" isCollapsed isCollapsable
+```ts title="Metadata in ID tokens"
 const { status, body } = await liveblocks.identifyUser(
   {
     userId: "marc@example.com",
-    groupIds: [], // Optional
+
+    // Optional
+    // tenantId: "org-id",
+    // groupIds: ["group-id-1", "group-id-2"],
   },
   {
     userInfo: {
@@ -75,8 +64,8 @@ const { status, body } = await liveblocks.identifyUser(
 );
 ```
 
-Don’t forget to modify your `UserMeta` type in `liveblocks.config.ts` to match
-the metadata format, adding type hints to your editor.
+Modify your `UserMeta` type in `liveblocks.config.ts` to match the metadata
+format, adding type hints to your editor.
 
 ```ts file="liveblocks.config.ts"
 declare global {

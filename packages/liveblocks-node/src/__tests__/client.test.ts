@@ -74,6 +74,7 @@ describe("client", () => {
       version: 1,
       content: [],
     },
+    metadata: {},
   };
 
   const thread: ThreadData<{
@@ -247,12 +248,13 @@ describe("client", () => {
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
           const url = new URL(request.url);
 
-          expect(url.searchParams.size).toEqual(5);
+          expect(url.searchParams.size).toEqual(6);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual("2");
           expect(url.searchParams.get("query")).toEqual(
             "roomId^'liveblocks:' metadata['color']:'blue'"
           );
+          expect(url.searchParams.get("tenantId")).toEqual("tenant1");
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
@@ -272,6 +274,7 @@ describe("client", () => {
         client.getRooms({
           limit: 10,
           startingAfter: "2",
+          tenantId: "tenant1",
           query: {
             roomId: {
               startsWith: "liveblocks:",
@@ -509,6 +512,7 @@ describe("client", () => {
         usersAccesses: undefined,
         tenantId,
         metadata: undefined,
+        engine: undefined,
       });
     });
 
@@ -537,6 +541,66 @@ describe("client", () => {
         usersAccesses: undefined,
         tenantId: undefined,
         metadata: undefined,
+        engine: undefined,
+      });
+    });
+
+    test("should pass engine to the request when createRoom is called with engine", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        engine: 2 as const,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId: undefined,
+        metadata: undefined,
+        engine: 2,
+      });
+    });
+
+    test("should not include engine in the request when createRoom is called without engine", async () => {
+      const roomId = "test-room";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        tenantId: undefined,
+        metadata: undefined,
+        engine: undefined,
       });
     });
   });
@@ -735,6 +799,69 @@ describe("client", () => {
           expect(err.name).toBe("LiveblocksError");
         }
       }
+    });
+
+    test("should return the created thread with comment metadata", async () => {
+      const threadData = {
+        comment: {
+          userId: "user1",
+          createdAt: new Date(),
+          body: {
+            version: 1 as const,
+            content: [],
+          },
+          metadata: {
+            priority: 1,
+            reviewed: false,
+          },
+        },
+        metadata: {
+          color: "blue",
+        },
+      };
+
+      const threadWithCommentMetadata: ThreadData<
+        { color: string },
+        { priority: number; reviewed?: boolean }
+      > = {
+        ...thread,
+        comments: [
+          {
+            ...comment,
+            metadata: {
+              priority: 1,
+              reviewed: false,
+            },
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(threadData) === JSON.stringify(data)) {
+              return HttpResponse.json(threadWithCommentMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createThread({
+        roomId: "room1",
+        data: threadData,
+      });
+
+      expect(res).toEqual(threadWithCommentMetadata);
+      expect(res.comments[0]?.metadata).toEqual({
+        priority: 1,
+        reviewed: false,
+      });
     });
   });
 
@@ -1294,6 +1421,234 @@ describe("client", () => {
           commentId: "comment1",
         })
       ).resolves.toEqual(comment);
+    });
+  });
+
+  describe("create comment", () => {
+    test("should return the created comment when createComment receives a successful response", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(comment);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createComment({
+        roomId: "room1",
+        threadId: "thread1",
+        data: commentData,
+      });
+
+      expect(res).toEqual(comment);
+    });
+
+    test("should return the created comment with metadata when createComment receives metadata", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+        metadata: {
+          priority: 1,
+          reviewed: false,
+        },
+      };
+
+      const commentWithMetadata: CommentData = {
+        ...comment,
+        metadata: {
+          priority: 1,
+          reviewed: false,
+        },
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(commentWithMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createComment({
+        roomId: "room1",
+        threadId: "thread1",
+        data: commentData,
+      });
+
+      expect(res).toEqual(commentWithMetadata);
+      expect(res.metadata).toEqual({
+        priority: 1,
+        reviewed: false,
+      });
+    });
+
+    test("should throw a LiveblocksError when createComment receives an error response", async () => {
+      const commentData = {
+        userId: "user1",
+        body: {
+          version: 1 as const,
+          content: [],
+        },
+      };
+
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(commentData) === JSON.stringify(data)) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to create a comment, which should fail and throw an error.
+        await client.createComment({
+          roomId: "room1",
+          threadId: "thread1",
+          data: commentData,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("edit comment metadata", () => {
+    test("should return the updated comment metadata when editCommentMetadata receives a successful response", async () => {
+      const metadataData = {
+        userId: "user1",
+        metadata: {
+          priority: 2,
+          reviewed: true,
+        },
+      };
+
+      const updatedMetadata = {
+        priority: 2,
+        reviewed: true,
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId/metadata`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(metadataData) === JSON.stringify(data)) {
+              return HttpResponse.json(updatedMetadata);
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.editCommentMetadata({
+        roomId: "room1",
+        threadId: "thread1",
+        commentId: "comment1",
+        data: metadataData,
+      });
+
+      expect(res).toEqual(updatedMetadata);
+    });
+
+    test("should throw a LiveblocksError when editCommentMetadata receives an error response", async () => {
+      const metadataData = {
+        userId: "user1",
+        metadata: {
+          priority: 2,
+        },
+      };
+
+      const error = {
+        error: "COMMENT_NOT_FOUND",
+        message: "Comment not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/comments/:commentId/metadata`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(metadataData) === JSON.stringify(data)) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to edit comment metadata, which should fail and throw an error.
+        await client.editCommentMetadata({
+          roomId: "room1",
+          threadId: "thread1",
+          commentId: "comment1",
+          data: metadataData,
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Comment not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 

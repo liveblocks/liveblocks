@@ -10,7 +10,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
@@ -46,12 +46,14 @@ type FloatingThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface FloatingThreadsProps<M extends BaseMetadata = DM>
-  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+export interface FloatingThreadsProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
    * The threads to display.
    */
-  threads: ThreadData<M>[];
+  threads: ThreadData<TM, CM>[];
 
   /**
    * Override the component's components.

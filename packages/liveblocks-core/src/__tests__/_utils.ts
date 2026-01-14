@@ -22,7 +22,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { Op } from "../protocol/Op";
+import type { Op, ServerWireOp } from "../protocol/Op";
 import type {
   IdTuple,
   SerializedCrdt,
@@ -113,9 +113,9 @@ export function makeSyncSource(): SyncSource {
   };
 }
 
-function makeRoomConfig<M extends BaseMetadata>(
+function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
   mockedDelegates: RoomDelegates
-): RoomConfig<M> {
+): RoomConfig<TM, CM> {
   return {
     delegates: mockedDelegates,
     roomId: "room-id",
@@ -149,7 +149,8 @@ export function prepareRoomWithStorage_loadWithDelay<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -167,7 +168,7 @@ export function prepareRoomWithStorage_loadWithDelay<
     const sendStorageMsg = () =>
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE,
           items: clonedItems,
         })
       );
@@ -179,12 +180,12 @@ export function prepareRoomWithStorage_loadWithDelay<
     }
   });
 
-  const room = createRoom<P, S, U, E, M>(
+  const room = createRoom<P, S, U, E, TM, CM>(
     {
       initialPresence: {} as P,
       initialStorage: defaultStorage || ({} as S),
     },
-    makeRoomConfig(delegates)
+    makeRoomConfig<TM, CM>(delegates)
   );
 
   room.connect();
@@ -201,19 +202,22 @@ export async function prepareRoomWithStorage<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
 ) {
-  const { room, wss } = prepareRoomWithStorage_loadWithDelay<P, S, U, E, M>(
-    items,
-    actor,
-    defaultStorage,
-    scopes
-  );
+  const { room, wss } = prepareRoomWithStorage_loadWithDelay<
+    P,
+    S,
+    U,
+    E,
+    TM,
+    CM
+  >(items, actor, defaultStorage, scopes);
 
   const storage = await room.getStorage();
   return { storage, room, wss };
@@ -237,6 +241,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     S,
     never,
     never,
+    never,
     never
   >(items, actor, defaultStorage || ({} as S));
 
@@ -254,7 +259,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
       expect(wss.receivedMessages).toEqual(messages);
     },
 
-    applyRemoteOperations: (ops: Op[]) =>
+    applyRemoteOperations: (ops: ServerWireOp[]) =>
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
@@ -274,7 +279,8 @@ export async function prepareStorageTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
-  M extends BaseMetadata = never,
+  TM extends BaseMetadata = never,
+  CM extends BaseMetadata = never,
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
@@ -283,14 +289,14 @@ export async function prepareStorageTest<
   let currentActor = actor;
   const operations: Op[] = [];
 
-  const ref = await prepareRoomWithStorage<P, S, U, E, M>(
+  const ref = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
     items,
     -1,
     undefined,
     scopes
   );
 
-  const subject = await prepareRoomWithStorage<P, S, U, E, M>(
+  const subject = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
     items,
     currentActor,
     undefined,
@@ -353,6 +359,7 @@ export async function prepareStorageTest<
       nonce: `nonce-for-actor-${currentActor}`,
       scopes,
       users: { [currentActor]: { scopes: ["room:write"] } },
+      meta: {},
     })
   );
 
@@ -414,13 +421,13 @@ export async function prepareStorageTest<
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this INITIAL_STORAGE_STATE
+    // Next time a client socket connects, send this STORAGE_STATE
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
+            type: ServerMsgCode.STORAGE_STATE,
             items: nextStorageItems,
           })
         );
@@ -457,7 +464,7 @@ export async function prepareStorageTest<
     expectStorage,
     assertUndoRedo,
 
-    applyRemoteOperations: (ops: Op[]) =>
+    applyRemoteOperations: (ops: ServerWireOp[]) =>
       subject.wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
@@ -480,16 +487,17 @@ export async function prepareStorageUpdateTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
-  M extends BaseMetadata = never,
+  TM extends BaseMetadata = never,
+  CM extends BaseMetadata = never,
 >(
   items: IdTuple<SerializedCrdt>[]
 ): Promise<{
-  room: Room<P, S, U, E, M>;
+  room: Room<P, S, U, E, TM, CM>;
   root: LiveObject<S>;
   expectUpdates: (updates: JsonStorageUpdate[][]) => void;
 }> {
   const ref = await prepareRoomWithStorage(items, -1);
-  const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, -2);
+  const subject = await prepareRoomWithStorage<P, S, U, E, TM, CM>(items, -2);
 
   onTestFinished(
     subject.wss.onReceive.subscribe((data) => {
@@ -547,9 +555,10 @@ export async function prepareDisconnectedStorageUpdateTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
-  M extends BaseMetadata = never,
+  TM extends BaseMetadata = never,
+  CM extends BaseMetadata = never,
 >(items: IdTuple<SerializedCrdt>[]) {
-  const { storage, room } = await prepareRoomWithStorage<P, S, U, E, M>(
+  const { storage, room } = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
     items,
     -1
   );
@@ -579,12 +588,12 @@ export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: IdTuple<SerializedCrdt>[]
 ) {
-  // Next time a client socket connects, send this INITIAL_STORAGE_STATE
+  // Next time a client socket connects, send this STORAGE_STATE
   // message
   wss.onConnection((conn) =>
     conn.server.send(
       serverMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        type: ServerMsgCode.STORAGE_STATE,
         items: nextStorageItems,
       })
     )

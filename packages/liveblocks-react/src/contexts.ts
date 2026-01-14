@@ -50,9 +50,10 @@ export function useRoomOrNull<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
->(): Room<P, S, U, E, M> | null {
-  return useContext(RoomContext) as Room<P, S, U, E, M> | null;
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(): Room<P, S, U, E, TM, CM> | null {
+  return useContext(RoomContext) as Room<P, S, U, E, TM, CM> | null;
 }
 
 /**
