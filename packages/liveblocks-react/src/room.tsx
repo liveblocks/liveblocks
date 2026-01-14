@@ -410,6 +410,11 @@ function RoomProviderInner<
 >(
   props: RoomProviderProps<P, S> & {
     stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
+    // XXX Add BoundRoomContext: Context<...> prop?
+    // (Let's not call this prop RoomContext here like we do in the hooks, as
+    // it may imply that this is the _only_ RoomContext where this will get
+    // registered. We need to make it slightly more obvious that this will
+    // provide to both the BoundRoomContext as well as the GlobalRoomContext!)
   }
 ) {
   const client = useClient<U>();
@@ -539,6 +544,12 @@ function RoomProviderInner<
   }, [roomId, frozenProps, stableEnterRoom]);
 
   return (
+    // XXX Core idea:
+    // <GlobalRoomContext.Provider value={room}>
+    //   <BundleRoomContext.Provider value={room}>
+    //     {props.children}
+    //   </BundleRoomContext.Provider>
+    // </GlobalRoomContext.Provider>
     <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
   );
 }
@@ -2599,6 +2610,11 @@ export function createRoomContext<
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   type TRoom = Room<P, S, U, E, TM, CM>;
 
+  // XXX This function currently still uses a top-level, shared, RoomProvider
+  // function (defined above), but that function should be passed a the
+  // BoundRoomContext we created here. Then, this RoomProvider (and its
+  // RoomProviderInner child) should register the room into both the
+  // BoundRoomContext _and_ the GlobalRoomContext.
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
   ) {
@@ -2619,8 +2635,12 @@ export function createRoomContext<
 
   const shared = createSharedContext(client as Client<U>);
 
+  // XXX We need to start passing this "bound" room context to all the hooks
+  // below, so they will use this context stack.
+  const BoundRoomContext = createContext<TRoom | null>(null);
+
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
-    RoomContext: RoomContext as Context<TRoom | null>,
+    RoomContext: BoundRoomContext,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
     useRoom,
@@ -2682,7 +2702,7 @@ export function createRoomContext<
     ...shared.classic,
 
     suspense: {
-      RoomContext: RoomContext as Context<TRoom | null>,
+      RoomContext: BoundRoomContext,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
       useRoom,
