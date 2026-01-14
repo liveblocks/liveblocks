@@ -253,7 +253,7 @@ describe("client", () => {
           expect(url.searchParams.get("query")).toEqual(
             "roomId^'liveblocks:' metadata['color']:'blue'"
           );
-          expect(url.searchParams.get("tenantId")).toEqual("tenant1");
+          expect(url.searchParams.get("organizationId")).toEqual("tenant1");
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
@@ -484,7 +484,7 @@ describe("client", () => {
   });
 
   describe("create room", () => {
-    test("should pass tenantId to the request when createRoom is called with tenantId", async () => {
+    test("should pass organizationId to the request when createRoom is called with tenantId (backward compatibility)", async () => {
       const roomId = "test-room";
       const tenantId = "test-tenant";
       const createRoomParams = {
@@ -509,7 +509,7 @@ describe("client", () => {
         defaultAccesses: ["room:write"],
         groupsAccesses: undefined,
         usersAccesses: undefined,
-        tenantId,
+        organizationId: tenantId,
         metadata: undefined,
       });
     });
@@ -537,7 +537,6 @@ describe("client", () => {
         defaultAccesses: ["room:write"],
         groupsAccesses: undefined,
         usersAccesses: undefined,
-        tenantId: undefined,
         metadata: undefined,
       });
     });
@@ -2493,6 +2492,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2549,6 +2549,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2635,6 +2636,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2687,6 +2689,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T14:32:50.697Z",
         scopes: { mention: true },
@@ -2736,6 +2739,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
@@ -2811,6 +2815,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T15:30:00.000Z",
         scopes: { mention: true },
@@ -2848,6 +2853,7 @@ describe("client", () => {
         type: "group",
         id: "group1",
         tenantId: "tenant1",
+        organizationId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T15:30:00.000Z"),
         scopes: { mention: true },
@@ -2959,6 +2965,7 @@ describe("client", () => {
           type: "group",
           id: "group1",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
           scopes: { mention: true },
@@ -2973,6 +2980,7 @@ describe("client", () => {
           type: "group",
           id: "group2",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
           scopes: { mention: true },
@@ -3010,6 +3018,7 @@ describe("client", () => {
             type: "group",
             id: "group1",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
             scopes: { mention: true },
@@ -3024,6 +3033,7 @@ describe("client", () => {
             type: "group",
             id: "group2",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
             scopes: { mention: true },
@@ -3101,6 +3111,7 @@ describe("client", () => {
           type: "group",
           id: "group1",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
           scopes: { mention: true },
@@ -3119,6 +3130,7 @@ describe("client", () => {
           type: "group",
           id: "group3",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-15T09:00:00.000Z",
           updatedAt: "2022-07-15T09:00:00.000Z",
           scopes: { mention: true },
@@ -3152,6 +3164,7 @@ describe("client", () => {
             type: "group",
             id: "group1",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
             scopes: { mention: true },
@@ -3170,6 +3183,7 @@ describe("client", () => {
             type: "group",
             id: "group3",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-15T09:00:00.000Z"),
             updatedAt: new Date("2022-07-15T09:00:00.000Z"),
             scopes: { mention: true },
@@ -3194,6 +3208,7 @@ describe("client", () => {
           type: "group",
           id: "group2",
           tenantId: "tenant1",
+          organizationId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
           scopes: { mention: true },
@@ -3234,6 +3249,7 @@ describe("client", () => {
             type: "group",
             id: "group2",
             tenantId: "tenant1",
+            organizationId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
             scopes: { mention: true },
