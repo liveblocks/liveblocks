@@ -90,7 +90,7 @@ export class Session {
   #postFn: PostFn;
   #userId: string;
   #userInfo?: IUserInfo;
-  #tenantId?: string;
+  #organizationId?: string;
   #sealed = false;
   readonly #permissions: Map<string, Set<Permission>> = new Map();
 
@@ -99,14 +99,14 @@ export class Session {
     postFn: PostFn,
     userId: string,
     userInfo?: IUserInfo,
-    tenantId?: string
+    organizationId?: string
   ) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this.#postFn = postFn;
     this.#userId = userId;
     this.#userInfo = userInfo;
-    this.#tenantId = tenantId;
+    this.#organizationId = organizationId;
   }
 
   #getOrCreate(roomId: string): Set<Permission> {
@@ -191,15 +191,25 @@ export class Session {
     }
 
     try {
-      const resp = await this.#postFn(url`/v2/authorize-user`, {
+      const body: {
+        userId: string;
+        permissions: JsonObject;
+        userInfo?: IUserInfo;
+        organizationId?: string;
+      } = {
         // Required
         userId: this.#userId,
         permissions: this.serializePermissions(),
 
         // Optional metadata
         userInfo: this.#userInfo,
-        tenantId: this.#tenantId,
-      });
+      };
+
+      if (this.#organizationId !== undefined) {
+        body.organizationId = this.#organizationId;
+      }
+
+      const resp = await this.#postFn(url`/v2/authorize-user`, body);
 
       return {
         status: normalizeStatusCode(resp.status),
