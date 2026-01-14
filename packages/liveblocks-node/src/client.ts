@@ -4,6 +4,8 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  AgentMessage,
+  AgentSession,
   Awaitable,
   BaseMetadata,
   BaseUserMeta,
@@ -563,6 +565,26 @@ export type GetWebKnowledgeSourceLinksOptions = {
   copilotId: string;
   knowledgeSourceId: string;
 } & PaginationOptions;
+
+export type CreateAgentSessionOptions = {
+  sessionId: string;
+  metadata?: JsonObject;
+  timestamp?: number;
+};
+
+export type UpdateAgentSessionOptions = {
+  metadata: JsonObject;
+};
+
+export type CreateAgentMessageOptions = {
+  id?: string;
+  timestamp?: number;
+  data: JsonObject;
+};
+
+export type UpdateAgentMessageOptions = {
+  data: JsonObject;
+};
 
 type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
 
@@ -3050,6 +3072,235 @@ export class Liveblocks {
       ...page,
       data: page.data.map(inflateWebKnowledgeSourceLink),
     };
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Agent Sessions
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a list of agent sessions in a room.
+   * @param params.roomId The room ID to get the agent sessions from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of agent sessions.
+   */
+  public async getAgentSessions(
+    params: { roomId: string },
+    options?: RequestOptions
+  ): Promise<{ data: AgentSession[] }> {
+    const { roomId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/agent-sessions`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: AgentSession[] };
+  }
+
+  /**
+   * Creates a new agent session in a room.
+   * @param params.roomId The room ID to create the agent session in.
+   * @param params.sessionId The session ID for the agent session.
+   * @param params.metadata (optional) The metadata for the agent session.
+   * @param params.timestamp (optional) The timestamp for the agent session. If not provided, the current time will be used.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created agent session.
+   */
+  public async createAgentSession(
+    params: { roomId: string } & CreateAgentSessionOptions,
+    options?: RequestOptions
+  ): Promise<AgentSession> {
+    const { roomId, sessionId, metadata, timestamp } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/agent-sessions`,
+      { sessionId, metadata, timestamp },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AgentSession;
+  }
+
+  /**
+   * Returns an agent session with the given id.
+   * @param params.roomId The room ID to get the agent session from.
+   * @param params.agentSessionId The agent session ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The agent session.
+   */
+  public async getAgentSession(
+    params: { roomId: string; agentSessionId: string },
+    options?: RequestOptions
+  ): Promise<AgentSession> {
+    const { roomId, agentSessionId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AgentSession;
+  }
+
+  /**
+   * Updates the metadata of an agent session.
+   * @param params.roomId The room ID to update the agent session in.
+   * @param params.agentSessionId The agent session ID to update.
+   * @param params.metadata The metadata for the agent session.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated agent session.
+   */
+  public async updateAgentSessionMetadata(
+    params: {
+      roomId: string;
+      agentSessionId: string;
+    } & UpdateAgentSessionOptions,
+    options?: RequestOptions
+  ): Promise<AgentSession> {
+    const { roomId, agentSessionId, metadata } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}`,
+      { metadata },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AgentSession;
+  }
+
+  /**
+   * Deletes an agent session.
+   * @param params.roomId The room ID to delete the agent session from.
+   * @param params.agentSessionId The agent session ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteAgentSession(
+    params: { roomId: string; agentSessionId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, agentSessionId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Returns a list of agent messages in an agent session.
+   * @param params.roomId The room ID to get the agent messages from.
+   * @param params.agentSessionId The agent session ID to get the messages from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of agent messages.
+   */
+  public async getAgentMessages(
+    params: { roomId: string; agentSessionId: string },
+    options?: RequestOptions
+  ): Promise<{ data: AgentMessage[] }> {
+    const { roomId, agentSessionId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: AgentMessage[] };
+  }
+
+  /**
+   * Creates a new agent message in an agent session.
+   * @param params.roomId The room ID to create the agent message in.
+   * @param params.agentSessionId The agent session ID to create the message in.
+   * @param params.id (optional) The message ID. If not provided, one will be generated.
+   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used.
+   * @param params.data The message data.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created agent message.
+   */
+  public async createAgentMessage(
+    params: {
+      roomId: string;
+      agentSessionId: string;
+    } & CreateAgentMessageOptions,
+    options?: RequestOptions
+  ): Promise<AgentMessage> {
+    const { roomId, agentSessionId, id, timestamp, data } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages`,
+      { id, timestamp, data },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AgentMessage;
+  }
+
+  /**
+   * Updates an agent message.
+   * @param params.roomId The room ID to update the agent message in.
+   * @param params.agentSessionId The agent session ID to update the message in.
+   * @param params.messageId The message ID to update.
+   * @param params.data The message data.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The updated agent message.
+   */
+  public async updateAgentMessage(
+    params: {
+      roomId: string;
+      agentSessionId: string;
+      messageId: string;
+    } & UpdateAgentMessageOptions,
+    options?: RequestOptions
+  ): Promise<AgentMessage> {
+    const { roomId, agentSessionId, messageId, data } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages/${messageId}`,
+      { data },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AgentMessage;
+  }
+
+  /**
+   * Deletes an agent message.
+   * @param params.roomId The room ID to delete the agent message from.
+   * @param params.agentSessionId The agent session ID to delete the message from.
+   * @param params.messageId The message ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteAgentMessage(
+    params: {
+      roomId: string;
+      agentSessionId: string;
+      messageId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, agentSessionId, messageId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages/${messageId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 }
 

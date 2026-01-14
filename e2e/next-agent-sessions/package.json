@@ -1,0 +1,35 @@
+{
+  "name": "@liveblocks/next-ai-kitchen-sink",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3009",
+    "build": "next build",
+    "start": "next start --port 3009",
+    "lint": "next lint",
+    "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/",
+    "test": "playwright test --max-failures=1",
+    "test:headed": "playwright --max-failures=1 test --headed",
+    "test:ui": "playwright test --max-failures=1 --workers=1 --ui"
+  },
+  "dependencies": {
+    "@liveblocks/client": "*",
+    "@liveblocks/node": "*",
+    "@liveblocks/react": "*",
+    "@liveblocks/react-ui": "*",
+    "next": "15.3.7",
+    "radix-ui": "^1.3.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.55.0",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.1",
+    "playwright": "^1.55.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

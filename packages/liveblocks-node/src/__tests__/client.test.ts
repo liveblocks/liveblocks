@@ -1,4 +1,6 @@
 import type {
+  AgentMessage,
+  AgentSession,
   CommentData,
   CommentUserReaction,
   IdTuple,
@@ -4110,6 +4112,292 @@ describe("client", () => {
             expect(err.message).toBe("Knowledge source not found");
           }
         }
+      });
+    });
+
+    describe("agent sessions", () => {
+      const agentSession: AgentSession = {
+        sessionId: "session_123",
+        metadata: { key: "value" },
+        timestamp: 1234567890,
+      };
+
+      const agentMessage: AgentMessage = {
+        id: "msg_123",
+        timestamp: 1234567890,
+        data: { content: "Hello" },
+      };
+
+      describe("getAgentSessions", () => {
+        test("should return a list of agent sessions", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
+              () => {
+                return HttpResponse.json(
+                  { data: [agentSession] },
+                  { status: 200 }
+                );
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getAgentSessions({ roomId: "room_123" })
+          ).resolves.toEqual({ data: [agentSession] });
+        });
+
+        test("should throw a LiveblocksError on error response", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
+              () => {
+                return HttpResponse.json(
+                  { message: "Room not found" },
+                  { status: 404 }
+                );
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          try {
+            await client.getAgentSessions({ roomId: "nonexistent" });
+            expect(true).toBe(false);
+          } catch (err) {
+            expect(err instanceof LiveblocksError).toBe(true);
+            if (err instanceof LiveblocksError) {
+              expect(err.status).toBe(404);
+            }
+          }
+        });
+      });
+
+      describe("createAgentSession", () => {
+        test("should create an agent session", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
+              () => {
+                return HttpResponse.json(agentSession, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createAgentSession({
+              roomId: "room_123",
+              sessionId: "session_123",
+              metadata: { key: "value" },
+            })
+          ).resolves.toEqual(agentSession);
+        });
+
+        test("should create an agent session without metadata", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
+              () => {
+                return HttpResponse.json(agentSession, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createAgentSession({
+              roomId: "room_123",
+              sessionId: "session_123",
+            })
+          ).resolves.toEqual(agentSession);
+        });
+      });
+
+      describe("getAgentSession", () => {
+        test("should return an agent session", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+              () => {
+                return HttpResponse.json(agentSession, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getAgentSession({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+            })
+          ).resolves.toEqual(agentSession);
+        });
+      });
+
+      describe("updateAgentSessionMetadata", () => {
+        test("should update agent session metadata", async () => {
+          const updatedSession = {
+            ...agentSession,
+            metadata: { updated: "metadata" },
+          };
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+              () => {
+                return HttpResponse.json(updatedSession, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateAgentSessionMetadata({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+              metadata: { updated: "metadata" },
+            })
+          ).resolves.toEqual(updatedSession);
+        });
+      });
+
+      describe("deleteAgentSession", () => {
+        test("should delete an agent session", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteAgentSession({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+            })
+          ).resolves.toBeUndefined();
+        });
+      });
+
+      describe("getAgentMessages", () => {
+        test("should return a list of agent messages", async () => {
+          server.use(
+            http.get(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              () => {
+                return HttpResponse.json(
+                  { data: [agentMessage] },
+                  { status: 200 }
+                );
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.getAgentMessages({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+            })
+          ).resolves.toEqual({ data: [agentMessage] });
+        });
+      });
+
+      describe("createAgentMessage", () => {
+        test("should create an agent message", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              () => {
+                return HttpResponse.json(agentMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createAgentMessage({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(agentMessage);
+        });
+
+        test("should create an agent message with id and timestamp", async () => {
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              () => {
+                return HttpResponse.json(agentMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.createAgentMessage({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+              id: "msg_123",
+              timestamp: 1234567890,
+              data: { content: "Hello" },
+            })
+          ).resolves.toEqual(agentMessage);
+        });
+      });
+
+      describe("updateAgentMessage", () => {
+        test("should update an agent message", async () => {
+          const updatedMessage = {
+            ...agentMessage,
+            data: { content: "Updated" },
+          };
+          server.use(
+            http.post(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages/:messageId`,
+              () => {
+                return HttpResponse.json(updatedMessage, { status: 200 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.updateAgentMessage({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+              messageId: "msg_123",
+              data: { content: "Updated" },
+            })
+          ).resolves.toEqual(updatedMessage);
+        });
+      });
+
+      describe("deleteAgentMessage", () => {
+        test("should delete an agent message", async () => {
+          server.use(
+            http.delete(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages/:messageId`,
+              () => {
+                return new HttpResponse(null, { status: 204 });
+              }
+            )
+          );
+
+          const client = new Liveblocks({ secret: "sk_xxx" });
+          await expect(
+            client.deleteAgentMessage({
+              roomId: "room_123",
+              agentSessionId: "session_123",
+              messageId: "msg_123",
+            })
+          ).resolves.toBeUndefined();
+        });
       });
     });
   });

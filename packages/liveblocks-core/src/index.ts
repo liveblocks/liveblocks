@@ -188,6 +188,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
+export type { AgentMessage, AgentSession } from "./protocol/AgentSession";
 export type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -301,6 +302,8 @@ export type {
 } from "./protocol/SerializedCrdt";
 export { CrdtType } from "./protocol/SerializedCrdt";
 export type {
+  AgentMessagesServerMsg,
+  AgentSessionsServerMsg,
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,

@@ -82,6 +82,8 @@ export {
   useSelf,
   useStorage,
   useThreads,
+  useAgentSessions,
+  useAgentSession,
   useSearchComments,
   useAttachmentUrl,
   useHistoryVersions,

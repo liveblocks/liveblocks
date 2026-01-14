@@ -39,6 +39,7 @@ import {
   raise,
   tryParseJson,
 } from "./lib/utils";
+import type { AgentMessage, AgentSession } from "./protocol/AgentSession";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -48,6 +49,8 @@ import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   ClientMsg,
+  FetchAgentMessagesClientMsg,
+  FetchAgentSessionsClientMsg,
   UpdateStorageClientMsg,
   UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
@@ -73,6 +76,8 @@ import { isAck, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
+  AgentMessagesServerMsg,
+  AgentSessionsServerMsg,
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
@@ -602,6 +607,34 @@ export type Room<
   fetchYDoc(stateVector: string, guid?: string, isV2?: boolean): void;
 
   /**
+   * Fetches agent sessions for the room.
+   */
+  fetchAgentSessions(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: Record<string, string>;
+  }): Promise<{
+    sessions: AgentSession[];
+    nextCursor?: string;
+  }>;
+
+  /**
+   * Fetches agent messages for a specific session.
+   */
+  fetchAgentMessages(
+    sessionId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{
+    messages: AgentMessage[];
+    nextCursor?: string;
+  }>;
+
+  /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
@@ -665,6 +698,9 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
+    readonly agentSessions: Observable<
+      AgentSessionsServerMsg | AgentMessagesServerMsg
+    >;
 
     /**
      * Called right before the room is destroyed. The event cannot be used to
@@ -1587,6 +1623,9 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
+    agentSessions: makeEventSource<
+      AgentSessionsServerMsg | AgentMessagesServerMsg
+    >(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
@@ -2397,6 +2436,56 @@ export function createRoom<
           break;
         }
 
+        case ServerMsgCode.AGENT_SESSIONS: {
+          const agentSessionsMsg = message;
+          // If this is a response to a fetch request (operation: "list"), resolve the pending promise
+          if (agentSessionsMsg.operation === "list") {
+            // Find and resolve the matching pending request
+            // We need to match based on the request parameters
+            // Since we don't have the exact request params in the response, we'll resolve the first pending request
+            // This is a limitation - ideally the backend would include a request ID
+            for (const [
+              requestId,
+              { resolve },
+            ] of pendingAgentSessionsRequests) {
+              resolve({
+                sessions: agentSessionsMsg.sessions,
+                nextCursor: agentSessionsMsg.nextCursor,
+              });
+              pendingAgentSessionsRequests.delete(requestId);
+              break; // Only resolve one request
+            }
+          }
+          // Always notify the event hub for real-time updates
+          eventHub.agentSessions.notify(agentSessionsMsg);
+          break;
+        }
+
+        case ServerMsgCode.AGENT_MESSAGES: {
+          const agentMessagesMsg = message;
+          // If this is a response to a fetch request (operation: "list"), resolve the pending promise
+          if (agentMessagesMsg.operation === "list") {
+            // Find and resolve the matching pending request based on sessionId
+            for (const [
+              requestId,
+              { resolve },
+            ] of pendingAgentMessagesRequests) {
+              const parsedRequestId = JSON.parse(requestId);
+              if (parsedRequestId.sessionId === agentMessagesMsg.sessionId) {
+                resolve({
+                  messages: agentMessagesMsg.messages,
+                  nextCursor: agentMessagesMsg.nextCursor,
+                });
+                pendingAgentMessagesRequests.delete(requestId);
+                break; // Only resolve one request
+              }
+            }
+          }
+          // Always notify the event hub for real-time updates
+          eventHub.agentSessions.notify(agentMessagesMsg);
+          break;
+        }
+
         default:
           // Ignore unknown server messages
           break;
@@ -2526,6 +2615,30 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
+  // Pending agent session fetch requests
+  const pendingAgentSessionsRequests = new Map<
+    string,
+    {
+      resolve: (value: {
+        sessions: AgentSession[];
+        nextCursor?: string;
+      }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
+  // Pending agent messages fetch requests
+  const pendingAgentMessagesRequests = new Map<
+    string,
+    {
+      resolve: (value: {
+        messages: AgentMessage[];
+        nextCursor?: string;
+      }) => void;
+      reject: (error: Error) => void;
+    }
+  >();
+
   function processInitialStorage(message: InitialDocumentStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
@@ -2630,6 +2743,114 @@ export function createRoom<
     }
 
     flushNowOrSoon();
+  }
+
+  async function fetchAgentSessions(options?: {
+    cursor?: string;
+    since?: number;
+    limit?: number;
+    metadata?: Record<string, string>;
+  }): Promise<{ sessions: AgentSession[]; nextCursor?: string }> {
+    // Create a unique request ID based on the options
+    const requestId = JSON.stringify({
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+      metadata: options?.metadata,
+    });
+
+    // Check if there's already a pending request with the same parameters
+    // For now, we'll create a new request each time
+    // TODO: Consider deduplicating requests with the same parameters
+
+    // Create a new promise for this request
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      sessions: AgentSession[];
+      nextCursor?: string;
+    }>();
+
+    pendingAgentSessionsRequests.set(requestId, { resolve, reject });
+
+    // Send the WebSocket message
+    const message: FetchAgentSessionsClientMsg = {
+      type: ClientMsgCode.FETCH_AGENT_SESSIONS,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+      metadata: options?.metadata,
+    };
+
+    context.buffer.messages.push(message);
+    // Flush immediately to avoid throttle delay for fetch operations
+    flushNowOrSoon();
+
+    // Clean up after a timeout to prevent memory leaks
+    setTimeout(() => {
+      if (pendingAgentSessionsRequests.has(requestId)) {
+        pendingAgentSessionsRequests.delete(requestId);
+        reject(new Error("Agent sessions fetch timeout"));
+      }
+    }, 30000); // 30 second timeout
+
+    return promise;
+  }
+
+  async function fetchAgentMessages(
+    sessionId: string,
+    options?: {
+      cursor?: string;
+      since?: number;
+      limit?: number;
+    }
+  ): Promise<{ messages: AgentMessage[]; nextCursor?: string }> {
+    // Create a unique request ID based on sessionId and options
+    const requestId = JSON.stringify({
+      sessionId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+    });
+
+    // Check if there's already a pending request with the same parameters
+    const existingRequest = pendingAgentMessagesRequests.get(requestId);
+    if (existingRequest) {
+      // Return the existing promise
+      return new Promise((resolve, reject) => {
+        existingRequest.resolve = resolve;
+        existingRequest.reject = reject;
+      });
+    }
+
+    // Create a new promise for this request
+    const { promise, resolve, reject } = Promise_withResolvers<{
+      messages: AgentMessage[];
+      nextCursor?: string;
+    }>();
+
+    pendingAgentMessagesRequests.set(requestId, { resolve, reject });
+
+    // Send the WebSocket message
+    const message: FetchAgentMessagesClientMsg = {
+      type: ClientMsgCode.FETCH_AGENT_MESSAGES,
+      sessionId,
+      cursor: options?.cursor,
+      since: options?.since,
+      limit: options?.limit,
+    };
+
+    context.buffer.messages.push(message);
+    // Flush immediately to avoid throttle delay for fetch operations
+    flushNowOrSoon();
+
+    // Clean up after a timeout to prevent memory leaks
+    setTimeout(() => {
+      if (pendingAgentMessagesRequests.has(requestId)) {
+        pendingAgentMessagesRequests.delete(requestId);
+        reject(new Error("Agent messages fetch timeout"));
+      }
+    }, 30000); // 30 second timeout
+
+    return promise;
   }
 
   function undo() {
@@ -2831,6 +3052,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
+    agentSessions: eventHub.agentSessions.observable,
     roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
@@ -3094,7 +3316,7 @@ export function createRoom<
       id: roomId,
       subscribe: makeClassicSubscribeFn(
         roomId,
-        events,
+        eventHub,
         config.errorEventSource
       ),
 
@@ -3137,6 +3359,8 @@ export function createRoom<
       },
 
       fetchYDoc,
+      fetchAgentSessions,
+      fetchAgentMessages,
       getStorage,
       getStorageSnapshot,
       getStorageStatus,

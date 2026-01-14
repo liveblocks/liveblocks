@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neutral-950: #0a0a0a;
+  --color-neutral-900: #171717;
+  --color-neutral-800: #262626;
+  --color-neutral-700: #404040;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-50: #fafafa;
+}
+
+@variant dark (.dark &);
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  .dark html {
+    color-scheme: dark;
+  }
+}
+@import "./typography.css";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 896px;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}

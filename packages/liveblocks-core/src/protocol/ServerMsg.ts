@@ -1,4 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
+import type { AgentMessage, AgentSession } from "./AgentSession";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
@@ -30,6 +31,10 @@ export const ServerMsgCode = Object.freeze({
   COMMENT_REACTION_ADDED: 405,
   COMMENT_REACTION_REMOVED: 406,
 
+  // For Agent Sessions
+  AGENT_SESSIONS: 501,
+  AGENT_MESSAGES: 503,
+
   // Error codes
   REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
 });
@@ -56,6 +61,8 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.COMMENT_REACTION_ADDED;
   export type COMMENT_REACTION_REMOVED =
     typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type AGENT_SESSIONS = typeof ServerMsgCode.AGENT_SESSIONS;
+  export type AGENT_MESSAGES = typeof ServerMsgCode.AGENT_MESSAGES;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
@@ -81,7 +88,11 @@ export type ServerMsg<
   | RejectedStorageOpServerMsg // For a single client
 
   // Comments
-  | CommentsEventServerMsg;
+  | CommentsEventServerMsg
+
+  // Agent Sessions
+  | AgentSessionsServerMsg
+  | AgentMessagesServerMsg;
 
 export type CommentsEventServerMsg =
   | ThreadCreatedEvent
@@ -339,4 +350,19 @@ export type RejectedStorageOpServerMsg = {
   readonly type: ServerMsgCode.REJECT_STORAGE_OP;
   readonly opIds: string[];
   readonly reason: string;
+};
+
+export type AgentSessionsServerMsg = {
+  readonly type: ServerMsgCode.AGENT_SESSIONS;
+  readonly sessions: AgentSession[];
+  readonly nextCursor?: string;
+  readonly operation: "list" | "added" | "updated" | "deleted";
+};
+
+export type AgentMessagesServerMsg = {
+  readonly type: ServerMsgCode.AGENT_MESSAGES;
+  readonly sessionId: string;
+  readonly messages: AgentMessage[];
+  readonly nextCursor?: string;
+  readonly operation: "list" | "added" | "updated" | "deleted";
 };

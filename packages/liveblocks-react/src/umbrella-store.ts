@@ -1,4 +1,6 @@
 import type {
+  AgentMessage,
+  AgentSession,
   AiChatsQuery,
   AsyncResult,
   BaseMetadata,
@@ -16,6 +18,7 @@ import type {
   MessageId,
   NotificationSettings,
   OpaqueClient,
+  OpaqueRoom,
   PartialNotificationSettings,
   Patchable,
   Permission,
@@ -57,6 +60,8 @@ import { makeInboxNotificationsFilter } from "./lib/querying";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  AgentSessionAsyncResult,
+  AgentSessionsAsyncResult,
   AiChatAsyncResult,
   AiChatMessagesAsyncResult,
   AiChatsAsyncResult,
@@ -270,6 +275,21 @@ export function makeInboxNotificationsQueryKey(
   query: InboxNotificationsQuery | undefined
 ) {
   return stableStringify(query ?? {});
+}
+
+export function makeAgentSessionsQueryKey(
+  roomId: string,
+  options?: { since?: number; metadata?: Record<string, string> }
+) {
+  return stableStringify([roomId, options ?? {}]);
+}
+
+export function makeAgentMessagesQueryKey(
+  roomId: string,
+  sessionId: string,
+  options?: { cursor?: string; limit?: number }
+) {
+  return stableStringify([roomId, sessionId, options ?? {}]);
 }
 
 /**
@@ -1106,6 +1126,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       string,
       LoadableResource<UrlMetadataAsyncResult>
     >;
+    readonly loadingAgentSessions: DefaultMap<
+      string,
+      LoadableResource<AgentSessionsAsyncResult>
+    >;
+    readonly loadingAgentMessages: DefaultMap<
+      string,
+      LoadableResource<AgentSessionAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1122,6 +1150,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Notification Settings
   #notificationSettings: SinglePageResource;
+
+  // Agent Sessions
+  #roomsByRoomId = new Map<RoomId, OpaqueRoom>(); // TODO: the need for this seems wrong, i need to explore if maybe this stuff belongs in in RoomContext and not here
+  #agentSessionsByRoomId = new Map<RoomId, Map<string, AgentSession>>();
+  #agentMessagesBySessionId = new Map<string, Map<string, AgentMessage>>();
+
+  // Signals for agent sessions and messages to trigger reactivity
+  // We use a version counter to track changes
+  readonly #agentSessionsSignal = new MutableSignal<{ version: number }>({
+    version: 0,
+  });
+  readonly #agentMessagesSignal = new MutableSignal<{ version: number }>({
+    version: 0,
+  });
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -1607,6 +1649,145 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
+    const loadingAgentSessions = new DefaultMap(
+      (queryKey: string): LoadableResource<AgentSessionsAsyncResult> => {
+        const [roomId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          options?: { since?: number; metadata?: Record<string, string> },
+        ];
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const room = this.#roomsByRoomId.get(roomId);
+          if (!room) {
+            throw new Error(
+              `Room ${roomId} not found. Make sure you're calling useAgentSessions inside a RoomProvider.`
+            );
+          }
+
+          // OpaqueRoom doesn't expose the type, so we need to cast to access methods
+          const typedRoom = room as unknown as {
+            fetchAgentSessions(options?: {
+              cursor?: string;
+              since?: number;
+              limit?: number;
+              metadata?: Record<string, string>;
+            }): Promise<{ sessions: AgentSession[]; nextCursor?: string }>;
+          };
+
+          const result = await typedRoom.fetchAgentSessions({
+            cursor,
+            since: options?.since,
+            metadata: options?.metadata,
+          });
+
+          // Update cache
+          this.updateAgentSessions(roomId, result.sessions, "list");
+
+          return result.nextCursor ?? null;
+        });
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#agentSessionsSignal,
+          (resourceResult, _signalState): AgentSessionsAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const sessionsMap = this.#agentSessionsByRoomId.get(roomId);
+            const sessions: AgentSession[] = sessionsMap
+              ? Array.from(sessionsMap.values())
+              : [];
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              sessions,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    const loadingAgentMessages = new DefaultMap(
+      (queryKey: string): LoadableResource<AgentSessionAsyncResult> => {
+        const [roomId, sessionId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          sessionId: string,
+          options?: { cursor?: string; limit?: number },
+        ];
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const room = this.#roomsByRoomId.get(roomId);
+          if (!room) {
+            throw new Error(
+              `Room ${roomId} not found. Make sure you're calling useAgentSession inside a RoomProvider.`
+            );
+          }
+
+          // OpaqueRoom doesn't expose the type, so we need to cast to access methods
+          const typedRoom = room as unknown as {
+            fetchAgentMessages(
+              sessionId: string,
+              options?: {
+                cursor?: string;
+                since?: number;
+                limit?: number;
+              }
+            ): Promise<{ messages: AgentMessage[]; nextCursor?: string }>;
+          };
+
+          const result = await typedRoom.fetchAgentMessages(sessionId, {
+            cursor,
+            limit: options?.limit,
+          });
+
+          // Update cache
+          this.updateAgentMessages(roomId, sessionId, result.messages, "list");
+
+          return result.nextCursor ?? null;
+        });
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#agentMessagesSignal,
+          (resourceResult, _signalState): AgentSessionAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const messagesMap = this.#agentMessagesBySessionId.get(sessionId);
+            const messages: AgentMessage[] = messagesMap
+              ? Array.from(messagesMap.values()).sort(
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                  (a, b) => a.timestamp - b.timestamp
+                )
+              : [];
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              messages,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1623,6 +1804,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       messagesByChatId,
       aiChatById,
       urlMetadataByUrl,
+      loadingAgentSessions,
+      loadingAgentMessages,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
@@ -1923,6 +2106,84 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
+  }
+
+  /**
+   * Registers a room instance for agent session fetching.
+   * Called by RoomProvider when it mounts.
+   */
+  public registerRoom(roomId: RoomId, room: OpaqueRoom): void {
+    this.#roomsByRoomId.set(roomId, room);
+  }
+
+  /**
+   * Unregisters a room instance.
+   * Called by RoomProvider when it unmounts.
+   */
+  public unregisterRoom(roomId: RoomId): void {
+    this.#roomsByRoomId.delete(roomId);
+    // Clean up caches when room is unregistered
+    this.#agentSessionsByRoomId.delete(roomId);
+  }
+
+  /**
+   * Updates the agent sessions cache based on WebSocket events.
+   */
+  public updateAgentSessions(
+    roomId: RoomId,
+    sessions: readonly AgentSession[],
+    operation: "list" | "added" | "updated" | "deleted"
+  ): void {
+    let sessionsMap = this.#agentSessionsByRoomId.get(roomId);
+    if (!sessionsMap) {
+      sessionsMap = new Map();
+      this.#agentSessionsByRoomId.set(roomId, sessionsMap);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+    for (const session of sessions) {
+      if (operation === "deleted") {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+        sessionsMap.delete(session.sessionId);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+        sessionsMap.set(session.sessionId, session);
+      }
+    }
+
+    // Increment version to trigger signal notification
+    this.#agentSessionsSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Updates the agent messages cache based on WebSocket events.
+   */
+  public updateAgentMessages(
+    _roomId: RoomId,
+    sessionId: string,
+    messages: readonly AgentMessage[],
+    operation: "list" | "added" | "updated" | "deleted"
+  ): void {
+    let messagesMap = this.#agentMessagesBySessionId.get(sessionId);
+    if (!messagesMap) {
+      messagesMap = new Map();
+      this.#agentMessagesBySessionId.set(sessionId, messagesMap);
+    }
+
+    for (const message of messages) {
+      if (operation === "deleted") {
+        messagesMap.delete(message.id);
+      } else {
+        messagesMap.set(message.id, message);
+      }
+    }
+
+    // Increment version to trigger signal notification
+    this.#agentMessagesSignal.mutate((state) => {
+      state.version++;
+    });
   }
 
   public async fetchUnreadNotificationsCount(

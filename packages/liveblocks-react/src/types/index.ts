@@ -14,6 +14,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AgentMessage,
+  AgentSession,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
@@ -210,6 +212,28 @@ export type UseInboxNotificationsOptions = {
   query?: InboxNotificationsQuery;
 };
 
+export type UseAgentSessionsOptions = {
+  /**
+   * Optional timestamp filter. Only sessions created or updated after this timestamp will be returned.
+   */
+  since?: number;
+  /**
+   * Optional metadata filter. Only sessions with matching metadata will be returned.
+   */
+  metadata?: Record<string, string>;
+};
+
+export type UseAgentSessionOptions = {
+  /**
+   * Optional cursor for pagination.
+   */
+  cursor?: string;
+  /**
+   * Optional limit for the number of messages to fetch.
+   */
+  limit?: number;
+};
+
 export type UserAsyncResult<T> = AsyncResult<T, "user">;
 export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
@@ -287,6 +311,12 @@ export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>,
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+
+export type AgentSessionsAsyncSuccess = PagedAsyncSuccess<AgentSession[], "sessions">; // prettier-ignore
+export type AgentSessionsAsyncResult = PagedAsyncResult<AgentSession[], "sessions">; // prettier-ignore
+
+export type AgentSessionAsyncSuccess = PagedAsyncSuccess<AgentMessage[], "messages">; // prettier-ignore
+export type AgentSessionAsyncResult = PagedAsyncResult<AgentMessage[], "messages">; // prettier-ignore
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
@@ -1129,6 +1159,25 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
+       * Returns agent sessions for the current room.
+       *
+       * @example
+       * const { sessions, error, isLoading } = useAgentSessions();
+       */
+      useAgentSessions(options?: UseAgentSessionsOptions): AgentSessionsAsyncResult;
+
+      /**
+       * Returns agent messages for a specific session in the current room.
+       *
+       * @example
+       * const { messages, error, isLoading } = useAgentSession("session-id");
+       */
+      useAgentSession(
+        sessionId: string,
+        options?: UseAgentSessionOptions
+      ): AgentSessionAsyncResult;
+
+      /**
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
        *
        * @example
@@ -1241,6 +1290,25 @@ export type RoomContextBundle<
              * const { threads } = useThreads();
              */
             useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
+
+            /**
+             * Returns agent sessions for the current room.
+             *
+             * @example
+             * const { sessions } = useAgentSessions();
+             */
+            useAgentSessions(options?: UseAgentSessionsOptions): AgentSessionsAsyncSuccess;
+
+            /**
+             * Returns agent messages for a specific session in the current room.
+             *
+             * @example
+             * const { messages } = useAgentSession("session-id");
+             */
+            useAgentSession(
+              sessionId: string,
+              options?: UseAgentSessionOptions
+            ): AgentSessionAsyncSuccess;
 
             /**
              * (Private beta) Returns a history of versions of the current room.

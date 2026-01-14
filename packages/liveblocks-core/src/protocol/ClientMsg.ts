@@ -14,6 +14,10 @@ export const ClientMsgCode = Object.freeze({
   // For Yjs support
   FETCH_YDOC: 300,
   UPDATE_YDOC: 301,
+
+  // For Agent Sessions
+  FETCH_AGENT_SESSIONS: 500,
+  FETCH_AGENT_MESSAGES: 502,
 });
 
 export namespace ClientMsgCode {
@@ -23,6 +27,8 @@ export namespace ClientMsgCode {
   export type UPDATE_STORAGE = typeof ClientMsgCode.UPDATE_STORAGE;
   export type FETCH_YDOC = typeof ClientMsgCode.FETCH_YDOC;
   export type UPDATE_YDOC = typeof ClientMsgCode.UPDATE_YDOC;
+  export type FETCH_AGENT_SESSIONS = typeof ClientMsgCode.FETCH_AGENT_SESSIONS;
+  export type FETCH_AGENT_MESSAGES = typeof ClientMsgCode.FETCH_AGENT_MESSAGES;
 }
 
 /**
@@ -39,7 +45,11 @@ export type ClientMsg<P extends JsonObject, E extends Json> =
 
   // For Yjs support
   | FetchYDocClientMsg
-  | UpdateYDocClientMsg;
+  | UpdateYDocClientMsg
+
+  // For Agent Sessions
+  | FetchAgentSessionsClientMsg
+  | FetchAgentMessagesClientMsg;
 
 export type BroadcastEventClientMsg<E extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
@@ -103,4 +113,20 @@ export type UpdateYDocClientMsg = {
   readonly update: string; // base64 encoded update from a yjs doc
   readonly guid?: string; // an optional guid to identify a subdoc
   readonly v2?: boolean; // if it's a v2 update
+};
+
+export type FetchAgentSessionsClientMsg = {
+  readonly type: ClientMsgCode.FETCH_AGENT_SESSIONS;
+  readonly cursor?: string;
+  readonly since?: number;
+  readonly limit?: number;
+  readonly metadata?: Record<string, string>;
+};
+
+export type FetchAgentMessagesClientMsg = {
+  readonly type: ClientMsgCode.FETCH_AGENT_MESSAGES;
+  readonly sessionId: string;
+  readonly cursor?: string;
+  readonly since?: number;
+  readonly limit?: number;
 };

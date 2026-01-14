@@ -18,6 +18,8 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
+  AgentMessagesServerMsg,
+  AgentSessionsServerMsg,
   AsyncResult,
   CommentsEventServerMsg,
   DE,
@@ -80,6 +82,10 @@ import {
   LiveblocksProviderWithClient,
 } from "./liveblocks";
 import type {
+  AgentSessionAsyncResult,
+  AgentSessionAsyncSuccess,
+  AgentSessionsAsyncResult,
+  AgentSessionsAsyncSuccess,
   AttachmentUrlAsyncResult,
   CommentReactionOptions,
   CreateCommentOptions,
@@ -100,16 +106,22 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
+  UseAgentSessionOptions,
+  UseAgentSessionsOptions,
   UseSearchCommentsOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
-import { makeRoomThreadsQueryKey } from "./umbrella-store";
+import {
+  makeAgentMessagesQueryKey,
+  makeAgentSessionsQueryKey,
+  makeRoomThreadsQueryKey,
+} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
@@ -395,6 +407,8 @@ function makeRoomContextBundle<
     useMutation: useMutation as RoomContextBundle<P, S, U, E, M>["useMutation"],
 
     useThreads,
+    useAgentSessions,
+    useAgentSession,
     useSearchComments,
 
     useCreateThread,
@@ -459,6 +473,8 @@ function makeRoomContextBundle<
       >["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
+      useAgentSessions: useAgentSessionsSuspense,
+      useAgentSession: useAgentSessionSuspense,
 
       useCreateThread,
       useDeleteThread,
@@ -680,6 +696,51 @@ function RoomProviderInner<
     return room.events.comments.subscribe(
       (message) => void handleCommentEvent(message)
     );
+  }, [client, room]);
+
+  useEffect(() => {
+    const { store } = getRoomExtrasForClient(client);
+
+    function handleAgentSessionEvent(
+      message: AgentSessionsServerMsg | AgentMessagesServerMsg
+    ): void {
+      if (message.type === ServerMsgCode.AGENT_SESSIONS) {
+        const agentSessionsMsg: AgentSessionsServerMsg = message;
+        // Only handle real-time updates, not "list" operations (those are handled by fetch promises)
+        if (agentSessionsMsg.operation !== "list") {
+          store.updateAgentSessions(
+            room.id,
+            agentSessionsMsg.sessions,
+            agentSessionsMsg.operation
+          );
+        }
+      } else if (message.type === ServerMsgCode.AGENT_MESSAGES) {
+        const agentMessagesMsg: AgentMessagesServerMsg = message;
+        // Only handle real-time updates, not "list" operations (those are handled by fetch promises)
+        if (agentMessagesMsg.operation !== "list") {
+          store.updateAgentMessages(
+            room.id,
+            agentMessagesMsg.sessionId,
+            agentMessagesMsg.messages,
+            agentMessagesMsg.operation
+          );
+        }
+      }
+    }
+
+    return room.events.agentSessions.subscribe(
+      (message: AgentSessionsServerMsg | AgentMessagesServerMsg) =>
+        void handleAgentSessionEvent(message)
+    );
+  }, [client, room]);
+
+  useEffect(() => {
+    const { store } = getRoomExtrasForClient(client);
+    // Register the room instance for agent session fetching
+    store.registerRoom(room.id, room);
+    return () => {
+      store.unregisterRoom(room.id);
+    };
   }, [client, room]);
 
   useEffect(() => {
@@ -1253,6 +1314,97 @@ function useThreads<M extends BaseMetadata>(
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, result);
   return result;
+}
+
+function useAgentSessions(
+  options?: UseAgentSessionsOptions
+): AgentSessionsAsyncResult {
+  const room = useRoom();
+  const client = useClient();
+  const { store } = getRoomExtrasForClient(client);
+  const queryKey = makeAgentSessionsQueryKey(room.id, options);
+
+  // Eagerly start loading before the useEffect runs
+  const loadableResource = store.outputs.loadingAgentSessions.getOrCreate(queryKey);
+
+  useEffect(() => {
+    void loadableResource.waitUntilLoaded();
+  });
+
+  return useSignal(loadableResource.signal);
+}
+
+function useAgentSession(
+  sessionId: string,
+  options?: UseAgentSessionOptions
+): AgentSessionAsyncResult {
+  const room = useRoom();
+  const client = useClient();
+  const { store } = getRoomExtrasForClient(client);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const queryKey = makeAgentMessagesQueryKey(room.id, sessionId, options);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    void store.outputs.loadingAgentMessages
+      .getOrCreate(queryKey)
+      .waitUntilLoaded();
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
+  return useSignal(
+    store.outputs.loadingAgentMessages.getOrCreate(queryKey).signal
+  );
+}
+
+function useAgentSessionsSuspense(
+  options?: UseAgentSessionsOptions
+): AgentSessionsAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const room = useRoom();
+
+  const { store } = getRoomExtrasForClient(client);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const queryKey = makeAgentSessionsQueryKey(room.id, options);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+  use(store.outputs.loadingAgentSessions.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useAgentSessions(options);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  assert(!result.error, "Did not expect error");
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  assert(!result.isLoading, "Did not expect loading");
+  return result as AgentSessionsAsyncSuccess;
+}
+
+function useAgentSessionSuspense(
+  sessionId: string,
+  options?: UseAgentSessionOptions
+): AgentSessionAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const room = useRoom();
+
+  const { store } = getRoomExtrasForClient(client);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  const queryKey = makeAgentMessagesQueryKey(room.id, sessionId, options);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+  use(store.outputs.loadingAgentMessages.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useAgentSession(sessionId, options);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  assert(!result.error, "Did not expect error");
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  assert(!result.isLoading, "Did not expect loading");
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  return result as AgentSessionAsyncSuccess;
 }
 
 function useSearchComments<M extends BaseMetadata>(
@@ -2280,8 +2432,8 @@ function useHistoryVersionData(
             error instanceof Error
               ? error
               : new Error(
-                  "An unknown error occurred while loading this version"
-                ),
+                "An unknown error occurred while loading this version"
+              ),
         });
       }
     };
@@ -2911,6 +3063,22 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
 const _useThreads: TypedBundle["useThreads"] = useThreads;
 
 /**
+ * Returns agent sessions for the current room.
+ *
+ * @example
+ * const { sessions, error, isLoading } = useAgentSessions();
+ */
+const _useAgentSessions: TypedBundle["useAgentSessions"] = useAgentSessions;
+
+/**
+ * Returns agent messages for a specific session in the current room.
+ *
+ * @example
+ * const { messages, error, isLoading } = useAgentSession("session-id");
+ */
+const _useAgentSession: TypedBundle["useAgentSession"] = useAgentSession;
+
+/**
  * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
  *
  * @example
@@ -3231,6 +3399,8 @@ export {
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
   useAddRoomCommentReaction,
+  _useAgentSession as useAgentSession,
+  _useAgentSessions as useAgentSessions,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,

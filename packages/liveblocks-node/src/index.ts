@@ -6,6 +6,8 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   AiCopilot,
+  CreateAgentMessageOptions,
+  CreateAgentSessionOptions,
   CreateAiCopilotOptions,
   CreateFileKnowledgeSourceOptions,
   CreateRoomOptions,
@@ -30,6 +32,8 @@ export type {
   RoomsQueryCriteria,
   RoomUser,
   ThreadParticipants,
+  UpdateAgentMessageOptions,
+  UpdateAgentSessionOptions,
   UpdateAiCopilotOptions,
   UpdateRoomOptions,
   UpsertRoomOptions,
