@@ -32,7 +32,7 @@ export function AddReaction({
             columns={10}
             className="isolate flex h-[368px] w-fit flex-col overflow-hidden rounded-xl bg-white shadow-xl"
           >
-            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-gray-100 px-2.5 py-2 text-sm outline-0 ring-blue-500 focus:ring" />
+            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-gray-100 px-2.5 py-2 text-sm outline-0 ring-blue-500 focus:ring-3" />
             <EmojiPicker.Viewport className="outline-hidden relative flex-1">
               <EmojiPicker.Loading className="absolute inset-0 flex items-center justify-center text-sm text-gray-400">
                 Loading…
@@ -58,7 +58,7 @@ export function AddReaction({
                   ),
                   Emoji: ({ emoji, ...props }) => (
                     <button
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-base data-[active]:bg-gray-100"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-base data-active:bg-gray-100"
                       {...props}
                     >
                       {emoji.emoji}

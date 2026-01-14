@@ -42,6 +42,11 @@ declare global {
       pinned?: boolean;
     };
 
+    CommentMetadata: {
+      priority: number;
+      reviewed?: boolean;
+    };
+
     RoomInfo: {
       name: string;
       url?: string;
@@ -247,6 +252,7 @@ async () => {
         comment: {
           userId: "user-123",
           body: { version: 1, content: [] },
+          metadata: { priority: 1 },
         },
         metadata: { color: "red" },
       },
@@ -257,6 +263,30 @@ async () => {
     expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
+
+    const threadWithCommentMetadata = await client.createThread({
+      roomId: "room-123",
+      data: {
+        comment: {
+          userId: "user-123",
+          body: { version: 1, content: [] },
+          metadata: {
+            priority: 2,
+            reviewed: false,
+          },
+        },
+        metadata: { color: "blue" },
+      },
+    });
+
+    expectType<"thread">(threadWithCommentMetadata.type);
+    expectType<number>(
+      threadWithCommentMetadata.comments[0]!.metadata.priority
+    );
+    expectType<boolean | undefined>(
+      threadWithCommentMetadata.comments[0]!.metadata.reviewed
+    );
+    expectError(threadWithCommentMetadata.comments[0]!.metadata.nonexisting);
   }
 
   // .editThreadMetadata()
@@ -345,6 +375,137 @@ async () => {
     expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
+  }
+
+  // .createComment()
+  {
+    const roomId = "my-room";
+    const threadId = "th_xxx";
+    const userId = "user-123";
+
+    // Invalid calls
+    expectError(client.createComment({ roomId }));
+    expectError(client.createComment({ threadId }));
+    expectError(
+      client.createComment({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        data: {},
+      })
+    );
+    expectError(
+      client.createComment({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        data: { userId },
+      })
+    );
+
+    const comment = await client.createComment({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        body: { version: 1, content: [] },
+        metadata: { priority: 1 },
+      },
+    });
+
+    expectType<"comment">(comment.type);
+    expectType<string>(comment.id);
+    expectType<string>(comment.threadId);
+
+    const commentWithMetadata = await client.createComment({
+      roomId,
+      threadId,
+      data: {
+        userId,
+        body: { version: 1, content: [] },
+        metadata: {
+          priority: 2,
+          reviewed: false,
+        },
+      },
+    });
+
+    expectType<"comment">(commentWithMetadata.type);
+    expectType<number>(commentWithMetadata.metadata.priority);
+    expectType<boolean | undefined>(commentWithMetadata.metadata.reviewed);
+    expectError(commentWithMetadata.metadata.nonexisting);
+  }
+
+  // .editCommentMetadata()
+  {
+    const roomId = "my-room";
+    const threadId = "th_xxx";
+    const commentId = "cm_xxx";
+    const userId = "user-123";
+
+    // Invalid calls
+    expectError(client.editCommentMetadata({ roomId }));
+    expectError(client.editCommentMetadata({ threadId }));
+    expectError(client.editCommentMetadata({ commentId }));
+    expectError(
+      client.editCommentMetadata({
+        roomId: "my-room",
+        threadId: "th_xxx",
+        commentId: "cm_xxx",
+        data: {},
+      })
+    );
+    expectError(
+      client.editCommentMetadata({
+        roomId,
+        threadId,
+        commentId,
+        data: { userId },
+      })
+    );
+
+    // Incorrect metadata
+    expectError(
+      client.editCommentMetadata({
+        roomId,
+        threadId,
+        commentId,
+        data: { userId, metadata: { foo: "bar" } }, // Incorrect metadata
+      })
+    );
+
+    await client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: { userId, metadata: {} }, // Not updating any fields is useless, but fine
+    });
+
+    await client.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      data: {
+        userId,
+        metadata: { priority: 2, reviewed: null },
+      }, // Correct metadata updates
+    });
+
+    expectError(
+      client.editCommentMetadata({
+        roomId,
+        threadId,
+        commentId,
+        data: { userId, metadata: { priority: null } }, // priority cannot be set to null
+      })
+    );
+
+    expectError(
+      client.editCommentMetadata({
+        roomId,
+        threadId,
+        commentId,
+        data: { userId, metadata: { foo: null } }, // Undefined fields
+      })
+    );
   }
 
   // .addCommentReaction()

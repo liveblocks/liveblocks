@@ -1009,7 +1009,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "A",
-          opId: "2:1",
         },
       ]);
       // B is shifted to SECOND_POSITION
@@ -1019,7 +1018,6 @@ describe("LiveList", () => {
         {
           type: OpCode.DELETE_CRDT,
           id: "2:0",
-          opId: "2:2",
         },
       ]);
 
@@ -1035,7 +1033,7 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
@@ -1051,7 +1049,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "C",
-          opId: "2:3",
         },
       ]);
 
@@ -1085,7 +1082,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "A",
-          opId: "2:1",
         },
       ]);
 
@@ -1093,7 +1089,6 @@ describe("LiveList", () => {
         {
           type: OpCode.DELETE_CRDT,
           id: "2:0",
-          opId: "2:2",
         },
       ]);
 
@@ -1107,7 +1102,7 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
@@ -1431,7 +1426,6 @@ describe("LiveList", () => {
           {
             data: { a: 2 },
             id: "0:3",
-            opId: "1:0",
             parentId: "0:1",
             parentKey: SECOND_POSITION,
             type: OpCode.CREATE_OBJECT,

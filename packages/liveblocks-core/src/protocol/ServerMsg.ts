@@ -1,6 +1,6 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Op } from "./Op";
+import type { ServerWireOp } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
@@ -13,7 +13,7 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE: 200,
+  STORAGE_STATE: 200,
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -29,6 +29,7 @@ export const ServerMsgCode = Object.freeze({
   COMMENT_DELETED: 404,
   COMMENT_REACTION_ADDED: 405,
   COMMENT_REACTION_REMOVED: 406,
+  COMMENT_METADATA_UPDATED: 409,
 
   // Error codes
   REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
@@ -40,8 +41,7 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type INITIAL_STORAGE_STATE =
-    typeof ServerMsgCode.INITIAL_STORAGE_STATE;
+  export type STORAGE_STATE = typeof ServerMsgCode.STORAGE_STATE;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -56,6 +56,8 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.COMMENT_REACTION_ADDED;
   export type COMMENT_REACTION_REMOVED =
     typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type COMMENT_METADATA_UPDATED =
+    typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
@@ -75,7 +77,7 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialDocumentStateServerMsg // For a single client
+  | StorageStateServerMsg // For a single client
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -92,7 +94,8 @@ export type CommentsEventServerMsg =
   | CommentEditedEvent
   | CommentDeletedEvent
   | CommentReactionAdded
-  | CommentReactionRemoved;
+  | CommentReactionRemoved
+  | CommentMetadataUpdatedEvent;
 
 type ThreadCreatedEvent = {
   type: ServerMsgCode.THREAD_CREATED;
@@ -144,6 +147,12 @@ type CommentReactionRemoved = {
   threadId: string;
   commentId: string;
   emoji: string;
+};
+
+type CommentMetadataUpdatedEvent = {
+  type: ServerMsgCode.COMMENT_METADATA_UPDATED;
+  threadId: string;
+  commentId: string;
 };
 
 /**
@@ -310,11 +319,11 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
 
 /**
  * Sent by the WebSocket server to a single client in response to the client
- * joining the Room, to provide the initial Storage state of the Room. The
- * payload includes the entire Storage document.
+ * sending a FetchStorageClientMsg message, to provide the initial Storage
+ * state of the Room. The payload includes the entire Storage document.
  */
-export type InitialDocumentStateServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
+export type StorageStateServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_STATE;
   readonly items: IdTuple<SerializedCrdt>[];
 };
 
@@ -327,7 +336,7 @@ export type InitialDocumentStateServerMsg = {
  */
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
-  readonly ops: Op[];
+  readonly ops: ServerWireOp[];
 };
 
 /**
