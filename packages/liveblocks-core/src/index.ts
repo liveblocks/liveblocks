@@ -281,6 +281,7 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  HasOpId,
   Op,
   ServerWireOp,
   SetParentKeyOp,

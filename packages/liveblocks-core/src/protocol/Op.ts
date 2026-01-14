@@ -135,12 +135,14 @@ export type DeleteObjectKeyOp = {
 // ------------------------------------------------------------------------------
 //
 
+export type HasOpId = { opId: string };
+
 /**
  * Ops sent from client → server. Always includes an opId so the server can
  * acknowledge the receipt.
  */
-export type ClientWireOp = Op & { opId: string };
-export type ClientWireCreateOp = CreateOp & { opId: string };
+export type ClientWireOp = Op & HasOpId;
+export type ClientWireCreateOp = CreateOp & HasOpId;
 
 /**
  * ServerWireOp: Ops sent from server → client. Three variants:
