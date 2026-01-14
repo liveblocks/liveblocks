@@ -198,22 +198,6 @@ const _bundles = new WeakMap<
   >
 >();
 
-function getOrCreateRoomContextBundle<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  let bundle = _bundles.get(client);
-  if (!bundle) {
-    bundle = makeRoomContextBundle(client);
-    _bundles.set(client, bundle);
-  }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
-}
-
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
@@ -2784,7 +2768,12 @@ export function createRoomContext<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM>(client);
+  let bundle = _bundles.get(client);
+  if (!bundle) {
+    bundle = makeRoomContextBundle(client);
+    _bundles.set(client, bundle);
+  }
+  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
