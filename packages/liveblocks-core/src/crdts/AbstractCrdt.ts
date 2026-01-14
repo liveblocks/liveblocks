@@ -1,7 +1,12 @@
 import { assertNever } from "../lib/assert";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import type { CreateOp, Op } from "../protocol/Op";
+import type {
+  ClientWireCreateOp,
+  ClientWireOp,
+  CreateOp,
+  Op,
+} from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
 import type * as DevTools from "../types/DevToolsTreeNode";
@@ -35,7 +40,7 @@ export interface ManagedPool {
    * - Notify room subscribers with updates (in-client, no networking)
    */
   dispatch: (
-    ops: Op[],
+    ops: ClientWireOp[],
     reverseOps: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ) => void;
@@ -62,7 +67,7 @@ export type CreateManagedPoolOptions = {
    * Will get invoked when any Live structure calls .dispatch() on the pool.
    */
   onDispatch?: (
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ) => void;
@@ -105,7 +110,7 @@ export function createManagedPool(
     generateOpId: () => `${getCurrentConnectionId()}:${opClock++}`,
 
     dispatch(
-      ops: Op[],
+      ops: ClientWireOp[],
       reverse: Op[],
       storageUpdates: Map<string, StorageUpdate>
     ) {
@@ -122,10 +127,34 @@ export function createManagedPool(
   };
 }
 
+/**
+ * When applying an op to a CRDT, we need to know where it came from to apply
+ * it correctly.
+ */
 export enum OpSource {
-  UNDOREDO_RECONNECT,
-  REMOTE,
-  ACK,
+  /**
+   * Optimistic update applied locally (from an undo, redo, or reconnect). Not
+   * yet acknowledged by the server. Will be sent to server and needs to be
+   * tracked for conflict resolution.
+   */
+  LOCAL,
+
+  /**
+   * Op received from server, originated from another client. Apply it, unless
+   * there's a pending local op for the same key (local ops take precedence
+   * until acknowledged).
+   *
+   * Note that a "fix Op" sent by the server in response to a local mutation
+   * that caused a conflict will also be classified as a THEIRS-like mutation.
+   * (As if another client resolved the conflict.)
+   */
+  THEIRS,
+
+  /**
+   * Op received from server, originated from THIS client. Server echoed it
+   * back to confirm.
+   */
+  OURS,
 }
 
 // TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
@@ -360,12 +389,32 @@ export abstract class AbstractCrdt {
   /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
 
-  /** @internal */
-  abstract _toOps(
+  /**
+   * Serializes this CRDT and all its children into a list of creation ops
+   * without opIds. Used for creating reverse/undo operations, which get their
+   * opIds assigned later when the undo is actually applied.
+   *
+   * @internal
+   */
+  abstract _toOps(parentId: string, parentKey: string): CreateOp[];
+
+  /**
+   * Serializes this CRDT and all its children into a list of creation ops
+   * with opIds. Used for forward operations that will be sent over the wire
+   * immediately. Each op gets a unique opId for server acknowledgement.
+   *
+   * @internal
+   */
+  _toOpsWithOpId(
     parentId: string,
     parentKey: string,
-    pool?: ManagedPool
-  ): CreateOp[];
+    pool: ManagedPool
+  ): ClientWireCreateOp[] {
+    return this._toOps(parentId, parentKey).map((op) => ({
+      opId: pool.generateOpId(),
+      ...op,
+    }));
+  }
 
   /** @internal */
   abstract _serialize(): SerializedCrdt;

@@ -47,16 +47,20 @@ export async function prepareStorageImmutableTest<
   P extends JsonObject = never,
   U extends BaseUserMeta = never,
   E extends Json = never,
-  M extends BaseMetadata = never,
+  TM extends BaseMetadata = never,
+  CM extends BaseMetadata = never,
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let state = {} as ToJson<S>;
   let refState = {} as ToJson<S>;
 
   let totalStorageOps = 0;
 
-  const ref = await prepareRoomWithStorage<P, S, U, E, M>(items, -1);
+  const ref = await prepareRoomWithStorage<P, S, U, E, TM, CM>(items, -1);
 
-  const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, actor);
+  const subject = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
+    items,
+    actor
+  );
 
   onTestFinished(
     subject.wss.onReceive.subscribe((data) => {

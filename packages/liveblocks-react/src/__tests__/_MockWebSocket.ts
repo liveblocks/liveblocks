@@ -150,14 +150,14 @@ export async function websocketSimulator() {
 
   function simulateStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE,
       items: [["root", { type: CrdtType.OBJECT, data: {} }]],
     });
   }
 
   function simulateExistingStorageLoaded() {
     simulateIncomingMessage({
-      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE,
       items: [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         [
