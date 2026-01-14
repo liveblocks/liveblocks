@@ -291,6 +291,55 @@ describe("client", () => {
       });
     });
 
+    test("should return a list of room when getRooms with organizationId receives a successful response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
+          const url = new URL(request.url);
+
+          expect(url.searchParams.size).toEqual(6);
+          expect(url.searchParams.get("limit")).toEqual("10");
+          expect(url.searchParams.get("startingAfter")).toEqual("2");
+          expect(url.searchParams.get("query")).toEqual(
+            "roomId^'liveblocks:' metadata['color']:'blue'"
+          );
+          expect(url.searchParams.get("organizationId")).toEqual("org1");
+          expect(url.searchParams.get("userId")).toEqual("user1");
+          expect(url.searchParams.get("groupIds")).toEqual("group1");
+
+          return HttpResponse.json(
+            {
+              nextCursor: "3",
+              data: [room],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getRooms({
+          limit: 10,
+          startingAfter: "2",
+          organizationId: "org1",
+          query: {
+            roomId: {
+              startsWith: "liveblocks:",
+            },
+            metadata: {
+              color: "blue",
+            },
+          },
+          userId: "user1",
+          groupIds: ["group1"],
+        })
+      ).resolves.toEqual({
+        nextCursor: "3",
+        data: [room],
+      });
+    });
+
     test("should return a list of room when getRooms with query params receives a successful response", async () => {
       const expectedQuery =
         "roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
@@ -514,7 +563,7 @@ describe("client", () => {
       });
     });
 
-    test("should not include tenantId in the request when createRoom is called without tenantId", async () => {
+    test("should not include tenantId in the request when createRoom is called without tenantId or organizationId", async () => {
       const roomId = "test-room";
       const createRoomParams = {
         defaultAccesses: ["room:write"] as ["room:write"],
@@ -537,6 +586,36 @@ describe("client", () => {
         defaultAccesses: ["room:write"],
         groupsAccesses: undefined,
         usersAccesses: undefined,
+        metadata: undefined,
+      });
+    });
+
+    test("should pass organizationId to the request when createRoom is called with organizationId", async () => {
+      const roomId = "test-room";
+      const organizationId = "test-org";
+      const createRoomParams = {
+        defaultAccesses: ["room:write"] as ["room:write"],
+        organizationId,
+      };
+
+      let capturedRequestData: unknown = null;
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms`, async ({ request }) => {
+          capturedRequestData = await request.json();
+          return HttpResponse.json(room, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await client.createRoom(roomId, createRoomParams);
+
+      expect(capturedRequestData).toEqual({
+        id: roomId,
+        defaultAccesses: ["room:write"],
+        groupsAccesses: undefined,
+        usersAccesses: undefined,
+        organizationId,
         metadata: undefined,
       });
     });
@@ -2509,6 +2588,73 @@ describe("client", () => {
       });
     });
 
+    test("should return the created group when createGroup receives a successful response with organizationId", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        memberIds: ["user1", "user2"],
+        organizationId: "org1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "org1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [
+                  {
+                    id: "user1",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                  {
+                    id: "user2",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "org1",
+        organizationId: "org1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
     test("should create a group without members when createGroup receives a successful response", async () => {
       const createGroupParams = {
         groupId: "group1",
@@ -2550,6 +2696,54 @@ describe("client", () => {
         id: "group1",
         tenantId: "tenant1",
         organizationId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
+        members: [],
+      });
+    });
+
+    test("should create a group without members when createGroup receives a successful response with organizationId", async () => {
+      const createGroupParams = {
+        groupId: "group1",
+        organizationId: "org1",
+        scopes: { mention: true as const },
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "org1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
+                members: [],
+              },
+              { status: 200 }
+            );
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(createGroupParams);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "org1",
+        organizationId: "org1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
         scopes: { mention: true },
