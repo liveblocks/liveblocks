@@ -10,13 +10,14 @@ const liveblocks = new Liveblocks({
 // POST /api/agent-sessions/[sessionId]/messages - Create a new message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { sessionId } = await params;
     const body = await request.json();
     const { roomId, id, timestamp, data } = body;
 
@@ -30,7 +31,7 @@ export async function POST(
 
     const message = await liveblocks.createAgentMessage({
       roomId,
-      agentSessionId: params.sessionId,
+      agentSessionId: sessionId,
       id,
       timestamp,
       data,

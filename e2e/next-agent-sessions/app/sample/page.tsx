@@ -9,26 +9,31 @@ import { useState } from "react";
 
 const ROOM_ID = "liveblocks:examples:agent-sessions";
 
+const SpinnerIcon = () => (
+
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={20}
+    height={20}
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="presentation"
+    className="lb-icon"
+  >
+    <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
+  </svg>
+)
+
 export default function Page() {
   return (
     <ClientSideSuspense
       fallback={
         <div className="h-screen w-full flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width={20}
-            height={20}
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            role="presentation"
-            className="lb-icon"
-          >
-            <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
-          </svg>
+          <SpinnerIcon />
         </div>
       }
     >
@@ -52,7 +57,9 @@ function SessionMessages({
   onCreateMessage: () => void;
   onDeleteMessage: (messageId: string) => void;
 }) {
-  const { messages } = useAgentSession(sessionId);
+  const {
+    messages,
+  } = useAgentSession(sessionId);
 
   return (
     <div className="mt-4 border-t pt-4">
@@ -111,8 +118,11 @@ function SessionMessages({
 }
 
 function Sample() {
-  const { sessions, isLoading } = useAgentSessions();
-  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const {
+    sessions,
+    isLoading,
+    error,
+  } = useAgentSessions();
   const [newMessageText, setNewMessageText] = useState<Record<string, string>>({});
 
   const createAgentSession = async () => {
@@ -167,10 +177,6 @@ function Sample() {
     } catch (error) {
       console.error("Error updating session:", error);
     }
-  };
-
-  const toggleMessages = (sessionId: string) => {
-    setExpandedSession(expandedSession === sessionId ? null : sessionId);
   };
 
   const createMessage = async (sessionId: string) => {
@@ -228,12 +234,20 @@ function Sample() {
       </div>
 
       <div className="flex flex-col gap-4">
+
+        {isLoading && (
+          <div className="h-24 w-24"><SpinnerIcon /></div>
+        )}
+
+        {error && (
+          <p className="text-red-500">Error loading sessions: {error.message}</p>
+        )}
+
         {sessions?.length === 0 && (
           <p className="text-gray-500">No sessions yet. Create one to get started!</p>
         )}
 
         {sessions?.map((session) => {
-          const isExpanded = expandedSession === session.sessionId;
 
           return (
             <div
@@ -259,12 +273,6 @@ function Sample() {
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => toggleMessages(session.sessionId)}
-                    className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                  >
-                    {isExpanded ? "Hide" : "Show"} Messages
-                  </button>
-                  <button
                     onClick={() => updateSessionMetadata(session.sessionId)}
                     className="px-3 py-1 text-sm bg-yellow-100 rounded hover:bg-yellow-200"
                   >
@@ -279,22 +287,20 @@ function Sample() {
                 </div>
               </div>
 
-              {isExpanded && (
-                <SessionMessages
-                  sessionId={session.sessionId}
-                  newMessageText={newMessageText[session.sessionId] || ""}
-                  onMessageTextChange={(text) =>
-                    setNewMessageText((prev) => ({
-                      ...prev,
-                      [session.sessionId]: text,
-                    }))
-                  }
-                  onCreateMessage={() => createMessage(session.sessionId)}
-                  onDeleteMessage={(messageId) =>
-                    deleteMessage(session.sessionId, messageId)
-                  }
-                />
-              )}
+              <SessionMessages
+                sessionId={session.sessionId}
+                newMessageText={newMessageText[session.sessionId] || ""}
+                onMessageTextChange={(text) =>
+                  setNewMessageText((prev) => ({
+                    ...prev,
+                    [session.sessionId]: text,
+                  }))
+                }
+                onCreateMessage={() => createMessage(session.sessionId)}
+                onDeleteMessage={(messageId) =>
+                  deleteMessage(session.sessionId, messageId)
+                }
+              />
             </div>
           );
         })}

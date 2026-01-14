@@ -10,13 +10,14 @@ const liveblocks = new Liveblocks({
 // POST /api/agent-sessions/[sessionId]/messages/[messageId] - Update a message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string; messageId: string } }
+  { params }: { params: Promise<{ sessionId: string; messageId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { sessionId, messageId } = await params;
     const body = await request.json();
     const { roomId, data } = body;
 
@@ -30,8 +31,8 @@ export async function POST(
 
     const message = await liveblocks.updateAgentMessage({
       roomId,
-      agentSessionId: params.sessionId,
-      messageId: params.messageId,
+      agentSessionId: sessionId,
+      messageId: messageId,
       data,
     });
 
@@ -48,7 +49,7 @@ export async function POST(
 // DELETE /api/agent-sessions/[sessionId]/messages/[messageId]?roomId=xxx - Delete a message
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string; messageId: string } }
+  { params }: { params: Promise<{ sessionId: string; messageId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -62,10 +63,11 @@ export async function DELETE(
   }
 
   try {
+    const { sessionId, messageId } = await params;
     await liveblocks.deleteAgentMessage({
       roomId,
-      agentSessionId: params.sessionId,
-      messageId: params.messageId,
+      agentSessionId: sessionId,
+      messageId: messageId,
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {

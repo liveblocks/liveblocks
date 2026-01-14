@@ -10,7 +10,7 @@ const liveblocks = new Liveblocks({
 // GET /api/agent-sessions/[sessionId]?roomId=xxx - Get a specific agent session
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -24,9 +24,10 @@ export async function GET(
   }
 
   try {
+    const { sessionId } = await params;
     const session = await liveblocks.getAgentSession({
       roomId,
-      agentSessionId: params.sessionId,
+      agentSessionId: sessionId,
     });
     return NextResponse.json(session);
   } catch (error) {
@@ -41,13 +42,14 @@ export async function GET(
 // POST /api/agent-sessions/[sessionId] - Update agent session metadata
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { sessionId } = await params;
     const body = await request.json();
     const { roomId, metadata } = body;
 
@@ -61,7 +63,7 @@ export async function POST(
 
     const session = await liveblocks.updateAgentSessionMetadata({
       roomId,
-      agentSessionId: params.sessionId,
+      agentSessionId: sessionId,
       metadata,
     });
 
@@ -78,7 +80,7 @@ export async function POST(
 // DELETE /api/agent-sessions/[sessionId]?roomId=xxx - Delete an agent session
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -92,9 +94,10 @@ export async function DELETE(
   }
 
   try {
+    const { sessionId } = await params;
     await liveblocks.deleteAgentSession({
       roomId,
-      agentSessionId: params.sessionId,
+      agentSessionId: sessionId,
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
