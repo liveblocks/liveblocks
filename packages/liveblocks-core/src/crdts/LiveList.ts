@@ -2,7 +2,12 @@ import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
-import type { CreateListOp, CreateOp, Op } from "../protocol/Op";
+import type {
+  ClientWireOp,
+  CreateListOp,
+  CreateOp,
+  Op,
+} from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -100,7 +105,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * This is quite unintuitive and should disappear as soon as
    * we introduce an explicit LiveList.Set operation
    */
-  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -108,7 +113,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const ops: CreateOp[] = [];
     const op: CreateListOp = {
       id: this._id,
-      opId: pool?.generateOpId(),
       type: OpCode.CREATE_LIST,
       parentId,
       parentKey,
@@ -119,13 +123,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     for (const item of this.#items) {
       const parentKey = item._getParentKeyOrThrow();
       const childOps = HACK_addIntentAndDeletedIdToOperation(
-        item._toOps(this._id, parentKey, pool),
+        item._toOps(this._id, parentKey),
         undefined
       );
-      const childOpId = childOps[0].opId;
-      if (childOpId !== undefined) {
-        this.#unacknowledgedSets.set(parentKey, childOpId);
-      }
       ops.push(...childOps);
     }
 
@@ -532,7 +532,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#items[indexOfItemWithSameKey] = child;
 
       const reverse = HACK_addIntentAndDeletedIdToOperation(
-        existingItem._toOps(nn(this._id), key, this._pool),
+        existingItem._toOps(nn(this._id), key),
         op.id
       );
 
@@ -572,17 +572,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     let result: ApplyResult;
 
     if (op.intent === "set") {
-      if (source === OpSource.REMOTE) {
+      if (source === OpSource.THEIRS) {
         result = this.#applySetRemote(op);
-      } else if (source === OpSource.ACK) {
+      } else if (source === OpSource.OURS) {
         result = this.#applySetAck(op);
       } else {
         result = this.#applySetUndoRedo(op);
       }
     } else {
-      if (source === OpSource.REMOTE) {
+      if (source === OpSource.THEIRS) {
         result = this.#applyRemoteInsert(op);
-      } else if (source === OpSource.ACK) {
+      } else if (source === OpSource.OURS) {
         result = this.#applyInsertAck(op);
       } else {
         result = this.#applyInsertUndoRedo(op);
@@ -602,7 +602,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
       const parentKey = nn(child._parentKey);
-      const reverse = child._toOps(nn(this._id), parentKey, this._pool);
+      const reverse = child._toOps(nn(this._id), parentKey);
 
       const indexToDelete = this.#items.indexOf(child);
 
@@ -801,9 +801,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _setChildKey(newKey: Pos, child: LiveNode, source: OpSource): ApplyResult {
-    if (source === OpSource.REMOTE) {
+    if (source === OpSource.THEIRS) {
       return this.#applySetChildKeyRemote(newKey, child);
-    } else if (source === OpSource.ACK) {
+    } else if (source === OpSource.OURS) {
       return this.#applySetChildKeyAck(newKey, child);
     } else {
       return this.#applySetChildKeyUndoRedo(newKey, child);
@@ -876,7 +876,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       value._attach(id, this._pool);
 
       this._pool.dispatch(
-        value._toOps(this._id, position, this._pool),
+        value._toOpsWithOpId(this._id, position, this._pool),
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -1004,7 +1004,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   clear(): void {
     this._pool?.assertStorageIsWritable();
     if (this._pool) {
-      const ops: Op[] = [];
+      const ops: ClientWireOp[] = [];
       const reverseOps: Op[] = [];
 
       const updateDelta: LiveListUpdateDelta[] = [];
@@ -1073,12 +1073,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
       const ops = HACK_addIntentAndDeletedIdToOperation(
-        value._toOps(this._id, position, this._pool),
+        value._toOpsWithOpId(this._id, position, this._pool),
         existingId
       );
       this.#unacknowledgedSets.set(position, nn(ops[0].opId));
       const reverseOps = HACK_addIntentAndDeletedIdToOperation(
-        existingItem._toOps(this._id, position, undefined),
+        existingItem._toOps(this._id, position),
         id
       );
 
@@ -1352,10 +1352,10 @@ function moveDelta(
  * As soon as we refactor the operations structure,
  * serializing a LiveStructure should not know anything about intent
  */
-function HACK_addIntentAndDeletedIdToOperation(
-  ops: CreateOp[],
+function HACK_addIntentAndDeletedIdToOperation<T extends CreateOp>(
+  ops: T[],
   deletedId: string | undefined
-): CreateOp[] {
+): T[] {
   return ops.map((op, index) => {
     if (index === 0) {
       // NOTE: Only patch the first Op here

@@ -63,7 +63,7 @@ export class LiveMap<
   }
 
   /** @internal */
-  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -71,7 +71,6 @@ export class LiveMap<
     const ops: CreateOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
-      opId: pool?.generateOpId(),
       type: OpCode.CREATE_MAP,
       parentId,
       parentKey,
@@ -80,7 +79,7 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this.#map) {
-      ops.push(...value._toOps(this._id, key, pool));
+      ops.push(...value._toOps(this._id, key));
     }
 
     return ops;
@@ -138,7 +137,7 @@ export class LiveMap<
       return { modified: false };
     }
 
-    if (source === OpSource.ACK) {
+    if (source === OpSource.OURS) {
       const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
@@ -148,7 +147,7 @@ export class LiveMap<
         // Another local set has overriden the value, so we do nothing
         return { modified: false };
       }
-    } else if (source === OpSource.REMOTE) {
+    } else if (source === OpSource.THEIRS) {
       // If a remote operation set an item,
       // delete the unacknowledgedSet associated to the key
       // to make sure any future ack can override it
@@ -193,7 +192,7 @@ export class LiveMap<
   _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
-    const reverse = child._toOps(id, parentKey, this._pool);
+    const reverse = child._toOps(id, parentKey);
 
     for (const [key, value] of this.#map) {
       if (value === child) {
@@ -276,12 +275,12 @@ export class LiveMap<
         updates: { [key]: { type: "update" } },
       });
 
-      const ops = item._toOps(this._id, key, this._pool);
+      const ops = item._toOpsWithOpId(this._id, key, this._pool);
 
       this.#unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._pool.dispatch(
-        item._toOps(this._id, key, this._pool),
+        ops,
         oldValue
           ? oldValue._toOps(this._id, key)
           : [{ type: OpCode.DELETE_CRDT, id }],
