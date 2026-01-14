@@ -273,6 +273,7 @@ export {
 } from "./protocol/NotificationSettings";
 export type {
   AckOp,
+  ClientWireOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -281,6 +282,7 @@ export type {
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   Op,
+  ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";

@@ -1075,7 +1075,6 @@ describe("LiveObject", () => {
           {
             data: { subA: 2 },
             id: "0:3",
-            opId: "1:0",
             parentId: "0:1",
             parentKey: "b",
             type: OpCode.CREATE_OBJECT,

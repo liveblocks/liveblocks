@@ -8,6 +8,7 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   ClientMsg,
+  ClientWireOp,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -2697,7 +2698,7 @@ export class Liveblocks {
     // there hasn't been an update to the buffered ops for a while. This
     // behavior is slightly different from the browser client, which will emit
     // ops as soon as they are available (= throttling)
-    let opsBuffer: Op[] = [];
+    let opsBuffer: ClientWireOp[] = [];
     let outstandingFlush$: Promise<void> | undefined = undefined;
     let lastFlush = performance.now();
 
@@ -2746,7 +2747,7 @@ export class Liveblocks {
       const pool = createManagedPool(roomId, {
         getCurrentConnectionId: () => actor,
         onDispatch: (
-          ops: Op[],
+          ops: ClientWireOp[],
           _reverse: Op[],
           _storageUpdates: Map<string, StorageUpdate>
         ) => {

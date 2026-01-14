@@ -22,7 +22,7 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { Op } from "../protocol/Op";
+import type { Op, ServerWireOp } from "../protocol/Op";
 import type {
   IdTuple,
   SerializedCrdt,
@@ -259,7 +259,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
       expect(wss.receivedMessages).toEqual(messages);
     },
 
-    applyRemoteOperations: (ops: Op[]) =>
+    applyRemoteOperations: (ops: ServerWireOp[]) =>
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,
@@ -464,7 +464,7 @@ export async function prepareStorageTest<
     expectStorage,
     assertUndoRedo,
 
-    applyRemoteOperations: (ops: Op[]) =>
+    applyRemoteOperations: (ops: ServerWireOp[]) =>
       subject.wss.last.send(
         serverMessage({
           type: ServerMsgCode.UPDATE_STORAGE,

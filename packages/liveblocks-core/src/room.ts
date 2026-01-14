@@ -36,6 +36,7 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  partition,
   raise,
   tryParseJson,
 } from "./lib/utils";
@@ -68,7 +69,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
-import type { Op } from "./protocol/Op";
+import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
@@ -1073,7 +1074,7 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
+  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1134,12 +1135,12 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-type HistoryOp<P extends JsonObject> =
-  | Op
-  | {
-      readonly type: "presence";
-      readonly data: P;
-    };
+type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
+
+type PresenceStackframe<P extends JsonObject> = {
+  readonly type: "presence";
+  readonly data: P;
+};
 
 type IdFactory = () => string;
 
@@ -1178,7 +1179,7 @@ type RoomState<
       | { type: "full"; data: P }
       | null;
     messages: ClientMsg<P, E>[];
-    storageOperations: Op[];
+    storageOperations: ClientWireOp[];
   };
 
   //
@@ -1202,22 +1203,22 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: HistoryOp<P>[][];
-  readonly redoStack: HistoryOp<P>[][];
+  readonly undoStack: Stackframe<P>[][];
+  readonly redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | Deque<HistoryOp<P>>;
+  pausedHistory: null | Deque<Stackframe<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
   activeBatch: {
-    ops: Op[];
-    reverseOps: Deque<HistoryOp<P>>;
+    ops: ClientWireOp[];
+    reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1227,7 +1228,7 @@ type RoomState<
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, ClientWireOp>;
 };
 
 export type Polyfills = {
@@ -1445,7 +1446,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -1558,7 +1559,7 @@ export function createRoom<
   });
 
   function onDispatch(
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
@@ -1866,26 +1867,25 @@ export function createRoom<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = applyOps(ops, /* isLocal */ false);
-
+    const result = applyRemoteOps(ops);
     notify(result.updates);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(historyOps);
+    context.undoStack.push(frames);
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOp<P>[]) {
+  function addToUndoStack(frames: Stackframe<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.pushLeft(historyOps);
+      context.pausedHistory.pushLeft(frames);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(frames);
     }
   }
 
@@ -1929,107 +1929,132 @@ export function createRoom<
     );
   }
 
-  function applyOps<O extends HistoryOp<P>>(
-    rawOps: readonly O[],
+  function applyLocalOps(frames: readonly Stackframe<P>[]): {
+    opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
+    reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    const [pframes, ops] = partition(
+      frames,
+      (f): f is PresenceStackframe<P> => f.type === "presence"
+    );
+
+    // Ensure all local ops have opIds assigned before applying them
+    const opsWithOpIds = ops.map((op: Op) =>
+      op.opId === undefined
+        ? { ...op, opId: context.pool.generateOpId() }
+        : (op as ClientWireOp)
+    );
+
+    const { reverse, updates } = applyOps(
+      pframes,
+      opsWithOpIds,
+      /* isLocal */ true
+    );
+    return { opsToEmit: opsWithOpIds, reverse, updates };
+  }
+
+  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    return applyOps([], ops, /* isLocal */ false);
+  }
+
+  function applyOps(
+    pframes: readonly PresenceStackframe<P>[],
+    ops: readonly Op[],
     isLocal: boolean
   ): {
-    // Input Ops can get opIds assigned during application.
-    ops: O[];
-    reverse: O[];
+    reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const output = {
-      reverse: new Deque<O>(),
+      reverse: new Deque<Stackframe<P>>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
 
-    const createdNodeIds = new Set<string>();
+    for (const pf of pframes) {
+      const reverse = {
+        type: "presence" as const,
+        data: {} as P,
+      };
 
-    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
-    // that right now first. Only do this for local ops, not remote ones!
-    const ops = isLocal
-      ? rawOps.map((op) => {
-          if (op.type !== "presence" && !op.opId) {
-            return { ...op, opId: context.pool.generateOpId() };
-          } else {
-            return op;
-          }
-        })
-      : Array.from(rawOps);
+      for (const key in pf.data) {
+        reverse.data[key] = context.myPresence.get()[key];
+      }
 
-    for (const op of ops) {
-      if (op.type === "presence") {
-        const reverse = {
-          type: "presence" as const,
-          data: {} as P,
-        };
+      context.myPresence.patch(pf.data);
 
-        for (const key in op.data) {
-          reverse.data[key] = context.myPresence.get()[key];
-        }
-
-        context.myPresence.patch(op.data);
-
-        if (context.buffer.presenceUpdates === null) {
-          context.buffer.presenceUpdates = { type: "partial", data: op.data };
-        } else {
-          // Merge the new fields with whatever is already queued up (doesn't
-          // matter whether its a partial or full update)
-          for (const key in op.data) {
-            context.buffer.presenceUpdates.data[key] = op.data[key];
-          }
-        }
-
-        output.reverse.pushLeft(reverse as O);
-        output.presence = true;
+      if (context.buffer.presenceUpdates === null) {
+        context.buffer.presenceUpdates = { type: "partial", data: pf.data };
       } else {
-        let source: OpSource;
+        // Merge the new fields with whatever is already queued up (doesn't
+        // matter whether its a partial or full update)
+        for (const key in pf.data) {
+          context.buffer.presenceUpdates.data[key] = pf.data[key];
+        }
+      }
 
-        if (isLocal) {
-          source = OpSource.LOCAL;
-        } else if (op.opId !== undefined) {
-          context.unacknowledgedOps.delete(op.opId);
-          source = OpSource.OURS;
-        } else {
-          // Remotely generated Ops (and fix Ops as a special case of that)
-          // don't have opId anymore.
-          source = OpSource.THEIRS;
+      output.reverse.pushLeft(reverse);
+      output.presence = true;
+    }
+
+    const createdNodeIds = new Set<string>();
+    for (const op of ops) {
+      let source: OpSource;
+
+      if (isLocal) {
+        source = OpSource.LOCAL;
+      } else if (op.opId !== undefined) {
+        context.unacknowledgedOps.delete(op.opId);
+        source = OpSource.OURS;
+      } else {
+        // Remotely generated Ops (and fix Ops as a special case of that)
+        // don't have opId anymore.
+        source = OpSource.THEIRS;
+      }
+
+      const applyOpResult = applyOp(op, source);
+      if (applyOpResult.modified) {
+        const nodeId = applyOpResult.modified.node._id;
+
+        // If the modified node was created in the same batch, we don't want
+        // to notify storage updates for it (children of newly created nodes
+        // shouldn't trigger separate updates).
+        if (!(nodeId && createdNodeIds.has(nodeId))) {
+          output.storageUpdates.set(
+            nn(applyOpResult.modified.node._id),
+            mergeStorageUpdates(
+              output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
+              applyOpResult.modified
+            )
+          );
+          output.reverse.pushLeft(applyOpResult.reverse);
         }
 
-        const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified) {
-          const nodeId = applyOpResult.modified.node._id;
-
-          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
-          // storage updates for the children.
-          if (!(nodeId && createdNodeIds.has(nodeId))) {
-            output.storageUpdates.set(
-              nn(applyOpResult.modified.node._id),
-              mergeStorageUpdates(
-                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
-                applyOpResult.modified
-              )
-            );
-            output.reverse.pushLeft(applyOpResult.reverse as O[]);
-          }
-
-          if (
-            op.type === OpCode.CREATE_LIST ||
-            op.type === OpCode.CREATE_MAP ||
-            op.type === OpCode.CREATE_OBJECT
-          ) {
-            createdNodeIds.add(nn(op.id));
-          }
+        if (
+          op.type === OpCode.CREATE_LIST ||
+          op.type === OpCode.CREATE_MAP ||
+          op.type === OpCode.CREATE_OBJECT
+        ) {
+          createdNodeIds.add(op.id);
         }
       }
     }
 
     return {
-      ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
@@ -2276,24 +2301,20 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(offlineOps: Map<string, Op>) {
-    if (offlineOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
+    if (unackedOps.size === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-
-    const inOps = Array.from(offlineOps.values());
-
-    const result = applyOps(inOps, /* isLocal */ true);
-
+    const inOps = Array.from(unackedOps.values());
+    const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
+      ops: result.opsToEmit,
     });
 
     notify(result.updates);
-
     sendMessages(messages);
   }
 
@@ -2376,7 +2397,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, /* isLocal */ false);
+          const applyResult = applyRemoteOps(message.ops);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2432,7 +2453,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(nn(op.opId), op);
+        context.unacknowledgedOps.set(op.opId, op);
       }
       notifyStorageStatus();
     }
@@ -2537,7 +2558,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  function dispatchOps(ops: Op[]) {
+  /**
+   * Schedule Ops to be sent to the server (now or soon). All ops should be
+   * "wire-ready" (have an opId), once dispatched there is no going back.
+   */
+  function dispatchOps(ops: ClientWireOp[]) {
     const { storageOperations } = context.buffer;
     for (const op of ops) {
       storageOperations.push(op);
@@ -2551,7 +2576,7 @@ export function createRoom<
   function processInitialStorage(message: StorageStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
-    applyAndSendOps(unacknowledgedOps);
+    applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
@@ -2658,22 +2683,20 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = context.undoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.undoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, /* isLocal */ true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2683,22 +2706,20 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = context.redoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.redoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, /* isLocal */ true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2763,10 +2784,10 @@ export function createRoom<
   }
 
   function resumeHistory() {
-    const historyOps = context.pausedHistory;
+    const frames = context.pausedHistory;
     context.pausedHistory = null;
-    if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(Array.from(historyOps));
+    if (frames !== null && frames.length > 0) {
+      _addToRealUndoStack(Array.from(frames));
     }
   }
 

@@ -40,11 +40,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toOps(
-    parentId: string,
-    parentKey: string,
-    pool?: ManagedPool
-  ): CreateRegisterOp[] {
+  _toOps(parentId: string, parentKey: string): CreateRegisterOp[] {
     if (this._id === undefined) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
@@ -54,7 +50,6 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return [
       {
         type: OpCode.CREATE_REGISTER,
-        opId: pool?.generateOpId(),
         id: this._id,
         parentId,
         parentKey,

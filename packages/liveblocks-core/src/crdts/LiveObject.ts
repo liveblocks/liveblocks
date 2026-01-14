@@ -5,6 +5,7 @@ import { nanoid } from "../lib/nanoid";
 import type { RemoveUndefinedValues } from "../lib/utils";
 import { compactObject, deepClone } from "../lib/utils";
 import type {
+  ClientWireOp,
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
@@ -148,18 +149,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
-
-    const opId = pool?.generateOpId();
 
     const ops: CreateOp[] = [];
     const op: CreateObjectOp = {
       type: OpCode.CREATE_OBJECT,
       id: this._id,
-      opId,
       parentId,
       parentKey,
       data: {},
@@ -169,7 +167,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     for (const [key, value] of this.#map) {
       if (isLiveNode(value)) {
-        ops.push(...value._toOps(this._id, key, pool));
+        ops.push(...value._toOps(this._id, key));
       } else {
         op.data[key] = value;
       }
@@ -296,7 +294,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     if (child) {
       const id = nn(this._id);
       const parentKey = nn(child._parentKey);
-      const reverse = child._toOps(id, parentKey, this._pool);
+      const reverse = child._toOps(id, parentKey);
 
       for (const [key, value] of this.#map) {
         if (value === child) {
@@ -640,7 +638,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
-    const ops: Op[] = [];
+    const ops: ClientWireOp[] = [];
     const reverseOps: Op[] = [];
 
     const opId = this._pool.generateOpId();
@@ -674,7 +672,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       if (isLiveNode(newValue)) {
         newValue._setParentLink(this, key);
         newValue._attach(this._pool.generateId(), this._pool);
-        const newAttachChildOps = newValue._toOps(this._id, key, this._pool);
+        const newAttachChildOps = newValue._toOpsWithOpId(
+          this._id,
+          key,
+          this._pool
+        );
 
         const createCrdtOp = newAttachChildOps.find(
           (op: Op & { parentId?: string }) => op.parentId === this._id
