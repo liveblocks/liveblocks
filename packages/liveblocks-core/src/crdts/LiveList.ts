@@ -3,7 +3,6 @@ import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
 import type {
-  ClientWireCreateOp,
   ClientWireOp,
   CreateListOp,
   CreateOp,
@@ -127,40 +126,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item._toOps(this._id, parentKey),
         undefined
       );
-      ops.push(...childOps);
-    }
-
-    return ops;
-  }
-
-  /** @internal */
-  override _toOpsWithOpId(
-    parentId: string,
-    parentKey: string,
-    pool: ManagedPool
-  ): ClientWireCreateOp[] {
-    if (this._id === undefined) {
-      throw new Error("Cannot serialize item is not attached");
-    }
-
-    const ops: ClientWireCreateOp[] = [];
-    const op: CreateListOp & { opId: string } = {
-      id: this._id,
-      opId: pool.generateOpId(),
-      type: OpCode.CREATE_LIST,
-      parentId,
-      parentKey,
-    };
-
-    ops.push(op);
-
-    for (const item of this.#items) {
-      const parentKey = item._getParentKeyOrThrow();
-      const childOps = HACK_addIntentAndDeletedIdToOperation(
-        item._toOpsWithOpId(this._id, parentKey, pool),
-        undefined
-      );
-      this.#unacknowledgedSets.set(parentKey, childOps[0].opId);
       ops.push(...childOps);
     }
 
