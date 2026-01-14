@@ -1217,7 +1217,7 @@ type RoomState<
    * wire after the batch is ended.
    */
   activeBatch: {
-    ops: Op[]; // XXX Must be wire op?
+    ops: ClientWireOp[];
     reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
@@ -1559,7 +1559,7 @@ export function createRoom<
   });
 
   function onDispatch(
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
@@ -2558,7 +2558,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  function dispatchOps(ops: Op[]) {
+  /**
+   * Schedule Ops to be sent to the server (now or soon). All ops should be
+   * "wire-ready" (have an opId), once dispatched there is no going back.
+   */
+  function dispatchOps(ops: ClientWireOp[]) {
     const { storageOperations } = context.buffer;
     for (const op of ops) {
       storageOperations.push(op);
