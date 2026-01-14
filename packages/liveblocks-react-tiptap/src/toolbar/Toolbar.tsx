@@ -25,7 +25,7 @@ import {
 } from "@liveblocks/react-ui/_private";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type { Editor } from "@tiptap/react";
+import { type Editor, useEditorState } from "@tiptap/react";
 import type {
   ComponentProps,
   ComponentType,
@@ -763,6 +763,13 @@ export const Toolbar = Object.assign(
       },
       forwardedRef
     ) => {
+      // Re-render the toolbar when the editor content and selection change.
+      useEditorState({
+        editor,
+        equalityFn: Object.is,
+        selector: (ctx) => ctx.editor?.state,
+      });
+
       if (!editor) {
         return null;
       }

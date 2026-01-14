@@ -31,6 +31,10 @@ metadata to individual comments in the same way as thread metadata.
 - Add `commentMetadata` prop to `FloatingComposer` to attach and update comment
   metadata.
 
+### `@liveblocks/react-tiptap`
+
+- Fix `Toolbar` not reflecting the editorʼs current state.
+
 ### `@liveblocks/node`
 
 - Add new parameters to `createThread`, `createComment`, and `editComment` to
