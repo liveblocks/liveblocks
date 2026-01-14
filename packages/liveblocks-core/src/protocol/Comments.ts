@@ -1,6 +1,7 @@
 import type { DCM, DTM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
 import type { Relax } from "../lib/Relax";
+import type { Resolve } from "../lib/Resolve";
 
 export type BaseMetadata = Record<
   string,
@@ -135,13 +136,22 @@ export type CommentBodyLink = {
   text?: string;
 };
 
-export type CommentBodyText = {
-  bold?: boolean;
-  italic?: boolean;
-  strikethrough?: boolean;
-  code?: boolean;
-  text: string;
-};
+export type CommentBodyText = Resolve<
+  {
+    bold?: boolean;
+    italic?: boolean;
+    strikethrough?: boolean;
+    code?: boolean;
+    text: string;
+  } & {
+    // Text elements don't have a `type` discriminator, so we
+    // explicitly exclude properties from other inline elements.
+    [K in Exclude<
+      keyof Relax<CommentBodyMention | CommentBodyLink>,
+      "text"
+    >]?: never;
+  }
+>;
 
 export type CommentBody = {
   version: 1;

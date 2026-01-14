@@ -8,6 +8,7 @@ metadata to individual comments in the same way as thread metadata.
 ### All packages
 
 - Support typing comment metadata globally via the `Liveblocks` interface.
+- Improve `CommentBody` types.
 
 ### `@liveblocks/client`
 
