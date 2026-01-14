@@ -94,10 +94,12 @@ describe("RoomProvider", () => {
     function TestComponent() {
       const roomA = contextA.useRoom();
       const roomB = contextB.useRoom();
+      const innermost = /* global */ useRoom();
       return (
         <div>
           <span data-testid="room-a">{roomA.id}</span>
           <span data-testid="room-b">{roomB.id}</span>
+          <span data-testid="innermost">{innermost.id}</span>
         </div>
       );
     }
@@ -120,6 +122,7 @@ describe("RoomProvider", () => {
 
     expect(getByTestId("room-a").textContent).toBe("room-a");
     expect(getByTestId("room-b").textContent).toBe("room-b");
+    expect(getByTestId("innermost").textContent).toBe("room-b");
   });
 });
 
