@@ -19,6 +19,7 @@ import {
   prepareStorageUpdateTest,
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
+  serverAck,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
 import {
@@ -1025,16 +1026,16 @@ describe("LiveList", () => {
         items: ["B"], // "B" is at SECOND_POSITION
       });
 
-      // Server sends ackownledgment for "B" creation with different position/
+      // Server sends ackownledgment for "B" creation with different position
       applyRemoteOperations([
-        {
+        serverAck({
           type: OpCode.CREATE_REGISTER,
           id: "1:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0", // Ack
-        },
+          opId: "1:0",
+        }),
       ]);
 
       expectStorage({
@@ -1096,14 +1097,14 @@ describe("LiveList", () => {
 
       // Ack
       applyRemoteOperations([
-        {
+        serverAck({
           type: OpCode.CREATE_REGISTER,
           id: "1:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0", // Ack
-        },
+          opId: "1:0",
+        }),
       ]);
 
       expectStorage({

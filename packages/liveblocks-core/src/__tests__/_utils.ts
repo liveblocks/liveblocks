@@ -22,7 +22,8 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { Op, ServerWireOp } from "../protocol/Op";
+import type { AckOp, ClientWireOp, Op, ServerWireOp } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
 import type {
   IdTuple,
   SerializedCrdt,
@@ -269,6 +270,46 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
   };
 }
 
+export function ack(opOrOpId: ClientWireOp | string): AckOp {
+  return {
+    type: OpCode.DELETE_CRDT,
+    id: "ACK",
+    opId: typeof opOrOpId === "string" ? opOrOpId : opOrOpId.opId,
+  };
+}
+
+/** Strips opId from Op - used for forwarding to other clients (same for v7 and v8) */
+function stripOpId(op: ClientWireOp): Op {
+  const { opId: _, ...rest } = op;
+  return rest;
+}
+
+/** On v7, sender gets back original Op (including opId), others get Op without opId */
+export function v7Behavior(op: ClientWireOp): {
+  back: ClientWireOp;
+  forward: Op;
+} {
+  return { back: op, forward: stripOpId(op) };
+}
+
+/** On v8, sender gets ack, others get Op without opId */
+export function v8Behavior(op: ClientWireOp): { back: AckOp; forward: Op } {
+  return { back: ack(op), forward: stripOpId(op) };
+}
+
+// NOTE: Uncomment to test v8 server behavior (tests should still pass)
+// TODO Make this the default once client is bumped to v8
+// export const serverBehavior = v8Behavior;
+export const serverBehavior = v7Behavior;
+
+/**
+ * Returns the server's ack response for a given op.
+ * Use this in tests that manually construct server responses.
+ */
+export function serverAck(opWithOpId: ClientWireOp): ServerWireOp {
+  return serverBehavior(opWithOpId).back;
+}
+
 /**
  * Create 2 rooms with a loaded storage
  * All operations made on the main room are forwarded to the other room
@@ -310,16 +351,17 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
+          const responses = message.ops.map(serverBehavior);
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.forward),
             })
           );
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.back),
             })
           );
         } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
@@ -504,16 +546,17 @@ export async function prepareStorageUpdateTest<
       const messages = parseAsClientMsgs(data);
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          const responses = message.ops.map(serverBehavior);
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.forward),
             })
           );
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.back),
             })
           );
         }

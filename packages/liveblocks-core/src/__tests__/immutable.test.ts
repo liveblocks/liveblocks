@@ -38,6 +38,7 @@ import {
   parseAsClientMsgs,
   prepareRoomWithStorage,
   SECOND_POSITION,
+  serverBehavior,
   serverMessage,
   THIRD_POSITION,
 } from "./_utils";
@@ -68,16 +69,17 @@ export async function prepareStorageImmutableTest<
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           totalStorageOps += message.ops.length;
+          const responses = message.ops.map(serverBehavior);
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.forward),
             })
           );
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: responses.map((r) => r.back),
             })
           );
         }
