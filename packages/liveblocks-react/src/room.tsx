@@ -321,166 +321,6 @@ type RoomLeavePair<
   leave: () => void;
 };
 
-function makeRoomContextBundle<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
->(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM> {
-  type TRoom = Room<P, S, U, E, TM, CM>;
-
-  function RoomProvider_withImplicitLiveblocksProvider(
-    props: RoomProviderProps<P, S>
-  ) {
-    // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
-    // factory-bound version of the RoomProvider will create an implicit
-    // LiveblocksProvider. This means that if an end user nests this
-    // RoomProvider under a LiveblocksProvider context, that would be an error.
-    // However, we'll allow that nesting only in this specific situation, and
-    // only because this wrapper will keep the Liveblocks context and the Room
-    // context consistent internally.
-    return (
-      <LiveblocksProviderWithClient client={client} allowNesting>
-        {/* @ts-expect-error {...props} is the same type as props */}
-        <RoomProvider {...props} />
-      </LiveblocksProviderWithClient>
-    );
-  }
-
-  const shared = createSharedContext<U>(client);
-
-  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
-    RoomContext: RoomContext as Context<TRoom | null>,
-    RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
-
-    useRoom,
-    useStatus,
-
-    useBroadcastEvent,
-    useOthersListener,
-    useLostConnectionListener,
-    useEventListener,
-
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanRedo,
-    useCanUndo,
-
-    useStorageRoot,
-    useStorage,
-
-    useSelf,
-    useMyPresence,
-    useUpdateMyPresence,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
-
-    // prettier-ignore
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
-
-    useThreads,
-    useSearchComments,
-
-    // prettier-ignore
-    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
-
-    useDeleteThread,
-    useEditThreadMetadata,
-    useMarkThreadAsResolved,
-    useMarkThreadAsUnresolved,
-    useSubscribeToThread,
-    useUnsubscribeFromThread,
-    useCreateComment,
-    useEditComment,
-    useEditCommentMetadata,
-    useDeleteComment,
-    useAddReaction,
-    useRemoveReaction,
-    useMarkThreadAsRead,
-    useThreadSubscription,
-    useAttachmentUrl,
-
-    useHistoryVersions,
-    useHistoryVersionData,
-
-    useRoomSubscriptionSettings,
-    useUpdateRoomSubscriptionSettings,
-
-    ...shared.classic,
-
-    suspense: {
-      RoomContext: RoomContext as Context<TRoom | null>,
-      RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
-
-      useRoom,
-      useStatus,
-
-      useBroadcastEvent,
-      useOthersListener,
-      useLostConnectionListener,
-      useEventListener,
-
-      useHistory,
-      useUndo,
-      useRedo,
-      useCanRedo,
-      useCanUndo,
-
-      useStorageRoot,
-      useStorage: useStorageSuspense,
-
-      useSelf: useSelfSuspense,
-      useMyPresence,
-      useUpdateMyPresence,
-      useOthers: useOthersSuspense,
-      useOthersMapped: useOthersMappedSuspense,
-      useOthersConnectionIds: useOthersConnectionIdsSuspense,
-      useOther: useOtherSuspense,
-
-      // prettier-ignore
-      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
-
-      useThreads: useThreadsSuspense,
-
-      // prettier-ignore
-      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
-
-      useDeleteThread,
-      useEditThreadMetadata,
-      useMarkThreadAsResolved,
-      useMarkThreadAsUnresolved,
-      useSubscribeToThread,
-      useUnsubscribeFromThread,
-      useCreateComment,
-      useEditComment,
-      useEditCommentMetadata,
-      useDeleteComment,
-      useAddReaction,
-      useRemoveReaction,
-      useMarkThreadAsRead,
-      useThreadSubscription,
-      useAttachmentUrl: useAttachmentUrlSuspense,
-
-      // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
-      useHistoryVersions: useHistoryVersionsSuspense,
-
-      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
-      useUpdateRoomSubscriptionSettings,
-
-      ...shared.suspense,
-    },
-  };
-
-  return Object.defineProperty(bundle, kInternal, {
-    enumerable: false,
-  });
-}
-
 function RoomProvider<
   P extends JsonObject,
   S extends LsonObject,
@@ -2757,7 +2597,156 @@ export function createRoomContext<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  return makeRoomContextBundle(client) as RoomContextBundle<P, S, U, E, TM, CM>;
+  type TRoom = Room<P, S, U, E, TM, CM>;
+
+  function RoomProvider_withImplicitLiveblocksProvider(
+    props: RoomProviderProps<P, S>
+  ) {
+    // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
+    // factory-bound version of the RoomProvider will create an implicit
+    // LiveblocksProvider. This means that if an end user nests this
+    // RoomProvider under a LiveblocksProvider context, that would be an error.
+    // However, we'll allow that nesting only in this specific situation, and
+    // only because this wrapper will keep the Liveblocks context and the Room
+    // context consistent internally.
+    return (
+      <LiveblocksProviderWithClient client={client} allowNesting>
+        {/* @ts-expect-error {...props} is the same type as props */}
+        <RoomProvider {...props} />
+      </LiveblocksProviderWithClient>
+    );
+  }
+
+  const shared = createSharedContext(client as Client<U>);
+
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
+    RoomContext: RoomContext as Context<TRoom | null>,
+    RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
+
+    useRoom,
+    useStatus,
+
+    useBroadcastEvent,
+    useOthersListener,
+    useLostConnectionListener,
+    useEventListener,
+
+    useHistory,
+    useUndo,
+    useRedo,
+    useCanRedo,
+    useCanUndo,
+
+    useStorageRoot,
+    useStorage,
+
+    useSelf,
+    useMyPresence,
+    useUpdateMyPresence,
+    useOthers,
+    useOthersMapped,
+    useOthersConnectionIds,
+    useOther,
+
+    // prettier-ignore
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
+
+    useThreads,
+    useSearchComments,
+
+    // prettier-ignore
+    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
+
+    useDeleteThread,
+    useEditThreadMetadata,
+    useMarkThreadAsResolved,
+    useMarkThreadAsUnresolved,
+    useSubscribeToThread,
+    useUnsubscribeFromThread,
+    useCreateComment,
+    useEditComment,
+    useEditCommentMetadata,
+    useDeleteComment,
+    useAddReaction,
+    useRemoveReaction,
+    useMarkThreadAsRead,
+    useThreadSubscription,
+    useAttachmentUrl,
+
+    useHistoryVersions,
+    useHistoryVersionData,
+
+    useRoomSubscriptionSettings,
+    useUpdateRoomSubscriptionSettings,
+
+    ...shared.classic,
+
+    suspense: {
+      RoomContext: RoomContext as Context<TRoom | null>,
+      RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
+
+      useRoom,
+      useStatus,
+
+      useBroadcastEvent,
+      useOthersListener,
+      useLostConnectionListener,
+      useEventListener,
+
+      useHistory,
+      useUndo,
+      useRedo,
+      useCanRedo,
+      useCanUndo,
+
+      useStorageRoot,
+      useStorage: useStorageSuspense,
+
+      useSelf: useSelfSuspense,
+      useMyPresence,
+      useUpdateMyPresence,
+      useOthers: useOthersSuspense,
+      useOthersMapped: useOthersMappedSuspense,
+      useOthersConnectionIds: useOthersConnectionIdsSuspense,
+      useOther: useOtherSuspense,
+
+      // prettier-ignore
+      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
+
+      useThreads: useThreadsSuspense,
+
+      // prettier-ignore
+      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
+
+      useDeleteThread,
+      useEditThreadMetadata,
+      useMarkThreadAsResolved,
+      useMarkThreadAsUnresolved,
+      useSubscribeToThread,
+      useUnsubscribeFromThread,
+      useCreateComment,
+      useEditComment,
+      useEditCommentMetadata,
+      useDeleteComment,
+      useAddReaction,
+      useRemoveReaction,
+      useMarkThreadAsRead,
+      useThreadSubscription,
+      useAttachmentUrl: useAttachmentUrlSuspense,
+
+      // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
+      useHistoryVersions: useHistoryVersionsSuspense,
+
+      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
+      useUpdateRoomSubscriptionSettings,
+
+      ...shared.suspense,
+    },
+  };
+
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
