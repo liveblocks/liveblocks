@@ -186,17 +186,6 @@ const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
 >();
-const _bundles = new WeakMap<
-  OpaqueClient,
-  RoomContextBundle<
-    JsonObject,
-    LsonObject,
-    BaseUserMeta,
-    Json,
-    BaseMetadata,
-    BaseMetadata
-  >
->();
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
@@ -2768,12 +2757,7 @@ export function createRoomContext<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  let bundle = _bundles.get(client);
-  if (!bundle) {
-    bundle = makeRoomContextBundle(client);
-    _bundles.set(client, bundle);
-  }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
+  return makeRoomContextBundle(client) as RoomContextBundle<P, S, U, E, TM, CM>;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
