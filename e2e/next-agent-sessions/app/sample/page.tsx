@@ -1,6 +1,6 @@
 "use client";
 import { nanoid } from "@liveblocks/core";
-import { useAgentSessions } from "@liveblocks/react";
+import { useAgentSession, useAgentSessions } from "@liveblocks/react";
 import {
   ClientSideSuspense,
   RoomProvider,
@@ -39,11 +39,80 @@ export default function Page() {
   );
 }
 
+function SessionMessages({
+  sessionId,
+  newMessageText,
+  onMessageTextChange,
+  onCreateMessage,
+  onDeleteMessage,
+}: {
+  sessionId: string;
+  newMessageText: string;
+  onMessageTextChange: (text: string) => void;
+  onCreateMessage: () => void;
+  onDeleteMessage: (messageId: string) => void;
+}) {
+  const { messages } = useAgentSession(sessionId);
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h4 className="font-semibold mb-2">Messages ({messages?.length || 0})</h4>
+
+      <div className="mb-4 flex gap-2">
+        <input
+          type="text"
+          value={newMessageText || ""}
+          onChange={(e) => onMessageTextChange(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
+              onCreateMessage();
+            }
+          }}
+          placeholder="Type a message..."
+          className="flex-1 px-3 py-2 border rounded"
+        />
+        <button
+          onClick={onCreateMessage}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Send
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        {!messages || messages.length === 0 ? (
+          <p className="text-gray-500 text-sm">No messages yet</p>
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className="flex items-start justify-between p-2 bg-gray-50 rounded"
+            >
+              <div className="flex-1">
+                <div className="text-xs text-gray-500 mb-1">
+                  {new Date(message.timestamp).toLocaleString()}
+                </div>
+                <pre className="text-sm whitespace-pre-wrap">
+                  {JSON.stringify(message.data, null, 2)}
+                </pre>
+              </div>
+              <button
+                onClick={() => onDeleteMessage(message.id)}
+                className="ml-2 px-2 py-1 text-xs bg-red-100 rounded hover:bg-red-200"
+              >
+                Delete
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Sample() {
-  const { sessions } = useAgentSessions();
+  const { sessions, isLoading } = useAgentSessions();
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Record<string, any[]>>({});
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [newMessageText, setNewMessageText] = useState<Record<string, string>>({});
 
   const createAgentSession = async () => {
@@ -100,26 +169,8 @@ function Sample() {
     }
   };
 
-  const loadMessages = async (sessionId: string) => {
-    if (messages[sessionId]) {
-      // Already loaded, just toggle
-      setExpandedSession(expandedSession === sessionId ? null : sessionId);
-      return;
-    }
-
-    setLoading((prev) => ({ ...prev, [sessionId]: true }));
-    try {
-      const response = await fetch(
-        `/api/agent-sessions/${sessionId}/messages?roomId=${encodeURIComponent(ROOM_ID)}`
-      );
-      const data = await response.json();
-      setMessages((prev) => ({ ...prev, [sessionId]: data.data || [] }));
-      setExpandedSession(sessionId);
-    } catch (error) {
-      console.error("Error loading messages:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, [sessionId]: false }));
-    }
+  const toggleMessages = (sessionId: string) => {
+    setExpandedSession(expandedSession === sessionId ? null : sessionId);
   };
 
   const createMessage = async (sessionId: string) => {
@@ -138,8 +189,7 @@ function Sample() {
       const data = await response.json();
       console.log("Created message:", data);
 
-      // Refresh messages
-      await loadMessages(sessionId);
+      // Messages will refresh automatically via useAgentSession hook
       setNewMessageText((prev) => ({ ...prev, [sessionId]: "" }));
     } catch (error) {
       console.error("Error creating message:", error);
@@ -156,8 +206,7 @@ function Sample() {
       );
       if (response.ok) {
         console.log("Deleted message:", messageId);
-        // Refresh messages
-        await loadMessages(sessionId);
+        // Messages will refresh automatically via useAgentSession hook
       }
     } catch (error) {
       console.error("Error deleting message:", error);
@@ -168,12 +217,14 @@ function Sample() {
     <main className="h-screen w-full max-w-4xl mx-auto flex p-4 py-8 flex-col overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Agent Sessions</h1>
-        <button
-          onClick={createAgentSession}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Create Session
-        </button>
+        {!isLoading && (
+          <button
+            onClick={createAgentSession}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Create Session
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-4">
@@ -183,8 +234,6 @@ function Sample() {
 
         {sessions?.map((session) => {
           const isExpanded = expandedSession === session.sessionId;
-          const sessionMessages = messages[session.sessionId] || [];
-          const isLoading = loading[session.sessionId];
 
           return (
             <div
@@ -210,11 +259,10 @@ function Sample() {
                 </div>
                 <div className="flex gap-2 ml-4">
                   <button
-                    onClick={() => loadMessages(session.sessionId)}
+                    onClick={() => toggleMessages(session.sessionId)}
                     className="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                    disabled={isLoading}
                   >
-                    {isLoading ? "Loading..." : isExpanded ? "Hide" : "Show"} Messages
+                    {isExpanded ? "Hide" : "Show"} Messages
                   </button>
                   <button
                     onClick={() => updateSessionMetadata(session.sessionId)}
@@ -232,63 +280,20 @@ function Sample() {
               </div>
 
               {isExpanded && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="font-semibold mb-2">Messages ({sessionMessages.length})</h4>
-
-                  <div className="mb-4 flex gap-2">
-                    <input
-                      type="text"
-                      value={newMessageText[session.sessionId] || ""}
-                      onChange={(e) =>
-                        setNewMessageText((prev) => ({
-                          ...prev,
-                          [session.sessionId]: e.target.value,
-                        }))
-                      }
-                      onKeyPress={(e) => {
-                        if (e.key === "Enter") {
-                          createMessage(session.sessionId);
-                        }
-                      }}
-                      placeholder="Type a message..."
-                      className="flex-1 px-3 py-2 border rounded"
-                    />
-                    <button
-                      onClick={() => createMessage(session.sessionId)}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                      Send
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {sessionMessages.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No messages yet</p>
-                    ) : (
-                      sessionMessages.map((message) => (
-                        <div
-                          key={message.id}
-                          className="flex items-start justify-between p-2 bg-gray-50 rounded"
-                        >
-                          <div className="flex-1">
-                            <div className="text-xs text-gray-500 mb-1">
-                              {new Date(message.timestamp).toLocaleString()}
-                            </div>
-                            <pre className="text-sm whitespace-pre-wrap">
-                              {JSON.stringify(message.data, null, 2)}
-                            </pre>
-                          </div>
-                          <button
-                            onClick={() => deleteMessage(session.sessionId, message.id)}
-                            className="ml-2 px-2 py-1 text-xs bg-red-100 rounded hover:bg-red-200"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                <SessionMessages
+                  sessionId={session.sessionId}
+                  newMessageText={newMessageText[session.sessionId] || ""}
+                  onMessageTextChange={(text) =>
+                    setNewMessageText((prev) => ({
+                      ...prev,
+                      [session.sessionId]: text,
+                    }))
+                  }
+                  onCreateMessage={() => createMessage(session.sessionId)}
+                  onDeleteMessage={(messageId) =>
+                    deleteMessage(session.sessionId, messageId)
+                  }
+                />
               )}
             </div>
           );
