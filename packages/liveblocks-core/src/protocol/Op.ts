@@ -151,6 +151,8 @@ export type ClientWireCreateOp = CreateOp & HasOpId;
  * 3. Op without opId — Another client's op being forwarded to us
  */
 export type ServerWireOp =
+  // NOTE: Soon, in v8, ClientWireOp will no longer be sent back by the server,
+  // only AckOp.
   | ClientWireOp // "Our" Op echoed back in full to ACK (V7 response)
   | AckOp // "Our" Op ignored, but acked with a classic V7 (h)ack response
   | TheirOp; // "Their" Op (V7 forward)
