@@ -1144,6 +1144,51 @@ type PresenceStackframe<P extends JsonObject> = {
 
 type IdFactory = () => string;
 
+class UnackedOps {
+  readonly #ops = new Map<string, ClientWireOp>();
+  readonly #generateOpId: ManagedPool["generateOpId"];
+
+  constructor(pool: Pick<ManagedPool, "generateOpId">) {
+    this.#generateOpId = () => pool.generateOpId();
+  }
+
+  /** Returns whether there are Ops that still need to be acked. */
+  isEmpty(): boolean {
+    return this.#ops.size === 0;
+  }
+
+  /**
+   * Records an Op before transmitting.
+   * Returns the transmittable Op (with an opId).
+   */
+  add(op: Op): ClientWireOp {
+    const opWithId: ClientWireOp =
+      op.opId === undefined
+        ? { ...op, opId: this.#generateOpId() }
+        : (op as ClientWireOp);
+    this.#ops.set(opWithId.opId, opWithId);
+    return opWithId;
+  }
+
+  /**
+   * Acknowledge an Op, by removing it from the unacked registry. Returns the
+   * original Op (including opId, needed by various CRDT ack handlers).
+   */
+  pop(opId: string): ClientWireOp | undefined {
+    const op = this.#ops.get(opId);
+    if (op === undefined) {
+      return undefined;
+    }
+    this.#ops.delete(opId);
+    return op;
+  }
+
+  /** Returns all unacked Ops (used for resending after reconnection). */
+  getAll(): ClientWireOp[] {
+    return Array.from(this.#ops.values());
+  }
+}
+
 export type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: IUserInfo;
@@ -1226,9 +1271,7 @@ type RoomState<
     };
   } | null;
 
-  // A registry of yet-unacknowledged Ops. These Ops have already been
-  // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, ClientWireOp>;
+  readonly unacknowledgedOps: UnackedOps;
 };
 
 export type Polyfills = {
@@ -1406,6 +1449,12 @@ export function createRoom<
     config.enableDebugLogging
   );
 
+  const pool = createManagedPool(roomId, {
+    getCurrentConnectionId,
+    onDispatch,
+    isStorageWritable,
+  });
+
   // The room's internal stateful context
   const context: RoomState<P, S, U, E> = {
     buffer: {
@@ -1434,11 +1483,7 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    pool: createManagedPool(roomId, {
-      getCurrentConnectionId,
-      onDispatch,
-      isStorageWritable,
-    }),
+    pool,
     root: undefined,
 
     undoStack: [],
@@ -1446,7 +1491,7 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, ClientWireOp>(),
+    unacknowledgedOps: new UnackedOps(pool),
   };
 
   let lastTokenKey: string | undefined;
@@ -2018,7 +2063,7 @@ export function createRoom<
       if (isLocal) {
         source = OpSource.LOCAL;
       } else if (op.opId !== undefined) {
-        context.unacknowledgedOps.delete(op.opId);
+        context.unacknowledgedOps.pop(op.opId);
         source = OpSource.OURS;
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
@@ -2301,14 +2346,13 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
-    if (unackedOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: ClientWireOp[]) {
+    if (unackedOps.length === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-    const inOps = Array.from(unackedOps.values());
-    const result = applyLocalOps(inOps);
+    const result = applyLocalOps(unackedOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops: result.opsToEmit,
@@ -2453,7 +2497,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(op.opId, op);
+        context.unacknowledgedOps.add(op);
       }
       notifyStorageStatus();
     }
@@ -2574,7 +2618,7 @@ export function createRoom<
   let _resolveStoragePromise: (() => void) | null = null;
 
   function processInitialStorage(message: StorageStateServerMsg) {
-    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    const unacknowledgedOps = context.unacknowledgedOps.getAll();
     createOrUpdateRootFromMessage(message);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
@@ -2799,7 +2843,7 @@ export function createRoom<
     if (context.root === undefined) {
       return _getStorage$ === null ? "not-loaded" : "loading";
     } else {
-      return context.unacknowledgedOps.size === 0
+      return context.unacknowledgedOps.isEmpty()
         ? "synchronized"
         : "synchronizing";
     }
