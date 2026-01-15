@@ -1,5 +1,11 @@
 ## vNEXT (not released yet)
 
+## v3.14.0 (WIP)
+
+(XXX Fine tune this message, but the theme of this release is improving room
+performance. A leaner protocol with less networking overhead, support for using
+room on our new storage engine.)
+
 ## v3.13.0
 
 This release adds support for comment metadata, allowing you to attach custom
