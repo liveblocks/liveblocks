@@ -779,7 +779,6 @@ describe("LiveObject", () => {
           type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
-          opId: "external",
         },
       ]);
 
@@ -833,13 +832,11 @@ describe("LiveObject", () => {
           type: OpCode.UPDATE_OBJECT,
           data: { a: 1 },
           id: "0:1",
-          opId: "external1",
         },
         {
           type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
-          opId: "external2",
         },
       ]);
 
@@ -875,7 +872,6 @@ describe("LiveObject", () => {
           type: OpCode.DELETE_OBJECT_KEY,
           key: "a",
           id: "0:1",
-          opId: "external",
         },
       ]);
 
