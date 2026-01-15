@@ -1,4 +1,4 @@
-## vNEXT (not released yet)
+## v3.13.1
 
 ### @liveblocks/node
 
