@@ -2057,13 +2057,22 @@ export function createRoom<
     }
 
     const createdNodeIds = new Set<string>();
-    for (const op of ops) {
+    for (let op of ops) {
       let source: OpSource;
 
       if (isLocal) {
         source = OpSource.LOCAL;
       } else if (op.opId !== undefined) {
-        context.unacknowledgedOps.pop(op.opId);
+        const opId = op.opId;
+
+        // When we receive an Op back that has an opId, it
+        // means it's an acknowledgment of an Op we sent before.
+        // Look it up from our unacknowledged Ops registry.
+        //
+        // On V7, such Ops are just echoed back in full, so we're only really
+        // using the opId from there. (Inefficient, but harmless.)
+        // On V8, the server only sends back a short ack message.
+        op = context.unacknowledgedOps.pop(opId) ?? op;
         source = OpSource.OURS;
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
