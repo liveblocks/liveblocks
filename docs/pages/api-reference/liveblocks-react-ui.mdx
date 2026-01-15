@@ -3650,121 +3650,122 @@ threads:
 
 #### Override names
 
-Here's a list of all available override names, their default values, and descriptions.
+Here's a list of all available override names, their descriptions, and default
+values.
 
 ##### Localization
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `locale` | `"en"` | Locale code |
-| `dir` | `"ltr"` | Text direction |
+| Name     | Description    | Default value |
+| -------- | -------------- | ------------- |
+| `locale` | Locale code    | `"en"`        |
+| `dir`    | Text direction | `"ltr"`       |
 
 ##### Global
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `USER_SELF` | `"you"` | Current user label |
-| `USER_UNKNOWN` | `"Anonymous"` | Unknown user label |
-| `LIST_REMAINING` | `"X more"` | Remaining items |
-| `LIST_REMAINING_USERS` | `"X others"` | Remaining users |
-| `LIST_REMAINING_COMMENTS` | `"X more comments"` | Remaining comments |
-| `EMOJI_PICKER_SEARCH_PLACEHOLDER` | `"Search…"` | Emoji search placeholder |
-| `EMOJI_PICKER_EMPTY` | `"No emoji found."` | Empty emoji results |
-| `EMOJI_PICKER_ERROR` | `"There was an error…"` | Emoji picker error |
-| `EMOJI_PICKER_CHANGE_SKIN_TONE` | `"Change skin tone"` | Skin tone button label |
-| `ATTACHMENT_TOO_LARGE` | `"The file is larger than X"` | File too large error |
-| `ATTACHMENT_ERROR` | `"The file couldn't be uploaded."` | Upload error |
-| `COPY_TO_CLIPBOARD` | `"Copy"` | Copy button label |
+| Name                              | Description              | Default value                      |
+| --------------------------------- | ------------------------ | ---------------------------------- |
+| `USER_SELF`                       | Current user label       | `"you"`                            |
+| `USER_UNKNOWN`                    | Unknown user label       | `"Anonymous"`                      |
+| `LIST_REMAINING`                  | Remaining items          | `"X more"`                         |
+| `LIST_REMAINING_USERS`            | Remaining users          | `"X others"`                       |
+| `LIST_REMAINING_COMMENTS`         | Remaining comments       | `"X more comments"`                |
+| `EMOJI_PICKER_SEARCH_PLACEHOLDER` | Emoji search placeholder | `"Search…"`                        |
+| `EMOJI_PICKER_EMPTY`              | Empty emoji results      | `"No emoji found."`                |
+| `EMOJI_PICKER_ERROR`              | Emoji picker error       | `"There was an error…"`            |
+| `EMOJI_PICKER_CHANGE_SKIN_TONE`   | Skin tone button label   | `"Change skin tone"`               |
+| `ATTACHMENT_TOO_LARGE`            | File too large error     | `"The file is larger than X"`      |
+| `ATTACHMENT_ERROR`                | Upload error             | `"The file couldn't be uploaded."` |
+| `COPY_TO_CLIPBOARD`               | Copy button label        | `"Copy"`                           |
 
 ##### Composer
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `COMPOSER_INSERT_MENTION` | `"Mention someone"` | Mention button label |
-| `COMPOSER_INSERT_EMOJI` | `"Add emoji"` | Emoji button label |
-| `COMPOSER_ATTACH_FILES` | `"Attach files"` | Attach button label |
-| `COMPOSER_REMOVE_ATTACHMENT` | `"Remove attachment"` | Remove attachment label |
-| `COMPOSER_PLACEHOLDER` | `"Write a comment…"` | Input placeholder |
-| `COMPOSER_SEND` | `"Send"` | Send button label |
-| `COMPOSER_TOGGLE_MARK` | `"Bold"`, `"Italic"`, etc. | Format toggle labels |
+| Name                         | Description             | Default value              |
+| ---------------------------- | ----------------------- | -------------------------- |
+| `COMPOSER_INSERT_MENTION`    | Mention button label    | `"Mention someone"`        |
+| `COMPOSER_INSERT_EMOJI`      | Emoji button label      | `"Add emoji"`              |
+| `COMPOSER_ATTACH_FILES`      | Attach button label     | `"Attach files"`           |
+| `COMPOSER_REMOVE_ATTACHMENT` | Remove attachment label | `"Remove attachment"`      |
+| `COMPOSER_PLACEHOLDER`       | Input placeholder       | `"Write a comment…"`       |
+| `COMPOSER_SEND`              | Send button label       | `"Send"`                   |
+| `COMPOSER_TOGGLE_MARK`       | Format toggle labels    | `"Bold"`, `"Italic"`, etc. |
 
 ##### Comment
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `COMMENT_EDITED` | `"(edited)"` | Edited indicator |
-| `COMMENT_DELETED` | `"This comment has been deleted."` | Deleted message |
-| `COMMENT_MORE` | `"More"` | More actions label |
-| `COMMENT_EDIT` | `"Edit comment"` | Edit action label |
-| `COMMENT_EDIT_COMPOSER_PLACEHOLDER` | `"Edit comment…"` | Edit placeholder |
-| `COMMENT_EDIT_COMPOSER_CANCEL` | `"Cancel"` | Cancel edit label |
-| `COMMENT_EDIT_COMPOSER_SAVE` | `"Save"` | Save edit label |
-| `COMMENT_DELETE` | `"Delete comment"` | Delete action label |
-| `COMMENT_DELETE_ATTACHMENT` | `"Delete attachment"` | Delete attachment label |
-| `COMMENT_ADD_REACTION` | `"Add reaction"` | Add reaction label |
-| `COMMENT_REACTION_LIST` | `"X reacted with Y"` | Reaction list text |
-| `COMMENT_REACTION_DESCRIPTION` | `"X reactions, react with Y"` | Reaction description |
+| Name                                | Description             | Default value                      |
+| ----------------------------------- | ----------------------- | ---------------------------------- |
+| `COMMENT_EDITED`                    | Edited indicator        | `"(edited)"`                       |
+| `COMMENT_DELETED`                   | Deleted message         | `"This comment has been deleted."` |
+| `COMMENT_MORE`                      | More actions label      | `"More"`                           |
+| `COMMENT_EDIT`                      | Edit action label       | `"Edit comment"`                   |
+| `COMMENT_EDIT_COMPOSER_PLACEHOLDER` | Edit placeholder        | `"Edit comment…"`                  |
+| `COMMENT_EDIT_COMPOSER_CANCEL`      | Cancel edit label       | `"Cancel"`                         |
+| `COMMENT_EDIT_COMPOSER_SAVE`        | Save edit label         | `"Save"`                           |
+| `COMMENT_DELETE`                    | Delete action label     | `"Delete comment"`                 |
+| `COMMENT_DELETE_ATTACHMENT`         | Delete attachment label | `"Delete attachment"`              |
+| `COMMENT_ADD_REACTION`              | Add reaction label      | `"Add reaction"`                   |
+| `COMMENT_REACTION_LIST`             | Reaction list text      | `"X reacted with Y"`               |
+| `COMMENT_REACTION_DESCRIPTION`      | Reaction description    | `"X reactions, react with Y"`      |
 
 ##### Thread
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `THREAD_RESOLVE` | `"Resolve thread"` | Resolve action label |
-| `THREAD_UNRESOLVE` | `"Re-open thread"` | Unresolve action label |
-| `THREAD_SUBSCRIBE` | `"Subscribe to thread"` | Subscribe action label |
-| `THREAD_UNSUBSCRIBE` | `"Unsubscribe from thread"` | Unsubscribe action label |
-| `THREAD_NEW_INDICATOR` | `"New"` | New indicator label |
-| `THREAD_NEW_INDICATOR_DESCRIPTION` | `"New comments"` | New indicator description |
-| `THREAD_SHOW_MORE_COMMENTS` | `"Show X more replies"` | Show more label |
-| `THREAD_COMPOSER_PLACEHOLDER` | `"Reply to thread…"` | Reply placeholder |
-| `THREAD_COMPOSER_SEND` | `"Reply"` | Reply button label |
+| Name                               | Description               | Default value               |
+| ---------------------------------- | ------------------------- | --------------------------- |
+| `THREAD_RESOLVE`                   | Resolve action label      | `"Resolve thread"`          |
+| `THREAD_UNRESOLVE`                 | Unresolve action label    | `"Re-open thread"`          |
+| `THREAD_SUBSCRIBE`                 | Subscribe action label    | `"Subscribe to thread"`     |
+| `THREAD_UNSUBSCRIBE`               | Unsubscribe action label  | `"Unsubscribe from thread"` |
+| `THREAD_NEW_INDICATOR`             | New indicator label       | `"New"`                     |
+| `THREAD_NEW_INDICATOR_DESCRIPTION` | New indicator description | `"New comments"`            |
+| `THREAD_SHOW_MORE_COMMENTS`        | Show more label           | `"Show X more replies"`     |
+| `THREAD_COMPOSER_PLACEHOLDER`      | Reply placeholder         | `"Reply to thread…"`        |
+| `THREAD_COMPOSER_SEND`             | Reply button label        | `"Reply"`                   |
 
 ##### Inbox notification
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `INBOX_NOTIFICATION_MORE` | `"More"` | More actions label |
-| `INBOX_NOTIFICATION_MARK_AS_READ` | `"Mark as read"` | Mark read label |
-| `INBOX_NOTIFICATION_DELETE` | `"Delete notification"` | Delete action label |
-| `INBOX_NOTIFICATION_THREAD_COMMENTS_LIST` | `"X commented in Y"` | Comments list text |
-| `INBOX_NOTIFICATION_THREAD_MENTION` | `"X mentioned you in Y"` | Thread mention text |
-| `INBOX_NOTIFICATION_TEXT_MENTION` | `"X mentioned you in Y"` | Text mention text |
+| Name                                      | Description         | Default value            |
+| ----------------------------------------- | ------------------- | ------------------------ |
+| `INBOX_NOTIFICATION_MORE`                 | More actions label  | `"More"`                 |
+| `INBOX_NOTIFICATION_MARK_AS_READ`         | Mark read label     | `"Mark as read"`         |
+| `INBOX_NOTIFICATION_DELETE`               | Delete action label | `"Delete notification"`  |
+| `INBOX_NOTIFICATION_THREAD_COMMENTS_LIST` | Comments list text  | `"X commented in Y"`     |
+| `INBOX_NOTIFICATION_THREAD_MENTION`       | Thread mention text | `"X mentioned you in Y"` |
+| `INBOX_NOTIFICATION_TEXT_MENTION`         | Text mention text   | `"X mentioned you in Y"` |
 
 ##### History version preview
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | `"Edits from X"` | Authors list text |
-| `HISTORY_VERSION_PREVIEW_RESTORE` | `"Restore"` | Restore button label |
-| `HISTORY_VERSION_PREVIEW_EMPTY` | `"No content."` | Empty state text |
-| `HISTORY_VERSION_PREVIEW_ERROR` | `"There was an error…"` | Error message |
+| Name                                   | Description          | Default value           |
+| -------------------------------------- | -------------------- | ----------------------- |
+| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
+| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`             |
+| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`         |
+| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"` |
 
 ##### AI composer
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `AI_COMPOSER_PLACEHOLDER` | `"Ask anything…"` | Input placeholder |
-| `AI_COMPOSER_SEND` | `"Send"` | Send button label |
-| `AI_COMPOSER_ABORT` | `"Abort response"` | Abort button label |
+| Name                      | Description        | Default value      |
+| ------------------------- | ------------------ | ------------------ |
+| `AI_COMPOSER_PLACEHOLDER` | Input placeholder  | `"Ask anything…"`  |
+| `AI_COMPOSER_SEND`        | Send button label  | `"Send"`           |
+| `AI_COMPOSER_ABORT`       | Abort button label | `"Abort response"` |
 
 ##### AI chat message
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `AI_CHAT_MESSAGE_DELETED` | `"This message has been deleted."` | Deleted message |
-| `AI_CHAT_MESSAGE_THINKING` | `"Thinking…"` | Thinking indicator |
-| `AI_CHAT_MESSAGE_REASONING` | `"Reasoning…"` / `"Reasoned for X"` | Reasoning indicator |
-| `AI_CHAT_MESSAGE_RETRIEVAL` | `"Searching X…"` / `"Searched X"` | Retrieval indicator |
+| Name                        | Description         | Default value                       |
+| --------------------------- | ------------------- | ----------------------------------- |
+| `AI_CHAT_MESSAGE_DELETED`   | Deleted message     | `"This message has been deleted."`  |
+| `AI_CHAT_MESSAGE_THINKING`  | Thinking indicator  | `"Thinking…"`                       |
+| `AI_CHAT_MESSAGE_REASONING` | Reasoning indicator | `"Reasoning…"` / `"Reasoned for X"` |
+| `AI_CHAT_MESSAGE_RETRIEVAL` | Retrieval indicator | `"Searching X…"` / `"Searched X"`   |
 
 ##### AI chat
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `AI_CHAT_MESSAGES_ERROR` | `"There was an error…"` | Messages error |
+| Name                     | Description    | Default value           |
+| ------------------------ | -------------- | ----------------------- |
+| `AI_CHAT_MESSAGES_ERROR` | Messages error | `"There was an error…"` |
 
 ##### AI tool confirmation
 
-| Name | Default | Description |
-| --- | --- | --- |
-| `AI_TOOL_CONFIRMATION_CONFIRM` | `"Confirm"` | Confirm button label |
-| `AI_TOOL_CONFIRMATION_CANCEL` | `"Cancel"` | Cancel button label |
+| Name                           | Description          | Default value |
+| ------------------------------ | -------------------- | ------------- |
+| `AI_TOOL_CONFIRMATION_CONFIRM` | Confirm button label | `"Confirm"`   |
+| `AI_TOOL_CONFIRMATION_CANCEL`  | Cancel button label  | `"Cancel"`    |
