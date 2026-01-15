@@ -3655,12 +3655,18 @@ values.
 
 ##### Localization
 
+Localization overrides can only be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name     | Description    | Default value |
 | -------- | -------------- | ------------- |
 | `locale` | Locale code    | `"en"`        |
 | `dir`    | Text direction | `"ltr"`       |
 
 ##### Global
+
+Global overrides can only be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
 
 | Name                              | Description              | Default value                      |
 | --------------------------------- | ------------------------ | ---------------------------------- |
@@ -3679,6 +3685,10 @@ values.
 
 ##### Composer
 
+Composer overrides can be set on both
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                         | Description             | Default value              |
 | ---------------------------- | ----------------------- | -------------------------- |
 | `COMPOSER_INSERT_MENTION`    | Mention button label    | `"Mention someone"`        |
@@ -3690,6 +3700,10 @@ values.
 | `COMPOSER_TOGGLE_MARK`       | Format toggle labels    | `"Bold"`, `"Italic"`, etc. |
 
 ##### Comment
+
+Comment overrides can be set on both
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
 
 | Name                                | Description             | Default value                      |
 | ----------------------------------- | ----------------------- | ---------------------------------- |
@@ -3708,6 +3722,10 @@ values.
 
 ##### Thread
 
+Thread overrides can be set on both
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                               | Description               | Default value               |
 | ---------------------------------- | ------------------------- | --------------------------- |
 | `THREAD_RESOLVE`                   | Resolve action label      | `"Resolve thread"`          |
@@ -3722,6 +3740,11 @@ values.
 
 ##### Inbox notification
 
+Inbox notification overrides can be set on both
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                                      | Description         | Default value            |
 | ----------------------------------------- | ------------------- | ------------------------ |
 | `INBOX_NOTIFICATION_MORE`                 | More actions label  | `"More"`                 |
@@ -3733,6 +3756,11 @@ values.
 
 ##### History version preview
 
+History version preview overrides can be set on both
+[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
+and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                                   | Description          | Default value           |
 | -------------------------------------- | -------------------- | ----------------------- |
 | `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
@@ -3742,6 +3770,10 @@ values.
 
 ##### AI composer
 
+AI composer overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                      | Description        | Default value      |
 | ------------------------- | ------------------ | ------------------ |
 | `AI_COMPOSER_PLACEHOLDER` | Input placeholder  | `"Ask anything…"`  |
@@ -3749,6 +3781,10 @@ values.
 | `AI_COMPOSER_ABORT`       | Abort button label | `"Abort response"` |
 
 ##### AI chat message
+
+AI chat message overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
 
 | Name                        | Description         | Default value                       |
 | --------------------------- | ------------------- | ----------------------------------- |
@@ -3759,11 +3795,19 @@ values.
 
 ##### AI chat
 
+AI chat overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
 | Name                     | Description    | Default value           |
 | ------------------------ | -------------- | ----------------------- |
 | `AI_CHAT_MESSAGES_ERROR` | Messages error | `"There was an error…"` |
 
 ##### AI tool confirmation
+
+AI tool confirmation overrides can be set on both
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
 
 | Name                           | Description          | Default value |
 | ------------------------------ | -------------------- | ------------- |
