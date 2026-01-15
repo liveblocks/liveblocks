@@ -111,7 +111,7 @@ export type AckOp = {
   readonly opId: string;
 };
 
-export function isAckOp(op: ServerWireOp): op is AckOp {
+export function isAckOp(op: Op): op is AckOp {
   return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 

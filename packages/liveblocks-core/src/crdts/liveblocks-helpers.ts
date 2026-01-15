@@ -3,7 +3,7 @@ import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
 import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
-import type { CreateOp, Op } from "../protocol/Op";
+import type { CreateOp, ServerWireOp } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -177,8 +177,8 @@ export function lsonToLiveNode(value: Lson): LiveNode {
 export function getTreesDiffOperations(
   currentItems: NodeMap,
   newItems: NodeMap
-): Op[] {
-  const ops: Op[] = [];
+): ServerWireOp[] {
+  const ops: ServerWireOp[] = [];
 
   currentItems.forEach((_, id) => {
     if (!newItems.get(id)) {
