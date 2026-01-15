@@ -7,6 +7,7 @@ import {
   getSubscriptionKey,
   isNumberOperator,
   isStartsWithOperator,
+  type QueryMetadata,
   type SubscriptionData,
   type SubscriptionKey,
 } from "@liveblocks/core";
@@ -17,18 +18,21 @@ import type { InboxNotificationsQuery, ThreadsQuery } from "../types";
  * Creates a predicate function that will filter all ThreadData instances that
  * match the given query.
  */
-export function makeThreadsFilter<M extends BaseMetadata>(
-  query: ThreadsQuery<M>,
+export function makeThreadsFilter<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  query: ThreadsQuery<TM>,
   subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
-): (thread: ThreadData<M>) => boolean {
-  return (thread: ThreadData<M>) =>
+): (thread: ThreadData<TM, CM>) => boolean {
+  return (thread: ThreadData<TM, CM>) =>
     matchesThreadsQuery(thread, query, subscriptions) &&
-    matchesMetadata(thread, query);
+    matchesThreadMetadata(thread, query);
 }
 
-function matchesThreadsQuery(
-  thread: ThreadData<BaseMetadata>,
-  q: ThreadsQuery<BaseMetadata>,
+function matchesThreadsQuery<TM extends BaseMetadata, CM extends BaseMetadata>(
+  thread: ThreadData<TM, CM>,
+  q: ThreadsQuery<TM>,
   subscriptions: Record<SubscriptionKey, SubscriptionData> | undefined
 ) {
   let subscription = undefined;
@@ -44,16 +48,16 @@ function matchesThreadsQuery(
   );
 }
 
-function matchesMetadata(
-  thread: ThreadData<BaseMetadata>,
-  q: ThreadsQuery<BaseMetadata>
-) {
+function matchesThreadMetadata<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(thread: ThreadData<TM, CM>, q: ThreadsQuery<TM>) {
   // Boolean logic: query.metadata? => all metadata matches
   const metadata = thread.metadata;
   return (
     q.metadata === undefined ||
     Object.entries(q.metadata).every(
-      ([key, op]) =>
+      ([key, op]: [keyof TM, QueryMetadata<TM>[keyof TM] | undefined]) =>
         // Ignore explicit-undefined filters
         // Boolean logic: op? => value matches the operator
         op === undefined || matchesOperator(metadata[key], op)

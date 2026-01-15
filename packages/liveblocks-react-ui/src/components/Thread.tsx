@@ -3,7 +3,8 @@
 import {
   type BaseMetadata,
   type CommentData,
-  type DM,
+  type DCM,
+  type DTM,
   Permission,
   type ThreadData,
 } from "@liveblocks/core";
@@ -53,12 +54,14 @@ import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
-export interface ThreadProps<M extends BaseMetadata = DM>
-  extends ComponentPropsWithoutRef<"div"> {
+export interface ThreadProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends ComponentPropsWithoutRef<"div"> {
   /**
    * The thread to display.
    */
-  thread: ThreadData<M>;
+  thread: ThreadData<TM, CM>;
 
   /**
    * How to show or hide the composer to reply to the thread.
@@ -152,7 +155,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * The event handler called when the thread is deleted.
    * A thread is deleted when all its comments are deleted.
    */
-  onThreadDelete?: (thread: ThreadData<M>) => void;
+  onThreadDelete?: (thread: ThreadData<TM, CM>) => void;
 
   /**
    * The event handler called when clicking on a comment's author.
@@ -199,7 +202,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
  * </>
  */
 export const Thread = forwardRef(
-  <M extends BaseMetadata = DM>(
+  <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
     {
       thread,
       indentCommentContent = true,
@@ -225,7 +228,7 @@ export const Thread = forwardRef(
       components,
       className,
       ...props
-    }: ThreadProps<M>,
+    }: ThreadProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
@@ -623,6 +626,6 @@ export const Thread = forwardRef(
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = DM>(
-  props: ThreadProps<M> & RefAttributes<HTMLDivElement>
+) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
+  props: ThreadProps<TM, CM> & RefAttributes<HTMLDivElement>
 ) => JSX.Element;

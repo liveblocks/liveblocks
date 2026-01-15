@@ -10,10 +10,11 @@ import type {
 } from "@liveblocks/client";
 import type {
   BaseMetadata,
+  DCM,
   DE,
-  DM,
   DP,
   DS,
+  DTM,
   DU,
   OpaqueClient,
   OpaqueRoom,
@@ -45,7 +46,8 @@ export type LiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 > = {
   /**
    * Enters a room and starts sync it with zustand state
@@ -60,7 +62,7 @@ export type LiveblocksContext<
   /**
    * The room currently synced to your zustand state.
    */
-  readonly room: Room<P, S, U, E, M> | null;
+  readonly room: Room<P, S, U, E, TM, CM> | null;
   /**
    * Other users in the room. Empty no room is currently synced
    */
@@ -84,9 +86,10 @@ export type WithLiveblocks<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
 > = TState & {
-  readonly liveblocks: LiveblocksContext<P, S, U, E, M>;
+  readonly liveblocks: LiveblocksContext<P, S, U, E, TM, CM>;
 };
 
 export type Mapping<T> = {
@@ -124,6 +127,7 @@ type InnerLiveblocksMiddleware = <
       LsonObject,
       BaseUserMeta,
       Json,
+      BaseMetadata,
       BaseMetadata
     >;
   },
@@ -370,14 +374,15 @@ function updateLiveblocksContext<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   set: (
     callbackOrPartial: (
-      current: WithLiveblocks<TState, P, S, U, E, M>
+      current: WithLiveblocks<TState, P, S, U, E, TM, CM>
     ) => WithLiveblocks<TState, P, S, U, E> | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksContext<P, S, U, E, M>>
+  partial: Partial<LiveblocksContext<P, S, U, E, TM, CM>>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
@@ -387,9 +392,10 @@ function updatePresence<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
-  room: Room<P, S, U, E, M>,
+  room: Room<P, S, U, E, TM, CM>,
   oldState: P,
   newState: P,
   presenceMapping: Mapping<P>

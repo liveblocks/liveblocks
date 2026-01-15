@@ -1,5 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
-import type { Op } from "./Op";
+import type { ClientWireOp } from "./Op";
 
 export type ClientMsgCode = (typeof ClientMsgCode)[keyof typeof ClientMsgCode];
 export const ClientMsgCode = Object.freeze({
@@ -84,7 +84,7 @@ export type UpdatePresenceClientMsg<P extends JsonObject> =
 
 export type UpdateStorageClientMsg = {
   readonly type: ClientMsgCode.UPDATE_STORAGE;
-  readonly ops: Op[];
+  readonly ops: ClientWireOp[];
 };
 
 export type FetchStorageClientMsg = {

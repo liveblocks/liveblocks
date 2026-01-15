@@ -37,6 +37,9 @@ export default function Home() {
                 LiveObject
               </Link>
             </li>
+            <li>
+              <Link href="/storage/stress/e2e-stress-test">Stress Test</Link>
+            </li>
           </ul>
         </li>
 

@@ -39,6 +39,8 @@ limits.
 | `userId` <InfoTooltip>The unique identifier for a user. Each `userId` must be used to represent a single user.</InfoTooltip>                                                                          | 128 characters                                                     |
 | `userInfo` <InfoTooltip>User information sent from the authentication endpoint.</InfoTooltip>                                                                                                         | 1024 characters once serialized to JSON                            |
 | Broadcast event message <InfoTooltip>Messages sent via the broadcast API for real-time communication between clients.</InfoTooltip>                                                                   | 1 MB                                                               |
+| Thread metadata <InfoTooltip>Custom metadata attached to a thread.</InfoTooltip>                                                                                                                      | 50 properties, 4000 characters each                                |
+| Comment metadata <InfoTooltip>Custom metadata attached to a comment.</InfoTooltip>                                                                                                                    | 50 properties, 4000 characters each                                |
 | `LiveObject` <InfoTooltip>A realtime data structure that stores key-value pairs. <a href="/docs/api-reference/liveblocks-client#LiveObject" className="font-medium">Learn more</a></InfoTooltip>      | 128 kB when totalling the size of the keys and values              |
 | `LiveMap` <InfoTooltip>A realtime data structure that stores key-value pairs in a map. <a href="/docs/api-reference/liveblocks-client#LiveMap" className="font-medium">Learn more</a></InfoTooltip>   | Unlimited, so long as each individual value does not exceed 128 kB |
 | `LiveList` <InfoTooltip>A realtime data structure that stores an ordered list of items. <a href="/docs/api-reference/liveblocks-client#LiveList" className="font-medium">Learn more</a></InfoTooltip> | Unlimited, so long as each individual value does not exceed 128 kB |
@@ -54,7 +56,20 @@ limit.
 ### What is a monthly active room?
 
 Monthly active rooms represents the number of rooms that have been used within a
-given month. Rooms are identified by the `roomId`.
+given month. Rooms are identified by their `roomId`.
+
+Specifically, a room counts as active when any of these occur:
+
+- A user connects on the front-end.
+- A comment is added or modified.
+- A document is updated. Any of the following: Storage, Tiptap, BlockNote,
+  Lexical, Yjs.
+- An attachment is uploaded.
+
+If a room contains content from the previous month, it is not active until it is
+used in the current month. For example, if a text document is created in
+January, it is not active in February until a user connects to the document or
+updates its content.
 
 ### What is a monthly active user?
 

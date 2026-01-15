@@ -1267,6 +1267,12 @@ declare global {
       x: number;
       y: number;
     };
+    CommentMetadata: {
+      // Example types, e.g. tags, context, external IDs
+      tag?: string;
+      spam: boolean;
+      slackMessageTs: string;
+    };
     // +++
 
     // Other types
@@ -1286,6 +1292,29 @@ import { Composer } from "@liveblocks/react-ui";
 // Adds a new comment to a thread
 function Component({ threadId }) {
   return <Composer threadId={threadId} />;
+}
+```
+
+##### Adding comment metadata
+
+If you’d like to attach custom metadata to a reply, you can add a
+`commentMetadata` prop.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new reply to an existing thread with custom metadata
+function Component({ threadId }) {
+  return (
+    <Composer
+      threadId={threadId}
+      commentMetadata={{
+        // Custom metadata here, e.g. tags, context, external IDs
+        tag: "important",
+        spam: false,
+      }}
+    />
+  );
 }
 ```
 
@@ -1349,6 +1378,12 @@ Learn more about mutation hooks under
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="commentMetadata"
+    type="CommentMetadata | Partial<CommentMetadata>"
+  >
+    The metadata of the comment to create or edit.
   </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
@@ -2784,6 +2819,7 @@ on the
 - [`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
 - [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
+- [`useEditCommentMetadata`](/docs/api-reference/liveblocks-react#useEditCommentMetadata)
 - [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
 - [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
 - [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
@@ -3611,3 +3647,169 @@ threads:
   }}
 />
 ```
+
+#### Override names
+
+Here's a list of all available override names, their descriptions, and default
+values.
+
+##### Localization
+
+Localization overrides can only be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name     | Description    | Default value |
+| -------- | -------------- | ------------- |
+| `locale` | Locale code    | `"en"`        |
+| `dir`    | Text direction | `"ltr"`       |
+
+##### Global
+
+Global overrides can only be set on
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                              | Description              | Default value                      |
+| --------------------------------- | ------------------------ | ---------------------------------- |
+| `USER_SELF`                       | Current user label       | `"you"`                            |
+| `USER_UNKNOWN`                    | Unknown user label       | `"Anonymous"`                      |
+| `LIST_REMAINING`                  | Remaining items          | `"X more"`                         |
+| `LIST_REMAINING_USERS`            | Remaining users          | `"X others"`                       |
+| `LIST_REMAINING_COMMENTS`         | Remaining comments       | `"X more comments"`                |
+| `EMOJI_PICKER_SEARCH_PLACEHOLDER` | Emoji search placeholder | `"Search…"`                        |
+| `EMOJI_PICKER_EMPTY`              | Empty emoji results      | `"No emoji found."`                |
+| `EMOJI_PICKER_ERROR`              | Emoji picker error       | `"There was an error…"`            |
+| `EMOJI_PICKER_CHANGE_SKIN_TONE`   | Skin tone button label   | `"Change skin tone"`               |
+| `ATTACHMENT_TOO_LARGE`            | File too large error     | `"The file is larger than X"`      |
+| `ATTACHMENT_ERROR`                | Upload error             | `"The file couldn't be uploaded."` |
+| `COPY_TO_CLIPBOARD`               | Copy button label        | `"Copy"`                           |
+
+##### Composer
+
+Composer overrides can be set on both
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                         | Description             | Default value              |
+| ---------------------------- | ----------------------- | -------------------------- |
+| `COMPOSER_INSERT_MENTION`    | Mention button label    | `"Mention someone"`        |
+| `COMPOSER_INSERT_EMOJI`      | Emoji button label      | `"Add emoji"`              |
+| `COMPOSER_ATTACH_FILES`      | Attach button label     | `"Attach files"`           |
+| `COMPOSER_REMOVE_ATTACHMENT` | Remove attachment label | `"Remove attachment"`      |
+| `COMPOSER_PLACEHOLDER`       | Input placeholder       | `"Write a comment…"`       |
+| `COMPOSER_SEND`              | Send button label       | `"Send"`                   |
+| `COMPOSER_TOGGLE_MARK`       | Format toggle labels    | `"Bold"`, `"Italic"`, etc. |
+
+##### Comment
+
+Comment overrides can be set on both
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                                | Description             | Default value                      |
+| ----------------------------------- | ----------------------- | ---------------------------------- |
+| `COMMENT_EDITED`                    | Edited indicator        | `"(edited)"`                       |
+| `COMMENT_DELETED`                   | Deleted message         | `"This comment has been deleted."` |
+| `COMMENT_MORE`                      | More actions label      | `"More"`                           |
+| `COMMENT_EDIT`                      | Edit action label       | `"Edit comment"`                   |
+| `COMMENT_EDIT_COMPOSER_PLACEHOLDER` | Edit placeholder        | `"Edit comment…"`                  |
+| `COMMENT_EDIT_COMPOSER_CANCEL`      | Cancel edit label       | `"Cancel"`                         |
+| `COMMENT_EDIT_COMPOSER_SAVE`        | Save edit label         | `"Save"`                           |
+| `COMMENT_DELETE`                    | Delete action label     | `"Delete comment"`                 |
+| `COMMENT_DELETE_ATTACHMENT`         | Delete attachment label | `"Delete attachment"`              |
+| `COMMENT_ADD_REACTION`              | Add reaction label      | `"Add reaction"`                   |
+| `COMMENT_REACTION_LIST`             | Reaction list text      | `"X reacted with Y"`               |
+| `COMMENT_REACTION_DESCRIPTION`      | Reaction description    | `"X reactions, react with Y"`      |
+
+##### Thread
+
+Thread overrides can be set on both
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                               | Description               | Default value               |
+| ---------------------------------- | ------------------------- | --------------------------- |
+| `THREAD_RESOLVE`                   | Resolve action label      | `"Resolve thread"`          |
+| `THREAD_UNRESOLVE`                 | Unresolve action label    | `"Re-open thread"`          |
+| `THREAD_SUBSCRIBE`                 | Subscribe action label    | `"Subscribe to thread"`     |
+| `THREAD_UNSUBSCRIBE`               | Unsubscribe action label  | `"Unsubscribe from thread"` |
+| `THREAD_NEW_INDICATOR`             | New indicator label       | `"New"`                     |
+| `THREAD_NEW_INDICATOR_DESCRIPTION` | New indicator description | `"New comments"`            |
+| `THREAD_SHOW_MORE_COMMENTS`        | Show more label           | `"Show X more replies"`     |
+| `THREAD_COMPOSER_PLACEHOLDER`      | Reply placeholder         | `"Reply to thread…"`        |
+| `THREAD_COMPOSER_SEND`             | Reply button label        | `"Reply"`                   |
+
+##### Inbox notification
+
+Inbox notification overrides can be set on both
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                                      | Description         | Default value            |
+| ----------------------------------------- | ------------------- | ------------------------ |
+| `INBOX_NOTIFICATION_MORE`                 | More actions label  | `"More"`                 |
+| `INBOX_NOTIFICATION_MARK_AS_READ`         | Mark read label     | `"Mark as read"`         |
+| `INBOX_NOTIFICATION_DELETE`               | Delete action label | `"Delete notification"`  |
+| `INBOX_NOTIFICATION_THREAD_COMMENTS_LIST` | Comments list text  | `"X commented in Y"`     |
+| `INBOX_NOTIFICATION_THREAD_MENTION`       | Thread mention text | `"X mentioned you in Y"` |
+| `INBOX_NOTIFICATION_TEXT_MENTION`         | Text mention text   | `"X mentioned you in Y"` |
+
+##### History version preview
+
+History version preview overrides can be set on both
+[`HistoryVersionSummary`](/docs/api-reference/liveblocks-react-ui#HistoryVersionSummary)
+and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                                   | Description          | Default value           |
+| -------------------------------------- | -------------------- | ----------------------- |
+| `HISTORY_VERSION_PREVIEW_AUTHORS_LIST` | Authors list text    | `"Edits from X"`        |
+| `HISTORY_VERSION_PREVIEW_RESTORE`      | Restore button label | `"Restore"`             |
+| `HISTORY_VERSION_PREVIEW_EMPTY`        | Empty state text     | `"No content."`         |
+| `HISTORY_VERSION_PREVIEW_ERROR`        | Error message        | `"There was an error…"` |
+
+##### AI composer
+
+AI composer overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                      | Description        | Default value      |
+| ------------------------- | ------------------ | ------------------ |
+| `AI_COMPOSER_PLACEHOLDER` | Input placeholder  | `"Ask anything…"`  |
+| `AI_COMPOSER_SEND`        | Send button label  | `"Send"`           |
+| `AI_COMPOSER_ABORT`       | Abort button label | `"Abort response"` |
+
+##### AI chat message
+
+AI chat message overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                        | Description         | Default value                       |
+| --------------------------- | ------------------- | ----------------------------------- |
+| `AI_CHAT_MESSAGE_DELETED`   | Deleted message     | `"This message has been deleted."`  |
+| `AI_CHAT_MESSAGE_THINKING`  | Thinking indicator  | `"Thinking…"`                       |
+| `AI_CHAT_MESSAGE_REASONING` | Reasoning indicator | `"Reasoning…"` / `"Reasoned for X"` |
+| `AI_CHAT_MESSAGE_RETRIEVAL` | Retrieval indicator | `"Searching X…"` / `"Searched X"`   |
+
+##### AI chat
+
+AI chat overrides can be set on both
+[`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                     | Description    | Default value           |
+| ------------------------ | -------------- | ----------------------- |
+| `AI_CHAT_MESSAGES_ERROR` | Messages error | `"There was an error…"` |
+
+##### AI tool confirmation
+
+AI tool confirmation overrides can be set on both
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool) and
+[`LiveblocksUiConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig).
+
+| Name                           | Description          | Default value |
+| ------------------------------ | -------------------- | ------------- |
+| `AI_TOOL_CONFIRMATION_CONFIRM` | Confirm button label | `"Confirm"`   |
+| `AI_TOOL_CONFIRMATION_CANCEL`  | Cancel button label  | `"Cancel"`    |
