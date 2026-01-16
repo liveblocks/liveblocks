@@ -151,6 +151,29 @@ export function lsonToLiveNode(value: Lson): LiveNode {
   }
 }
 
+/**
+ * Computes the operations needed to transform one NodeMap into another.
+ *
+ * Used when the client receives a fresh storage snapshot from the server
+ * (e.g. after reconnecting). The local state may have diverged, so we diff
+ * the two trees and apply the resulting ops to bring local state in sync
+ * with the server's authoritative version.
+ *
+ * Returns ops for:
+ * - DELETE_CRDT: nodes in current but not in new
+ * - CREATE_*: nodes in new but not in current
+ * - UPDATE_OBJECT: objects whose data changed
+ * - SET_PARENT_KEY: nodes whose position changed
+ *
+ * Example:
+ * - Current: { "root": { a: 1 },  "node1": { b: 2 } }
+ * - New:     { "root": { a: 99 }, "node2": { c: 3 } }
+ *
+ * Returns:
+ *  - DELETE_CRDT for "node1" (removed)
+ *  - UPDATE_OBJECT for "root" (data changed: a: 1 → 99)
+ *  - CREATE_OBJECT for "node2" (added)
+ */
 export function getTreesDiffOperations(
   currentItems: NodeMap,
   newItems: NodeMap

@@ -1,10 +1,11 @@
+import { config } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
+config({ path: ".env.local" });
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io";
+console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
