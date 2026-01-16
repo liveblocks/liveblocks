@@ -28,6 +28,8 @@ import {
 } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
+import { ClientMsgCode } from "../../protocol/ClientMsg";
+import type { CreateRegisterOp, Op } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
@@ -725,6 +727,85 @@ describe("LiveList", () => {
       expectStorage({ items: [{ a: 2 }] });
 
       assertUndoRedo();
+    });
+
+    test("ack with deletedId should detach item re-inserted by remote before ack", async () => {
+      // This test verifies that when processing a set ack, the deletedId field
+      // is used to clean up items that were re-inserted by a remote operation
+      // between sending the set op and receiving the ack.
+      //
+      // Scenario:
+      // 1. List has ["A", "B"] where B has ID "0:3"
+      // 2. Client does list.set(1, "X") - B is detached locally, X inserted
+      // 3. Remote op arrives that re-inserts B with same ID "0:3"
+      //    (e.g., another client undoing a prior local delete of B)
+      // 4. Ack arrives for the set op (with deletedId: "0:3")
+      // 5. The ack should detach the re-inserted B
+
+      const { root, wss, expectStorage, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+      expectStorage({ items: ["A", "B"] });
+
+      // Do a set operation - this will delete B and insert X
+      items.set(1, "X");
+
+      // Locally, B is now replaced with X
+      expectStorage({ items: ["A", "X"] });
+
+      // Capture the op that was sent (it should have deletedId: "0:3")
+      const sentMessages = wss.receivedMessages;
+      expect(sentMessages.length).toBeGreaterThan(0);
+      const lastBatch = sentMessages[sentMessages.length - 1] as Array<{
+        type: number;
+        ops?: Op[];
+      }>;
+      // lastBatch is an array of messages; find the UPDATE_STORAGE message
+      const updateStorageMsg = lastBatch.find(
+        (msg) => msg.type === ClientMsgCode.UPDATE_STORAGE
+      );
+      expect(updateStorageMsg?.ops).toBeDefined();
+      const setOp = updateStorageMsg!.ops![0] as CreateRegisterOp & {
+        opId: string;
+      };
+      expect(setOp.opId).toBeDefined();
+      expect(setOp.deletedId).toBe("0:3"); // The ID of B that was deleted
+
+      // Before the ack arrives, a remote operation recreates B with the same ID
+      // This simulates a remote undo that recreates the deleted item
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "0:3", // Same ID as the original B!
+          parentId: "0:1",
+          parentKey: THIRD_POSITION, // At a different position
+          data: "B",
+        },
+      ]);
+
+      // Now the list has both X and the recreated B
+      expectStorage({ items: ["A", "X", "B"] });
+
+      // Send the ack for the set operation using serverAck, which respects
+      // the serverBehavior setting (v7 echoes full op, v8 sends minimal ack).
+      // For v8, the intent and deletedId come from the original op retrieved
+      // from memory. For v7, they come from the echoed op.
+      applyRemoteOperations([serverAck(setOp)]);
+
+      // The ack should use deletedId to detach the recreated B.
+      // This also implicitly tests that intent="set" is preserved, because
+      // without it, the ack would route to #applyInsertAck instead of
+      // #applySetAck, and deletedId cleanup wouldn't happen.
+      expectStorage({ items: ["A", "X"] });
     });
   });
 
