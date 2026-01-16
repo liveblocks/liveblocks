@@ -1,4 +1,4 @@
-## v3.13.1
+## v3.13.2
 
 ### @liveblocks/node
 
