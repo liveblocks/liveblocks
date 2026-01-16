@@ -2,12 +2,7 @@ import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
-import type {
-  ClientWireOp,
-  CreateListOp,
-  CreateOp,
-  Op,
-} from "../protocol/Op";
+import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
@@ -205,7 +200,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
-        // item at position to be replaced is different from server, so we put in a cache
+        // Item at position to be replaced is different from server, so we
+        // remember it in case we need to restore it later.
         // This scenario can happen if an other item has been put at this position
         // while getting the acknowledgement of the set (move, insert or set)
         this.#implicitlyDeletedItems.add(itemWithSamePosition);
@@ -713,9 +709,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       child._setParentLink(this, newKey);
       this._insertAndSort(child);
 
-      // TODO
+      const newIndex = this.#items.indexOf(child);
       return {
-        modified: false,
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
+        reverse: [],
       };
     } else {
       if (newKey === previousKey) {

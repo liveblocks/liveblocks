@@ -5,13 +5,16 @@ import { describe, test, expect, onTestFinished, vi } from "vitest";
 
 config();
 
+const BASE_URL =
+  process.env.LIVEBLOCKS_BASE_URL ??
+  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
+  "https://api.liveblocks.io";
+console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
+
 const client = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
   // @ts-expect-error hidden config
-  baseUrl:
-    process.env.LIVEBLOCKS_BASE_URL ??
-    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
-    "https://api.liveblocks.io",
+  baseUrl: BASE_URL,
 });
 
 async function createRandomTestRoom(): Promise<string> {

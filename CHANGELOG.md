@@ -1,5 +1,12 @@
 ## vNEXT (not released yet)
 
+## v3.13.1
+
+### `@liveblocks/client`
+
+- Fix issue where storage subscriptions wouldn't fire after concurrent move and
+  set operations, causing stale `LiveList` state in UI.
+
 ## v3.13.0
 
 This release adds support for comment metadata, allowing you to attach custom
