@@ -17,7 +17,16 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
+import type {
+  DCM,
+  DE,
+  DMD,
+  DP,
+  DS,
+  DSM,
+  DTM,
+  DU,
+} from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
@@ -512,7 +521,10 @@ export type OpaqueRoom = Room<
   LsonObject,
   BaseUserMeta,
   Json,
-  BaseMetadata
+  BaseMetadata,
+  BaseMetadata,
+  Json,
+  Json
 >;
 
 export type Room<
@@ -522,6 +534,8 @@ export type Room<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
+  SM extends Json = DSM,
+  MD extends Json = DMD,
 > = {
   /**
    * @private
@@ -617,7 +631,7 @@ export type Room<
     limit?: number;
     metadata?: Record<string, string>;
   }): Promise<{
-    sessions: AgentSession[];
+    sessions: AgentSession<SM>[];
     nextCursor?: string;
   }>;
 
@@ -632,7 +646,7 @@ export type Room<
       limit?: number;
     }
   ): Promise<{
-    messages: AgentMessage[];
+    messages: AgentMessage<MD>[];
     nextCursor?: string;
   }>;
 
@@ -701,7 +715,7 @@ export type Room<
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
     readonly agentSessions: Observable<
-      AgentSessionsServerMsg | AgentMessagesServerMsg
+      AgentSessionsServerMsg<SM> | AgentMessagesServerMsg<MD>
     >;
 
     /**
@@ -1402,10 +1416,12 @@ export function createRoom<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = DSM,
+  MD extends Json = DMD,
 >(
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<TM, CM>
-): Room<P, S, U, E, TM, CM> {
+): Room<P, S, U, E, TM, CM, SM, MD> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -1643,7 +1659,7 @@ export function createRoom<
 
     comments: makeEventSource<CommentsEventServerMsg>(),
     agentSessions: makeEventSource<
-      AgentSessionsServerMsg | AgentMessagesServerMsg
+      AgentSessionsServerMsg<SM> | AgentMessagesServerMsg<MD>
     >(),
     roomWillDestroy: makeEventSource<void>(),
   };
@@ -2480,13 +2496,13 @@ export function createRoom<
         }
 
         case ServerMsgCode.AGENT_SESSIONS: {
-          const agentSessionsMsg = message;
+          const agentSessionsMsg = message as AgentSessionsServerMsg<SM>;
           // If this is a response to a fetch request (operation: "list"), resolve the pending promise
           if (agentSessionsMsg.operation === "list") {
             // Find and resolve the matching pending request
             // We need to match based on the request parameters
             // Since we don't have the exact request params in the response, we'll resolve the first pending request
-            // This is a limitation - ideally the backend would include a request ID
+            // TODO: - ideally the backend would include a request ID, like in Aicopilots
             for (const [
               requestId,
               { resolve },
@@ -2505,7 +2521,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.AGENT_MESSAGES: {
-          const agentMessagesMsg = message;
+          const agentMessagesMsg = message as AgentMessagesServerMsg<MD>;
           // If this is a response to a fetch request (operation: "list"), resolve the pending promise
           if (agentMessagesMsg.operation === "list") {
             // Find and resolve the matching pending request based on sessionId
@@ -2513,8 +2529,13 @@ export function createRoom<
               requestId,
               { resolve },
             ] of pendingAgentMessagesRequests) {
-              const parsedRequestId = JSON.parse(requestId);
-              if (parsedRequestId.sessionId === agentMessagesMsg.sessionId) {
+              const parsedRequestId = tryParseJson(requestId) as {
+                sessionId: string;
+                cursor?: string;
+                since?: number;
+                limit?: number;
+              } | null;
+              if (parsedRequestId?.sessionId === agentMessagesMsg.sessionId) {
                 resolve({
                   messages: agentMessagesMsg.messages,
                   nextCursor: agentMessagesMsg.nextCursor,
@@ -2667,7 +2688,7 @@ export function createRoom<
     string,
     {
       resolve: (value: {
-        sessions: AgentSession[];
+        sessions: AgentSession<SM>[];
         nextCursor?: string;
       }) => void;
       reject: (error: Error) => void;
@@ -2679,7 +2700,7 @@ export function createRoom<
     string,
     {
       resolve: (value: {
-        messages: AgentMessage[];
+        messages: AgentMessage<MD>[];
         nextCursor?: string;
       }) => void;
       reject: (error: Error) => void;
@@ -2797,7 +2818,7 @@ export function createRoom<
     since?: number;
     limit?: number;
     metadata?: Record<string, string>;
-  }): Promise<{ sessions: AgentSession[]; nextCursor?: string }> {
+  }): Promise<{ sessions: AgentSession<SM>[]; nextCursor?: string }> {
     // Create a unique request ID based on the options
     const requestId = JSON.stringify({
       cursor: options?.cursor,
@@ -2812,7 +2833,7 @@ export function createRoom<
 
     // Create a new promise for this request
     const { promise, resolve, reject } = Promise_withResolvers<{
-      sessions: AgentSession[];
+      sessions: AgentSession<SM>[];
       nextCursor?: string;
     }>();
 
@@ -2849,7 +2870,7 @@ export function createRoom<
       since?: number;
       limit?: number;
     }
-  ): Promise<{ messages: AgentMessage[]; nextCursor?: string }> {
+  ): Promise<{ messages: AgentMessage<MD>[]; nextCursor?: string }> {
     // Create a unique request ID based on sessionId and options
     const requestId = JSON.stringify({
       sessionId,
@@ -2870,7 +2891,7 @@ export function createRoom<
 
     // Create a new promise for this request
     const { promise, resolve, reject } = Promise_withResolvers<{
-      messages: AgentMessage[];
+      messages: AgentMessage<MD>[];
       nextCursor?: string;
     }>();
 

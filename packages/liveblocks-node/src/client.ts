@@ -593,24 +593,24 @@ export type GetWebKnowledgeSourceLinksOptions = {
   knowledgeSourceId: string;
 } & PaginationOptions;
 
-export type CreateAgentSessionOptions = {
+export type CreateAgentSessionOptions<SM extends Json = Json> = {
   sessionId: string;
-  metadata?: JsonObject;
+  metadata?: SM;
   timestamp?: number;
 };
 
-export type UpdateAgentSessionOptions = {
-  metadata: JsonObject;
+export type UpdateAgentSessionOptions<SM extends Json = Json> = {
+  metadata: SM;
 };
 
-export type CreateAgentMessageOptions = {
+export type CreateAgentMessageOptions<MD extends Json = Json> = {
   id?: string;
   timestamp?: number;
-  data: JsonObject;
+  data: MD;
 };
 
-export type UpdateAgentMessageOptions = {
-  data: JsonObject;
+export type UpdateAgentMessageOptions<MD extends Json = Json> = {
+  data: MD;
 };
 
 type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
@@ -3158,10 +3158,10 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of agent sessions.
    */
-  public async getAgentSessions(
+  public async getAgentSessions<SM extends Json = Json>(
     params: { roomId: string },
     options?: RequestOptions
-  ): Promise<{ data: AgentSession[] }> {
+  ): Promise<{ data: AgentSession<SM>[] }> {
     const { roomId } = params;
     const res = await this.#get(
       url`/v2/rooms/${roomId}/agent-sessions`,
@@ -3171,7 +3171,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as { data: AgentSession[] };
+    return (await res.json()) as { data: AgentSession<SM>[] };
   }
 
   /**
@@ -3183,10 +3183,10 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created agent session.
    */
-  public async createAgentSession(
-    params: { roomId: string } & CreateAgentSessionOptions,
+  public async createAgentSession<SM extends Json = Json>(
+    params: { roomId: string } & CreateAgentSessionOptions<SM>,
     options?: RequestOptions
-  ): Promise<AgentSession> {
+  ): Promise<AgentSession<SM>> {
     const { roomId, sessionId, metadata, timestamp } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/agent-sessions`,
@@ -3196,7 +3196,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as AgentSession;
+    return (await res.json()) as AgentSession<SM>;
   }
 
   /**
@@ -3206,10 +3206,10 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The agent session.
    */
-  public async getAgentSession(
+  public async getAgentSession<SM extends Json = Json>(
     params: { roomId: string; agentSessionId: string },
     options?: RequestOptions
-  ): Promise<AgentSession> {
+  ): Promise<AgentSession<SM>> {
     const { roomId, agentSessionId } = params;
     const res = await this.#get(
       url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}`,
@@ -3219,7 +3219,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as AgentSession;
+    return (await res.json()) as AgentSession<SM>;
   }
 
   /**
@@ -3230,13 +3230,13 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated agent session.
    */
-  public async updateAgentSessionMetadata(
+  public async updateAgentSessionMetadata<SM extends Json = Json>(
     params: {
       roomId: string;
       agentSessionId: string;
-    } & UpdateAgentSessionOptions,
+    } & UpdateAgentSessionOptions<SM>,
     options?: RequestOptions
-  ): Promise<AgentSession> {
+  ): Promise<AgentSession<SM>> {
     const { roomId, agentSessionId, metadata } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}`,
@@ -3246,7 +3246,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as AgentSession;
+    return (await res.json()) as AgentSession<SM>;
   }
 
   /**
@@ -3277,10 +3277,10 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of agent messages.
    */
-  public async getAgentMessages(
+  public async getAgentMessages<MD extends Json = Json>(
     params: { roomId: string; agentSessionId: string },
     options?: RequestOptions
-  ): Promise<{ data: AgentMessage[] }> {
+  ): Promise<{ data: AgentMessage<MD>[] }> {
     const { roomId, agentSessionId } = params;
     const res = await this.#get(
       url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages`,
@@ -3290,7 +3290,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as { data: AgentMessage[] };
+    return (await res.json()) as { data: AgentMessage<MD>[] };
   }
 
   /**
@@ -3303,13 +3303,13 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created agent message.
    */
-  public async createAgentMessage(
+  public async createAgentMessage<MD extends Json = Json>(
     params: {
       roomId: string;
       agentSessionId: string;
-    } & CreateAgentMessageOptions,
+    } & CreateAgentMessageOptions<MD>,
     options?: RequestOptions
-  ): Promise<AgentMessage> {
+  ): Promise<AgentMessage<MD>> {
     const { roomId, agentSessionId, id, timestamp, data } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages`,
@@ -3319,7 +3319,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as AgentMessage;
+    return (await res.json()) as AgentMessage<MD>;
   }
 
   /**
@@ -3331,14 +3331,14 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated agent message.
    */
-  public async updateAgentMessage(
+  public async updateAgentMessage<MD extends Json = Json>(
     params: {
       roomId: string;
       agentSessionId: string;
       messageId: string;
-    } & UpdateAgentMessageOptions,
+    } & UpdateAgentMessageOptions<MD>,
     options?: RequestOptions
-  ): Promise<AgentMessage> {
+  ): Promise<AgentMessage<MD>> {
     const { roomId, agentSessionId, messageId, data } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/agent-sessions/${agentSessionId}/messages/${messageId}`,
@@ -3348,7 +3348,7 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as AgentMessage;
+    return (await res.json()) as AgentMessage<MD>;
   }
 
   /**

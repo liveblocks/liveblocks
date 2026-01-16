@@ -217,13 +217,15 @@ function getOrCreateRoomContextBundle<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM, SM, MD> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeRoomContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
+  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
@@ -355,8 +357,10 @@ type RoomLeavePair<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = {
-  room: Room<P, S, U, E, TM, CM>;
+  room: Room<P, S, U, E, TM, CM, SM, MD>;
   leave: () => void;
 };
 
@@ -367,9 +371,9 @@ function makeRoomContextBundle<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
->(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM> {
-  type TRoom = Room<P, S, U, E, TM, CM>;
-
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM, SM, MD> {
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
   ) {
@@ -390,11 +394,11 @@ function makeRoomContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
-    RoomContext: RoomContext as Context<TRoom | null>,
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM, SM, MD> = {
+    RoomContext: RoomContext as unknown as Context<Room<P, S, U, E, TM, CM, SM, MD> | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-    useRoom,
+    useRoom: useRoom as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["useRoom"],
     useStatus,
 
     useBroadcastEvent,
@@ -420,15 +424,20 @@ function makeRoomContextBundle<
     useOther,
 
     // prettier-ignore
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
+    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["useMutation"],
 
     useThreads,
-    useAgentSessions,
-    useAgentSession,
+    useAgentSessions: useAgentSessions as (
+      options?: UseAgentSessionsOptions
+    ) => AgentSessionsAsyncResult<SM>,
+    useAgentSession: useAgentSession as (
+      sessionId: string,
+      options?: UseAgentSessionOptions
+    ) => AgentSessionAsyncResult<MD>,
     useSearchComments,
 
     // prettier-ignore
-    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
+    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["useCreateThread"],
 
     useDeleteThread,
     useEditThreadMetadata,
@@ -455,10 +464,10 @@ function makeRoomContextBundle<
     ...shared.classic,
 
     suspense: {
-      RoomContext: RoomContext as Context<TRoom | null>,
+      RoomContext: RoomContext as unknown as Context<Room<P, S, U, E, TM, CM, SM, MD> | null>,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-      useRoom,
+      useRoom: useRoom as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["suspense"]["useRoom"],
       useStatus,
 
       useBroadcastEvent,
@@ -484,14 +493,19 @@ function makeRoomContextBundle<
       useOther: useOtherSuspense,
 
       // prettier-ignore
-      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
+      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
-      useAgentSessions: useAgentSessionsSuspense,
-      useAgentSession: useAgentSessionSuspense,
+      useAgentSessions: useAgentSessionsSuspense as (
+        options?: UseAgentSessionsOptions
+      ) => AgentSessionsAsyncSuccess<SM>,
+      useAgentSession: useAgentSessionSuspense as (
+        sessionId: string,
+        options?: UseAgentSessionOptions
+      ) => AgentSessionAsyncSuccess<MD>,
 
       // prettier-ignore
-      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
+      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["suspense"]["useCreateThread"],
 
       useDeleteThread,
       useEditThreadMetadata,
@@ -531,24 +545,26 @@ function RoomProvider<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(props: RoomProviderProps<P, S>) {
   const client = useClient<U>();
   const [cache] = useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM, SM, MD>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM> = useCallback(
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, SM, MD> = useCallback(
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, TM, CM> => {
+    ): RoomLeavePair<P, S, U, E, TM, CM, SM, MD> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, TM, CM>(roomId, options);
+      const rv = client.enterRoom<P, S, E, TM, CM, SM, MD>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -583,7 +599,7 @@ function RoomProvider<
   // Room to not be freed and destroyed when the component unmounts later.
   //
   return (
-    <RoomProviderInner<P, S, U, E, TM, CM>
+    <RoomProviderInner<P, S, U, E, TM, CM, SM, MD>
       {...(props as any)}
       stableEnterRoom={stableEnterRoom}
     />
@@ -597,10 +613,12 @@ type EnterRoomType<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = (
   roomId: string,
   options: EnterOptions<P, S>
-) => RoomLeavePair<P, S, U, E, TM, CM>;
+) => RoomLeavePair<P, S, U, E, TM, CM, SM, MD>;
 
 /** @internal */
 function RoomProviderInner<
@@ -610,9 +628,11 @@ function RoomProviderInner<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM, SM, MD>;
   }
 ) {
   const client = useClient<U>();
@@ -798,7 +818,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM, SM, MD>;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -806,7 +828,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null;
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -814,8 +838,10 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
-  const room = useRoomOrNull<P, S, U, E, TM, CM>();
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM, SM, MD>();
   if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
@@ -2935,11 +2961,13 @@ export function createRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM>(client);
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM, SM, MD> {
+  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM, SM, MD>(client);
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, Json, Json>;
 
 /**
  * Makes a Room available in the component hierarchy below.

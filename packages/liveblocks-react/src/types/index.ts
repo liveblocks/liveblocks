@@ -320,11 +320,11 @@ export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>,
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
-export type AgentSessionsAsyncSuccess = PagedAsyncSuccess<AgentSession[], "sessions">; // prettier-ignore
-export type AgentSessionsAsyncResult = PagedAsyncResult<AgentSession[], "sessions">; // prettier-ignore
+export type AgentSessionsAsyncSuccess<SM extends Json = Json> = PagedAsyncSuccess<AgentSession<SM>[], "sessions">; // prettier-ignore
+export type AgentSessionsAsyncResult<SM extends Json = Json> = PagedAsyncResult<AgentSession<SM>[], "sessions">; // prettier-ignore
 
-export type AgentSessionAsyncSuccess = PagedAsyncSuccess<AgentMessage[], "messages">; // prettier-ignore
-export type AgentSessionAsyncResult = PagedAsyncResult<AgentMessage[], "messages">; // prettier-ignore
+export type AgentSessionAsyncSuccess<MD extends Json = Json> = PagedAsyncSuccess<AgentMessage<MD>[], "messages">; // prettier-ignore
+export type AgentSessionAsyncResult<MD extends Json = Json> = PagedAsyncResult<AgentMessage<MD>[], "messages">; // prettier-ignore
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
@@ -632,13 +632,15 @@ type RoomContextBundleCommon<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: Context<Room<P, S, U, E, TM, CM> | null>;
+  RoomContext: Context<Room<P, S, U, E, TM, CM, SM, MD> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -651,10 +653,12 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
+  useRoom(options?: {
+    allowOutsideRoom: false;
+  }): Room<P, S, U, E, TM, CM, SM, MD>;
   useRoom(options: {
     allowOutsideRoom: boolean;
-  }): Room<P, S, U, E, TM, CM> | null;
+  }): Room<P, S, U, E, TM, CM, SM, MD> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -1115,8 +1119,10 @@ export type RoomContextBundle<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = Resolve<
-  RoomContextBundleCommon<P, S, U, E, TM, CM> &
+  RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1195,7 +1201,9 @@ export type RoomContextBundle<
        * @example
        * const { sessions, error, isLoading } = useAgentSessions();
        */
-      useAgentSessions(options?: UseAgentSessionsOptions): AgentSessionsAsyncResult;
+      useAgentSessions(
+        options?: UseAgentSessionsOptions
+      ): AgentSessionsAsyncResult<SM>;
 
       /**
        * Returns agent messages for a specific session in the current room.
@@ -1206,7 +1214,7 @@ export type RoomContextBundle<
       useAgentSession(
         sessionId: string,
         options?: UseAgentSessionOptions
-      ): AgentSessionAsyncResult;
+      ): AgentSessionAsyncResult<MD>;
 
       /**
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
@@ -1255,7 +1263,7 @@ export type RoomContextBundle<
       useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
-        RoomContextBundleCommon<P, S, U, E, TM, CM> &
+        RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1330,7 +1338,9 @@ export type RoomContextBundle<
              * @example
              * const { sessions } = useAgentSessions();
              */
-            useAgentSessions(options?: UseAgentSessionsOptions): AgentSessionsAsyncSuccess;
+            useAgentSessions(
+              options?: UseAgentSessionsOptions
+            ): AgentSessionsAsyncSuccess<SM>;
 
             /**
              * Returns agent messages for a specific session in the current room.
@@ -1341,7 +1351,7 @@ export type RoomContextBundle<
             useAgentSession(
               sessionId: string,
               options?: UseAgentSessionOptions
-            ): AgentSessionAsyncSuccess;
+            ): AgentSessionAsyncSuccess<MD>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.

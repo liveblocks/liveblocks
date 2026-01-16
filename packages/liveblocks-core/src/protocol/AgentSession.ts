@@ -1,13 +1,13 @@
 import type { Json } from "../lib/Json";
 
-export type AgentSession = {
+export type AgentSession<SM extends Json = Json> = {
   sessionId: string;
-  metadata: Json;
+  metadata: SM;
   timestamp: number;
 };
 
-export type AgentMessage = {
+export type AgentMessage<MD extends Json = Json> = {
   id: string;
   timestamp: number;
-  data: Json;
+  data: MD;
 };

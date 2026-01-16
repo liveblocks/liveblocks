@@ -361,17 +361,17 @@ export type RejectedStorageOpServerMsg = {
   readonly reason: string;
 };
 
-export type AgentSessionsServerMsg = {
+export type AgentSessionsServerMsg<SM extends Json = Json> = {
   readonly type: ServerMsgCode.AGENT_SESSIONS;
-  readonly sessions: AgentSession[];
+  readonly sessions: AgentSession<SM>[];
   readonly nextCursor?: string;
   readonly operation: "list" | "added" | "updated" | "deleted";
 };
 
-export type AgentMessagesServerMsg = {
+export type AgentMessagesServerMsg<MD extends Json = Json> = {
   readonly type: ServerMsgCode.AGENT_MESSAGES;
   readonly sessionId: string;
-  readonly messages: AgentMessage[];
+  readonly messages: AgentMessage<MD>[];
   readonly nextCursor?: string;
   readonly operation: "list" | "added" | "updated" | "deleted";
 };
