@@ -2069,10 +2069,27 @@ export function createRoom<
         // means it's an acknowledgment of an Op we sent before.
         // Look it up from our unacknowledged Ops registry.
         //
-        // On V7, such Ops are just echoed back in full, so we're only really
-        // using the opId from there. (Inefficient, but harmless.)
-        // On V8, the server only sends back a short ack message.
-        op = context.unacknowledgedOps.pop(opId) ?? op;
+        // On V7, the server echoes back the full op, but... possibly with its
+        // parentKey field adjusted due to conflict resolution.
+        //
+        // On V8, the server only sends back a short ack message, so we must
+        // use the original op from memory.
+        const originalOp = context.unacknowledgedOps.pop(opId);
+        if (originalOp !== undefined) {
+          const serverOp = op;
+          // Terrible hack needed unfortunately 😭😭😭😭😭😭😭😭😭
+          if (
+            "parentKey" in originalOp &&
+            typeof originalOp.parentKey === "string" &&
+            "parentKey" in serverOp &&
+            typeof serverOp.parentKey === "string" &&
+            originalOp.parentKey !== serverOp.parentKey
+          ) {
+            op = { ...originalOp, parentKey: serverOp.parentKey };
+          } else {
+            op = originalOp;
+          }
+        }
         source = OpSource.OURS;
       } else {
         // Remotely generated Ops (and fix Ops as a special case of that)
