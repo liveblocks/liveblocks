@@ -1,4 +1,12 @@
-## vNEXT (not released yet)
+## v3.13.2
+
+### @liveblocks/node
+
+- Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
+  this option is enabled, the copilot retrieves and uses the uploaded knowledge
+  sources on each user query. When disabled, the copilot will retrieve the
+  uploaded knowledge sources only when the user query relates to the knowledge
+  prompt set on the copilot.
 
 ## v3.13.1
 
