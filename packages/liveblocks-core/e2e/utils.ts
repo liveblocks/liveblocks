@@ -19,6 +19,10 @@ import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
 
+const BASE_URL =
+  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io";
+console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
+
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
   S extends LsonObject = LsonObject,
@@ -82,7 +86,7 @@ async function initializeRoomForTest<
       fetch,
       WebSocket: PausableWebSocket,
     },
-    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    baseUrl: BASE_URL,
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
