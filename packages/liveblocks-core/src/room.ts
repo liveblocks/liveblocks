@@ -2076,19 +2076,19 @@ export function createRoom<
         // use the original op from memory.
         const originalOp = context.unacknowledgedOps.pop(opId);
         if (originalOp !== undefined) {
-          const serverOp = op;
-          // Terrible hack needed unfortunately 😭😭😭😭😭😭😭😭😭
-          if (
-            "parentKey" in originalOp &&
-            typeof originalOp.parentKey === "string" &&
-            "parentKey" in serverOp &&
-            typeof serverOp.parentKey === "string" &&
-            originalOp.parentKey !== serverOp.parentKey
-          ) {
-            op = { ...originalOp, parentKey: serverOp.parentKey };
-          } else {
-            op = originalOp;
-          }
+          // const serverOp = op;
+          // // Terrible hack needed unfortunately 😭😭😭😭😭😭😭😭😭
+          // if (
+          //   "parentKey" in originalOp &&
+          //   typeof originalOp.parentKey === "string" &&
+          //   "parentKey" in serverOp &&
+          //   typeof serverOp.parentKey === "string" &&
+          //   originalOp.parentKey !== serverOp.parentKey
+          // ) {
+          //   op = { ...originalOp, parentKey: serverOp.parentKey };
+          // } else {
+          op = originalOp;
+          // }
         }
         source = OpSource.OURS;
       } else {
