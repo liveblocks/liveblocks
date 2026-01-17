@@ -77,12 +77,14 @@ export async function POST(request: Request) {
     });
   }
 
-  const tenantId = room.tenantId;
+  const organizationId = room.organizationId;
   const user = await __getSession__();
 
-  if (!__hasAccessToTenant__(user, tenantId)) {
+  if (!__hasAccessToOrganization__(user, organizationId)) {
     return new Response(
-      JSON.stringify({ error: "User does not have access to this tenant" }),
+      JSON.stringify({
+        error: `User does not have access to ${organizationId}`,
+      }),
       {
         status: 403,
       }
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
   const { status, body } = await liveblocks.identifyUser(
     {
       userId: user.id,
-      tenantId: room.tenantId,
+      organizationId: organizationId,
       groupIds: ["acme"],
     },
     {
