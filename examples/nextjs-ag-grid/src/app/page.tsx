@@ -11,7 +11,7 @@ import { Grid } from "./grid";
 import { nanoid } from "@liveblocks/core";
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-ag-grid-new-3");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-ag-grid-new-4");
 
   return (
     <RoomProvider

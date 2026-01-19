@@ -64,16 +64,16 @@ function MainGrid() {
     ({ storage }, event: CellEditRequestEvent) => {
       const {
         newValue,
-        rowIndex,
+        node: { id: rowId },
         colDef: { field },
       } = event;
 
-      if (rowIndex === null || field === undefined) {
+      if (rowId === undefined || field === undefined) {
         return;
       }
 
       const rowData = storage.get("rowData");
-      const row = rowData.get(rowIndex);
+      const row = rowData.find((row) => row.get("id") === rowId);
 
       if (!row) {
         return;
