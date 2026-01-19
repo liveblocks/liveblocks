@@ -290,13 +290,11 @@ export type Delegates<T extends BaseAuthResult> = {
 
 // istanbul ignore next
 function enableTracing(machine: FSM<Context, Event, State>) {
-  const start = new Date().getTime();
+  const start = performance.now();
 
   function log(...args: unknown[]) {
     console.warn(
-      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
-        machine.id
-      }]`,
+      `${((performance.now() - start) / 1000).toFixed(2)} [FSM #${machine.id}]`,
       ...args
     );
   }
@@ -308,8 +306,6 @@ function enableTracing(machine: FSM<Context, Event, State>) {
     machine.events.didIgnoreEvent.subscribe((e) =>
       log("Ignored event", e.type, e, "(current state won't handle it)")
     ),
-    // machine.events.willExitState.subscribe((s) => log("Exiting state", s)),
-    // machine.events.didEnterState.subscribe((s) => log("Entering state", s)),
   ];
   return () => {
     for (const unsub of unsubs) {
