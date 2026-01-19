@@ -298,10 +298,14 @@ function enableTracing(machine: FSM<Context, Event, State>) {
       ...args
     );
   }
+
   const unsubs = [
     machine.events.didReceiveEvent.subscribe((e) => log(`Event ${e.type}`)),
     machine.events.willTransition.subscribe(({ from, to }) =>
       log("Transitioning", from, "→", to)
+    ),
+    machine.events.didExitState.subscribe(({ state, durationMs }) =>
+      log(`Exited ${state} after ${durationMs.toFixed(0)}ms`)
     ),
     machine.events.didIgnoreEvent.subscribe((e) =>
       log("Ignored event", e.type, e, "(current state won't handle it)")
