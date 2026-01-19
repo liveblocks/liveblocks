@@ -24,8 +24,10 @@ import type {
   CommentsEventServerMsg,
   DCM,
   DE,
+  DMD,
   DP,
   DS,
+  DSM,
   DTM,
   DU,
   EnterOptions,
@@ -2967,7 +2969,7 @@ export function createRoomContext<
   return getOrCreateRoomContextBundle<P, S, U, E, TM, CM, SM, MD>(client);
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, Json, Json>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, DSM, DMD>;
 
 /**
  * Makes a Room available in the component hierarchy below.
