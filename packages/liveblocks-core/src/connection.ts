@@ -290,13 +290,8 @@ export type Delegates<T extends BaseAuthResult> = {
 
 // istanbul ignore next
 function enableTracing(machine: FSM<Context, Event, State>) {
-  const start = performance.now();
-
   function log(...args: unknown[]) {
-    console.warn(
-      `${((performance.now() - start) / 1000).toFixed(2)} [FSM #${machine.id}]`,
-      ...args
-    );
+    console.warn(`[FSM #${machine.id}]`, ...args);
   }
 
   const unsubs = [
