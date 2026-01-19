@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "3.13.0-metadata2",
-    "@liveblocks/node": "3.13.0-metadata2",
-    "@liveblocks/react": "3.13.0-metadata2",
-    "@liveblocks/react-ui": "3.13.0-metadata2",
+    "@liveblocks/client": "^3.13.2",
+    "@liveblocks/node": "^3.13.2",
+    "@liveblocks/react": "^3.13.2",
+    "@liveblocks/react-ui": "^3.13.2",
     "clsx": "^2.0.0",
     "frimousse": "^0.1.0",
     "next": "16.1.1",

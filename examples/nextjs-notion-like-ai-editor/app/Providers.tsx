@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { authWithRandomUser } from "./example";
 import { getRoomInfo } from "./actions/liveblocks";
 
@@ -41,7 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
         return info;
       }}
     >
-      {children}
+      <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
 }

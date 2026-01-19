@@ -2,6 +2,7 @@
 
 import type { PropsWithChildren } from "react";
 import { LiveblocksProvider } from "@liveblocks/react";
+import { Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
@@ -35,7 +36,7 @@ export function Providers({ children }: PropsWithChildren) {
         return userIds;
       }}
     >
-      {children}
+      <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
 }
