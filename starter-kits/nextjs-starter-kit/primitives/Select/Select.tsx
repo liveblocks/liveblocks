@@ -1,13 +1,21 @@
 import * as RadixSelect from "@radix-ui/react-select";
 import clsx from "clsx";
-import { CSSProperties, useCallback, useEffect, useState } from "react";
+import {
+  CSSProperties,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { CheckIcon, SelectIcon } from "../../icons";
+import { Spinner } from "../Spinner";
 import styles from "./Select.module.css";
 
 interface Item extends RadixSelect.SelectItemProps {
   value: string;
   title?: string;
   description?: string;
+  icon?: ReactNode;
 }
 
 interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
@@ -18,7 +26,10 @@ interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
   onChange?: RadixSelect.SelectProps["onValueChange"];
   placeholder?: RadixSelect.SelectValueProps["placeholder"];
   aboveOverlay?: boolean;
+  inlineDescription?: boolean;
   className?: RadixSelect.SelectTriggerProps["className"];
+  style?: CSSProperties;
+  loading?: boolean;
 }
 
 export function Select({
@@ -29,7 +40,10 @@ export function Select({
   onChange,
   placeholder,
   aboveOverlay,
+  inlineDescription,
   className,
+  style,
+  loading,
   ...props
 }: Props) {
   const [internalValue, setInternalValue] = useState(initialValue);
@@ -59,13 +73,24 @@ export function Select({
         className={clsx(className, styles.trigger, {
           [styles.triggerSubtle]: variant === "subtle",
         })}
+        style={style}
+        data-inline-description={inlineDescription === true || undefined}
+        data-loading={loading === true || undefined}
+        data-disabled={props.disabled === true || undefined}
       >
-        <RadixSelect.Value
-          placeholder={placeholder}
-          className={styles.triggerValue}
-        />
+        <div className={styles.itemInfo}>
+          <RadixSelect.Value
+            placeholder={placeholder}
+            className={styles.itemTitle}
+          />
+          {inlineDescription && internalValue && (
+            <span className={styles.itemDescription}>
+              {items.find((item) => item.value === internalValue)?.description}
+            </span>
+          )}
+        </div>
         <RadixSelect.Icon className={styles.triggerIcon}>
-          <SelectIcon />
+          {loading ? <Spinner /> : <SelectIcon />}
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
@@ -78,7 +103,7 @@ export function Select({
           }
         >
           <RadixSelect.Viewport>
-            {items.map(({ value, title, description, ...props }) => (
+            {items.map(({ value, title, description, icon, ...props }) => (
               <RadixSelect.Item
                 key={value}
                 value={value}
@@ -87,16 +112,10 @@ export function Select({
               >
                 <div className={styles.itemIndicator}>
                   <RadixSelect.ItemIndicator>
-                    <svg
-                      width="16"
-                      height="16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <CheckIcon />
-                    </svg>
+                    <CheckIcon />
                   </RadixSelect.ItemIndicator>
                 </div>
+                {icon && <div className={styles.itemIcon}>{icon}</div>}
                 <div className={styles.itemInfo}>
                   <RadixSelect.ItemText className={styles.itemTitle}>
                     {title ?? value}

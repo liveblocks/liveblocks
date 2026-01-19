@@ -5,7 +5,7 @@ import { updateUserAccess } from "@/lib/actions";
 import { Button } from "@/primitives/Button";
 import { Input } from "@/primitives/Input";
 import { Spinner } from "@/primitives/Spinner";
-import { Document, DocumentAccess, DocumentUser } from "@/types";
+import { Document, DocumentUser } from "@/types";
 import styles from "./ShareDialogInvite.module.css";
 
 interface Props extends ComponentProps<"div"> {
@@ -32,7 +32,7 @@ export function ShareDialogInviteUser({
     const { error } = await updateUserAccess({
       userId: id,
       documentId: documentId,
-      access: DocumentAccess.READONLY,
+      access: "read",
     });
 
     setInviteLoading(false);
@@ -81,7 +81,7 @@ export function ShareDialogInviteUser({
         </>
       ) : (
         <div className={styles.error}>
-          You need full access to invite others.
+          You don’t have access to change permissions.
         </div>
       )}
     </div>

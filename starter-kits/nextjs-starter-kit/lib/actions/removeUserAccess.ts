@@ -60,14 +60,14 @@ export async function removeUserAccess({ userId, documentId }: Props) {
     };
   }
 
-  // Check current logged-in user is set as a user with id, ignoring groupIds and default access
+  // Check current logged-in user is set as a user with id, ignoring default access
   if (
     !userAllowedInRoom({
       accessAllowed: "write",
       checkAccessLevel: "user",
       userId: session.user.info.id,
-      groupIds: [],
       room,
+      tenantId: session.user.currentOrganizationId,
     })
   ) {
     return {

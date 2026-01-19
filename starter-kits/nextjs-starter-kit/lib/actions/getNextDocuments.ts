@@ -19,26 +19,7 @@ type Props = {
  * @param nextCursor - nextCursor, retrieved from getDocumentByGroup
  */
 export async function getNextDocuments({ nextCursor }: Props) {
-  let session;
-  let getRoomsResponse;
-  try {
-    // Get session and rooms
-    const result = await Promise.all([
-      auth(),
-      liveblocks.getRooms({ startingAfter: nextCursor }),
-    ]);
-    session = result[0];
-    getRoomsResponse = result[1];
-  } catch (err) {
-    console.log(err);
-    return {
-      error: {
-        code: 500,
-        message: "Error fetching rooms",
-        suggestion: "Refresh the page and try again",
-      },
-    };
-  }
+  const session = await auth();
 
   // Check user is logged in
   if (!session) {
@@ -47,6 +28,26 @@ export async function getNextDocuments({ nextCursor }: Props) {
         code: 401,
         message: "Not signed in",
         suggestion: "Sign in to get documents",
+      },
+    };
+  }
+
+  const tenantId = session.user.currentOrganizationId;
+
+  let getRoomsResponse;
+  try {
+    // Get rooms
+    getRoomsResponse = await liveblocks.getRooms({
+      startingAfter: nextCursor,
+      tenantId,
+    });
+  } catch (err) {
+    console.log(err);
+    return {
+      error: {
+        code: 500,
+        message: "Error fetching rooms",
+        suggestion: "Refresh the page and try again",
       },
     };
   }
@@ -70,8 +71,8 @@ export async function getNextDocuments({ nextCursor }: Props) {
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
         room: room,
+        tenantId,
       })
     ) {
       finalRooms.push(room);

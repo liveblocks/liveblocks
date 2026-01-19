@@ -1,29 +1,41 @@
 "use server";
 
+import { RoomPermission } from "@liveblocks/node";
 import { auth } from "@/auth";
 import {
   buildDocument,
-  documentAccessToRoomAccesses,
+  permissionTypeToRoomAccesses,
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, DocumentAccess } from "@/types";
+import {
+  Document,
+  DocumentPermissionGroup,
+  DocumentPermissionType,
+  DocumentRoomMetadata,
+} from "@/types";
 
 type Props = {
   documentId: Document["id"];
-  access: DocumentAccess;
+  permissionGroup: DocumentPermissionGroup;
+  permissionType: DocumentPermissionType;
 };
 
 /**
- * Update Default Access
+ * Update General Access
  *
- * Given a document, update its default access
+ * Given a document, update its general access and permission group
  * Uses custom API endpoint
  *
  * @param documentId - The document to update
- * @param access - The new DocumentAccess permission level
+ * @param permissionGroup - The new permission group (private, organization, public)
+ * @param permissionType - The new permission type (read, write)
  */
-export async function updateDefaultAccess({ documentId, access }: Props) {
+export async function updateGeneralAccess({
+  documentId,
+  permissionGroup,
+  permissionType,
+}: Props) {
   let session;
   let room;
   try {
@@ -68,8 +80,8 @@ export async function updateDefaultAccess({ documentId, access }: Props) {
     !userAllowedInRoom({
       accessAllowed: "write",
       userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
       room,
+      tenantId: session.user.currentOrganizationId,
     })
   ) {
     return {
@@ -81,14 +93,44 @@ export async function updateDefaultAccess({ documentId, access }: Props) {
     };
   }
 
-  // If room exists, create default access parameter for room
-  const defaultAccesses = documentAccessToRoomAccesses(access);
+  const metadata = room.metadata as DocumentRoomMetadata;
+  const tenantId = session.user.currentOrganizationId;
 
-  // Update the room with the new collaborators
+  // Update metadata with new permission group and type
+  const updatedMetadata = {
+    ...metadata,
+    permissionGroup,
+    permissionType,
+  };
+
+  // Set up room access based on permission group
+  let defaultAccesses: RoomPermission = [];
+  let groupsAccesses: Record<string, RoomPermission> = {};
+
+  if (permissionGroup === "public") {
+    // Public access is defined in defaultAccesses, and no group accesses should be defined
+    defaultAccesses = permissionTypeToRoomAccesses(permissionType);
+    groupsAccesses = {};
+  } else if (permissionGroup === "organization") {
+    // Organization access is defined in groupsAccesses and has no default access
+    groupsAccesses[tenantId] = permissionTypeToRoomAccesses(permissionType);
+    defaultAccesses = [];
+  } else if (permissionGroup === "private") {
+    // Private access has no group or default accesses
+    defaultAccesses = [];
+    groupsAccesses = {};
+  }
+
+  // Update the room with the new permissions
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
+      metadata: updatedMetadata,
       defaultAccesses,
+      groupsAccesses: groupsAccesses as Record<
+        string,
+        ["room:write"] | ["room:read", "room:presence:write"] | null
+      >,
     });
   } catch (err) {
     return {

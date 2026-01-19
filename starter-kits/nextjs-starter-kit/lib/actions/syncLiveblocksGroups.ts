@@ -1,6 +1,7 @@
 "use server";
 
 import { LiveblocksError } from "@liveblocks/node";
+import { auth } from "@/auth";
 import { getGroups } from "@/lib/database";
 import { liveblocks } from "@/liveblocks.server.config";
 
@@ -11,6 +12,9 @@ import { liveblocks } from "@/liveblocks.server.config";
  */
 export async function syncLiveblocksGroups() {
   const groups = (await getGroups()).filter((group) => group !== null);
+  // Get organization ID - defaults to personal workspace for authenticated users
+  const session = await auth();
+  const tenantId = session?.user.currentOrganizationId ?? "liveblocks";
 
   for (const group of groups) {
     const localMemberIds = new Set(group.memberIds ?? []);
@@ -60,6 +64,7 @@ export async function syncLiveblocksGroups() {
       await liveblocks.createGroup({
         groupId: group.id,
         memberIds: Array.from(localMemberIds),
+        tenantId,
       });
     }
   }

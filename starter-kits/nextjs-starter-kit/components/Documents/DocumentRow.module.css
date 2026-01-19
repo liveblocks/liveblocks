@@ -58,15 +58,10 @@
   font-size: var(--size-xs);
 }
 
-.groups {
-  display: inline-flex;
-  margin-left: var(--space-3);
-  gap: var(--space-3);
-}
-
-.group {
+.permissionsGroup {
   position: relative;
   display: inline-block;
+  margin-left: var(--space-3);
   padding: 0 var(--space-3);
   border-radius: 1em;
   color: var(--color-text-lighter);

@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { getDraftsGroupName } from "@/lib/utils";
+import { ANONYMOUS_USER_ID } from "@/constants";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 
@@ -11,29 +11,32 @@ export async function authorizeLiveblocks() {
 
   // Anonymous user info
   const anonymousUser: User = {
-    id: "anonymous",
+    id: ANONYMOUS_USER_ID,
     name: "Anonymous",
     color: "#ff0000",
+    avatar: "",
     groupIds: [],
+    organizationIds: [],
   };
 
   // Get current user info from session (defined in /auth.config.ts)
   // If no session found, this is a logged out/anonymous user
-  const {
-    name,
-    avatar,
-    color,
-    id,
-    groupIds = [],
-  } = session?.user.info ?? anonymousUser;
+  const { name, avatar, color, id } = session?.user.info ?? anonymousUser;
 
-  const groupIdsWithDraftsGroup = [...groupIds, getDraftsGroupName(id)];
+  // TODO remove "liveblocks"
+  // Get current organization from session
+  const currentOrganizationId =
+    session?.user.currentOrganizationId ?? "liveblocks";
+
+  // TODO insert the room's organization id into the thing above
+  // The correct id needs to be inserted even for anonymous users
 
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
     {
       userId: id,
-      groupIds: groupIdsWithDraftsGroup,
+      groupIds: [currentOrganizationId],
+      tenantId: currentOrganizationId,
     },
     {
       userInfo: { name, color, avatar },

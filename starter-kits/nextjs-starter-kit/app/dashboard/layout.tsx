@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import { auth } from "@/auth";
 import { DashboardLayout } from "@/layouts/Dashboard";
-import { getGroups } from "@/lib/actions";
 
 export default async function Dashboard({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -12,7 +11,5 @@ export default async function Dashboard({ children }: { children: ReactNode }) {
     redirect("/");
   }
 
-  const groups = await getGroups(session?.user.info.groupIds ?? []);
-
-  return <DashboardLayout groups={groups}>{children}</DashboardLayout>;
+  return <DashboardLayout>{children}</DashboardLayout>;
 }

@@ -1,51 +1,41 @@
 import { RoomPermission } from "@liveblocks/node";
-import { DocumentAccess } from "@/types";
+import { DocumentPermissionType } from "@/types";
 
 /**
- * Convert from Liveblocks room accesses to a custom document access format
- * If the user was set on userAccesses, give FULL permissions to edit invited users
+ * Convert from Liveblocks room accesses to document permission type
  * @param roomAccesses - The room access(es) to check
- * @param setOnUserAccesses - If the user was set with userAccesses or not
  */
-export function roomAccessesToDocumentAccess(
-  roomAccesses: RoomPermission | null,
-  setOnUserAccesses = false
-): DocumentAccess {
-  if (!roomAccesses) {
-    return DocumentAccess.NONE;
+export function roomAccessesToPermissionType(
+  roomAccesses: RoomPermission
+): DocumentPermissionType {
+  if (!roomAccesses || roomAccesses.length === 0) {
+    return "read";
   }
 
   if (roomAccesses[0] === "room:write") {
-    return setOnUserAccesses ? DocumentAccess.FULL : DocumentAccess.EDIT;
+    return "write";
   }
 
   if (
     roomAccesses[0] === "room:read" &&
     roomAccesses[1] === "room:presence:write"
   ) {
-    return DocumentAccess.READONLY;
+    return "read";
   }
 
-  return DocumentAccess.NONE;
+  return "read";
 }
 
 /**
- * Convert from a custom document access format to native Liveblocks room accesses
- * @param documentAccess
+ * Convert from document permission type to native Liveblocks room accesses
+ * @param permissionType - The document permission type
  */
-export function documentAccessToRoomAccesses(
-  documentAccess: DocumentAccess
+export function permissionTypeToRoomAccesses(
+  permissionType: DocumentPermissionType
 ): RoomPermission {
-  if (
-    documentAccess === DocumentAccess.FULL ||
-    documentAccess === DocumentAccess.EDIT
-  ) {
+  if (permissionType === "write") {
     return ["room:write"];
   }
 
-  if (documentAccess === DocumentAccess.READONLY) {
-    return ["room:read", "room:presence:write"];
-  }
-
-  return [];
+  return ["room:read", "room:presence:write"];
 }

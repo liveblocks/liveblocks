@@ -1,19 +1,14 @@
 "use server";
 
+import { GetRoomsOptions } from "@liveblocks/node";
 import { auth } from "@/auth";
-import {
-  buildDocuments,
-  getDraftsGroupName,
-  userAllowedInRoom,
-} from "@/lib/utils";
+import { buildDocuments, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, DocumentGroup, DocumentType, DocumentUser } from "@/types";
+import { Document, DocumentPermissionGroup, DocumentType } from "@/types";
 
 export type GetDocumentsProps = {
-  groupIds?: DocumentGroup["id"][];
-  userId?: DocumentUser["id"];
+  permissionGroup?: DocumentPermissionGroup;
   documentType?: DocumentType;
-  drafts?: boolean;
   limit?: number;
 };
 
@@ -25,71 +20,19 @@ export type GetDocumentsResponse = {
 /**
  * Get Documents
  *
- * Get a list of documents by groupId, userId, and metadata
+ * Get a list of documents by userId and metadata
  * Uses custom API endpoint
  *
- * @param groupIds - The groups to filter for
- * @param userId - The user to filter for
+ * @param permissionGroup - The permission group to filter for
  * @param documentType - The document type to filter for
- * @param drafts - Get only drafts
  * @param limit - The amount of documents to retrieve
  */
 export async function getDocuments({
-  groupIds = [],
-  userId = undefined,
+  permissionGroup,
   documentType,
-  drafts = false,
   limit = 20,
 }: GetDocumentsProps) {
-  // Build getRooms arguments
-  let query: string | undefined = undefined;
-
-  if (documentType) {
-    query = `metadata["type"]:${JSON.stringify(documentType)}`;
-  }
-
-  let getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
-    limit,
-    query,
-  };
-
-  const draftGroupName = getDraftsGroupName(userId || "");
-
-  if (drafts) {
-    // Drafts are stored as a group that uses the userId
-    getRoomsOptions = {
-      ...getRoomsOptions,
-      groupIds: [draftGroupName],
-    };
-  } else {
-    // Not a draft, use other info
-    getRoomsOptions = {
-      ...getRoomsOptions,
-      groupIds: groupIds.filter((id) => id !== draftGroupName),
-      userId: userId,
-    };
-  }
-
-  let session;
-  let getRoomsResponse;
-  try {
-    // Get session and rooms
-    const result = await Promise.all([
-      auth(),
-      liveblocks.getRooms(getRoomsOptions),
-    ]);
-    session = result[0];
-    getRoomsResponse = result[1];
-  } catch (err) {
-    console.log(err);
-    return {
-      error: {
-        code: 500,
-        message: "Error fetching rooms",
-        suggestion: "Refresh the page and try again",
-      },
-    };
-  }
+  const session = await auth();
 
   // Check user is logged in
   if (!session) {
@@ -98,6 +41,47 @@ export async function getDocuments({
         code: 401,
         message: "Not signed in",
         suggestion: "Sign in to get documents",
+      },
+    };
+  }
+
+  const userId = session.user.info.id;
+  const tenantId = session.user.currentOrganizationId;
+
+  console.log("tenantId", tenantId);
+
+  // Build getRooms arguments
+  // Only include query if there are actual filters to apply
+  const query: GetRoomsOptions["query"] | undefined =
+    permissionGroup || documentType
+      ? {
+          metadata: {
+            ...(permissionGroup && { permissionGroup }),
+            ...(documentType && { type: documentType }),
+          },
+        }
+      : undefined;
+
+  // Check all types of rooms a user is allowed to access, with query options too
+  const getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
+    tenantId,
+    userId,
+    groupIds: [tenantId],
+    limit,
+    ...(query && { query }),
+  };
+
+  let getRoomsResponse;
+  try {
+    // Get rooms
+    getRoomsResponse = await liveblocks.getRooms(getRoomsOptions);
+  } catch (err) {
+    console.log(err);
+    return {
+      error: {
+        code: 500,
+        message: "Error fetching rooms",
+        suggestion: "Refresh the page and try again",
       },
     };
   }
@@ -121,8 +105,8 @@ export async function getDocuments({
       userAllowedInRoom({
         accessAllowed: "read",
         userId: session.user.info.id,
-        groupIds: session.user.info.groupIds,
         room,
+        tenantId,
       })
     ) {
       finalRooms.push(room);

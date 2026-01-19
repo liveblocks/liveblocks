@@ -15,7 +15,7 @@ import { Button } from "@/primitives/Button";
 import { Container } from "@/primitives/Container";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
-import { DocumentType, Group } from "@/types";
+import { DocumentType } from "@/types";
 import { capitalize } from "@/utils";
 import styles from "./DocumentsList.module.css";
 
@@ -23,20 +23,14 @@ import styles from "./DocumentsList.module.css";
 const DOCUMENT_LOAD_LIMIT = 10;
 
 interface Props extends ComponentProps<"div"> {
-  filter?: "all" | "drafts" | "group";
-  group?: Group;
+  filter?: "all" | "private" | "organization" | "public";
 }
 
-export function DocumentsList({
-  filter = "all",
-  group,
-  className,
-  ...props
-}: Props) {
+export function DocumentsList({ filter = "all", className, ...props }: Props) {
   const { data: session } = useSession();
   const [documentType, setDocumentType] = useState<DocumentType | "all">("all");
 
-  // Return `getDocuments` params for the current filters/group
+  // Return `getDocuments` params for the current filters
   const getDocumentsOptions: GetDocumentsProps | null = useMemo(() => {
     if (!session) {
       return null;
@@ -45,33 +39,15 @@ export function DocumentsList({
     const currentDocumentType =
       documentType === "all" ? undefined : documentType;
 
-    // Get the current user's drafts
-    if (filter === "drafts") {
-      return {
-        documentType: currentDocumentType,
-        userId: session.user.info.id,
-        drafts: true,
-        limit: DOCUMENT_LOAD_LIMIT,
-      };
-    }
-
-    // Get the current group's documents
-    if (filter === "group" && group?.id) {
-      return {
-        documentType: currentDocumentType,
-        groupIds: [group.id],
-        limit: DOCUMENT_LOAD_LIMIT,
-      };
-    }
+    // TODO filters
 
     // Get all documents for the current user
     return {
       documentType: currentDocumentType,
-      userId: session.user.info.id,
-      groupIds: session.user.info.groupIds,
+      permissionGroup: filter !== "all" ? filter : undefined,
       limit: DOCUMENT_LOAD_LIMIT,
     };
-  }, [filter, group, session, documentType]);
+  }, [session, documentType, filter]);
 
   // When session is found, find pages of documents with the above document options
   const {
@@ -112,13 +88,9 @@ export function DocumentsList({
     <DocumentCreatePopover
       align="end"
       userId={session.user.info.id}
-      groupIds={group?.id ? [group.id] : undefined}
-      draft={filter === "drafts" || filter === "all"}
       sideOffset={12}
     >
-      <Button icon={<PlusIcon />}>
-        {group?.id ? "New document" : "New draft"}
-      </Button>
+      <Button icon={<PlusIcon />}>New document</Button>
     </DocumentCreatePopover>
   );
 
@@ -129,9 +101,7 @@ export function DocumentsList({
       {...props}
     >
       <div className={styles.header}>
-        <h1 className={styles.headerTitle}>
-          {group?.name ?? capitalize(filter)}
-        </h1>
+        <h1 className={styles.headerTitle}>{capitalize(filter)}</h1>
         <div className={styles.headerActions}>
           <Select
             initialValue="all"

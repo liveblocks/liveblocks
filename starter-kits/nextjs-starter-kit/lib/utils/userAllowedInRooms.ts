@@ -7,8 +7,8 @@ import { RoomData } from "@liveblocks/node";
 
 interface UserAccessProps {
   accessAllowed: "write" | "read";
-  checkAccessLevel?: "any" | "user" | "group" | "default";
-  groupIds: string[];
+  checkAccessLevel?: "any" | "user" | "organization" | "general";
+  tenantId: string;
   userId: string;
 }
 
@@ -24,14 +24,13 @@ type UserAllowedInRoomsProps = UserAccessProps & {
  * Returns true if a user has any of the allowed accesses in every room
  * @param accessesAllowed - Each of these permission types is checked
  * @param userId - The user's id to check
- * @param groupIds - An array of group names the user is part of
  * @param rooms - A list of rooms returned from Liveblocks APIs
  * @param [checkAccessLevels] - Check permission on only these access levels
  */
 export function userAllowedInRooms({
   accessAllowed,
   userId,
-  groupIds,
+  tenantId,
   rooms,
   checkAccessLevel,
 }: UserAllowedInRoomsProps) {
@@ -39,7 +38,7 @@ export function userAllowedInRooms({
     userAllowedInRoom({
       accessAllowed,
       userId,
-      groupIds,
+      tenantId,
       checkAccessLevel,
       room,
     })
@@ -50,7 +49,6 @@ export function userAllowedInRooms({
  * Returns true if a user has one of the allowed accesses in the room
  * @param accessesAllowed - Each of these permission types is checked
  * @param userId - The user's id to check
- * @param groupIds - An array of group names the user is part of
  * @param room - A room returned from Liveblocks APIs
  * @param [checkAccessLevels] - Check permission on only these access levels
  */
@@ -58,62 +56,62 @@ export function userAllowedInRooms({
 export function userAllowedInRoom({
   accessAllowed,
   userId,
-  groupIds,
+  tenantId,
   room,
   checkAccessLevel = "any",
 }: UserAllowedInRoomProps) {
   const userAllowed = checkUserAccess({
     accessAllowed,
     userId,
-    groupIds,
     room,
+    tenantId,
   });
 
-  const groupAllowed = checkGroupsAccess({
+  const organizationAllowed = checkOrganizationAccess({
     accessAllowed,
     userId,
-    groupIds,
     room,
+    tenantId,
   });
 
-  const defaultAllowed = checkDefaultAccess({
+  const generalAllowed = checkGeneralAccess({
     accessAllowed,
     userId,
-    groupIds,
     room,
+    tenantId,
   });
 
   if (checkAccessLevel === "any") {
-    return userAllowed || groupAllowed || defaultAllowed;
+    return userAllowed || organizationAllowed || generalAllowed;
   }
 
   if (checkAccessLevel === "user") {
     return userAllowed;
   }
 
-  if (checkAccessLevel === "group") {
-    return groupAllowed;
+  if (checkAccessLevel === "organization") {
+    return organizationAllowed;
   }
 
-  if (checkAccessLevel === "default") {
-    return groupAllowed;
+  if (checkAccessLevel === "general") {
+    return generalAllowed;
   }
 
   return false;
 }
 
-function checkDefaultAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
-  const defaultAccess = room.defaultAccesses as string[];
+function checkGeneralAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
+  const generalAccess = room.defaultAccesses as string[];
   if (accessAllowed === "write") {
-    if (defaultAccess.includes("room:write")) {
+    if (generalAccess.includes("room:write")) {
       return true;
     }
   }
 
   if (accessAllowed === "read") {
     if (
-      defaultAccess.includes("room:write") ||
-      defaultAccess.includes("room:read")
+      generalAccess.includes("room:write") ||
+      generalAccess.includes("room:read")
     ) {
       return true;
     }
@@ -122,29 +120,16 @@ function checkDefaultAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
   return false;
 }
 
-function checkGroupsAccess({
+function checkOrganizationAccess({
   room,
   accessAllowed,
-  groupIds,
+  tenantId,
 }: UserAllowedInRoomProps) {
-  for (const groupId of groupIds) {
-    const groupAccess = (room.groupsAccesses[groupId] || []) as string[];
+  // TODO
+  const roomTenantId = room.tenantId;
 
-    // Checking for write access on current group
-    if (accessAllowed === "write" && groupAccess.includes("room:write")) {
-      return true;
-    }
-
-    // Checking for read (and write) access on current group
-    if (
-      accessAllowed === "read" &&
-      (groupAccess.includes("room:write") || groupAccess.includes("room:read"))
-    ) {
-      return true;
-    }
-  }
-
-  return false;
+  // TODO a way to check the tenantId of a room then give a user access
+  return tenantId === "liveblocks";
 }
 
 function checkUserAccess({
