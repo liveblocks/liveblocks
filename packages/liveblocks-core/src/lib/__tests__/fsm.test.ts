@@ -966,6 +966,119 @@ describe("finite state machine", () => {
     });
   });
 
+  describe("didExitState event", () => {
+    test("emits didExitState with state and duration on transition", () => {
+      vi.useFakeTimers();
+
+      const exitEvents: { state: string; durationMs: number }[] = [];
+
+      const fsm = new FSM({})
+        .addState("one")
+        .addState("two")
+        .addTransitions("one", { GO: "two" })
+        .addTransitions("two", { GO: "one" });
+
+      fsm.events.didExitState.subscribe((event) => exitEvents.push(event));
+      fsm.start();
+
+      expect(exitEvents).toEqual([]);
+
+      vi.advanceTimersByTime(100);
+      fsm.send({ type: "GO" });
+
+      expect(exitEvents).toHaveLength(1);
+      expect(exitEvents[0].state).toBe("one");
+      expect(exitEvents[0].durationMs).toBeGreaterThanOrEqual(100);
+
+      vi.advanceTimersByTime(50);
+      fsm.send({ type: "GO" });
+
+      expect(exitEvents).toHaveLength(2);
+      expect(exitEvents[1].state).toBe("two");
+      expect(exitEvents[1].durationMs).toBeGreaterThanOrEqual(50);
+    });
+
+    test("emits didExitState for each level in hierarchical states", () => {
+      vi.useFakeTimers();
+
+      const exitEvents: { state: string; durationMs: number }[] = [];
+
+      const fsm = new FSM({})
+        .addState("group.one")
+        .addState("group.two")
+        .addState("other")
+        .addTransitions("group.one", { NEXT: "group.two" })
+        .addTransitions("group.two", { LEAVE: "other" });
+
+      fsm.events.didExitState.subscribe((event) => exitEvents.push(event));
+      fsm.start();
+
+      expect(exitEvents).toEqual([]);
+
+      // Transition within group - only exits the leaf state
+      vi.advanceTimersByTime(100);
+      fsm.send({ type: "NEXT" });
+
+      expect(exitEvents).toHaveLength(1);
+      expect(exitEvents[0].state).toBe("group.one");
+
+      // Transition out of group - exits both leaf and group level
+      vi.advanceTimersByTime(50);
+      fsm.send({ type: "LEAVE" });
+
+      expect(exitEvents).toHaveLength(3);
+      // Most specific first
+      expect(exitEvents[1].state).toBe("group.two");
+      expect(exitEvents[1].durationMs).toBeGreaterThanOrEqual(50);
+      // Then the group
+      expect(exitEvents[2].state).toBe("group");
+      expect(exitEvents[2].durationMs).toBeGreaterThanOrEqual(150);
+    });
+
+    test("emits didExitState for all levels when machine is stopped", () => {
+      vi.useFakeTimers();
+
+      const exitEvents: { state: string; durationMs: number }[] = [];
+
+      const fsm = new FSM({}).addState("foo.bar.baz").addState("other");
+
+      fsm.events.didExitState.subscribe((event) => exitEvents.push(event));
+      fsm.start();
+
+      vi.advanceTimersByTime(200);
+      fsm.stop();
+
+      // Should emit for: foo.bar.baz, foo.bar, foo, *
+      expect(exitEvents).toHaveLength(4);
+      expect(exitEvents.map((e) => e.state)).toEqual([
+        "foo.bar.baz",
+        "foo.bar",
+        "foo",
+        "*",
+      ]);
+      // All should have the same duration since they were entered at the same time
+      for (const event of exitEvents) {
+        expect(event.durationMs).toBeGreaterThanOrEqual(200);
+      }
+    });
+
+    test("does not emit didExitState when staying in the same state", () => {
+      const exitEvents: { state: string; durationMs: number }[] = [];
+
+      const fsm = new FSM({})
+        .addState("one")
+        .addTransitions("one", { STAY: "one" });
+
+      fsm.events.didExitState.subscribe((event) => exitEvents.push(event));
+      fsm.start();
+
+      fsm.send({ type: "STAY" });
+      fsm.send({ type: "STAY" });
+
+      expect(exitEvents).toEqual([]);
+    });
+  });
+
   test("wildcards cannot overwrite existing transitions", () => {
     const fsm = new FSM({})
       .addState("start")
