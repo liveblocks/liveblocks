@@ -4,6 +4,16 @@
 performance. A leaner protocol with less networking overhead, support for using
 room on our new storage engine.)
 
+### @liveblocks/client
+
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow
+  connecting to alternative hosted Liveblocks environments
+
+### @liveblocks/react
+
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
+  connecting to alternative hosted Liveblocks environments
+
 ## vNEXT (not yet released)
 
 ### @liveblocks/client
