@@ -1,12 +1,16 @@
 "use client";
 
+import { ThreadData } from "@liveblocks/client";
+import { Composer } from "@liveblocks/react-ui";
 import {
   ClientSideSuspense,
   useMutation,
   useStorage,
   useOthers,
   useSelf,
+  useCreateThread,
   useUpdateMyPresence,
+  useThreads,
 } from "@liveblocks/react/suspense";
 import {
   AllCommunityModule,
@@ -43,12 +47,15 @@ function MainGrid() {
     []
   );
 
-  const [colDefs] = useState<ColDef[]>([
-    { field: "make", cellRenderer: AvatarCell },
-    { field: "model", cellRenderer: AvatarCell },
-    { field: "price", cellRenderer: AvatarCell },
+  const { threads } = useThreads();
+
+  const colDefs = useMemo<ColDef[]>(() =>[
+    { field: "make", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
+    { field: "model", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
+    { field: "price", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
+    { field: "price", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
     { field: "electric" },
-  ]);
+  ], [threads]);
 
   const handleCellEditRequest = useMutation(
     ({ storage }, event: CellEditRequestEvent) => {
@@ -143,10 +150,18 @@ function MainGrid() {
   );
 }
 
-function AvatarCell(params: CustomCellRendererProps) {
+function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] }) {
   const rowId = params?.data?.id;
   const field = params?.colDef?.field;
 
+  const createThread = useCreateThread();
+  const [composerOpen, setComposerOpen] = useState(false);
+  
+  const thisThread = params.threads.find(
+    (thread) =>
+       thread.metadata.rowId === rowId &&
+       thread.metadata.field === field);
+  
   const selfFocused = useSelf(
     (me) =>
       me.presence.focusedCell?.rowId === rowId &&
@@ -166,7 +181,7 @@ function AvatarCell(params: CustomCellRendererProps) {
   const mostRecentFocused = othersFocused?.[othersFocused.length - 1];
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, paddingRight: 24 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, }}>
       {mostRecentFocused ? (
         <div
           style={{
@@ -183,6 +198,19 @@ function AvatarCell(params: CustomCellRendererProps) {
       <div style={{ paddingRight: 24 }}>
         {params.value}
       </div>
+
+      {thisThread ? (
+        <button></button>
+      ) : <button onClick={() => setComposerOpen(true)}>+</button>}
+
+      {composerOpen ? (
+        // popover
+        <>
+        <Composer onSubmit={() => setComposerOpen(false)}
+        />
+        </>
+      ) : null}
+      
       {/* {othersEditing.map(({ connectionId, presence, info }) => (
         <img key={connectionId} src={info.avatar} width={24} height={24} style={{ position: "absolute", right: 8, borderRadius: "50%", }} />
       ))} */}

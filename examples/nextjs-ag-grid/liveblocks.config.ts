@@ -26,6 +26,10 @@ declare global {
         avatar: string;
       }; // Accessible through `user.info`
     };
+    ThreadMetadata: {
+      rowId: string;
+      field: string;
+    };
   }
 }
 
