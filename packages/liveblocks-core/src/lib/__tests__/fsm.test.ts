@@ -987,14 +987,14 @@ describe("finite state machine", () => {
       fsm.send({ type: "GO" });
 
       expect(exitEvents).toHaveLength(1);
-      expect(exitEvents[0].state).toBe("one");
+      expect(exitEvents[0].state).toBe("one.*");
       expect(exitEvents[0].durationMs).toBeGreaterThanOrEqual(100);
 
       vi.advanceTimersByTime(50);
       fsm.send({ type: "GO" });
 
       expect(exitEvents).toHaveLength(2);
-      expect(exitEvents[1].state).toBe("two");
+      expect(exitEvents[1].state).toBe("two.*");
       expect(exitEvents[1].durationMs).toBeGreaterThanOrEqual(50);
     });
 
@@ -1020,7 +1020,7 @@ describe("finite state machine", () => {
       fsm.send({ type: "NEXT" });
 
       expect(exitEvents).toHaveLength(1);
-      expect(exitEvents[0].state).toBe("group.one");
+      expect(exitEvents[0].state).toBe("group.one.*");
 
       // Transition out of group - exits both leaf and group level
       vi.advanceTimersByTime(50);
@@ -1028,10 +1028,10 @@ describe("finite state machine", () => {
 
       expect(exitEvents).toHaveLength(3);
       // Most specific first
-      expect(exitEvents[1].state).toBe("group.two");
+      expect(exitEvents[1].state).toBe("group.two.*");
       expect(exitEvents[1].durationMs).toBeGreaterThanOrEqual(50);
       // Then the group
-      expect(exitEvents[2].state).toBe("group");
+      expect(exitEvents[2].state).toBe("group.*");
       expect(exitEvents[2].durationMs).toBeGreaterThanOrEqual(150);
     });
 
@@ -1048,12 +1048,12 @@ describe("finite state machine", () => {
       vi.advanceTimersByTime(200);
       fsm.stop();
 
-      // Should emit for: foo.bar.baz, foo.bar, foo, *
+      // Should emit for: foo.bar.baz.*, foo.bar.*, foo.*, *
       expect(exitEvents).toHaveLength(4);
       expect(exitEvents.map((e) => e.state)).toEqual([
-        "foo.bar.baz",
-        "foo.bar",
-        "foo",
+        "foo.bar.baz.*",
+        "foo.bar.*",
+        "foo.*",
         "*",
       ]);
       // All should have the same duration since they were entered at the same time
