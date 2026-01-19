@@ -543,6 +543,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // OK state. This is done by resolving the Promise.
       //
       async (ctx, signal) => {
+        const socketEpoch = performance.now();
+        let socketOpenAt: number | null = null;
+
         let capturedPrematureEvent: IWebSocketEvent | null = null;
         let unconfirmedSocket: IWebSocketInstance | null = null;
 
@@ -575,6 +578,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
                 | Record<string, Json>
                 | undefined;
               if (serverMsg?.type === ServerMsgCode.ROOM_STATE) {
+                if (options.enableDebugLogging && socketOpenAt !== null) {
+                  const elapsed = performance.now() - socketOpenAt;
+                  console.warn(
+                    `[FSM #${machine.id}] Socket open → ROOM_STATE: ${elapsed.toFixed(0)}ms`
+                  );
+                }
                 didReceiveActor();
               }
             }
@@ -592,6 +601,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             socket.addEventListener("error", reject); // (*)
             socket.addEventListener("close", reject); // (*)
             socket.addEventListener("open", () => {
+              socketOpenAt = performance.now();
+              if (options.enableDebugLogging) {
+                const elapsed = socketOpenAt - socketEpoch;
+                console.warn(
+                  `[FSM #${machine.id}] Socket epoch → open: ${elapsed.toFixed(0)}ms`
+                );
+              }
+
               //
               // Part 2:
               // The "open" event just fired, so the server accepted our
