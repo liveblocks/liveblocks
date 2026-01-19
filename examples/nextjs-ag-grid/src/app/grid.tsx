@@ -188,7 +188,7 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
   const mostRecentFocused = othersFocused?.[othersFocused.length - 1];
 
   return (
-    <div className="group flex items-center justify-between gap-1 relative">
+    <div className="group flex items-center justify-between gap-1">
       {mostRecentFocused ? (
         <div
           className="absolute inset-0 bg-transparent"
@@ -218,7 +218,7 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
             <Popover.Content sideOffset={8}>
               <Thread 
                 thread={thisThread}
-                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px] max-h-[500px]" 
+                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px] max-h-[500px]"
               />
             </Popover.Content>
           </Popover.Portal>
@@ -234,7 +234,7 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
                 className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px]" 
                 onSubmit={() => setComposerOpen(false)} 
                 metadata={{ rowId, field }}
-                autoFocus 
+                // autoFocus 
               />
             </Popover.Content>
           </Popover.Portal>
