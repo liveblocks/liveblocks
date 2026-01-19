@@ -1,3 +1,4 @@
+@import "tailwindcss";
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
@@ -26,6 +27,7 @@ body {
 
 .lb-root {
   --lb-accent: #44f;
+  font-size: 14px;
 }
 
 main {

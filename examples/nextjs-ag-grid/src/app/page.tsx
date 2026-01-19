@@ -2,9 +2,8 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
-import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { LiveList, LiveObject } from "@liveblocks/client";
@@ -17,7 +16,7 @@ export default function Page() {
   return (
     <RoomProvider
       id={roomId}
-      initialPresence={{ editingCell: null, focusedCell: null }}
+      initialPresence={{ isEditing: false, focusedCell: null }}
       initialStorage={{
         rowData: new LiveList([
           new LiveObject({ id: nanoid(), make: "Tesla", model: "Model Y", price: 64950, electric: true }),

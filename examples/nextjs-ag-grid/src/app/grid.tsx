@@ -1,7 +1,8 @@
 "use client";
 
 import { ThreadData } from "@liveblocks/client";
-import { Composer } from "@liveblocks/react-ui";
+import { Composer, Thread } from "@liveblocks/react-ui";
+import * as Popover from "@radix-ui/react-popover";
 import {
   ClientSideSuspense,
   useMutation,
@@ -12,6 +13,9 @@ import {
   useUpdateMyPresence,
   useThreads,
 } from "@liveblocks/react/suspense";
+import {
+  useUser,
+} from "@liveblocks/react";
 import {
   AllCommunityModule,
   ColDef,
@@ -52,7 +56,6 @@ function MainGrid() {
   const colDefs = useMemo<ColDef[]>(() =>[
     { field: "make", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
     { field: "model", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
-    { field: "price", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
     { field: "price", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
     { field: "electric" },
   ], [threads]);
@@ -133,7 +136,7 @@ function MainGrid() {
   }, []);
 
   return (
-    <div ref={gridContainerRef} style={{ height: 500, width: "100%" }}>
+    <div ref={gridContainerRef} className="h-[500px] w-full">
       <AgGridReact
         readOnlyEdit={true} /* Lets Liveblocks handle state */
         defaultColDef={defaultColDef}
@@ -156,11 +159,15 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
 
   const createThread = useCreateThread();
   const [composerOpen, setComposerOpen] = useState(false);
+  const [threadOpen, setThreadOpen] = useState(false);
+  
   
   const thisThread = params.threads.find(
     (thread) =>
        thread.metadata.rowId === rowId &&
        thread.metadata.field === field);
+
+  const { user }  = useUser(thisThread?.comments[0]?.userId || "");
   
   const selfFocused = useSelf(
     (me) =>
@@ -181,42 +188,65 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
   const mostRecentFocused = othersFocused?.[othersFocused.length - 1];
 
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, }}>
+    <div className="group flex items-center justify-between gap-1 relative">
       {mostRecentFocused ? (
         <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            border: `2px solid ${mostRecentFocused.info.color}`,
-            background: "transparent"
-          }}
+          className="absolute inset-0 bg-transparent"
+          style={{ border: `2px solid ${mostRecentFocused.info.color}` }}
         />
       ) : null}
-      <div style={{ paddingRight: 24 }}>
+      <div className="pr-6">
         {params.value}
       </div>
 
       {thisThread ? (
-        <button></button>
-      ) : <button onClick={() => setComposerOpen(true)}>+</button>}
-
-      {composerOpen ? (
-        // popover
-        <>
-        <Composer onSubmit={() => setComposerOpen(false)}
-        />
-        </>
-      ) : null}
+        <Popover.Root open={threadOpen} onOpenChange={setThreadOpen}>
+          <Popover.Trigger asChild>
+            <button className="w-6 h-6 rounded-full overflow-hidden p-0 border-none bg-transparent cursor-pointer">
+              {user?.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt={user.name || "User"} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="bg-gray-200 dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center">💬</span>
+              )}
+            </button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content sideOffset={8}>
+              <Thread 
+                thread={thisThread}
+                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px] max-h-[500px]" 
+              />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      ) : (
+        <Popover.Root open={composerOpen} onOpenChange={setComposerOpen}>
+          <Popover.Trigger asChild>
+            <button className="justify-center items-center group-hover:flex opacity-0 invisible group-hover:opacity-100 group-hover:visible rounded-full bg-gray-200 dark:bg-gray-800 w-6 h-6">+</button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content sideOffset={8}>
+              <Composer 
+                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px]" 
+                onSubmit={() => setComposerOpen(false)} 
+                metadata={{ rowId, field }}
+                autoFocus 
+              />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
+      )}
       
       {/* {othersEditing.map(({ connectionId, presence, info }) => (
-        <img key={connectionId} src={info.avatar} width={24} height={24} style={{ position: "absolute", right: 8, borderRadius: "50%", }} />
+        <img key={connectionId} src={info.avatar} width={24} height={24} className="absolute right-2 rounded-full" />
       ))} */}
       {/* {mostRecentFocused ?
         (
-          <img src={mostRecentFocused?.info.avatar} width={24} height={24} style={{ position: "absolute", right: 8, borderRadius: "50%", }} />
+          <img src={mostRecentFocused?.info.avatar} width={24} height={24} className="absolute right-2 rounded-full" />
         ) : null
       } */}
     </div>
