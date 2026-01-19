@@ -289,6 +289,7 @@ export type AiCopilot = {
 
   systemPrompt: string;
   knowledgePrompt?: string;
+  alwaysUseKnowledge: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -482,6 +483,7 @@ export type CreateAiCopilotOptions = {
 
   systemPrompt: string;
   knowledgePrompt?: string;
+  alwaysUseKnowledge?: boolean;
 
   settings?: AiCopilotProviderSettings;
 
@@ -517,6 +519,7 @@ export type UpdateAiCopilotOptions = {
 
   systemPrompt?: string;
   knowledgePrompt?: string | null;
+  alwaysUseKnowledge?: boolean;
 
   settings?: AiCopilotProviderSettings | null;
 
@@ -572,7 +575,6 @@ export type UpdateAiCopilotOptions = {
       providerOptions?: never;
     }
 );
-
 export type CreateWebKnowledgeSourceOptions = {
   copilotId: string;
   url: string;

@@ -5906,6 +5906,9 @@
               "knowledgePrompt": {
                 "type": "string"
               },
+              "alwaysUseKnowledge": {
+                "type": "boolean"
+              },
               "provider": {
                 "const": "openai"
               },
@@ -6003,6 +6006,9 @@
               },
               "knowledgePrompt": {
                 "type": "string"
+              },
+              "alwaysUseKnowledge": {
+                "type": "boolean"
               },
               "provider": {
                 "const": "anthropic"
@@ -6114,6 +6120,9 @@
               "knowledgePrompt": {
                 "type": "string"
               },
+              "alwaysUseKnowledge": {
+                "type": "boolean"
+              },
               "provider": {
                 "const": "google"
               },
@@ -6194,6 +6203,9 @@
               "knowledgePrompt": {
                 "type": "string"
               },
+              "alwaysUseKnowledge": {
+                "type": "boolean"
+              },
               "provider": {
                 "const": "openai-compatible"
               },
@@ -6257,6 +6269,10 @@
           },
           "knowledgePrompt": {
             "type": "string",
+            "nullable": true
+          },
+          "alwaysUseKnowledge": {
+            "type": "boolean",
             "nullable": true
           },
           "providerApiKey": {
@@ -6397,6 +6413,10 @@
           },
           "knowledgePrompt": {
             "type": "string",
+            "nullable": true
+          },
+          "alwaysUseKnowledge": {
+            "type": "boolean",
             "nullable": true
           },
           "providerApiKey": {
