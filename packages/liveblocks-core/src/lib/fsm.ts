@@ -82,6 +82,9 @@ type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   : never;
 export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
 
+/** State or one of its parent group patterns (e.g., "foo.bar.baz" | "foo.bar.*" | "foo.*") */
+export type StateOrGroupPattern<T extends string> = T | `${Groups<T>}.*`;
+
 function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {
     return [0, 0];
@@ -216,7 +219,7 @@ export class FSM<
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
     readonly didExitState: EventSource<{
-      state: Wildcard<TState>;
+      state: StateOrGroupPattern<TState>;
       durationMs: number;
     }>;
   };
@@ -228,7 +231,7 @@ export class FSM<
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
     readonly didExitState: Observable<{
-      state: Wildcard<TState>;
+      state: StateOrGroupPattern<TState>;
       durationMs: number;
     }>;
   };
@@ -594,13 +597,17 @@ export class FSM<
         const entryTime = this.#entryTimesStack.pop();
         if (entryTime !== undefined) {
           // Compute the state prefix for this level
-          // Stack depth corresponds to: *, foo.*, foo.bar.*, foo.bar.qux
+          // Stack depth corresponds to: *, foo.*, foo.bar.*, foo.bar.baz
           // So current stack length after pop tells us which prefix we exited
           const depth = this.#entryTimesStack.length;
-          const state =
-            depth === 0
-              ? "*"
-              : ((parts.slice(0, depth).join(".") + ".*") as Wildcard<TState>);
+
+          // Skip the root wildcard level (depth === 0)
+          if (depth === 0) continue;
+
+          const state: StateOrGroupPattern<TState> =
+            depth === parts.length
+              ? this.currentState // Leaf state: use exact name
+              : (`${parts.slice(0, depth).join(".")}.*` as `${Groups<TState>}.*`);
           this.#eventHub.didExitState.notify({
             state,
             durationMs: now - entryTime,
