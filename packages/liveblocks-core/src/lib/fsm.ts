@@ -595,7 +595,11 @@ export class FSM<
 
         // Emit timing info for the exited state level
         const entryTime = this.#entryTimesStack.pop();
-        if (entryTime !== undefined) {
+        if (
+          entryTime !== undefined &&
+          // ...but avoid computing state names if nobody is listening
+          this.#eventHub.didExitState.count() > 0
+        ) {
           // Compute the state prefix for this level
           // Stack depth corresponds to: *, foo.*, foo.bar.*, foo.bar.baz
           // So current stack length after pop tells us which prefix we exited
