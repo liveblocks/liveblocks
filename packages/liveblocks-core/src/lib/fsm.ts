@@ -215,7 +215,10 @@ export class FSM<
     readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
-    readonly didExitState: EventSource<{ state: string; durationMs: number }>;
+    readonly didExitState: EventSource<{
+      state: Wildcard<TState>;
+      durationMs: number;
+    }>;
   };
 
   public readonly events: {
@@ -224,7 +227,10 @@ export class FSM<
     readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
-    readonly didExitState: Observable<{ state: string; durationMs: number }>;
+    readonly didExitState: Observable<{
+      state: Wildcard<TState>;
+      durationMs: number;
+    }>;
   };
 
   //
@@ -591,7 +597,10 @@ export class FSM<
           // Stack depth corresponds to: *, foo.*, foo.bar.*, foo.bar.qux
           // So current stack length after pop tells us which prefix we exited
           const depth = this.#entryTimesStack.length;
-          const state = depth === 0 ? "*" : parts.slice(0, depth).join(".");
+          const state =
+            depth === 0
+              ? "*"
+              : ((parts.slice(0, depth).join(".") + ".*") as Wildcard<TState>);
           this.#eventHub.didExitState.notify({
             state,
             durationMs: now - entryTime,
