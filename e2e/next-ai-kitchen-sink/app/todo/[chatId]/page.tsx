@@ -134,7 +134,6 @@ export default function Page({
             >
               <LiveblocksProvider
                 authEndpoint="/api/auth/liveblocks"
-                // @ts-expect-error
                 baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
               >
                 <ClientSideSuspense fallback={null}>

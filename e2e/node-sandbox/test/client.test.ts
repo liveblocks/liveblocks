@@ -18,7 +18,6 @@ console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
 // First, create the room with proper permissions
 const nodeClient = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // @ts-expect-error hidden config
   baseUrl: BASE_URL,
 });
 

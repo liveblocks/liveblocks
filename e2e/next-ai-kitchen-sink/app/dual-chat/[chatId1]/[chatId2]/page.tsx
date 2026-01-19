@@ -94,7 +94,6 @@ export default function DualChatPage({
   return (
     <LiveblocksProvider
       authEndpoint="/api/auth/liveblocks"
-      // @ts-expect-error
       baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
     >
       {/* Global knowledge that should be accessible to ALL chat instances */}

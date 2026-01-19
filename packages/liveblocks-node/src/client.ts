@@ -109,10 +109,7 @@ export type LiveblocksOptions = {
    */
   secret: string;
 
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
+  /** Point the client to an alternative Liveblocks server. */
   baseUrl?: string;
 };
 
