@@ -1,3 +1,10 @@
+## vNEXT (not yet released)
+
+### @liveblocks/client
+
+- Add more detailed timing info to `enableDebugLogging` to better debug
+  connection issues
+
 ## v3.13.2
 
 ### @liveblocks/node
