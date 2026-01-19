@@ -18,7 +18,6 @@ import type {
   MessageId,
   NotificationSettings,
   OpaqueClient,
-  OpaqueRoom,
   PartialNotificationSettings,
   Patchable,
   Permission,
@@ -1173,7 +1172,6 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   #notificationSettings: SinglePageResource;
 
   // Agent Sessions
-  #roomsByRoomId = new Map<RoomId, OpaqueRoom>(); // TODO: the need for this seems wrong, i need to explore if maybe this stuff belongs in in RoomContext and not here
   #agentSessionsByRoomId = new Map<RoomId, Map<string, AgentSession>>();
   #agentMessagesBySessionId = new Map<string, Map<string, AgentMessage>>();
 
@@ -1682,24 +1680,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         ];
 
         const resource = new PaginatedResource(async (cursor?: string) => {
-          const room = this.#roomsByRoomId.get(roomId);
-          if (!room) {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
             throw new Error(
-              `Room ${roomId} not found. Make sure you're calling useAgentSessions inside a RoomProvider.`
+              `Room '${roomId}' is not available on client. Make sure you're calling useAgentSessions inside a RoomProvider.`
             );
           }
 
-          // OpaqueRoom doesn't expose the type, so we need to cast to access methods
-          const typedRoom = room as unknown as {
-            fetchAgentSessions(options?: {
-              cursor?: string;
-              since?: number;
-              limit?: number;
-              metadata?: Record<string, string>;
-            }): Promise<{ sessions: AgentSession[]; nextCursor?: string }>;
-          };
-
-          const result = await typedRoom.fetchAgentSessions({
+          const result = await room.fetchAgentSessions({
             cursor,
             since: options?.since,
             metadata: options?.metadata,
@@ -1750,26 +1738,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
         ];
 
         const resource = new PaginatedResource(async (cursor?: string) => {
-          const room = this.#roomsByRoomId.get(roomId);
-          if (!room) {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
             throw new Error(
-              `Room ${roomId} not found. Make sure you're calling useAgentSession inside a RoomProvider.`
+              `Room '${roomId}' is not available on client. Make sure you're calling useAgentSession inside a RoomProvider.`
             );
           }
 
-          // OpaqueRoom doesn't expose the type, so we need to cast to access methods
-          const typedRoom = room as unknown as {
-            fetchAgentMessages(
-              sessionId: string,
-              options?: {
-                cursor?: string;
-                since?: number;
-                limit?: number;
-              }
-            ): Promise<{ messages: AgentMessage[]; nextCursor?: string }>;
-          };
-
-          const result = await typedRoom.fetchAgentMessages(sessionId, {
+          const result = await room.fetchAgentMessages(sessionId, {
             cursor,
             limit: options?.limit,
           });
@@ -2161,24 +2137,6 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
-  }
-
-  /**
-   * Registers a room instance for agent session fetching.
-   * Called by RoomProvider when it mounts.
-   */
-  public registerRoom(roomId: RoomId, room: OpaqueRoom): void {
-    this.#roomsByRoomId.set(roomId, room);
-  }
-
-  /**
-   * Unregisters a room instance.
-   * Called by RoomProvider when it unmounts.
-   */
-  public unregisterRoom(roomId: RoomId): void {
-    this.#roomsByRoomId.delete(roomId);
-    // Clean up caches when room is unregistered
-    this.#agentSessionsByRoomId.delete(roomId);
   }
 
   /**

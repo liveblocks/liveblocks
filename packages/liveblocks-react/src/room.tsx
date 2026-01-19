@@ -779,15 +779,6 @@ function RoomProviderInner<
   }, [client, room]);
 
   useEffect(() => {
-    const { store } = getRoomExtrasForClient(client);
-    // Register the room instance for agent session fetching
-    store.registerRoom(room.id, room);
-    return () => {
-      store.unregisterRoom(room.id);
-    };
-  }, [client, room]);
-
-  useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
 
     setRoomLeavePair(pair);
