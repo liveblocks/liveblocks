@@ -5,6 +5,11 @@
 - Add more detailed timing info to `enableDebugLogging` to better debug
   connection issues
 
+### @liveblocks/react-ui
+
+- Fix an issue where `Composer` and `AiComposer` would throw an error when
+  mounted/unmounted.
+
 ## v3.13.2
 
 ### @liveblocks/node
