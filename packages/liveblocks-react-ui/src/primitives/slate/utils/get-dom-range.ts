@@ -1,4 +1,5 @@
-import type { Editor as SlateEditor, Range as SlateRange } from "slate";
+import type { Editor as SlateEditor } from "slate";
+import { Range as SlateRange } from "slate";
 import { ReactEditor } from "slate-react";
 
 export function getDOMRange(
@@ -7,10 +8,20 @@ export function getDOMRange(
 ): Range | undefined {
   try {
     return ReactEditor.toDOMRange(editor, range);
-  } catch (error) {
-    return getDOMRange(editor, {
-      anchor: range.anchor,
-      focus: range.anchor,
-    });
+  } catch {
+    // First attempt failed.
   }
+
+  if (!SlateRange.isCollapsed(range)) {
+    try {
+      return ReactEditor.toDOMRange(editor, {
+        anchor: range.anchor,
+        focus: range.anchor,
+      });
+    } catch {
+      // Second attempt with a collapsed range also failed.
+    }
+  }
+
+  return undefined;
 }

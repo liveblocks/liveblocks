@@ -1384,6 +1384,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const focus = useCallback(
       (resetSelection = true) => {
         try {
+          // Slate's `ReactEditor.focus` method can use `setTimeout` internally
+          // which prevents us from catching errors, so this is a reimplementation.
+          // https://github.com/ianstormtaylor/slate/blob/main/packages/slate-dom/src/plugin/dom-editor.ts
           if (!ReactEditor.isFocused(editor)) {
             SlateTransforms.select(
               editor,
@@ -1391,7 +1394,20 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 ? SlateEditor.end(editor, [])
                 : editor.selection
             );
-            ReactEditor.focus(editor);
+
+            const element = ReactEditor.toDOMNode(editor, editor);
+
+            if (editor.selection) {
+              const domSelection = window.getSelection();
+              const domRange = getDOMRange(editor, editor.selection);
+
+              if (domRange) {
+                domSelection?.removeAllRanges();
+                domSelection?.addRange(domRange);
+              }
+            }
+
+            element.focus({ preventScroll: true });
           }
         } catch {
           // Slate's DOM-specific methods will throw if the editor's DOM
