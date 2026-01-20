@@ -272,7 +272,6 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOp,
   ClientWireOp,
   CreateListOp,
   CreateMapOp,
@@ -282,6 +281,7 @@ export type {
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   HasOpId,
+  IgnoredOp,
   Op,
   ServerWireOp,
   SetParentKeyOp,
