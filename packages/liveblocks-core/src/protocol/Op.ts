@@ -147,7 +147,7 @@ export type ClientWireCreateOp = CreateOp & HasOpId;
 /**
  * ServerWireOp: Ops sent from server → client. Three variants:
  * 1. ClientWireOp — Full echo back of our own op, confirming it was applied
- * 2. AckOp — Our op was seen but intentionally ignored (still counts as ack)
+ * 2. IgnoredOp — Our op was seen but intentionally ignored (still counts as ack)
  * 3. Op without opId — Another client's op being forwarded to us
  */
 export type ServerWireOp =
