@@ -1,27 +1,27 @@
-import type { Editor as SlateEditor } from "slate";
-import { Range as SlateRange } from "slate";
+import type { Editor as SlateEditor, Range as SlateRange } from "slate";
 import { ReactEditor } from "slate-react";
+
+const MAX_RETRIES = 3;
 
 export function getDOMRange(
   editor: SlateEditor,
-  range: SlateRange
+  range: SlateRange,
+  retries: number = MAX_RETRIES
 ): Range | undefined {
+  if (retries <= 0) {
+    return;
+  }
+
   try {
     return ReactEditor.toDOMRange(editor, range);
-  } catch {
-    // First attempt failed.
-  }
-
-  if (!SlateRange.isCollapsed(range)) {
-    try {
-      return ReactEditor.toDOMRange(editor, {
+  } catch (error) {
+    return getDOMRange(
+      editor,
+      {
         anchor: range.anchor,
         focus: range.anchor,
-      });
-    } catch {
-      // Second attempt with a collapsed range also failed.
-    }
+      },
+      retries - 1
+    );
   }
-
-  return undefined;
 }
