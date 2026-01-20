@@ -909,7 +909,6 @@ export class Liveblocks {
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param params.organizationId (optional) A filter on organization ID.
-   * @param params.tenantId (optional) @deprecated Use `organizationId` instead. A filter on tenant ID.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
@@ -1001,7 +1000,6 @@ export class Liveblocks {
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
    * @param params.organizationId (optional) The organization ID to create the room for.
-   * @param params.tenantId (optional) @deprecated Use `organizationId` instead. The tenant ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
@@ -2299,7 +2297,6 @@ export class Liveblocks {
    * @param params.activityData The activity data of the triggered inbox notification.
    * @param params.roomId (optional) The room ID to trigger the inbox notification for.
    * @param params.organizationId (optional) The organization ID to trigger the inbox notification for.
-   * @param params.tenantId (optional) @deprecated Use `organizationId` instead. The tenant ID to trigger the inbox notification for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async triggerInboxNotification<K extends KDAD>(
