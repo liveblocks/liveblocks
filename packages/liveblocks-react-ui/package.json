@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "3.13.2",
+  "version": "3.13.3-slate1",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -76,9 +76,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
-    "@liveblocks/client": "3.13.2",
-    "@liveblocks/core": "3.13.2",
-    "@liveblocks/react": "3.13.2",
+    "@liveblocks/client": "3.13.3-slate1",
+    "@liveblocks/core": "3.13.3-slate1",
+    "@liveblocks/react": "3.13.3-slate1",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",
