@@ -70,7 +70,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
@@ -2064,9 +2064,8 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // Explicit case to handle incoming "AckOp"s, which are supposed to be
-    // no-ops.
-    if (isAckOp(op)) {
+    // Explicit case to handle ignored Ops
+    if (isIgnoredOp(op)) {
       return { modified: false };
     }
 
