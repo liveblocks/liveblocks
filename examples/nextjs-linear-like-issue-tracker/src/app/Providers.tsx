@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, Suspense } from "react";
 import { InboxProvider } from "@/components/InboxContext";
 import { getRoomsFromIds } from "@/actions/liveblocks";
 import { authWithRandomUser } from "@/example";
@@ -47,7 +47,7 @@ export function Providers({ children }: PropsWithChildren) {
           }));
         }}
       >
-        {children}
+        <Suspense>{children}</Suspense>
       </LiveblocksProvider>
     </InboxProvider>
   );

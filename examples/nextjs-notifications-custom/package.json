@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.11.0",
-    "@liveblocks/node": "^3.11.0",
-    "@liveblocks/react": "^3.11.0",
-    "@liveblocks/react-ui": "^3.11.0",
+    "@liveblocks/client": "^3.13.2",
+    "@liveblocks/node": "^3.13.2",
+    "@liveblocks/react": "^3.13.2",
+    "@liveblocks/react-ui": "^3.13.2",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.7",
     "next": "14.2.34",

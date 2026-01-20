@@ -1,4 +1,26 @@
-## vNEXT (not released yet)
+## vNEXT (not yet released)
+
+### @liveblocks/client
+
+- Add more detailed timing info to `enableDebugLogging` to better debug
+  connection issues
+
+## v3.13.2
+
+### @liveblocks/node
+
+- Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
+  this option is enabled, the copilot retrieves and uses the uploaded knowledge
+  sources on each user query. When disabled, the copilot will retrieve the
+  uploaded knowledge sources only when the user query relates to the knowledge
+  prompt set on the copilot.
+
+## v3.13.1
+
+### `@liveblocks/client`
+
+- Fix issue where storage subscriptions wouldn't fire after concurrent move and
+  set operations, causing stale `LiveList` state in UI.
 
 ## v3.13.0
 

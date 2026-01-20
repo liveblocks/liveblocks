@@ -639,6 +639,10 @@
             "path": "/pricing/plans/pro"
           },
           {
+            "title": "Team",
+            "path": "/pricing/plans/team"
+          },
+          {
             "title": "Enterprise",
             "path": "/pricing/plans/enterprise"
           }
