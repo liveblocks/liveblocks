@@ -308,6 +308,13 @@ export type {
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
   ListStorageNode,
   MapStorageNode,
   NodeStream,
