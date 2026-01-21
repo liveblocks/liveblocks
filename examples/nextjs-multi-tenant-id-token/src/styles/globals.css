@@ -1,0 +1,316 @@
+@import "@liveblocks/react-ui/styles.css";
+
+html {
+  --accent: #44f;
+  --header-height: 60px;
+  --sidebar-width: 260px;
+
+  background: #f3f3f3;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.lb-root {
+  --lb-accent: var(--accent);
+}
+
+.lb-comment {
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}
+
+.avatar {
+  background: #f3f3f3;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--header-height);
+  display: flex;
+  place-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.header-title {
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100%;
+  padding: calc(var(--header-height) + 0.5rem) 0.5rem 0.5rem;
+  background: #fff;
+  overflow-y: auto;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-room {
+  all: unset;
+  display: flex;
+  place-items: center;
+  color: #555;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.sidebar-room:hover,
+.sidebar-room:focus-visible {
+  background: #f3f3f3;
+}
+
+.sidebar-room[data-active] {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.sidebar-room svg {
+  margin-right: 0.375rem;
+}
+
+/* Footer should be at bottom of sidebar */
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0.5rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.content {
+  display: flex;
+  min-height: 100vh;
+  padding: calc(var(--header-height) + 1rem) 1rem 1rem
+    calc(var(--sidebar-width) + 1rem);
+  overflow-y: auto;
+}
+
+.button {
+  all: unset;
+  position: relative;
+  display: flex;
+  place-items: center;
+  place-content: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  background: #f3f3f3;
+  color: #555;
+}
+
+.button.square {
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+}
+
+.button.destructive {
+  background: #fde5e5;
+  color: #953939;
+}
+
+.button:hover,
+.button:focus-visible {
+  background: #e8e8e8;
+  cursor: pointer;
+}
+
+.button.destructive:hover,
+.button.destructive:focus-visible {
+  background: #ffd6d6;
+}
+
+.loading,
+.error,
+.empty,
+.home {
+  width: 100%;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  padding: 1rem;
+  flex: 1 0 auto;
+  color: rgb(0 0 0 / 50%);
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}
+
+.threads {
+  width: 100%;
+  max-width: 620px;
+  min-height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.thread,
+.composer {
+  position: relative;
+  flex: none;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.composer {
+  margin-top: auto;
+}
+
+.inbox {
+  background: #fff;
+  width: 460px;
+  height: 560px;
+  max-height: calc(100vh - var(--header-height) - 10px);
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  overflow-y: auto;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 8%),
+    0 8px 26px rgb(0 0 0 / 12%);
+}
+
+.inbox-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  place-items: center;
+  justify-content: space-between;
+  background: #fff;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.inbox-title {
+  font-weight: 500;
+}
+
+.inbox-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.inbox-list {
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 8%);
+}
+
+.inbox-unread-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 500;
+  height: 1rem;
+  min-width: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+}
+
+.tenant-select {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tenant-select select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(0 0 0 / 10%);
+}
+
+.tenant-select select:focus-visible {
+  outline: none;
+}
+
+.tenant-select select option {
+  padding: 0.5rem 0.75rem;
+  color: rgb(0 0 0 / 50%);
+}
+
+.tenant-select select option:disabled {
+  color: #555;
+}
