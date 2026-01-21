@@ -293,6 +293,13 @@ export type {
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
   IdTuple,
   SerializedChild,
   SerializedCrdt,
