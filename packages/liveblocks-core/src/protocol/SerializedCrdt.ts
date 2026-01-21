@@ -25,6 +25,7 @@ export type SerializedChild =
   | SerializedMap
   | SerializedRegister;
 
+// XXX Later, do a pass replacing all of these types to NodeStream
 export type NodeStream = Iterable<IdTuple<SerializedCrdt>>;
 
 export type SerializedRootObject = {
