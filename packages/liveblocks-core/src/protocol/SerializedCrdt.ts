@@ -25,6 +25,8 @@ export type SerializedChild =
   | SerializedMap
   | SerializedRegister;
 
+export type NodeStream = Iterable<IdTuple<SerializedCrdt>>;
+
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;
   readonly data: JsonObject;
