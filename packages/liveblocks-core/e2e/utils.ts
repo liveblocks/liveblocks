@@ -222,8 +222,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          30000,
-          "Client B did not receive beacon from Client A within 30s"
+          4000,
+          "Client B did not receive beacon from Client A within 4s"
         );
       },
 
@@ -241,8 +241,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          30000,
-          "Client A did not receive beacon from Client B within 30s"
+          2000,
+          "Client A did not receive beacon from Client B within 2s"
         );
       },
     };
@@ -379,7 +379,7 @@ async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    30000,
-    `Room did not reach connection status "${targetStatus}" within 30s`
+    10000,
+    `Room did not reach connection status "${targetStatus}" within 10s`
   );
 }
