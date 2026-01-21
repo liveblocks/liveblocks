@@ -100,3 +100,43 @@ export function isRegisterStorageNode(
 ): node is RegisterStorageNode {
   return node[1].type === CrdtType.REGISTER;
 }
+
+export type CompactNode = CompactRootNode | CompactChildNode;
+
+export type CompactChildNode =
+  | CompactObjectNode
+  | CompactListNode
+  | CompactMapNode
+  | CompactRegisterNode;
+
+export type CompactRootNode = readonly [id: "root", data: JsonObject];
+
+export type CompactObjectNode = readonly [
+  id: string,
+  type: CrdtType.OBJECT,
+  parentId: string,
+  parentKey: string,
+  data: JsonObject,
+];
+
+export type CompactListNode = readonly [
+  id: string,
+  type: CrdtType.LIST,
+  parentId: string,
+  parentKey: string,
+];
+
+export type CompactMapNode = readonly [
+  id: string,
+  type: CrdtType.MAP,
+  parentId: string,
+  parentKey: string,
+];
+
+export type CompactRegisterNode = readonly [
+  id: string,
+  type: CrdtType.REGISTER,
+  parentId: string,
+  parentKey: string,
+  data: Json,
+];
