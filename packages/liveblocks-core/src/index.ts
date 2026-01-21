@@ -309,7 +309,11 @@ export type {
   SerializedRegister,
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
+export {
+  compactNodesToNodeStream,
+  CrdtType,
+  nodeStreamToCompactNodes,
+} from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
