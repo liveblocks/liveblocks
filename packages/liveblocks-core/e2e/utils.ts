@@ -223,8 +223,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          10000,
-          "Client B did not receive beacon from Client A within 10s"
+          8000,
+          "Client B did not receive beacon from Client A within 8s"
         );
       },
 
@@ -242,8 +242,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          10000,
-          "Client A did not receive beacon from Client B within 10s"
+          8000,
+          "Client A did not receive beacon from Client B within 8s"
         );
       },
     };
