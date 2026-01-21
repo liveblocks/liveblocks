@@ -12,7 +12,13 @@ import type {
   ServerMsg,
   UpdatePresenceServerMsg,
 } from "@liveblocks/core";
-import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  nodeStreamToCompactNodes,
+  OpCode,
+  ServerMsgCode,
+} from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -151,8 +157,9 @@ async function prepareWithStorage<TState>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.STORAGE_STATE,
-      items: options.items,
+      type: ServerMsgCode.STORAGE_CHUNK,
+      done: true,
+      nodes: Array.from(nodeStreamToCompactNodes(options.items)),
     }),
   } as MessageEvent);
 
@@ -206,8 +213,9 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: [obj("root", {})],
+        type: ServerMsgCode.STORAGE_CHUNK,
+        done: true,
+        nodes: [["root", CrdtType.OBJECT, {}]],
       }),
     } as MessageEvent);
 
@@ -248,9 +256,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       await waitFor(() => socket.sentMessages[1] != null);
@@ -278,9 +284,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
     });
 
@@ -299,9 +303,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       store.getState().setCursor({ x: 1, y: 1 });
