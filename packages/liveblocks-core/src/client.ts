@@ -29,7 +29,6 @@ import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
 import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
-import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -630,8 +629,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const currentUserId = new Signal<string | undefined>(undefined);
 
   const authManager = createAuthManager(options, (token) => {
-    const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
-    currentUserId.set(() => userId);
+    currentUserId.set(() => token.uid);
   });
 
   const fetchPolyfill =
@@ -672,8 +670,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           throw new StopRetrying(
             "Cannot use AI Copilots with a public API key"
           );
-        } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
-          throw new StopRetrying("AI Copilots requires an ID or Access token");
         }
         return resp;
       },
