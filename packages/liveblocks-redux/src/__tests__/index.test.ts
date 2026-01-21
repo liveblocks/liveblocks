@@ -252,7 +252,7 @@ describe("middleware", () => {
     socket.callbacks.message[0]!({
       data: JSON.stringify({
         type: ServerMsgCode.STORAGE_CHUNK,
-        nodes: [["root", CrdtType.OBJECT, {}]],
+        nodes: [["root", {}]],
       }),
     } as MessageEvent);
     socket.callbacks.message[0]!({
