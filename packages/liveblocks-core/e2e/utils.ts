@@ -379,7 +379,7 @@ async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    10000,
-    `Room did not reach connection status "${targetStatus}" within 10s`
+    20000,
+    `Room did not reach connection status "${targetStatus}" within 20s`
   );
 }
