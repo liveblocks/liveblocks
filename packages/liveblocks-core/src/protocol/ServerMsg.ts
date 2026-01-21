@@ -288,32 +288,16 @@ export type BroadcastedEventServerMsg<E extends Json> = {
  */
 export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
-
-  /**
-   * Informs the client what their actor ID is going to be.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what their actor ID is going to be. */
   readonly actor: number;
-
-  /**
-   * Secure nonce for the current session.
-   * @since v1.2 (WS API v7)
-   */
+  /** Secure nonce for the current session. */
   readonly nonce: string;
-
-  /**
-   * Informs the client what permissions the current User (self) has.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what permissions the current User (self) has. */
   readonly scopes: string[];
-
   readonly users: {
     readonly [otherActor: number]: U & { scopes: string[] };
   };
-
-  /**
-   * Metadata sent from the server to the client.
-   */
+  /** Metadata sent from the server to the client. */
   readonly meta: JsonObject;
 };
 
