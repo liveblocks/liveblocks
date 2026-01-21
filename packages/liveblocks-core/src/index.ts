@@ -292,6 +292,7 @@ export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
+// XXX Remove these IdTuple + Serialized* exports!
 export type {
   IdTuple,
   SerializedChild,

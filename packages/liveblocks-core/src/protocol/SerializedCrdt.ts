@@ -17,14 +17,17 @@ export namespace CrdtType {
   export type REGISTER = typeof CrdtType.REGISTER;
 }
 
+// XXX Remove export? At least from src/index
 export type SerializedCrdt = SerializedRootObject | SerializedChild;
 
+// XXX Remove export? At least from src/index
 export type SerializedChild =
   | SerializedObject
   | SerializedList
   | SerializedMap
   | SerializedRegister;
 
+// XXX Remove export? At least from src/index
 export type SerializedRootObject = {
   readonly type: CrdtType.OBJECT;
   readonly data: JsonObject;
@@ -34,6 +37,7 @@ export type SerializedRootObject = {
   readonly parentKey?: never;
 };
 
+// XXX Remove export? At least from src/index
 export type SerializedObject = {
   readonly type: CrdtType.OBJECT;
   readonly parentId: string;
@@ -41,18 +45,21 @@ export type SerializedObject = {
   readonly data: JsonObject;
 };
 
+// XXX Remove export? At least from src/index
 export type SerializedList = {
   readonly type: CrdtType.LIST;
   readonly parentId: string;
   readonly parentKey: string;
 };
 
+// XXX Remove export? At least from src/index
 export type SerializedMap = {
   readonly type: CrdtType.MAP;
   readonly parentId: string;
   readonly parentKey: string;
 };
 
+// XXX Remove export? At least from src/index
 export type SerializedRegister = {
   readonly type: CrdtType.REGISTER;
   readonly parentId: string;
