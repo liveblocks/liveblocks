@@ -12,11 +12,7 @@ import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
-import type {
-  AccessToken,
-  IDToken,
-  LegacySecretToken,
-} from "../protocol/AuthToken";
+import type { AccessToken, IDToken } from "../protocol/AuthToken";
 import { Permission, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
@@ -40,7 +36,7 @@ import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
 import {
-  ALWAYS_AUTH_WITH_LEGACY_TOKEN,
+  ALWAYS_AUTH_WITH_ACCESS_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
@@ -48,26 +44,6 @@ import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
-
-export function makeSecretLegacyToken(
-  actor: number,
-  scopes: string[]
-): LegacySecretToken {
-  // NOTE: This is not the complete JWT token, but one that has enough fields
-  // to we can run the unit tests. The actual full shape of these JWT tokens is
-  // defined in the (private) backend in case you're interested, see
-  // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-  return {
-    k: TokenKind.SECRET_LEGACY,
-    iat: Date.now() / 1000,
-    exp: Date.now() / 1000 + 60, // Valid for 1 minute
-    appId: "my-app",
-    roomId: "my-room",
-    id: "user1",
-    actor,
-    scopes,
-  };
-}
 
 export function makeAccessToken(): AccessToken {
   return {
@@ -159,7 +135,7 @@ export function prepareRoomWithStorage_loadWithDelay<
   delay = 0
 ) {
   const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
+    ALWAYS_AUTH_WITH_ACCESS_TOKEN,
     SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
   );
 

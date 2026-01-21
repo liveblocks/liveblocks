@@ -45,7 +45,7 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   ClientMsg,
@@ -1461,9 +1461,8 @@ export function createRoom<
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
           context.staticSessionInfoSig.set({
-            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-            userInfo:
-              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+            userId: token.uid,
+            userInfo: token.ui,
           });
         } else {
           context.staticSessionInfoSig.set({
