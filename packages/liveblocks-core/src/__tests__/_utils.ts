@@ -29,7 +29,7 @@ import type {
   RootStorageNode,
   StorageNode,
 } from "../protocol/StorageNode";
-import { CrdtType } from "../protocol/StorageNode";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -140,13 +140,18 @@ export function prepareRoomWithStorage_loadWithDelay<
 
   const clonedItems = deepClone(items);
   wss.onConnection((conn) => {
-    const sendStorageMsg = () =>
+    const sendStorageMsg = () => {
       conn.server.send(
+        // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE,
-          items: clonedItems,
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: Array.from(nodeStreamToCompactNodes(clonedItems)),
         })
       );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+      );
+    };
 
     if (delay) {
       setTimeout(() => sendStorageMsg(), delay);
@@ -392,15 +397,19 @@ export async function prepareStorageTest<
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this STORAGE_STATE
+    // Next time a client socket connects, send this STORAGE_CHUNK
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
+          // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE,
-            items: nextStorageItems,
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       }
 
@@ -559,16 +568,18 @@ export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: StorageNode[]
 ) {
-  // Next time a client socket connects, send this STORAGE_STATE
+  // Next time a client socket connects, send this STORAGE_CHUNK
   // message
-  wss.onConnection((conn) =>
+  wss.onConnection((conn) => {
     conn.server.send(
+      // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
       serverMessage({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: nextStorageItems,
+        type: ServerMsgCode.STORAGE_CHUNK,
+        nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
       })
-    )
-  );
+    );
+    conn.server.send(serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END }));
+  });
 
   // Send a close from the WebSocket server, triggering an automatic reconnect
   // by the room.
