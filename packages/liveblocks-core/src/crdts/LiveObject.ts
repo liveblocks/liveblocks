@@ -14,11 +14,11 @@ import type {
 } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
+  NodeStream,
   ObjectStorageNode,
   RootStorageNode,
   SerializedObject,
   SerializedRootObject,
-  StorageNode,
 } from "../protocol/StorageNode";
 import { CrdtType, isRootStorageNode } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
@@ -88,7 +88,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
-    nodes: StorageNode[]
+    nodes: NodeStream
   ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: SerializedRootObject | null = null;
@@ -116,11 +116,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @private Do not use this API directly */
   static _fromItems<O extends LsonObject>(
-    items: StorageNode[],
+    nodes: NodeStream,
     pool: ManagedPool
   ): LiveObject<O> {
     const [root, parentToChildren] =
-      LiveObject.#buildRootAndParentToChildren(items);
+      LiveObject.#buildRootAndParentToChildren(nodes);
     return LiveObject._deserialize(
       ["root", root],
       parentToChildren,
