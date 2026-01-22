@@ -60,7 +60,7 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDataPlain,

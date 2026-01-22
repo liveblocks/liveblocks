@@ -72,7 +72,7 @@ import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./protocol/StorageNode";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,

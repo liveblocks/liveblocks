@@ -27,8 +27,8 @@ import type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+} from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";

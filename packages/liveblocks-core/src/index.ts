@@ -302,8 +302,8 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
+} from "./protocol/StorageNode";
+export { CrdtType } from "./protocol/StorageNode";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,

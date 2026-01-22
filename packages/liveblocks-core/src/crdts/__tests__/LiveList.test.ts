@@ -28,8 +28,8 @@ import {
 import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";

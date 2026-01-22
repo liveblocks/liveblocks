@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { ServerWireOp } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./StorageNode";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
 export const ServerMsgCode = Object.freeze({

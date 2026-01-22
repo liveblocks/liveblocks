@@ -26,7 +26,7 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "../protocol/StorageNode";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
   createSerializedList,
