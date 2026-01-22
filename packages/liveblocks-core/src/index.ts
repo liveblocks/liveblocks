@@ -314,6 +314,13 @@ export type {
   ObjectStorageNode,
   RegisterStorageNode,
   RootStorageNode,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
   StorageNode,
 } from "./protocol/StorageNode";
 export {
