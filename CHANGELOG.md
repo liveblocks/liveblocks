@@ -1,7 +1,12 @@
 ## vNEXT (not yet released)
 
+- ...
+
+## 3.13.3
+
 ### @liveblocks/client
 
+- Bump hardcoded client-side socket connection timeout from 10s to 20s
 - Add more detailed timing info to `enableDebugLogging` to better debug
   connection issues
 
