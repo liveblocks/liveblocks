@@ -292,18 +292,6 @@ export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
-// XXX Remove these IdTuple + Serialized* exports!
-export type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "./protocol/StorageNode";
-export { CrdtType } from "./protocol/StorageNode";
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
@@ -318,6 +306,31 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  // SerializedChild,
+  // SerializedCrdt,
+  // SerializedList,
+  // SerializedMap,
+  // SerializedObject,
+  // SerializedRegister,
+  // SerializedRootObject,
+  ChildStorageNode,
+  ListStorageNode,
+  MapStorageNode,
+  NodeStream,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
+  StorageNode,
+} from "./protocol/StorageNode";
+export {
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+  isRootStorageNode,
+} from "./protocol/StorageNode";
 export type {
   SubscriptionData,
   SubscriptionDataPlain,
