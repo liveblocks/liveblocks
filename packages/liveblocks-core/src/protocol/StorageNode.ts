@@ -82,3 +82,29 @@ export type MapStorageNode = [id: string, value: SerializedMap];
 export type RegisterStorageNode = [id: string, value: SerializedRegister];
 
 export type NodeStream = Iterable<StorageNode>;
+
+export function isRootStorageNode(
+  node: RootStorageNode | ObjectStorageNode
+): node is RootStorageNode {
+  return node[0] === "root";
+}
+
+export function isObjectStorageNode(
+  node: StorageNode
+): node is RootStorageNode | ObjectStorageNode {
+  return node[1].type === CrdtType.OBJECT;
+}
+
+export function isListStorageNode(node: StorageNode): node is ListStorageNode {
+  return node[1].type === CrdtType.LIST;
+}
+
+export function isMapStorageNode(node: StorageNode): node is MapStorageNode {
+  return node[1].type === CrdtType.MAP;
+}
+
+export function isRegisterStorageNode(
+  node: StorageNode
+): node is RegisterStorageNode {
+  return node[1].type === CrdtType.REGISTER;
+}
