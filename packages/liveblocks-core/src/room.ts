@@ -72,7 +72,6 @@ import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
@@ -84,6 +83,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { SerializedCrdt, StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -1853,18 +1853,21 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+  function updateRoot(items: StorageNode[]) {
     if (context.root === undefined) {
       return;
     }
 
     const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
+    for (const [id, crdt] of context.pool.nodes) {
+      currentItems.set(id, crdt._serialize());
     }
 
     // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
+    const ops = getTreesDiffOperations(
+      currentItems,
+      new Map<string, SerializedCrdt>(items)
+    );
 
     const result = applyRemoteOps(ops);
     notify(result.updates);

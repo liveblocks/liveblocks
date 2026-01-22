@@ -293,17 +293,6 @@ export type {
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
-export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
   RejectedStorageOpServerMsg,
@@ -317,6 +306,31 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  ChildStorageNode,
+  ListStorageNode,
+  MapStorageNode,
+  NodeStream,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+  StorageNode,
+} from "./protocol/StorageNode";
+export {
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+  isRootStorageNode,
+} from "./protocol/StorageNode";
 export type {
   SubscriptionData,
   SubscriptionDataPlain,

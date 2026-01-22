@@ -1,10 +1,9 @@
 import type {
   CommentData,
   CommentUserReaction,
-  IdTuple,
   NotificationSettingsPlain,
   RoomSubscriptionSettings,
-  SerializedCrdt,
+  StorageNode,
   ThreadData,
 } from "@liveblocks/core";
 import { createNotificationSettings, LiveList } from "@liveblocks/core";
@@ -2764,7 +2763,7 @@ describe("client", () => {
               ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
               ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 }}],
               ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 }}],
-            ] satisfies IdTuple<SerializedCrdt>[];
+            ] satisfies StorageNode[];
 
             return HttpResponse.text(
               [{ actor: 123 }, ...nodes]

@@ -23,7 +23,6 @@ import type {
   GroupData,
   GroupDataPlain,
   GroupScopes,
-  IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
   Json,
@@ -41,7 +40,7 @@ import type {
   QueryMetadata,
   QueryParams,
   RoomSubscriptionSettings,
-  SerializedCrdt,
+  StorageNode,
   StorageUpdate,
   SubscriptionData,
   SubscriptionDataPlain,
@@ -325,7 +324,7 @@ export type RoomUser<U extends BaseUserMeta = DU> = {
 
 type RequestStorageMutationResponse = {
   actor: number;
-  nodes: IdTuple<SerializedCrdt>[];
+  nodes: StorageNode[];
 };
 
 export type MutateStorageCallback = (context: {
@@ -1302,7 +1301,7 @@ export class Liveblocks {
     }
 
     // The rest of the stream are all the Storage nodes
-    const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
+    const nodes = (await asyncConsume(iter)) as StorageNode[];
     return { actor: first.actor, nodes };
   }
 

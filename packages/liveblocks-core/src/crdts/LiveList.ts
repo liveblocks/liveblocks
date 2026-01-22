@@ -4,8 +4,8 @@ import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
 import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import type { ListStorageNode, SerializedList } from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -69,7 +69,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id]: IdTuple<SerializedList>,
+    [id, _]: ListStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveList<Lson> {
@@ -81,8 +81,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return list;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, pool);
 
       child._setParentLink(list, crdt.parentKey);
       list._insertAndSort(child);

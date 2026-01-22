@@ -1,8 +1,4 @@
-import type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-} from "../protocol/SerializedCrdt";
+import type { ChildStorageNode, SerializedCrdt } from "../protocol/StorageNode";
 
 /**
  * Lookup table for nodes (= SerializedCrdt values) by their IDs.
@@ -18,5 +14,5 @@ export type NodeMap = Map<
  */
 export type ParentToChildNodeMap = Map<
   string, // Parent's node ID
-  IdTuple<SerializedChild>[]
+  ChildStorageNode[]
 >;

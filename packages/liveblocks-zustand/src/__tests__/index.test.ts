@@ -6,10 +6,9 @@ import type {
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
-  IdTuple,
   RoomStateServerMsg,
-  SerializedCrdt,
   ServerMsg,
+  StorageNode,
   UpdatePresenceServerMsg,
 } from "@liveblocks/core";
 import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
@@ -138,7 +137,7 @@ async function prepareWithStorage<TState>(
     storageMapping: Mapping<TState>;
     presenceMapping: Mapping<TState>;
     room?: string;
-    items: IdTuple<SerializedCrdt>[];
+    items: StorageNode[];
   }
 ) {
   const { client, store } = prepareClientAndStore(stateCreator, {
@@ -170,7 +169,7 @@ async function prepareWithStorage<TState>(
 }
 
 async function prepareBasicStoreWithStorage(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   options?: { room?: string }
 ) {
   return prepareWithStorage(basicStateCreator, {

@@ -5,8 +5,14 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import type { StorageNode } from "../protocol/StorageNode";
+import {
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+} from "../protocol/StorageNode";
 import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
 import { LiveList, type LiveListUpdates } from "./LiveList";
@@ -46,50 +52,38 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
 }
 
 export function deserialize(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  node: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): LiveNode {
-  switch (crdt.type) {
-    case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.REGISTER: {
-      return LiveRegister._deserialize([id, crdt], parentToChildren, pool);
-    }
-    default: {
-      throw new Error("Unexpected CRDT type");
-    }
+  if (isObjectStorageNode(node)) {
+    return LiveObject._deserialize(node, parentToChildren, pool);
+  } else if (isListStorageNode(node)) {
+    return LiveList._deserialize(node, parentToChildren, pool);
+  } else if (isMapStorageNode(node)) {
+    return LiveMap._deserialize(node, parentToChildren, pool);
+  } else if (isRegisterStorageNode(node)) {
+    return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else {
+    throw new Error("Unexpected CRDT type");
   }
 }
 
 export function deserializeToLson(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  node: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): Lson {
-  switch (crdt.type) {
-    case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.REGISTER: {
-      return crdt.data;
-    }
-    default: {
-      throw new Error("Unexpected CRDT type");
-    }
+  if (isObjectStorageNode(node)) {
+    return LiveObject._deserialize(node, parentToChildren, pool);
+  } else if (isListStorageNode(node)) {
+    return LiveList._deserialize(node, parentToChildren, pool);
+  } else if (isMapStorageNode(node)) {
+    return LiveMap._deserialize(node, parentToChildren, pool);
+  } else if (isRegisterStorageNode(node)) {
+    return node[1].data;
+  } else {
+    throw new Error("Unexpected CRDT type");
   }
 }
 

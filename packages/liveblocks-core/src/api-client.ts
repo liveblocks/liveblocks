@@ -60,7 +60,7 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type { StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDataPlain,
@@ -413,9 +413,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  streamStorage(options: {
-    roomId: string;
-  }): Promise<IdTuple<SerializedCrdt>[]>;
+  streamStorage(options: { roomId: string }): Promise<StorageNode[]>;
 
   sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
     roomId: string;
@@ -1620,7 +1618,7 @@ export function createApiClient<
         roomId: options.roomId,
       })
     );
-    return (await result.json()) as IdTuple<SerializedCrdt>[];
+    return (await result.json()) as StorageNode[];
   }
 
   async function sendMessagesOverHTTP<

@@ -19,18 +19,17 @@ import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import type { Op, ServerWireOp } from "../protocol/Op";
-import type {
-  IdTuple,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type {
+  ListStorageNode,
+  MapStorageNode,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
+  StorageNode,
+} from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -128,7 +127,7 @@ export function prepareRoomWithStorage_loadWithDelay<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 >(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S,
   scopes: string[] = ["room:write"],
@@ -181,7 +180,7 @@ export async function prepareRoomWithStorage<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 >(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
@@ -208,7 +207,7 @@ export async function prepareRoomWithStorage<
  * helpers can be used to make assertions easier to express.
  */
 export async function prepareIsolatedStorageTest<S extends LsonObject>(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S
 ) {
@@ -257,11 +256,7 @@ export async function prepareStorageTest<
   E extends Json = never,
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
->(
-  items: IdTuple<SerializedCrdt>[],
-  actor: number = 0,
-  scopes: string[] = ["room:write"]
-) {
+>(items: StorageNode[], actor: number = 0, scopes: string[] = ["room:write"]) {
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -393,7 +388,7 @@ export async function prepareStorageTest<
 
   function reconnect(
     actor: number,
-    nextStorageItems?: IdTuple<SerializedCrdt>[] | undefined
+    nextStorageItems?: StorageNode[] | undefined
   ) {
     currentActor = actor;
 
@@ -466,7 +461,7 @@ export async function prepareStorageUpdateTest<
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
 >(
-  items: IdTuple<SerializedCrdt>[]
+  items: StorageNode[]
 ): Promise<{
   room: Room<P, S, U, E, TM, CM>;
   root: LiveObject<S>;
@@ -533,7 +528,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   E extends Json = never,
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
->(items: IdTuple<SerializedCrdt>[]) {
+>(items: StorageNode[]) {
   const { storage, room } = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
     items,
     -1
@@ -562,7 +557,7 @@ export async function prepareDisconnectedStorageUpdateTest<
 
 export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
-  nextStorageItems: IdTuple<SerializedCrdt>[]
+  nextStorageItems: StorageNode[]
 ) {
   // Next time a client socket connects, send this STORAGE_STATE
   // message
@@ -590,7 +585,7 @@ export function createSerializedObject(
   data: JsonObject,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedObject> {
+): ObjectStorageNode {
   return [id, { type: CrdtType.OBJECT, data, parentId, parentKey }];
 }
 
@@ -598,9 +593,7 @@ export function createSerializedObject(
  * Creates a serialized root object with the canonical "root" node ID.
  * All Storage trees have their root at this ID.
  */
-export function createSerializedRoot(
-  data: JsonObject = {}
-): IdTuple<SerializedRootObject> {
+export function createSerializedRoot(data: JsonObject = {}): RootStorageNode {
   return ["root", { type: CrdtType.OBJECT, data }];
 }
 
@@ -608,7 +601,7 @@ export function createSerializedList(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedList> {
+): ListStorageNode {
   return [id, { type: CrdtType.LIST, parentId, parentKey }];
 }
 
@@ -616,7 +609,7 @@ export function createSerializedMap(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedMap> {
+): MapStorageNode {
   return [id, { type: CrdtType.MAP, parentId, parentKey }];
 }
 
@@ -625,7 +618,7 @@ export function createSerializedRegister(
   parentId: string,
   parentKey: string,
   data: Json
-): IdTuple<SerializedRegister> {
+): RegisterStorageNode {
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 

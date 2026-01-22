@@ -29,9 +29,9 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { StorageNode } from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -1854,7 +1854,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
@@ -1897,7 +1897,7 @@ describe("room", () => {
 
       expectStorage({ items: ["a"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["2:0", { type: CrdtType.LIST, parentId: "root", parentKey: "items2" }],
         [
@@ -2004,9 +2004,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ x: 0 });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        createSerializedRoot({ x: 0 }),
-      ];
+      const newInitStorage: StorageNode[] = [createSerializedRoot({ x: 0 })];
 
       reconnect(2, newInitStorage);
 
