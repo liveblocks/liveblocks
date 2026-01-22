@@ -187,7 +187,7 @@ const AUTH_TIMEOUT = 10_000;
  * Maximum amount of time that the socket connect delegate may take to return
  * an opened WebSocket connection, or else we consider the attempt timed out.
  */
-const SOCKET_CONNECT_TIMEOUT = 10_000;
+const SOCKET_CONNECT_TIMEOUT = 20_000;
 
 /**
  * Special error class that can be thrown during authentication to stop the
@@ -290,26 +290,21 @@ export type Delegates<T extends BaseAuthResult> = {
 
 // istanbul ignore next
 function enableTracing(machine: FSM<Context, Event, State>) {
-  const start = new Date().getTime();
-
   function log(...args: unknown[]) {
-    console.warn(
-      `${((new Date().getTime() - start) / 1000).toFixed(2)} [FSM #${
-        machine.id
-      }]`,
-      ...args
-    );
+    console.warn(`[FSM #${machine.id}]`, ...args);
   }
+
   const unsubs = [
     machine.events.didReceiveEvent.subscribe((e) => log(`Event ${e.type}`)),
     machine.events.willTransition.subscribe(({ from, to }) =>
       log("Transitioning", from, "→", to)
     ),
+    machine.events.didExitState.subscribe(({ state, durationMs }) =>
+      log(`Exited ${state} after ${durationMs.toFixed(0)}ms`)
+    ),
     machine.events.didIgnoreEvent.subscribe((e) =>
       log("Ignored event", e.type, e, "(current state won't handle it)")
     ),
-    // machine.events.willExitState.subscribe((s) => log("Exiting state", s)),
-    // machine.events.didEnterState.subscribe((s) => log("Entering state", s)),
   ];
   return () => {
     for (const unsub of unsubs) {
@@ -548,6 +543,9 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       // OK state. This is done by resolving the Promise.
       //
       async (ctx, signal) => {
+        const socketEpoch = performance.now();
+        let socketOpenAt: number | null = null;
+
         let capturedPrematureEvent: IWebSocketEvent | null = null;
         let unconfirmedSocket: IWebSocketInstance | null = null;
 
@@ -580,6 +578,12 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
                 | Record<string, Json>
                 | undefined;
               if (serverMsg?.type === ServerMsgCode.ROOM_STATE) {
+                if (options.enableDebugLogging && socketOpenAt !== null) {
+                  const elapsed = performance.now() - socketOpenAt;
+                  console.warn(
+                    `[FSM #${machine.id}] Socket open → ROOM_STATE: ${elapsed.toFixed(0)}ms`
+                  );
+                }
                 didReceiveActor();
               }
             }
@@ -597,6 +601,14 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
             socket.addEventListener("error", reject); // (*)
             socket.addEventListener("close", reject); // (*)
             socket.addEventListener("open", () => {
+              socketOpenAt = performance.now();
+              if (options.enableDebugLogging) {
+                const elapsed = socketOpenAt - socketEpoch;
+                console.warn(
+                  `[FSM #${machine.id}] Socket epoch → open: ${elapsed.toFixed(0)}ms`
+                );
+              }
+
               //
               // Part 2:
               // The "open" event just fired, so the server accepted our

@@ -1009,7 +1009,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "A",
-          opId: "2:1",
         },
       ]);
       // B is shifted to SECOND_POSITION
@@ -1019,7 +1018,6 @@ describe("LiveList", () => {
         {
           type: OpCode.DELETE_CRDT,
           id: "2:0",
-          opId: "2:2",
         },
       ]);
 
@@ -1035,7 +1033,7 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
@@ -1051,7 +1049,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: SECOND_POSITION,
           data: "C",
-          opId: "2:3",
         },
       ]);
 
@@ -1085,7 +1082,6 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "A",
-          opId: "2:1",
         },
       ]);
 
@@ -1093,7 +1089,6 @@ describe("LiveList", () => {
         {
           type: OpCode.DELETE_CRDT,
           id: "2:0",
-          opId: "2:2",
         },
       ]);
 
@@ -1107,13 +1102,65 @@ describe("LiveList", () => {
           parentId: "0:0",
           parentKey: FIRST_POSITION,
           data: "B",
-          opId: "1:0",
+          opId: "1:0", // Ack
         },
       ]);
 
       expectStorage({
         items: ["B", "C"], // C position is shifted
       });
+    });
+
+    // Regression test: #applySetChildKeyAck must return modified when restoring
+    // items from implicitlyDeletedItems, otherwise subscriptions won't fire.
+    test("restoring item from implicitlyDeletedItems triggers subscription", async () => {
+      const { room, root, expectStorage, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedRoot(),
+            createSerializedList("0:0", "root", "items"),
+            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "a"),
+            createSerializedRegister("0:2", "0:0", SECOND_POSITION, "b"),
+            createSerializedRegister("0:3", "0:0", THIRD_POSITION, "c"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+      items.delete(0);
+      items.move(1, 0);
+      expectStorage({ items: ["c", "b"] });
+
+      // Remote set at "a"'s position moves "c" to implicitlyDeletedItems
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "X",
+          intent: "set",
+          deletedId: "0:1",
+        },
+      ]);
+      expectStorage({ items: ["X", "b"] });
+
+      // Start listening for subscription updates
+      const onStorage = vi.fn();
+      onTestFinished(room.events.storageBatch.subscribe(onStorage));
+
+      // Ack restores "c" from implicitlyDeletedItems - this MUST trigger subscription
+      applyRemoteOperations([
+        {
+          type: OpCode.SET_PARENT_KEY,
+          id: "0:3",
+          parentKey: SECOND_POSITION,
+          opId: "1:1",
+        },
+      ]);
+
+      expectStorage({ items: ["X", "c", "b"] });
+      expect(onStorage).toHaveBeenCalled();
     });
   });
 
@@ -1431,7 +1478,6 @@ describe("LiveList", () => {
           {
             data: { a: 2 },
             id: "0:3",
-            opId: "1:0",
             parentId: "0:1",
             parentKey: SECOND_POSITION,
             type: OpCode.CREATE_OBJECT,

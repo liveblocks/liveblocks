@@ -11,7 +11,8 @@ import type {
   BaseGroupInfo,
   BaseRoomInfo,
   CopilotId,
-  DM,
+  DCM,
+  DTM,
   DU,
   LiveblocksError,
   MessageId,
@@ -116,7 +117,7 @@ function identity<T>(x: T): T {
 
 const _umbrellaStores = new WeakMap<
   OpaqueClient,
-  UmbrellaStore<BaseMetadata>
+  UmbrellaStore<BaseMetadata, BaseMetadata>
 >();
 const _extras = new WeakMap<
   OpaqueClient,
@@ -124,7 +125,7 @@ const _extras = new WeakMap<
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
-  LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
+  LiveblocksContextBundle<BaseUserMeta, BaseMetadata, BaseMetadata>
 >();
 
 function selectorFor_useUnreadInboxNotificationsCount(
@@ -224,14 +225,15 @@ function selectorFor_useGroupInfo(
 
 function getOrCreateContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
->(client: OpaqueClient): LiveblocksContextBundle<U, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): LiveblocksContextBundle<U, TM, CM> {
   let bundle = _bundles.get(client);
   if (!bundle) {
     bundle = makeLiveblocksContextBundle(client);
     _bundles.set(client, bundle);
   }
-  return bundle as LiveblocksContextBundle<U, M>;
+  return bundle as unknown as LiveblocksContextBundle<U, TM, CM>;
 }
 
 /**
@@ -239,24 +241,26 @@ function getOrCreateContextBundle<
  *
  * @private
  */
-export function getUmbrellaStoreForClient<M extends BaseMetadata>(
-  client: OpaqueClient
-): UmbrellaStore<M> {
+export function getUmbrellaStoreForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient): UmbrellaStore<TM, CM> {
   let store = _umbrellaStores.get(client);
   if (!store) {
     store = new UmbrellaStore(client);
     _umbrellaStores.set(client, store);
   }
-  return store as unknown as UmbrellaStore<M>;
+  return store as unknown as UmbrellaStore<TM, CM>;
 }
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
 /** @internal Only exported for unit tests. */
-export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
-  client: OpaqueClient
-) {
+export function getLiveblocksExtrasForClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeLiveblocksExtrasForClient(client);
@@ -264,7 +268,7 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: UmbrellaStore<M>;
+    store: UmbrellaStore<TM, CM>;
   };
 }
 
@@ -406,11 +410,12 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
 
 function makeLiveblocksContextBundle<
   U extends BaseUserMeta,
-  M extends BaseMetadata,
->(client: Client<U>): LiveblocksContextBundle<U, M> {
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: Client<U>): LiveblocksContextBundle<U, TM, CM> {
   // Bind all hooks to the current client instance
   const useInboxNotificationThread = (inboxNotificationId: string) =>
-    useInboxNotificationThread_withClient<M>(client, inboxNotificationId);
+    useInboxNotificationThread_withClient<TM, CM>(client, inboxNotificationId);
 
   const useMarkInboxNotificationAsRead = () =>
     useMarkInboxNotificationAsRead_withClient(client);
@@ -440,7 +445,7 @@ function makeLiveblocksContextBundle<
 
   const shared = createSharedContext<U>(client);
 
-  const bundle: LiveblocksContextBundle<U, M> = {
+  const bundle: LiveblocksContextBundle<U, TM, CM> = {
     LiveblocksProvider,
 
     useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
@@ -800,11 +805,11 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   }, [client]);
 }
 
-function useInboxNotificationThread_withClient<M extends BaseMetadata>(
-  client: OpaqueClient,
-  inboxNotificationId: string
-): ThreadData<M> {
-  const { store } = getLiveblocksExtrasForClient<M>(client);
+function useInboxNotificationThread_withClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(client: OpaqueClient, inboxNotificationId: string): ThreadData<TM, CM> {
+  const { store } = getLiveblocksExtrasForClient<TM, CM>(client);
   return useSignal(
     store.outputs.threadifications,
     useCallback(
@@ -887,9 +892,9 @@ function useUpdateNotificationSettings_withClient(
 function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-    NotificationSettingsAsyncResult,
-    (settings: PartialNotificationSettings) => void,
-  ] {
+  NotificationSettingsAsyncResult,
+  (settings: PartialNotificationSettings) => void,
+] {
   const updateNotificationSettings =
     useUpdateNotificationSettings_withClient(client);
 
@@ -926,9 +931,9 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-    NotificationSettingsAsyncSuccess,
-    (settings: PartialNotificationSettings) => void,
-  ] {
+  NotificationSettingsAsyncSuccess,
+  (settings: PartialNotificationSettings) => void,
+] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -1862,9 +1867,10 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
  */
 export function createLiveblocksContext<
   U extends BaseUserMeta = DU,
-  M extends BaseMetadata = DM,
->(client: OpaqueClient): LiveblocksContextBundle<U, M> {
-  return getOrCreateContextBundle<U, M>(client);
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(client: OpaqueClient): LiveblocksContextBundle<U, TM, CM> {
+  return getOrCreateContextBundle<U, TM, CM>(client);
 }
 
 /**
@@ -1883,12 +1889,15 @@ export function createLiveblocksContext<
  * The final API for that is still TBD.
  *
  */
-function useUserThreads_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {}
-): ThreadsAsyncResult<M> {
+function useUserThreads_experimental<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(options: UseUserThreadsOptions<TM> = {}): ThreadsAsyncResult<TM, CM> {
   const client = useClient();
-  const { store, userThreadsPoller: poller } =
-    getLiveblocksExtrasForClient<M>(client);
+  const { store, userThreadsPoller: poller } = getLiveblocksExtrasForClient<
+    TM,
+    CM
+  >(client);
   const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
@@ -1935,19 +1944,20 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * specify the sort order to be by most recently updated first somehow.
  * The final API for that is still TBD.
  */
-function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {}
-): ThreadsAsyncSuccess<M> {
+function useUserThreadsSuspense_experimental<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(options: UseUserThreadsOptions<TM> = {}): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const { store } = getLiveblocksExtrasForClient<M>(client);
+  const { store } = getLiveblocksExtrasForClient<TM, CM>(client);
   const queryKey = makeUserThreadsQueryKey(options.query);
 
   use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useUserThreads_experimental(options);
+  const result = useUserThreads_experimental<TM, CM>(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1978,10 +1988,11 @@ function useInboxNotificationsSuspense(options?: UseInboxNotificationsOptions) {
   return useInboxNotificationsSuspense_withClient(useClient(), options);
 }
 
-function useInboxNotificationThread<M extends BaseMetadata>(
-  inboxNotificationId: string
-) {
-  return useInboxNotificationThread_withClient<M>(
+function useInboxNotificationThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(inboxNotificationId: string) {
+  return useInboxNotificationThread_withClient<TM, CM>(
     useClient(),
     inboxNotificationId
   );
@@ -2141,7 +2152,7 @@ function useGroupInfoSuspense(groupId: string): GroupInfoAsyncSuccess {
   return useGroupInfoSuspense_withClient(useClient(), groupId);
 }
 
-type TypedBundle = LiveblocksContextBundle<DU, DM>;
+type TypedBundle = LiveblocksContextBundle<DU, DTM, DCM>;
 
 /**
  * Returns the thread associated with a `"thread"` inbox notification.

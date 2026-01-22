@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/core";
+import type { BaseMetadata, CommentBody } from "@liveblocks/core";
 import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
@@ -284,6 +284,100 @@ describe("useCreateComment", () => {
     await waitFor(() =>
       expect(result.current.threads).toEqual([initialThread])
     );
+
+    unmount();
+  });
+
+  test("should create a comment with metadata optimistically", async () => {
+    const roomId = nanoid();
+    const fakeCreatedAt = addMinutes(new Date(), 5);
+    const initialThread = dummyThreadData({ roomId });
+    const metadata = { priority: 1, reviewed: false };
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [initialThread],
+            inboxNotifications: [],
+            subscriptions: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
+            },
+          })
+        );
+      }),
+      mockCreateComment(
+        { threadId: initialThread.id },
+        async (req, res, ctx) => {
+          const json = await req.json<{
+            id: string;
+            body: CommentBody;
+            metadata?: BaseMetadata;
+          }>();
+
+          const comment = dummyCommentData({
+            roomId,
+            threadId: initialThread.id,
+            body: json.body,
+            createdAt: fakeCreatedAt,
+            metadata: json.metadata ?? {},
+          });
+
+          return res(ctx.json(comment));
+        }
+      )
+    );
+
+    const {
+      room: { RoomProvider, useThreads, useCreateComment },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads().threads,
+        createComment: useCreateComment(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toBeUndefined();
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual([initialThread])
+    );
+
+    const comment = await act(() =>
+      result.current.createComment({
+        threadId: initialThread.id,
+        body: {
+          version: 1,
+          content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+        },
+        metadata,
+      })
+    );
+
+    expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
+    expect(comment.metadata).toEqual(metadata);
+
+    // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
+    await waitFor(() => {
+      const serverComment = result.current.threads?.[0]?.comments[1];
+      expect(serverComment?.createdAt).toEqual(fakeCreatedAt);
+      expect(serverComment?.metadata).toEqual(metadata);
+    });
 
     unmount();
   });

@@ -73,17 +73,17 @@ import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
 
-export interface RoomHttpApi<M extends BaseMetadata> {
+export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   getThreads(options: {
     roomId: string;
     cursor?: string;
     query?: {
       resolved?: boolean;
       subscribed?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     requestedAt: Date;
@@ -97,7 +97,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     signal?: AbortSignal;
   }): Promise<{
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
@@ -116,7 +116,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     options: {
       roomId: string;
       query: {
-        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadMetadata?: Partial<QueryMetadata<TM>>;
         threadResolved?: boolean;
         hasAttachments?: boolean;
         hasMentions?: boolean;
@@ -136,18 +136,20 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     body,
     commentId,
     threadId,
+    commentMetadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
+  }): Promise<ThreadData<TM, CM>>;
 
   getThread(options: { roomId: string; threadId: string }): Promise<{
-    thread?: ThreadData<M>;
+    thread?: ThreadData<TM, CM>;
     inboxNotification?: InboxNotificationData;
     subscription?: SubscriptionData;
   }>;
@@ -166,23 +168,37 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     threadId,
   }: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
-  }): Promise<M>;
+  }): Promise<TM>;
+
+  editCommentMetadata({
+    roomId,
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
 
   createComment({
     roomId,
     threadId,
     commentId,
     body,
+    metadata,
     attachmentIds,
   }: {
     roomId: string;
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   editComment({
     roomId,
@@ -190,13 +206,15 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     commentId,
     body,
     attachmentIds,
+    metadata,
   }: {
     roomId: string;
     threadId: string;
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+    metadata?: Patchable<CM>;
+  }): Promise<CommentData<CM>>;
 
   deleteComment({
     roomId,
@@ -422,13 +440,16 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }): Promise<string>;
 }
 
-export interface NotificationHttpApi<M extends BaseMetadata> {
+export interface NotificationHttpApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> {
   getInboxNotifications(options?: {
     cursor?: string;
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
@@ -444,7 +465,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -479,19 +500,21 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   ): Promise<NotificationSettingsPlain>;
 }
 
-export interface LiveblocksHttpApi<M extends BaseMetadata>
-  extends RoomHttpApi<M>,
-    NotificationHttpApi<M> {
+export interface LiveblocksHttpApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> extends RoomHttpApi<TM, CM>,
+    NotificationHttpApi<TM, CM> {
   getUrlMetadata(url: string): Promise<UrlMetadata>;
 
   getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }): Promise<{
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
@@ -508,7 +531,7 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -524,7 +547,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
   getGroup(groupId: string): Promise<GroupData | undefined>;
 }
 
-export function createApiClient<M extends BaseMetadata>({
+export function createApiClient<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>({
   baseUrl,
   authManager,
   currentUserId,
@@ -534,7 +560,7 @@ export function createApiClient<M extends BaseMetadata>({
   authManager: AuthManager;
   currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
-}): LiveblocksHttpApi<M> {
+}): LiveblocksHttpApi<TM, CM> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
 
   /* -------------------------------------------------------------------------------------------------
@@ -546,7 +572,7 @@ export function createApiClient<M extends BaseMetadata>({
     signal?: AbortSignal;
   }) {
     const result = await httpClient.get<{
-      data: ThreadDataPlain<M>[];
+      data: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -596,7 +622,7 @@ export function createApiClient<M extends BaseMetadata>({
     query?: {
       resolved?: boolean;
       subscribed?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
     let query: string | undefined;
@@ -609,7 +635,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     try {
       const result = await httpClient.get<{
-        data: ThreadDataPlain<M>[];
+        data: ThreadDataPlain<TM, CM>[];
         inboxNotifications: InboxNotificationDataPlain[];
         subscriptions: SubscriptionDataPlain[];
         deletedThreads: ThreadDeleteInfoPlain[];
@@ -673,7 +699,7 @@ export function createApiClient<M extends BaseMetadata>({
     options: {
       roomId: string;
       query: {
-        threadMetadata?: Partial<QueryMetadata<M>>;
+        threadMetadata?: Partial<QueryMetadata<TM>>;
         threadResolved?: boolean;
         hasAttachments?: boolean;
         hasMentions?: boolean;
@@ -710,14 +736,15 @@ export function createApiClient<M extends BaseMetadata>({
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
     const threadId = options.threadId ?? createThreadId();
 
-    const thread = await httpClient.post<ThreadDataPlain<M>>(
+    const thread = await httpClient.post<ThreadDataPlain<TM, CM>>(
       url`/v2/c/rooms/${options.roomId}/threads`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -728,13 +755,14 @@ export function createApiClient<M extends BaseMetadata>({
         comment: {
           id: commentId,
           body: options.body,
+          metadata: options.commentMetadata,
           attachmentIds: options.attachmentIds,
         },
         metadata: options.metadata,
       }
     );
 
-    return convertToThreadData<M>(thread);
+    return convertToThreadData<TM, CM>(thread);
   }
 
   async function deleteThread(options: { roomId: string; threadId: string }) {
@@ -758,7 +786,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     if (response.ok) {
       const json = (await response.json()) as {
-        thread: ThreadDataPlain<M>;
+        thread: ThreadDataPlain<TM, CM>;
         inboxNotification?: InboxNotificationDataPlain;
         subscription?: SubscriptionDataPlain;
       };
@@ -787,11 +815,27 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function editThreadMetadata(options: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
   }) {
-    return await httpClient.post<M>(
+    return await httpClient.post<TM>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
+      options.metadata
+    );
+  }
+
+  async function editCommentMetadata(options: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return await httpClient.post<CM>(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/metadata`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -805,10 +849,11 @@ export function createApiClient<M extends BaseMetadata>({
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     const commentId = options.commentId ?? createCommentId();
-    const comment = await httpClient.post<CommentDataPlain>(
+    const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -817,6 +862,7 @@ export function createApiClient<M extends BaseMetadata>({
       {
         id: commentId,
         body: options.body,
+        metadata: options.metadata,
         attachmentIds: options.attachmentIds,
       }
     );
@@ -829,8 +875,9 @@ export function createApiClient<M extends BaseMetadata>({
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
+    metadata?: Patchable<CM>;
   }) {
-    const comment = await httpClient.post<CommentDataPlain>(
+    const comment = await httpClient.post<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -839,6 +886,7 @@ export function createApiClient<M extends BaseMetadata>({
       {
         body: options.body,
         attachmentIds: options.attachmentIds,
+        metadata: options.metadata,
       }
     );
 
@@ -883,7 +931,7 @@ export function createApiClient<M extends BaseMetadata>({
     commentId: string;
     emoji: string;
   }) {
-    await httpClient.delete<CommentDataPlain>(
+    await httpClient.delete<CommentDataPlain<CM>>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
@@ -1612,7 +1660,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       groups: GroupDataPlain[];
@@ -1659,7 +1707,7 @@ export function createApiClient<M extends BaseMetadata>({
     }
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1797,7 +1845,7 @@ export function createApiClient<M extends BaseMetadata>({
     cursor?: string;
     query?: {
       resolved?: boolean;
-      metadata?: Partial<QueryMetadata<M>>;
+      metadata?: Partial<QueryMetadata<TM>>;
     };
   }) {
     let query: string | undefined;
@@ -1809,7 +1857,7 @@ export function createApiClient<M extends BaseMetadata>({
     const PAGE_SIZE = 50;
 
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1842,11 +1890,12 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function getUserThreadsSince_experimental<
-    M extends BaseMetadata,
-  >(options: { since: Date; signal?: AbortSignal }) {
+  async function getUserThreadsSince_experimental(options: {
+    since: Date;
+    signal?: AbortSignal;
+  }) {
     const json = await httpClient.get<{
-      threads: ThreadDataPlain<M>[];
+      threads: ThreadDataPlain<TM, CM>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -1942,6 +1991,7 @@ export function createApiClient<M extends BaseMetadata>({
     editThreadMetadata,
     createComment,
     editComment,
+    editCommentMetadata,
     deleteComment,
     addReaction,
     removeReaction,

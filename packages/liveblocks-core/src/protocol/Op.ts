@@ -1,4 +1,5 @@
 import type { Json, JsonObject } from "../lib/Json";
+import type { DistributiveOmit } from "../lib/utils";
 
 export type OpCode = (typeof OpCode)[keyof typeof OpCode];
 export const OpCode = Object.freeze({
@@ -11,7 +12,6 @@ export const OpCode = Object.freeze({
   DELETE_OBJECT_KEY: 6,
   CREATE_MAP: 7,
   CREATE_REGISTER: 8,
-  ACK: 9, // Will only appear in v8+
 });
 
 export namespace OpCode {
@@ -24,7 +24,6 @@ export namespace OpCode {
   export type DELETE_OBJECT_KEY = typeof OpCode.DELETE_OBJECT_KEY;
   export type CREATE_MAP = typeof OpCode.CREATE_MAP;
   export type CREATE_REGISTER = typeof OpCode.CREATE_REGISTER;
-  export type ACK = typeof OpCode.ACK;
 }
 
 /**
@@ -36,9 +35,7 @@ export type Op =
   | UpdateObjectOp
   | DeleteCrdtOp
   | SetParentKeyOp // Only for lists!
-  | DeleteObjectKeyOp
-  | AckOpV7 // Classic (H)Ack
-  | AckOpV8; // Proper Ack
+  | DeleteObjectKeyOp;
 
 export type CreateOp =
   | CreateObjectOp
@@ -108,23 +105,14 @@ export type DeleteCrdtOp = {
 // way to trigger an acknowledgement for Ops that were seen by the server, but
 // deliberately ignored.
 //
-export type AckOpV7 = {
+export type IgnoredOp = {
   readonly type: OpCode.DELETE_CRDT; // Not a typo!
-  readonly id: "ACK";
+  readonly id: "ACK"; // (H)ACK
   readonly opId: string;
 };
 
-// Proper Ack, this will be sent by V8+, instead of the hack above
-export type AckOpV8 = {
-  readonly type: OpCode.ACK;
-  readonly opId: string;
-};
-
-export function isAck(op: Op): op is AckOpV7 | AckOpV8 {
-  return (
-    op.type === OpCode.ACK || // >= v8
-    (op.type === OpCode.DELETE_CRDT && op.id === "ACK") // < v7
-  );
+export function isIgnoredOp(op: ServerWireOp): op is IgnoredOp {
+  return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 
 export type SetParentKeyOp = {
@@ -140,3 +128,31 @@ export type DeleteObjectKeyOp = {
   readonly type: OpCode.DELETE_OBJECT_KEY;
   readonly key: string;
 };
+
+//
+// ------------------------------------------------------------------------------
+// Wire types for Ops sent over the network
+// ------------------------------------------------------------------------------
+//
+
+export type HasOpId = { opId: string };
+
+/**
+ * Ops sent from client → server. Always includes an opId so the server can
+ * acknowledge the receipt.
+ */
+export type ClientWireOp = Op & HasOpId;
+export type ClientWireCreateOp = CreateOp & HasOpId;
+
+/**
+ * ServerWireOp: Ops sent from server → client. Three variants:
+ * 1. ClientWireOp — Full echo back of our own op, confirming it was applied
+ * 2. AckOp — Our op was seen but intentionally ignored (still counts as ack)
+ * 3. Op without opId — Another client's op being forwarded to us
+ */
+export type ServerWireOp =
+  | ClientWireOp // "Our" Op echoed back in full to ACK (V7 response)
+  | IgnoredOp // "Our" Op was ignored by the server (not forwarded) in v7
+  | TheirOp; // "Their" Op (V7 forward)
+
+type TheirOp = DistributiveOmit<Op, "opId"> & { opId?: undefined };

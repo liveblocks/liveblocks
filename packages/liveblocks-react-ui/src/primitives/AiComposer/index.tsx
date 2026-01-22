@@ -34,6 +34,7 @@ import type { AiComposerBody } from "../../types";
 import { requestSubmit } from "../../utils/request-submit";
 import { useInitial } from "../../utils/use-initial";
 import { withNormalize } from "../slate/plugins/normalize";
+import { getDOMRange } from "../slate/utils/get-dom-range";
 import { isEmpty } from "../slate/utils/is-empty";
 import {
   AiComposerContext,
@@ -143,6 +144,9 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const focus = useCallback(
       (resetSelection = true) => {
         try {
+          // Slate's `ReactEditor.focus` method can use `setTimeout` internally
+          // which prevents us from catching errors, so this is a reimplementation.
+          // https://github.com/ianstormtaylor/slate/blob/main/packages/slate-dom/src/plugin/dom-editor.ts
           if (!ReactEditor.isFocused(editor)) {
             SlateTransforms.select(
               editor,
@@ -150,7 +154,20 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
                 ? SlateEditor.end(editor, [])
                 : editor.selection
             );
-            ReactEditor.focus(editor);
+
+            const element = ReactEditor.toDOMNode(editor, editor);
+
+            if (editor.selection) {
+              const domSelection = window.getSelection();
+              const domRange = getDOMRange(editor, editor.selection);
+
+              if (domRange) {
+                domSelection?.removeAllRanges();
+                domSelection?.addRange(domRange);
+              }
+            }
+
+            element.focus({ preventScroll: true });
           }
         } catch {
           // Slate's DOM-specific methods will throw if the editor's DOM

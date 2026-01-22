@@ -51,6 +51,7 @@ export function createComment(
     },
     reactions = [],
     attachments = [],
+    metadata = {},
   } = overrides;
 
   return {
@@ -64,6 +65,7 @@ export function createComment(
     body,
     reactions,
     attachments,
+    metadata,
   };
 }
 

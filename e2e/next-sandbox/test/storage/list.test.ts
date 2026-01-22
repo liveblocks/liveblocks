@@ -170,7 +170,7 @@ test.describe("Storage - LiveList", () => {
       await waitForJson(pages, "#numItems", 4);
       await waitUntilEqualOnAllPages(pages, "#items");
 
-      const initialState = await page1.$eval("#items", (el) => el.textContent);
+      await page1.$eval("#items", (el) => el.textContent);
     });
 
     await test.step("Client A moves item from index 2 to index 0", async () => {
@@ -178,7 +178,7 @@ test.describe("Storage - LiveList", () => {
       // This should move the 3rd item to the front
       // Before: [e1, e2, e3, e4] -> After: [e3, e1, e2, e4]
 
-      const initialItems = await page1.$eval("#items", (el) => el.textContent);
+      await page1.$eval("#items", (el) => el.textContent);
 
       // Use the deterministic move button
       await page1.click("#move-2-to-0");
@@ -187,7 +187,7 @@ test.describe("Storage - LiveList", () => {
       await waitForJson(pages, "#syncStatus", "synchronized");
       await waitUntilEqualOnAllPages(pages, "#items");
 
-      const afterMove = await page1.$eval("#items", (el) => el.textContent);
+      await page1.$eval("#items", (el) => el.textContent);
     });
 
     await test.step("Client B inserts an item at index 3", async () => {
@@ -200,7 +200,7 @@ test.describe("Storage - LiveList", () => {
       await waitForJson(pages, "#syncStatus", "synchronized");
       await waitUntilEqualOnAllPages(pages, "#items");
 
-      const afterInsert = await page1.$eval("#items", (el) => el.textContent);
+      await page1.$eval("#items", (el) => el.textContent);
     });
 
     await test.step("Client A undoes the move", async () => {
@@ -211,16 +211,15 @@ test.describe("Storage - LiveList", () => {
       await waitForJson(pages, "#syncStatus", "synchronized");
       await waitUntilEqualOnAllPages(pages, "#items");
 
-      const finalState = await page1.$eval("#items", (el) => el.textContent);
+      await page1.$eval("#items", (el) => el.textContent);
     });
 
     await test.step("Verify both clients have consistent state", async () => {
       // Both clients should have the same final state
       await waitUntilEqualOnAllPages(pages, "#items");
 
-      const client1State = await page1.$eval("#items", (el) => el.textContent);
-      const client2State = await page2.$eval("#items", (el) => el.textContent);
-
+      await page1.$eval("#items", (el) => el.textContent);
+      await page2.$eval("#items", (el) => el.textContent);
 
       // The test passes if waitUntilEqualOnAllPages doesn't throw
       // This ensures both clients converged to the same state

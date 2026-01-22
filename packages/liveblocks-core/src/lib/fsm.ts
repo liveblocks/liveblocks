@@ -82,6 +82,9 @@ type Groups<T extends string> = T extends `${infer G}.${infer Rest}`
   : never;
 export type Wildcard<T extends string> = "*" | `${Groups<T>}.*`;
 
+/** State or one of its parent group patterns (e.g., "foo.bar.baz" | "foo.bar.*" | "foo.*") */
+export type StateOrGroupPattern<T extends string> = T | `${Groups<T>}.*`;
+
 function distance(state1: string, state2: string): [number, number] {
   if (state1 === state2) {
     return [0, 0];
@@ -215,6 +218,10 @@ export class FSM<
     readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willExitState: EventSource<TState>;
     readonly didEnterState: EventSource<TState>;
+    readonly didExitState: EventSource<{
+      state: StateOrGroupPattern<TState>;
+      durationMs: number;
+    }>;
   };
 
   public readonly events: {
@@ -223,6 +230,10 @@ export class FSM<
     readonly didIgnoreEvent: Observable<TEvent | BuiltinEvent>;
     readonly willExitState: Observable<TState>;
     readonly didEnterState: Observable<TState>;
+    readonly didExitState: Observable<{
+      state: StateOrGroupPattern<TState>;
+      durationMs: number;
+    }>;
   };
 
   //
@@ -242,6 +253,15 @@ export class FSM<
   // `foo.bar.*`, then `foo.*`, and finally, `*`.
   //
   #cleanupStack: (CleanupFn<TContext> | null)[];
+
+  //
+  // The entry times stack tracks when each state level was entered, using
+  // performance.now() timestamps. This parallels the cleanup stack structure.
+  //
+  // For example, if you are in state `foo.bar.qux`, the stack contains:
+  // [timestamp for *, timestamp for foo.*, timestamp for foo.bar.*, timestamp for foo.bar.qux]
+  //
+  #entryTimesStack: number[];
 
   #enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
 
@@ -307,6 +327,7 @@ export class FSM<
     this.#states = new Set();
     this.#enterFns = new Map();
     this.#cleanupStack = [];
+    this.#entryTimesStack = [];
     this.#knownEventTypes = new Set();
     this.#allowedTransitions = new Map();
     this.#currentContext = new SafeContext(initialContext);
@@ -316,6 +337,7 @@ export class FSM<
       didIgnoreEvent: makeEventSource(),
       willExitState: makeEventSource(),
       didEnterState: makeEventSource(),
+      didExitState: makeEventSource(),
     };
     this.events = {
       didReceiveEvent: this.#eventHub.didReceiveEvent.observable,
@@ -323,6 +345,7 @@ export class FSM<
       didIgnoreEvent: this.#eventHub.didIgnoreEvent.observable,
       willExitState: this.#eventHub.willExitState.observable,
       didEnterState: this.#eventHub.didEnterState.observable,
+      didExitState: this.#eventHub.didExitState.observable,
     };
   }
 
@@ -562,10 +585,38 @@ export class FSM<
   #exit(levels: number | null) {
     this.#eventHub.willExitState.notify(this.currentState);
 
+    const now = performance.now();
+    const parts = this.currentState.split(".");
+
     this.#currentContext.allowPatching((patchableContext) => {
       levels = levels ?? this.#cleanupStack.length;
       for (let i = 0; i < levels; i++) {
         this.#cleanupStack.pop()?.(patchableContext);
+
+        // Emit timing info for the exited state level
+        const entryTime = this.#entryTimesStack.pop();
+        if (
+          entryTime !== undefined &&
+          // ...but avoid computing state names if nobody is listening
+          this.#eventHub.didExitState.count() > 0
+        ) {
+          // Compute the state prefix for this level
+          // Stack depth corresponds to: *, foo.*, foo.bar.*, foo.bar.baz
+          // So current stack length after pop tells us which prefix we exited
+          const depth = this.#entryTimesStack.length;
+
+          // Skip the root wildcard level (depth === 0)
+          if (depth === 0) continue;
+
+          const state: StateOrGroupPattern<TState> =
+            depth === parts.length
+              ? this.currentState // Leaf state: use exact name
+              : (`${parts.slice(0, depth).join(".")}.*` as `${Groups<TState>}.*`);
+          this.#eventHub.didExitState.notify({
+            state,
+            durationMs: now - entryTime,
+          });
+        }
       }
     });
   }
@@ -580,6 +631,8 @@ export class FSM<
       levels ?? this.currentState.split(".").length + 1
     );
 
+    const now = performance.now();
+
     this.#currentContext.allowPatching((patchableContext) => {
       for (const pattern of enterPatterns) {
         const enterFn = this.#enterFns.get(pattern);
@@ -589,6 +642,8 @@ export class FSM<
         } else {
           this.#cleanupStack.push(null);
         }
+        // Track entry time for this state level
+        this.#entryTimesStack.push(now);
       }
     });
 

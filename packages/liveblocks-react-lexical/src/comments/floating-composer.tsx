@@ -11,7 +11,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -35,8 +35,21 @@ import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
 
+type ExcludeProps<T, K extends Record<string, unknown>> = Omit<
+  Exclude<T, T & K>,
+  keyof K
+>;
+
+type ComposerPropsCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = ExcludeProps<
+  ComposerProps<TM, CM>,
+  { threadId: string; commentId: string }
+>;
+
 type FloatingComposerComponents = {
-  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+  Composer: ComponentType<ComposerPropsCreateThread<DTM, DCM>>;
 };
 
 /**
@@ -70,10 +83,10 @@ export const ATTACH_THREAD_COMMAND: LexicalCommand<string> = createCommand(
   "ATTACH_THREAD_COMMAND"
 );
 
-export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
-> & {
+export type FloatingComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = ComposerPropsCreateThread<TM, CM> & {
   /**
    * Override the component's components.
    */
