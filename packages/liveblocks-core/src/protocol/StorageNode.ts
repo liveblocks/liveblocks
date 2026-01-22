@@ -74,6 +74,7 @@ export type ListStorageNode = [id: string, value: SerializedList];
 export type MapStorageNode = [id: string, value: SerializedMap];
 export type RegisterStorageNode = [id: string, value: SerializedRegister];
 
+export type NodeMap = Map<string, SerializedCrdt>;
 export type NodeStream = Iterable<StorageNode>;
 
 export function isRootStorageNode(node: StorageNode): node is RootStorageNode {

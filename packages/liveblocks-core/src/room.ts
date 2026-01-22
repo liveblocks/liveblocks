@@ -83,7 +83,11 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { SerializedCrdt, StorageNode } from "./protocol/StorageNode";
+import type {
+  NodeMap,
+  SerializedCrdt,
+  StorageNode,
+} from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -98,7 +102,6 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
 import type {
   BadgeLocation,
   InternalOthersEvent,

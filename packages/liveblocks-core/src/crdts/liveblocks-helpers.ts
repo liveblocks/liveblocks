@@ -5,7 +5,7 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { StorageNode } from "../protocol/StorageNode";
+import type { NodeMap, StorageNode } from "../protocol/StorageNode";
 import {
   CrdtType,
   isListStorageNode,
@@ -13,7 +13,7 @@ import {
   isObjectStorageNode,
   isRegisterStorageNode,
 } from "../protocol/StorageNode";
-import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";

@@ -1,12 +1,4 @@
-import type { ChildStorageNode, SerializedCrdt } from "../protocol/StorageNode";
-
-/**
- * Lookup table for nodes (= SerializedCrdt values) by their IDs.
- */
-export type NodeMap = Map<
-  string, // Node ID
-  SerializedCrdt
->;
+import type { ChildStorageNode } from "../protocol/StorageNode";
 
 /**
  * Reverse lookup table for all child nodes (= list of SerializedCrdt values)

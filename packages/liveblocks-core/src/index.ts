@@ -310,6 +310,7 @@ export type {
   ChildStorageNode,
   ListStorageNode,
   MapStorageNode,
+  NodeMap,
   NodeStream,
   ObjectStorageNode,
   RegisterStorageNode,
@@ -396,7 +397,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { LiveblocksErrorContext } from "./types/LiveblocksError";
 export { LiveblocksError } from "./types/LiveblocksError";
-export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { ParentToChildNodeMap } from "./types/NodeMap";
 export type { OthersEvent } from "./types/Others";
 export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";

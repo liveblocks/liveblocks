@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 
 import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
+import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
-import type { NodeMap } from "../../types/NodeMap";
 import {
   findNonSerializableValue,
   getTreesDiffOperations,
