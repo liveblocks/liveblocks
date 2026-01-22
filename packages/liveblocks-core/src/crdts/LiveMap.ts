@@ -99,8 +99,9 @@ export class LiveMap<
       return map;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, pool);
       child._setParentLink(map, crdt.parentKey);
       map.#map.set(crdt.parentKey, child);
       map.invalidate();

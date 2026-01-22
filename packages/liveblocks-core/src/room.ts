@@ -83,7 +83,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { StorageNode } from "./protocol/StorageNode";
+import type { SerializedCrdt, StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -1859,12 +1859,15 @@ export function createRoom<
     }
 
     const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
+    for (const [id, crdt] of context.pool.nodes) {
+      currentItems.set(id, crdt._serialize());
     }
 
     // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
+    const ops = getTreesDiffOperations(
+      currentItems,
+      new Map<string, SerializedCrdt>(items)
+    );
 
     const result = applyRemoteOps(ops);
     notify(result.updates);

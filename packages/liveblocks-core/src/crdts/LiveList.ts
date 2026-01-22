@@ -69,7 +69,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id]: ListStorageNode,
+    [id, _]: ListStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveList<Lson> {
@@ -81,8 +81,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return list;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, pool);
 
       child._setParentLink(list, crdt.parentKey);
       list._insertAndSort(child);

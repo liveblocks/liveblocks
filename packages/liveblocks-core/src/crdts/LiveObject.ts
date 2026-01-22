@@ -14,15 +14,13 @@ import type {
 } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
-  ChildStorageNode,
   ObjectStorageNode,
   RootStorageNode,
-  SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
   StorageNode,
 } from "../protocol/StorageNode";
-import { CrdtType } from "../protocol/StorageNode";
+import { CrdtType, isRootStorageNode } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -54,10 +52,6 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
 };
-
-function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
-  return id === "root";
-}
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -94,21 +88,21 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
-    items: StorageNode[]
+    nodes: StorageNode[]
   ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: SerializedRootObject | null = null;
 
-    for (const [id, crdt] of items) {
-      if (isRootCrdt(id, crdt)) {
-        root = crdt;
+    for (const node of nodes) {
+      if (isRootStorageNode(node)) {
+        root = node[1];
       } else {
-        const tuple: ChildStorageNode = [id, crdt];
+        const crdt = node[1];
         const children = parentToChildren.get(crdt.parentId);
         if (children !== undefined) {
-          children.push(tuple);
+          children.push(node);
         } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [node]);
         }
       }
     }
@@ -200,8 +194,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return liveObj;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserializeToLson([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const child = deserializeToLson(node, parentToChildren, pool);
+      const crdt = node[1];
       if (isLiveStructure(child)) {
         child._setParentLink(liveObj, crdt.parentKey);
       }

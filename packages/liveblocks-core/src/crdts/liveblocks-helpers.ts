@@ -12,7 +12,6 @@ import {
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
-  isRootStorageNode,
 } from "../protocol/StorageNode";
 import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";

@@ -83,9 +83,7 @@ export type RegisterStorageNode = [id: string, value: SerializedRegister];
 
 export type NodeStream = Iterable<StorageNode>;
 
-export function isRootStorageNode(
-  node: RootStorageNode | ObjectStorageNode
-): node is RootStorageNode {
+export function isRootStorageNode(node: StorageNode): node is RootStorageNode {
   return node[0] === "root";
 }
 
