@@ -39,6 +39,6 @@
     "@types/lodash": "^4.17.13",
     "eslint-config-next": "^14.2.20",
     "lodash": "^4.17.21",
-    "playwright": "^1.55.0"
+    "playwright": "^1.55.1"
   }
 }
