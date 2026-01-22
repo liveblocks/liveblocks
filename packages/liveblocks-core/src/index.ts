@@ -332,12 +332,14 @@ export type {
   StorageNode,
 } from "./protocol/StorageNode";
 export {
+  compactNodesToNodeStream,
   CrdtType,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
   isRootStorageNode,
+  nodeStreamToCompactNodes,
 } from "./protocol/StorageNode";
 export type {
   SubscriptionData,
