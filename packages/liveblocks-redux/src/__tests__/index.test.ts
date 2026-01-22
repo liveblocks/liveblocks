@@ -181,7 +181,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.STORAGE_STATE,
+      type: ServerMsgCode.STORAGE_STATE_V7,
       items: options.items,
     }),
   } as MessageEvent);
@@ -239,7 +239,7 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.STORAGE_STATE,
+        type: ServerMsgCode.STORAGE_STATE_V7,
         items: [obj("root", {})],
       }),
     } as MessageEvent);

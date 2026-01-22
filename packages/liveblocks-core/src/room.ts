@@ -76,7 +76,7 @@ import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageStateServerMsg,
+  StorageStateServerMsg_V7,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
@@ -1824,7 +1824,7 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(message: StorageStateServerMsg) {
+  function createOrUpdateRootFromMessage(message: StorageStateServerMsg_V7) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
@@ -2393,7 +2393,7 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.STORAGE_STATE: {
+        case ServerMsgCode.STORAGE_STATE_V7: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           processInitialStorage(message);
@@ -2577,7 +2577,7 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: StorageStateServerMsg) {
+  function processInitialStorage(message: StorageStateServerMsg_V7) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
     applyAndSendOfflineOps(unacknowledgedOps);
@@ -2590,7 +2590,7 @@ export function createRoom<
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
     const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE, items });
+    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE_V7, items });
   }
 
   function refreshStorage(options: { flush: boolean }) {

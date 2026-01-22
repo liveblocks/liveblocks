@@ -298,7 +298,7 @@ export type {
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageStateServerMsg,
+  StorageStateServerMsg_V7,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,

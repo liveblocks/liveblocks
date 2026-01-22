@@ -143,7 +143,7 @@ export function prepareRoomWithStorage_loadWithDelay<
     const sendStorageMsg = () =>
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE,
+          type: ServerMsgCode.STORAGE_STATE_V7,
           items: clonedItems,
         })
       );
@@ -392,13 +392,13 @@ export async function prepareStorageTest<
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this STORAGE_STATE
+    // Next time a client socket connects, send this STORAGE_STATE_V7
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE,
+            type: ServerMsgCode.STORAGE_STATE_V7,
             items: nextStorageItems,
           })
         );
@@ -559,12 +559,12 @@ export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: StorageNode[]
 ) {
-  // Next time a client socket connects, send this STORAGE_STATE
+  // Next time a client socket connects, send this STORAGE_STATE_V7
   // message
   wss.onConnection((conn) =>
     conn.server.send(
       serverMessage({
-        type: ServerMsgCode.STORAGE_STATE,
+        type: ServerMsgCode.STORAGE_STATE_V7,
         items: nextStorageItems,
       })
     )
