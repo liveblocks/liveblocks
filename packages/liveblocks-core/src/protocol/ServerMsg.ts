@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { ServerWireOp } from "./Op";
-import type { StorageNode } from "./StorageNode";
+import type { CompactNode, StorageNode } from "./StorageNode";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
 export const ServerMsgCode = Object.freeze({
@@ -13,7 +13,9 @@ export const ServerMsgCode = Object.freeze({
   ROOM_STATE: 104,
 
   // For Storage
-  STORAGE_STATE: 200,
+  STORAGE_STATE_V7: 200, // Only sent in V7
+  STORAGE_CHUNK: 210, // Used in V8+
+  STORAGE_STREAM_END: 211, // Used in V8+
   UPDATE_STORAGE: 201,
 
   // For Yjs Docs
@@ -41,7 +43,9 @@ export namespace ServerMsgCode {
   export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
   export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
   export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
-  export type STORAGE_STATE = typeof ServerMsgCode.STORAGE_STATE;
+  export type STORAGE_STATE_V7 = typeof ServerMsgCode.STORAGE_STATE_V7;
+  export type STORAGE_CHUNK = typeof ServerMsgCode.STORAGE_CHUNK;
+  export type STORAGE_STREAM_END = typeof ServerMsgCode.STORAGE_STREAM_END;
   export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
   export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
   export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
@@ -77,7 +81,9 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | StorageStateServerMsg // For a single client
+  | StorageStateServerMsg_V7 // Only used in protocol v7
+  | StorageChunkServerMsg // Used in protocol v8+
+  | StorageEndServerMsg // Used in protocol v8+
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -302,13 +308,33 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
 };
 
 /**
- * Sent by the WebSocket server to a single client in response to the client
- * sending a FetchStorageClientMsg message, to provide the initial Storage
- * state of the Room. The payload includes the entire Storage document.
+ * No longer used as of WS API v8.
  */
-export type StorageStateServerMsg = {
-  readonly type: ServerMsgCode.STORAGE_STATE;
+export type StorageStateServerMsg_V7 = {
+  readonly type: ServerMsgCode.STORAGE_STATE_V7;
   readonly items: StorageNode[];
+};
+
+/**
+ * Sent by the WebSocket server to a single client in response to the client
+ * sending a FetchStorageClientMsg message, to provide one chunk of the initial
+ * Storage state of the Room.
+ *
+ * The server will respond with 1+ STORAGE_CHUNK messages, followed by exactly
+ * one STORAGE_STREAM_END message to mark the end of the transmission.
+ *
+ * If the room is using the new storage engine that supports streaming, then
+ * potentially multiple chunks might get sent. If the room is using the old
+ * storage engine, then all nodes will be sent in a single/large chunk
+ * (non-streaming).
+ */
+export type StorageChunkServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_CHUNK;
+  readonly nodes: CompactNode[];
+};
+
+export type StorageEndServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_STREAM_END;
 };
 
 /**
