@@ -82,11 +82,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
-import type {
-  NodeStream,
-  SerializedCrdt,
-  StorageNode,
-} from "./protocol/StorageNode";
+import type { NodeStream, SerializedCrdt } from "./protocol/StorageNode";
 import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
@@ -1848,11 +1844,14 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(nodes: NodeStream) {
+  function createOrUpdateRootFromMessage(nodes: NodeMap) {
     if (context.root !== undefined) {
-      updateRoot(new Map(nodes));
+      updateRoot(nodes);
     } else {
-      context.root = LiveObject._fromItems<S>(nodes, context.pool);
+      context.root = LiveObject._fromItems<S>(
+        nodes as NodeStream,
+        context.pool
+      );
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -2598,7 +2597,7 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(nodes: NodeStream) {
+  function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
@@ -2610,7 +2609,9 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const nodes = new Map(await httpClient.streamStorage({ roomId }));
+    const nodes = new Map<string, SerializedCrdt>(
+      await httpClient.streamStorage({ roomId })
+    );
     processInitialStorage(nodes);
   }
 
