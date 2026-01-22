@@ -29,9 +29,9 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
-import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -2004,9 +2004,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ x: 0 });
 
-      const newInitStorage: StorageNode[] = [
-        createSerializedRoot({ x: 0 }),
-      ];
+      const newInitStorage: StorageNode[] = [createSerializedRoot({ x: 0 })];
 
       reconnect(2, newInitStorage);
 

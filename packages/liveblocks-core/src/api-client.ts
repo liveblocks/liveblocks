@@ -413,9 +413,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  streamStorage(options: {
-    roomId: string;
-  }): Promise<StorageNode[]>;
+  streamStorage(options: { roomId: string }): Promise<StorageNode[]>;
 
   sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
     roomId: string;

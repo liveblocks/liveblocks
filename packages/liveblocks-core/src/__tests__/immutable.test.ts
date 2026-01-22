@@ -26,8 +26,8 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { StorageNode } from "../protocol/StorageNode";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { StorageNode } from "../protocol/StorageNode";
 import {
   createSerializedList,
   createSerializedObject,
