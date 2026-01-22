@@ -187,7 +187,7 @@ const AUTH_TIMEOUT = 10_000;
  * Maximum amount of time that the socket connect delegate may take to return
  * an opened WebSocket connection, or else we consider the attempt timed out.
  */
-const SOCKET_CONNECT_TIMEOUT = 10_000;
+const SOCKET_CONNECT_TIMEOUT = 20_000;
 
 /**
  * Special error class that can be thrown during authentication to stop the
