@@ -307,13 +307,6 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
-  // SerializedChild,
-  // SerializedCrdt,
-  // SerializedList,
-  // SerializedMap,
-  // SerializedObject,
-  // SerializedRegister,
-  // SerializedRootObject,
   ChildStorageNode,
   ListStorageNode,
   MapStorageNode,
