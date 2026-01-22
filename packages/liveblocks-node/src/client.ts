@@ -197,6 +197,7 @@ export type RoomData = {
   id: string;
   createdAt: Date;
   lastConnectionAt?: Date;
+  organizationId: string;
   defaultAccesses: RoomPermission;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
