@@ -1,12 +1,11 @@
 import type { Json } from "@liveblocks/client";
 import type {
-  IdTuple,
+  ListStorageNode,
+  MapStorageNode,
+  ObjectStorageNode,
+  RegisterStorageNode,
   RoomStateServerMsg,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
+  RootStorageNode,
 } from "@liveblocks/core";
 import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
 
@@ -102,59 +101,46 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
   throw new Error("TIMEOUT");
 }
 
+export function obj(id: "root", data: Record<string, any>): RootStorageNode;
 export function obj(
   id: string,
   data: Record<string, any>,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedObject>;
-export function obj(
-  id: string,
-  data: Record<string, any>
-): IdTuple<SerializedRootObject>;
+): ObjectStorageNode;
 export function obj(
   id: string,
   data: Record<string, any>,
   parentId?: string,
   parentKey?: string
-): IdTuple<SerializedObject | SerializedRootObject> {
-  return [
-    id,
-    parentId !== undefined && parentKey !== undefined
-      ? { type: CrdtType.OBJECT, data, parentId, parentKey }
-      : // Root object
-        { type: CrdtType.OBJECT, data },
-  ];
+): RootStorageNode | ObjectStorageNode {
+  return id === "root"
+    ? [id, { type: CrdtType.OBJECT, data }]
+    : [
+        id,
+        {
+          type: CrdtType.OBJECT,
+          data,
+          parentId: parentId!,
+          parentKey: parentKey!,
+        },
+      ];
 }
 
 export function list(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedList> {
-  return [
-    id,
-    {
-      type: CrdtType.LIST,
-      parentId,
-      parentKey,
-    },
-  ];
+): ListStorageNode {
+  return [id, { type: CrdtType.LIST, parentId, parentKey }];
 }
 
 export function map(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedMap> {
-  return [
-    id,
-    {
-      type: CrdtType.MAP,
-      parentId,
-      parentKey,
-    },
-  ];
+): MapStorageNode {
+  return [id, { type: CrdtType.MAP, parentId, parentKey }];
 }
 
 export function register(
@@ -162,14 +148,6 @@ export function register(
   parentId: string,
   parentKey: string,
   data: Json
-): IdTuple<SerializedRegister> {
-  return [
-    id,
-    {
-      type: CrdtType.REGISTER,
-      parentId,
-      parentKey,
-      data,
-    },
-  ];
+): RegisterStorageNode {
+  return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
