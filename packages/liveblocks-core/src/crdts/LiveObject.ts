@@ -14,11 +14,13 @@ import type {
 } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
-  IdTuple,
-  SerializedChild,
+  ChildStorageNode,
+  ObjectStorageNode,
+  RootStorageNode,
   SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
+  StorageNode,
 } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
@@ -92,7 +94,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
+    items: StorageNode[]
   ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: SerializedRootObject | null = null;
@@ -101,7 +103,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       if (isRootCrdt(id, crdt)) {
         root = crdt;
       } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const tuple: ChildStorageNode = [id, crdt];
         const children = parentToChildren.get(crdt.parentId);
         if (children !== undefined) {
           children.push(tuple);
@@ -120,7 +122,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @private Do not use this API directly */
   static _fromItems<O extends LsonObject>(
-    items: IdTuple<SerializedCrdt>[],
+    items: StorageNode[],
     pool: ManagedPool
   ): LiveObject<O> {
     const [root, parentToChildren] =
@@ -178,7 +180,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
+    [id, item]: RootStorageNode | ObjectStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveObject<LsonObject> {

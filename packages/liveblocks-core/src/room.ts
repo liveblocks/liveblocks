@@ -72,7 +72,6 @@ import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/StorageNode";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
@@ -84,6 +83,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -1853,7 +1853,7 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+  function updateRoot(items: StorageNode[]) {
     if (context.root === undefined) {
       return;
     }

@@ -4,7 +4,7 @@ import type { Pos } from "../lib/position";
 import { asPos, makePosition } from "../lib/position";
 import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedList } from "../protocol/StorageNode";
+import type { ListStorageNode, SerializedList } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
@@ -69,7 +69,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id]: IdTuple<SerializedList>,
+    [id]: ListStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveList<Lson> {

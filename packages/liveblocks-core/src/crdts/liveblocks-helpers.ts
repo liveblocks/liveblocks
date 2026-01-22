@@ -5,7 +5,7 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/StorageNode";
+import type { StorageNode } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
@@ -46,7 +46,7 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
 }
 
 export function deserialize(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  [id, crdt]: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): LiveNode {
@@ -70,7 +70,7 @@ export function deserialize(
 }
 
 export function deserializeToLson(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  [id, crdt]: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): Lson {

@@ -3,7 +3,7 @@ import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
 import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedMap } from "../protocol/StorageNode";
+import type { MapStorageNode, SerializedMap } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
@@ -87,7 +87,7 @@ export class LiveMap<
 
   /** @internal */
   static _deserialize(
-    [id, _item]: IdTuple<SerializedMap>,
+    [id, _item]: MapStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveMap<string, Lson> {

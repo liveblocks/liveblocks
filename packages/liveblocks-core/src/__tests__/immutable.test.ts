@@ -26,7 +26,7 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
-import type { IdTuple, SerializedCrdt } from "../protocol/StorageNode";
+import type { StorageNode } from "../protocol/StorageNode";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
   createSerializedList,
@@ -49,7 +49,7 @@ export async function prepareStorageImmutableTest<
   E extends Json = never,
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
->(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
+>(items: StorageNode[], actor: number = 0) {
   let state = {} as ToJson<S>;
   let refState = {} as ToJson<S>;
 

@@ -5,7 +5,10 @@ import { nanoid } from "../lib/nanoid";
 import { deepClone } from "../lib/utils";
 import type { CreateOp, CreateRegisterOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedRegister } from "../protocol/StorageNode";
+import type {
+  RegisterStorageNode,
+  SerializedRegister,
+} from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
@@ -30,7 +33,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id, item]: IdTuple<SerializedRegister>,
+    [id, item]: RegisterStorageNode,
     _parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveRegister<Json> {

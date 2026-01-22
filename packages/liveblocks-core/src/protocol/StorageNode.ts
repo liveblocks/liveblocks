@@ -81,4 +81,4 @@ export type ListStorageNode = [id: string, value: SerializedList];
 export type MapStorageNode = [id: string, value: SerializedMap];
 export type RegisterStorageNode = [id: string, value: SerializedRegister];
 
-export type NodeStream = Iterable<IdTuple<SerializedCrdt>>;
+export type NodeStream = Iterable<StorageNode>;

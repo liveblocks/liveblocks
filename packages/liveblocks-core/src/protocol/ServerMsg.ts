@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { ServerWireOp } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./StorageNode";
+import type { StorageNode } from "./StorageNode";
 
 export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
 export const ServerMsgCode = Object.freeze({
@@ -324,7 +324,7 @@ export type RoomStateServerMsg<U extends BaseUserMeta> = {
  */
 export type StorageStateServerMsg = {
   readonly type: ServerMsgCode.STORAGE_STATE;
-  readonly items: IdTuple<SerializedCrdt>[];
+  readonly items: StorageNode[];
 };
 
 /**
