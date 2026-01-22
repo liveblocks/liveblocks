@@ -31,7 +31,7 @@ import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageNode } from "../protocol/StorageNode";
-import { CrdtType } from "../protocol/StorageNode";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -987,9 +987,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE_V7,
-          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", {}]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1021,13 +1024,15 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE_V7,
-            items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-            //                                              ^^
-            //                                   NOTE: Storage is initially
-            //                                   empty, so initialStorage keys
-            //                                   will get added
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", {}]],
+            //               ^^
+            //       NOTE: Storage is initially empty,
+            //       so initialStorage keys will get added
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       });
       room.connect();
@@ -1056,9 +1061,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE_V7,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1159,9 +1167,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE_V7,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1267,9 +1278,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE_V7,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1305,9 +1319,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE_V7,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1389,9 +1406,12 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE_V7,
-            items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", { x: 0 }]],
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       });
 
@@ -1912,14 +1932,17 @@ describe("room", () => {
       ];
 
       // The next time a connection is made, send the updated storage
-      wss.onConnection((conn) =>
+      wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE_V7,
-            items: newInitStorage,
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: Array.from(nodeStreamToCompactNodes(newInitStorage)),
           })
-        )
-      );
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+        );
+      });
 
       // Closing the connection from the server will trigger a reconnect, which
       // will in turn load the "B" item

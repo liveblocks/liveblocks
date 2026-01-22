@@ -6,7 +6,13 @@ import type {
   StorageNode,
   UpdatePresenceServerMsg,
 } from "@liveblocks/core";
-import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  nodeStreamToCompactNodes,
+  OpCode,
+  ServerMsgCode,
+} from "@liveblocks/core";
 import type { Reducer } from "@reduxjs/toolkit";
 import { configureStore } from "@reduxjs/toolkit";
 import { http, HttpResponse } from "msw";
@@ -181,8 +187,13 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.STORAGE_STATE_V7,
-      items: options.items,
+      type: ServerMsgCode.STORAGE_CHUNK,
+      nodes: Array.from(nodeStreamToCompactNodes(options.items)),
+    }),
+  } as MessageEvent);
+  socket.callbacks.message[0]!({
+    data: JSON.stringify({
+      type: ServerMsgCode.STORAGE_STREAM_END,
     }),
   } as MessageEvent);
 
@@ -239,8 +250,13 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.STORAGE_STATE_V7,
-        items: [obj("root", {})],
+        type: ServerMsgCode.STORAGE_CHUNK,
+        nodes: [["root", {}]],
+      }),
+    } as MessageEvent);
+    socket.callbacks.message[0]!({
+      data: JSON.stringify({
+        type: ServerMsgCode.STORAGE_STREAM_END,
       }),
     } as MessageEvent);
 
@@ -279,9 +295,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       await waitFor(() => socket.sentMessages[1] != null);
@@ -309,9 +323,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
     });
 
@@ -330,9 +342,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       store.dispatch({ type: "SET_CURSOR", cursor: { x: 1, y: 1 } });
@@ -362,9 +372,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       store.dispatch(leaveRoom());
