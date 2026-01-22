@@ -66,3 +66,17 @@ export type SerializedRegister = {
   readonly parentKey: string;
   readonly data: Json;
 };
+
+export type StorageNode = RootStorageNode | ChildStorageNode;
+
+export type ChildStorageNode =
+  | ObjectStorageNode
+  | ListStorageNode
+  | MapStorageNode
+  | RegisterStorageNode;
+
+export type RootStorageNode = [id: "root", value: SerializedRootObject];
+export type ObjectStorageNode = [id: string, value: SerializedObject];
+export type ListStorageNode = [id: string, value: SerializedList];
+export type MapStorageNode = [id: string, value: SerializedMap];
+export type RegisterStorageNode = [id: string, value: SerializedRegister];
