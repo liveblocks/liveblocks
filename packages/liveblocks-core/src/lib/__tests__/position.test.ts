@@ -10,6 +10,7 @@ import {
   __nthDigit as nthDigit,
   __NUM_DIGITS as NUM_DIGITS,
   asPos,
+  makeNPositions,
   makePosition,
 } from "../position";
 
@@ -471,6 +472,22 @@ describe("makePosition", () => {
 
   test("between .11 and .21 should be .15", () =>
     expect(makePosition(asPos(ONE + ONE), asPos(TWO + ONE))).toBe(ONE + MID));
+});
+
+describe("makeNPositions", () => {
+  test("generates n unique positions in order", () => {
+    const positions = makeNPositions(5);
+    expect(positions.length).toBe(5);
+    expect(positions).toEqual([...positions].sort()); // all sorted...
+    expect(new Set(positions).size).toBe(positions.length); // ...no duplicates
+  });
+
+  test("generates valid positions", () => {
+    const positions = makeNPositions(100);
+    for (const pos of positions) {
+      expect(isPos(pos)).toBe(true);
+    }
+  });
 });
 
 describe("comparePosition", () => {

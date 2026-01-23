@@ -334,7 +334,20 @@ function asPos(str: string): Pos {
   return isPos(str) ? str : convertToPos(str);
 }
 
-export { asPos, makePosition };
+/**
+ * Generates n positions in order. Useful for initializing a list with n items.
+ */
+function makeNPositions(n: number): Pos[] {
+  const positions: Pos[] = [];
+  let pos: Pos | undefined;
+  for (let i = 0; i < n; i++) {
+    pos = makePosition(pos);
+    positions.push(pos);
+  }
+  return positions;
+}
+
+export { asPos, makeNPositions, makePosition };
 
 // For use in unit tests only
 export {
