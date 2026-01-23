@@ -100,6 +100,25 @@ describe("SortedList", () => {
     expect(Array.from(s)).toEqual([]);
   });
 
+  test("removing items by index (removeAt)", () => {
+    const s = SortedList.from([1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13], asc);
+    // [-555, 0, 1, Math.PI, 13, 13, 42, 88, 88, 88]
+
+    expect(s.removeAt(0)).toEqual(-555);
+    expect(Array.from(s)).toEqual([0, 1, Math.PI, 13, 13, 42, 88, 88, 88]);
+
+    expect(s.removeAt(3)).toEqual(13);
+    expect(Array.from(s)).toEqual([0, 1, Math.PI, 13, 42, 88, 88, 88]);
+
+    expect(s.removeAt(s.length - 1)).toEqual(88);
+    expect(Array.from(s)).toEqual([0, 1, Math.PI, 13, 42, 88, 88]);
+
+    // Out of bounds
+    expect(s.removeAt(-1)).toEqual(undefined);
+    expect(s.removeAt(999)).toEqual(undefined);
+    expect(Array.from(s)).toEqual([0, 1, Math.PI, 13, 42, 88, 88]);
+  });
+
   test("removing items by predicate (without limit)", () => {
     const s = SortedList.from(
       [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],

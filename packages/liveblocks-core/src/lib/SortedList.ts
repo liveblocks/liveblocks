@@ -126,6 +126,18 @@ export class SortedList<T> {
     return false;
   }
 
+  /**
+   * Removes the item at the given index.
+   * Returns the removed item, or undefined if index is out of bounds.
+   */
+  removeAt(index: number): T | undefined {
+    if (index < 0 || index >= this.#data.length) {
+      return undefined;
+    }
+    const [removed] = this.#data.splice(index, 1);
+    return removed;
+  }
+
   at(index: number): T | undefined {
     return this.#data[index];
   }
