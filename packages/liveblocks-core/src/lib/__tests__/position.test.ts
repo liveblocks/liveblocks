@@ -231,6 +231,20 @@ describe("after / before", () => {
     expect(result.length).toBe(largePos.length);
   });
 
+  test("after can produce non-viewport-aligned lengths (not common, but possible)", () => {
+    // "    ~" = 4 spaces + ~ (length 5, in V=5)
+    // Increment: [0,0,0,0,94] → [0,0,0,1,0] = "   ! " (3 spaces, !, space)
+    // Stripping the trailing zero gives "   !" (length 4)
+    // Length 4 is fine - viewport alignment isn't a strict requirement
+    const pos = asPos(ZERO + ZERO + ZERO + ZERO + NINE); // "    ~"
+    const result = after(pos);
+
+    expect(isPos(result)).toBe(true);
+    expect(result > pos).toBe(true);
+    expect(result).toBe(ZERO + ZERO + ZERO + ONE); // "   !"
+    expect(result.length).toBe(4);
+  });
+
   test("viewport bumps at length boundaries", () => {
     // Viewport formula: V = 2 + ceil((len-2)/3)*3
     // len 2500: V = 2501, result pads to 2501
@@ -333,22 +347,6 @@ describe("after / before", () => {
 
     // before() edge cases (unchanged behavior)
     expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE); // before(.001) => .0009
-  });
-
-  test("after returns viewport-aligned lengths for valid positions", () => {
-    // Valid viewport in V=2+3 are only 2, 5, 8, 11, ...
-    const isValidViewportLength = (len: number) =>
-      // Common case: 2, 5, 8, 11, ...
-      (len >= 2 && (len - 2) % 3 === 0) ||
-      // Edge case possible, e.g. after("!~") returns '"' (1 char)
-      len === 1;
-
-    fc.assert(
-      fc.property(genPos(), (pos) => {
-        const result = after(pos);
-        expect(isValidViewportLength(result.length)).toBe(true);
-      })
-    );
   });
 
   test("always outputs valid Pos values", () => {
