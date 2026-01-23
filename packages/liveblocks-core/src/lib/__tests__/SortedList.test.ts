@@ -101,7 +101,10 @@ describe("SortedList", () => {
   });
 
   test("removing items by index (removeAt)", () => {
-    const s = SortedList.from([1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13], asc);
+    const s = SortedList.from(
+      [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
+      asc
+    );
     // [-555, 0, 1, Math.PI, 13, 13, 42, 88, 88, 88]
 
     expect(s.removeAt(0)).toEqual(-555);
@@ -362,6 +365,134 @@ describe("SortedList", () => {
   test("Static convenience method .with() produces empty lists", () => {
     expect(Array.from(SortedList.with(asc))).toEqual([]);
     expect(Array.from(SortedList.with(desc))).toEqual([]);
+  });
+
+  describe("reposition", () => {
+    test("mutating sort key in-place and repositioning keeps list sorted", () => {
+      const items = [
+        { id: "a", priority: 4 },
+        { id: "b", priority: 3 },
+        { id: "c", priority: 2 },
+        { id: "d", priority: 1 },
+      ];
+      const s = SortedList.from(items, (a, b) => a.priority > b.priority);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["a", "b", "c", "d"]);
+
+      // Mutate "b" to have highest priority
+      const b = s.at(1)!;
+      b.priority = 10;
+      const newIdx = s.reposition(b);
+
+      expect(newIdx).toBe(0);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["b", "a", "c", "d"]);
+    });
+
+    test("repositioning to the back", () => {
+      const items = [
+        { id: "a", priority: 3 },
+        { id: "b", priority: 2 },
+        { id: "c", priority: 1 },
+      ];
+      const s = SortedList.from(items, (a, b) => a.priority > b.priority);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["a", "b", "c"]);
+
+      // Mutate "a" to have lowest priority
+      const a = s.at(0)!;
+      a.priority = 0;
+      const newIdx = s.reposition(a);
+
+      expect(newIdx).toBe(2);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["b", "c", "a"]);
+    });
+
+    test("repositioning to the front", () => {
+      const items = [
+        { id: "a", priority: 3 },
+        { id: "b", priority: 2 },
+        { id: "c", priority: 1 },
+      ];
+      const s = SortedList.from(items, (a, b) => a.priority > b.priority);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["a", "b", "c"]);
+
+      // Mutate "b" to have highest priority
+      const b = s.at(1)!;
+      b.priority = 9999;
+      const newIdx = s.reposition(b);
+
+      expect(newIdx).toBe(0);
+      expect(Array.from(s).map((x) => x.id)).toEqual(["b", "a", "c"]);
+    });
+
+    test("returns -1 for item not in list", () => {
+      // XXX Open question: should this throw instead or returning -1?
+      // XXX When could calling .reposition(nonExisting) ever be a desired action?
+      const s = SortedList.from([1, 2, 3], asc);
+      expect(s.reposition(99)).toBe(-1);
+      expect(Array.from(s)).toEqual([1, 2, 3]); // unchanged
+    });
+
+    test("repositioning unmutated element keeps array unchanged", () => {
+      fc.assert(
+        fc.property(
+          fc.array(fc.record({ id: fc.nat(), key: fc.nat() }), {
+            minLength: 1,
+          }),
+          fc.nat(),
+
+          (items, indexSeed) => {
+            const s = SortedList.from(items, (a, b) => a.key < b.key);
+            const before = Array.from(s);
+            const index = indexSeed % s.length;
+            const item = s.at(index)!;
+
+            s.reposition(item);
+
+            expect(Array.from(s)).toEqual(before);
+          }
+        )
+      );
+    });
+
+    test("mutate + reposition always equals remove + mutate + add", () => {
+      fc.assert(
+        fc.property(
+          fc.array(fc.record({ id: fc.nat(), key: fc.nat() }), {
+            minLength: 1,
+          }),
+          fc.nat(),
+          fc.nat(),
+
+          (items, indexSeed, newKey) => {
+            const lt = (a: { key: number }, b: { key: number }) =>
+              a.key < b.key;
+            const cmp = (a: { key: number }, b: { key: number }) =>
+              a.key - b.key;
+
+            // Clone items for both approaches
+            const items1 = structuredClone(items);
+            const items2 = structuredClone(items);
+
+            // Approach 1: SortedList with mutate-in-place + reposition
+            const sortedList = SortedList.from(items1, lt);
+            const index = indexSeed % sortedList.length;
+            const item1 = sortedList.at(index)!;
+            item1.key = newKey;
+            sortedList.reposition(item1);
+
+            // Approach 2: plain array with remove + mutate + push + sort
+            const arr = items2.slice().sort(cmp);
+            const item2 = arr[index];
+            arr.splice(index, 1);
+            item2.key = newKey;
+            arr.push(item2);
+            arr.sort(cmp);
+
+            // Both should produce same result
+            expect(Array.from(sortedList)).toEqual(arr);
+          }
+        )
+      );
+    });
   });
 
   test("will keep a sorted list sorted, no matter what elements are added (asc)", () => {

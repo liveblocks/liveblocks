@@ -138,6 +138,52 @@ export class SortedList<T> {
     return removed;
   }
 
+  /**
+   * Repositions an item to maintain sorted order after its sort key has
+   * been mutated in-place. For example:
+   *
+   *   const item = sorted.at(3);
+   *   item.updatedAt = new Date();  // mutate the item's sort key in-place
+   *   sorted.reposition(item);      // restore sorted order
+   *
+   * Returns the new index of the item, or -1 if the item wasn't found.
+   */
+  reposition(value: T): number {
+    const oldIdx = this.#data.indexOf(value);
+    if (oldIdx < 0) {
+      return -1;
+    }
+
+    let newIdx = oldIdx;
+
+    // Try moving left
+    while (newIdx > 0 && this.#lt(value, this.#data[newIdx - 1])) {
+      this.#data[newIdx] = this.#data[newIdx - 1];
+      newIdx--;
+    }
+
+    // Did we move left? If so, return!
+    if (newIdx < oldIdx) {
+      this.#data[newIdx] = value;
+      return newIdx;
+    }
+
+    // Otherwise, try moving right
+    while (
+      newIdx < this.#data.length - 1 &&
+      !this.#lt(value, this.#data[newIdx + 1])
+    ) {
+      this.#data[newIdx] = this.#data[newIdx + 1];
+      newIdx++;
+    }
+
+    if (newIdx !== oldIdx) {
+      this.#data[newIdx] = value;
+    }
+
+    return newIdx;
+  }
+
   at(index: number): T | undefined {
     return this.#data[index];
   }
