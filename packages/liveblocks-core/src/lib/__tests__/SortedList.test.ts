@@ -431,6 +431,21 @@ describe("SortedList", () => {
       expect(Array.from(s)).toEqual([1, 2, 3]); // unchanged
     });
 
+    // Regression: reposition with equal keys should not swap items
+    test("repositioning item with equal key does not swap order", () => {
+      const item0 = { id: 0, key: 13 };
+      const item1 = { id: 1, key: 13 };
+      const s = SortedList.from([item0, item1], (a, b) => a.key < b.key);
+
+      // Reposition first item (key unchanged) - order should stay the same
+      s.reposition(item0);
+      expect(Array.from(s)).toEqual([item0, item1]);
+
+      // Reposition second item (key unchanged) - order should stay the same
+      s.reposition(item1);
+      expect(Array.from(s)).toEqual([item0, item1]);
+    });
+
     test("repositioning unmutated element keeps array unchanged", () => {
       fc.assert(
         fc.property(

@@ -171,7 +171,7 @@ export class SortedList<T> {
     // Otherwise, try moving right
     while (
       newIdx < this.#data.length - 1 &&
-      !this.#lt(value, this.#data[newIdx + 1])
+      this.#lt(this.#data[newIdx + 1], value)
     ) {
       this.#data[newIdx] = this.#data[newIdx + 1];
       newIdx++;
