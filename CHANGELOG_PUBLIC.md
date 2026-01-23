@@ -20,7 +20,38 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 4 (2026-01-23)
 
+## 3.13.3
+
+### @liveblocks/client
+
+- Bump hardcoded client-side socket connection timeout from 10s to 20s
+- Add more detailed timing info to `enableDebugLogging` to better debug
+  connection issues
+
+### @liveblocks/react-ui
+
+- Fix an issue where `Composer` and `AiComposer` would throw an error when
+  mounted/unmounted.
+
 ## Contributors
+
+nvie, marcbouchenoire
+
+# Week 4 (2026-01-23)
+
+## v3.13.2
+
+### @liveblocks/node
+
+- Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
+  this option is enabled, the copilot retrieves and uses the uploaded knowledge
+  sources on each user query. When disabled, the copilot will retrieve the
+  uploaded knowledge sources only when the user query relates to the knowledge
+  prompt set on the copilot.
+
+## Contributors
+
+nimeshnayaju
 
 # Week 2 (2026-01-09)
 
