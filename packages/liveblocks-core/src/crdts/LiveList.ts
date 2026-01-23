@@ -143,14 +143,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * IMPORTANT: Item must exist in this list. List count remains unchanged.
    */
   #updateItemPosition(item: LiveNode, newKey: string): void {
-    const wasRemoved = this.#items.remove(item);
-    if (!wasRemoved) {
+    item._setParentLink(this, newKey);
+    const newIdx = this.#items.reposition(item);
+    if (newIdx < 0) {
       throw new Error(
         "Cannot update position of item not in list. This is a bug in LiveList."
       );
     }
-    item._setParentLink(this, newKey);
-    this.#items.add(item);
     this.invalidate();
   }
 
