@@ -517,7 +517,9 @@ describe("SortedList", () => {
             // Both should produce same result
             expect(Array.from(sortedList)).toEqual(arr);
           }
-        )
+        ),
+        // XXX Counterexample found, look into this next week!
+        { seed: 1196896722 }
       );
     });
   });
