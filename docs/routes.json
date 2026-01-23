@@ -23,12 +23,12 @@
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/react-ai-copilots",
+            "path": "/get-started/react-ai-chats",
             "hidden": true
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/nextjs-ai-copilots",
+            "path": "/get-started/nextjs-ai-chats",
             "hidden": true
           },
           {
@@ -43,12 +43,12 @@
           },
           {
             "title": "Notifications",
-            "path": "/get-started/react-notifications",
+            "path": "/get-started/react-notifications-inapp",
             "hidden": true
           },
           {
             "title": "Notifications",
-            "path": "/get-started/nextjs-notifications",
+            "path": "/get-started/nextjs-notifications-webhook-custom",
             "hidden": true
           },
           {
