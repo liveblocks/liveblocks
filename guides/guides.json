@@ -454,5 +454,12 @@
     "topics": ["webhooks", "databases", "rest-api"],
     "technologies": ["yjs", "nodejs"],
     "date": "2025-11-26"
+  },
+  {
+    "title": "How to notify users about unread comments outside of your app",
+    "path": "/how-to-notify-users-about-unread-comments-outside-of-your-app",
+    "topics": ["comments", "tutorials", "webhooks", "notifications"],
+    "technologies": ["react-ui", "nodejs"],
+    "date": "2026-01-23"
   }
 ]
