@@ -539,7 +539,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // If there is already an item at this position
     if (indexOfItemWithSameKey !== -1) {
       // TODO: Should we add this item to implictly deleted item?
-      const existingItem = this.#items.at(indexOfItemWithSameKey)!;
+      const existingItem = this.#items.at(indexOfItemWithSameKey)!; // eslint-disable-line no-restricted-syntax
       existingItem._detach();
 
       this.#items.remove(existingItem);
@@ -626,7 +626,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
 
-      const previousNode = this.#items.at(indexToDelete)!;
+      const previousNode = this.#items.at(indexToDelete)!; // eslint-disable-line no-restricted-syntax
       this.#items.remove(child);
       this.invalidate();
 
@@ -717,7 +717,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#implicitlyDeletedItems.delete(child);
 
       if (existingItemIndex !== -1) {
-        const existingItem = this.#items.at(existingItemIndex)!;
+        const existingItem = this.#items.at(existingItemIndex)!; // eslint-disable-line no-restricted-syntax
         existingItem._setParentLink(
           this,
           makePosition(
@@ -932,9 +932,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         targetIndex === this.#items.length - 1
           ? undefined
           : this.#items.at(targetIndex + 1)?._parentPos;
-      beforePosition = this.#items.at(targetIndex)!._parentPos;
+      beforePosition = this.#items.at(targetIndex)!._parentPos; // eslint-disable-line no-restricted-syntax
     } else {
-      afterPosition = this.#items.at(targetIndex)!._parentPos;
+      afterPosition = this.#items.at(targetIndex)!._parentPos; // eslint-disable-line no-restricted-syntax
       beforePosition =
         targetIndex === 0
           ? undefined
@@ -943,7 +943,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const position = makePosition(beforePosition, afterPosition);
 
-    const item = this.#items.at(index)!;
+    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
     const previousPosition = item._getParentKeyOrThrow();
     this.#updateItemPositionAt(index, position);
 
@@ -987,7 +987,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
     }
 
-    const item = this.#items.at(index)!;
+    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
     item._detach();
     this.#items.remove(item);
     this.invalidate();
@@ -1069,7 +1069,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
     }
 
-    const existingItem = this.#items.at(index)!;
+    const existingItem = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
     const position = existingItem._getParentKeyOrThrow();
 
     const existingId = existingItem._id;
