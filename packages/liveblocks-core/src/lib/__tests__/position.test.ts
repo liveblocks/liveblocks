@@ -176,38 +176,87 @@ describe("position datastructure", () => {
 });
 
 describe("after / before", () => {
-  test("after hops to next major digit when possible", () => {
-    expect(after(ONE)).toBe(TWO);
-    expect(after(TWO)).toBe(THREE);
-    expect(after(THREE)).toBe(FOUR);
-    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ONE);
-    expect(after(ONE)).toBe(TWO);
-    expect(after(asPos(ONE + ZERO + ONE))).toBe(TWO);
-    expect(after(TWO)).toBe(THREE);
-    expect(after(THREE)).toBe(FOUR);
-    expect(after(EIGHT)).toBe(NINE);
-    expect(after(NINE)).toBe(NINE + ONE);
-    expect(after(asPos(NINE + ONE))).toBe(NINE + TWO);
-    expect(after(asPos(NINE + ONE + TWO + THREE))).toBe(NINE + TWO);
-    expect(after(asPos(NINE + EIGHT))).toBe(NINE + NINE);
-    expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ONE);
-    expect(after(asPos(NINE + NINE + NINE + NINE))).toBe(
-      NINE + NINE + NINE + NINE + ONE
-    );
+  // The viewport-based after() increments within a fixed-width viewport (V=2, 5, 8, ...)
+  // rather than hopping to "nice round" numbers. This keeps position lengths bounded.
+  test("after increments within viewport", () => {
+    // V=2 viewport: positions of length 1-2
+    expect(after(ONE)).toBe(ONE + ONE); // .1 -> .11
+    expect(after(TWO)).toBe(TWO + ONE); // .2 -> .21
+    expect(after(THREE)).toBe(THREE + ONE); // .3 -> .31
+    expect(after(EIGHT)).toBe(EIGHT + ONE); // .8 -> .81
+    expect(after(NINE)).toBe(NINE + ONE); // .9 -> .91
+    expect(after(asPos(NINE + ONE))).toBe(NINE + TWO); // .91 -> .92
+    expect(after(asPos(NINE + EIGHT))).toBe(NINE + NINE); // .98 -> .99
 
-    // Generically stated, if the first digit isn't a 9, the result is always
-    // going to be a single digit position
-    fc.assert(
-      fc.property(
-        genPos(),
+    // V=2 overflow -> V=5: when we exceed 95^2 positions
+    expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ZERO + ZERO + ONE); // .99 -> .99001
+  });
 
-        (pos) => {
-          if (pos[0] !== NINE) {
-            expect(after(pos).length).toBe(1); // Always generates a single-digit
-          }
-        }
-      )
-    );
+  test("after viewport transitions", () => {
+    // V=2: length 1-2, increments within 2 digits
+    expect(after(ONE)).toBe(ONE + ONE); // .1 -> .11
+    expect(after(asPos(ZERO + ONE))).toBe(ZERO + TWO); // .01 -> .02 (within V=2)
+
+    // V=2 overflow -> V=5: when 95^2 positions exhausted
+    expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ZERO + ZERO + ONE); // .99 -> .99001
+
+    // V=5: length 3-5, increments within 5 digits
+    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ONE + ZERO + ONE); // .001 -> .00101
+    expect(after(asPos(ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ONE + ONE
+    ); // .0001 -> .00011
+    expect(after(asPos(ZERO + ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ZERO + TWO
+    ); // .00001 -> .00002
+
+    // V=5 overflow -> V=8: when 95^5 positions exhausted
+    expect(after(asPos(NINE + NINE + NINE + NINE + NINE))).toBe(
+      NINE + NINE + NINE + NINE + NINE + ZERO + ZERO + ONE
+    ); // .99999 -> .99999001
+
+    // V=8: length 6-8
+    expect(after(asPos(ZERO + ZERO + ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ZERO + ZERO + ONE + ZERO + ONE
+    ); // .000001 -> .00000101
+  });
+
+  test("after with very large position uses string-based increment", () => {
+    // String-based increment works for any length (no integer overflow issues)
+    const largePos = asPos("~".repeat(2500) + "$");
+    const result = after(largePos);
+
+    // $ (code 36) increments to % (code 37)
+    expect(result).toBe("~".repeat(2500) + "%");
+    expect(result > largePos).toBe(true);
+    expect(result.length).toBe(largePos.length);
+  });
+
+  test("viewport bumps at length boundaries", () => {
+    // Viewport formula: V = 2 + ceil((len-2)/3)*3
+    // len 2500: V = 2501, result pads to 2501
+    // len 2501: V = 2501, result stays 2501
+    // len 2502: V = 2504, result pads to 2504 (viewport bump!)
+    // len 2503: V = 2504, result pads to 2504
+    // len 2504: V = 2504, result stays 2504
+
+    const pos2500 = asPos("~".repeat(2499) + "$"); // len 2500
+    const pos2501 = asPos("~".repeat(2500) + "$"); // len 2501
+    const pos2502 = asPos("~".repeat(2501) + "$"); // len 2502
+    const pos2503 = asPos("~".repeat(2502) + "$"); // len 2503
+    const pos2504 = asPos("~".repeat(2503) + "$"); // len 2504
+
+    expect(after(pos2500).length).toBe(2501); // pads to viewport
+    expect(after(pos2501).length).toBe(2501); // stays at viewport
+    expect(after(pos2502).length).toBe(2504); // bumps to next viewport!
+    expect(after(pos2503).length).toBe(2504); // pads to viewport
+    expect(after(pos2504).length).toBe(2504); // stays at viewport
+
+    // All should increment correctly and be greater than input
+    expect(after(pos2500) > pos2500).toBe(true);
+    expect(after(pos2501) > pos2501).toBe(true);
+    expect(after(pos2502) > pos2502).toBe(true);
+    expect(after(pos2503) > pos2503).toBe(true);
+    expect(after(pos2504) > pos2504).toBe(true);
   });
 
   test("before hops to prior major digit when possible", () => {
@@ -265,20 +314,36 @@ describe("after / before", () => {
     );
   });
 
-  test("hops to next subdigit at edges", () => {
-    expect(after(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(THREE); // e.g. after(.23101) => .3
-    expect(after(asPos(EIGHT + NINE + NINE + EIGHT))).toBe(NINE); // e.g. after(.8998) => .9
-    expect(after(asPos(NINE + NINE + NINE + EIGHT))).toBe(
-      NINE + NINE + NINE + NINE
-    ); // e.g. after(.9998) => .9999
-    expect(after(asPos(ONE + ZERO + ZERO + ONE))).toBe(TWO); // e.g. after(.1001) => .2
-    expect(after(NINE)).toBe(NINE + ONE); // e.g. after(.9) => .91
-    expect(after(asPos(NINE + NINE + NINE))).toBe(NINE + NINE + NINE + ONE); // e.g. after(.999) => .9991
+  test("after at viewport boundaries", () => {
+    // V=5 viewport: positions of length 3-5
+    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ONE + ZERO + ONE); // .001 -> .00101
+    expect(after(asPos(ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ONE + ONE
+    ); // .0001 -> .00011
+    expect(after(asPos(ZERO + ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ZERO + TWO
+    ); // .00001 -> .00002
 
-    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE); // e.g. before(.001) => .0009
+    // V=8 viewport: positions of length 6-8
+    expect(after(asPos(ZERO + ZERO + ZERO + ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ZERO + ZERO + ZERO + ONE + ZERO + ONE
+    ); // .000001 -> .00000101
 
-    expect(after(asPos(EIGHT + THREE))).toBe(NINE); // e.g. after(.83) => .9
-    expect(after(asPos(NINE + THREE))).toBe(NINE + FOUR); // e.g. after(.93) => .99
+    // before() edge cases (unchanged behavior)
+    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE); // before(.001) => .0009
+  });
+
+  test("after returns viewport-aligned lengths for valid positions", () => {
+    // Valid viewport lengths are 2, 5, 8, 11, ... (or 1 for edge case "!")
+    const isValidViewportLength = (len: number) =>
+      len === 1 || (len >= 2 && (len - 2) % 3 === 0);
+
+    fc.assert(
+      fc.property(genPos(), (pos) => {
+        const result = after(pos);
+        expect(isValidViewportLength(result.length)).toBe(true);
+      })
+    );
   });
 
   test("always outputs valid Pos values", () => {
@@ -382,8 +447,8 @@ describe("makePosition", () => {
   test("default/first position is .1", () =>
     expect(makePosition(undefined, undefined)).toBe(ONE));
 
-  test("after .1 lies .2", () =>
-    expect(makePosition(ONE, undefined)).toBe(TWO));
+  test("after .1 lies .11", () =>
+    expect(makePosition(ONE, undefined)).toBe(ONE + ONE));
 
   test("before .9 lies .8", () =>
     expect(makePosition(undefined, NINE)).toBe(EIGHT));
