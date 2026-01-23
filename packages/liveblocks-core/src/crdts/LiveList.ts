@@ -725,6 +725,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             this.#items.at(existingItemIndex + 1)?._parentPos
           )
         );
+        this.#items.reposition(existingItem);
       }
 
       child._setParentLink(this, newKey);
