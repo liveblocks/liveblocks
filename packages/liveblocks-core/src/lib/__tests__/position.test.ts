@@ -476,17 +476,58 @@ describe("makePosition", () => {
 
 describe("makeNPositions", () => {
   test("generates n unique positions in order", () => {
-    const positions = makeNPositions(5);
+    const positions = [...makeNPositions(5)];
     expect(positions.length).toBe(5);
     expect(positions).toEqual([...positions].sort()); // all sorted...
     expect(new Set(positions).size).toBe(positions.length); // ...no duplicates
   });
 
   test("generates valid positions", () => {
-    const positions = makeNPositions(100);
-    for (const pos of positions) {
+    for (const pos of makeNPositions(100)) {
       expect(isPos(pos)).toBe(true);
     }
+  });
+
+  test("mass-position generation keeps pos lenghts in check", () => {
+    // With optimal distribution, we only need ceil(log₉₅(100000)) ≈ 3 characters
+    for (const pos of makeNPositions(100_000)) {
+      // 3 characters in base94-ish gives us 94^3 = 830_584 possible positions.
+      // So more than enough space to fit 100_000 positions! Therefore:
+      // 3 should be more than enough!
+      expect(pos.length, `${JSON.stringify(pos)}`).toBeLessThanOrEqual(3);
+    }
+  });
+
+  test("always generates exactly n positions", () => {
+    for (const n of [0, 1, 2, 10, 93, 94, 95, 96, 100, 200, 1000, 10_000]) {
+      expect([...makeNPositions(n)].length).toBe(n);
+    }
+  });
+
+  test("expected values for n=0", () => {
+    expect([...makeNPositions(0)]).toEqual([]);
+  });
+
+  test("expected values for n=1", () => {
+    expect([...makeNPositions(1)]).toEqual(["!"]);
+  });
+
+  test("expected values for n=95", () => {
+    const positions = [...makeNPositions(95)];
+    expect(positions.slice(0, 5)).toEqual(["!", "!!", '"', "#", "$"]); // First 5...
+    expect(positions.slice(-5)).toEqual(["z", "{", "|", "}", "~"]); // ...last 5
+  });
+
+  test("expected values for n=200", () => {
+    const positions = [...makeNPositions(200)];
+    expect(positions.slice(0, 5)).toEqual(["!", "!!", '!"', '"', '"!']); // First 5...
+    expect(positions.slice(-5)).toEqual(["|!", "}", "}!", "~", "~!"]); // ...last 5
+  });
+
+  test("expected values for n=100_000", () => {
+    const positions = [...makeNPositions(100_000)];
+    expect(positions.slice(0, 5)).toEqual(["!", "! !", '! "', "! #", "! $"]); // First 5...
+    expect(positions.slice(-5)).toEqual(["~~&", "~~'", "~~(", "~~)", "~~*"]); // ...last 5
   });
 });
 
