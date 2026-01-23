@@ -146,12 +146,12 @@ export class SortedList<T> {
    *   item.updatedAt = new Date();  // mutate the item's sort key in-place
    *   sorted.reposition(item);      // restore sorted order
    *
-   * Returns the new index of the item, or -1 if the item wasn't found.
+   * Returns the new index of the item. Throws if the item is not in the list.
    */
   reposition(value: T): number {
     const oldIdx = this.#data.indexOf(value);
     if (oldIdx < 0) {
-      return -1;
+      throw new Error("Cannot reposition item that is not in the list");
     }
 
     let newIdx = oldIdx;

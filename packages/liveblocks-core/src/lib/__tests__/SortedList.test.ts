@@ -423,11 +423,11 @@ describe("SortedList", () => {
       expect(Array.from(s).map((x) => x.id)).toEqual(["b", "a", "c"]);
     });
 
-    test("returns -1 for item not in list", () => {
-      // XXX Open question: should this throw instead or returning -1?
-      // XXX When could calling .reposition(nonExisting) ever be a desired action?
+    test("throws for item not in list", () => {
       const s = SortedList.from([1, 2, 3], asc);
-      expect(s.reposition(99)).toBe(-1);
+      expect(() => s.reposition(99)).toThrow(
+        "Cannot reposition item that is not in the list"
+      );
       expect(Array.from(s)).toEqual([1, 2, 3]); // unchanged
     });
 
