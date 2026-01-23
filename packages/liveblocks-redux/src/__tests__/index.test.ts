@@ -678,7 +678,7 @@ describe("middleware", () => {
                 opId: "0:1",
                 type: OpCode.CREATE_OBJECT,
                 parentId: "1:0",
-                parentKey: '"',
+                parentKey: "!!",
                 data: { text: "B" },
               },
             ],
