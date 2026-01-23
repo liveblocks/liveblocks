@@ -71,10 +71,12 @@ export class SortedList<T> {
 
   /**
    * Adds a new item to the sorted list, such that it remains sorted.
+   * Returns the index where the item was inserted.
    */
-  add(value: T): void {
+  add(value: T): number {
     const idx = bisectRight(this.#data, value, this.#lt);
     this.#data.splice(idx, 0, value);
+    return idx;
   }
 
   /**
