@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
-import { asPos, makeNPositions, makePosition } from "../lib/position";
+import { asPos, makePosition } from "../lib/position";
 import { SortedList } from "../lib/SortedList";
 import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
@@ -54,13 +54,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.#implicitlyDeletedItems = new WeakSet();
     this.#unacknowledgedSets = new Map();
 
-    const positions = makeNPositions(items.length);
     const nodes: LiveNode[] = [];
-    let i = 0;
-    for (const pos of positions) {
-      const node = lsonToLiveNode(items[i++]);
+    let lastPos: Pos | undefined;
+    for (const item of items) {
+      const pos = makePosition(lastPos);
+      const node = lsonToLiveNode(item);
       node._setParentLink(this, pos);
       nodes.push(node);
+      lastPos = pos;
     }
     this.#items = SortedList.fromAlreadySorted(nodes, childNodeLt);
   }

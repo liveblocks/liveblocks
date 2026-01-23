@@ -414,57 +414,7 @@ function asPos(str: string): Pos {
   return isPos(str) ? str : convertToPos(str);
 }
 
-function divmod(n: number, d: number): [number, number] {
-  const q = Math.floor(n / d);
-  const r = n - q * d;
-  return [q, r];
-}
-
-/**
- * Generates n positions in order. Useful for initializing a list with n items.
- *
- * Uses even distribution across the position space to keep position lengths
- * minimal. For n positions, each will have at most ceil(log₉₄(n)) characters.
- *
- * Algorithm: recursively distribute items into 94 buckets (digits '!' to '~').
- * Each bucket gets ~n/94 items. If a bucket has more than 1 item, the first
- * item is the bucket's prefix itself, and the rest recurse to determine suffixes.
- */
-function* makeNPositions(n: number): Generator<Pos> {
-  if (n > 0) {
-    yield* distribute(n, "");
-  }
-}
-
-function* distribute(count: number, prefix: string): Generator<Pos> {
-  if (count === 1) {
-    if (prefix === "") {
-      yield ONE;
-    } else {
-      // Strip trailing zeros
-      let i = prefix.length;
-      while (prefix.charCodeAt(i - 1) === MIN_CODE) i--;
-      yield (i === prefix.length ? prefix : prefix.substring(0, i)) as Pos;
-    }
-    return;
-  }
-
-  // First level: 94 non-zero buckets ('!' to '~')
-  // Inner levels: 95 buckets (' ' to '~')
-  const isFirst = prefix === "";
-  const numBuckets = isFirst ? NUM_DIGITS - 1 : NUM_DIGITS;
-  const startCode = isFirst ? MIN_CODE + 1 : MIN_CODE;
-
-  const [base, extra] = divmod(count, numBuckets);
-
-  for (let b = 0; b < numBuckets; b++) {
-    const k = b < extra ? base + 1 : base;
-    if (k === 0) break;
-    yield* distribute(k, prefix + String.fromCharCode(startCode + b));
-  }
-}
-
-export { asPos, makeNPositions, makePosition };
+export { asPos, makePosition };
 
 // For use in unit tests only
 export {
