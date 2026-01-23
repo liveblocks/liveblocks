@@ -147,6 +147,9 @@ export class SortedList<T> {
    *   sorted.reposition(item);      // restore sorted order
    *
    * Returns the new index of the item. Throws if the item is not in the list.
+   *
+   * Semantically equivalent to remove(value) + add(value), but optimized
+   * to avoid array shifting when the item only moves a short distance.
    */
   reposition(value: T): number {
     const oldIdx = this.#data.indexOf(value);
@@ -154,24 +157,34 @@ export class SortedList<T> {
       throw new Error("Cannot reposition item that is not in the list");
     }
 
+    // Quick check: if already in valid position, no need to move.
+    // Valid means: prev < value <= next (matching bisectRight insertion point)
+    const prev = this.#data[oldIdx - 1];
+    const next = this.#data[oldIdx + 1];
+    const validLeft = prev === undefined || this.#lt(prev, value);
+    const validRight = next === undefined || !this.#lt(next, value);
+    if (validLeft && validRight) {
+      return oldIdx;
+    }
+
     let newIdx = oldIdx;
 
-    // Try moving left
+    // Try moving left (value < prev means we're out of order on the left)
     while (newIdx > 0 && this.#lt(value, this.#data[newIdx - 1])) {
       this.#data[newIdx] = this.#data[newIdx - 1];
       newIdx--;
     }
 
-    // Did we move left? If so, return!
     if (newIdx < oldIdx) {
       this.#data[newIdx] = value;
       return newIdx;
     }
 
-    // Otherwise, try moving right
+    // Try moving right (next < value means we're out of order on the right)
+    // Use !lt(value, next) to match bisectRight: move past equal elements
     while (
       newIdx < this.#data.length - 1 &&
-      this.#lt(this.#data[newIdx + 1], value)
+      !this.#lt(value, this.#data[newIdx + 1])
     ) {
       this.#data[newIdx] = this.#data[newIdx + 1];
       newIdx++;

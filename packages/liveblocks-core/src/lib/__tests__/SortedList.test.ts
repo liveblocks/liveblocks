@@ -431,19 +431,31 @@ describe("SortedList", () => {
       expect(Array.from(s)).toEqual([1, 2, 3]); // unchanged
     });
 
-    // Regression: reposition with equal keys should not swap items
-    test("repositioning item with equal key does not swap order", () => {
-      const item0 = { id: 0, key: 13 };
-      const item1 = { id: 1, key: 13 };
-      const s = SortedList.from([item0, item1], (a, b) => a.key < b.key);
+    // Regression: reposition() must be equivalent to remove() + add()
+    test("reposition equals remove + add (counterexample from property test)", () => {
+      const lt = (a: { id: number; key: number }, b: { id: number; key: number }) => a.key < b.key;
 
-      // Reposition first item (key unchanged) - order should stay the same
-      s.reposition(item0);
-      expect(Array.from(s)).toEqual([item0, item1]);
+      const items = [
+        { id: 0, key: 0 },
+        { id: 1, key: 0 },
+        { id: 2, key: 19 },
+      ];
 
-      // Reposition second item (key unchanged) - order should stay the same
-      s.reposition(item1);
-      expect(Array.from(s)).toEqual([item0, item1]);
+      // Approach 1: mutate + reposition
+      const s1 = SortedList.from(structuredClone(items), lt);
+      const item1 = s1.at(0)!;
+      item1.key = 19;
+      s1.reposition(item1);
+
+      // Approach 2: remove + mutate + add
+      const s2 = SortedList.from(structuredClone(items), lt);
+      const item2 = s2.at(0)!;
+      s2.remove(item2);
+      item2.key = 19;
+      s2.add(item2);
+
+      // Both must give same result
+      expect(Array.from(s1)).toEqual(Array.from(s2));
     });
 
     test("repositioning unmutated element keeps array unchanged", () => {
