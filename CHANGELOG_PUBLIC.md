@@ -24,9 +24,9 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### @liveblocks/client
 
-- Bump hardcoded client-side socket connection timeout from 10s to 20s
+- Bump hardcoded client-side socket connection timeout from 10s to 20s.
 - Add more detailed timing info to `enableDebugLogging` to better debug
-  connection issues
+  connection issues.
 
 ### @liveblocks/react-ui
 
