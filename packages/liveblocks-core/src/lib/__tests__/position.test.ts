@@ -200,7 +200,9 @@ describe("after / before", () => {
     expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ZERO + ZERO + ONE); // .99 -> .99001
 
     // V=5: length 3-5, increments within 5 digits
-    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ONE + ZERO + ONE); // .001 -> .00101
+    expect(after(asPos(ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ONE + ZERO + ONE
+    ); // .001 -> .00101
     expect(after(asPos(ZERO + ZERO + ZERO + ONE))).toBe(
       ZERO + ZERO + ZERO + ONE + ONE
     ); // .0001 -> .00011
@@ -219,8 +221,7 @@ describe("after / before", () => {
     ); // .000001 -> .00000101
   });
 
-  test("after with very large position uses string-based increment", () => {
-    // String-based increment works for any length (no integer overflow issues)
+  test("after works with very large positions", () => {
     const largePos = asPos("~".repeat(2500) + "$");
     const result = after(largePos);
 
@@ -315,7 +316,9 @@ describe("after / before", () => {
 
   test("after at viewport boundaries", () => {
     // V=5 viewport: positions of length 3-5
-    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ONE + ZERO + ONE); // .001 -> .00101
+    expect(after(asPos(ZERO + ZERO + ONE))).toBe(
+      ZERO + ZERO + ONE + ZERO + ONE
+    ); // .001 -> .00101
     expect(after(asPos(ZERO + ZERO + ZERO + ONE))).toBe(
       ZERO + ZERO + ZERO + ONE + ONE
     ); // .0001 -> .00011
@@ -333,9 +336,12 @@ describe("after / before", () => {
   });
 
   test("after returns viewport-aligned lengths for valid positions", () => {
-    // Valid viewport lengths are 2, 5, 8, 11, ... (or 1 for edge case "!")
+    // Valid viewport in V=2+3 are only 2, 5, 8, 11, ...
     const isValidViewportLength = (len: number) =>
-      len === 1 || (len >= 2 && (len - 2) % 3 === 0);
+      // Common case: 2, 5, 8, 11, ...
+      (len >= 2 && (len - 2) % 3 === 0) ||
+      // Edge case possible, e.g. after("!~") returns '"' (1 char)
+      len === 1;
 
     fc.assert(
       fc.property(genPos(), (pos) => {
