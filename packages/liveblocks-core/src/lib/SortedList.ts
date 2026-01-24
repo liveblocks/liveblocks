@@ -160,11 +160,11 @@ export class SortedList<T> {
     }
 
     // Quick check: if already in valid position, no need to move.
-    // Valid means: prev < value <= next (matching bisectRight insertion point)
+    // Valid means: prev < value < next (matching bisectRight insertion point)
     const prev = this.#data[oldIdx - 1];
     const next = this.#data[oldIdx + 1];
     const validLeft = prev === undefined || this.#lt(prev, value);
-    const validRight = next === undefined || !this.#lt(next, value);
+    const validRight = next === undefined || this.#lt(value, next);
     if (validLeft && validRight) {
       return oldIdx;
     }
@@ -182,8 +182,7 @@ export class SortedList<T> {
       return newIdx;
     }
 
-    // Try moving right (next < value means we're out of order on the right)
-    // Use !lt(value, next) to match bisectRight: move past equal elements
+    // Try moving right (next <= value means we need to move past it)
     while (
       newIdx < this.#data.length - 1 &&
       !this.#lt(value, this.#data[newIdx + 1])

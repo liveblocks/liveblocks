@@ -461,28 +461,6 @@ describe("SortedList", () => {
       expect(Array.from(s1)).toEqual(Array.from(s2));
     });
 
-    test("repositioning unmutated element keeps array unchanged", () => {
-      fc.assert(
-        fc.property(
-          fc.array(fc.record({ id: fc.nat(), key: fc.nat() }), {
-            minLength: 1,
-          }),
-          fc.nat(),
-
-          (items, indexSeed) => {
-            const s = SortedList.from(items, (a, b) => a.key < b.key);
-            const before = Array.from(s);
-            const index = indexSeed % s.length;
-            const item = s.at(index)!;
-
-            s.reposition(item);
-
-            expect(Array.from(s)).toEqual(before);
-          }
-        )
-      );
-    });
-
     test("mutate + reposition always equals remove + mutate + add", () => {
       fc.assert(
         fc.property(
@@ -520,9 +498,7 @@ describe("SortedList", () => {
             // Both should produce same result
             expect(Array.from(sortedList)).toEqual(arr);
           }
-        ),
-        // XXX Counterexample found, look into this next week!
-        { seed: 1196896722 }
+        )
       );
     });
   });
