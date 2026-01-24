@@ -433,7 +433,10 @@ describe("SortedList", () => {
 
     // Regression: reposition() must be equivalent to remove() + add()
     test("reposition equals remove + add (counterexample from property test)", () => {
-      const lt = (a: { id: number; key: number }, b: { id: number; key: number }) => a.key < b.key;
+      const lt = (
+        a: { id: number; key: number },
+        b: { id: number; key: number }
+      ) => a.key < b.key;
 
       const items = [
         { id: 0, key: 0 },
