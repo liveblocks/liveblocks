@@ -431,30 +431,34 @@ describe("SortedList", () => {
       expect(Array.from(s)).toEqual([1, 2, 3]); // unchanged
     });
 
-    test.skip("repositioning unmutated element keeps array unchanged", () => {
-      fc.assert(
-        fc.property(
-          fc.array(fc.record({ id: fc.nat(), key: fc.nat() }), {
-            minLength: 1,
-          }),
-          fc.nat(),
+    // Regression: reposition() must be equivalent to remove() + add()
+    test("reposition equals remove + add (counterexample from property test)", () => {
+      const lt = (
+        a: { id: number; key: number },
+        b: { id: number; key: number }
+      ) => a.key < b.key;
 
-          (items, indexSeed) => {
-            const s = SortedList.from(items, (a, b) => a.key < b.key);
-            const before = Array.from(s);
-            const index = indexSeed % s.length;
-            const item = s.at(index)!;
+      const items = [
+        { id: 0, key: 0 },
+        { id: 1, key: 0 },
+        { id: 2, key: 19 },
+      ];
 
-            s.reposition(item);
+      // Approach 1: mutate + reposition
+      const s1 = SortedList.from(structuredClone(items), lt);
+      const item1 = s1.at(0)!;
+      item1.key = 19;
+      s1.reposition(item1);
 
-            expect(Array.from(s)).toEqual(before);
-          }
-        ),
-        {
-          // Known regression: reposition can swap elements with equal keys
-          examples: [[[{ id: 0, key: 13 }, { id: 1, key: 13 }], 0]],
-        }
-      );
+      // Approach 2: remove + mutate + add
+      const s2 = SortedList.from(structuredClone(items), lt);
+      const item2 = s2.at(0)!;
+      s2.remove(item2);
+      item2.key = 19;
+      s2.add(item2);
+
+      // Both must give same result
+      expect(Array.from(s1)).toEqual(Array.from(s2));
     });
 
     test("mutate + reposition always equals remove + mutate + add", () => {

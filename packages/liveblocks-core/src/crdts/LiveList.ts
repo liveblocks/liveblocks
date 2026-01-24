@@ -129,11 +129,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /**
    * Inserts a new child into the list in the correct location (binary search
-   * finds correct position efficiently).
+   * finds correct position efficiently). Returns the insertion index.
    */
-  #insert(childNode: LiveNode): void {
-    this.#items.add(childNode);
+  #insert(childNode: LiveNode): number {
+    const index = this.#items.add(childNode);
     this.invalidate();
+    return index;
   }
 
   /**
@@ -335,12 +336,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         // And delete it from the orphan cache
         this.#implicitlyDeletedItems.delete(orphan);
 
-        this.#insert(orphan);
-
-        const recreatedItemIndex = this.#items.findIndex(
-          (item) => item === orphan
-        );
-
+        const recreatedItemIndex = this.#insert(orphan);
         return {
           modified: makeUpdate(this, [
             // If there is an item at this position, update is a set, else it's an insert
@@ -646,12 +642,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this.#implicitlyDeletedItems.delete(child);
 
       child._setParentLink(this, newKey);
-      this.#insert(child);
-
-      const newIndex = this.#items.findIndex((item) => item === child);
+      const newIndex = this.#insert(child);
 
       // TODO: Shift existing item?
-
       return {
         modified: makeUpdate(this, [insertDelta(newIndex, child)]),
         reverse: [],
@@ -725,12 +718,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             this.#items.at(existingItemIndex + 1)?._parentPos
           )
         );
+        this.#items.reposition(existingItem);
       }
 
       child._setParentLink(this, newKey);
-      this.#insert(child);
-
-      const newIndex = this.#items.findIndex((item) => item === child);
+      const newIndex = this.#insert(child);
       return {
         modified: makeUpdate(this, [insertDelta(newIndex, child)]),
         reverse: [],
