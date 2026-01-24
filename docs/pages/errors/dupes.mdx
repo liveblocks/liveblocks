@@ -23,28 +23,33 @@ unnecessarily large.
 
 ## Possible causes
 
-- Your project is using multiple internal packages that all rely on Liveblocks,
-  but maybe some are on different versions.
+- Your project is using
+  [multiple internal packages](#using-liveblocks-with-internal-packages) that
+  all rely on Liveblocks, but maybe some are on different versions.
 - Your project is using a non-standard bundler setup. If you believe this is an
   issue with the way Liveblocks is packaged, feel free to open a support
   request.
 
 ## Possible ways to fix it
 
-To investigate your set up, run the following command to see if all your
+To investigate your setup, run the following command to see if all your
 Liveblocks dependencies are on the same version:
 
 ```bash
 npm ls | grep @liveblocks
 ```
 
-If they’re not all on the same version, please fix that. You could manually
-upgrade that, but we recommend declaring Liveblocks as a `"peerDependency"` in
-those internal packages’ `package.json` files, and only declare it in the actual
-`"dependencies"` in the outermost `package.json` for your project. That way,
-your package manager will keep all the versions the same.
+If they're not all on the same version, you can upgrade them by running:
 
-If all your Liveblocks dependencies are on the same version already, and you’re
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+If you're using shared internal packages that depend on Liveblocks, see
+[Using Liveblocks with internal packages](#using-liveblocks-with-internal-packages)
+below for the recommended setup.
+
+If all your Liveblocks dependencies are on the same version already, and you're
 still seeing this error, you’re experiencing the
 [dual-package hazard](https://nodejs.org/api/packages.html#dual-package-hazard)
 problem, which means that both the ESM and the CJS version of Liveblocks end up
@@ -53,3 +58,62 @@ supposed to happen. Please let us know about this by
 [opening a GitHub issue](https://github.com/liveblocks/liveblocks/issues/new?template=bug_report.md),
 or reaching out in our support channel on
 [Discord](https://liveblocks.io/discord).
+
+## Using Liveblocks with internal packages
+
+Consider a setup where you have two applications that both depend on Liveblocks
+directly, and on a shared internal package that also depends on Liveblocks.
+
+If the shared package declares Liveblocks as a regular `"dependency"`, your
+package manager will install the Liveblocks version specified by the shared
+package, which may conflict with the version your application needs:
+
+```mermaid
+graph TD
+    subgraph "Problem: dependencies conflict"
+        A1[App 1] --> SL1[Shared Lib]
+        A1 -->|"3.2.0"| LB1["@liveblocks"]
+        SL1 -->|"3.2.0"| LB1
+
+        A2[App 2] --> SL1b[Shared Lib]
+        A2 -->|"3.13.3"| LB2["❌ @liveblocks<br/><small><i>conflicting versions</i></small>"]
+        SL1b -->|"3.2.0"| LB2
+    end
+
+    style LB1 fill:#6f6,stroke:#090
+    style LB2 fill:#fcc,stroke:#b33
+```
+
+The recommended approach is to declare Liveblocks as a `"peerDependency"` in
+your shared package's `package.json`. This tells the package manager: "I'm
+compatible with Liveblocks ^3, but the host application decides which version to
+use." Then, only declare Liveblocks in the `"dependencies"` of your actual
+applications.
+
+```json
+{
+  "peerDependencies": {
+    "@liveblocks/client": "^3",
+    "@liveblocks/react": "^3"
+  }
+}
+```
+
+Use a major version range like `"^3"` to allow flexibility while ensuring
+compatibility.
+
+```mermaid
+graph TD
+    subgraph "Solution: use peerDependencies"
+        A1[App 1] --> SL1[Shared Lib]
+        A1 -->|"3.2.0"| LB1["@liveblocks"]
+        SL1 -.->|"peer: ^3"| LB1
+
+        A2[App 2] --> SL1b[Shared Lib]
+        A2 -->|"3.13.3"| LB2["@liveblocks"]
+        SL1b -.->|"peer: ^3"| LB2
+    end
+
+    style LB1 fill:#6f6,stroke:#090
+    style LB2 fill:#6f6,stroke:#090
+```
