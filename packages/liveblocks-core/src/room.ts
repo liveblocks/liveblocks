@@ -1853,7 +1853,16 @@ export function createRoom<
     }
 
     if (context.root !== undefined) {
-      updateRoot(nodes);
+      const currentItems: NodeMap = new Map();
+      for (const [id, crdt] of context.pool.nodes) {
+        currentItems.set(id, crdt._serialize());
+      }
+
+      // Get operations that represent the diff between 2 states.
+      const ops = getTreesDiffOperations(currentItems, nodes);
+
+      const result = applyRemoteOps(ops);
+      notify(result.updates);
     } else {
       context.root = LiveObject._fromItems<S>(
         nodes as NodeStream,
@@ -1880,23 +1889,6 @@ export function createRoom<
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
     context.undoStack.length = stackSizeBefore;
-  }
-
-  function updateRoot(nodes: NodeMap) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    const currentItems: NodeMap = new Map();
-    for (const [id, crdt] of context.pool.nodes) {
-      currentItems.set(id, crdt._serialize());
-    }
-
-    // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, nodes);
-
-    const result = applyRemoteOps(ops);
-    notify(result.updates);
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
