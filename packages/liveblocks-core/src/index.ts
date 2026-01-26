@@ -298,7 +298,7 @@ export type {
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageStateServerMsg_V7,
+  StorageChunkServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
@@ -308,6 +308,13 @@ export type {
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
   ListStorageNode,
   MapStorageNode,
   NodeMap,
@@ -325,12 +332,14 @@ export type {
   StorageNode,
 } from "./protocol/StorageNode";
 export {
+  compactNodesToNodeStream,
   CrdtType,
   isListStorageNode,
   isMapStorageNode,
   isObjectStorageNode,
   isRegisterStorageNode,
   isRootStorageNode,
+  nodeStreamToCompactNodes,
 } from "./protocol/StorageNode";
 export type {
   SubscriptionData,

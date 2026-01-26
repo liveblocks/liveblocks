@@ -100,3 +100,112 @@ export function isRegisterStorageNode(
 ): node is RegisterStorageNode {
   return node[1].type === CrdtType.REGISTER;
 }
+
+export type CompactNode = CompactRootNode | CompactChildNode;
+
+export type CompactChildNode =
+  | CompactObjectNode
+  | CompactListNode
+  | CompactMapNode
+  | CompactRegisterNode;
+
+export type CompactRootNode = readonly [id: "root", data: JsonObject];
+
+export type CompactObjectNode = readonly [
+  id: string,
+  type: CrdtType.OBJECT,
+  parentId: string,
+  parentKey: string,
+  data: JsonObject,
+];
+
+export type CompactListNode = readonly [
+  id: string,
+  type: CrdtType.LIST,
+  parentId: string,
+  parentKey: string,
+];
+
+export type CompactMapNode = readonly [
+  id: string,
+  type: CrdtType.MAP,
+  parentId: string,
+  parentKey: string,
+];
+
+export type CompactRegisterNode = readonly [
+  id: string,
+  type: CrdtType.REGISTER,
+  parentId: string,
+  parentKey: string,
+  data: Json,
+];
+
+function isCompactRootNode(node: CompactNode): node is CompactRootNode {
+  return node[0] === "root";
+}
+
+export function* compactNodesToNodeStream(
+  compactNodes: CompactNode[]
+): NodeStream {
+  for (const cnode of compactNodes) {
+    // Handle root nodes first - they have format ["root", data] where data is JsonObject
+    if (isCompactRootNode(cnode)) {
+      yield [cnode[0], { type: CrdtType.OBJECT, data: cnode[1] }];
+      continue;
+    }
+
+    switch (cnode[1]) {
+      case CrdtType.OBJECT:
+        // prettier-ignore
+        yield [cnode[0], { type: CrdtType.OBJECT, parentId: cnode[2], parentKey: cnode[3], data: cnode[4] }];
+        break;
+      case CrdtType.LIST:
+        // prettier-ignore
+        yield [cnode[0], { type: CrdtType.LIST, parentId: cnode[2], parentKey: cnode[3] }];
+        break;
+      case CrdtType.MAP:
+        // prettier-ignore
+        yield [cnode[0], { type: CrdtType.MAP, parentId: cnode[2], parentKey: cnode[3] }];
+        break;
+      case CrdtType.REGISTER:
+        // prettier-ignore
+        yield [cnode[0], {type: CrdtType.REGISTER, parentId: cnode[2], parentKey: cnode[3], data: cnode[4], }];
+        break;
+      default:
+      // Ignore
+    }
+  }
+}
+
+export function* nodeStreamToCompactNodes(
+  nodes: NodeStream
+): Iterable<CompactNode> {
+  for (const node of nodes) {
+    if (isObjectStorageNode(node)) {
+      if (isRootStorageNode(node)) {
+        const id = node[0];
+        const crdt = node[1];
+        yield [id, crdt.data];
+      } else {
+        const id = node[0];
+        const crdt = node[1];
+        yield [id, CrdtType.OBJECT, crdt.parentId, crdt.parentKey, crdt.data];
+      }
+    } else if (isListStorageNode(node)) {
+      const id = node[0];
+      const crdt = node[1];
+      yield [id, CrdtType.LIST, crdt.parentId, crdt.parentKey];
+    } else if (isMapStorageNode(node)) {
+      const id = node[0];
+      const crdt = node[1];
+      yield [id, CrdtType.MAP, crdt.parentId, crdt.parentKey];
+    } else if (isRegisterStorageNode(node)) {
+      const id = node[0];
+      const crdt = node[1];
+      yield [id, CrdtType.REGISTER, crdt.parentId, crdt.parentKey, crdt.data];
+    } else {
+      // Ignore
+    }
+  }
+}
