@@ -6,6 +6,7 @@ room on our new storage engine.)
 
 ### @liveblocks/client
 
+- Internal protocol optimizations to support larger storage documents
 - Add new config option `createClient({ baseUrl: "https://..." })` to allow
   connecting to alternative hosted Liveblocks environments
 - Improve `LiveList` performance when processing large batches of operations
