@@ -55,13 +55,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.#unacknowledgedSets = new Map();
 
     const nodes: LiveNode[] = [];
-    let position = undefined;
+    let lastPos: Pos | undefined;
     for (const item of items) {
-      const newPosition = makePosition(position);
+      const pos = makePosition(lastPos);
       const node = lsonToLiveNode(item);
-      node._setParentLink(this, newPosition);
+      node._setParentLink(this, pos);
       nodes.push(node);
-      position = newPosition;
+      lastPos = pos;
     }
     this.#items = SortedList.fromAlreadySorted(nodes, childNodeLt);
   }

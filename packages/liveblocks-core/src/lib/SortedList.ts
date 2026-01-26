@@ -40,6 +40,9 @@ export class SortedList<T> {
     this.#data = alreadySortedList;
   }
 
+  /**
+   * Creates an empty SortedList with the given "less than" function.
+   */
   public static with<T>(lt: (a: T, b: T) => boolean): SortedList<T> {
     return SortedList.fromAlreadySorted([], lt);
   }

@@ -8,6 +8,9 @@ room on our new storage engine.)
 
 - Add new config option `createClient({ baseUrl: "https://..." })` to allow
   connecting to alternative hosted Liveblocks environments
+- Improve `LiveList` performance when processing large batches of operations
+- Improve `LiveList.push()` efficiency to prevent unbounded position string
+  growth over time
 
 ### @liveblocks/react
 
