@@ -1848,6 +1848,10 @@ export function createRoom<
   );
 
   function createOrUpdateRootFromMessage(nodes: NodeMap) {
+    if (nodes.size === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
     if (context.root !== undefined) {
       updateRoot(nodes);
     } else {
@@ -1879,10 +1883,6 @@ export function createRoom<
   }
 
   function updateRoot(nodes: NodeMap) {
-    if (nodes.size === 0) {
-      throw new Error("Internal error: cannot load storage without items");
-    }
-
     if (context.root === undefined) {
       return;
     }
