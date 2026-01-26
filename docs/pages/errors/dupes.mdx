@@ -84,10 +84,10 @@ graph TD
     style LB2 fill:#fcc,stroke:#b33
 ```
 
-The recommended approach is to declare Liveblocks as a `"peerDependency"` in
-your shared package's `package.json`. This tells the package manager: "I'm
-compatible with Liveblocks ^3, but the host application decides which version to
-use." Then, only declare Liveblocks in the `"dependencies"` of your actual
+The recommended approach is to declare Liveblocks as a "peer dependency" in your
+shared package's `package.json`. This tells the package manager: "I'm compatible
+with Liveblocks ^3, but the host application decides which version to use."
+Then, only declare Liveblocks in the `"dependencies"` of your actual
 applications.
 
 ```json
