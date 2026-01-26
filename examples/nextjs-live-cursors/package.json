@@ -9,18 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@next/font": "^13.5.4",
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.0.10",
-    "next": "14.2.34",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@next/font": "^13.5.11",
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.0.11",
+    "next": "16.1.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

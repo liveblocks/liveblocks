@@ -10,25 +10,25 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@liveblocks/yjs": "^3.13.2",
-    "@tiptap/extension-collaboration": "^3.4.2",
-    "@tiptap/extension-collaboration-caret": "^3.4.2",
-    "@tiptap/pm": "^3.4.2",
-    "@tiptap/react": "^3.4.2",
-    "@tiptap/starter-kit": "^3.4.2",
-    "@types/node": "^20.3.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.2.5",
-    "next": "14.2.34",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "yjs": "^13.6.7"
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@liveblocks/yjs": "^3.13.3",
+    "@tiptap/extension-collaboration": "^3.4.6",
+    "@tiptap/extension-collaboration-caret": "^3.4.6",
+    "@tiptap/pm": "^3.4.6",
+    "@tiptap/react": "^3.4.6",
+    "@tiptap/starter-kit": "^3.4.6",
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
+    "next": "16.1.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }
