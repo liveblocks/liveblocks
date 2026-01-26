@@ -44,7 +44,7 @@ const system =
   "\n\n" +
   "The user will provide a JSON request with the following schema:" +
   "\n" +
-  JSON.stringify(zodToJsonSchema(requestSchema), null, 2) +
+  JSON.stringify(zodToJsonSchema(requestSchema as any), null, 2) +
   "\n\n" +
   "You must determine the correct response type based on the user's prompt and context." +
   "\n" +
