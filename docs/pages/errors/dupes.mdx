@@ -69,6 +69,7 @@ manager will install the Liveblocks version specified by the shared package,
 which may conflict with the version your application needs:
 
 ![Do not pin the Liveblocks dependency in your shared library as it can lead to conflicts](/assets/errors/dont-use-normal-dependencies.png)
+<small style={{ display: "block", textAlign: "center" }}>The version numbers used here are just examples.</small>
 
 The recommended approach is to declare Liveblocks as a "peer dependency" in your
 shared package's `package.json`. This tells the package manager: "I'm compatible
@@ -89,3 +90,4 @@ Use a major version range like `"^3"` to allow flexibility while ensuring
 compatibility.
 
 ![Using a peer dependency on Liveblocks from your shared library helps to avoid version conflicts](/assets/errors/use-peer-dependencies.png)
+<small style={{ display: "block", textAlign: "center" }}>The version numbers used here are just examples.</small>
