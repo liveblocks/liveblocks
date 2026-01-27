@@ -10,7 +10,7 @@
     "@liveblocks/client": "^3.13.3"
   },
   "devDependencies": {
-    "esbuild": "0.17.19",
+    "esbuild": "0.27.2",
     "prettier": "^3.3.3"
   }
 }
