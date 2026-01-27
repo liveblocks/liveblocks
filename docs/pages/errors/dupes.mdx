@@ -64,9 +64,9 @@ or reaching out in our support channel on
 Consider a setup where you have two applications that both depend on Liveblocks
 directly, and on a shared internal package that also depends on Liveblocks.
 
-If the shared package declares Liveblocks as a regular `"dependency"`, your
-package manager will install the Liveblocks version specified by the shared
-package, which may conflict with the version your application needs:
+If the shared package declares Liveblocks as a regular dependency, your package
+manager will install the Liveblocks version specified by the shared package,
+which may conflict with the version your application needs:
 
 ![Do not pin the Liveblocks dependency in your shared library as it can lead to conflicts](/assets/errors/dont-use-normal-dependencies.png)
 
