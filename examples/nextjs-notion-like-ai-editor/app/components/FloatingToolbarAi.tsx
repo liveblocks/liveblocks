@@ -8,10 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { CoreMessage } from "ai";
+import { ModelMessage } from "ai";
 import { useSelection } from "../hooks/useSelection";
 import { continueConversation } from "../actions/ai";
-import { readStreamableValue } from "ai/rsc";
+import { readStreamableValue } from "@ai-sdk/rsc";
 import {
   $createParagraphNode,
   $createTextNode,
@@ -57,7 +57,7 @@ export function FloatingToolbarAi({
   );
 
   // Store all messages to and from AI
-  const [messages, setMessages] = useState<CoreMessage[]>([]);
+  const [messages, setMessages] = useState<ModelMessage[]>([]);
 
   // Get the last message sent from AI
   const lastAiMessage = useMemo(() => {
@@ -100,7 +100,7 @@ ${textContent || ""}
 `;
 
       // Create new messages with selected text and prompt from user or command panel
-      const newMessages: CoreMessage[] = [
+      const newMessages: ModelMessage[] = [
         ...messages,
         { content: systemMessage, role: "system" },
         { content: prompt, role: "user" },
@@ -226,7 +226,6 @@ ${textContent || ""}
           </button>
         </motion.form>
       </motion.div>
-
       {aiState !== "loading" ? (
         // Don't show command panel when a result is streaming in
         <motion.div
@@ -352,9 +351,7 @@ ${textContent || ""}
                   >
                     Add below paragraph
                   </CommandItem>
-
                   <Command.Separator />
-
                   {aiState === "complete" ? (
                     // Commands to be shown on the completed prompt page
                     <>
@@ -450,7 +447,6 @@ ${lastAiMessage.content}
                       </Fragment>
                     ))
                   )}
-
                   {selectedOption?.children
                     ? selectedOption.children.map((option) => (
                         // If a page is selected, render child items on that page
