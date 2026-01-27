@@ -191,6 +191,14 @@ There are three permission values that you can set on rooms.
     [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
     is `false`.
   </dd>
+  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
+  <dd>
+    Read access with presence and comments. Enables people to edit their
+    presence, view the room&rsquo;s storage, and comment on the document. On the
+    client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `false`.
+  </dd>
   <dt>`[]`</dt>
   <dd>Private. No one can enter the room.</dd>
 </dl>
@@ -399,6 +407,165 @@ const room = await liveblocks.getRoom("a32wQXid4A9");
 // { "ellen@acme.inc": ["room:write"] }
 console.log(room.data.usersAccesses);
 ```
+
+## A concrete example
+
+Your application likely supports multiple organizations. In this example, we’ll
+set up ID token authentication for a multi-organization application. Each
+organization has its own tenant, and each tenant defines its own set of user
+roles aligned with its business requirements. We use the permissions provided by
+Liveblocks to define and enforce access control for each role.
+
+We will use the following roles:
+
+| Role        | Description                 |
+| ----------- | --------------------------- |
+| `admin`     | can do everything           |
+| `commenter` | can comment on the document |
+| `viewer`    | can only view the document  |
+
+Liveblocks provides the following permissions to control access to the room:
+
+| Permission            | Description                                         |
+| --------------------- | --------------------------------------------------- |
+| `room:write`          | full access to the room                             |
+| `room:read`           | read access to the room                             |
+| `room:presence:write` | edit presence (cursor position, avatar, name, etc.) |
+| `comments:write`      | comment on the document                             |
+
+We can map the roles to the permissions as follows:
+
+| Role        | Permissions                                          |
+| ----------- | ---------------------------------------------------- |
+| `admin`     | `room:write`                                         |
+| `commenter` | `room:read`, `room:presence:write`, `comments:write` |
+| `viewer`    | `room:read`, `room:presence:write`                   |
+
+### Tenants
+
+For our example we will have two organizations, each with its own tenant and set
+of roles.
+
+| Organization Name | Tenant     | Available Roles                |
+| ----------------- | ---------- | ------------------------------ |
+| Acme Inc.         | `acme-inc` | `admin`, `commenter`, `viewer` |
+| Lumon             | `lumon`    | `admin`, `commenter`, `viewer` |
+
+#### Setting up rooms and tenants
+
+Here is how we can set up rooms and tenants for each organization.
+
+```ts
+// Setting up a room for the Acme Inc. organization
+// Room ID: acme-inc:document:123
+const room = await liveblocks.createRoom(
+  "acme-inc:document:123", // room id
+  {
+    defaultAccesses: [], // no public access by default
+    tenantId: "acme-inc",
+    groupsAccesses: {
+      admin: ["room:write"],
+      commenter: ["room:read", "room:presence:write", "room:comment:write"],
+      viewer: ["room:read", "room:presence:write"],
+    },
+  }
+);
+
+// Setting up a room for the Lumon organization
+// Room ID: lumon:document:123
+const room = await liveblocks.createRoom(
+  "lumon:document:123", // room id
+  {
+    defaultAccesses: [], // no public access by default
+    tenantId: "lumon",
+    groupsAccesses: {
+      admin: ["room:write"],
+      commenter: ["room:read", "room:presence:write", "comments:write"],
+      viewer: ["room:read", "room:presence:write"],
+    },
+  }
+);
+```
+
+### Users
+
+We will have the following users in our application:
+
+| Name          | User ID                     |
+| ------------- | --------------------------- |
+| Mislav Abha   | `mislav.abha@example.com`   |
+| Charlie Layne | `charlie.layne@example.com` |
+
+#### Authentication
+
+Now each time a user accesses a tenant, we will identify them and set the
+desired role for them.
+
+```ts
+// Identifying Mislav Abha and giving them admin access in the Acme Inc. organization
+const { status, body } = await liveblocks.identifyUser({
+  userId: "mislav.abha@example.com",
+  tenantId: "acme-inc",
+  groupIds: ["admin"],
+});
+
+// Identifying Mislav Abha and giving them commenter access in the Lumon organization
+const { status, body } = await liveblocks.identifyUser({
+  userId: "mislav.abha@example.com",
+  tenantId: "lumon",
+  groupIds: ["commenter"],
+});
+```
+
+```ts
+// Identifying Charlie Layne and giving them admin access in the Lumon organization
+const { status, body } = await liveblocks.identifyUser({
+  userId: "charlie.layne@example.com",
+  tenantId: "lumon",
+  groupIds: ["admin"],
+});
+
+// Identifying Charlie Layne and giving them viewer access in the Acme Inc. organization
+const { status, body } = await liveblocks.identifyUser({
+  userId: "charlie.layne@example.com",
+  tenantId: "acme-inc",
+  groupIds: ["viewer"],
+});
+```
+
+#### Room specific access
+
+To give enhanced permissions to a user in a room we can use `usersAccesses` and
+set the user's `userId` as the key and the permissions as the value when
+creating or updating a room.
+
+```ts
+// Mislav Abha is a commenter in the Lumon tenant except for the lumon:document:123 room, where he has admin access.
+// We update the room to give Mislav admin access.
+const lumonRoom = await liveblocks.updateRoom("lumon:document:123", {
+  usersAccesses: {
+    "mislav.abha@example.com": ["room:write"], // admin access to the room
+  },
+});
+
+// Charlie Layne is a commenter in the Acme Inc. tenant except for the acme-inc:document:123 room, where he has admin access.
+// We update the room to give Charlie admin access.
+const acmeRoom = await liveblocks.updateRoom("acme-inc:document:456", {
+  usersAccesses: {
+    "charlie.layne@example.com": ["room:write"],
+  },
+});
+```
+
+<Figure>
+  <Image
+    src="/assets/authentication/concrete-example.png"
+    alt="Concrete example"
+    width={1494}
+    height={840}
+    quality={90}
+  />
+</Figure>
 
 ## Select your framework [#select-your-framework]
 

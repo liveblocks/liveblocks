@@ -454,5 +454,12 @@
     "topics": ["webhooks", "databases", "rest-api"],
     "technologies": ["yjs", "nodejs"],
     "date": "2025-11-26"
+  },
+  {
+    "title": "How to set up complex permissions and share menus",
+    "path": "/how-to-set-up-complex-permissions-and-share-menus",
+    "topics": ["authentication", "tutorials"],
+    "technologies": ["nodejs"],
+    "date": "2026-01-17"
   }
 ]
