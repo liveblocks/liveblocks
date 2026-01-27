@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.1.19",
+    "@ai-sdk/anthropic": "^3.0.25",
     "@ai-sdk/openai-compatible": "^0.1.17",
     "@liveblocks/client": "^3.13.3",
     "@liveblocks/node": "^3.13.3",
@@ -26,7 +26,7 @@
     "@types/node": "^18.11.19",
     "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
-    "ai": "^4.1.66",
+    "ai": "^6.0.54",
     "next": "16.1.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
