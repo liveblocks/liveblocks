@@ -1290,6 +1290,11 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   backgroundKeepAliveTimeout?: number;
   largeMessageStrategy?: LargeMessageStrategy;
 
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Engine 2 rooms have
+   * native support for streaming. This flag will be removed in a future
+   * version, but will continue to work for existing engine 1 rooms for now.
+   */
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;

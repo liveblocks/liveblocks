@@ -515,6 +515,11 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   largeMessageStrategy?: LargeMessageStrategy;
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Engine 2 rooms have
+   * native support for streaming. This flag will be removed in a future
+   * version, but will continue to work for existing engine 1 rooms for now.
+   */
   unstable_streamData?: boolean;
   /**
    * A function that returns a list of mention suggestions matching a string.
