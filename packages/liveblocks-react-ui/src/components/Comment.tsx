@@ -16,7 +16,6 @@ import {
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
-  useMarkRoomThreadAsRead,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
   useRoomPermissions,
@@ -29,7 +28,6 @@ import type {
   MouseEvent,
   PropsWithChildren,
   ReactNode,
-  RefObject,
   SyntheticEvent,
 } from "react";
 import {
@@ -74,8 +72,6 @@ import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
-import { useIntersectionCallback } from "../utils/use-visible";
-import { useWindowFocus } from "../utils/use-window-focus";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import {
@@ -95,9 +91,8 @@ import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
 
-export interface CommentProps<
-  CM extends BaseMetadata = DCM,
-> extends ComponentPropsWithoutRef<"div"> {
+export interface CommentProps<CM extends BaseMetadata = DCM>
+  extends ComponentPropsWithoutRef<"div"> {
   /**
    * The comment to display.
    */
@@ -184,11 +179,6 @@ export interface CommentProps<
   /**
    * @internal
    */
-  autoMarkReadThreadId?: string;
-
-  /**
-   * @internal
-   */
   actions?: ReactNode;
 
   /**
@@ -197,10 +187,8 @@ export interface CommentProps<
   actionsClassName?: string;
 }
 
-export interface CommentDropdownItemProps extends Omit<
-  ComponentPropsWithoutRef<"div">,
-  "onSelect"
-> {
+export interface CommentDropdownItemProps
+  extends Omit<ComponentPropsWithoutRef<"div">, "onSelect"> {
   /**
    * An optional icon displayed in this dropdown item.
    */
@@ -212,9 +200,8 @@ export interface CommentDropdownItemProps extends Omit<
   onSelect?: (event: Event) => void;
 }
 
-interface CommentReactionButtonProps extends ComponentPropsWithoutRef<
-  typeof Button
-> {
+interface CommentReactionButtonProps
+  extends ComponentPropsWithoutRef<typeof Button> {
   reaction: CommentReactionData;
   overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
@@ -233,7 +220,8 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
 }
 
 interface CommentMentionProps
-  extends CommentBodyMentionProps, CommentPrimitiveMentionProps {
+  extends CommentBodyMentionProps,
+    CommentPrimitiveMentionProps {
   overrides?: CommentProps["overrides"];
 }
 
@@ -557,38 +545,6 @@ export function CommentNonInteractiveFileAttachment({
   );
 }
 
-// A void component (which doesn't render anything) responsible for marking a thread
-// as read when the comment it's used in becomes visible.
-// Moving this logic into a separate component allows us to use the visibility
-// and focus hooks "conditionally" by conditionally rendering this component.
-function AutoMarkReadThreadIdHandler({
-  threadId,
-  roomId,
-  commentRef,
-}: {
-  threadId: string;
-  roomId: string;
-  commentRef: RefObject<HTMLElement>;
-}) {
-  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
-  const isWindowFocused = useWindowFocus();
-
-  useIntersectionCallback(
-    commentRef,
-    (isIntersecting) => {
-      if (isIntersecting) {
-        markThreadAsRead(threadId);
-      }
-    },
-    {
-      // The underlying IntersectionObserver is only enabled when the window is focused
-      enabled: isWindowFocused,
-    }
-  );
-
-  return null;
-}
-
 const CommentDropdownItem = forwardRef<
   HTMLDivElement,
   CommentDropdownItemProps
@@ -649,7 +605,6 @@ export const Comment = Object.assign(
         className,
         actions,
         actionsClassName,
-        autoMarkReadThreadId,
         ...props
       },
       forwardedRef
@@ -813,13 +768,6 @@ export const Comment = Object.assign(
       return (
         <TooltipProvider>
           <ComponentsProvider components={components}>
-            {autoMarkReadThreadId && (
-              <AutoMarkReadThreadIdHandler
-                commentRef={ref}
-                threadId={autoMarkReadThreadId}
-                roomId={comment.roomId}
-              />
-            )}
             <div
               id={comment.id}
               className={cn(

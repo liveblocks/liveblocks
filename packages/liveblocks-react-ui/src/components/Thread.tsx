@@ -5,32 +5,32 @@ import {
   type CommentData,
   type DCM,
   type DTM,
+  findLastIndex,
   Permission,
   type ThreadData,
 } from "@liveblocks/core";
-import { findLastIndex } from "@liveblocks/core";
 import {
+  useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
   useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type {
-  ComponentPropsWithoutRef,
-  ComponentType,
-  ForwardedRef,
-  PropsWithChildren,
-  ReactNode,
-  RefAttributes,
-  SyntheticEvent,
-} from "react";
 import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  type ForwardedRef,
   forwardRef,
   Fragment,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -48,12 +48,44 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
-import type { CommentProps } from "./Comment";
-import { Comment as DefaultComment } from "./Comment";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+import { useIntersectionCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
+import { Comment as DefaultComment, type CommentProps } from "./Comment";
+import { Composer, type ComposerProps } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+
+// An invisible marker used to mark a thread as read only when it becomes visible.
+function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
+  const { id: threadId, roomId } = thread;
+  const ref = useRef<HTMLDivElement>(null);
+  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
+  const isWindowFocused = useWindowFocus();
+
+  useIntersectionCallback(
+    ref,
+    (isIntersecting) => {
+      if (isIntersecting) {
+        markThreadAsRead(threadId);
+      }
+    },
+    {
+      // The underlying IntersectionObserver is only enabled when the window is focused
+      enabled: isWindowFocused,
+    }
+  );
+
+  return (
+    <div
+      ref={ref}
+      style={{ height: 0 }}
+      aria-hidden
+      data-mark-as-read-marker=""
+    >
+      MARKED AS READ
+    </div>
+  );
+}
 
 export interface ThreadComponents<
   _TM extends BaseMetadata = DTM,
@@ -464,6 +496,8 @@ export const Thread = forwardRef(
                 hiddenComments &&
                 index >= hiddenComments.firstIndex &&
                 index <= hiddenComments.lastIndex;
+              const isHiddenBecauseDeleted =
+                !showDeletedComments && !comment.body;
               const isFirstHiddenComment =
                 isHidden && index === hiddenComments.firstIndex;
 
@@ -484,7 +518,7 @@ export const Thread = forwardRef(
                 );
               }
 
-              if (isHidden) {
+              if (isHidden || isHiddenBecauseDeleted) {
                 return null;
               }
 
@@ -509,11 +543,6 @@ export const Thread = forwardRef(
                   onMentionClick={onMentionClick}
                   onAttachmentClick={onAttachmentClick}
                   components={components}
-                  autoMarkReadThreadId={
-                    index === lastCommentIndex && isUnread
-                      ? thread.id
-                      : undefined
-                  }
                   actionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
@@ -617,6 +646,9 @@ export const Thread = forwardRef(
               );
             })}
           </div>
+          {unreadIndex !== undefined && (
+            <MarkThreadAsReadMarker thread={thread} />
+          )}
           {showComposer && (
             <Composer
               className="lb-thread-composer"
