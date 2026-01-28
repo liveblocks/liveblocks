@@ -3666,6 +3666,7 @@ describe("client", () => {
       systemPrompt: "You are a helpful assistant",
       providerModel: "gpt-4o",
       knowledgePrompt: "Use the provided knowledge",
+      alwaysUseKnowledge: false,
       provider: "openai",
       createdAt: new Date("2023-01-01T00:00:00.000Z"),
       updatedAt: new Date("2023-01-02T00:00:00.000Z"),

@@ -9,24 +9,24 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "classnames": "^2.3.2",
-    "next": "14.2.34",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "classnames": "^2.3.3",
+    "next": "16.1.4",
     "next-auth": "^4.23.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@svgr/webpack": "^7.0.0",
-    "@types/node": "^14.14.31",
-    "@types/react": "^18.3.3",
-    "autoprefixer": "^10.2.5",
-    "postcss": "^8.2.13",
-    "prettier": "^3.3.2",
-    "prettier-plugin-tailwindcss": "^0.5.1",
-    "tailwindcss": "^3.1.4",
+    "@types/node": "^14.14.45",
+    "@types/react": "^18.3.27",
+    "autoprefixer": "^10.2.6",
+    "postcss": "^8.2.15",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.5.14",
+    "tailwindcss": "^3.1.8",
     "typescript": "^5.4.5"
   }
 }

@@ -10,19 +10,19 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^6.1.0",
-    "@sveltejs/kit": "^2.9.0",
+    "@sveltejs/adapter-auto": "^6.1.1",
+    "@sveltejs/kit": "^2.9.1",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.23",
     "prettier": "^2.8.8",
     "prettier-plugin-svelte": "^2.10.1",
-    "svelte": "^4.2.19",
+    "svelte": "^4.2.20",
     "tslib": "^2.4.1",
     "typescript": "^5.4.5",
-    "vite": "^5.4.14"
+    "vite": "^5.4.21"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2"
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3"
   }
 }
