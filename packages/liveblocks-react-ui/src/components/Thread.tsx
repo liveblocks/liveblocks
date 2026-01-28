@@ -18,6 +18,7 @@ import {
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
+  ComponentType,
   ForwardedRef,
   PropsWithChildren,
   ReactNode,
@@ -48,11 +49,21 @@ import type {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import type { CommentProps } from "./Comment";
-import { Comment } from "./Comment";
+import { Comment as DefaultComment } from "./Comment";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+
+export interface ThreadComponents<
+  _TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> {
+  /**
+   * The component used to display comments.
+   */
+  Comment: ComponentType<CommentProps<CM>>;
+}
 
 export interface ThreadProps<
   TM extends BaseMetadata = DTM,
@@ -187,7 +198,7 @@ export interface ThreadProps<
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents>;
+  components?: Partial<GlobalComponents & ThreadComponents>;
 }
 
 /**
@@ -231,6 +242,7 @@ export const Thread = forwardRef(
     }: ThreadProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
+    const Comment = components?.Comment ?? DefaultComment;
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
@@ -543,7 +555,7 @@ export const Thread = forwardRef(
                   dropdownItems={({ children }) => {
                     const threadDropdownItems = isFirstComment ? (
                       <>
-                        <Comment.DropdownItem
+                        <DefaultComment.DropdownItem
                           onSelect={handleSubscribeChange}
                           icon={
                             subscriptionStatus === "subscribed" ? (
@@ -556,7 +568,7 @@ export const Thread = forwardRef(
                           {subscriptionStatus === "subscribed"
                             ? $.THREAD_UNSUBSCRIBE
                             : $.THREAD_SUBSCRIBE}
-                        </Comment.DropdownItem>
+                        </DefaultComment.DropdownItem>
                       </>
                     ) : null;
 

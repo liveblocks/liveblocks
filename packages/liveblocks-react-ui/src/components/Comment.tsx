@@ -2,9 +2,11 @@
 
 import {
   assertNever,
+  type BaseMetadata,
   type CommentAttachment,
   type CommentData,
   type CommentReaction as CommentReactionData,
+  type DCM,
   type GroupMentionData,
   MENTION_CHARACTER,
   type MentionData,
@@ -93,11 +95,13 @@ import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
 
-export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
+export interface CommentProps<
+  CM extends BaseMetadata = DCM,
+> extends ComponentPropsWithoutRef<"div"> {
   /**
    * The comment to display.
    */
-  comment: CommentData;
+  comment: CommentData<CM>;
 
   /**
    * How to show or hide the actions.
@@ -193,8 +197,10 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   actionsClassName?: string;
 }
 
-export interface CommentDropdownItemProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "onSelect"> {
+export interface CommentDropdownItemProps extends Omit<
+  ComponentPropsWithoutRef<"div">,
+  "onSelect"
+> {
   /**
    * An optional icon displayed in this dropdown item.
    */
@@ -206,8 +212,9 @@ export interface CommentDropdownItemProps
   onSelect?: (event: Event) => void;
 }
 
-interface CommentReactionButtonProps
-  extends ComponentPropsWithoutRef<typeof Button> {
+interface CommentReactionButtonProps extends ComponentPropsWithoutRef<
+  typeof Button
+> {
   reaction: CommentReactionData;
   overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
@@ -226,8 +233,7 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
 }
 
 interface CommentMentionProps
-  extends CommentBodyMentionProps,
-    CommentPrimitiveMentionProps {
+  extends CommentBodyMentionProps, CommentPrimitiveMentionProps {
   overrides?: CommentProps["overrides"];
 }
 
