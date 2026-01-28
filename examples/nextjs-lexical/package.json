@@ -26,7 +26,7 @@
     "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
     "lexical": "0.35.0",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.2.2"

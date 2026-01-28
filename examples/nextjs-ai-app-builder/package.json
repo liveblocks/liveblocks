@@ -19,7 +19,7 @@
     "@types/node": "^18.11.19",
     "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^6.0.3",

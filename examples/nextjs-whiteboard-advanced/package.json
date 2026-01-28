@@ -13,7 +13,7 @@
     "@liveblocks/node": "^3.13.3",
     "@liveblocks/react": "^3.13.3",
     "nanoid": "^3.1.32",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "perfect-freehand": "^0.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

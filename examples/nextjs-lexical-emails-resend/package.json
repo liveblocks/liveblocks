@@ -32,7 +32,7 @@
     "@types/react-dom": "^18.0.11",
     "clsx": "^2.1.1",
     "lexical": "0.35.0",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-email": "^5.2.5",
