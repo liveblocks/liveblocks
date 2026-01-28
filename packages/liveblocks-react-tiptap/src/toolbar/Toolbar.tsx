@@ -595,7 +595,7 @@ function ToolbarSectionInline() {
         <ToolbarToggle
           name="Strikethrough"
           icon={<StrikethroughIcon />}
-          shortcut="Mod-U"
+          shortcut="Mod-Shift-S"
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"toggleStrike">)
               .toggleStrike()
