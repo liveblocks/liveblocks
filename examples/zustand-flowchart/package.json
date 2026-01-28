@@ -15,7 +15,7 @@
     "@types/node": "18.13.0",
     "@types/react": "18.3.27",
     "@types/react-dom": "18.0.11",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "reactflow": "^11.11.4",

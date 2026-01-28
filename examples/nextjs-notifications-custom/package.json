@@ -15,7 +15,7 @@
     "@liveblocks/react-ui": "^3.13.3",
     "clsx": "^2.1.1",
     "nanoid": "^5.0.9",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.0.13"

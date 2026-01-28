@@ -21,7 +21,7 @@
     "@wavesurfer/react": "^1.0.12",
     "autoprefixer": "^10.4.23",
     "classnames": "^2.5.1",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "postcss": "^8.4.49",
     "react": "18.2.0",
     "react-dom": "18.2.0",

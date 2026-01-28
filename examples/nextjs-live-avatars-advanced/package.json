@@ -14,7 +14,7 @@
     "@liveblocks/react": "^3.13.3",
     "classnames": "^2.3.3",
     "framer-motion": "^10.16.16",
-    "next": "16.1.4",
+    "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
