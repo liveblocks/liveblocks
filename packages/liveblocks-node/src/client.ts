@@ -444,9 +444,9 @@ export type CreateRoomOptions = {
   tenantId?: string;
 
   /**
-   * @private Preferred storage engine version to use when creating the
-   * room. Only takes effect if the room doesn't exist yet. Version
-   * 2 supports streaming and will become the default in the future.
+   * Preferred storage engine version to use when creating the room. Only takes
+   * effect if the room doesn't exist yet. Version 2 can support larger
+   * documents, is more performant, and will become the default in the future.
    */
   engine?: 1 | 2;
 };

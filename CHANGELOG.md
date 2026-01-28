@@ -1,11 +1,35 @@
 ## v3.14.0 (WIP)
 
-(XXX Fine tune this message, but the theme of this release is improving room
-performance. A leaner protocol with less networking overhead, support for using
-room on our new storage engine.)
+This release adds support for opting-in to the new storage engine on a per-room
+basis. The new storage engine can support larger documents, is more performant,
+is considered more stable, and will eventually become our default engine for all
+new rooms in the future.
+
+As of this release, the default storage engine still remains engine version 1.
+
+To give it a try, simply pass `engine: 2` when entering a _new_ room. After a
+room is created, you cannot change the engine it was created with anymore.
+
+For example:
+
+```ts
+// Vanilla JS
+client.enterRoom("my-new-room", { engine: 2 });
+```
+
+or:
+
+```ts
+// In React
+<RoomProvider id="my-new-room" engine={2}>
+  ...
+</RoomProvider>
+```
 
 ### @liveblocks/client
 
+- Support for selecting the preferred engine when entering new rooms:
+  `client.enterRoom("my-new-room", { engine: 2 })`
 - Internal protocol optimizations to support larger storage documents
 - Add new config option `createClient({ baseUrl: "https://..." })` to allow
   connecting to alternative hosted Liveblocks environments
@@ -15,6 +39,8 @@ room on our new storage engine.)
 
 ### @liveblocks/react
 
+- Support for selecting the preferred engine when entering new rooms:
+  `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
 - Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
   connecting to alternative hosted Liveblocks environments
 
