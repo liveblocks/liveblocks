@@ -123,7 +123,11 @@ type DateToString<T> = {
 export type CreateSessionOptions<U extends BaseUserMeta = DU> =
   //
   PartialUnless<U["info"], { userInfo: U["info"] }> & {
+    /**
+     * @deprecated Use `organizationId` instead.
+     */
     tenantId?: string;
+    organizationId?: string;
   };
 
 export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
@@ -139,7 +143,11 @@ export type AuthResponse = {
 type Identity = {
   userId: string;
   groupIds: string[];
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
 };
 
 export type ThreadParticipants = {
@@ -189,6 +197,7 @@ export type RoomData = {
   id: string;
   createdAt: Date;
   lastConnectionAt?: Date;
+  organizationId: string;
   defaultAccesses: RoomPermission;
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
@@ -359,7 +368,11 @@ type S = DS;
 type U = DU;
 
 export type RoomsQueryCriteria = {
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
   userId?: string;
   groupIds?: string[];
   /**
@@ -396,7 +409,11 @@ export type RoomsQueryCriteria = {
 
 export type InboxNotificationsQueryCriteria = {
   userId: string;
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
   /**
    * The query to filter inbox notifications by. It is based on our query language.
    *
@@ -445,7 +462,11 @@ export type CreateRoomOptions = {
   groupsAccesses?: RoomAccesses;
   usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
+  /**
+   * @deprecated Use `organizationId` instead.
+   */
   tenantId?: string;
+  organizationId?: string;
 
   /**
    * @private Preferred storage engine version to use when creating the
@@ -788,7 +809,7 @@ export class Liveblocks {
    * uniquely identify the user account in your system. The uniqueness of this
    * value will determine how many MAUs will be counted/billed.
    *
-   * @param tenantId (optional) The tenant ID to authorize the user for.
+   * @param options.organizationId (optional) The organization ID to authorize the user for.
    *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the
@@ -807,7 +828,7 @@ export class Liveblocks {
       this.#post.bind(this),
       userId,
       options?.userInfo,
-      options?.tenantId
+      options?.organizationId ?? options?.tenantId
     );
   }
 
@@ -857,19 +878,35 @@ export class Liveblocks {
 
     const path = url`/v2/identify-user`;
 
-    const { userId, groupIds, tenantId } =
+    const { userId, groupIds, tenantId, organizationId } =
       typeof identity === "string"
-        ? { userId: identity, groupIds: undefined, tenantId: undefined }
+        ? {
+            userId: identity,
+            groupIds: undefined,
+            tenantId: undefined,
+            organizationId: undefined,
+          }
         : identity;
 
     assertNonEmpty(userId, "userId");
 
-    const body = {
+    const body: {
+      userId: string;
+      groupIds?: string[];
+      organizationId?: string;
+      tenantId?: string;
+      userInfo?: U["info"];
+    } = {
       userId,
       groupIds,
-      tenantId,
       userInfo: options?.userInfo,
     };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
 
     try {
       const resp = await this.#post(path, body);
@@ -901,7 +938,7 @@ export class Liveblocks {
    * @param params.userId (optional) A filter on users accesses.
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
-   * @param params.tenantId (optional) A filter on tenant ID.
+   * @param params.organizationId (optional) A filter on organization ID.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
@@ -920,14 +957,19 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const queryParams = {
+    const queryParams: QueryParams = {
       limit: params.limit,
       startingAfter: params.startingAfter,
       userId: params.userId,
-      tenantId: params.tenantId,
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
       query,
     };
+
+    if (params.organizationId !== undefined) {
+      queryParams.organizationId = params.organizationId;
+    } else if (params.tenantId !== undefined) {
+      queryParams.organizationId = params.tenantId;
+    }
 
     const res = await this.#get(path, queryParams, options);
     if (!res.ok) {
@@ -987,7 +1029,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
-   * @param params.tenantId (optional) The tenant ID to create the room for.
+   * @param params.organizationId (optional) The organization ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
@@ -1002,20 +1044,36 @@ export class Liveblocks {
       usersAccesses,
       metadata,
       tenantId,
+      organizationId,
       engine,
     } = params;
 
+    const body: {
+      id: string;
+      defaultAccesses: RoomPermission;
+      groupsAccesses?: RoomAccesses;
+      usersAccesses?: RoomAccesses;
+      metadata?: RoomMetadata;
+      organizationId?: string;
+      engine?: 1 | 2;
+    } = {
+      id: roomId,
+      defaultAccesses,
+      groupsAccesses,
+      usersAccesses,
+      metadata,
+      engine,
+    };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
+
     const res = await this.#post(
       options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
-      {
-        id: roomId,
-        defaultAccesses,
-        groupsAccesses,
-        usersAccesses,
-        tenantId,
-        metadata,
-        engine,
-      },
+      body,
       options
     );
 
@@ -1036,7 +1094,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
-   * @param params.tenantId (optional) The tenant ID to create the room for.
+   * @param params.organizationId (optional) The organization ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room.
    */
@@ -2074,14 +2132,14 @@ export class Liveblocks {
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
-   * @param params.tenantId (optional) The tenant ID to get the inbox notifications for.
+   * @param params.organizationId (optional) The organization ID to get the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
     params: GetInboxNotificationsOptions,
     options?: RequestOptions
   ): Promise<Page<InboxNotificationData>> {
-    const { userId, tenantId, limit, startingAfter } = params;
+    const { userId, tenantId, organizationId, limit, startingAfter } = params;
 
     let query: string | undefined;
 
@@ -2091,14 +2149,21 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
+    const queryParams: QueryParams = {
+      query,
+      limit,
+      startingAfter,
+    };
+
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
+
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications`,
-      {
-        query,
-        limit,
-        startingAfter,
-        tenantId,
-      },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2120,7 +2185,7 @@ export class Liveblocks {
    *
    * @param criteria.userId The user ID to get the inbox notifications from.
    * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
-   * @param criteria.tenantId (optional) The tenant ID to get the inbox notifications for.
+   * @param criteria.organizationId (optional) The organization ID to get the inbox notifications for.
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
@@ -2151,24 +2216,38 @@ export class Liveblocks {
   /**
    * Returns all room subscription settings for a user.
    * @param params.userId The user ID to get the room subscription settings from.
-   * @param params.tenantId (optional) The tenant ID to get the room subscription settings for.
+   * @param params.organizationId (optional) The organization ID to get the room subscription settings for.
    * @param params.startingAfter (optional) The cursor to start the pagination from.
    * @param params.limit (optional) The number of items to return.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getUserRoomSubscriptionSettings(
-    params: { userId: string; tenantId?: string } & PaginationOptions,
+    params: {
+      userId: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
+      tenantId?: string;
+    } & PaginationOptions,
     options?: RequestOptions
   ): Promise<Page<UserRoomSubscriptionSettings>> {
-    const { userId, tenantId, startingAfter, limit } = params;
+    const { userId, tenantId, organizationId, startingAfter, limit } = params;
+
+    const queryParams: QueryParams = {
+      startingAfter,
+      limit,
+    };
+
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
 
     const res = await this.#get(
       url`/v2/users/${userId}/room-subscription-settings`,
-      {
-        tenantId,
-        startingAfter,
-        limit,
-      },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2295,7 +2374,7 @@ export class Liveblocks {
    * @param params.subjectId The subject ID of the triggered inbox notification.
    * @param params.activityData The activity data of the triggered inbox notification.
    * @param params.roomId (optional) The room ID to trigger the inbox notification for.
-   * @param params.tenantId (optional) The tenant ID to trigger the inbox notification for.
+   * @param params.organizationId (optional) The organization ID to trigger the inbox notification for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async triggerInboxNotification<K extends KDAD>(
@@ -2303,15 +2382,33 @@ export class Liveblocks {
       userId: string;
       kind: K;
       roomId?: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
       tenantId?: string;
       subjectId: string;
       activityData: DAD[K];
     },
     options?: RequestOptions
   ): Promise<void> {
+    const { tenantId, organizationId, ...restParams } = params;
+    const body: typeof restParams & {
+      organizationId?: string;
+      tenantId?: string;
+    } = {
+      ...restParams,
+    };
+
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
+
     const res = await this.#post(
       url`/v2/inbox-notifications/trigger`,
-      params,
+      body,
       options
     );
 
@@ -2348,18 +2445,32 @@ export class Liveblocks {
   /**
    * Deletes all inbox notifications for a user.
    * @param params.userId The user ID for which to delete all the inbox notifications.
-   * @param params.tenantId (optional) The tenant ID to delete the inbox notifications for.
+   * @param params.organizationId (optional) The organization ID to delete the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async deleteAllInboxNotifications(
-    params: { userId: string; tenantId?: string },
+    params: {
+      userId: string;
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
+      tenantId?: string;
+    },
     options?: RequestOptions
   ): Promise<void> {
-    const { userId, tenantId } = params;
+    const { userId, tenantId, organizationId } = params;
+
+    const queryParams: QueryParams = {};
+    if (organizationId !== undefined) {
+      queryParams.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      queryParams.organizationId = tenantId;
+    }
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications`,
-      { tenantId },
+      queryParams,
       options
     );
     if (!res.ok) {
@@ -2445,7 +2556,7 @@ export class Liveblocks {
    * Create a group
    * @param params.groupId The ID of the group to create.
    * @param params.memberIds The IDs of the members to add to the group.
-   * @param params.tenantId (optional) The tenant ID to create the group for.
+   * @param params.organizationId (optional) The organization ID to create the group for.
    * @param params.scopes (optional) The scopes to grant to the group. The default is `{ mention: true }`.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
@@ -2453,22 +2564,34 @@ export class Liveblocks {
     params: {
       groupId: string;
       memberIds?: string[];
+      organizationId?: string;
+      /**
+       * @deprecated Use `organizationId` instead.
+       */
       tenantId?: string;
       scopes?: GroupScopes;
     },
     options?: RequestOptions
   ): Promise<GroupData> {
-    const res = await this.#post(
-      url`/v2/groups`,
-      {
-        ...params,
+    const { tenantId, organizationId, ...restParams } = params;
+    const body: typeof restParams & {
+      id: string;
+      organizationId?: string;
+      tenantId?: string;
+    } = {
+      ...restParams,
+      // The REST API uses `id` since a group is a resource,
+      // but we use `groupId` here for consistency with the other methods.
+      id: params.groupId,
+    };
 
-        // The REST API uses `id` since a group is a resource,
-        // but we use `groupId` here for consistency with the other methods.
-        id: params.groupId,
-      },
-      options
-    );
+    if (organizationId !== undefined) {
+      body.organizationId = organizationId;
+    } else if (tenantId !== undefined) {
+      body.organizationId = tenantId;
+    }
+
+    const res = await this.#post(url`/v2/groups`, body, options);
 
     if (!res.ok) {
       throw await LiveblocksError.from(res);
