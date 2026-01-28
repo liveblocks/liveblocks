@@ -23,12 +23,12 @@
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/react-ai-chats",
+            "path": "/get-started/react-ai-chat",
             "hidden": true
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/nextjs-ai-chats",
+            "path": "/get-started/nextjs-ai-chat",
             "hidden": true
           },
           {
