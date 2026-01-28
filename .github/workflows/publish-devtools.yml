@@ -87,6 +87,6 @@ jobs:
         run: npx --no turbo run build:firefox --filter=@liveblocks/devtools
 
       - name: Browser Platform Publish
-        uses: PlasmoHQ/bpp@v3
+        uses: PlasmoHQ/bpp@c15984c0a74f452851c605cab46f34d9fd6cb158 # v3.8.0
         with:
           keys: ${{ secrets.DEVTOOLS_PUBLISHING_KEYS }}
