@@ -9,18 +9,17 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@react-three/drei": "^9.16.0",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@react-three/drei": "^9.16.1",
     "@react-three/fiber": "^8.0.27",
-    "next": "^12.1.6",
-    "next-transpile-modules": "^9.0.0",
-    "react": "^18.2.0",
+    "next": "^16.1.4",
+    "react": "^18.3.1",
     "react-colorful": "^5.5.1",
-    "react-dom": "^18.2.0",
+    "react-dom": "^18.3.1",
     "three": "^0.143.0"
   },
   "devDependencies": {
-    "prettier": "^3.3.2"
+    "prettier": "^3.3.3"
   }
 }

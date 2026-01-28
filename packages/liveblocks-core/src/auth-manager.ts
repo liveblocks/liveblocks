@@ -236,12 +236,8 @@ export function createAuthManager(
         BUFFER;
 
       seenTokens.add(token.raw);
-
-      // Legacy tokens should not get cached
-      if (token.parsed.k !== TokenKind.SECRET_LEGACY) {
-        tokens.push(token);
-        expiryTimes.push(expiresAt);
-      }
+      tokens.push(token);
+      expiryTimes.push(expiresAt);
 
       return { type: "secret", token };
     } finally {

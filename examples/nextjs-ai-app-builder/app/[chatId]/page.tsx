@@ -7,22 +7,23 @@ import { Editor } from "./_components/editor";
 import { Header } from "./_components/header";
 import Chat from "./_components/chat";
 import { Preview } from "./_components/preview";
-import { useState } from "react";
+import { useState, use } from "react";
 
-export default function Page({ params }: { params: { chatId: string } }) {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   const [panel, setPanel] = useState<"preview" | "editor">("preview");
-  const { status, toolName } = useAiChatStatus(params.chatId);
+  const { status, toolName } = useAiChatStatus(chatId);
 
   return (
-    <Room chatId={params.chatId}>
+    <Room chatId={chatId}>
       <div className="flex flex-col h-full w-full gap-2.5 overflow-hidden">
         <header>
-          <Header chatId={params.chatId} />
+          <Header chatId={chatId} />
         </header>
 
         <main className="grow flex  min-h-0">
           <div className="grow-0 w-[380px] rounded-lg overflow-hidden">
-            <Chat chatId={params.chatId} />
+            <Chat chatId={chatId} />
           </div>
 
           <div className="mb-2.5 mr-2.5 relative grow shadow rounded-lg overflow-hidden ring-1 ring-neutral-950/5 bg-white flex flex-col">
@@ -61,14 +62,14 @@ export default function Page({ params }: { params: { chatId: string } }) {
                   // opacity: generating ? 0.7 : 1,
                 }}
               >
-                <Preview chatId={params.chatId} />
+                <Preview chatId={chatId} />
               </div>
               <div
                 style={{
                   display: panel === "editor" ? "block" : "none",
                 }}
               >
-                <Editor chatId={params.chatId} />
+                <Editor chatId={chatId} />
               </div>
             </div>
           </div>

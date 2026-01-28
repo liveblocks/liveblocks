@@ -1,9 +1,8 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-ui/styles/dark/media-query.css";
 
 :root {
   --accent: theme("colors.pink.600");

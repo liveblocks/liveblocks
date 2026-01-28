@@ -45,7 +45,7 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
   ClientMsg,
@@ -70,7 +70,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
@@ -1461,9 +1461,8 @@ export function createRoom<
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
           context.staticSessionInfoSig.set({
-            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-            userInfo:
-              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+            userId: token.uid,
+            userInfo: token.ui,
           });
         } else {
           context.staticSessionInfoSig.set({
@@ -2064,9 +2063,8 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // Explicit case to handle incoming "AckOp"s, which are supposed to be
-    // no-ops.
-    if (isAckOp(op)) {
+    // Explicit case to handle ignored Ops
+    if (isIgnoredOp(op)) {
       return { modified: false };
     }
 

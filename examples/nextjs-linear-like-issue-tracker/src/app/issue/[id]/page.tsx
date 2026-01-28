@@ -8,10 +8,11 @@ import { DisplayWhenInboxOpen } from "@/components/InboxContext";
 export const revalidate = 0;
 
 export default async function PageHome({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   return (
     <Room issueId={id}>
       <div className="flex flex-row h-full">

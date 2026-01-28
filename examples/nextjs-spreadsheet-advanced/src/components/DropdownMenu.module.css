@@ -13,9 +13,6 @@
     0 2px 6px rgb(31 41 55 / 8%),
     0 8px 24px -2px rgb(31 41 55 / 16%);
   user-select: none;
-}
-
-.menu:global {
   animation: appear both 0.12s ease-in-out;
 }
 
