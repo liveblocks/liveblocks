@@ -1830,10 +1830,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     resolveRoomsInfo: useInitialUnlessFunction(o.resolveRoomsInfo),
     resolveGroupsInfo: useInitialUnlessFunction(o.resolveGroupsInfo),
 
-    baseUrl: useInitial(
-      // @ts-expect-error - Hidden config options
-      o.baseUrl as string | undefined
-    ),
+    baseUrl: useInitial(o.baseUrl),
     enableDebugLogging: useInitial(
       // @ts-expect-error - Hidden config options
       o.enableDebugLogging as boolean | undefined

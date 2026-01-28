@@ -72,18 +72,22 @@ import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageStateServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+} from "./protocol/StorageNode";
+import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -98,7 +102,6 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
 import type {
   BadgeLocation,
   InternalOthersEvent,
@@ -1355,6 +1358,24 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+function makeNodeMapBuffer() {
+  let map: NodeMap = new Map();
+  return {
+    /** Append a "page" of nodes to the current NodeMap buffer. */
+    append(chunk: NodeStream) {
+      for (const [id, node] of chunk) {
+        map.set(id, node);
+      }
+    },
+    /** Return the contents of the current NodeMap buffer, and create a fresh new one. */
+    take(): NodeMap {
+      const result = map;
+      map = new Map();
+      return result;
+    },
+  };
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1448,6 +1469,11 @@ export function createRoom<
     activeBatch: null,
     unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
+
+  // Accumulates nodes as initial storage arrives in chunks via
+  // STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // done: true), the complete map is passed to processInitialStorage().
+  const nodeMapBuffer = makeNodeMapBuffer();
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
@@ -1821,15 +1847,27 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(message: StorageStateServerMsg) {
-    if (message.items.length === 0) {
+  function createOrUpdateRootFromMessage(nodes: NodeMap) {
+    if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items);
+      const currentItems: NodeMap = new Map();
+      for (const [id, crdt] of context.pool.nodes) {
+        currentItems.set(id, crdt._serialize());
+      }
+
+      // Get operations that represent the diff between 2 states.
+      const ops = getTreesDiffOperations(currentItems, nodes);
+
+      const result = applyRemoteOps(ops);
+      notify(result.updates);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, context.pool);
+      context.root = LiveObject._fromItems<S>(
+        nodes as NodeStream,
+        context.pool
+      );
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1851,23 +1889,6 @@ export function createRoom<
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
     context.undoStack.length = stackSizeBefore;
-  }
-
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
-    }
-
-    // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
-
-    const result = applyRemoteOps(ops);
-    notify(result.updates);
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -2283,9 +2304,7 @@ export function createRoom<
     if (!isJsonObject(data)) {
       return null;
     }
-
     return data as ServerMsg<P, U, E>;
-    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
@@ -2387,12 +2406,13 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message);
+        case ServerMsgCode.STORAGE_CHUNK:
+          nodeMapBuffer.append(compactNodesToNodeStream(message.nodes));
           break;
-        }
+
+        case ServerMsgCode.STORAGE_STREAM_END:
+          processInitialStorage(nodeMapBuffer.take());
+          break;
 
         case ServerMsgCode.UPDATE_STORAGE: {
           const applyResult = applyRemoteOps(message.ops);
@@ -2438,6 +2458,7 @@ export function createRoom<
           break;
         }
 
+        case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
           break;
@@ -2571,9 +2592,9 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: StorageStateServerMsg) {
+  function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message);
+    createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
@@ -2583,8 +2604,10 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE, items });
+    const nodes = new Map<string, SerializedCrdt>(
+      await httpClient.streamStorage({ roomId })
+    );
+    processInitialStorage(nodes);
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2598,6 +2621,7 @@ export function createRoom<
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      nodeMapBuffer.take(); // Reset any partial state from previous fetch
     }
 
     if (options.flush) {
@@ -3464,7 +3488,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

@@ -84,7 +84,6 @@ export default function HtmlStreamingPage({
     <main className="h-screen w-full">
       <LiveblocksProvider
         authEndpoint="/api/auth/liveblocks"
-        // @ts-expect-error
         baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       >
         <ClientSideSuspense fallback={null}>

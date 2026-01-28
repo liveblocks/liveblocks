@@ -6,13 +6,18 @@ import type {
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
-  IdTuple,
   RoomStateServerMsg,
-  SerializedCrdt,
   ServerMsg,
+  StorageNode,
   UpdatePresenceServerMsg,
 } from "@liveblocks/core";
-import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
+import {
+  ClientMsgCode,
+  CrdtType,
+  nodeStreamToCompactNodes,
+  OpCode,
+  ServerMsgCode,
+} from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -138,7 +143,7 @@ async function prepareWithStorage<TState>(
     storageMapping: Mapping<TState>;
     presenceMapping: Mapping<TState>;
     room?: string;
-    items: IdTuple<SerializedCrdt>[];
+    items: StorageNode[];
   }
 ) {
   const { client, store } = prepareClientAndStore(stateCreator, {
@@ -151,8 +156,13 @@ async function prepareWithStorage<TState>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMsgCode.STORAGE_STATE,
-      items: options.items,
+      type: ServerMsgCode.STORAGE_CHUNK,
+      nodes: Array.from(nodeStreamToCompactNodes(options.items)),
+    }),
+  } as MessageEvent);
+  socket.callbacks.message[0]!({
+    data: JSON.stringify({
+      type: ServerMsgCode.STORAGE_STREAM_END,
     }),
   } as MessageEvent);
 
@@ -170,7 +180,7 @@ async function prepareWithStorage<TState>(
 }
 
 async function prepareBasicStoreWithStorage(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   options?: { room?: string }
 ) {
   return prepareWithStorage(basicStateCreator, {
@@ -206,8 +216,13 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: [obj("root", {})],
+        type: ServerMsgCode.STORAGE_CHUNK,
+        nodes: [["root", {}]],
+      }),
+    } as MessageEvent);
+    socket.callbacks.message[0]!({
+      data: JSON.stringify({
+        type: ServerMsgCode.STORAGE_STREAM_END,
       }),
     } as MessageEvent);
 
@@ -248,9 +263,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       await waitFor(() => socket.sentMessages[1] != null);
@@ -278,9 +291,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
     });
 
@@ -299,9 +310,7 @@ describe("middleware", () => {
           targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
+        { type: ClientMsgCode.FETCH_STORAGE },
       ]);
 
       store.getState().setCursor({ x: 1, y: 1 });
@@ -575,7 +584,7 @@ describe("middleware", () => {
                 opId: "0:1",
                 type: OpCode.CREATE_OBJECT,
                 parentId: "1:0",
-                parentKey: '"',
+                parentKey: "!!",
                 data: { text: "B" },
               },
             ],

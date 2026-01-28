@@ -1,3 +1,23 @@
+## v3.14.0 (WIP)
+
+(XXX Fine tune this message, but the theme of this release is improving room
+performance. A leaner protocol with less networking overhead, support for using
+room on our new storage engine.)
+
+### @liveblocks/client
+
+- Internal protocol optimizations to support larger storage documents
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow
+  connecting to alternative hosted Liveblocks environments
+- Improve `LiveList` performance when processing large batches of operations
+- Improve `LiveList.push()` efficiency to prevent unbounded position string
+  growth over time
+
+### @liveblocks/react
+
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
+  connecting to alternative hosted Liveblocks environments
+
 ## vNEXT (not yet released)
 
 - ...
