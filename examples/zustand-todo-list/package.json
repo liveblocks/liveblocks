@@ -9,18 +9,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/zustand": "^3.13.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "zustand": "^5.0.1"
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/zustand": "^3.13.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
     "@vitejs/plugin-react": "^4.0.4",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5",
-    "vite": "^4.5.9"
+    "vite": "^4.5.14"
   }
 }

@@ -12,24 +12,24 @@
   "dependencies": {
     "@blocknote/core": "^0.41.1",
     "@blocknote/mantine": "^0.41.1",
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@liveblocks/react-blocknote": "^3.13.2",
-    "@liveblocks/react-ui": "^3.13.2",
-    "@radix-ui/react-dialog": "^1.1.2",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@liveblocks/react-blocknote": "^3.13.3",
+    "@liveblocks/react-ui": "^3.13.3",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-popover": "^1.0.7",
-    "@types/node": "^20.3.1",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.2.5",
-    "next": "14.2.34",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.2.25",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "typescript": "^5.2.2"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.19",
-    "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.4"
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.19"
   }
 }

@@ -120,9 +120,14 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
 
   // If room exists, create userAccesses element for new collaborator with passed access level
   const userAccess = documentAccessToRoomAccesses(access);
+
+  // TODO - Type this better after package fixes
   const usersAccesses: Record<
     string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
+    | ["room:write"]
+    | ["room:read", "room:presence:write"]
+    | ["room:read", "room:presence:write", "comments:write"]
+    | null
   > = {
     [userId]: userAccess.length === 0 ? null : userAccess,
   };
@@ -131,7 +136,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      usersAccesses,
+      usersAccesses: usersAccesses as any, // TODO - Type this better after package fixes
     });
   } catch (err) {
     return {

@@ -10,19 +10,19 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/zustand": "^3.13.2",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/zustand": "^3.13.3",
     "@types/node": "18.13.0",
-    "@types/react": "18.3.3",
+    "@types/react": "18.3.27",
     "@types/react-dom": "18.0.11",
-    "next": "13.1.6",
+    "next": "^16.1.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "reactflow": "^11.11.4",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

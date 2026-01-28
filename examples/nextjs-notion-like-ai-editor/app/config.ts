@@ -1,6 +1,7 @@
-import { OpenAIChatModelId } from "@ai-sdk/openai/internal/dist";
+import { openai } from "@ai-sdk/openai";
+import { LanguageModel } from "ai";
 
-export const aiModel: OpenAIChatModelId = "gpt-4o-mini";
+export const aiModel: LanguageModel = openai("gpt-5.2-codex");
 
 export function getRoomId(pageId: string) {
   return `liveblocks:examples:${pageId}`;
