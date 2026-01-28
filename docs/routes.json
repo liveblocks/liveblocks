@@ -43,12 +43,37 @@
           },
           {
             "title": "Notifications",
-            "path": "/get-started/react-notifications-inapp",
+            "path": "/get-started/react-notifications-in-app",
             "hidden": true
           },
           {
             "title": "Notifications",
-            "path": "/get-started/nextjs-notifications-inapp",
+            "path": "/get-started/nextjs-notifications-in-app",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications-webhooks",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications-email",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications-slack",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications-teams",
+            "hidden": true
+          },
+          {
+            "title": "Notifications",
+            "path": "/get-started/nextjs-notifications-push",
             "hidden": true
           },
           {
