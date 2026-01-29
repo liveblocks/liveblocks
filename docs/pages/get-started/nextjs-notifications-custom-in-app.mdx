@@ -149,13 +149,13 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
   </Step>
 
-  <Step>
+   <Step>
     <StepTitle>Trigger a custom notification</StepTitle>
     <StepContent>
 
       Trigger a custom notification using
       [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
-      from a server action or route handler.  In this example, we’ll create a custom `$fileUploaded` notification.
+      from a server action or route handler. In this example, a custom `$fileUploaded` notification is sent.
 
       ```ts
       "use server";
@@ -177,8 +177,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
           // Custom data for this notification
           activityData: {
             file: "https://example.com/my-file.zip",
-            size: 256,
-            success: true,
+            status: "pending",
           },
         });
 

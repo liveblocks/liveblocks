@@ -1,0 +1,136 @@
+---
+meta:
+  title:
+    "Get started with Slack custom notifications using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to get started with Slack custom notifications using Liveblocks
+    and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding Slack
+custom notifications to your Next.js `/app` directory application using methods
+from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks Node</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+
+   <Step>
+    <StepTitle>Trigger a custom notification</StepTitle>
+    <StepContent>
+
+      Trigger a custom notification using
+      [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+      from a server action or route handler. In this example, a custom `$fileUploaded` notification is sent.
+
+      ```ts
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      // Call this in your app to create a custom notification
+      export async function triggerCustomNotification() {
+        await liveblocks.triggerInboxNotification({
+          // The user that will receive the notification
+          userId: "steven@example.com",
+          kind: "$fileUploaded",
+          subjectId: "my-file",
+
+          // Custom data for this notification
+          activityData: {
+            file: "https://example.com/my-file.zip",
+            status: "pending",
+          },
+        });
+
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Follow our guide</StepTitle>
+    <StepContent>
+
+      Follow our step-by-step guide to learn set up Slack notifications.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app">
+          How to notify users with Slack
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You've set up Slack notifications in your Next.js application.
+
+- [Webhooks API reference](/docs/platform/webhooks)
+- [Node.js API reference](/docs/api-reference/liveblocks-node)
+- [How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)
+
+---
+
+## Examples using Notifications
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notification settings",
+      slug: "notification-settings/nextjs-notification-settings",
+      image: "/images/examples/thumbnails/notification-settings.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI Editor",
+      slug: "notion-like-ai-editor/nextjs-notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Comments notifications",
+      slug: "https://liveblocks.io/examples/comments-emails",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+</ListGrid>

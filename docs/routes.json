@@ -82,6 +82,31 @@
             "hidden": true
           },
           {
+            "title": "Custom notifications / Slack",
+            "path": "/get-started/nextjs-notifications-custom-slack",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Email",
+            "path": "/get-started/nextjs-notifications-custom-email",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Webhooks",
+            "path": "/get-started/nextjs-notifications-custom-webhooks",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Teams",
+            "path": "/get-started/nextjs-notifications-custom-teams",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Push",
+            "path": "/get-started/nextjs-notifications-custom-push",
+            "hidden": true
+          },
+          {
             "title": "Tiptap",
             "path": "/get-started/react-tiptap",
             "hidden": true
