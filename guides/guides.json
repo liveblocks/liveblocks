@@ -461,5 +461,12 @@
     "topics": ["comments", "tutorials", "webhooks", "notifications"],
     "technologies": ["react-ui", "nodejs"],
     "date": "2026-01-23"
+  },
+  {
+    "title": "How to notify users about unread custom notifications outside of your app",
+    "path": "/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app",
+    "topics": ["notifications", "tutorials", "webhooks"],
+    "technologies": ["react-ui", "nodejs"],
+    "date": "2026-01-29"
   }
 ]

@@ -67,12 +67,12 @@ Learn more about Notifications for Comments in the
 Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
 send requests to your API endpoint when certain events occurs. One webhook we
 provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
-webhook, which is triggered for each participating user in a thread, 30 minutes
-after activity has occurred, and this can be used to send emails to your users.
+webhook, which is triggered for each participating user in a thread, and can be
+used to send external notifications to your users.
 
 The information it returns allows you to retrieve comments that have not yet
 been read by the user, making it possible to aggregate multiple unread comments
-into a single notification email. Let’s take a look at how to set this up.
+into a single external notification. Let’s take a look at how to set this up.
 
 ### Notification channels
 
@@ -223,7 +223,7 @@ has been created.
 <Step>
   <StepTitle>Create an endpoint</StepTitle>
   <StepContent>
-    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    Click the **“Add endpoint…”** button on the webhooks dashboard to start
     setting up your webhook.
     <Figure>
       <Image
@@ -253,10 +253,26 @@ has been created.
 </Step>
 
 <Step>
+  <StepTitle>Enable notification webhook events</StepTitle>
+  <StepContent>
+    Check the **“notification”** event in the dialog to enable the correct
+    webhooks events.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-notification-webhook.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
   <StepTitle>Get your webhook secret key</StepTitle>
   <StepContent>
-    Click **“Create endpoint”** at the bottom, then find your **“Secret key”**
-    on the next page, and copy it.
+    Click **“Add endpoint”** at the bottom, then find your **“Secret key”** on
+    the next page, and copy it.
     <Figure>
       <Image
         src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
@@ -272,8 +288,7 @@ has been created.
     <StepTitle>Webhooks dashboard is set up!</StepTitle>
 
     <StepContent>
-      Note that you can filter specifically for `notification` events, but we’re
-      ignoring this for now so we can test more easily. Let’s go back to the
+      Notification webhooks are set up! Let’s go back to the
       code.
     </StepContent>
 
@@ -658,7 +673,7 @@ options.
 
 ## Send external notifications
 
-Now that the React code has been generated, we can send the external
+Now that the comment’s body has been formatted, we can send the external
 notifications. In this example, we’re sending our markdown to an incoming
 webhook in Slack.
 
