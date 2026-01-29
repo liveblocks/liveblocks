@@ -68,7 +68,7 @@
           },
           {
             "title": "Notifications / Teams",
-            "path": "/get-started/nextjs-notifications-teams",
+            "path": "/get-started/nextjs-notifications-microsoft-teams",
             "hidden": true
           },
           {
@@ -98,7 +98,7 @@
           },
           {
             "title": "Custom notifications / Teams",
-            "path": "/get-started/nextjs-notifications-custom-teams",
+            "path": "/get-started/nextjs-notifications-custom-microsoft-teams",
             "hidden": true
           },
           {
