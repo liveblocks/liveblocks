@@ -137,6 +137,11 @@
             "hidden": true
           },
           {
+            "title": "Tldraw",
+            "path": "/get-started/nextjs-tldraw",
+            "hidden": true
+          },
+          {
             "title": "Redux",
             "path": "/get-started/redux",
             "hidden": true
