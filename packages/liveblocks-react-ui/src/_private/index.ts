@@ -12,9 +12,11 @@ export {
   TooltipProvider,
 } from "../components/internal/Tooltip";
 export { User } from "../components/internal/User";
+export { useLiveblocksUiConfig } from "../config";
 export * from "../icons";
 export { capitalize } from "../utils/capitalize";
 export { cn } from "../utils/cn";
+export { Portal } from "../utils/Portal";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";
 
