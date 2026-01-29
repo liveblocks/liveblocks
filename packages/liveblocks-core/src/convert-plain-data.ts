@@ -210,7 +210,6 @@ export function convertToGroupData(data: GroupDataPlain): GroupData {
 
   return {
     ...data,
-    organizationId: data.organizationId ?? data.tenantId,
     createdAt,
     updatedAt,
     members,

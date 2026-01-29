@@ -226,6 +226,9 @@ describe("authorization (new API)", () => {
     );
   });
 
+  /**
+   * @deprecated Use organizationId instead.
+   */
   test("can set tenantId when creating session", () => {
     const session = makeSession({ tenantId: "tenant-123" });
     expect(session).toBeDefined();
@@ -252,6 +255,9 @@ describe("authorization (new API)", () => {
     expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
   });
 
+  /**
+   * @deprecated Use organizationId instead.
+   */
   test("tenantId can be passed through client prepareSession", () => {
     const client = new Liveblocks({
       secret: "sk_testingtesting",
