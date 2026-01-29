@@ -1,0 +1,174 @@
+---
+meta:
+  title: "How to set up complex permissions and share menus"
+  description:
+    "Learn how to set up permissions like you'll find in apps such as Notion,
+    Figma, Google Docs."
+---
+
+Using Liveblocks, it’s possible to build complex organization and document-level
+access controls, like you’ll find in apps such as Notion, Figma, Google Docs,
+using Liveblocks' organizations and permissions features. In this realistic
+example, each organization has its own workspace, with its own set of users and
+documents.
+
+[Image of next.js starter kit's new org switcher]
+
+Inside each document, you can create a share menu that allows you to:
+
+- Invite users and set their permissions using `usersAccesses`.
+- Set permissions for whole organizations using `groupsAccesses`.
+- Choose to make the document publicly available using `defaultAccesses`.
+
+[Image of next.js starter kit's new share menu, "Everyone with a link" is
+visible]
+
+## Users and organizations
+
+[explain about organizationId and userId, and show a couple of real users/orgs]
+
+## Setting up documents
+
+Each Liveblocks room represents a document, and in our example, each document
+will start private. To set up a room, use the
+[`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms)
+method, making sure to pass the organization’s ID`.
+
+```ts
+const room = await liveblocks.createRoom("acme:document-123", {
+  defaultAccesses: [],
+  organizationId: "acme",
+});
+```
+
+It may be helpful to prefix the document ID with the organization’s ID to make
+it easier to identify the document.
+
+## Authenticating your users
+
+[auth your users to to the correct workspace and also pass `acme` as groupId so
+we can later add individual orgs to different documents]
+
+```ts
+const { status, body } = await liveblocks.identifyUser({
+  userId: "florent@example.com",
+  organizationId: "acme",
+  groupIds: ["acme"],
+});
+```
+
+[note that tenantId has to be the ID of the current room, you need to fetch it
+and pass it to identifyUser, real example below]
+
+[NOTE: this is not possible until after we have added tenantId/organizationId to
+the room object on our node package]
+
+```ts
+export async function POST(request: Request) {
+  const { roomId } = await request.json();
+
+  let room;
+  try {
+    room = await liveblocks.getRoom(roomId);
+  } catch (error) {
+    console.error(error);
+    return new Response(JSON.stringify({ error }), {
+      status: 404,
+    });
+  }
+
+  const organizationId = room.organizationId;
+  const user = await __getSession__();
+
+  if (!__hasAccessToOrganization__(user, organizationId)) {
+    return new Response(
+      JSON.stringify({
+        error: `User does not have access to ${organizationId}`,
+      }),
+      {
+        status: 403,
+      }
+    );
+  }
+
+  const { status, body } = await liveblocks.identifyUser(
+    {
+      userId: user.id,
+      organizationId: organizationId,
+      groupIds: ["acme"],
+    },
+    {
+      userInfo: {
+        name: user.info.name,
+        avatar: user.info.avatar,
+        color: user.info.color,
+      },
+    }
+  );
+
+  return new Response(body, { status });
+}
+```
+
+## Modifying document access
+
+[different access levels inside documents, start private by default]
+
+| Role      | Description                                                                                                 | Liveblocks permission type                               |
+| --------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Admin     | Full access. Can edit the document, use presence, and leave comments.                                       | `["room:write"]`                                         |
+| Commenter | Comment & read access. Can view the document, use presence, and leave comments. _Cannot_ edit the document. | `["room:read", "room:presence:write", "comments:write"]` |
+| Viewer    | Read-only access. Can view the document, and use presence. _Cannot_ edit the document, or leave comments.   | `["room:read", "room:presence:write"]`                   |
+| Default   | No access. _Cannot_ view or edit the document, use presence, or leave comments.                             | `[]`                                                     |
+
+### Change user access
+
+[how to add or change a users access]
+
+```ts title="Making Florent an admin"
+const room = await liveblocks.updateRoom("acme:document-123", {
+  // +++
+  usersAccesses: {
+    "florent@example.com": ["room:write"],
+  },
+  // +++
+});
+```
+
+[Image of next.js starter kit's new share menu, "Invited florent@example.com"
+visible]
+
+### Change group access
+
+[how to add or change a groups access]
+
+```ts title="Giving Acme Inc. commenting access"
+const room = await liveblocks.updateRoom("acme:document-123", {
+  // +++
+  groupsAccesses: {
+    acme: ["room:read", "room:presence:write", "comments:write"],
+  },
+  // +++
+});
+```
+
+[Image of next.js starter kit's new share menu, "Everyone in Acme" is visible]
+
+### Change default access
+
+[how to change the default access, rooms start private by default]
+
+```ts title="Making the document read-only for the public"
+const room = await liveblocks.updateRoom("acme:document-123", {
+  // +++
+  defaultAccesses: ["room:read", "room:presence:write"],
+  // +++
+});
+```
+
+[Image of next.js starter kit's new share menu, "Everyone with a link" is
+visible]
+
+## Summary
+
+[summarise key points of the guide]
