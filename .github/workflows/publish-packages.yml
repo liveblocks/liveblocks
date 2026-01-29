@@ -12,6 +12,10 @@ on:
 
 run-name: Publishing ${{ github.event.inputs.tag }} packages
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -70,7 +74,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22.21.0"
-          registry-url: "https://registry.npmjs.org"
 
       - name: Setup git config
         run: |
@@ -98,9 +101,6 @@ jobs:
 
       - name: Publish packages
         env:
-          # setup-node created .npmrc file to publish to npm
-          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
         run:

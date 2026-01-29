@@ -10,6 +10,10 @@ on:
           "NPM version to publish (use format v2.YYYYMMDD.0). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -67,8 +71,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
-          registry-url: "https://registry.npmjs.org"
+          node-version: "22.21.0"
 
       - name: Setup git config
         run: |
@@ -88,9 +91,6 @@ jobs:
 
       - name: Publish packages
         env:
-          # setup-node created .npmrc file to publish to npm
-          # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.value }}
           NPM_TAG: ${{ steps.npm_tag.outputs.value }}
         run:
