@@ -141,9 +141,8 @@ function collectAttachmentPoints(
     if (value instanceof LiveObject) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       points.push({ type: "object", node: value as LiveObject<LsonObject> });
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      for (const key of Object.keys(value.toObject())) {
-        visit(value.get(key));
+      for (const child of Object.values(value.toObject())) {
+        visit(child);
       }
     } else if (value instanceof LiveList) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -160,8 +159,8 @@ function collectAttachmentPoints(
     }
   }
 
-  for (const key of Object.keys(root.toObject())) {
-    visit(root.get(key));
+  for (const child of Object.values(root.toObject())) {
+    visit(child);
   }
 
   return points;
@@ -252,36 +251,30 @@ function Sandbox({ roomId }: { roomId: string }) {
   );
 
   const shrink = useMutation(({ storage }, count: number, times: number) => {
-    for (let t = 0; t < times; t++) {
-      for (let i = 0; i < count; i++) {
-        const points = collectAttachmentPoints(storage);
-        // Filter to points that have something to remove
-        const nonEmpty = points.filter((p) => {
-          if (p.type === "object")
-            return Object.keys(p.node.toObject()).length > 0;
-          if (p.type === "list") return p.node.length > 0;
-          if (p.type === "map") return p.node.size > 0;
-          return false;
-        });
+    const points = collectAttachmentPoints(storage);
+    const totalDeletes = count * times;
+    const maxAttempts = totalDeletes * 3; // Allow some retries for empty points
 
-        if (nonEmpty.length === 0) break;
+    let deleted = 0;
+    for (let attempt = 0; attempt < maxAttempts && deleted < totalDeletes; attempt++) {
+      const point = points[randomInt(points.length)];
 
-        const point = nonEmpty[randomInt(nonEmpty.length)];
-
-        if (point.type === "object") {
-          const keys = Object.keys(point.node.toObject());
-          if (keys.length > 0) {
-            point.node.delete(keys[randomInt(keys.length)]);
-          }
-        } else if (point.type === "list") {
-          if (point.node.length > 0) {
-            point.node.delete(randomInt(point.node.length));
-          }
-        } else {
-          const keys = Array.from(point.node.keys());
-          if (keys.length > 0) {
-            point.node.delete(keys[randomInt(keys.length)]);
-          }
+      if (point.type === "object") {
+        const keys = Object.keys(point.node.toObject());
+        if (keys.length > 0) {
+          point.node.delete(keys[randomInt(keys.length)]);
+          deleted++;
+        }
+      } else if (point.type === "list") {
+        if (point.node.length > 0) {
+          point.node.delete(randomInt(point.node.length));
+          deleted++;
+        }
+      } else {
+        const keys = Array.from(point.node.keys());
+        if (keys.length > 0) {
+          point.node.delete(keys[randomInt(keys.length)]);
+          deleted++;
         }
       }
     }
