@@ -130,9 +130,9 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
     autoConnect?: boolean;
 
     /**
-     * @private Preferred storage engine version to use when creating the
-     * room. Only takes effect if the room doesn't exist yet. Version
-     * 2 supports streaming and will become the default in the future.
+     * Preferred storage engine version to use when creating the room. Only
+     * takes effect if the room doesn't exist yet. Version 2 can support larger
+     * documents, is more performant, and will become the default in the future.
      */
     engine?: 1 | 2;
   }
@@ -515,6 +515,11 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   largeMessageStrategy?: LargeMessageStrategy;
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Engine v2 rooms have
+   * native support for streaming. This flag will be removed in a future
+   * version, but will continue to work for existing engine v1 rooms for now.
+   */
   unstable_streamData?: boolean;
   /**
    * A function that returns a list of mention suggestions matching a string.
