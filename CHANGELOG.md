@@ -1,3 +1,7 @@
+## vNEXT (not yet released)
+
+- ...
+
 ## v3.14.0 (WIP)
 
 This release adds support for opting-in to the new storage engine on a per-room
@@ -43,10 +47,8 @@ or:
   `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
 - Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
   connecting to alternative hosted Liveblocks environments
-
-## vNEXT (not yet released)
-
-- ...
+- Exclude marking a thread or inbox notification as read from blocking
+  navigation when `preventUnsavedChanges` is enabled.
 
 ## 3.13.3
 
