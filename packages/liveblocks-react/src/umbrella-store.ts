@@ -981,6 +981,13 @@ function createStore_forNotificationSettings(
   };
 }
 
+// A list of optimistic updates that should not trigger `preventUnsavedChanges`
+// behaviors (e.g prevent closing the tab or navigating to another page).
+// These mutations can be considered non-critical.
+const NON_BLOCKING_OPTIMISTIC_UPDATES: ReadonlySet<
+  OptimisticUpdate<never, never>["type"]
+> = new Set(["mark-inbox-notification-as-read"]);
+
 function createStore_forOptimistic<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
@@ -989,10 +996,14 @@ function createStore_forOptimistic<
   const syncSource = client[kInternal].createSyncSource();
 
   // Automatically update the global sync status as an effect whenever there
-  // are any optimistic updates
+  // are any blocking optimistic updates.
   signal.subscribe(() =>
     syncSource.setSyncStatus(
-      signal.get().length > 0 ? "synchronizing" : "synchronized"
+      signal
+        .get()
+        .some((update) => !NON_BLOCKING_OPTIMISTIC_UPDATES.has(update.type))
+        ? "synchronizing"
+        : "synchronized"
     )
   );
 
