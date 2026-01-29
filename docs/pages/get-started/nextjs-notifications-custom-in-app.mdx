@@ -1,14 +1,17 @@
 ---
 meta:
-  title: "Get started with Notifications using Liveblocks and React"
+  title:
+    "Get started with an in-app custom notification inbox using Liveblocks and
+    Next.js"
   parentTitle: "Quickstart"
   description:
-    "Learn how to get started with Notifications using Liveblocks and React"
+    "Learn how to add an in-app custom notification inbox using using Liveblocks
+    Liveblocks and Next.js"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding
-notifications to your application using the hooks from
+collaborative experiences. Follow this guide to start adding custom
+notifications to your Next.js `/app` directory application using the hooks from
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the components
 from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
@@ -21,8 +24,8 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       Every package should use the same version.
 
-      ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
       ```
 
     </StepContent>
@@ -42,7 +45,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
   </Step>
   <Step>
-    <StepTitle>Set up the Liveblocks client</StepTitle>
+    <StepTitle>Create a Liveblocks provider</StepTitle>
     <StepContent>
 
       Liveblocks Notifications uses the concept of projects, which relate to
@@ -51,19 +54,45 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
       to a client component in your app.
 
-      ```tsx file="App.tsx"
+      ```tsx file="app/Providers.tsx" highlight="8-10"
       "use client";
 
-      import { LiveblocksProvider } from "@liveblocks/react/suspense";
-      import { MyApp } from "./MyApp";
+      import { ReactNode } from "react";
+      import { LiveblocksProvider } from "@liveblocks/react";
 
-      export default function App() {
+      export function Providers({ children }: { children: ReactNode }) {
         return (
-          // +++
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <MyApp />
+            {children}
           </LiveblocksProvider>
-          // +++
+        );
+      }
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the provider to your layout</StepTitle>
+    <StepContent>
+
+      After creating your provider file, it’s time to use it. Import
+      your room into your `layout.tsx` file.
+
+      ```tsx file="app/layout.tsx"
+      import { Providers } from "./Providers";
+
+      export default function Layout({ children }) {
+        return (
+          <html>
+            <body>
+              // +++
+              <Providers>
+                {children}
+              </Providers>
+              // +++
+            </body>
+          </html>
         );
       }
       ```
@@ -80,7 +109,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       to get the current project’s notifications, then we’ll
       use [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification) and [`InboxNotificationList`](/docs/api-reference/liveblocks-react-ui#InboxNotificationList) to render them.
 
-      ```tsx file="app/MyApp.tsx"
+      ```tsx file="app/page.tsx" highlight="10,13-20"
       "use client";
 
       import { useInboxNotifications } from "@liveblocks/react/suspense";
@@ -89,13 +118,10 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
         InboxNotificationList,
       } from "@liveblocks/react-ui";
 
-      export function MyApp() {
-        // +++
+      export default function Page() {
         const { inboxNotifications } = useInboxNotifications();
-        // +++
 
         return (
-          // +++
           <InboxNotificationList>
             {inboxNotifications.map((inboxNotification) => (
               <InboxNotification
@@ -104,7 +130,6 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
               />
             ))}
           </InboxNotificationList>
-          // +++
         );
       }
       ```
@@ -117,15 +142,106 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
     <StepContent>
 
     The default components come with default styles, you can import them into the
-    root of your app or directly into a CSS file with `@import`.
+    root layout of your app or directly into a CSS file with `@import`.
 
-    ```tsx
+    ```tsx file="app/layout.tsx"
     import "@liveblocks/react-ui/styles.css";
     ```
 
     </StepContent>
 
   </Step>
+
+   <Step>
+    <StepTitle>Trigger a custom notification</StepTitle>
+    <StepContent>
+
+      Trigger a custom notification using
+      [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+      from a server action or route handler. In this example, a custom `$fileUploaded` notification is sent.
+
+      ```ts
+      "use server";
+
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        secret: "{{SECRET_KEY}}",
+      });
+
+      // Call this in your app to create a custom notification
+      export async function triggerCustomNotification() {
+        // +++
+        await liveblocks.triggerInboxNotification({
+          // The user that will receive the notification
+          userId: "steven@example.com",
+          kind: "$fileUploaded",
+          subjectId: "my-file",
+
+          // Custom data for this notification
+          activityData: {
+            file: "https://example.com/my-file.zip",
+            status: "pending",
+          },
+        });
+        // +++
+      }
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+
+  <StepTitle>Render the custom notification</StepTitle>
+  <StepContent>
+
+    After triggering the custom notification, modify `InboxNotification` to
+    [render it with custom UI](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+
+    ```tsx file="app/page.tsx"
+    "use client";
+
+    import { useInboxNotifications } from "@liveblocks/react/suspense";
+    import {
+      InboxNotification,
+      InboxNotificationList,
+    } from "@liveblocks/react-ui";
+
+    export default function Page() {
+      const { inboxNotifications } = useInboxNotifications();
+
+      return (
+        <InboxNotificationList>
+          {inboxNotifications.map((inboxNotification) => (
+            <InboxNotification
+              key={inboxNotification.id}
+              inboxNotification={inboxNotification}
+              // +++
+              kinds={{
+                $fileUploaded: (props) => (
+                  <InboxNotification.Custom
+                    {...props}
+                    title="File uploaded!"
+                    aside={<InboxNotification.Icon>📎</InboxNotification.Icon>}
+                  >
+                    A new file has been uploaded:
+                    <b>{props.inboxNotification.activities[0].file}</b>
+                  </InboxNotification.Custom>
+                ),
+              }}
+              // +++
+            />
+          ))}
+        </InboxNotificationList>
+      );
+    }
+    ```
+
+  </StepContent>
+
+  </Step>
+
   <Step lastStep>
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
@@ -133,7 +249,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
       Notifications is set up and working now, but each user is anonymous—the next step is to
       authenticate each user as they connect, and attach their name and avatar to their notifications.
 
-      <Button asChild className="not-markdown">
+      <Button asChild  className="not-markdown">
         <a href="/docs/guides/how-to-add-users-to-liveblocks-notifications">
           Add your users to Notifications
         </a>
