@@ -72,8 +72,8 @@
             "hidden": true
           },
           {
-            "title": "Notifications / Push",
-            "path": "/get-started/nextjs-notifications-push",
+            "title": "Notifications / Web Push",
+            "path": "/get-started/nextjs-notifications-web-push",
             "hidden": true
           },
           {
@@ -102,8 +102,8 @@
             "hidden": true
           },
           {
-            "title": "Custom notifications / Push",
-            "path": "/get-started/nextjs-notifications-custom-push",
+            "title": "Custom notifications / Web Push",
+            "path": "/get-started/nextjs-notifications-custom-web-push",
             "hidden": true
           },
           {

@@ -1,15 +1,15 @@
 ---
 meta:
   title:
-    "Get started with Push custom notifications using Liveblocks and Next.js"
+    "Get started with Web Push custom notifications using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
-    "Learn how to get started with Push custom notifications using Liveblocks
-    and Next.js"
+    "Learn how to get started with Web Push custom notifications using
+    Liveblocks and Next.js"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
-collaborative experiences. Follow the following steps to start adding Push
+collaborative experiences. Follow the following steps to start adding Web Push
 custom notifications to your Next.js `/app` directory application using methods
 from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
@@ -49,6 +49,7 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
       // Call this in your app to create a custom notification
       export async function triggerCustomNotification() {
+        // +++
         await liveblocks.triggerInboxNotification({
           // The user that will receive the notification
           userId: "steven@example.com",
@@ -61,7 +62,8 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
             status: "pending",
           },
         });
-
+        // +++
+      }
       ```
     </StepContent>
 
@@ -71,11 +73,11 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
     <StepTitle>Follow our guide</StepTitle>
     <StepContent>
 
-      Follow our step-by-step guide to learn set up Push notifications.
+      Follow our step-by-step guide to learn set up Web Push notifications.
 
       <Button asChild className="not-markdown">
         <a href="/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app">
-          How to notify users with Push
+          How to notify users with Web Push
         </a>
       </Button>
 
@@ -86,7 +88,8 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
 ## What to read next
 
-Congratulations! You've set up Push notifications in your Next.js application.
+Congratulations! You've set up Web Push notifications in your Next.js
+application.
 
 - [Webhooks API reference](/docs/platform/webhooks)
 - [Node.js API reference](/docs/api-reference/liveblocks-node)

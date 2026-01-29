@@ -49,6 +49,7 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
 
       // Call this in your app to create a custom notification
       export async function triggerCustomNotification() {
+        // +++
         await liveblocks.triggerInboxNotification({
           // The user that will receive the notification
           userId: "steven@example.com",
@@ -61,7 +62,8 @@ from [`@liveblocks/node`](/docs/api-reference/liveblocks-node).
             status: "pending",
           },
         });
-
+        // +++
+      }
       ```
     </StepContent>
 

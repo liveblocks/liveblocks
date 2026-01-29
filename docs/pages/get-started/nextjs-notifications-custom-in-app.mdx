@@ -168,6 +168,7 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
 
       // Call this in your app to create a custom notification
       export async function triggerCustomNotification() {
+        // +++
         await liveblocks.triggerInboxNotification({
           // The user that will receive the notification
           userId: "steven@example.com",
@@ -180,7 +181,8 @@ from [`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
             status: "pending",
           },
         });
-
+        // +++
+      }
       ```
     </StepContent>
 
