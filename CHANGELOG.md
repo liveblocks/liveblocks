@@ -1,3 +1,7 @@
+## vNEXT (not yet released)
+
+- ...
+
 ## v3.14.0 (WIP)
 
 This release adds support for opting-in to the new storage engine on a per-room
@@ -44,9 +48,11 @@ or:
 - Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
   connecting to alternative hosted Liveblocks environments
 
-## vNEXT (not yet released)
+### @liveblocks/react-tiptap and @liveblocks/react-lexical
 
-- ...
+- Portaled elements now respect the `portalContainer` option from
+  `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
+  `document.body`.
 
 ## 3.13.3
 
