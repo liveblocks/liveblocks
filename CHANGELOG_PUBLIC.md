@@ -18,6 +18,25 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 5 (2026-01-30)
+
+## Documentation
+
+- New quickstart flow, prioritizing products, and use cases.
+- New [quickstart guides for Notifications](https://liveblocks.io/docs/get-started/notifications) in two different categories.
+- New [quickstart guide for Tldaw](https://liveblocks.io/docs/get-started/nextjs-tldraw).
+- New guide: [How to notify users about unread custom notifications outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app).
+- New guide: [How to notify users about unread comments outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app).
+
+## Dashboard
+
+- New quickstart flow to match the documentation update.
+- Get your API key from the quickstart page.
+
+## Contributors
+
+ctnicholas, stevenfabre, pierrelevaillant
+
 # Week 4 (2026-01-23)
 
 ## 3.13.3
