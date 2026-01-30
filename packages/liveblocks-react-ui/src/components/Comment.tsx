@@ -24,7 +24,6 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
-  ComponentType,
   FormEvent,
   MouseEvent,
   PropsWithChildren,
@@ -92,21 +91,24 @@ import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
 
-export interface CommentsComponents<CM extends BaseMetadata = DCM> {
-  /**
-   * The component used to display additional content below a comment's body.
-   */
-  CommentAdditionalContent: ComponentType<
-    PropsWithChildren<{ comment: CommentData<CM> }>
-  >;
-}
-
 export interface CommentProps<CM extends BaseMetadata = DCM>
   extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The comment to display.
    */
   comment: CommentData<CM>;
+
+  /**
+   * The comment's avatar.
+   * Can be combined with `Comment.Avatar` to easily follow default styles.
+   */
+  avatar?: ReactNode;
+
+  /**
+   * The comment's author.
+   * Can be combined with `Comment.Author` to easily follow default styles.
+   */
+  author?: ReactNode;
 
   /**
    * How to show or hide the actions.
@@ -137,6 +139,11 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
    * Whether to indent the comment's content.
    */
   indentContent?: boolean;
+
+  /**
+   * Additional content to display below the comment's body.
+   */
+  additionalContent?: ReactNode;
 
   /**
    * The event handler called when the comment is edited.
@@ -191,7 +198,7 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents & CommentsComponents>;
+  components?: Partial<GlobalComponents>;
 
   /**
    * @internal
@@ -202,6 +209,28 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
    * @internal
    */
   actionsClassName?: string;
+}
+
+export interface CommentAvatarProps extends ComponentProps<"div"> {
+  /**
+   * The user ID to display the avatar for.
+   */
+  userId: string;
+}
+
+export interface CommentAuthorProps extends ComponentProps<"span"> {
+  /**
+   * The user ID to display the author for.
+   */
+  userId: string;
+}
+
+function CommentAvatar(props: CommentAvatarProps) {
+  return <Avatar {...props} />;
+}
+
+function CommentAuthor(props: CommentAuthorProps) {
+  return <User {...props} />;
 }
 
 export interface CommentDropdownItemProps
@@ -619,6 +648,9 @@ export const Comment = Object.assign(
         dropdownItems,
         overrides,
         components,
+        additionalContent,
+        avatar,
+        author,
         className,
         actions,
         actionsClassName,
@@ -847,9 +879,7 @@ export const Comment = Object.assign(
                 Link: CommentLink,
               }}
             />
-            {components?.CommentAdditionalContent && (
-              <components.CommentAdditionalContent comment={comment} />
-            )}
+            {additionalContent}
             {showAttachments &&
             (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (
               <div className="lb-comment-attachments">
@@ -945,17 +975,35 @@ export const Comment = Object.assign(
             >
               <div className="lb-comment-header">
                 <div className="lb-comment-details">
-                  <Avatar
-                    className="lb-comment-avatar"
-                    userId={comment.userId}
-                    onClick={handleAuthorClick}
-                  />
-                  <span className="lb-comment-details-labels">
-                    <User
-                      className="lb-comment-author"
+                  {avatar ? (
+                    <div
+                      className="lb-comment-avatar"
+                      onClick={handleAuthorClick}
+                    >
+                      {avatar}
+                    </div>
+                  ) : (
+                    <Avatar
+                      className="lb-comment-avatar"
                       userId={comment.userId}
                       onClick={handleAuthorClick}
                     />
+                  )}
+                  <span className="lb-comment-details-labels">
+                    {author ? (
+                      <span
+                        className="lb-comment-author"
+                        onClick={handleAuthorClick}
+                      >
+                        {author}
+                      </span>
+                    ) : (
+                      <User
+                        className="lb-comment-author"
+                        userId={comment.userId}
+                        onClick={handleAuthorClick}
+                      />
+                    )}
                     <span className="lb-comment-date">
                       <Timestamp
                         locale={$.locale}
@@ -1028,5 +1076,15 @@ export const Comment = Object.assign(
      * Displays a dropdown item in the comment's dropdown.
      */
     DropdownItem: CommentDropdownItem,
+
+    /**
+     * Displays a comment's avatar.
+     */
+    Avatar: CommentAvatar,
+
+    /**
+     * Displays a comment's author.
+     */
+    Author: CommentAuthor,
   }
 );
