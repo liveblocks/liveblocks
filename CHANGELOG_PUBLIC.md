@@ -18,6 +18,31 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 5 (2026-01-30)
+
+## Documentation
+
+- New quickstart flow, prioritizing products, and use cases.
+- New [quickstart guides for Notifications](https://liveblocks.io/docs/get-started/notifications) in two different categories.
+- New [quickstart guide for Tldaw](https://liveblocks.io/docs/get-started/nextjs-tldraw).
+- New guide: [How to notify users about unread custom notifications outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app).
+- New guide: [How to notify users about unread comments outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app).
+- A number of updated dashboard screenshots.
+
+## Dashboard
+
+- New quickstart flow to match the documentation update.
+- Get your API key from the quickstart page.
+
+## Examples
+
+- Updated all examples to use the latest versions of their major frameworks.
+- Updated all packages in all examples.
+
+## Contributors
+
+ctnicholas, stevenfabre, pierrelevaillant
+
 # Week 4 (2026-01-23)
 
 ## 3.13.3
@@ -49,9 +74,60 @@ nvie, marcbouchenoire
   uploaded knowledge sources only when the user query relates to the knowledge
   prompt set on the copilot.
 
+## v3.13.1
+
+### `@liveblocks/client`
+
+- Fix issue where storage subscriptions wouldn't fire after concurrent move and
+  set operations, causing stale `LiveList` state in UI.
+
+## v3.13.0
+
+This release adds support for comment metadata, allowing you to attach custom
+metadata to individual comments in the same way as thread metadata.
+
+### All packages
+
+- Support typing comment metadata globally via the `Liveblocks` interface.
+- Improve `CommentBody` types.
+- Internal refactorings to prepare for upcoming protocol updates.
+
+### `@liveblocks/client`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+
+### `@liveblocks/react`
+
+- Add new parameters to `useCreateThread`, `useCreateComment`, and
+  `useEditComment` to attach and update comment metadata.
+- Add `useEditCommentMetadata` hook to update only a commentʼs metadata.
+
+### `@liveblocks/react-ui`
+
+- Add `commentMetadata` prop to `Composer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- Add `commentMetadata` prop to `FloatingComposer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `Toolbar` not reflecting the editorʼs current state.
+
+### `@liveblocks/node`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+- Add `commentMetadataUpdated` webhook event.
+
 ## Contributors
 
-nimeshnayaju
+nimeshnayaju, marcbouchenoire, nvie
 
 # Week 2 (2026-01-09)
 
