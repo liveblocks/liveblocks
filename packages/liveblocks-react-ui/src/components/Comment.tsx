@@ -92,7 +92,7 @@ import { User } from "./internal/User";
 const REACTIONS_TRUNCATE = 5;
 
 export interface CommentProps<CM extends BaseMetadata = DCM>
-  extends ComponentPropsWithoutRef<"div"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The comment to display.
    */
@@ -163,6 +163,13 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
    * Add (or change) items to display in the comment's dropdown.
    */
   dropdownItems?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+
+  /**
+   * Override the comment's content.
+   */
+  children?:
     | ReactNode
     | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
 
@@ -605,6 +612,7 @@ export const Comment = Object.assign(
         className,
         actions,
         actionsClassName,
+        children,
         ...props
       },
       forwardedRef
@@ -765,6 +773,142 @@ export const Comment = Object.assign(
           </>
         );
 
+      let content: ReactNode;
+
+      if (isEditing) {
+        content = (
+          <Composer
+            className="lb-comment-composer"
+            onComposerSubmit={handleEditSubmit}
+            defaultValue={comment.body}
+            defaultAttachments={comment.attachments}
+            autoFocus
+            showAttribution={false}
+            showAttachments={showAttachments}
+            showFormattingControls={showComposerFormattingControls}
+            actions={
+              <>
+                <Tooltip
+                  content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                  aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                >
+                  <Button
+                    className="lb-composer-action"
+                    onClick={handleEditCancel}
+                    icon={<CrossIcon />}
+                  />
+                </Tooltip>
+                <ShortcutTooltip
+                  content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                  shortcut="Enter"
+                >
+                  <ComposerPrimitive.Submit asChild>
+                    <Button
+                      variant="primary"
+                      className="lb-composer-action"
+                      onClick={stopPropagation}
+                      aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                      icon={<CheckIcon />}
+                    />
+                  </ComposerPrimitive.Submit>
+                </ShortcutTooltip>
+              </>
+            }
+            overrides={{
+              COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
+            }}
+            roomId={comment.roomId}
+          />
+        );
+      } else {
+        content = comment.body ? (
+          <>
+            <CommentPrimitive.Body
+              className="lb-comment-body"
+              body={comment.body}
+              components={{
+                Mention: ({ mention }) => (
+                  <CommentMention
+                    mention={mention}
+                    onClick={(event) => onMentionClick?.(mention, event)}
+                    overrides={overrides}
+                  />
+                ),
+                Link: CommentLink,
+              }}
+            />
+            {showAttachments &&
+            (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (
+              <div className="lb-comment-attachments">
+                {mediaAttachments.length > 0 ? (
+                  <div className="lb-attachments">
+                    {mediaAttachments.map((attachment) => (
+                      <CommentMediaAttachment
+                        key={attachment.id}
+                        attachment={attachment}
+                        overrides={overrides}
+                        onAttachmentClick={onAttachmentClick}
+                        roomId={comment.roomId}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {fileAttachments.length > 0 ? (
+                  <div className="lb-attachments">
+                    {fileAttachments.map((attachment) => (
+                      <CommentFileAttachment
+                        key={attachment.id}
+                        attachment={attachment}
+                        overrides={overrides}
+                        onAttachmentClick={onAttachmentClick}
+                        roomId={comment.roomId}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {showReactions && comment.reactions.length > 0 && (
+              <div className="lb-comment-reactions">
+                {comment.reactions.map((reaction) => (
+                  <CommentReaction
+                    key={reaction.emoji}
+                    comment={comment}
+                    reaction={reaction}
+                    overrides={overrides}
+                    disabled={!canComment}
+                  />
+                ))}
+                {canComment ? (
+                  <EmojiPicker onEmojiSelect={handleReactionSelect}>
+                    <Tooltip content={$.COMMENT_ADD_REACTION}>
+                      <EmojiPickerTrigger asChild>
+                        <Button
+                          className="lb-comment-reaction lb-comment-reaction-add"
+                          variant="outline"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_ADD_REACTION}
+                          icon={<EmojiPlusIcon />}
+                        />
+                      </EmojiPickerTrigger>
+                    </Tooltip>
+                  </EmojiPicker>
+                ) : null}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="lb-comment-body">
+            <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+          </div>
+        );
+
+        content =
+          typeof children === "function"
+            ? children({ comment, children: content })
+            : (children ?? content);
+      }
+
       return (
         <TooltipProvider>
           <ComponentsProvider components={components}>
@@ -859,135 +1003,7 @@ export const Comment = Object.assign(
                   </div>
                 )}
               </div>
-              <div className="lb-comment-content">
-                {isEditing ? (
-                  <Composer
-                    className="lb-comment-composer"
-                    onComposerSubmit={handleEditSubmit}
-                    defaultValue={comment.body}
-                    defaultAttachments={comment.attachments}
-                    autoFocus
-                    showAttribution={false}
-                    showAttachments={showAttachments}
-                    showFormattingControls={showComposerFormattingControls}
-                    actions={
-                      <>
-                        <Tooltip
-                          content={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                          aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                        >
-                          <Button
-                            className="lb-composer-action"
-                            onClick={handleEditCancel}
-                            icon={<CrossIcon />}
-                          />
-                        </Tooltip>
-                        <ShortcutTooltip
-                          content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                          shortcut="Enter"
-                        >
-                          <ComposerPrimitive.Submit asChild>
-                            <Button
-                              variant="primary"
-                              className="lb-composer-action"
-                              onClick={stopPropagation}
-                              aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
-                              icon={<CheckIcon />}
-                            />
-                          </ComposerPrimitive.Submit>
-                        </ShortcutTooltip>
-                      </>
-                    }
-                    overrides={{
-                      COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
-                    }}
-                    roomId={comment.roomId}
-                  />
-                ) : comment.body ? (
-                  <>
-                    <CommentPrimitive.Body
-                      className="lb-comment-body"
-                      body={comment.body}
-                      components={{
-                        Mention: ({ mention }) => (
-                          <CommentMention
-                            mention={mention}
-                            onClick={(event) =>
-                              onMentionClick?.(mention, event)
-                            }
-                            overrides={overrides}
-                          />
-                        ),
-                        Link: CommentLink,
-                      }}
-                    />
-                    {showAttachments &&
-                    (mediaAttachments.length > 0 ||
-                      fileAttachments.length > 0) ? (
-                      <div className="lb-comment-attachments">
-                        {mediaAttachments.length > 0 ? (
-                          <div className="lb-attachments">
-                            {mediaAttachments.map((attachment) => (
-                              <CommentMediaAttachment
-                                key={attachment.id}
-                                attachment={attachment}
-                                overrides={overrides}
-                                onAttachmentClick={onAttachmentClick}
-                                roomId={comment.roomId}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                        {fileAttachments.length > 0 ? (
-                          <div className="lb-attachments">
-                            {fileAttachments.map((attachment) => (
-                              <CommentFileAttachment
-                                key={attachment.id}
-                                attachment={attachment}
-                                overrides={overrides}
-                                onAttachmentClick={onAttachmentClick}
-                                roomId={comment.roomId}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {showReactions && comment.reactions.length > 0 && (
-                      <div className="lb-comment-reactions">
-                        {comment.reactions.map((reaction) => (
-                          <CommentReaction
-                            key={reaction.emoji}
-                            comment={comment}
-                            reaction={reaction}
-                            overrides={overrides}
-                            disabled={!canComment}
-                          />
-                        ))}
-                        {canComment ? (
-                          <EmojiPicker onEmojiSelect={handleReactionSelect}>
-                            <Tooltip content={$.COMMENT_ADD_REACTION}>
-                              <EmojiPickerTrigger asChild>
-                                <Button
-                                  className="lb-comment-reaction lb-comment-reaction-add"
-                                  variant="outline"
-                                  onClick={stopPropagation}
-                                  aria-label={$.COMMENT_ADD_REACTION}
-                                  icon={<EmojiPlusIcon />}
-                                />
-                              </EmojiPickerTrigger>
-                            </Tooltip>
-                          </EmojiPicker>
-                        ) : null}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="lb-comment-body">
-                    <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-                  </div>
-                )}
-              </div>
+              <div className="lb-comment-content">{content}</div>
             </div>
           </ComponentsProvider>
         </TooltipProvider>
