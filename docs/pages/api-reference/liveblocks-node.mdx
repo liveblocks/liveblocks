@@ -61,8 +61,8 @@ const { body, status } = await liveblocks.identifyUser(
     // Required, the current user's ID
     userId: "marie@example.com",
 
-    // Optional, only view resources on this tenant
-    tenantId: "acme-corp",
+    // Optional, only view resources on this organization
+    organizationId: "acme-corp",
 
     // Optional, used to provision room access on group level
     groupIds: ["marketing", "engineering"],
@@ -93,7 +93,7 @@ const { body, status } = await liveblocks.identifyUser({
 
   // Optional, only view resources on this workspace
   // +++
-  tenantId: "acme-corp",
+  organizationId: "acme-corp",
   // +++
 
   // Optional, used to provision room access on group level
@@ -205,8 +205,8 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
-    // Optional, identify the user in a specific tenant
-    tenantId: "acme-corp",
+    // Optional, identify the user in a specific organization
+    organizationId: "acme-corp",
   },
 
   // Optional
@@ -230,7 +230,7 @@ assigning group permissions.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
 
-`tenantId` (optional) is the tenant for this user, will be set to `default` if
+`organizationId` (optional) is the organization for this user, will be set to `default` if
 not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
@@ -307,8 +307,8 @@ const session = liveblocks.prepareSession(
   // Required, the current user's ID
   "marie@example.com",
   {
-    // Optional, only view resources on this tenant
-    tenantId: "acme-corp",
+    // Optional, only view resources on this organization
+    organizationId: "acme-corp",
 
     // Optional, used to provision room access on group level
     groupIds: ["marketing"],
@@ -353,9 +353,9 @@ session.allow("design-room:*", session.FULL_ACCESS);
 </Banner>
 
 Additionally, you can pass additional options to `prepareSession`, enabling you
-to create complex permissions using [tenants](/docs/authentication/tenants) and
+to create complex permissions using [organizations](/docs/authentication/organizations) and
 [accesses](/docs/authentication/access-tokens/permissions). For example, this
-user can only see resources in the `acme-corp` tenant, and they’re part of a
+user can only see resources in the `acme-corp` organization, and they're part of a
 `marketing` group within it.
 
 ```ts
@@ -363,9 +363,9 @@ const session = liveblocks.prepareSession(
   // Required, the current user's ID
   "marie@example.com",
   {
-    // Optional, only view resources on this tenant
+    // Optional, only view resources on this organization
     // +++
-    tenantId: "acme-corp",
+    organizationId: "acme-corp",
     // +++
 
     // Optional, used to provision room access on group level
@@ -474,8 +474,8 @@ To implement your back end, follow these steps:
             name: "Marie",
             avatar: "https://example.com/avatar/marie.jpg",
           },
-          // Optional, authenticate this user on a specific tenant
-          tenantId: "acme-corp",
+          // Optional, authenticate this user on a specific organization
+          organizationId: "acme-corp",
         }
       );
       ```
@@ -489,7 +489,7 @@ To implement your back end, follow these steps:
       publicly visible to all other people in the room. Useful for
       metadata like the user’s full name, or their avatar URL.
 
-      The `tenantId` (optional) is the tenant for this session, will be set to `default` if not provided.
+      The `organizationId` (optional) is the organization for this session, will be set to `default` if not provided.
 
     </StepContent>
 
@@ -624,8 +624,8 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
     },
   },
 
-  // Optional, authenticate this user on a specific tenant
-  tenantId: "my-tenant-id",
+  // Optional, authenticate this user on a specific organization
+  organizationId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
@@ -786,8 +786,8 @@ const room = await liveblocks.createRoom("my-room-id", {
     myRoomType: "whiteboard",
   },
 
-  // Optional, create it on a specific tenant
-  tenantId: "acme-corp",
+  // Optional, create it on a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -852,8 +852,8 @@ const room = await liveblocks.getOrCreateRoom("my-room-id", {
     myRoomType: "whiteboard",
   },
 
-  // Optional, create it on a specific tenant
-  tenantId: "acme-corp",
+  // Optional, create it on a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -1174,7 +1174,7 @@ const group = await liveblocks.createGroup({
   memberIds: ["alice@example.com", "bob@example.com"],
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -1186,8 +1186,8 @@ const group = await liveblocks.createGroup({
   // Optional, add members when creating the group
   memberIds: ["charlie@example.com"],
 
-  // Optional, create it on a specific tenant
-  tenantId: "company-123",
+  // Optional, create it on a specific organization
+  organizationId: "company-123",
 
   // Optional, set group scopes (defaults to { mention: true })
   scopes: { mention: true },
@@ -1206,7 +1206,7 @@ const group = await liveblocks.getGroup({
   groupId: "engineering-team",
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -1220,7 +1220,7 @@ the same response.
 const { data: groups, nextCursor } = await liveblocks.getGroups();
 
 // A list of groups
-// [{ type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
+// [{ type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
 console.log(groups);
 
 // A pagination cursor for the next page
@@ -1278,7 +1278,7 @@ const updatedGroup = await liveblocks.addGroupMembers({
   memberIds: ["david@example.com", "eve@example.com"],
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
@@ -1294,7 +1294,7 @@ const updatedGroup = await liveblocks.removeGroupMembers({
   memberIds: ["david@example.com"],
 });
 
-// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+// { type: "group", id: "engineering-team", organizationId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
@@ -2743,8 +2743,8 @@ const { data: subscriptionSettings, nextCursor } =
   await liveblocks.getUserRoomSubscriptionSettings({
     userId: "steven@example.com",
 
-    // Optional, filter for a specific tenant
-    tenantId: "acme-corp",
+    // Optional, filter for a specific organization
+    organizationId: "acme-corp",
   });
 
 console.log(subscriptionSettings);
@@ -2781,8 +2781,8 @@ const { data: unreadInboxNotifications, nextCursor } =
     userId: "steven@example.com",
     query: { unread: true },
 
-    // Optional, filter for a specific tenant
-    tenantId: "acme-corp",
+    // Optional, filter for a specific organization
+    organizationId: "acme-corp",
   });
 ```
 
@@ -2828,8 +2828,8 @@ const userId = "steven@example.com";
 
 for await (const item of liveblocks.iterInboxNotifications({
   userId,
-  // Optional, filter for a specific tenant
-  tenantId: "acme-corp",
+  // Optional, filter for a specific organization
+  organizationId: "acme-corp",
 })) {
   console.log(item.id); // in_3dH7sF3...
   console.log(item.kind); // "thread", "textMention", ...
@@ -2884,8 +2884,8 @@ await liveblocks.triggerInboxNotification({
   // Optional, define the room ID the notification was sent from
   roomId: "my-room-id",
 
-  // Optional, trigger it for a specific tenant
-  tenantId: "acme-corp",
+  // Optional, trigger it for a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
@@ -2991,8 +2991,8 @@ Deletes all the user’s inbox notifications. This is a wrapper around the
 ```ts
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
-  // Optional, delete for a specific tenant
-  tenantId: "acme-corp",
+  // Optional, delete for a specific organization
+  organizationId: "acme-corp",
 });
 ```
 
