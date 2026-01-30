@@ -81,9 +81,7 @@ function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
       style={{ height: 0 }}
       aria-hidden
       data-mark-as-read-marker=""
-    >
-      MARKED AS READ
-    </div>
+    />
   );
 }
 

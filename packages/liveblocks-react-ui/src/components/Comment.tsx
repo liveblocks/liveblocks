@@ -24,6 +24,7 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
+  ComponentType,
   FormEvent,
   MouseEvent,
   PropsWithChildren,
@@ -90,6 +91,15 @@ import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
+
+export interface CommentsComponents<CM extends BaseMetadata = DCM> {
+  /**
+   * The component used to display additional content below a comment's body.
+   */
+  CommentAdditionalContent: ComponentType<
+    PropsWithChildren<{ comment: CommentData<CM> }>
+  >;
+}
 
 export interface CommentProps<CM extends BaseMetadata = DCM>
   extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
@@ -181,7 +191,7 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents>;
+  components?: Partial<GlobalComponents & CommentsComponents>;
 
   /**
    * @internal
@@ -837,6 +847,9 @@ export const Comment = Object.assign(
                 Link: CommentLink,
               }}
             />
+            {components?.CommentAdditionalContent && (
+              <components.CommentAdditionalContent comment={comment} />
+            )}
             {showAttachments &&
             (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (
               <div className="lb-comment-attachments">
