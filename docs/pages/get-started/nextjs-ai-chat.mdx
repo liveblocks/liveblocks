@@ -30,6 +30,19 @@ components from
 
   </Step>
   <Step>
+    <StepTitle>Add your project’s secret key</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
     <StepTitle>Set up authentication</StepTitle>
     <StepContent>
 
