@@ -27,6 +27,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New [quickstart guide for Tldaw](https://liveblocks.io/docs/get-started/nextjs-tldraw).
 - New guide: [How to notify users about unread custom notifications outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app).
 - New guide: [How to notify users about unread comments outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app).
+- A number of updated dashboard screenshots.
 
 ## Dashboard
 
