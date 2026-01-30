@@ -33,6 +33,11 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New quickstart flow to match the documentation update.
 - Get your API key from the quickstart page.
 
+## Examples
+
+- Updated all examples to use the latest versions of their major frameworks.
+- Updated all packages in all examples.
+
 ## Contributors
 
 ctnicholas, stevenfabre, pierrelevaillant
