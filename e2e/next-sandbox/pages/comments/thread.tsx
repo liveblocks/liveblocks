@@ -65,6 +65,19 @@ function Sandbox() {
         key={thread.id}
         thread={thread}
         className="thread"
+        commentDropdownItems={({ comment, children }) => (
+          <>
+            {children}
+            <Comment.DropdownItem
+              data-testid="custom-dropdown-item"
+              onSelect={(event) => {
+                console.log("Custom dropdown item selected", event);
+              }}
+            >
+              Custom dropdown item for {comment.id}
+            </Comment.DropdownItem>
+          </>
+        )}
         components={{
           Comment: (props: ComponentProps<typeof Comment>) => (
             <Comment
