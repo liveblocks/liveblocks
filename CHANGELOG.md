@@ -50,6 +50,12 @@ or:
 - Exclude marking a thread or inbox notification as read from blocking
   navigation when `preventUnsavedChanges` is enabled.
 
+### @liveblocks/react-tiptap and @liveblocks/react-lexical
+
+- Portaled elements now respect the `portalContainer` option from
+  `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
+  `document.body`.
+
 ## 3.13.3
 
 ### @liveblocks/client
