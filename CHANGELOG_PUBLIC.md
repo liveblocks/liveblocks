@@ -23,10 +23,15 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Documentation
 
 - New quickstart flow, prioritizing products, and use cases.
-- New [quickstart guides for Notifications](https://liveblocks.io/docs/get-started/notifications) in two different categories.
-- New [quickstart guide for Tldaw](https://liveblocks.io/docs/get-started/nextjs-tldraw).
-- New guide: [How to notify users about unread custom notifications outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app).
-- New guide: [How to notify users about unread comments outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app).
+- New
+  [quickstart guides for Notifications](https://liveblocks.io/docs/get-started/notifications)
+  in two different categories.
+- New
+  [quickstart guide for Tldaw](https://liveblocks.io/docs/get-started/nextjs-tldraw).
+- New guide:
+  [How to notify users about unread custom notifications outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-custom-notifications-outside-of-your-app).
+- New guide:
+  [How to notify users about unread comments outside of your app](https://liveblocks.io/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app).
 - A number of updated dashboard screenshots.
 
 ## Dashboard
@@ -47,13 +52,13 @@ ctnicholas, stevenfabre, pierrelevaillant
 
 ## 3.13.3
 
-### @liveblocks/client
+### `@liveblocks/client`
 
 - Bump hardcoded client-side socket connection timeout from 10s to 20s.
 - Add more detailed timing info to `enableDebugLogging` to better debug
   connection issues.
 
-### @liveblocks/react-ui
+### `@liveblocks/react-ui`
 
 - Fix an issue where `Composer` and `AiComposer` would throw an error when
   mounted/unmounted.
@@ -66,7 +71,7 @@ nvie, marcbouchenoire
 
 ## v3.13.2
 
-### @liveblocks/node
+### `@liveblocks/node`
 
 - Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
   this option is enabled, the copilot retrieves and uses the uploaded knowledge
@@ -164,13 +169,14 @@ ctnicholas
 
 ## Infrastructure
 
-- We've been doing lots of prep work to enable a new opt-in storage engine for Liveblocks
-  rooms that will bring performance benefits like faster room connection speed and larger
-  document sizes to everyone—stay tuned!
+- We've been doing lots of prep work to enable a new opt-in storage engine for
+  Liveblocks rooms that will bring performance benefits like faster room
+  connection speed and larger document sizes to everyone—stay tuned!
 
 ## Documentation
 
-- Fix `useThreads` API reference, it returns _oldest_ threads first, not _newest_ threads.
+- Fix `useThreads` API reference, it returns _oldest_ threads first, not
+  _newest_ threads.
 
 ## Contributors
 
@@ -197,12 +203,16 @@ jrowny
 
 ## Examples
 
-- New example: [Comments search](https://liveblocks.io/examples/comments-search).
-- Add custom “Copy link” comment dropdown item to the [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker) example.
+- New example:
+  [Comments search](https://liveblocks.io/examples/comments-search).
+- Add custom “Copy link” comment dropdown item to the
+  [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker)
+  example.
 
 ## Showcase
 
-- New item: [Search through comments](https://liveblocks.io/showcase/search-through-comments).
+- New item:
+  [Search through comments](https://liveblocks.io/showcase/search-through-comments).
 
 ## Contributors
 
@@ -231,8 +241,10 @@ ctnicholas
 
 ## Documentation
 
-- New guide: [Can I use my own database with Yjs?](https://liveblocks.io/docs/guides/can-i-use-my-own-database-with-yjs)
-- New guide: [Why you can’t delete Yjs documents](https://liveblocks.io/docs/guides/why-you-cant-delete-yjs-documents).
+- New guide:
+  [Can I use my own database with Yjs?](https://liveblocks.io/docs/guides/can-i-use-my-own-database-with-yjs)
+- New guide:
+  [Why you can’t delete Yjs documents](https://liveblocks.io/docs/guides/why-you-cant-delete-yjs-documents).
 - Add info on mass deleting rooms.
 - Rename "Liveblocks" notification kinds as "Collaboration" kinds.
 
