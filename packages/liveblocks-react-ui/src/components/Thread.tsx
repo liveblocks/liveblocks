@@ -134,7 +134,7 @@ export interface ThreadProps<
    */
   commentDropdownItems?:
     | ReactNode
-    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * The maximum number of comments to show.

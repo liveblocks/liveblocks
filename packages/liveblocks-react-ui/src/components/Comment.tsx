@@ -181,14 +181,14 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
    */
   dropdownItems?:
     | ReactNode
-    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * Override the comment's content.
    */
   children?:
     | ReactNode
-    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * Override the component's strings.
