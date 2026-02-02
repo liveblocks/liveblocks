@@ -30,7 +30,7 @@ or:
 </RoomProvider>
 ```
 
-### @liveblocks/client
+### `@liveblocks/client`
 
 - Support for selecting the preferred engine when entering new rooms:
   `client.enterRoom("my-new-room", { engine: 2 })`
@@ -41,7 +41,7 @@ or:
 - Improve `LiveList.push()` efficiency to prevent unbounded position string
   growth over time
 
-### @liveblocks/react
+### `@liveblocks/react`
 
 - Support for selecting the preferred engine when entering new rooms:
   `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
@@ -50,7 +50,7 @@ or:
 - Exclude marking a thread or inbox notification as read from blocking
   navigation when `preventUnsavedChanges` is enabled.
 
-### @liveblocks/react-tiptap and @liveblocks/react-lexical
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
 
 - Portaled elements now respect the `portalContainer` option from
   `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
