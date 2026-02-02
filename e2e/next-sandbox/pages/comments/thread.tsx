@@ -1,5 +1,5 @@
 import type { ThreadData } from "@liveblocks/core";
-import { createRoomContext } from "@liveblocks/react";
+import { ClientSideSuspense, createRoomContext } from "@liveblocks/react";
 import { Comment, Thread } from "@liveblocks/react-ui";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
@@ -9,20 +9,26 @@ import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-const { RoomProvider } = createRoomContext(client);
+const {
+  RoomProvider,
+  suspense: { useSelf },
+} = createRoomContext(client);
 
 export default function Home() {
   const roomId = getRoomFromUrl();
 
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      <Sandbox />
+      <ClientSideSuspense fallback={null}>
+        <Sandbox />
+      </ClientSideSuspense>
     </RoomProvider>
   );
 }
 
 function Sandbox() {
   const roomId = getRoomFromUrl();
+  const userId = useSelf().id ?? "user";
   const thread = useMemo<ThreadData>(() => {
     const date = new Date("2026-01-01T00:00:00.000Z");
 
@@ -40,7 +46,7 @@ function Sandbox() {
           id: "cm_123",
           threadId: "th_123",
           roomId,
-          userId: "user-1",
+          userId,
           createdAt: date,
           reactions: [],
           attachments: [],
@@ -57,7 +63,7 @@ function Sandbox() {
         },
       ],
     };
-  }, [roomId]);
+  }, [roomId, userId]);
 
   return (
     <>
