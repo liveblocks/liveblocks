@@ -9,10 +9,11 @@ export const maxDuration = 30;
 export const revalidate = 0;
 
 export default async function Page({
-  params: { pageId },
+  params,
 }: {
-  params: { pageId: string };
+  params: Promise<{ pageId: string }>;
 }) {
+  const { pageId } = await params;
   return (
     <Room pageId={pageId}>
       {/* Sticky header */}

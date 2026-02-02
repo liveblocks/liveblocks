@@ -1184,8 +1184,8 @@
           "content": {
             "application/octet-stream": {
               "schema": {
-                "format": "binary",
-                "type": "array"
+                "type": "string",
+                "format": "binary"
               }
             }
           }
@@ -1223,7 +1223,8 @@
             "content": {
               "application/octet-stream": {
                 "schema": {
-                  "type": "array"
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -5424,9 +5425,7 @@
       "ThreadMetadata": {
         "type": "object",
         "title": "ThreadMetadata",
-        "properties": {
-          "type": "object"
-        },
+        "additionalProperties": true,
         "required": [],
         "examples": [
           {
@@ -5454,9 +5453,7 @@
       "CommentMetadata": {
         "type": "object",
         "title": "CommentMetadata",
-        "properties": {
-          "type": "object"
-        },
+        "additionalProperties": true,
         "required": [],
         "examples": [
           {
@@ -6595,6 +6592,7 @@
         "type": "object",
         "oneOf": [
           {
+            "title": "WebKnowledgeSource",
             "properties": {
               "type": {
                 "const": "ai-knowledge-web-source"
@@ -6636,6 +6634,7 @@
             }
           },
           {
+            "title": "FileKnowledgeSource",
             "properties": {
               "type": {
                 "const": "ai-knowledge-file-source"
@@ -6748,149 +6747,149 @@
             }
           }
         }
-      }
-    },
-    "Group": {
-      "title": "Group",
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["group"]
-        },
-        "id": {
-          "type": "string"
-        },
-        "tenantId": {
-          "type": "string"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "scopes": {
-          "type": "object",
-          "properties": {
-            "mention": {
-              "type": "boolean"
+      },
+      "Group": {
+        "title": "Group",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["group"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scopes": {
+            "type": "object",
+            "properties": {
+              "mention": {
+                "type": "boolean"
+              }
+            }
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupMember"
             }
           }
         },
-        "members": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/GroupMember"
-          }
-        }
+        "required": [
+          "type",
+          "id",
+          "tenantId",
+          "createdAt",
+          "updatedAt",
+          "scopes",
+          "members"
+        ]
       },
-      "required": [
-        "type",
-        "id",
-        "tenantId",
-        "createdAt",
-        "updatedAt",
-        "scopes",
-        "members"
-      ]
-    },
-    "GroupMember": {
-      "title": "GroupMember",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "addedAt": {
-          "type": "string",
-          "format": "date-time"
-        }
-      },
-      "required": ["id", "addedAt"]
-    },
-    "CreateGroup": {
-      "title": "CreateGroup",
-      "type": "object",
-      "properties": {
-        "groupId": {
-          "type": "string"
-        },
-        "memberIds": {
-          "type": "array",
-          "items": {
+      "GroupMember": {
+        "title": "GroupMember",
+        "type": "object",
+        "properties": {
+          "id": {
             "type": "string"
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
-        "tenantId": {
-          "type": "string"
-        },
-        "scopes": {
-          "type": "object",
-          "properties": {
-            "mention": {
-              "type": "boolean"
+        "required": ["id", "addedAt"]
+      },
+      "CreateGroup": {
+        "title": "CreateGroup",
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "object",
+            "properties": {
+              "mention": {
+                "type": "boolean"
+              }
             }
           }
-        }
+        },
+        "required": ["groupId"]
       },
-      "required": ["groupId"]
-    },
-    "AddGroupMembers": {
-      "title": "AddGroupMembers",
-      "type": "object",
-      "properties": {
-        "memberIds": {
-          "type": "array",
-          "items": {
+      "AddGroupMembers": {
+        "title": "AddGroupMembers",
+        "type": "object",
+        "properties": {
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["memberIds"]
+      },
+      "RemoveGroupMembers": {
+        "title": "RemoveGroupMembers",
+        "type": "object",
+        "properties": {
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["memberIds"]
+      },
+      "GetGroups": {
+        "title": "GetGroups",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "nextCursor": {
             "type": "string"
           }
         }
       },
-      "required": ["memberIds"]
-    },
-    "RemoveGroupMembers": {
-      "title": "RemoveGroupMembers",
-      "type": "object",
-      "properties": {
-        "memberIds": {
-          "type": "array",
-          "items": {
+      "GetUserGroups": {
+        "title": "GetUserGroups",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "nextCursor": {
             "type": "string"
           }
-        }
-      },
-      "required": ["memberIds"]
-    },
-    "GetGroups": {
-      "title": "GetGroups",
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/Group"
-          }
-        },
-        "nextCursor": {
-          "type": "string"
-        }
-      }
-    },
-    "GetUserGroups": {
-      "title": "GetUserGroups",
-      "type": "object",
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/components/schemas/Group"
-          }
-        },
-        "nextCursor": {
-          "type": "string"
         }
       }
     },

@@ -23,7 +23,7 @@
     "@liveblocks/zustand": "*",
     "@reduxjs/toolkit": "^2.8.2",
     "encoding": "^0.1.13",
-    "next": "14.2.34",
+    "next": "16.1.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.1.2",
@@ -32,12 +32,14 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@eslint/compat": "^2.0.1",
+    "@eslint/eslintrc": "^3.3.3",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@playwright/test": "^1.55.0",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.13",
-    "eslint-config-next": "^14.2.20",
+    "eslint-config-next": "16.1.4",
     "lodash": "^4.17.21",
     "playwright": "^1.55.0"
   }

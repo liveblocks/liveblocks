@@ -1,12 +1,11 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 import { createRoomWithLexicalDocument } from "../actions/liveblocks";
 import { getPageUrl } from "../config";
 import Markdown from "markdown-to-jsx";
 import { SparklesIcon } from "../icons/SparklesIcon";
-import * as React from "react";
-import { Message } from "ai";
+import { UIMessage } from "ai";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { CreateIcon } from "../icons/CreateIcon";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -25,11 +24,11 @@ export default function Page() {
 }
 
 function Chat() {
+  const [input, setInput] = useState("");
   // Check `app/api/chat/route.ts` for the back-end
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } =
-    useChat({
-      keepLastMessageOnError: true,
-    });
+  const { messages, sendMessage, status, stop } = useChat();
+  
+  const isLoading = status === "submitted" || status === "streaming";
 
   return (
     <div className="relative w-full mx-auto h-full flex flex-col">
@@ -40,10 +39,15 @@ function Chat() {
           ))}
         </div>
       </div>
-
       {/* Submit queries to Vercel AI */}
       <form
-        onSubmit={handleSubmit}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (input.trim()) {
+            sendMessage({ text: input });
+            setInput("");
+          }
+        }}
         className="max-w-[740px] mx-auto w-full flex-0 my-0 relative"
       >
         {messages.length === 0 ? (
@@ -55,15 +59,15 @@ function Chat() {
           <input
             placeholder={isLoading ? "Generating…" : "Create a draft about…"}
             className="border block w-full p-2 pl-3 rounded-lg outline-none transition-all focus:outline-indigo-500 disabled:bg-gray-50 disabled:outline-none"
-            name="prompt"
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
             disabled={isLoading}
             autoFocus={true}
           />
           <button
+            type={isLoading ? "button" : "submit"}
             className="absolute right-0 px-2 top-0 bottom-0 transition-colors rounded-r-lg border border-transparent hover:border-gray-200 hover:disabled:border-transparent hover:bg-gray-100 hover:disabled:bg-transparent"
-            onClick={isLoading ? stop : undefined}
+            onClick={isLoading ? (e) => { e.preventDefault(); stop?.(); } : undefined}
             disabled={!isLoading && !input}
           >
             {isLoading ? (
@@ -77,30 +81,36 @@ function Chat() {
           </button>
         </div>
       </form>
-
       <LiveblocksBadge />
     </div>
   );
 }
 
-function MessageLine({ message }: { message: Message }) {
+function MessageLine({ message }: { message: UIMessage }) {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState(message.content);
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If the message starts with an H1 heading (#), extract it as the title
+  // Extract text content from message parts
   useEffect(() => {
-    const match = message.content.match(/^#\s(.+)/);
+    // Get all text parts from the message
+    const textContent = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("");
+
+    // If the message starts with an H1 heading (#), extract it as the title
+    const match = textContent.match(/^#\s(.+)/);
     if (match) {
       setTitle(match[1]);
-      setContent(message.content.replace(/^#\s.+/, "").trim());
+      setContent(textContent.replace(/^#\s.+/, "").trim());
     } else {
       setTitle("");
-      setContent(message.content);
+      setContent(textContent);
     }
-  }, [message.content]);
+  }, [message.parts]);
 
   // Create new document with content/title and redirect
   const handleSubmit = useCallback(
@@ -147,7 +157,6 @@ function MessageLine({ message }: { message: Message }) {
               <Markdown options={{ forceBlock: true }}>{content}</Markdown>
             </div>
           </div>
-
           <form onSubmit={handleSubmit}>
             <button
               disabled={loading}

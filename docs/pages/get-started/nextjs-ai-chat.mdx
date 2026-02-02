@@ -1,0 +1,275 @@
+---
+meta:
+  title: "Get started with an AI chat using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to get started with an AI chat using Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding an
+advanced AI chat to your Next.js `/app` directory application using the hooks
+from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
+components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks</StepTitle>
+    <StepContent>
+
+      Every package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your project’s secret key</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Set up authentication</StepTitle>
+    <StepContent>
+
+      Create an [authentication](/docs/authentication) API route with [`prepareSession`](/docs/api-reference/liveblocks-node#prepareSession),
+      passing a unique user ID.
+      Each user has their own set of private chats, and this allows Liveblocks to identify who is connecting.
+
+      ```tsx file="app/api/liveblocks-auth/route.ts"
+      import { Liveblocks } from "@liveblocks/node";
+      import { NextRequest } from "next/server";
+
+      const liveblocks = new Liveblocks({
+        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+      });
+
+      export async function POST(req: NextRequest) {
+        // Get the current user from your database
+        const user = {
+          // +++
+          id: "user-1",
+          // +++
+          info: {
+            // Optional. `name`, `avatar`, `color`, custom info.
+          },
+        };
+
+        // Create a session for the current user
+        // +++
+        const session = liveblocks.prepareSession(user.id, {
+          userInfo: user.info,
+        });
+        // +++
+
+        // Give the user access to AI chats
+        session.allow(`*`, session.FULL_ACCESS);
+
+        // Authorize the user and return the result
+        const { status, body } = await session.authorize();
+        return new Response(body, { status });
+      }
+      ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Add your secret key</StepTitle>
+    <StepContent>
+      Create a project in the [dashboard](/dashboard) and add your secret key to `.env.local`:
+
+    ```js file=".env.local"
+    LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
+    ```
+    </StepContent>
+
+  </Step>
+
+  <Step>
+    <StepTitle>Create a Liveblocks provider</StepTitle>
+    <StepContent>
+
+      To connect the user to their chats, you must
+      add [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+      to a client component in your app.
+
+      ```tsx file="app/Providers.tsx" highlight="8-10"
+      "use client";
+
+      import { ReactNode } from "react";
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      export function Providers({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+            {children}
+          </LiveblocksProvider>
+        );
+      }
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the provider to your layout</StepTitle>
+    <StepContent>
+
+      After creating your provider file, it’s time to use it. Import
+      your room into your `layout.tsx` file.
+
+      ```tsx file="app/layout.tsx"
+      import { Providers } from "./Providers";
+
+      export default function Layout({ children }) {
+        return (
+          <html>
+            <body>
+              // +++
+              <Providers>
+                {children}
+              </Providers>
+              // +++
+            </body>
+          </html>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the AI chat component</StepTitle>
+    <StepContent>
+
+      Now you can add the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
+      component to your application. This component renders a fully-featured AI
+      chat interface with message history and a composer. You can add
+      [tools](/docs/ready-made-features/ai-copilots/tools), [knowledge](/docs/ready-made-features/ai-copilots/knowledge),
+      and use [hooks](/docs/ready-made-features/ai-copilots/hooks).
+
+      ```tsx file="app/page.tsx"
+      "use client";
+
+      import { AiChat } from "@liveblocks/react-ui";
+      import { RegisterAiTool, RegisterAiKnowledge } from "@liveblocks/react";
+
+      export default function Page() {
+        return (
+          <div style={{ height: 500, width: 500 }}>
+            // +++
+            <AiChat
+              chatId="my-first-chat"
+              // copilotId="co_aH1j2..."
+            />
+            // +++
+            {/* <RegisterAiTool ... /> and <RegisterAiKnowledge ... /> */}
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: create a copilot</StepTitle>
+    <StepContent>
+
+      AI Copilots is set up and working, but it’s using our default AI model
+      and prompt—the next step is to create a custom copilot
+      using your preferred AI provider and configuration.
+
+      <Button asChild  className="not-markdown">
+        <a href="/docs/ready-made-features/ai-copilots/copilots">
+          Create a copilot
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up the foundation to start building an AI copilot
+experience for your Next.js application.
+
+- [Overview of all features and where to start](/docs/ready-made-features/ai-copilots)
+- [@liveblocks/react API reference](/docs/api-reference/liveblocks-react#AI-Copilots)
+- [@liveblocks/react-ui API reference](/docs/api-reference/liveblocks-react-ui#AI-Copilots)
+- [How to use a fallback AI model](/docs/guides/how-to-use-fallback-ai-models-in-ai-copilots)
+
+---
+
+## Examples using Next.js
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "AI Chats",
+      slug: "ai-chats/nextjs-ai-chats",
+      image: "/images/examples/thumbnails/ai-chats.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Reports Dashboard",
+      slug: "ai-dashboard-reports/nextjs-ai-dashboard-reports",
+      image: "/images/examples/thumbnails/ai-reports-dashboard.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI Support Chat",
+      slug: "ai-support-chat/nextjs-ai-support-chat",
+      image: "/images/examples/thumbnails/ai-support.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "AI App Builder",
+      slug: "ai-app-builder/nextjs-ai-app-builder",
+      image: "/images/examples/thumbnails/ai-app-builder.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

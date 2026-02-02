@@ -58,20 +58,20 @@ or:
 
 ## 3.13.3
 
-### @liveblocks/client
+### `@liveblocks/client`
 
 - Bump hardcoded client-side socket connection timeout from 10s to 20s
 - Add more detailed timing info to `enableDebugLogging` to better debug
   connection issues
 
-### @liveblocks/react-ui
+### `@liveblocks/react-ui`
 
 - Fix an issue where `Composer` and `AiComposer` would throw an error when
   mounted/unmounted.
 
 ## v3.13.2
 
-### @liveblocks/node
+### `@liveblocks/node`
 
 - Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
   this option is enabled, the copilot retrieves and uses the uploaded knowledge

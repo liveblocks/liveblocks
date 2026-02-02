@@ -10,24 +10,24 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@blocknote/core": "^0.14.1",
-    "@blocknote/mantine": "^0.14.1",
-    "@blocknote/react": "^0.14.1",
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@liveblocks/yjs": "^3.13.2",
-    "@types/node": "20.3.1",
-    "@types/react": "18.3.3",
-    "@types/react-dom": "18.2.5",
-    "next": "14.2.34",
+    "@blocknote/core": "^0.46.1",
+    "@blocknote/mantine": "^0.46.1",
+    "@blocknote/react": "^0.46.1",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@liveblocks/yjs": "^3.13.3",
+    "@types/node": "20.3.3",
+    "@types/react": "18.3.27",
+    "@types/react-dom": "18.2.25",
+    "next": "^16.1.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.1.3",
-    "yjs": "^13.6.7"
+    "typescript": "5.1.6",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }
