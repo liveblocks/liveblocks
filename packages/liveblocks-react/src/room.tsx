@@ -376,6 +376,7 @@ function makeRoomContextBundle<
     );
   }
 
+  // TODO: Extend
   const shared = createSharedContext<U>(client);
 
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
