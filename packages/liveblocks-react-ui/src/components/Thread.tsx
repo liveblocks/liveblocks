@@ -86,6 +86,8 @@ function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
 }
 
 export interface ThreadComponents<
+  // Future components might reference thread metadata so we declare it
+  // already to respect the `TM` → `CM` order used everywhere else.
   _TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 > {
