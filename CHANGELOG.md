@@ -47,6 +47,8 @@ or:
   `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
 - Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
   connecting to alternative hosted Liveblocks environments
+- Exclude marking a thread or inbox notification as read from blocking
+  navigation when `preventUnsavedChanges` is enabled.
 
 ### @liveblocks/react-tiptap and @liveblocks/react-lexical
 
