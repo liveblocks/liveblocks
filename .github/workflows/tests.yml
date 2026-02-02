@@ -3,7 +3,33 @@ name: Tests
 on: [pull_request]
 
 jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Required permissions
+    permissions:
+      pull-requests: read
+    # Set job outputs to values from filter step
+    outputs:
+      code_changes: ${{ steps.filter.outputs.code_changes }}
+    steps:
+      # For pull requests it's not necessary to checkout the code
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            code_changes:
+              - '**/*'
+              - '!docs/**'
+              - '!guides/**'
+              - '!starter-kits/**'
+              - '!tutorials/**'
+              - '!CHANGELOG.md'
+              - '!CHANGELOG_PUBLIC.md'
+
   test:
+    needs: changes
+    if: needs.changes.outputs.code_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
@@ -83,6 +109,8 @@ jobs:
 
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
+    needs: changes
+    if: needs.changes.outputs.code_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
@@ -127,6 +155,8 @@ jobs:
 
   # E2E tests defined in e2e/next-ai-kitchen-sink package
   e2e-next-ai-sandbox:
+    needs: changes
+    if: needs.changes.outputs.code_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
@@ -171,6 +201,8 @@ jobs:
 
   # E2E tests defined in e2e/node-sandbox package
   e2e-node-sandbox:
+    needs: changes
+    if: needs.changes.outputs.code_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
@@ -206,6 +238,8 @@ jobs:
 
   # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
+    needs: changes
+    if: needs.changes.outputs.code_changes == 'true'
     runs-on: ubuntu-latest
 
     strategy:
