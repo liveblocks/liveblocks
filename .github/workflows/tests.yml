@@ -21,6 +21,7 @@ jobs:
             code_changes:
               - '**/*'
               - '!docs/**'
+              - '!examples/**'
               - '!guides/**'
               - '!starter-kits/**'
               - '!tutorials/**'
