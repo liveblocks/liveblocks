@@ -21,7 +21,6 @@ jobs:
           filters: |
             no_code_changes:
               - '**/*'
-              - '!.github/**'
               - '!docs/**'
               - '!examples/**'
               - '!guides/**'
