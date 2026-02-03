@@ -1476,7 +1476,11 @@ function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
   return useThreads_withRoomContext<TM, CM>(GlobalRoomContext, options);
 }
 
-function useSearchComments<TM extends BaseMetadata>(
+/**
+ * @internal
+ */
+function useSearchComments_withRoomContext<TM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseSearchCommentsOptions<TM>
 ): SearchCommentsAsyncResult {
   const [result, setResult] = useState<SearchCommentsAsyncResult>({
@@ -1491,7 +1495,7 @@ function useSearchComments<TM extends BaseMetadata>(
   const timeout = useRef<number | null>(null);
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const queryKey = stableStringify([room.id, options.query]);
 
@@ -1558,6 +1562,12 @@ function useSearchComments<TM extends BaseMetadata>(
   }, [queryKey, client, room.id]);
 
   return result;
+}
+
+function useSearchComments<TM extends BaseMetadata>(
+  options: UseSearchCommentsOptions<TM>
+): SearchCommentsAsyncResult {
+  return useSearchComments_withRoomContext<TM>(GlobalRoomContext, options);
 }
 
 /**
@@ -2557,6 +2567,19 @@ function useUnsubscribeFromRoomThread(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useThreadSubscription_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  threadId: string
+): ThreadSubscription {
+  return useRoomThreadSubscription(
+    useRoom_withRoomContext(RoomContext).id,
+    threadId
+  );
+}
+
+/**
  * Returns the subscription status of a thread, methods to update it, and when
  * the thread was last read.
  *
@@ -2564,7 +2587,7 @@ function useUnsubscribeFromRoomThread(roomId: string) {
  * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
-  return useRoomThreadSubscription(useRoom().id, threadId);
+  return useThreadSubscription_withRoomContext(GlobalRoomContext, threadId);
 }
 
 /**
@@ -3173,14 +3196,24 @@ function selectorFor_useAttachmentUrl(
 }
 
 /**
+ * @internal
+ */
+function useAttachmentUrl_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  attachmentId: string
+): AttachmentUrlAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useRoomAttachmentUrl(attachmentId, room.id);
+}
+
+/**
  * Returns a presigned URL for an attachment by its ID.
  *
  * @example
  * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
  */
 function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
-  const room = useRoom();
-  return useRoomAttachmentUrl(attachmentId, room.id);
+  return useAttachmentUrl_withRoomContext(GlobalRoomContext, attachmentId);
 }
 
 /**
@@ -3213,13 +3246,13 @@ function useRoomAttachmentUrl(
 }
 
 /**
- * Returns a presigned URL for an attachment by its ID.
- *
- * @example
- * const { url } = useAttachmentUrl("at_xxx");
+ * @internal
  */
-function useAttachmentUrlSuspense(attachmentId: string) {
-  const room = useRoom();
+function useAttachmentUrlSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  attachmentId: string
+) {
+  const room = useRoom_withRoomContext(RoomContext);
   const { attachmentUrlsStore } = room[kInternal];
 
   const getAttachmentUrlState = useCallback(
@@ -3249,6 +3282,19 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     url: state.data,
     error: undefined,
   } as const;
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrlSuspense(attachmentId: string) {
+  return useAttachmentUrlSuspense_withRoomContext(
+    GlobalRoomContext,
+    attachmentId
+  );
 }
 
 /**
@@ -3517,6 +3563,30 @@ export function createRoomContext<
     return useRemoveReaction_withRoomContext(BoundRoomContext);
   }
 
+  function useThreadSubscription_withBoundRoomContext(
+    ...args: Parameters<typeof useThreadSubscription>
+  ) {
+    return useThreadSubscription_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useAttachmentUrl_withBoundRoomContext(
+    ...args: Parameters<typeof useAttachmentUrl>
+  ) {
+    return useAttachmentUrl_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useAttachmentUrlSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useAttachmentUrlSuspense>
+  ) {
+    return useAttachmentUrlSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useSearchComments_withBoundRoomContext(
+    ...args: Parameters<typeof useSearchComments<TM>>
+  ) {
+    return useSearchComments_withRoomContext<TM>(BoundRoomContext, ...args);
+  }
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
@@ -3599,9 +3669,12 @@ export function createRoomContext<
     useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["useRemoveReaction"],
     // prettier-ignore
     useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["useMarkThreadAsRead"],
-    useThreadSubscription,
-    useAttachmentUrl,
-    useSearchComments,
+    // prettier-ignore
+    useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["useThreadSubscription"],
+    // prettier-ignore
+    useAttachmentUrl: useAttachmentUrl_withBoundRoomContext as TRoomBundle["useAttachmentUrl"],
+    // prettier-ignore
+    useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
 
     useHistoryVersions,
     useHistoryVersionData,
@@ -3692,8 +3765,10 @@ export function createRoomContext<
       useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["suspense"]["useRemoveReaction"],
       // prettier-ignore
       useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsRead"],
-      useThreadSubscription,
-      useAttachmentUrl: useAttachmentUrlSuspense,
+      // prettier-ignore
+      useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["suspense"]["useThreadSubscription"],
+      // prettier-ignore
+      useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
 
       useHistoryVersions: useHistoryVersionsSuspense,
 
