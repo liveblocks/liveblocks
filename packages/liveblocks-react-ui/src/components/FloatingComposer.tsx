@@ -19,36 +19,35 @@ import {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
-import type { ThreadProps } from "./Thread";
-import { Thread } from "./Thread";
+import type { ComposerProps } from "./Composer";
+import { Composer } from "./Composer";
 
-export interface FloatingThreadProps<
+export type FloatingComposerProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> extends ThreadProps<TM, CM>,
-    Relax<
+> = ComposerProps<TM, CM> &
+  Relax<
+    Pick<
+      PopoverPrimitive.PopoverProps,
+      "defaultOpen" | "open" | "onOpenChange"
+    > &
       Pick<
-        PopoverPrimitive.PopoverProps,
-        "defaultOpen" | "open" | "onOpenChange"
-      > &
-        Pick<
-          PopoverPrimitive.PopoverContentProps,
-          "side" | "sideOffset" | "align" | "alignOffset"
-        >
-    > {
-  /**
-   * The element which opens the floating thread.
-   */
-  children: ReactNode;
-}
+        PopoverPrimitive.PopoverContentProps,
+        "side" | "sideOffset" | "align" | "alignOffset"
+      >
+  > & {
+    /**
+     * The element which opens the floating composer.
+     */
+    children: ReactNode;
+  };
 
 /**
- * Displays a floating thread attached to a trigger element.
+ * Displays a floating composer attached to a trigger element.
  */
-export const FloatingThread = forwardRef(
+export const FloatingComposer = forwardRef(
   <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
     {
-      thread,
       children,
       defaultOpen,
       open,
@@ -61,8 +60,8 @@ export const FloatingThread = forwardRef(
       onKeyDown,
       className,
       ...props
-    }: FloatingThreadProps<TM, CM>,
-    forwardedRef: ForwardedRef<HTMLDivElement>
+    }: FloatingComposerProps<TM, CM>,
+    forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const $ = useOverrides(overrides);
     const { portalContainer } = useLiveblocksUiConfig();
@@ -73,7 +72,7 @@ export const FloatingThread = forwardRef(
     );
 
     const handleKeyDown = useCallback(
-      (event: KeyboardEvent<HTMLDivElement>) => {
+      (event: KeyboardEvent<HTMLFormElement>) => {
         onKeyDown?.(event);
 
         if (event.key === "Escape") {
@@ -89,7 +88,7 @@ export const FloatingThread = forwardRef(
         <PopoverPrimitive.Portal container={portalContainer}>
           <PopoverPrimitive.Content
             className={cn(
-              "lb-root lb-portal lb-elevation lb-floating-thread",
+              "lb-root lb-portal lb-elevation lb-floating-composer",
               className
             )}
             dir={$.dir}
@@ -108,9 +107,8 @@ export const FloatingThread = forwardRef(
             }}
             asChild
           >
-            <Thread
+            <Composer
               ref={forwardedRef}
-              thread={thread}
               overrides={overrides}
               onKeyDown={handleKeyDown}
               {...props}
@@ -121,5 +119,5 @@ export const FloatingThread = forwardRef(
     );
   }
 ) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
-  props: FloatingThreadProps<TM, CM> & RefAttributes<HTMLDivElement>
+  props: FloatingComposerProps<TM, CM> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;
