@@ -40,6 +40,7 @@ or:
 - Improve `LiveList` performance when processing large batches of operations
 - Improve `LiveList.push()` efficiency to prevent unbounded position string
   growth over time
+- Fix crash when clearing documents with a large number of keys
 
 ### `@liveblocks/react`
 
