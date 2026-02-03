@@ -874,10 +874,28 @@ function useEventListener<
 }
 
 /**
+ * @internal
+ */
+function useHistory_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): History {
+  return useRoom_withRoomContext(RoomContext).history;
+}
+
+/**
  * Returns the room.history
  */
 function useHistory(): History {
-  return useRoom().history;
+  return useHistory_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUndo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): () => void {
+  return useHistory_withRoomContext(RoomContext).undo;
 }
 
 /**
@@ -885,7 +903,16 @@ function useHistory(): History {
  * client. It does not impact operations made by other clients.
  */
 function useUndo(): () => void {
-  return useHistory().undo;
+  return useUndo_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRedo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): () => void {
+  return useHistory_withRoomContext(RoomContext).redo;
 }
 
 /**
@@ -893,27 +920,45 @@ function useUndo(): () => void {
  * client. It does not impact operations made by other clients.
  */
 function useRedo(): () => void {
-  return useHistory().redo;
+  return useRedo_withRoomContext(GlobalRoomContext);
 }
 
 /**
- * Returns whether there are any operations to undo.
+ * @internal
  */
-function useCanUndo(): boolean {
-  const room = useRoom();
+function useCanUndo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): boolean {
+  const room = useRoom_withRoomContext(RoomContext);
   const subscribe = room.events.history.subscribe;
   const canUndo = room.history.canUndo;
   return useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
 /**
- * Returns whether there are any operations to redo.
+ * Returns whether there are any operations to undo.
  */
-function useCanRedo(): boolean {
-  const room = useRoom();
+function useCanUndo(): boolean {
+  return useCanUndo_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useCanRedo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): boolean {
+  const room = useRoom_withRoomContext(RoomContext);
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
   return useSyncExternalStore(subscribe, canRedo, canRedo);
+}
+
+/**
+ * Returns whether there are any operations to redo.
+ */
+function useCanRedo(): boolean {
+  return useCanRedo_withRoomContext(GlobalRoomContext);
 }
 
 function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2805,6 +2850,36 @@ export function createRoomContext<
     );
   };
 
+  const useHistory_withBoundRoomContext = () => {
+    return useHistory_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useUndo_withBoundRoomContext = () => {
+    return useUndo_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useRedo_withBoundRoomContext = () => {
+    return useRedo_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useCanUndo_withBoundRoomContext = () => {
+    return useCanUndo_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useCanRedo_withBoundRoomContext = () => {
+    return useCanRedo_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2823,11 +2898,16 @@ export function createRoomContext<
     // prettier-ignore
     useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useEventListener"],
 
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanRedo,
-    useCanUndo,
+    // prettier-ignore
+    useHistory: useHistory_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useHistory"],
+    // prettier-ignore
+    useUndo: useUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useUndo"],
+    // prettier-ignore
+    useRedo: useRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRedo"],
+    // prettier-ignore
+    useCanUndo: useCanUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useCanUndo"],
+    // prettier-ignore
+    useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useCanRedo"],
 
     useStorageRoot,
     useStorage,
@@ -2891,11 +2971,16 @@ export function createRoomContext<
       // prettier-ignore
       useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useEventListener"],
 
-      useHistory,
-      useUndo,
-      useRedo,
-      useCanRedo,
-      useCanUndo,
+      // prettier-ignore
+      useHistory: useHistory_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useHistory"],
+      // prettier-ignore
+      useUndo: useUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useUndo"],
+      // prettier-ignore
+      useRedo: useRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRedo"],
+      // prettier-ignore
+      useCanUndo: useCanUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCanUndo"],
+      // prettier-ignore
+      useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCanRedo"],
 
       useStorageRoot,
       useStorage: useStorageSuspense,
