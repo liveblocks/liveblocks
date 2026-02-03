@@ -417,7 +417,7 @@ function RoomProviderInner<
 >(
   props: RoomProviderProps<P, S> & {
     stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
-    BoundRoomContext: Context<OpaqueRoom | null>;
+    BoundRoomContext?: Context<OpaqueRoom | null>;
   }
 ) {
   const client = useClient<U>();
@@ -548,11 +548,35 @@ function RoomProviderInner<
 
   return (
     <GlobalRoomContext.Provider value={room}>
-      <BoundRoomContext.Provider value={room}>
-        {props.children}
-      </BoundRoomContext.Provider>
+      {BoundRoomContext ? (
+        <BoundRoomContext.Provider value={room}>
+          {props.children}
+        </BoundRoomContext.Provider>
+      ) : (
+        props.children
+      )}
     </GlobalRoomContext.Provider>
   );
+}
+
+function useRoom_withRoomContext<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: boolean }
+): Room<P, S, U, E, TM, CM> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM>(RoomContext);
+
+  if (room === null && !options?.allowOutsideRoom) {
+    throw new Error("RoomProvider is missing from the React tree.");
+  }
+
+  return room;
 }
 
 function useRoom<
@@ -579,11 +603,7 @@ function useRoom<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
-  const room = useRoomOrNull<P, S, U, E, TM, CM>();
-  if (room === null && !options?.allowOutsideRoom) {
-    throw new Error("RoomProvider is missing from the React tree.");
-  }
-  return room;
+  return useRoom_withRoomContext(GlobalRoomContext, options);
 }
 
 /**
@@ -2611,6 +2631,8 @@ export function createRoomContext<
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   type TRoom = Room<P, S, U, E, TM, CM>;
 
+  const BoundRoomContext = createContext<TRoom | null>(null);
+
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
   ) {
@@ -2629,14 +2651,22 @@ export function createRoomContext<
     );
   }
 
-  const BoundRoomContext = createContext<TRoom | null>(null);
-  const shared = createSharedContext(client as Client<U>);
+  const useRoom_withBoundRoomContext = (options?: {
+    allowOutsideRoom: boolean;
+  }) => {
+    return useRoom_withRoomContext<P, S, U, E, TM, CM>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      options
+    );
+  };
 
+  const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-    useRoom,
+    // prettier-ignore
+    useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRoom"],
     useStatus,
 
     useBroadcastEvent,
@@ -2698,7 +2728,8 @@ export function createRoomContext<
       RoomContext: BoundRoomContext,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
-      useRoom,
+      // prettier-ignore
+      useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRoom"],
       useStatus,
 
       useBroadcastEvent,
