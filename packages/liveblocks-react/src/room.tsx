@@ -1367,7 +1367,10 @@ function useStorage<S extends LsonObject, T>(
   return useStorage_withRoomContext<S, T>(GlobalRoomContext, selector, isEqual);
 }
 
-function useMutation<
+/**
+ * @internal
+ */
+function useMutation_withRoomContext<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
@@ -1375,8 +1378,12 @@ function useMutation<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
->(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-  const room = useRoom<P, S, U, E, TM, CM>();
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: F,
+  deps: readonly unknown[]
+): OmitFirstArg<F> {
+  const room = useRoom_withRoomContext<P, S, U, E, TM, CM>(RoomContext);
   return useMemo(
     () => {
       return ((...args) =>
@@ -1392,6 +1399,22 @@ function useMutation<
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [room, ...deps]
+  );
+}
+
+function useMutation<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+>(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
+  return useMutation_withRoomContext<P, S, U, E, TM, CM, F>(
+    GlobalRoomContext,
+    callback,
+    deps
   );
 }
 
@@ -3270,6 +3293,15 @@ export function createRoomContext<
     return useOtherSuspense_withRoomContext<P, U, T>(BoundRoomContext, ...args);
   }
 
+  function useMutation_withBoundRoomContext<
+    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+  >(...args: Parameters<typeof useMutation<P, S, U, E, TM, CM, F>>) {
+    return useMutation_withRoomContext<P, S, U, E, TM, CM, F>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
@@ -3304,6 +3336,8 @@ export function createRoomContext<
     useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["useStorageRoot"],
     // prettier-ignore
     useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
+    // prettier-ignore
+    useMutation: useMutation_withBoundRoomContext as TRoomBundle["useMutation"],
 
     // prettier-ignore
     useSelf: useSelf_withBoundRoomContext as TRoomBundle["useSelf"],
@@ -3320,15 +3354,9 @@ export function createRoomContext<
     // prettier-ignore
     useOther: useOther_withBoundRoomContext as TRoomBundle["useOther"],
 
-    // prettier-ignore
-    useMutation: useMutation as TRoomBundle["useMutation"],
-
     useThreads,
-    useSearchComments,
-
     // prettier-ignore
     useCreateThread: useCreateThread as TRoomBundle["useCreateThread"],
-
     useDeleteThread,
     useEditThreadMetadata,
     useMarkThreadAsResolved,
@@ -3345,6 +3373,7 @@ export function createRoomContext<
     useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["useMarkThreadAsRead"],
     useThreadSubscription,
     useAttachmentUrl,
+    useSearchComments,
 
     useHistoryVersions,
     useHistoryVersionData,
@@ -3387,6 +3416,8 @@ export function createRoomContext<
       useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["suspense"]["useStorageRoot"],
       // prettier-ignore
       useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
+      // prettier-ignore
+      useMutation: useMutation as TRoomBundle["suspense"]["useMutation"],
 
       // prettier-ignore
       useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
@@ -3403,14 +3434,9 @@ export function createRoomContext<
       // prettier-ignore
       useOther: useOtherSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOther"],
 
-      // prettier-ignore
-      useMutation: useMutation as TRoomBundle["suspense"]["useMutation"],
-
       useThreads: useThreadsSuspense,
-
       // prettier-ignore
       useCreateThread: useCreateThread as TRoomBundle["suspense"]["useCreateThread"],
-
       useDeleteThread,
       useEditThreadMetadata,
       useMarkThreadAsResolved,
@@ -3428,11 +3454,13 @@ export function createRoomContext<
       useThreadSubscription,
       useAttachmentUrl: useAttachmentUrlSuspense,
 
-      // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
       useHistoryVersions: useHistoryVersionsSuspense,
 
       useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
       useUpdateRoomSubscriptionSettings,
+
+      // No Suspense version: useSearchComments
+      // No Suspense version: useHistoryVersionData
 
       ...shared.suspense,
     },
