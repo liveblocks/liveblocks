@@ -121,7 +121,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item._toOps(this._id, parentKey),
         undefined
       );
-      ops.push(...childOps);
+      for (const childOp of childOps) {
+        ops.push(childOp);
+      }
     }
 
     return ops;
