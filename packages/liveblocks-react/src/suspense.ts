@@ -17,7 +17,11 @@ export type { Json, JsonObject } from "@liveblocks/client";
 export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
-export { ClientContext, RoomContext, useClient } from "./contexts";
+export {
+  ClientContext,
+  GlobalRoomContext as RoomContext,
+  useClient,
+} from "./contexts";
 export { RegisterAiKnowledge, RegisterAiTool } from "./ai";
 export type {
   AiChatStatus,

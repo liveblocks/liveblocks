@@ -42,8 +42,7 @@ export function useClient<U extends BaseUserMeta>() {
  *
  * @private This is a private/advanced API. Do not rely on it.
  */
-// XXX Rename to GlobalRoomContext?
-export const RoomContext = createContext<OpaqueRoom | null>(null);
+export const GlobalRoomContext = createContext<OpaqueRoom | null>(null);
 
 /** @private */
 export function useRoomOrNull<
@@ -53,11 +52,8 @@ export function useRoomOrNull<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
->(
-  // XXX Add here, and to pretty much all other hooks?
-  // RoomContext: Context<...> = GlobalRoomContext,
-) : Room<P, S, U, E, TM, CM> | null {
-  return useContext(RoomContext) as Room<P, S, U, E, TM, CM> | null;
+>(): Room<P, S, U, E, TM, CM> | null {
+  return useContext(GlobalRoomContext) as Room<P, S, U, E, TM, CM> | null;
 }
 
 /**

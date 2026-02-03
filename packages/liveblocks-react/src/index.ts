@@ -23,7 +23,11 @@ export type {
   RegisterAiKnowledgeProps,
   RegisterAiToolProps,
 } from "./types/ai";
-export { ClientContext, RoomContext, useClient } from "./contexts";
+export {
+  ClientContext,
+  GlobalRoomContext as RoomContext,
+  useClient,
+} from "./contexts";
 export {
   createLiveblocksContext,
   LiveblocksProvider,
