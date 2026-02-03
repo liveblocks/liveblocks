@@ -559,13 +559,38 @@ function RoomProviderInner<
   );
 }
 
+/**
+ * @internal
+ */
 function useRoom_withRoomContext<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: false }
+): Room<P, S, U, E, TM, CM>;
+function useRoom_withRoomContext<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: boolean }
+): Room<P, S, U, E, TM, CM> | null;
+function useRoom_withRoomContext<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: boolean }
@@ -603,7 +628,23 @@ function useRoom<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
-  return useRoom_withRoomContext(GlobalRoomContext, options);
+  return useRoom_withRoomContext<P, S, U, E, TM, CM>(
+    GlobalRoomContext,
+    options
+  );
+}
+
+/**
+ * @internal
+ */
+function useStatus_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): Status {
+  const room = useRoom_withRoomContext(RoomContext);
+  const subscribe = room.events.status.subscribe;
+  const getSnapshot = room.getStatus;
+  const getServerSnapshot = room.getStatus;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
@@ -611,11 +652,7 @@ function useRoom<
  * a re-render whenever it changes. Can be used to render a status badge.
  */
 function useStatus(): Status {
-  const room = useRoom();
-  const subscribe = room.events.status.subscribe;
-  const getSnapshot = room.getStatus;
-  const getServerSnapshot = room.getStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useStatus_withRoomContext(GlobalRoomContext);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -2660,6 +2697,12 @@ export function createRoomContext<
     );
   };
 
+  const useStatus_withBoundRoomContext = () => {
+    return useStatus_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2667,7 +2710,8 @@ export function createRoomContext<
 
     // prettier-ignore
     useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRoom"],
-    useStatus,
+    // prettier-ignore
+    useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStatus"],
 
     useBroadcastEvent,
     useOthersListener,
@@ -2730,7 +2774,8 @@ export function createRoomContext<
 
       // prettier-ignore
       useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRoom"],
-      useStatus,
+      // prettier-ignore
+      useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStatus"],
 
       useBroadcastEvent,
       useOthersListener,
