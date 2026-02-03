@@ -1,25 +1,80 @@
 ---
 meta:
   title: "The new Storage engine and its benefits"
-  description: "Learn ... [what does this guide teach you?]"
+  description: "Learn about the v2 storage engine and how to enable it"
 ---
 
-In v3.14, we released a new back-end engine that powers
-[Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
-under the hood. It’s a major improvement over the previous storage engine, and
-in future, it’ll be the default.
+Since v3.14, rooms can be powered by our new storage engine v2. Switching is
+**seamless and requires no code changes**. Rooms on v1 or v2 behave identically
+from your app's perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs
+Storage all work the same way.
+
+If you switch, you may notice faster initial loads and support for larger
+documents. We’re enabling opting-in to v2 now for those eager to try it out and
+give us feedback. Soon it will become the default for everyone.
 
 ## What are the benefits?
 
-[Add your titles and info here]
+The main architectural leap of v2 is that the Liveblocks server no longer needs
+to keep the entire document in memory. Historically, large documents put memory
+pressure on our edge workers, which are limited in capacity. A 50 MiB document,
+including its overhead, could easily cause an OOM crash in an edge worker on
+engine v1, causing the room to become inaccessible.
+
+Rooms on engine v2 now stream their document data directly from our persisted
+storage layer, keeping only minimal data in memory. Conflict resolution and
+mutations happen directly in the storage layer too.
+
+This enables arbitrarily large documents—server memory is no longer the
+bottleneck (browser memory, network speed, or your app's rendering performance
+might now be).
+
+Initial load time will be faster, especially for larger documents: the server
+can start streaming immediately without buffering, and our wire protocol has
+been compacted to reduce transmission overhead.
+
+Lastly, v2 enables us to ship future Liveblocks features not possible on v1.
 
 ## How to enable it
 
-Enable the new Storage engine for new rooms by setting your `engine` option to
-`2`.
+The engine is assigned at room creation time and cannot be changed afterward.
+
+1. Upgrade to v3.14+: `npx create-liveblocks-app@latest --upgrade`
+2. Opt-in to v2 (see options below)
+
+### Per-room opt-in
+
+Specify the `engine` option when entering a room. This only affects new rooms—if
+the room already exists, the flag has no effect.
+
+With `LiveblocksProvider`:
 
 ```tsx
 <LiveblocksProvider id="my-new-room" engine={2}>
   {children}
 </LiveblocksProvider>
 ```
+
+With vanilla client:
+
+```tsx
+const { room, leave } = client.enterRoom("my-new-room", { engine: 2 });
+```
+
+### Dashboard opt-in
+
+Alternatively, you can opt-in without code changes directly from your
+[Liveblocks dashboard](https://liveblocks.io/dashboard):
+
+1. Click Settings
+2. Toggle "Use Engine v2 for new rooms"
+
+This is equivalent to setting `engine={2}` on all new rooms going forward.
+**Note: this toggle affects all projects in your account.**
+
+### Migrating existing rooms
+
+Eventually, we will transparently migrate all existing room data from engine v1
+to engine v2, and the explicit opt-in `engine` option will no longer have an
+effect, but we will announce this ahead of time. This process will be a seamless
+and uninterrupted continuation for rooms, and require no action on your part.
