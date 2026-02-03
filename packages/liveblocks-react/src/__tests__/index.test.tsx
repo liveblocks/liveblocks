@@ -4,7 +4,7 @@ import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { createRoomContext } from "../room";
+import { createRoomContext, useRoom as useRoomGlobal } from "../room";
 import {
   useCanRedo,
   useCanUndo,
@@ -94,7 +94,7 @@ describe("RoomProvider", () => {
     function TestComponent() {
       const roomA = contextA.useRoom();
       const roomB = contextB.useRoom();
-      const innermost = /* global */ useRoom();
+      const innermost = useRoomGlobal();
       return (
         <div>
           <span data-testid="room-a">{roomA.id}</span>
