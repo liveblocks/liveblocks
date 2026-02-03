@@ -2643,19 +2643,18 @@ function useRoomThreadSubscription(
 }
 
 /**
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- *
- * @example
- * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ * @internal
  */
-function useRoomSubscriptionSettings(): [
+function useRoomSubscriptionSettings_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): [
   RoomSubscriptionSettingsAsyncResult,
   (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
-  const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+  const updateRoomSubscriptionSettings =
+    useUpdateRoomSubscriptionSettings_withRoomContext(RoomContext);
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const { store, getOrCreateSubscriptionSettingsPollerForRoomId } =
     getRoomExtrasForClient(client);
 
@@ -2701,7 +2700,19 @@ function useRoomSubscriptionSettings(): [
  * @example
  * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
  */
-function useRoomSubscriptionSettingsSuspense(): [
+function useRoomSubscriptionSettings(): [
+  RoomSubscriptionSettingsAsyncResult,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  return useRoomSubscriptionSettings_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRoomSubscriptionSettingsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): [
   RoomSubscriptionSettingsAsyncSuccess,
   (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
@@ -2710,7 +2721,7 @@ function useRoomSubscriptionSettingsSuspense(): [
 
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   // Suspend until there are at least some inbox notifications
   use(
@@ -2722,7 +2733,7 @@ function useRoomSubscriptionSettingsSuspense(): [
   // We're in a Suspense world here, and as such, the useRoomSubscriptionSettings()
   // hook is expected to only return success results when we're here.
   const [settings, updateRoomSubscriptionSettings] =
-    useRoomSubscriptionSettings();
+    useRoomSubscriptionSettings_withRoomContext(RoomContext);
   assert(!settings.error, "Did not expect error");
   assert(!settings.isLoading, "Did not expect loading");
 
@@ -2732,18 +2743,30 @@ function useRoomSubscriptionSettingsSuspense(): [
 }
 
 /**
- * Returns the version data bianry for a given version
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  *
  * @example
- * const {data} = useHistoryVersionData(versionId);
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
  */
-function useHistoryVersionData(
+function useRoomSubscriptionSettingsSuspense(): [
+  RoomSubscriptionSettingsAsyncSuccess,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  return useRoomSubscriptionSettingsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersionData_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
   versionId: string
 ): HistoryVersionDataAsyncResult {
   const [state, setState] = useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   useEffect(() => {
     setState({ isLoading: true });
     const load = async () => {
@@ -2773,14 +2796,25 @@ function useHistoryVersionData(
 }
 
 /**
- * (Private beta) Returns a history of versions of the current room.
+ * Returns the version data bianry for a given version
  *
  * @example
- * const { versions, error, isLoading } = useHistoryVersions();
+ * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersions(): HistoryVersionsAsyncResult {
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersions_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): HistoryVersionsAsyncResult {
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const { store, getOrCreateVersionsPollerForRoomId } =
     getRoomExtrasForClient(client);
@@ -2814,35 +2848,51 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
  * (Private beta) Returns a history of versions of the current room.
  *
  * @example
- * const { versions } = useHistoryVersions();
+ * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
+  return useHistoryVersions_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersionsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): HistoryVersionsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const store = getRoomExtrasForClient(client).store;
 
   use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
-  const result = useHistoryVersions();
+  const result = useHistoryVersions_withRoomContext(RoomContext);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
 }
 
 /**
- * Returns a function that updates the user's subscription settings
- * for the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
- * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
- * updateRoomSubscriptionSettings({ threads: "all" });
+ * const { versions } = useHistoryVersions();
  */
-function useUpdateRoomSubscriptionSettings() {
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+  return useHistoryVersionsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUpdateRoomSubscriptionSettings_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
     (settings: Partial<RoomSubscriptionSettings>) => {
       const { store, onMutationFailure, pollThreadsForRoomId } =
@@ -2882,6 +2932,18 @@ function useUpdateRoomSubscriptionSettings() {
     },
     [client, room]
   );
+}
+
+/**
+ * Returns a function that updates the user's subscription settings
+ * for the current room.
+ *
+ * @example
+ * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+ * updateRoomSubscriptionSettings({ threads: "all" });
+ */
+function useUpdateRoomSubscriptionSettings() {
+  return useUpdateRoomSubscriptionSettings_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -3587,6 +3649,34 @@ export function createRoomContext<
     return useSearchComments_withRoomContext<TM>(BoundRoomContext, ...args);
   }
 
+  function useHistoryVersions_withBoundRoomContext() {
+    return useHistoryVersions_withRoomContext(BoundRoomContext);
+  }
+
+  function useHistoryVersionsSuspense_withBoundRoomContext() {
+    return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
+  }
+
+  function useHistoryVersionData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionData>
+  ) {
+    return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useRoomSubscriptionSettings_withBoundRoomContext() {
+    return useRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
+  }
+
+  function useRoomSubscriptionSettingsSuspense_withBoundRoomContext() {
+    return useRoomSubscriptionSettingsSuspense_withRoomContext(
+      BoundRoomContext
+    );
+  }
+
+  function useUpdateRoomSubscriptionSettings_withBoundRoomContext() {
+    return useUpdateRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
+  }
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
@@ -3676,11 +3766,15 @@ export function createRoomContext<
     // prettier-ignore
     useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
 
-    useHistoryVersions,
-    useHistoryVersionData,
+    // prettier-ignore
+    useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
+    // prettier-ignore
+    useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
 
-    useRoomSubscriptionSettings,
-    useUpdateRoomSubscriptionSettings,
+    // prettier-ignore
+    useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
+    // prettier-ignore
+    useUpdateRoomSubscriptionSettings: useUpdateRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useUpdateRoomSubscriptionSettings"],
 
     ...shared.classic,
 
@@ -3770,10 +3864,13 @@ export function createRoomContext<
       // prettier-ignore
       useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
 
-      useHistoryVersions: useHistoryVersionsSuspense,
+      // prettier-ignore
+      useHistoryVersions: useHistoryVersionsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useHistoryVersions"],
 
-      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
-      useUpdateRoomSubscriptionSettings,
+      // prettier-ignore
+      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useRoomSubscriptionSettings"],
+      // prettier-ignore
+      useUpdateRoomSubscriptionSettings: useUpdateRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateRoomSubscriptionSettings"],
 
       // No Suspense version: useSearchComments
       // No Suspense version: useHistoryVersionData
