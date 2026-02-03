@@ -1900,16 +1900,6 @@ function useRemoveRoomCommentReaction(roomId: string) {
     [client, roomId]
   );
 }
-/**
- * Returns a function that marks a thread as read.
- *
- * @example
- * const markThreadAsRead = useMarkThreadAsRead();
- * markThreadAsRead("th_xxx");
- */
-function useMarkThreadAsRead() {
-  return useMarkRoomThreadAsRead(useRoom().id);
-}
 
 /**
  * @private
@@ -1967,6 +1957,27 @@ function useMarkRoomThreadAsRead(roomId: string) {
     },
     [client, roomId]
   );
+}
+
+/**
+ * @internal
+ */
+function useMarkThreadAsRead_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useMarkRoomThreadAsRead(room.id);
+}
+
+/**
+ * Returns a function that marks a thread as read.
+ *
+ * @example
+ * const markThreadAsRead = useMarkThreadAsRead();
+ * markThreadAsRead("th_xxx");
+ */
+function useMarkThreadAsRead() {
+  return useMarkThreadAsRead_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2788,6 +2799,12 @@ export function createRoomContext<
     );
   };
 
+  const useMarkThreadAsRead_withBoundRoomContext = () => {
+    return useMarkThreadAsRead_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2844,7 +2861,8 @@ export function createRoomContext<
     useDeleteComment,
     useAddReaction,
     useRemoveReaction,
-    useMarkThreadAsRead,
+    // prettier-ignore
+    useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useMarkThreadAsRead"],
     useThreadSubscription,
     useAttachmentUrl,
 
@@ -2910,7 +2928,8 @@ export function createRoomContext<
       useDeleteComment,
       useAddReaction,
       useRemoveReaction,
-      useMarkThreadAsRead,
+      // prettier-ignore
+      useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMarkThreadAsRead"],
       useThreadSubscription,
       useAttachmentUrl: useAttachmentUrlSuspense,
 
