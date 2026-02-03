@@ -31,6 +31,7 @@ import type {
   LiveblocksErrorContext,
   MentionData,
   OpaqueClient,
+  OpaqueRoom,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
@@ -54,6 +55,7 @@ import {
 } from "@liveblocks/core";
 import type { Context } from "react";
 import {
+  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -65,7 +67,7 @@ import {
 
 import { config } from "./config";
 import {
-  RoomContext,
+  GlobalRoomContext,
   useClient,
   useIsInsideRoom,
   useRoomOrNull,
@@ -328,7 +330,12 @@ function RoomProvider<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
->(props: RoomProviderProps<P, S>) {
+>(
+  props: RoomProviderProps<P, S> & {
+    /** @internal */
+    BoundRoomContext: Context<OpaqueRoom | null>;
+  }
+) {
   const client = useClient<U>();
   const [cache] = useState(
     () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
@@ -410,15 +417,11 @@ function RoomProviderInner<
 >(
   props: RoomProviderProps<P, S> & {
     stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
-    // XXX Add BoundRoomContext: Context<...> prop?
-    // (Let's not call this prop RoomContext here like we do in the hooks, as
-    // it may imply that this is the _only_ RoomContext where this will get
-    // registered. We need to make it slightly more obvious that this will
-    // provide to both the BoundRoomContext as well as the GlobalRoomContext!)
+    BoundRoomContext: Context<OpaqueRoom | null>;
   }
 ) {
   const client = useClient<U>();
-  const { id: roomId, stableEnterRoom } = props;
+  const { id: roomId, stableEnterRoom, BoundRoomContext } = props;
 
   if (process.env.NODE_ENV !== "production") {
     if (!roomId) {
@@ -544,13 +547,11 @@ function RoomProviderInner<
   }, [roomId, frozenProps, stableEnterRoom]);
 
   return (
-    // XXX Core idea:
-    // <GlobalRoomContext.Provider value={room}>
-    //   <BundleRoomContext.Provider value={room}>
-    //     {props.children}
-    //   </BundleRoomContext.Provider>
-    // </GlobalRoomContext.Provider>
-    <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+    <GlobalRoomContext.Provider value={room}>
+      <BoundRoomContext.Provider value={room}>
+        {props.children}
+      </BoundRoomContext.Provider>
+    </GlobalRoomContext.Provider>
   );
 }
 
@@ -2610,11 +2611,6 @@ export function createRoomContext<
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   type TRoom = Room<P, S, U, E, TM, CM>;
 
-  // XXX This function currently still uses a top-level, shared, RoomProvider
-  // function (defined above), but that function should be passed a the
-  // BoundRoomContext we created here. Then, this RoomProvider (and its
-  // RoomProviderInner child) should register the room into both the
-  // BoundRoomContext _and_ the GlobalRoomContext.
   function RoomProvider_withImplicitLiveblocksProvider(
     props: RoomProviderProps<P, S>
   ) {
@@ -2628,16 +2624,13 @@ export function createRoomContext<
     return (
       <LiveblocksProviderWithClient client={client} allowNesting>
         {/* @ts-expect-error {...props} is the same type as props */}
-        <RoomProvider {...props} />
+        <RoomProvider {...props} BoundRoomContext={BoundRoomContext} />
       </LiveblocksProviderWithClient>
     );
   }
 
-  const shared = createSharedContext(client as Client<U>);
-
-  // XXX We need to start passing this "bound" room context to all the hooks
-  // below, so they will use this context stack.
   const BoundRoomContext = createContext<TRoom | null>(null);
+  const shared = createSharedContext(client as Client<U>);
 
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
