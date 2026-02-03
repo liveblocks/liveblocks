@@ -744,11 +744,15 @@ function useMentionSuggestionsCache() {
   return client[kInternal].mentionSuggestionsCache;
 }
 
-function useBroadcastEvent<E extends Json>(): (
-  event: E,
-  options?: BroadcastOptions
-) => void {
-  const room = useRoom<never, never, never, E, never>();
+/**
+ * @internal
+ */
+function useBroadcastEvent_withRoomContext<E extends Json>(
+  RoomContext: Context<OpaqueRoom | null>
+): (event: E, options?: BroadcastOptions) => void {
+  const room = useRoom_withRoomContext<never, never, never, E, never, never>(
+    RoomContext
+  );
   return useCallback(
     (
       event: E,
@@ -758,6 +762,13 @@ function useBroadcastEvent<E extends Json>(): (
     },
     [room]
   );
+}
+
+function useBroadcastEvent<E extends Json>(): (
+  event: E,
+  options?: BroadcastOptions
+) => void {
+  return useBroadcastEvent_withRoomContext<E>(GlobalRoomContext);
 }
 
 function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
@@ -2703,6 +2714,12 @@ export function createRoomContext<
     );
   };
 
+  const useBroadcastEvent_withBoundRoomContext = () => {
+    return useBroadcastEvent_withRoomContext<E>(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2712,8 +2729,8 @@ export function createRoomContext<
     useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRoom"],
     // prettier-ignore
     useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStatus"],
-
-    useBroadcastEvent,
+    // prettier-ignore
+    useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useBroadcastEvent"],
     useOthersListener,
     useLostConnectionListener,
     useEventListener,
@@ -2776,8 +2793,8 @@ export function createRoomContext<
       useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRoom"],
       // prettier-ignore
       useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStatus"],
-
-      useBroadcastEvent,
+      // prettier-ignore
+      useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useBroadcastEvent"],
       useOthersListener,
       useLostConnectionListener,
       useEventListener,
