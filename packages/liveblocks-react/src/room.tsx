@@ -771,13 +771,46 @@ function useBroadcastEvent<E extends Json>(): (
   return useBroadcastEvent_withRoomContext<E>(GlobalRoomContext);
 }
 
-function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+/**
+ * @internal
+ */
+function useOthersListener_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   callback: (event: OthersEvent<P, U>) => void
 ) {
-  const room = useRoom<P, never, U, never, never>();
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
   const savedCallback = useLatest(callback);
   useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
+    [room, savedCallback]
+  );
+}
+
+function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+  callback: (event: OthersEvent<P, U>) => void
+) {
+  return useOthersListener_withRoomContext<P, U>(GlobalRoomContext, callback);
+}
+
+/**
+ * @internal
+ */
+function useLostConnectionListener_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: (event: LostConnectionEvent) => void
+): void {
+  const room = useRoom_withRoomContext(RoomContext);
+  const savedCallback = useLatest(callback);
+  useEffect(
+    () =>
+      room.events.lostConnection.subscribe((event) =>
+        savedCallback.current(event)
+      ),
     [room, savedCallback]
   );
 }
@@ -805,23 +838,23 @@ function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
 function useLostConnectionListener(
   callback: (event: LostConnectionEvent) => void
 ): void {
-  const room = useRoom();
-  const savedCallback = useLatest(callback);
-  useEffect(
-    () =>
-      room.events.lostConnection.subscribe((event) =>
-        savedCallback.current(event)
-      ),
-    [room, savedCallback]
-  );
+  return useLostConnectionListener_withRoomContext(GlobalRoomContext, callback);
 }
 
-function useEventListener<
+/**
+ * @internal
+ */
+function useEventListener_withRoomContext<
   P extends JsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(callback: (data: RoomEventMessage<P, U, E>) => void): void {
-  const room = useRoom<P, never, U, E, never>();
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: (data: RoomEventMessage<P, U, E>) => void
+): void {
+  const room = useRoom_withRoomContext<P, never, U, E, never, never>(
+    RoomContext
+  );
   const savedCallback = useLatest(callback);
   useEffect(() => {
     const listener = (eventData: RoomEventMessage<P, U, E>) => {
@@ -830,6 +863,14 @@ function useEventListener<
 
     return room.events.customEvent.subscribe(listener);
   }, [room, savedCallback]);
+}
+
+function useEventListener<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(callback: (data: RoomEventMessage<P, U, E>) => void): void {
+  return useEventListener_withRoomContext<P, U, E>(GlobalRoomContext, callback);
 }
 
 /**
@@ -2720,6 +2761,33 @@ export function createRoomContext<
     );
   };
 
+  const useOthersListener_withBoundRoomContext = (
+    callback: (event: OthersEvent<P, U>) => void
+  ) => {
+    return useOthersListener_withRoomContext<P, U>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      callback
+    );
+  };
+
+  const useLostConnectionListener_withBoundRoomContext = (
+    callback: (event: LostConnectionEvent) => void
+  ) => {
+    return useLostConnectionListener_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      callback
+    );
+  };
+
+  const useEventListener_withBoundRoomContext = (
+    callback: (data: RoomEventMessage<P, U, E>) => void
+  ) => {
+    return useEventListener_withRoomContext<P, U, E>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      callback
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2731,9 +2799,12 @@ export function createRoomContext<
     useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStatus"],
     // prettier-ignore
     useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useBroadcastEvent"],
-    useOthersListener,
-    useLostConnectionListener,
-    useEventListener,
+    // prettier-ignore
+    useOthersListener: useOthersListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersListener"],
+    // prettier-ignore
+    useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useLostConnectionListener"],
+    // prettier-ignore
+    useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useEventListener"],
 
     useHistory,
     useUndo,
@@ -2795,9 +2866,12 @@ export function createRoomContext<
       useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStatus"],
       // prettier-ignore
       useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useBroadcastEvent"],
-      useOthersListener,
-      useLostConnectionListener,
-      useEventListener,
+      // prettier-ignore
+      useOthersListener: useOthersListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersListener"],
+      // prettier-ignore
+      useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useLostConnectionListener"],
+      // prettier-ignore
+      useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useEventListener"],
 
       useHistory,
       useUndo,
