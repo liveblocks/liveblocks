@@ -1772,8 +1772,19 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
   );
 }
 
+/**
+ * @internal
+ */
+function useEditCommentMetadata_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useEditRoomCommentMetadata<CM>(
+    useRoom_withRoomContext(RoomContext).id
+  );
+}
+
 function useEditCommentMetadata<CM extends BaseMetadata>() {
-  return useEditRoomCommentMetadata<CM>(useRoom().id);
+  return useEditCommentMetadata_withRoomContext<CM>(GlobalRoomContext);
 }
 
 function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
@@ -1829,6 +1840,15 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useCreateComment_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: CreateCommentOptions<CM>) => CommentData<CM> {
+  return useCreateRoomComment(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that adds a comment to a thread.
  *
  * @example
@@ -1838,7 +1858,7 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
 function useCreateComment<CM extends BaseMetadata>(): (
   options: CreateCommentOptions<CM>
 ) => CommentData<CM> {
-  return useCreateRoomComment(useRoom().id);
+  return useCreateComment_withRoomContext<CM>(GlobalRoomContext);
 }
 
 /**
@@ -1913,6 +1933,15 @@ function useCreateRoomComment<CM extends BaseMetadata>(
 }
 
 /**
+ * @internal
+ */
+function useEditComment_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: EditCommentOptions<CM>) => void {
+  return useEditRoomComment<CM>(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that edits a comment.
  *
  * @example
@@ -1922,7 +1951,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
 function useEditComment<CM extends BaseMetadata>(): (
   options: EditCommentOptions<CM>
 ) => void {
-  return useEditRoomComment<CM>(useRoom().id);
+  return useEditComment_withRoomContext<CM>(GlobalRoomContext);
 }
 
 /**
@@ -2018,6 +2047,15 @@ function useEditRoomComment<CM extends BaseMetadata>(
 }
 
 /**
+ * @internal
+ */
+function useDeleteComment_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useDeleteRoomComment(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that deletes a comment.
  * If it is the last non-deleted comment, the thread also gets deleted.
  *
@@ -2026,7 +2064,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
  * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
  */
 function useDeleteComment() {
-  return useDeleteRoomComment(useRoom().id);
+  return useDeleteComment_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2068,8 +2106,17 @@ function useDeleteRoomComment(roomId: string) {
   );
 }
 
+/**
+ * @internal
+ */
+function useAddReaction_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useAddRoomCommentReaction(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useAddReaction() {
-  return useAddRoomCommentReaction(useRoom().id);
+  return useAddReaction_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2127,6 +2174,15 @@ function useAddRoomCommentReaction(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useRemoveReaction_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useRemoveRoomCommentReaction(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that removes a reaction on a comment.
  *
  * @example
@@ -2134,7 +2190,7 @@ function useAddRoomCommentReaction(roomId: string) {
  * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
  */
 function useRemoveReaction() {
-  return useRemoveRoomCommentReaction(useRoom().id);
+  return useRemoveReaction_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2390,6 +2446,15 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useSubscribeToThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useSubscribeToRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that subscribes the user to a thread.
  *
  * @example
@@ -2397,7 +2462,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
  * subscribeToThread("th_xxx");
  */
 function useSubscribeToThread() {
-  return useSubscribeToRoomThread(useRoom().id);
+  return useSubscribeToThread_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2434,6 +2499,15 @@ function useSubscribeToRoomThread(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useUnsubscribeFromThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useUnsubscribeFromRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that unsubscribes the user from a thread.
  *
  * @example
@@ -2441,7 +2515,7 @@ function useSubscribeToRoomThread(roomId: string) {
  * unsubscribeFromThread("th_xxx");
  */
 function useUnsubscribeFromThread() {
-  return useUnsubscribeFromRoomThread(useRoom().id);
+  return useUnsubscribeFromThread_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -3411,6 +3485,38 @@ export function createRoomContext<
     );
   }
 
+  function useSubscribeToThread_withBoundRoomContext() {
+    return useSubscribeToThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useUnsubscribeFromThread_withBoundRoomContext() {
+    return useUnsubscribeFromThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useCreateComment_withBoundRoomContext() {
+    return useCreateComment_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useEditComment_withBoundRoomContext() {
+    return useEditComment_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useEditCommentMetadata_withBoundRoomContext() {
+    return useEditCommentMetadata_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useDeleteComment_withBoundRoomContext() {
+    return useDeleteComment_withRoomContext(BoundRoomContext);
+  }
+
+  function useAddReaction_withBoundRoomContext() {
+    return useAddReaction_withRoomContext(BoundRoomContext);
+  }
+
+  function useRemoveReaction_withBoundRoomContext() {
+    return useRemoveReaction_withRoomContext(BoundRoomContext);
+  }
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
@@ -3475,14 +3581,22 @@ export function createRoomContext<
     useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsResolved"],
     // prettier-ignore
     useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsUnresolved"],
-    useSubscribeToThread,
-    useUnsubscribeFromThread,
-    useCreateComment,
-    useEditComment,
-    useEditCommentMetadata,
-    useDeleteComment,
-    useAddReaction,
-    useRemoveReaction,
+    // prettier-ignore
+    useSubscribeToThread: useSubscribeToThread_withBoundRoomContext as TRoomBundle["useSubscribeToThread"],
+    // prettier-ignore
+    useUnsubscribeFromThread: useUnsubscribeFromThread_withBoundRoomContext as TRoomBundle["useUnsubscribeFromThread"],
+    // prettier-ignore
+    useCreateComment: useCreateComment_withBoundRoomContext as TRoomBundle["useCreateComment"],
+    // prettier-ignore
+    useEditComment: useEditComment_withBoundRoomContext as TRoomBundle["useEditComment"],
+    // prettier-ignore
+    useEditCommentMetadata: useEditCommentMetadata_withBoundRoomContext as TRoomBundle["useEditCommentMetadata"],
+    // prettier-ignore
+    useDeleteComment: useDeleteComment_withBoundRoomContext as TRoomBundle["useDeleteComment"],
+    // prettier-ignore
+    useAddReaction: useAddReaction_withBoundRoomContext as TRoomBundle["useAddReaction"],
+    // prettier-ignore
+    useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["useRemoveReaction"],
     // prettier-ignore
     useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["useMarkThreadAsRead"],
     useThreadSubscription,
@@ -3560,14 +3674,22 @@ export function createRoomContext<
       useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsResolved"],
       // prettier-ignore
       useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsUnresolved"],
-      useSubscribeToThread,
-      useUnsubscribeFromThread,
-      useCreateComment,
-      useEditComment,
-      useEditCommentMetadata,
-      useDeleteComment,
-      useAddReaction,
-      useRemoveReaction,
+      // prettier-ignore
+      useSubscribeToThread: useSubscribeToThread_withBoundRoomContext as TRoomBundle["suspense"]["useSubscribeToThread"],
+      // prettier-ignore
+      useUnsubscribeFromThread: useUnsubscribeFromThread_withBoundRoomContext as TRoomBundle["suspense"]["useUnsubscribeFromThread"],
+      // prettier-ignore
+      useCreateComment: useCreateComment_withBoundRoomContext as TRoomBundle["suspense"]["useCreateComment"],
+      // prettier-ignore
+      useEditComment: useEditComment_withBoundRoomContext as TRoomBundle["suspense"]["useEditComment"],
+      // prettier-ignore
+      useEditCommentMetadata: useEditCommentMetadata_withBoundRoomContext as TRoomBundle["suspense"]["useEditCommentMetadata"],
+      // prettier-ignore
+      useDeleteComment: useDeleteComment_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteComment"],
+      // prettier-ignore
+      useAddReaction: useAddReaction_withBoundRoomContext as TRoomBundle["suspense"]["useAddReaction"],
+      // prettier-ignore
+      useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["suspense"]["useRemoveReaction"],
       // prettier-ignore
       useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsRead"],
       useThreadSubscription,
