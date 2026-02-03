@@ -1130,29 +1130,50 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   return other;
 }
 
-/** @internal */
-function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
-  const room = useRoom<never, S, never, never, never>();
+/**
+ * @internal
+ */
+function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): LiveObject<S> | null {
+  const room = useRoom_withRoomContext<never, S, never, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-// NOTE: This API exists for backward compatible reasons
-function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
-  return [useMutableStorageRoot<S>()];
+/**
+ * @internal
+ */
+function useStorageRoot_withRoomContext<S extends LsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): [root: LiveObject<S> | null] {
+  return [useMutableStorageRoot_withRoomContext<S>(RoomContext)];
 }
 
-function useStorage<S extends LsonObject, T>(
+// NOTE: This API exists for backward compatible reasons
+function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
+  return useStorageRoot_withRoomContext<S>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useStorage_withRoomContext<S extends LsonObject, T>(
+  RoomContext: Context<OpaqueRoom | null>,
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
   type Snapshot = ToImmutable<S> | null;
   type Selection = T | null;
 
-  const room = useRoom<never, S, never, never, never>();
-  const rootOrNull = useMutableStorageRoot<S>();
+  const room = useRoom_withRoomContext<never, S, never, never, never, never>(
+    RoomContext
+  );
+  const rootOrNull = useMutableStorageRoot_withRoomContext<S>(RoomContext);
 
   const wrappedSelector = useCallback(
     (rootOrNull: Snapshot): Selection =>
@@ -1187,6 +1208,13 @@ function useStorage<S extends LsonObject, T>(
     wrappedSelector,
     isEqual
   );
+}
+
+function useStorage<S extends LsonObject, T>(
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null {
+  return useStorage_withRoomContext<S, T>(GlobalRoomContext, selector, isEqual);
 }
 
 function useMutation<
@@ -2611,23 +2639,44 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   return useOther(connectionId, selector, isEqual);
 }
 
-function useSuspendUntilStorageReady(): void {
+/**
+ * @internal
+ */
+function useSuspendUntilStorageReady_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): void {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilStorageReady());
+}
+
+/**
+ * @internal
+ */
+function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilStorageReady_withRoomContext(RoomContext);
+  return useStorage_withRoomContext(
+    RoomContext,
+    selector,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T;
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilStorageReady();
-  return useStorage(
+  return useStorageSuspense_withRoomContext<S, T>(
+    GlobalRoomContext,
     selector,
-    isEqual as (prev: T | null, curr: T | null) => boolean
-  ) as T;
+    isEqual
+  );
 }
 
 function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
@@ -2880,6 +2929,34 @@ export function createRoomContext<
     );
   };
 
+  const useStorageRoot_withBoundRoomContext = () => {
+    return useStorageRoot_withRoomContext<S>(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useStorage_withBoundRoomContext = <T,>(
+    selector: (root: ToImmutable<S>) => T,
+    isEqual?: (prev: T | null, curr: T | null) => boolean
+  ) => {
+    return useStorage_withRoomContext<S, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      selector,
+      isEqual
+    );
+  };
+
+  const useStorageSuspense_withBoundRoomContext = <T,>(
+    selector: (root: ToImmutable<S>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ) => {
+    return useStorageSuspense_withRoomContext<S, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      selector,
+      isEqual
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2910,8 +2987,10 @@ export function createRoomContext<
     // prettier-ignore
     useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useCanRedo"],
 
-    useStorageRoot,
-    useStorage,
+    // prettier-ignore
+    useStorageRoot: useStorageRoot_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStorageRoot"],
+    // prettier-ignore
+    useStorage: useStorage_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStorage"],
 
     useSelf,
     useMyPresence,
@@ -2984,8 +3063,10 @@ export function createRoomContext<
       // prettier-ignore
       useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCanRedo"],
 
-      useStorageRoot,
-      useStorage: useStorageSuspense,
+      // prettier-ignore
+      useStorageRoot: useStorageRoot_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStorageRoot"],
+      // prettier-ignore
+      useStorage: useStorageSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStorage"],
 
       useSelf: useSelfSuspense,
       useMyPresence,
