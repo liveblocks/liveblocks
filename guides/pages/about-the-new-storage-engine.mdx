@@ -6,7 +6,7 @@ meta:
 
 Since v3.14, rooms can be powered by our new storage engine v2. Switching is
 **seamless and requires no code changes**. Rooms on v1 or v2 behave identically
-from your app's perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs
+from your app’s perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs
 Storage all work the same way.
 
 If you switch, you may notice faster initial loads and support for larger
@@ -26,7 +26,7 @@ storage layer, keeping only minimal data in memory. Conflict resolution and
 mutations happen directly in the storage layer too.
 
 This enables arbitrarily large documents—server memory is no longer the
-bottleneck (browser memory, network speed, or your app's rendering performance
+bottleneck (browser memory, network speed, or your app’s rendering performance
 might now be).
 
 Initial load time will be faster, especially for larger documents: the server
