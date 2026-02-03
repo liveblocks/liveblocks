@@ -3103,8 +3103,9 @@ export function createRoomContext<
   CM extends BaseMetadata = DCM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
   type TRoom = Room<P, S, U, E, TM, CM>;
+  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM>;
 
-  const BoundRoomContext = createContext<TRoom | null>(null);
+  const BoundRoomContext = createContext<OpaqueRoom | null>(null);
 
   function RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext(
     props: RoomProviderProps<P, S>
@@ -3124,312 +3125,209 @@ export function createRoomContext<
     );
   }
 
-  const useRoom_withBoundRoomContext = (options?: {
-    allowOutsideRoom: boolean;
-  }) => {
+  function useRoom_withBoundRoomContext(
+    ...args: Parameters<typeof useRoom<P, S, U, E, TM, CM>>
+  ) {
     return useRoom_withRoomContext<P, S, U, E, TM, CM>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      options
+      BoundRoomContext,
+      ...args
     );
-  };
+  }
 
-  const useStatus_withBoundRoomContext = () => {
-    return useStatus_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useStatus_withBoundRoomContext() {
+    return useStatus_withRoomContext(BoundRoomContext);
+  }
 
-  const useBroadcastEvent_withBoundRoomContext = () => {
-    return useBroadcastEvent_withRoomContext<E>(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useBroadcastEvent_withBoundRoomContext() {
+    return useBroadcastEvent_withRoomContext<E>(BoundRoomContext);
+  }
 
-  const useOthersListener_withBoundRoomContext = (
-    callback: (event: OthersEvent<P, U>) => void
-  ) => {
-    return useOthersListener_withRoomContext<P, U>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      callback
-    );
-  };
+  function useOthersListener_withBoundRoomContext(
+    ...args: Parameters<typeof useOthersListener<P, U>>
+  ) {
+    return useOthersListener_withRoomContext<P, U>(BoundRoomContext, ...args);
+  }
 
-  const useLostConnectionListener_withBoundRoomContext = (
-    callback: (event: LostConnectionEvent) => void
-  ) => {
-    return useLostConnectionListener_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      callback
-    );
-  };
+  function useLostConnectionListener_withBoundRoomContext(
+    ...args: Parameters<typeof useLostConnectionListener>
+  ) {
+    return useLostConnectionListener_withRoomContext(BoundRoomContext, ...args);
+  }
 
-  const useEventListener_withBoundRoomContext = (
-    callback: (data: RoomEventMessage<P, U, E>) => void
-  ) => {
-    return useEventListener_withRoomContext<P, U, E>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      callback
-    );
-  };
+  function useEventListener_withBoundRoomContext(
+    ...args: Parameters<typeof useEventListener<P, U, E>>
+  ) {
+    return useEventListener_withRoomContext<P, U, E>(BoundRoomContext, ...args);
+  }
 
-  const useMarkThreadAsRead_withBoundRoomContext = () => {
-    return useMarkThreadAsRead_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useMarkThreadAsRead_withBoundRoomContext() {
+    return useMarkThreadAsRead_withRoomContext(BoundRoomContext);
+  }
 
-  const useHistory_withBoundRoomContext = () => {
-    return useHistory_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useHistory_withBoundRoomContext() {
+    return useHistory_withRoomContext(BoundRoomContext);
+  }
 
-  const useUndo_withBoundRoomContext = () => {
-    return useUndo_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useUndo_withBoundRoomContext() {
+    return useUndo_withRoomContext(BoundRoomContext);
+  }
 
-  const useRedo_withBoundRoomContext = () => {
-    return useRedo_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useRedo_withBoundRoomContext() {
+    return useRedo_withRoomContext(BoundRoomContext);
+  }
 
-  const useCanUndo_withBoundRoomContext = () => {
-    return useCanUndo_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useCanUndo_withBoundRoomContext() {
+    return useCanUndo_withRoomContext(BoundRoomContext);
+  }
 
-  const useCanRedo_withBoundRoomContext = () => {
-    return useCanRedo_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useCanRedo_withBoundRoomContext() {
+    return useCanRedo_withRoomContext(BoundRoomContext);
+  }
 
-  const useStorageRoot_withBoundRoomContext = () => {
-    return useStorageRoot_withRoomContext<S>(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useStorageRoot_withBoundRoomContext() {
+    return useStorageRoot_withRoomContext<S>(BoundRoomContext);
+  }
 
-  const useStorage_withBoundRoomContext = <T,>(
-    selector: (root: ToImmutable<S>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ) => {
-    return useStorage_withRoomContext<S, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      selector,
-      isEqual
-    );
-  };
+  function useStorage_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useStorage<S, T>>
+  ) {
+    return useStorage_withRoomContext<S, T>(BoundRoomContext, ...args);
+  }
 
-  const useStorageSuspense_withBoundRoomContext = <T,>(
-    selector: (root: ToImmutable<S>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ) => {
-    return useStorageSuspense_withRoomContext<S, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      selector,
-      isEqual
-    );
-  };
+  function useStorageSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useStorageSuspense<S, T>>
+  ) {
+    return useStorageSuspense_withRoomContext<S, T>(BoundRoomContext, ...args);
+  }
 
-  function useSelf_withBoundRoomContext(): User<P, U> | null;
   function useSelf_withBoundRoomContext<T>(
-    selector: (me: User<P, U>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | null;
-  function useSelf_withBoundRoomContext<T>(
-    maybeSelector?: (me: User<P, U>) => T,
-    isEqual?: (prev: T | null, curr: T | null) => boolean
-  ): T | User<P, U> | null {
-    return useSelf_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      maybeSelector as (me: User<P, U>) => T,
-      isEqual
-    );
+    ...args: Parameters<typeof useSelf<P, U, T>>
+  ) {
+    return useSelf_withRoomContext<P, U, T>(BoundRoomContext, ...args);
   }
 
-  const useMyPresence_withBoundRoomContext = () => {
-    return useMyPresence_withRoomContext<P>(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useMyPresence_withBoundRoomContext() {
+    return useMyPresence_withRoomContext<P>(BoundRoomContext);
+  }
 
-  const useUpdateMyPresence_withBoundRoomContext = () => {
-    return useUpdateMyPresence_withRoomContext<P>(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useUpdateMyPresence_withBoundRoomContext() {
+    return useUpdateMyPresence_withRoomContext<P>(BoundRoomContext);
+  }
 
-  function useOthers_withBoundRoomContext(): readonly User<P, U>[];
   function useOthers_withBoundRoomContext<T>(
-    selector: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOthers_withBoundRoomContext<T>(
-    selector?: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<P, U>[] {
-    return useOthers_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      selector as (others: readonly User<P, U>[]) => T,
-      isEqual
-    );
+    ...args: Parameters<typeof useOthers<P, U, T>>
+  ) {
+    return useOthers_withRoomContext<P, U, T>(BoundRoomContext, ...args);
   }
 
-  const useOthersMapped_withBoundRoomContext = <T,>(
-    itemSelector: (other: User<P, U>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ) => {
-    return useOthersMapped_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      itemSelector,
-      itemIsEqual
-    );
-  };
-
-  const useOthersConnectionIds_withBoundRoomContext = () => {
-    return useOthersConnectionIds_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
-
-  const useOther_withBoundRoomContext = <T,>(
-    connectionId: number,
-    selector: (other: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ) => {
-    return useOther_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      connectionId,
-      selector,
-      isEqual
-    );
-  };
-
-  function useSelfSuspense_withBoundRoomContext(): User<P, U>;
-  function useSelfSuspense_withBoundRoomContext<T>(
-    selector: (me: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useSelfSuspense_withBoundRoomContext<T>(
-    selector?: (me: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | User<P, U> {
-    return useSelfSuspense_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      selector as (me: User<P, U>) => T,
-      isEqual
-    );
+  function useOthersMapped_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthersMapped<P, U, T>>
+  ) {
+    return useOthersMapped_withRoomContext<P, U, T>(BoundRoomContext, ...args);
   }
 
-  function useOthersSuspense_withBoundRoomContext(): readonly User<P, U>[];
+  function useOthersConnectionIds_withBoundRoomContext() {
+    return useOthersConnectionIds_withRoomContext(BoundRoomContext);
+  }
+
+  function useOther_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOther<P, U, T>>
+  ) {
+    return useOther_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useSelfSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useSelfSuspense<P, U, T>>
+  ) {
+    return useSelfSuspense_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
   function useOthersSuspense_withBoundRoomContext<T>(
-    selector: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOthersSuspense_withBoundRoomContext<T>(
-    selector?: (others: readonly User<P, U>[]) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | readonly User<P, U>[] {
+    ...args: Parameters<typeof useOthersSuspense<P, U, T>>
+  ) {
     return useOthersSuspense_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      selector as (others: readonly User<P, U>[]) => T,
-      isEqual
+      BoundRoomContext,
+      ...args
     );
   }
 
-  const useOthersMappedSuspense_withBoundRoomContext = <T,>(
-    itemSelector: (other: User<P, U>) => T,
-    itemIsEqual?: (prev: T, curr: T) => boolean
-  ) => {
+  function useOthersMappedSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthersMappedSuspense<P, U, T>>
+  ) {
     return useOthersMappedSuspense_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      itemSelector,
-      itemIsEqual
+      BoundRoomContext,
+      ...args
     );
-  };
+  }
 
-  const useOthersConnectionIdsSuspense_withBoundRoomContext = () => {
-    return useOthersConnectionIdsSuspense_withRoomContext(
-      BoundRoomContext as Context<OpaqueRoom | null>
-    );
-  };
+  function useOthersConnectionIdsSuspense_withBoundRoomContext() {
+    return useOthersConnectionIdsSuspense_withRoomContext(BoundRoomContext);
+  }
 
-  const useOtherSuspense_withBoundRoomContext = <T,>(
-    connectionId: number,
-    selector: (other: User<P, U>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ) => {
-    return useOtherSuspense_withRoomContext<P, U, T>(
-      BoundRoomContext as Context<OpaqueRoom | null>,
-      connectionId,
-      selector,
-      isEqual
-    );
-  };
+  function useOtherSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOtherSuspense<P, U, T>>
+  ) {
+    return useOtherSuspense_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
 
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
-    RoomContext: BoundRoomContext,
+    RoomContext: BoundRoomContext as Context<TRoom | null>,
     RoomProvider:
       RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
 
     // prettier-ignore
-    useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRoom"],
+    useRoom: useRoom_withBoundRoomContext as TRoomBundle["useRoom"],
     // prettier-ignore
-    useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStatus"],
+    useStatus: useStatus_withBoundRoomContext as TRoomBundle["useStatus"],
     // prettier-ignore
-    useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useBroadcastEvent"],
+    useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as TRoomBundle["useBroadcastEvent"],
     // prettier-ignore
-    useOthersListener: useOthersListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersListener"],
+    useOthersListener: useOthersListener_withBoundRoomContext as TRoomBundle["useOthersListener"],
     // prettier-ignore
-    useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useLostConnectionListener"],
+    useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as TRoomBundle["useLostConnectionListener"],
     // prettier-ignore
-    useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useEventListener"],
+    useEventListener: useEventListener_withBoundRoomContext as TRoomBundle["useEventListener"],
 
     // prettier-ignore
-    useHistory: useHistory_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useHistory"],
+    useHistory: useHistory_withBoundRoomContext as TRoomBundle["useHistory"],
     // prettier-ignore
-    useUndo: useUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useUndo"],
+    useUndo: useUndo_withBoundRoomContext as TRoomBundle["useUndo"],
     // prettier-ignore
-    useRedo: useRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRedo"],
+    useRedo: useRedo_withBoundRoomContext as TRoomBundle["useRedo"],
     // prettier-ignore
-    useCanUndo: useCanUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useCanUndo"],
+    useCanUndo: useCanUndo_withBoundRoomContext as TRoomBundle["useCanUndo"],
     // prettier-ignore
-    useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useCanRedo"],
+    useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["useCanRedo"],
 
     // prettier-ignore
-    useStorageRoot: useStorageRoot_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStorageRoot"],
+    useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["useStorageRoot"],
     // prettier-ignore
-    useStorage: useStorage_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStorage"],
+    useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
 
     // prettier-ignore
-    useSelf: useSelf_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useSelf"],
+    useSelf: useSelf_withBoundRoomContext as TRoomBundle["useSelf"],
     // prettier-ignore
-    useMyPresence: useMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useMyPresence"],
+    useMyPresence: useMyPresence_withBoundRoomContext as TRoomBundle["useMyPresence"],
     // prettier-ignore
-    useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useUpdateMyPresence"],
+    useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as TRoomBundle["useUpdateMyPresence"],
     // prettier-ignore
-    useOthers: useOthers_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthers"],
+    useOthers: useOthers_withBoundRoomContext as TRoomBundle["useOthers"],
     // prettier-ignore
-    useOthersMapped: useOthersMapped_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersMapped"],
+    useOthersMapped: useOthersMapped_withBoundRoomContext as TRoomBundle["useOthersMapped"],
     // prettier-ignore
-    useOthersConnectionIds: useOthersConnectionIds_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersConnectionIds"],
+    useOthersConnectionIds: useOthersConnectionIds_withBoundRoomContext as TRoomBundle["useOthersConnectionIds"],
     // prettier-ignore
-    useOther: useOther_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOther"],
+    useOther: useOther_withBoundRoomContext as TRoomBundle["useOther"],
 
     // prettier-ignore
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
+    useMutation: useMutation as TRoomBundle["useMutation"],
 
     useThreads,
     useSearchComments,
 
     // prettier-ignore
-    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
+    useCreateThread: useCreateThread as TRoomBundle["useCreateThread"],
 
     useDeleteThread,
     useEditThreadMetadata,
@@ -3444,7 +3342,7 @@ export function createRoomContext<
     useAddReaction,
     useRemoveReaction,
     // prettier-ignore
-    useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useMarkThreadAsRead"],
+    useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["useMarkThreadAsRead"],
     useThreadSubscription,
     useAttachmentUrl,
 
@@ -3457,61 +3355,61 @@ export function createRoomContext<
     ...shared.classic,
 
     suspense: {
-      RoomContext: BoundRoomContext,
+      RoomContext: BoundRoomContext as Context<TRoom | null>,
       RoomProvider:
         RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
 
       // prettier-ignore
-      useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRoom"],
+      useRoom: useRoom_withBoundRoomContext as TRoomBundle["suspense"]["useRoom"],
       // prettier-ignore
-      useStatus: useStatus_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStatus"],
+      useStatus: useStatus_withBoundRoomContext as TRoomBundle["suspense"]["useStatus"],
       // prettier-ignore
-      useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useBroadcastEvent"],
+      useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as TRoomBundle["suspense"]["useBroadcastEvent"],
       // prettier-ignore
-      useOthersListener: useOthersListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersListener"],
+      useOthersListener: useOthersListener_withBoundRoomContext as TRoomBundle["suspense"]["useOthersListener"],
       // prettier-ignore
-      useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useLostConnectionListener"],
+      useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as TRoomBundle["suspense"]["useLostConnectionListener"],
       // prettier-ignore
-      useEventListener: useEventListener_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useEventListener"],
+      useEventListener: useEventListener_withBoundRoomContext as TRoomBundle["suspense"]["useEventListener"],
 
       // prettier-ignore
-      useHistory: useHistory_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useHistory"],
+      useHistory: useHistory_withBoundRoomContext as TRoomBundle["suspense"]["useHistory"],
       // prettier-ignore
-      useUndo: useUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useUndo"],
+      useUndo: useUndo_withBoundRoomContext as TRoomBundle["suspense"]["useUndo"],
       // prettier-ignore
-      useRedo: useRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRedo"],
+      useRedo: useRedo_withBoundRoomContext as TRoomBundle["suspense"]["useRedo"],
       // prettier-ignore
-      useCanUndo: useCanUndo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCanUndo"],
+      useCanUndo: useCanUndo_withBoundRoomContext as TRoomBundle["suspense"]["useCanUndo"],
       // prettier-ignore
-      useCanRedo: useCanRedo_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCanRedo"],
+      useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["suspense"]["useCanRedo"],
 
       // prettier-ignore
-      useStorageRoot: useStorageRoot_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStorageRoot"],
+      useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["suspense"]["useStorageRoot"],
       // prettier-ignore
-      useStorage: useStorageSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStorage"],
+      useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
 
       // prettier-ignore
-      useSelf: useSelfSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useSelf"],
+      useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
       // prettier-ignore
-      useMyPresence: useMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMyPresence"],
+      useMyPresence: useMyPresence_withBoundRoomContext as TRoomBundle["suspense"]["useMyPresence"],
       // prettier-ignore
-      useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useUpdateMyPresence"],
+      useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateMyPresence"],
       // prettier-ignore
-      useOthers: useOthersSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthers"],
+      useOthers: useOthersSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthers"],
       // prettier-ignore
-      useOthersMapped: useOthersMappedSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersMapped"],
+      useOthersMapped: useOthersMappedSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthersMapped"],
       // prettier-ignore
-      useOthersConnectionIds: useOthersConnectionIdsSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersConnectionIds"],
+      useOthersConnectionIds: useOthersConnectionIdsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthersConnectionIds"],
       // prettier-ignore
-      useOther: useOtherSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOther"],
+      useOther: useOtherSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOther"],
 
       // prettier-ignore
-      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
+      useMutation: useMutation as TRoomBundle["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
 
       // prettier-ignore
-      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
+      useCreateThread: useCreateThread as TRoomBundle["suspense"]["useCreateThread"],
 
       useDeleteThread,
       useEditThreadMetadata,
@@ -3526,7 +3424,7 @@ export function createRoomContext<
       useAddReaction,
       useRemoveReaction,
       // prettier-ignore
-      useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMarkThreadAsRead"],
+      useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsRead"],
       useThreadSubscription,
       useAttachmentUrl: useAttachmentUrlSuspense,
 
