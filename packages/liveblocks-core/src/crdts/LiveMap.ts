@@ -79,7 +79,9 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this.#map) {
-      ops.push(...value._toOps(this._id, key));
+      for (const childOp of value._toOps(this._id, key)) {
+        ops.push(childOp);
+      }
     }
 
     return ops;

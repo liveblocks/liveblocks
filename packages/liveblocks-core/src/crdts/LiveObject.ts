@@ -163,7 +163,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     for (const [key, value] of this.#map) {
       if (isLiveNode(value)) {
-        ops.push(...value._toOps(this._id, key));
+        for (const childOp of value._toOps(this._id, key)) {
+          ops.push(childOp);
+        }
       } else {
         op.data[key] = value;
       }
@@ -378,7 +380,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const key in op.data as Partial<O>) {
       const oldValue = this.#map.get(key);
       if (isLiveNode(oldValue)) {
-        reverse.push(...oldValue._toOps(id, key));
+        for (const childOp of oldValue._toOps(id, key)) {
+          reverse.push(childOp);
+        }
         oldValue._detach();
       } else if (oldValue !== undefined) {
         reverseUpdate.data[key] = oldValue;
@@ -658,7 +662,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       const oldValue = this.#map.get(key);
 
       if (isLiveNode(oldValue)) {
-        reverseOps.push(...oldValue._toOps(this._id, key));
+        for (const childOp of oldValue._toOps(this._id, key)) {
+          reverseOps.push(childOp);
+        }
         oldValue._detach();
       } else if (oldValue === undefined) {
         reverseOps.push({ type: OpCode.DELETE_OBJECT_KEY, id: this._id, key });
@@ -683,7 +689,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           this.#unackedOpsByKey.set(key, nn(createCrdtOp.opId));
         }
 
-        ops.push(...newAttachChildOps);
+        for (const childOp of newAttachChildOps) {
+          ops.push(childOp);
+        }
       } else {
         updatedProps[key] = newValue;
         // Track locally-generated opId to preserve optimistic update
