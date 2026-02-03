@@ -961,22 +961,36 @@ function useCanRedo(): boolean {
   return useCanRedo_withRoomContext(GlobalRoomContext);
 }
 
-function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
-  P,
-  U
-> | null;
-function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * @internal
+ */
+function useSelf_withRoomContext<P extends JsonObject, U extends BaseUserMeta>(
+  RoomContext: Context<OpaqueRoom | null>
+): User<P, U> | null;
+function useSelf_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null;
-function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+function useSelf_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   maybeSelector?: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | User<P, U> | null {
   type Snapshot = User<P, U> | null;
   type Selection = T | null;
 
-  const room = useRoom<P, never, U, never, never>();
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.self.subscribe;
   const getSnapshot: () => Snapshot = room.getSelf;
 
@@ -997,11 +1011,34 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   );
 }
 
-function useMyPresence<P extends JsonObject>(): [
+function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
   P,
-  (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
-] {
-  const room = useRoom<P, never, never, never, never>();
+  U
+> | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  maybeSelector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | User<P, U> | null {
+  return useSelf_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    maybeSelector as (me: User<P, U>) => T,
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useMyPresence_withRoomContext<P extends JsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): [P, (patch: Partial<P>, options?: { addToHistory: boolean }) => void] {
+  const room = useRoom_withRoomContext<P, never, never, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
   const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -1009,11 +1046,69 @@ function useMyPresence<P extends JsonObject>(): [
   return [presence, setPresence];
 }
 
+function useMyPresence<P extends JsonObject>(): [
+  P,
+  (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
+] {
+  return useMyPresence_withRoomContext<P>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUpdateMyPresence_withRoomContext<P extends JsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): (patch: Partial<P>, options?: { addToHistory: boolean }) => void {
+  return useRoom_withRoomContext<P, never, never, never, never, never>(
+    RoomContext
+  ).updatePresence;
+}
+
 function useUpdateMyPresence<P extends JsonObject>(): (
   patch: Partial<P>,
   options?: { addToHistory: boolean }
 ) => void {
-  return useRoom<P, never, never, never, never>().updatePresence;
+  return useUpdateMyPresence_withRoomContext<P>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): readonly User<P, U>[];
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
+  const subscribe = room.events.others.subscribe;
+  const getSnapshot = room.getOthers;
+  const getServerSnapshot = alwaysEmptyList;
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    selector ?? (identity as (others: readonly User<P, U>[]) => T),
+    isEqual
+  );
 }
 
 function useOthers<
@@ -1028,20 +1123,22 @@ function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  const room = useRoom<P, never, U, never, never>();
-  const subscribe = room.events.others.subscribe;
-  const getSnapshot = room.getOthers;
-  const getServerSnapshot = alwaysEmptyList;
-  return useSyncExternalStoreWithSelector(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-    selector ?? (identity as (others: readonly User<P, U>[]) => T),
+  return useOthers_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    selector as (others: readonly User<P, U>[]) => T,
     isEqual
   );
 }
 
-function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * @internal
+ */
+function useOthersMapped_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
@@ -1069,7 +1166,35 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
     [itemIsEqual]
   );
 
-  return useOthers(wrappedSelector, wrappedIsEqual);
+  return useOthers_withRoomContext<P, U, ReadonlyArray<readonly [number, T]>>(
+    RoomContext,
+    wrappedSelector,
+    wrappedIsEqual
+  );
+}
+
+function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  return useOthersMapped_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    itemSelector,
+    itemIsEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersConnectionIds_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): readonly number[] {
+  return useOthers_withRoomContext(
+    RoomContext,
+    selectorFor_useOthersConnectionIds,
+    shallow
+  );
 }
 
 /**
@@ -1087,14 +1212,22 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
  * // [2, 4, 7]
  */
 function useOthersConnectionIds(): readonly number[] {
-  return useOthers(selectorFor_useOthersConnectionIds, shallow);
+  return useOthersConnectionIds_withRoomContext(GlobalRoomContext);
 }
 
 const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * @internal
+ */
+function useOther_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -1120,7 +1253,11 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
     [isEqual]
   );
 
-  const other = useOthers(wrappedSelector, wrappedIsEqual);
+  const other = useOthers_withRoomContext<P, U, T | NotFound>(
+    RoomContext,
+    wrappedSelector,
+    wrappedIsEqual
+  );
   if (other === NOT_FOUND) {
     throw new Error(
       `No such other user with connection id ${connectionId} exists`
@@ -1128,6 +1265,19 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   }
 
   return other;
+}
+
+function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  return useOther_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
 }
 
 /**
@@ -2553,12 +2703,50 @@ function useUpdateRoomSubscriptionSettings() {
   );
 }
 
-function useSuspendUntilPresenceReady(): void {
+/**
+ * @internal
+ */
+function useSuspendUntilPresenceReady_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): void {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilPresenceReady());
+}
+
+/**
+ * @internal
+ */
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): User<P, U>;
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | User<P, U> {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useSelf_withRoomContext<P, U, T>(
+    RoomContext,
+    selector as (me: User<P, U>) => T,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T | User<P, U>;
 }
 
 function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2573,11 +2761,44 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
-  useSuspendUntilPresenceReady();
-  return useSelf(
+  return useSelfSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
     selector as (me: User<P, U>) => T,
-    isEqual as (prev: T | null, curr: T | null) => boolean
-  ) as T | User<P, U>;
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): readonly User<P, U>[];
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthers_withRoomContext<P, U, T>(
+    RoomContext,
+    selector as (others: readonly User<P, U>[]) => T,
+    isEqual as (prev: T, curr: T) => boolean
+  ) as T | readonly User<P, U>[];
 }
 
 function useOthersSuspense<
@@ -2592,11 +2813,21 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  useSuspendUntilPresenceReady();
-  return useOthers(
+  return useOthersSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
     selector as (others: readonly User<P, U>[]) => T,
-    isEqual as (prev: T, curr: T) => boolean
-  ) as T | readonly User<P, U>[];
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersConnectionIdsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): readonly number[] {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthersConnectionIds_withRoomContext(RoomContext);
 }
 
 /**
@@ -2614,8 +2845,27 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
  * // [2, 4, 7]
  */
 function useOthersConnectionIdsSuspense(): readonly number[] {
-  useSuspendUntilPresenceReady();
-  return useOthersConnectionIds();
+  return useOthersConnectionIdsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useOthersMappedSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthersMapped_withRoomContext<P, U, T>(
+    RoomContext,
+    itemSelector,
+    itemIsEqual
+  );
 }
 
 function useOthersMappedSuspense<
@@ -2626,8 +2876,33 @@ function useOthersMappedSuspense<
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  useSuspendUntilPresenceReady();
-  return useOthersMapped(itemSelector, itemIsEqual);
+  return useOthersMappedSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    itemSelector,
+    itemIsEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOtherSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOther_withRoomContext<P, U, T>(
+    RoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
 }
 
 function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
@@ -2635,8 +2910,12 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilPresenceReady();
-  return useOther(connectionId, selector, isEqual);
+  return useOtherSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
 }
 
 /**
@@ -2957,6 +3236,142 @@ export function createRoomContext<
     );
   };
 
+  function useSelf_withBoundRoomContext(): User<P, U> | null;
+  function useSelf_withBoundRoomContext<T>(
+    selector: (me: User<P, U>) => T,
+    isEqual?: (prev: T | null, curr: T | null) => boolean
+  ): T | null;
+  function useSelf_withBoundRoomContext<T>(
+    maybeSelector?: (me: User<P, U>) => T,
+    isEqual?: (prev: T | null, curr: T | null) => boolean
+  ): T | User<P, U> | null {
+    return useSelf_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      maybeSelector as (me: User<P, U>) => T,
+      isEqual
+    );
+  }
+
+  const useMyPresence_withBoundRoomContext = () => {
+    return useMyPresence_withRoomContext<P>(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useUpdateMyPresence_withBoundRoomContext = () => {
+    return useUpdateMyPresence_withRoomContext<P>(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  function useOthers_withBoundRoomContext(): readonly User<P, U>[];
+  function useOthers_withBoundRoomContext<T>(
+    selector: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useOthers_withBoundRoomContext<T>(
+    selector?: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T | readonly User<P, U>[] {
+    return useOthers_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      selector as (others: readonly User<P, U>[]) => T,
+      isEqual
+    );
+  }
+
+  const useOthersMapped_withBoundRoomContext = <T,>(
+    itemSelector: (other: User<P, U>) => T,
+    itemIsEqual?: (prev: T, curr: T) => boolean
+  ) => {
+    return useOthersMapped_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      itemSelector,
+      itemIsEqual
+    );
+  };
+
+  const useOthersConnectionIds_withBoundRoomContext = () => {
+    return useOthersConnectionIds_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useOther_withBoundRoomContext = <T,>(
+    connectionId: number,
+    selector: (other: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ) => {
+    return useOther_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      connectionId,
+      selector,
+      isEqual
+    );
+  };
+
+  function useSelfSuspense_withBoundRoomContext(): User<P, U>;
+  function useSelfSuspense_withBoundRoomContext<T>(
+    selector: (me: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useSelfSuspense_withBoundRoomContext<T>(
+    selector?: (me: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T | User<P, U> {
+    return useSelfSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      selector as (me: User<P, U>) => T,
+      isEqual
+    );
+  }
+
+  function useOthersSuspense_withBoundRoomContext(): readonly User<P, U>[];
+  function useOthersSuspense_withBoundRoomContext<T>(
+    selector: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T;
+  function useOthersSuspense_withBoundRoomContext<T>(
+    selector?: (others: readonly User<P, U>[]) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ): T | readonly User<P, U>[] {
+    return useOthersSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      selector as (others: readonly User<P, U>[]) => T,
+      isEqual
+    );
+  }
+
+  const useOthersMappedSuspense_withBoundRoomContext = <T,>(
+    itemSelector: (other: User<P, U>) => T,
+    itemIsEqual?: (prev: T, curr: T) => boolean
+  ) => {
+    return useOthersMappedSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      itemSelector,
+      itemIsEqual
+    );
+  };
+
+  const useOthersConnectionIdsSuspense_withBoundRoomContext = () => {
+    return useOthersConnectionIdsSuspense_withRoomContext(
+      BoundRoomContext as Context<OpaqueRoom | null>
+    );
+  };
+
+  const useOtherSuspense_withBoundRoomContext = <T,>(
+    connectionId: number,
+    selector: (other: User<P, U>) => T,
+    isEqual?: (prev: T, curr: T) => boolean
+  ) => {
+    return useOtherSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext as Context<OpaqueRoom | null>,
+      connectionId,
+      selector,
+      isEqual
+    );
+  };
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
@@ -2992,13 +3407,20 @@ export function createRoomContext<
     // prettier-ignore
     useStorage: useStorage_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useStorage"],
 
-    useSelf,
-    useMyPresence,
-    useUpdateMyPresence,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
+    // prettier-ignore
+    useSelf: useSelf_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useSelf"],
+    // prettier-ignore
+    useMyPresence: useMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useMyPresence"],
+    // prettier-ignore
+    useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useUpdateMyPresence"],
+    // prettier-ignore
+    useOthers: useOthers_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthers"],
+    // prettier-ignore
+    useOthersMapped: useOthersMapped_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersMapped"],
+    // prettier-ignore
+    useOthersConnectionIds: useOthersConnectionIds_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOthersConnectionIds"],
+    // prettier-ignore
+    useOther: useOther_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useOther"],
 
     // prettier-ignore
     useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
@@ -3068,13 +3490,20 @@ export function createRoomContext<
       // prettier-ignore
       useStorage: useStorageSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useStorage"],
 
-      useSelf: useSelfSuspense,
-      useMyPresence,
-      useUpdateMyPresence,
-      useOthers: useOthersSuspense,
-      useOthersMapped: useOthersMappedSuspense,
-      useOthersConnectionIds: useOthersConnectionIdsSuspense,
-      useOther: useOtherSuspense,
+      // prettier-ignore
+      useSelf: useSelfSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useSelf"],
+      // prettier-ignore
+      useMyPresence: useMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMyPresence"],
+      // prettier-ignore
+      useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useUpdateMyPresence"],
+      // prettier-ignore
+      useOthers: useOthersSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthers"],
+      // prettier-ignore
+      useOthersMapped: useOthersMappedSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersMapped"],
+      // prettier-ignore
+      useOthersConnectionIds: useOthersConnectionIdsSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOthersConnectionIds"],
+      // prettier-ignore
+      useOther: useOtherSuspense_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useOther"],
 
       // prettier-ignore
       useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
