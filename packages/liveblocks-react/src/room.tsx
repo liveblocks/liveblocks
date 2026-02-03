@@ -2778,7 +2778,7 @@ export function createRoomContext<
 
   const BoundRoomContext = createContext<TRoom | null>(null);
 
-  function RoomProvider_withImplicitLiveblocksProvider(
+  function RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext(
     props: RoomProviderProps<P, S>
   ) {
     // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
@@ -2883,7 +2883,8 @@ export function createRoomContext<
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext,
-    RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
+    RoomProvider:
+      RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
 
     // prettier-ignore
     useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["useRoom"],
@@ -2956,7 +2957,8 @@ export function createRoomContext<
 
     suspense: {
       RoomContext: BoundRoomContext,
-      RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
+      RoomProvider:
+        RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
 
       // prettier-ignore
       useRoom: useRoom_withBoundRoomContext as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useRoom"],
