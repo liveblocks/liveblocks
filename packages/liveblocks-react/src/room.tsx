@@ -1418,13 +1418,20 @@ function useMutation<
   );
 }
 
-function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+/**
+ * @internal
+ */
+function useThreads_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncResult<TM, CM> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const { store, getOrCreateThreadsPollerForRoomId } = getRoomExtrasForClient<
     TM,
     CM
@@ -1461,6 +1468,12 @@ function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, result);
   return result;
+}
+
+function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncResult<TM, CM> {
+  return useThreads_withRoomContext<TM, CM>(GlobalRoomContext, options);
 }
 
 function useSearchComments<TM extends BaseMetadata>(
@@ -1547,10 +1560,22 @@ function useSearchComments<TM extends BaseMetadata>(
   return result;
 }
 
+/**
+ * @internal
+ */
+function useCreateThread_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: CreateThreadOptions<TM, CM>) => ThreadData<TM, CM> {
+  return useCreateRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
   options: CreateThreadOptions<TM, CM>
 ) => ThreadData<TM, CM> {
-  return useCreateRoomThread(useRoom().id);
+  return useCreateThread_withRoomContext<TM, CM>(GlobalRoomContext);
 }
 
 /**
@@ -1641,8 +1666,17 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
   );
 }
 
+/**
+ * @internal
+ */
+function useDeleteThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (threadId: string) => void {
+  return useDeleteRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useDeleteThread(): (threadId: string) => void {
-  return useDeleteRoomThread(useRoom().id);
+  return useDeleteThread_withRoomContext(GlobalRoomContext);
 }
 
 function useDeleteRoomThread(roomId: string): (threadId: string) => void {
@@ -1682,8 +1716,17 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   );
 }
 
+/**
+ * @internal
+ */
+function useEditThreadMetadata_withRoomContext<TM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useEditRoomThreadMetadata<TM>(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useEditThreadMetadata<TM extends BaseMetadata>() {
-  return useEditRoomThreadMetadata<TM>(useRoom().id);
+  return useEditThreadMetadata_withRoomContext<TM>(GlobalRoomContext);
 }
 
 function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
@@ -2227,6 +2270,15 @@ function useMarkThreadAsRead() {
 }
 
 /**
+ * @internal
+ */
+function useMarkThreadAsResolved_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useMarkRoomThreadAsResolved(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that marks a thread as resolved.
  *
  * @example
@@ -2234,7 +2286,7 @@ function useMarkThreadAsRead() {
  * markThreadAsResolved("th_xxx");
  */
 function useMarkThreadAsResolved() {
-  return useMarkRoomThreadAsResolved(useRoom().id);
+  return useMarkThreadAsResolved_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2278,6 +2330,15 @@ function useMarkRoomThreadAsResolved(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useMarkThreadAsUnresolved_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useMarkRoomThreadAsUnresolved(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that marks a thread as unresolved.
  *
  * @example
@@ -2285,7 +2346,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
  * markThreadAsUnresolved("th_xxx");
  */
 function useMarkThreadAsUnresolved() {
-  return useMarkRoomThreadAsUnresolved(useRoom().id);
+  return useMarkThreadAsUnresolved_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2981,24 +3042,37 @@ function useStorageSuspense<S extends LsonObject, T>(
   );
 }
 
-function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+/**
+ * @internal
+ */
+function useThreadsSuspense_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const { store } = getRoomExtrasForClient<TM, CM>(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useThreads<TM, CM>(options);
+  const result = useThreads_withRoomContext<TM, CM>(RoomContext, options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
+}
+
+function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncSuccess<TM, CM> {
+  return useThreadsSuspense_withRoomContext<TM, CM>(GlobalRoomContext, options);
 }
 
 function selectorFor_useAttachmentUrl(
@@ -3302,6 +3376,41 @@ export function createRoomContext<
     );
   }
 
+  function useThreads_withBoundRoomContext(
+    ...args: Parameters<typeof useThreads<TM, CM>>
+  ) {
+    return useThreads_withRoomContext<TM, CM>(BoundRoomContext, ...args);
+  }
+
+  function useCreateThread_withBoundRoomContext() {
+    return useCreateThread_withRoomContext<TM, CM>(BoundRoomContext);
+  }
+
+  function useDeleteThread_withBoundRoomContext() {
+    return useDeleteThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useEditThreadMetadata_withBoundRoomContext() {
+    return useEditThreadMetadata_withRoomContext<TM>(BoundRoomContext);
+  }
+
+  function useMarkThreadAsResolved_withBoundRoomContext() {
+    return useMarkThreadAsResolved_withRoomContext(BoundRoomContext);
+  }
+
+  function useMarkThreadAsUnresolved_withBoundRoomContext() {
+    return useMarkThreadAsUnresolved_withRoomContext(BoundRoomContext);
+  }
+
+  function useThreadsSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useThreadsSuspense<TM, CM>>
+  ) {
+    return useThreadsSuspense_withRoomContext<TM, CM>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
   const shared = createSharedContext(client as Client<U>);
   const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
@@ -3354,13 +3463,18 @@ export function createRoomContext<
     // prettier-ignore
     useOther: useOther_withBoundRoomContext as TRoomBundle["useOther"],
 
-    useThreads,
     // prettier-ignore
-    useCreateThread: useCreateThread as TRoomBundle["useCreateThread"],
-    useDeleteThread,
-    useEditThreadMetadata,
-    useMarkThreadAsResolved,
-    useMarkThreadAsUnresolved,
+    useThreads: useThreads_withBoundRoomContext as TRoomBundle["useThreads"],
+    // prettier-ignore
+    useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["useCreateThread"],
+    // prettier-ignore
+    useDeleteThread: useDeleteThread_withBoundRoomContext as TRoomBundle["useDeleteThread"],
+    // prettier-ignore
+    useEditThreadMetadata: useEditThreadMetadata_withBoundRoomContext as TRoomBundle["useEditThreadMetadata"],
+    // prettier-ignore
+    useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsResolved"],
+    // prettier-ignore
+    useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsUnresolved"],
     useSubscribeToThread,
     useUnsubscribeFromThread,
     useCreateComment,
@@ -3434,13 +3548,18 @@ export function createRoomContext<
       // prettier-ignore
       useOther: useOtherSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOther"],
 
-      useThreads: useThreadsSuspense,
       // prettier-ignore
-      useCreateThread: useCreateThread as TRoomBundle["suspense"]["useCreateThread"],
-      useDeleteThread,
-      useEditThreadMetadata,
-      useMarkThreadAsResolved,
-      useMarkThreadAsUnresolved,
+      useThreads: useThreadsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useThreads"],
+      // prettier-ignore
+      useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["suspense"]["useCreateThread"],
+      // prettier-ignore
+      useDeleteThread: useDeleteThread_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteThread"],
+      // prettier-ignore
+      useEditThreadMetadata: useEditThreadMetadata_withBoundRoomContext as TRoomBundle["suspense"]["useEditThreadMetadata"],
+      // prettier-ignore
+      useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsResolved"],
+      // prettier-ignore
+      useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsUnresolved"],
       useSubscribeToThread,
       useUnsubscribeFromThread,
       useCreateComment,
