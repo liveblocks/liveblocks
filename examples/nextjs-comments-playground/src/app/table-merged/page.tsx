@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
-import { FloatingThread } from "@liveblocks/react-ui";
+import { FloatingThreadComposer } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -46,14 +46,17 @@ function Example() {
                     <div className="table-cell-inner">
                       <span className="cell-content">{row[col]}</span>
 
-                      <FloatingThread thread={thread} metadata={{ cellId }}>
+                      <FloatingThreadComposer
+                        thread={thread}
+                        metadata={{ cellId }}
+                      >
                         <button
                           className="thread-indicator"
                           data-has-thread={thread ? "" : undefined}
                         >
                           {thread ? "💬" : "＋"}
                         </button>
-                      </FloatingThread>
+                      </FloatingThreadComposer>
                     </div>
                   </td>
                 );
@@ -68,7 +71,7 @@ function Example() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-table"
+    "liveblocks:examples:nextjs-comments-playground-table-merged"
   );
 
   return (

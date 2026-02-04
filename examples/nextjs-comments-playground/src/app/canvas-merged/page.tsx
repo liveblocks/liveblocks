@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
-import { FloatingThread } from "@liveblocks/react-ui";
+import { FloatingThreadComposer } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { ThreadData } from "@liveblocks/client";
@@ -64,7 +64,7 @@ function Canvas() {
         }}
       >
         {pins.map((pin) => (
-          <FloatingThread
+          <FloatingThreadComposer
             key={`${pin.x}-${pin.y}`}
             thread={pin.thread}
             metadata={{ x: pin.x, y: pin.y }}
@@ -83,7 +83,7 @@ function Canvas() {
                 top: pin.y - 20,
               }}
             />
-          </FloatingThread>
+          </FloatingThreadComposer>
         ))}
       </div>
     </main>
@@ -92,7 +92,7 @@ function Canvas() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-canvas"
+    "liveblocks:examples:nextjs-comments-playground-canvas-merged"
   );
 
   return (

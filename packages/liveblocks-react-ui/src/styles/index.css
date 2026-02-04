@@ -1652,17 +1652,37 @@
 }
 
 /*************************************
- *          Floating Thread           *
+ *          Floating Thread          *
  *************************************/
 
 .lb-floating-thread {
   --lb-floating-thread-size: 350px;
 
   inline-size: var(--lb-floating-thread-size);
+}
+
+/*************************************
+ *       Floating Thread Composer    *
+ *************************************/
+
+.lb-floating-thread-composer {
+  --lb-floating-thread-composer-size: 350px;
+
+  inline-size: var(--lb-floating-thread-composer-size);
 
   :where(.lb-thread, .lb-composer) {
     inline-size: 100%;
   }
+}
+
+/*************************************
+ *            Floating Composer      *
+ *************************************/
+
+.lb-floating-composer {
+  --lb-floating-composer-size: 350px;
+
+  inline-size: var(--lb-floating-composer-size);
 }
 
 /*************************************
@@ -2347,7 +2367,9 @@
 .lb-composer-floating-toolbar,
 .lb-tooltip,
 .lb-emoji-picker,
-.lb-floating-thread {
+.lb-floating-thread,
+.lb-floating-composer,
+.lb-floating-thread-composer {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -2369,7 +2391,7 @@
   }
 }
 
-:is(.lb-floating-thread) {
+:is(.lb-floating-thread, .lb-floating-composer, .lb-floating-thread-composer) {
   animation-name: lb-animation-appear;
 }
 
@@ -2379,7 +2401,9 @@
   .lb-tooltip,
   .lb-composer-suggestions,
   .lb-composer-floating-toolbar,
-  .lb-floating-thread
+  .lb-floating-thread,
+  .lb-floating-composer,
+  .lb-floating-thread-composer
 ) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
@@ -2391,7 +2415,9 @@
   .lb-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
   .lb-composer-suggestions:where(:not([data-state="closed"])),
-  .lb-floating-thread:where(:not([data-state="closed"])) {
+  .lb-floating-thread:where(:not([data-state="closed"])),
+  .lb-floating-composer:where(:not([data-state="closed"])),
+  .lb-floating-thread-composer:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
   }
 }
