@@ -1,0 +1,215 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+html,
+body {
+  background: #f3f3f3;
+  padding: 0;
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Segoe UI,
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    Fira Sans,
+    Droid Sans,
+    Helvetica Neue,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.lb-root {
+  --lb-accent: #44f;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  margin: 0 auto;
+  max-width: 800px;
+}
+
+main h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #111;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* Table styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+  background: #fafafa;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.table-cell {
+  position: relative;
+}
+
+.cell-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.375rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: #44f;
+  color: #fff;
+  border-radius: 999px;
+}
+
+.thread-indicator,
+.add-comment-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition:
+    background 0.1s,
+    opacity 0.1s;
+}
+
+.thread-indicator {
+  background: transparent;
+}
+
+.thread-indicator:hover {
+  background: #f0f0f0;
+}
+
+.add-comment-button {
+  background: transparent;
+  color: #999;
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0;
+}
+
+.table-cell:hover .add-comment-button {
+  opacity: 1;
+}
+
+.add-comment-button:hover {
+  background: #44f;
+  color: #fff;
+}
+
+.loading,
+.error {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    background: #111;
+  }
+
+  main h1 {
+    color: #fff;
+  }
+
+  .hint {
+    color: #888;
+  }
+
+  .lb-root {
+    --lb-accent: #77f;
+  }
+
+  .data-table {
+    background: #1a1a1a;
+  }
+
+  .data-table th {
+    background: #222;
+    color: #888;
+  }
+
+  .data-table td {
+    border-color: #333;
+  }
+
+  .comment-count {
+    background: #77f;
+  }
+
+  .thread-indicator:hover,
+  .add-comment-button:hover {
+    background: #333;
+  }
+
+  .add-comment-button:hover {
+    background: #77f;
+    color: #fff;
+  }
+
+  .loading img {
+    filter: invert(1);
+  }
+
+  .error {
+    color: #fff;
+  }
+}

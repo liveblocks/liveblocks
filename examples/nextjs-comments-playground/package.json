@@ -1,0 +1,27 @@
+{
+  "name": "@liveblocks-examples/nextjs-comments-playground",
+  "description": "This example shows how to build comments with Liveblocks and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@liveblocks/client": "file:../../packages/liveblocks-client",
+    "@liveblocks/node": "file:../../packages/liveblocks-node",
+    "@liveblocks/react": "file:../../packages/liveblocks-react",
+    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13"
+  },
+  "devDependencies": {
+    "@types/node": "^20.4.10",
+    "@types/react": "^18.3.27",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  }
+}
