@@ -19,16 +19,6 @@ const COLUMNS = ["task", "status", "priority"] as const;
 
 function Example() {
   const { threads } = useThreads();
-  const threadByCell = useMemo(() => {
-    const map = new Map<string, (typeof threads)[0]>();
-    for (const thread of threads) {
-      const cellId = thread.metadata.cellId;
-      if (cellId && !map.has(cellId)) {
-        map.set(cellId, thread);
-      }
-    }
-    return map;
-  }, [threads]);
 
   return (
     <main>
@@ -47,21 +37,24 @@ function Example() {
             <tr key={row.id}>
               {COLUMNS.map((col) => {
                 const cellId = `${row.id}-${col}`;
-                const thread = threadByCell.get(cellId);
+                const thread = threads.find(
+                  (thread) => thread.metadata.cellId === cellId
+                );
 
                 return (
                   <td key={cellId} className="table-cell">
-                    <span className="cell-content">{row[col]}</span>
+                    <div className="table-cell-inner">
+                      <span className="cell-content">{row[col]}</span>
 
-                    <FloatingThread
-                      thread={thread}
-                      metadata={{ cellId }}
-                      autoFocus
-                    >
-                      <button className="thread-indicator">
-                        {thread ? "💬" : "➕"}
-                      </button>
-                    </FloatingThread>
+                      <FloatingThread thread={thread} metadata={{ cellId }}>
+                        <button
+                          className="thread-indicator"
+                          data-has-thread={thread ? "" : undefined}
+                        >
+                          {thread ? "💬" : "＋"}
+                        </button>
+                      </FloatingThread>
+                    </div>
                   </td>
                 );
               })}

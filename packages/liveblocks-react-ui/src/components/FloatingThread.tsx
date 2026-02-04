@@ -37,7 +37,13 @@ export type FloatingThreadProps<
 > = Omit<ThreadProps<TM, CM>, "thread"> &
   Omit<
     ComposerProps<TM, CM>,
-    "threadId" | "commentId" | "metadata" | "commentMetadata"
+    | "threadId"
+    | "commentId"
+    | "metadata"
+    | "commentMetadata"
+    | "collapsed"
+    | "onCollapsedChange"
+    | "defaultCollapsed"
   > &
   ComposerCreateThreadProps<TM, CM> &
   Relax<
@@ -76,7 +82,6 @@ export const FloatingThread = forwardRef(
       sideOffset = FLOATING_ELEMENT_SIDE_OFFSET,
       align = "start",
       alignOffset,
-      autoFocus = true,
       overrides,
       className,
       ...props
@@ -117,16 +122,12 @@ export const FloatingThread = forwardRef(
             ref={forwardedRef}
           >
             {thread ? (
-              <Thread
-                thread={thread}
-                overrides={overrides}
-                autoFocus={autoFocus}
-                {...props}
-              />
+              <Thread thread={thread} overrides={overrides} {...props} />
             ) : (
               <Composer
                 overrides={overrides}
-                autoFocus={autoFocus}
+                autoFocus
+                collapsed={false}
                 {...props}
               />
             )}

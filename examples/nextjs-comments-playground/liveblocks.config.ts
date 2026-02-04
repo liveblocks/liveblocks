@@ -10,7 +10,12 @@ declare global {
       };
     };
     ThreadMetadata: {
+      // Table cells
       cellId?: string;
+
+      // Canvas pins
+      x?: number;
+      y?: number;
     };
   }
 }

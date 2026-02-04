@@ -54,25 +54,28 @@ main h1 {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .data-table th,
 .data-table td {
-  padding: 0.75rem 1rem;
+  padding: 0;
   text-align: left;
   border-bottom: 1px solid #eee;
 }
 
 .data-table th {
+  padding: 0.875rem 1rem;
   background: #fafafa;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #666;
+  color: #888;
 }
 
 .data-table tr:last-child td {
@@ -83,65 +86,91 @@ main h1 {
   position: relative;
 }
 
-.cell-content {
+.table-cell-inner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
+  padding: 0.75rem 1rem;
 }
 
-.comment-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 0.375rem;
-  font-size: 0.625rem;
-  font-weight: 600;
-  background: #44f;
-  color: #fff;
-  border-radius: 999px;
-}
-
-.thread-indicator,
-.add-comment-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  transition:
-    background 0.1s,
-    opacity 0.1s;
+.cell-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .thread-indicator {
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  background: #f5f5f5;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
 }
 
-.thread-indicator:hover {
-  background: #f0f0f0;
+.thread-indicator[data-has-thread] {
+  background: #eef2ff;
 }
 
-.add-comment-button {
-  background: transparent;
-  color: #999;
-  font-size: 1rem;
-  font-weight: 500;
-  opacity: 0;
+.thread-indicator[data-has-thread]:hover {
+  background: #dde4ff;
 }
 
-.table-cell:hover .add-comment-button {
-  opacity: 1;
+/* Canvas styles */
+.canvas-page {
+  max-width: 1200px;
 }
 
-.add-comment-button:hover {
+.canvas-page .canvas {
+  position: relative;
+  height: 500px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  cursor: crosshair;
+}
+
+/* Pin styles */
+.canvas-page .pin {
+  width: 20px;
+  height: 20px;
   background: #44f;
-  color: #fff;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  cursor: pointer;
+  box-shadow:
+    0 2px 8px rgba(68, 68, 255, 0.35),
+    0 0 0 2px #fff;
+}
+
+.canvas-page .pin:hover {
+  box-shadow:
+    0 4px 12px rgba(68, 68, 255, 0.4),
+    0 0 0 2px #fff;
+}
+
+.canvas-page .pin[data-pending] {
+  background: #f59e0b;
+  box-shadow:
+    0 2px 8px rgba(245, 158, 11, 0.35),
+    0 0 0 2px #fff;
+}
+
+.canvas-page .pin[data-resolved] {
+  background: #22c55e;
+  box-shadow:
+    0 2px 8px rgba(34, 197, 94, 0.35),
+    0 0 0 2px #fff;
 }
 
 .loading,
@@ -180,29 +209,34 @@ main h1 {
 
   .data-table {
     background: #1a1a1a;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
   .data-table th {
     background: #222;
-    color: #888;
+    color: #777;
   }
 
   .data-table td {
-    border-color: #333;
+    border-color: #2a2a2a;
   }
 
-  .comment-count {
-    background: #77f;
+  .data-table tbody tr:hover {
+    background: #222;
   }
 
-  .thread-indicator:hover,
-  .add-comment-button:hover {
+  .thread-indicator:hover {
     background: #333;
   }
 
-  .add-comment-button:hover {
-    background: #77f;
-    color: #fff;
+  .thread-indicator[data-has-thread] {
+    background: #2a2a3a;
+  }
+
+  .thread-indicator[data-has-thread]:hover {
+    background: #3a3a4a;
   }
 
   .loading img {
@@ -211,5 +245,34 @@ main h1 {
 
   .error {
     color: #fff;
+  }
+
+  /* Canvas dark mode */
+  .canvas-page .canvas {
+    background: #1a1a1a;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .canvas-page .pin {
+    background: #77f;
+    box-shadow:
+      0 2px 8px rgba(119, 119, 255, 0.35),
+      0 0 0 2px #1a1a1a;
+  }
+
+  .canvas-page .pin[data-pending] {
+    background: #fbbf24;
+    box-shadow:
+      0 2px 8px rgba(251, 191, 36, 0.35),
+      0 0 0 2px #1a1a1a;
+  }
+
+  .canvas-page .pin[data-resolved] {
+    background: #22c55e;
+    box-shadow:
+      0 2px 8px rgba(34, 197, 94, 0.35),
+      0 0 0 2px #1a1a1a;
   }
 }
