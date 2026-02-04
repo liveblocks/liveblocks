@@ -1,9 +1,9 @@
 ---
 meta:
-  title: "Get started with AI Copilots using Liveblocks and Next.js"
+  title: "Get started with an AI chat using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
-    "Learn how to get started with AI Copilots using Liveblocks and Next.js"
+    "Learn how to get started with an AI chat using Liveblocks and Next.js"
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
@@ -22,8 +22,21 @@ components from
 
       Every package should use the same version.
 
-      ```bash
+      ```bash trackEvent="install_liveblocks"
       npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add your project’s secret key</StepTitle>
+    <StepContent>
+
+      Create a new `.env.local` file and add your Liveblocks secret key from the [dashboard](/dashboard/apikeys).
+
+      ```env file=".env.local"
+      LIVEBLOCKS_SECRET_KEY="{{SECRET_KEY}}"
       ```
 
     </StepContent>

@@ -3,7 +3,35 @@ name: Tests
 on: [pull_request]
 
 jobs:
+  # Check if there are any code changes in the PR (not docs, examples, changelogs, etc.)
+  # If not, the tests will be skipped and marked as successful
+  check_for_code_changes:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          predicate-quantifier: "every"
+          filters: |
+            changes:
+              - '**/*'
+              - '!docs/**'
+              - '!examples/**'
+              - '!guides/**'
+              - '!starter-kits/**'
+              - '!tutorials/**'
+              - '!CHANGELOG.md'
+              - '!CHANGELOG_PUBLIC.md'
+
   test:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,9 +58,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -40,9 +70,11 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Turbo Cache
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         id: turbo-cache
         uses: actions/cache@v4
         with:
@@ -52,12 +84,15 @@ jobs:
             turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
 
       - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: oven-sh/setup-bun@v1
 
       - name: Build
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run build -- --filter ${{ matrix.pkg }}
 
       - name: Ensure no files are changed
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: |
           CHANGED=$(git status --porcelain)
           if [ -n "$CHANGED" ]; then
@@ -67,22 +102,28 @@ jobs:
           fi
 
       - name: Run unit tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:types -- --filter ${{ matrix.pkg }}
 
       - name: Run dependency tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:deps -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint -- --filter ${{ matrix.pkg }}
 
       - name: Run public NPM packaging lint checks
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
@@ -100,9 +141,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -110,12 +153,15 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run Playwright tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v4
@@ -127,6 +173,7 @@ jobs:
 
   # E2E tests defined in e2e/next-ai-kitchen-sink package
   e2e-next-ai-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
@@ -144,9 +191,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -154,12 +203,15 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Install Playwright
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run AI Playwright tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
 
       - uses: actions/upload-artifact@v4
@@ -171,6 +223,7 @@ jobs:
 
   # E2E tests defined in e2e/node-sandbox package
   e2e-node-sandbox:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
@@ -189,9 +242,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
@@ -199,13 +254,16 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Run node-sandbox tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter node-sandbox
 
   # E2E tests defined in @liveblocks/core package
   e2e-client-specs:
+    needs: check_for_code_changes
     runs-on: ubuntu-latest
 
     strategy:
@@ -219,18 +277,22 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/checkout@v4
 
       - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Run npm install
+      - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
       - name: Run e2e client specs tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:e2e
         working-directory: packages/liveblocks-core
