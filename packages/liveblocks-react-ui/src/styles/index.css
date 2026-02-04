@@ -2332,7 +2332,9 @@
 .lb-composer-suggestions,
 .lb-composer-floating-toolbar,
 .lb-tooltip,
-.lb-emoji-picker {
+.lb-emoji-picker,
+.lb-floating-thread,
+.lb-floating-composer {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -2354,12 +2356,18 @@
   }
 }
 
+:is(.lb-floating-thread, .lb-floating-composer) {
+  animation-name: lb-animation-appear;
+}
+
 :is(
   .lb-dropdown,
   .lb-emoji-picker,
   .lb-tooltip,
   .lb-composer-suggestions,
-  .lb-composer-floating-toolbar
+  .lb-composer-floating-toolbar,
+  .lb-floating-thread,
+  .lb-floating-composer
 ) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
@@ -2370,7 +2378,9 @@
   .lb-dropdown:where(:not([data-state="closed"])),
   .lb-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
-  .lb-composer-suggestions:where(:not([data-state="closed"])) {
+  .lb-composer-suggestions:where(:not([data-state="closed"])),
+  .lb-floating-thread:where(:not([data-state="closed"])),
+  .lb-floating-composer:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
   }
 }
