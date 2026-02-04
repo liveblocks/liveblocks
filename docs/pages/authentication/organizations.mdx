@@ -37,7 +37,7 @@ for example, when creating a room.
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 ```
@@ -57,7 +57,7 @@ editors, Yjs, Storage, inbox notifications, mention groups.
 ```ts
 const { data: rooms, nextCursor } = await liveblocks.getRooms({
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
@@ -67,21 +67,21 @@ await liveblocks.triggerInboxNotification({
   subjectId: "my-file",
   activityData: {},
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
 await liveblocks.deleteAllInboxNotifications({
   userId: "steven@example.com",
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
 const { data, nextCursor } = await liveblocks.getUserRoomSubscriptionSettings({
   userId: "steven@example.com",
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 ```
@@ -111,7 +111,7 @@ inside this organization, even if the user has access to rooms in other organiza
 ```ts highlight="3"
 const { body, status } = await liveblocks.identifyUser({
   userId: "olivier@example.com",
-  organizationId: "tenant123",
+  organizationId: "organization123",
 });
 
 // '{ token: "eyJga7..." }'
@@ -128,7 +128,7 @@ inside this organization, even if the token has permissions to rooms in other or
 
 ```ts highlight="2"
 const session = liveblocks.prepareSession("olivier@example.com", {
-  organizationId: "tenant123",
+  organizationId: "organization123",
 });
 
 // Giving full access to one room

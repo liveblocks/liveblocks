@@ -119,7 +119,7 @@ ensuring that the user will only have access to resources within this workspace.
 const { body, status } = await liveblocks.identifyUser({
   userId: "olivier@example.com",
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
@@ -134,7 +134,7 @@ the resource, to allow the user access.
 const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
   // +++
-  organizationId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
