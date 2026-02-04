@@ -20,8 +20,6 @@ export type {
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
-export type { FloatingComposerProps } from "./components/FloatingComposer";
-export { FloatingComposer } from "./components/FloatingComposer";
 export type { FloatingThreadProps } from "./components/FloatingThread";
 export { FloatingThread } from "./components/FloatingThread";
 export type { HistoryVersionSummaryProps } from "./components/HistoryVersionSummary";

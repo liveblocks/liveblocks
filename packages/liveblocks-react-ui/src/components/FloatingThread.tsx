@@ -1,14 +1,18 @@
 "use client";
 
-import type { BaseMetadata, DCM, DTM, Relax } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  DCM,
+  DTM,
+  Relax,
+  ThreadData,
+} from "@liveblocks/core";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   type ForwardedRef,
   forwardRef,
-  type KeyboardEvent,
   type ReactNode,
   type RefAttributes,
-  useCallback,
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
@@ -19,28 +23,43 @@ import {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
+import {
+  Composer,
+  type ComposerCreateThreadProps,
+  type ComposerProps,
+} from "./Composer";
 import type { ThreadProps } from "./Thread";
 import { Thread } from "./Thread";
 
-export interface FloatingThreadProps<
+export type FloatingThreadProps<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-> extends ThreadProps<TM, CM>,
-    Relax<
+> = Omit<ThreadProps<TM, CM>, "thread"> &
+  Omit<
+    ComposerProps<TM, CM>,
+    "threadId" | "commentId" | "metadata" | "commentMetadata"
+  > &
+  ComposerCreateThreadProps<TM, CM> &
+  Relax<
+    Pick<
+      PopoverPrimitive.PopoverProps,
+      "defaultOpen" | "open" | "onOpenChange"
+    > &
       Pick<
-        PopoverPrimitive.PopoverProps,
-        "defaultOpen" | "open" | "onOpenChange"
-      > &
-        Pick<
-          PopoverPrimitive.PopoverContentProps,
-          "side" | "sideOffset" | "align" | "alignOffset"
-        >
-    > {
-  /**
-   * The element which opens the floating thread.
-   */
-  children: ReactNode;
-}
+        PopoverPrimitive.PopoverContentProps,
+        "side" | "sideOffset" | "align" | "alignOffset"
+      >
+  > & {
+    /**
+     * The element which opens the floating thread.
+     */
+    children: ReactNode;
+
+    /**
+     * The thread to display. If not provided, a composer will be displayed instead.
+     */
+    thread?: ThreadData<TM, CM>;
+  };
 
 /**
  * Displays a floating thread attached to a trigger element.
@@ -57,8 +76,8 @@ export const FloatingThread = forwardRef(
       sideOffset = FLOATING_ELEMENT_SIDE_OFFSET,
       align = "start",
       alignOffset,
+      autoFocus = true,
       overrides,
-      onKeyDown,
       className,
       ...props
     }: FloatingThreadProps<TM, CM>,
@@ -70,17 +89,6 @@ export const FloatingThread = forwardRef(
       defaultOpen ?? false,
       open,
       onOpenChange
-    );
-
-    const handleKeyDown = useCallback(
-      (event: KeyboardEvent<HTMLDivElement>) => {
-        onKeyDown?.(event);
-
-        if (event.key === "Escape") {
-          setIsOpen(false);
-        }
-      },
-      [onKeyDown, setIsOpen]
     );
 
     return (
@@ -106,15 +114,22 @@ export const FloatingThread = forwardRef(
                 event.preventDefault();
               }
             }}
-            asChild
+            ref={forwardedRef}
           >
-            <Thread
-              ref={forwardedRef}
-              thread={thread}
-              overrides={overrides}
-              onKeyDown={handleKeyDown}
-              {...props}
-            />
+            {thread ? (
+              <Thread
+                thread={thread}
+                overrides={overrides}
+                autoFocus={autoFocus}
+                {...props}
+              />
+            ) : (
+              <Composer
+                overrides={overrides}
+                autoFocus={autoFocus}
+                {...props}
+              />
+            )}
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>
       </PopoverPrimitive.Root>

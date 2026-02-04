@@ -178,6 +178,11 @@ export interface ThreadProps<
   onComposerSubmit?: ComposerProps["onComposerSubmit"];
 
   /**
+   * Whether to focus the composer on mount.
+   */
+  autoFocus?: ComposerProps["autoFocus"];
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -224,6 +229,7 @@ export const Thread = forwardRef(
       onAttachmentClick,
       onComposerSubmit,
       blurComposerOnSubmit,
+      autoFocus,
       overrides,
       components,
       className,
@@ -620,6 +626,7 @@ export const Thread = forwardRef(
                 ...overrides,
               }}
               roomId={thread.roomId}
+              autoFocus={autoFocus}
             />
           )}
         </div>
