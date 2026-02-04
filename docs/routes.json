@@ -23,12 +23,12 @@
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/react-ai-copilots",
+            "path": "/get-started/react-ai-chat",
             "hidden": true
           },
           {
             "title": "AI Copilots",
-            "path": "/get-started/nextjs-ai-copilots",
+            "path": "/get-started/nextjs-ai-chat",
             "hidden": true
           },
           {
@@ -42,13 +42,68 @@
             "hidden": true
           },
           {
-            "title": "Notifications",
-            "path": "/get-started/react-notifications",
+            "title": "Notifications / In-app",
+            "path": "/get-started/react-notifications-in-app",
             "hidden": true
           },
           {
-            "title": "Notifications",
-            "path": "/get-started/nextjs-notifications",
+            "title": "Notifications / In-app",
+            "path": "/get-started/nextjs-notifications-in-app",
+            "hidden": true
+          },
+          {
+            "title": "Notifications / Webhooks",
+            "path": "/get-started/nextjs-notifications-webhooks",
+            "hidden": true
+          },
+          {
+            "title": "Notifications / Email",
+            "path": "/get-started/nextjs-notifications-email",
+            "hidden": true
+          },
+          {
+            "title": "Notifications / Slack",
+            "path": "/get-started/nextjs-notifications-slack",
+            "hidden": true
+          },
+          {
+            "title": "Notifications / Teams",
+            "path": "/get-started/nextjs-notifications-microsoft-teams",
+            "hidden": true
+          },
+          {
+            "title": "Notifications / Web Push",
+            "path": "/get-started/nextjs-notifications-web-push",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / In-app",
+            "path": "/get-started/nextjs-notifications-custom-in-app",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Slack",
+            "path": "/get-started/nextjs-notifications-custom-slack",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Email",
+            "path": "/get-started/nextjs-notifications-custom-email",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Webhooks",
+            "path": "/get-started/nextjs-notifications-custom-webhooks",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Teams",
+            "path": "/get-started/nextjs-notifications-custom-microsoft-teams",
+            "hidden": true
+          },
+          {
+            "title": "Custom notifications / Web Push",
+            "path": "/get-started/nextjs-notifications-custom-web-push",
             "hidden": true
           },
           {
@@ -79,6 +134,11 @@
           {
             "title": "Lexical",
             "path": "/get-started/nextjs-lexical",
+            "hidden": true
+          },
+          {
+            "title": "Tldraw",
+            "path": "/get-started/nextjs-tldraw",
             "hidden": true
           },
           {
