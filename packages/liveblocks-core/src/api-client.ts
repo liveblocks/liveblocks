@@ -18,7 +18,7 @@ import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
-import type { Json, JsonObject } from "./lib/Json";
+import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
@@ -30,7 +30,6 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -414,12 +413,6 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
   }>;
 
   streamStorage(options: { roomId: string }): Promise<StorageNode[]>;
-
-  sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }): Promise<Response>;
 
   executeContextualPrompt({
     roomId,
@@ -1621,27 +1614,6 @@ export function createApiClient<
     return (await result.json()) as StorageNode[];
   }
 
-  async function sendMessagesOverHTTP<
-    P extends JsonObject,
-    E extends Json,
-  >(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }) {
-    return httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/send-message`,
-      await authManager.getAuthValue({
-        requestedScope: "room:read",
-        roomId: options.roomId,
-      }),
-      {
-        nonce: options.nonce,
-        messages: options.messages,
-      }
-    );
-  }
-
   /* -------------------------------------------------------------------------------------------------
    * Inbox notifications (User-level)
    * -----------------------------------------------------------------------------------------------*/
@@ -2019,7 +1991,6 @@ export function createApiClient<
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessagesOverHTTP,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,

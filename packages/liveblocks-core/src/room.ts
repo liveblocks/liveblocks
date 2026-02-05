@@ -37,7 +37,6 @@ import {
   deepClone,
   memoizeOnSuccess,
   partition,
-  raise,
   tryParseJson,
 } from "./lib/utils";
 import type {
@@ -47,11 +46,7 @@ import type {
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type {
-  ClientMsg,
-  UpdateStorageClientMsg,
-  UpdateYDocClientMsg,
-} from "./protocol/ClientMsg";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -1125,14 +1120,6 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-//
-// The maximum message size on websockets is 1MB. If a message larger than this
-// threshold is attempted to be sent, the strategy picked via the
-// `largeMessageStrategy` option will be used.
-//
-// In practice, we'll set threshold to slightly less than 1 MB.
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
-
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -1275,11 +1262,6 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
-export type LargeMessageStrategy =
-  | "default"
-  | "split"
-  | "experimental-fallback-to-http";
-
 /** @internal */
 export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   delegates: RoomDelegates;
@@ -1288,7 +1270,6 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
-  largeMessageStrategy?: LargeMessageStrategy;
 
   /**
    * @deprecated For new rooms, use `engine: 2` instead. Engine v2 rooms have
@@ -1686,135 +1667,8 @@ export function createRoom<
     });
   }
 
-  /**
-   * Split a single large UPDATE_STORAGE message into smaller chunks, by
-   * splitting the ops list recursively in half.
-   */
-  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
-    const { ops, ...rest } = msg;
-    if (ops.length < 2) {
-      throw new Error("Cannot split ops into smaller chunks");
-    }
-
-    const mid = Math.floor(ops.length / 2);
-    const firstHalf = ops.slice(0, mid);
-    const secondHalf = ops.slice(mid);
-
-    for (const halfOps of [firstHalf, secondHalf]) {
-      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = stringify([half]);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkOps(half);
-      }
-    }
-  }
-
-  /**
-   * Split the message array in half (two chunks), and try to send each chunk
-   * separately. If the chunk is still too big, repeat the process. If a chunk
-   * can no longer be split up (i.e. is 1 message), then error.
-   */
-  function* chunkMessages(
-    messages: ClientMsg<P, E>[]
-  ): IterableIterator<string> {
-    if (messages.length < 2) {
-      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
-        yield* chunkOps(messages[0]);
-        return;
-      } else {
-        throw new Error(
-          "Cannot split into chunks smaller than the allowed message size"
-        );
-      }
-    }
-
-    const mid = Math.floor(messages.length / 2);
-    const firstHalf = messages.slice(0, mid);
-    const secondHalf = messages.slice(mid);
-
-    for (const half of [firstHalf, secondHalf]) {
-      const text = stringify(half);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkMessages(half);
-      }
-    }
-  }
-
-  function isTooBigForWebSocket(text: string): boolean {
-    // The theoretical worst case is that each character in the string is
-    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
-    // so we can spare ourselves the TextEncoder() measurement overhead with
-    // this heuristic.
-    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
-      return false;
-    }
-
-    // Otherwise we need to measure to be sure
-    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
-  }
-
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const strategy = config.largeMessageStrategy ?? "default";
-
-    const text = stringify(messages);
-    if (!isTooBigForWebSocket(text)) {
-      return managedSocket.send(text); // Happy path
-    }
-
-    // If message is too big for WebSockets, we need to follow a strategy
-    switch (strategy) {
-      case "default": {
-        const type = "LARGE_MESSAGE_ERROR";
-        const err = new LiveblocksError("Message is too large for websockets", {
-          type,
-        });
-        const didNotify = config.errorEventSource.notify(err);
-        if (!didNotify) {
-          console.error(
-            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
-          );
-        }
-        return;
-      }
-
-      case "split": {
-        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
-        for (const chunk of chunkMessages(messages)) {
-          managedSocket.send(chunk);
-        }
-        return;
-      }
-
-      // NOTE: This strategy is experimental as it will not work in all situations.
-      // It should only be used for broadcasting, presence updates, but isn't suitable
-      // for Storage or Yjs updates yet (because through this channel the server does
-      // not respond with acks or rejections, causing the client's reported status to
-      // be stuck in "synchronizing" forever).
-      case "experimental-fallback-to-http": {
-        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
-        const nonce =
-          context.dynamicSessionInfoSig.get()?.nonce ??
-          raise("Session is not authorized to send message over HTTP");
-
-        void httpClient
-          .sendMessagesOverHTTP<P, E>({ roomId, nonce, messages })
-          .then((resp) => {
-            if (!resp.ok && resp.status === 403) {
-              managedSocket.reconnect();
-            }
-          })
-          .catch((err) => {
-            console.error(
-              `Failed to deliver message over HTTP: ${String(err)}`
-            );
-          });
-        return;
-      }
-    }
+    managedSocket.send(stringify(messages));
   }
 
   const self = DerivedSignal.from(
