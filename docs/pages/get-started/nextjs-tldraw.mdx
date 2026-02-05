@@ -92,9 +92,9 @@ collaboration to your Next.js and Tldraw app using hooks from
       [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
       join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
       and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
-      to add a loading spinner to your app.
+      to add a loading spinner to your app. Add `initialPresence` and `initialStorage` for Tldraw.
 
-      ```tsx file="app/Room.tsx" highlight="12-18"
+      ```tsx file="app/Room.tsx"
       "use client";
 
       import { ReactNode } from "react";
@@ -103,16 +103,23 @@ collaboration to your Next.js and Tldraw app using hooks from
         RoomProvider,
         ClientSideSuspense,
       } from "@liveblocks/react/suspense";
+      import { LiveMap } from "@liveblocks/client";
 
       export function Room({ children }: { children: ReactNode }) {
         return (
+          // +++
           <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
-            <RoomProvider id="my-room">
+            <RoomProvider
+              id="my-room"
+              initialPresence={{ presence: {} }}
+              initialStorage={{ records: new LiveMap() }}
+            >
               <ClientSideSuspense fallback={<div>Loading…</div>}>
                 {children}
               </ClientSideSuspense>
             </RoomProvider>
           </LiveblocksProvider>
+          // +++
         );
       }
       ```
@@ -153,9 +160,12 @@ collaboration to your Next.js and Tldraw app using hooks from
       ```tsx file="app/TldrawApp.tsx"
       "use client";
 
+      import { Tldraw } from "tldraw";
+      import { useSelf } from "@liveblocks/react";
       import { useStorageStore } from "./useStorageStore";
+      import "tldraw/tldraw.css";
 
-      function StorageTldraw() {
+      export function TldrawApp() {
         const id = useSelf((me) => me.id);
         const info = useSelf((me) => me.info);
 
@@ -164,7 +174,7 @@ collaboration to your Next.js and Tldraw app using hooks from
         });
 
         return (
-          <div style={{ height: "100%", width: "100vw" }}>
+          <div style={{ height: "100vh", width: "100vw" }}>
             <Tldraw store={store} autoFocus />
           </div>
         );
