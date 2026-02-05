@@ -4823,6 +4823,473 @@
         },
         "operationId": "get-web-knowledge-source-links"
       }
+    },
+    "/management/projects": {
+      "get": {
+        "summary": "List projects",
+        "description": "Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of projects and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectsResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "projects": [
+                        {
+                          "id": "683d49ed6b4d1cec5a597b13",
+                          "teamId": "team_123",
+                          "type": "dev",
+                          "name": "Frimousse",
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "updatedAt": "2024-09-03T12:34:56.000Z",
+                          "publicKey": {
+                            "activated": true,
+                            "createdAt": "2024-09-03T12:34:56.000Z",
+                            "value": "pk_dev_123"
+                          },
+                          "secretKey": {
+                            "createdAt": "2024-09-03T12:34:56.000Z",
+                            "value": "sk_dev_123"
+                          },
+                          "region": "earth",
+                          "versionCreationTimeout": false
+                        }
+                      ],
+                      "nextCursor": "eyJpZCI6IjY4M2Q0OWVkNmI0ZDFjZWM1YTU5N2IxMyIsImNyZWF0ZWRBdCI6MTcyNTI4NzcwMDAwMH0="
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "get-management-projects"
+      },
+      "post": {
+        "summary": "Create project",
+        "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
+        "tags": ["Management"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "project": {
+                        "id": "683d49ed6b4d1cec5a597b13",
+                        "teamId": "team_123",
+                        "type": "dev",
+                        "name": "Frimousse",
+                        "createdAt": "2024-09-03T12:34:56.000Z",
+                        "updatedAt": "2024-09-03T12:34:56.000Z",
+                        "publicKey": {
+                          "activated": true,
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "value": "pk_dev_123"
+                        },
+                        "secretKey": {
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "value": "sk_dev_123"
+                        },
+                        "region": "earth",
+                        "versionCreationTimeout": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-projects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateManagementProject"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "Frimousse",
+                    "type": "dev",
+                    "versionCreationTimeout": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}": {
+      "get": {
+        "summary": "Get project",
+        "description": "Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "get-management-project"
+      },
+      "post": {
+        "summary": "Update project",
+        "description": "Updates an existing project specified by its ID. This endpoint allows you to modify project details such as the project name and the version creation timeout. The `versionCreationTimeout` can be set to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from the request body will not be updated. Requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateManagementProject"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "Valleys",
+                    "versionCreationTimeout": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete project",
+        "description": "Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The project was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-management-project"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/activate": {
+      "post": {
+        "summary": "Activate public key",
+        "description": "Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The public key was activated."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "post-management-project-public-key-activate"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/deactivate": {
+      "post": {
+        "summary": "Deactivate public key",
+        "description": "Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The public key was deactivated."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "post-management-project-public-key-deactivate"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/roll": {
+      "post": {
+        "summary": "Roll public key",
+        "description": "Rolls (rotates) the public API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the public key is not currently enabled for the project, a 403 error response is returned. If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the rolled public key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectPublicKeyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project-public-key-roll",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "expirationIn": "1 hour"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/api-keys/secret/roll": {
+      "post": {
+        "summary": "Roll secret key",
+        "description": "Rolls (rotates) the secret API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the rolled secret key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectSecretKeyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project-secret-key-roll",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "expirationIn": "3 days"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
     }
   },
   "components": {
@@ -6886,6 +7353,214 @@
             "type": "string"
           }
         }
+      },
+      "ManagementProjectType": {
+        "title": "ManagementProjectType",
+        "type": "string",
+        "enum": ["dev", "prod"]
+      },
+      "ManagementProjectRegion": {
+        "title": "ManagementProjectRegion",
+        "type": "string",
+        "enum": ["earth", "eu", "fedramp"]
+      },
+      "ManagementProjectVersionCreationTimeout": {
+        "title": "ManagementProjectVersionCreationTimeout",
+        "description": "False to disable timeout or number of seconds between 30 and 300.",
+        "oneOf": [
+          {
+            "type": "boolean",
+            "enum": [false]
+          },
+          {
+            "type": "number",
+            "minimum": 30,
+            "maximum": 300
+          }
+        ]
+      },
+      "ManagementProjectPublicKey": {
+        "title": "ManagementProjectPublicKey",
+        "type": "object",
+        "properties": {
+          "activated": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["activated", "createdAt", "value"]
+      },
+      "ManagementProjectSecretKey": {
+        "title": "ManagementProjectSecretKey",
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["createdAt", "value"]
+      },
+      "ManagementProject": {
+        "title": "ManagementProject",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ManagementProjectType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publicKey": {
+            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+          },
+          "secretKey": {
+            "$ref": "#/components/schemas/ManagementProjectSecretKey",
+            "nullable": true
+          },
+          "region": {
+            "$ref": "#/components/schemas/ManagementProjectRegion"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
+          }
+        },
+        "required": [
+          "id",
+          "teamId",
+          "type",
+          "name",
+          "createdAt",
+          "updatedAt",
+          "publicKey",
+          "secretKey",
+          "region",
+          "versionCreationTimeout"
+        ]
+      },
+      "CreateManagementProject": {
+        "title": "CreateManagementProject",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ManagementProjectType"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout",
+            "default": false
+          }
+        },
+        "required": ["type"]
+      },
+      "UpdateManagementProject": {
+        "title": "UpdateManagementProject",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
+          }
+        }
+      },
+      "ManagementProjectKeyRollRequest": {
+        "title": "ManagementProjectKeyRollRequest",
+        "type": "object",
+        "properties": {
+          "expirationIn": {
+            "type": "string",
+            "enum": [
+              "now",
+              "1h",
+              "1hour",
+              "1 hour",
+              "24hrs",
+              "24hours",
+              "24 hours",
+              "3d",
+              "3days",
+              "3 days",
+              "7d",
+              "7days",
+              "7 days"
+            ],
+            "default": "now"
+          }
+        }
+      },
+      "ManagementProjectsResponse": {
+        "title": "ManagementProjectsResponse",
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementProject"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ManagementProjectResponse": {
+        "title": "ManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"]
+      },
+      "ManagementProjectPublicKeyResponse": {
+        "title": "ManagementProjectPublicKeyResponse",
+        "type": "object",
+        "properties": {
+          "publicKey": {
+            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+          }
+        },
+        "required": ["publicKey"]
+      },
+      "ManagementProjectSecretKeyResponse": {
+        "title": "ManagementProjectSecretKeyResponse",
+        "type": "object",
+        "properties": {
+          "secretKey": {
+            "$ref": "#/components/schemas/ManagementProjectSecretKey"
+          }
+        },
+        "required": ["secretKey"]
+      }
       }
     },
     "securitySchemes": {
@@ -6954,6 +7629,14 @@
                   "message": "The user does not have permission to access the room.",
                   "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
+                }
+              },
+              "INVALID_MANAGEMENT_API_ACCESS_TOKEN_SCOPE": {
+                "value": {
+                  "error": "INVALID_MANAGEMENT_API_ACCESS_TOKEN_SCOPE",
+                  "message": "Invalid management api access token scope",
+                  "suggestion": "Please provide a management api access token with required scope: 'read:all'.",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
                 }
               }
             }
@@ -7199,6 +7882,9 @@
     },
     {
       "name": "AI"
+    },
+    {
+      "name": "Management"
     },
     {
       "name": "Deprecated"
