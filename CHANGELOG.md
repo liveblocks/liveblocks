@@ -41,6 +41,8 @@ or:
 - Improve `LiveList.push()` efficiency to prevent unbounded position string
   growth over time
 - Fix crash when clearing documents with a large number of keys
+- Remove the `largeMessageStrategy` client option. The WebSocket message limit
+  has been increased from 1 MB to 32 MB, making this setting obsolete.
 
 ### `@liveblocks/react`
 
