@@ -50,7 +50,6 @@ import type {
   SubscriptionDeleteInfo,
 } from "./protocol/Subscriptions";
 import type {
-  LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -514,7 +513,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
-  largeMessageStrategy?: LargeMessageStrategy;
   /**
    * @deprecated For new rooms, use `engine: 2` instead. Engine v2 rooms have
    * native support for streaming. This flag will be removed in a future
@@ -777,7 +775,6 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
         createSyncSource,

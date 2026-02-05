@@ -1817,7 +1817,6 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     lostConnectionTimeout: useInitial(o.lostConnectionTimeout),
     backgroundKeepAliveTimeout: useInitial(o.backgroundKeepAliveTimeout),
     polyfills: useInitial(o.polyfills),
-    largeMessageStrategy: useInitial(o.largeMessageStrategy),
     unstable_streamData: useInitial(o.unstable_streamData),
     preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
     badgeLocation: useInitial(o.badgeLocation),

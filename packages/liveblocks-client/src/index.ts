@@ -39,7 +39,6 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
-  LargeMessageStrategy,
   LiveblocksErrorContext,
   LiveListUpdate,
   LiveMapUpdate,
