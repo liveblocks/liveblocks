@@ -124,6 +124,41 @@ main h1 {
   background: #dde4ff;
 }
 
+/* Presence styles */
+.presence-page {
+  min-height: 100vh;
+  max-width: none;
+  padding: 0;
+  gap: 0;
+}
+
+.presence-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.presence-toolbar h1 {
+  font-size: 1.125rem;
+}
+
+.presence-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-top: 4rem;
+}
+
 /* Canvas styles */
 .canvas-page {
   max-width: 1200px;
@@ -245,6 +280,12 @@ main h1 {
 
   .error {
     color: #fff;
+  }
+
+  /* Presence dark mode */
+  .presence-toolbar {
+    background: #1a1a1a;
+    border-color: #333;
   }
 
   /* Canvas dark mode */

@@ -1686,6 +1686,38 @@
 }
 
 /*************************************
+ *            Avatar Stack           *
+ *************************************/
+
+.lb-avatar-stack {
+  --lb-avatar-stack-size: 24px;
+  --lb-avatar-stack-overlap: 6px;
+
+  display: flex;
+  flex-direction: row;
+}
+
+.lb-avatar-stack-avatar {
+  position: relative;
+  inline-size: var(--lb-avatar-stack-size);
+  block-size: var(--lb-avatar-stack-size);
+  margin-inline-end: calc(-1 * var(--lb-avatar-stack-overlap));
+  border-radius: $lb-radius-full;
+
+  &:where(:not(:first-child)) {
+    --lb-avatar-stack-cutout-size: calc(var(--lb-avatar-stack-size) / 2 + 2px);
+
+    mask-image: radial-gradient(
+      circle at
+        calc(var(--lb-avatar-stack-overlap) - var(--lb-avatar-stack-size) / 2)
+        50%,
+      transparent var(--lb-avatar-stack-cutout-size),
+      black var(--lb-avatar-stack-cutout-size)
+    );
+  }
+}
+
+/*************************************
  *            Attachments            *
  *************************************/
 
