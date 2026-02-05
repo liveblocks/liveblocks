@@ -249,8 +249,8 @@ export interface LiveblocksInboxNotification {
   // Unique inbox notification ID
   id: string;
 
-  // The tenant ID (useful in multi-tenant setups)
-  tenantId: string;
+  // The organization ID (useful in multi-organization setups)
+  organizationId: string;
 
   // Notification kind — for custom notifications, must start with "$"
   kind: string; // e.g., "$alert"

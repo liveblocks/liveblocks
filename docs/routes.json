@@ -327,8 +327,8 @@
         "path": "/authentication",
         "routes": [
           {
-            "title": "Tenants",
-            "path": "/authentication/tenants"
+            "title": "Organizations",
+            "path": "/authentication/organizations"
           },
           {
             "title": "Access token",
