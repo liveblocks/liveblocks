@@ -59,7 +59,8 @@ or:
 
 ### `@liveblocks/node`
 
-- Deprecated `tenantId` parameter in client methods, use `organizationId` instead.
+- Deprecated `tenantId` parameter in client methods, use `organizationId`
+  instead.
 
 ## 3.13.3
 
