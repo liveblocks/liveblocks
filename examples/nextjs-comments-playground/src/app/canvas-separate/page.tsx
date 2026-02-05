@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
@@ -11,6 +11,39 @@ import { ErrorBoundary } from "react-error-boundary";
 function Canvas() {
   const { threads } = useThreads();
   const [newPin, setNewPin] = useState<{ x: number; y: number } | null>(null);
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+  const [pendingPin, setPendingPin] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const prevThreadIdsRef = useRef<Set<string>>(new Set());
+
+  // When a new thread appears matching pending coordinates, open it
+  useEffect(() => {
+    if (!pendingPin) return;
+
+    const currentIds = new Set(threads.map((t) => t.id));
+    const newThreads = threads.filter(
+      (t) => !prevThreadIdsRef.current.has(t.id)
+    );
+
+    // Find a new thread that matches our pending pin coordinates
+    const matchingThread = newThreads.find(
+      (t) => t.metadata.x === pendingPin.x && t.metadata.y === pendingPin.y
+    );
+
+    if (matchingThread) {
+      setOpenThreadId(matchingThread.id);
+      setPendingPin(null);
+    }
+
+    prevThreadIdsRef.current = currentIds;
+  }, [threads, pendingPin]);
+
+  // Keep track of thread IDs even when not waiting for a pending pin
+  useEffect(() => {
+    prevThreadIdsRef.current = new Set(threads.map((t) => t.id));
+  }, [threads]);
 
   return (
     <main className="canvas-page">
@@ -23,11 +56,19 @@ function Canvas() {
           if ((e.target as Element).closest(".pin")) return;
           const rect = e.currentTarget.getBoundingClientRect();
           setNewPin({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+          setOpenThreadId(null);
         }}
       >
         {/* Existing threads */}
         {threads.map((thread) => (
-          <FloatingThread key={thread.id} thread={thread}>
+          <FloatingThread
+            key={thread.id}
+            thread={thread}
+            open={openThreadId === thread.id}
+            onOpenChange={(open: boolean) =>
+              setOpenThreadId(open ? thread.id : null)
+            }
+          >
             <div
               className="pin"
               style={{
@@ -45,6 +86,12 @@ function Canvas() {
             metadata={{ x: newPin.x, y: newPin.y }}
             open
             onOpenChange={(open: boolean) => !open && setNewPin(null)}
+            onComposerSubmit={() => {
+              // Store coordinates to match the new thread when it appears
+              setPendingPin({ x: newPin.x, y: newPin.y });
+              setNewPin(null);
+            }}
+            autoFocus
           >
             <div
               className="pin"
