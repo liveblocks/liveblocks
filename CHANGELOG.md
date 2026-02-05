@@ -57,6 +57,10 @@ or:
   `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
   `document.body`.
 
+### `@liveblocks/node`
+
+- Deprecated `tenantId` parameter in client methods, use `organizationId` instead.
+
 ## 3.13.3
 
 ### `@liveblocks/client`
