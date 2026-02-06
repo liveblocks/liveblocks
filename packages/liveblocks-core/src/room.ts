@@ -31,6 +31,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
@@ -1461,6 +1462,9 @@ export function createRoom<
   // done: true), the complete map is passed to processInitialStorage().
   const nodeMapBuffer = makeNodeMapBuffer();
 
+  // Tracks timing of storage fetch for debug logging
+  const stopwatch = config.enableDebugLogging ? makeStopWatch() : undefined;
+
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -2266,12 +2270,28 @@ export function createRoom<
         }
 
         case ServerMsgCode.STORAGE_CHUNK:
+          stopwatch?.lap();
           nodeMapBuffer.append(compactNodesToNodeStream(message.nodes));
           break;
 
-        case ServerMsgCode.STORAGE_STREAM_END:
+        case ServerMsgCode.STORAGE_STREAM_END: {
+          const timing = stopwatch?.stop();
+          if (timing) {
+            const ms = (v: number) => `${v.toFixed(1)}ms`;
+            const rest = timing.laps.slice(1);
+            console.warn(
+              `Storage chunk arrival: ${[
+                `total=${ms(timing.total)}`,
+                `first=${ms(timing.laps[0])}`,
+                `rest.n=${rest.length}`,
+                `rest.avg=${ms(rest.reduce((a, b) => a + b, 0) / rest.length)}`,
+                `rest.max=${ms(rest.reduce((a, b) => Math.max(a, b), 0))}`,
+              ].join(", ")}`
+            );
+          }
           processInitialStorage(nodeMapBuffer.take());
           break;
+        }
 
         case ServerMsgCode.UPDATE_STORAGE: {
           const applyResult = applyRemoteOps(message.ops);
@@ -2481,6 +2501,7 @@ export function createRoom<
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       nodeMapBuffer.take(); // Reset any partial state from previous fetch
+      stopwatch?.start();
     }
 
     if (options.flush) {
