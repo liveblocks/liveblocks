@@ -20,13 +20,20 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 6 (2026-02-06)
 
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
 ## Examples
 
 - Fixed BlockNote example.
 
 ## Contributors
 
-bxff
+bxff, marcbouchenoire
 
 # Week 5 (2026-01-30)
 
