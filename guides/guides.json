@@ -468,5 +468,12 @@
     "topics": ["notifications", "tutorials", "webhooks"],
     "technologies": ["react-ui", "nodejs"],
     "date": "2026-01-29"
+  },
+  {
+    "title": "How to set up Continuous Integration (CI) testing",
+    "path": "/how-to-set-up-continuous-integration-ci-testing",
+    "topics": ["tutorials", "testing"],
+    "technologies": ["nodejs"],
+    "date": "2026-02-06"
   }
 ]
