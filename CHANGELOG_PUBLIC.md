@@ -62,7 +62,7 @@ ctnicholas, stevenfabre, pierrelevaillant
 
 # Week 4 (2026-01-23)
 
-## 3.13.3
+## v3.13.3
 
 ### @liveblocks/client
 
