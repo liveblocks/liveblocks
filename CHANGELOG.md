@@ -2,7 +2,14 @@
 
 - ...
 
-## 3.13.3
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
+## v3.13.3
 
 ### `@liveblocks/client`
 
