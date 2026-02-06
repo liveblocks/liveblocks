@@ -1,0 +1,123 @@
+---
+meta:
+  title: "Get started with the Liveblocks dev server"
+  parentTitle: "Get started"
+  description:
+    "Learn how to set up your local development environment for building with
+    Liveblocks."
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to set up a local
+development environment for building with Liveblocks.
+
+<Banner title="Only Multiplayer is supported" type="warning">
+
+The Liveblocks dev server only supports
+[Storage](/ready-made-features/multiplayer/sync-engine/liveblocks-storage) and
+[Yjs](/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+[Learn more](/docs/tools/dev-server).
+
+</Banner>
+
+## Quickstart
+
+<Steps>
+
+  <Step>
+    <StepTitle>Install Bun</StepTitle>
+    <StepContent>
+
+      Liveblocks dev server requires bun to be installed.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install -g bun
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Run the dev server</StepTitle>
+    <StepContent>
+
+      Run the dev server.
+
+      ```bash
+      bunx TODO ...
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: set up tests</StepTitle>
+    <StepContent>
+
+      TODO is this the next step?
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/authentication">
+          Set up authentication
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You now have set up the foundation to start building
+collaborative experiences for your React application.
+
+- [Liveblocks dev server](/docs/tools/dev-server)
+- [How to set up Continuous Integration (CI) testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing)
+- [@liveblocks/server repo](TODO directory of this)
+
+---
+
+## Examples supporting the dev server
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced/nextjs-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

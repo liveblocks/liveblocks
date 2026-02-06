@@ -315,6 +315,11 @@
             "title": "Custom",
             "href": "/get-started/custom",
             "hidden": true
+          },
+          {
+            "title": "How to set up the Liveblocks dev server",
+            "path": "/get-started/dev-server",
+            "hidden": true
           }
         ]
       },
@@ -717,6 +722,10 @@
       {
         "title": "DevTools extension",
         "path": "/tools/devtools"
+      },
+      {
+        "title": "Dev server",
+        "path": "/tools/dev-server"
       },
       {
         "title": "Next.js Starter Kit",
