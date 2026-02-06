@@ -30,10 +30,15 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Examples
 
 - Fixed BlockNote example.
+- Updated Nuxt example.
+
+## Documentation
+
+- Update Next.js authentication guides to use `.env.local`.
 
 ## Contributors
 
-bxff, marcbouchenoire
+bxff, marcbouchenoire, ctnicholas
 
 # Week 5 (2026-01-30)
 
