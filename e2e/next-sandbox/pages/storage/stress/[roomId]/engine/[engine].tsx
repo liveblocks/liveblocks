@@ -61,6 +61,12 @@ function stableStringify(obj: unknown): string {
   });
 }
 
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${bytes} B`;
+}
+
 // Simple hash function for quick comparison
 function simpleHash(str: string): string {
   let hash = 0;
@@ -505,7 +511,10 @@ function Sandbox({ roomId }: { roomId: string }) {
           <code
             style={{ fontSize: "12px", background: "#eee", padding: "2px 6px" }}
           >
-            {simpleHash(stableStringify(immutable))}
+            {(() => {
+              const str = stableStringify(immutable);
+              return `${simpleHash(str)} (${formatSize(str.length)})`;
+            })()}
           </code>
         </div>
       ) : null}
