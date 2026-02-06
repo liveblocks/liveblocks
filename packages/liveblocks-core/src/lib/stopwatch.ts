@@ -5,14 +5,14 @@ interface StopWatch {
 }
 
 export function makeStopWatch(): StopWatch {
-  let starttime: number = 0;
-  let lastLapTime: number = 0;
+  let startTime = 0;
+  let lastLapTime = 0;
   let laps: number[];
 
   function start() {
     laps = [];
-    starttime = performance.now();
-    lastLapTime = starttime;
+    startTime = performance.now();
+    lastLapTime = startTime;
   }
 
   function lap(now = performance.now()) {
@@ -21,9 +21,9 @@ export function makeStopWatch(): StopWatch {
   }
 
   function stop(): { total: number; laps: number[] } {
-    const endtime = performance.now();
-    lap(endtime);
-    const total = endtime - starttime;
+    const endTime = performance.now();
+    lap(endTime);
+    const total = endTime - startTime;
     return { total, laps };
   }
 
