@@ -1116,17 +1116,21 @@ const NOT_FOUND = Symbol();
 type NotFound = typeof NOT_FOUND;
 
 function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
-  connectionId: number,
+  connectionIdOrUserId: number | string,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
   const wrappedSelector = useCallback(
     (others: readonly User<P, U>[]) => {
       // TODO: Make this O(1) instead of O(n)?
-      const other = others.find((other) => other.connectionId === connectionId);
+      const other = others.find((other) =>
+        typeof connectionIdOrUserId === "number"
+          ? other.connectionId === connectionIdOrUserId
+          : other.id === connectionIdOrUserId
+      );
       return other !== undefined ? selector(other) : NOT_FOUND;
     },
-    [connectionId, selector]
+    [connectionIdOrUserId, selector]
   );
 
   const wrappedIsEqual = useCallback(
@@ -1144,7 +1148,7 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   const other = useOthers(wrappedSelector, wrappedIsEqual);
   if (other === NOT_FOUND) {
     throw new Error(
-      `No such other user with connection id ${connectionId} exists`
+      `No such other user with ${typeof connectionIdOrUserId === "number" ? "connection ID" : "user ID"} ${connectionIdOrUserId} exists`
     );
   }
 
@@ -3096,12 +3100,12 @@ const _useHistoryVersionsSuspense: TypedBundle["suspense"]["useHistoryVersions"]
   useHistoryVersionsSuspense;
 
 /**
- * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
- * can call this selector deep down in your component stack to only have the
+ * Given a connection ID (as obtained by using `useOthersConnectionIds`) or a user ID,
+ * you can call this selector deep down in your component stack to only have the
  * component re-render if properties for this particular user change.
  *
  * @example
- * // Returns only the selected values re-renders whenever that selection changes)
+ * // Returns only the selected values (re-renders whenever that selection changes)
  * const { x, y } = useOther(2, user => user.presence.cursor);
  */
 const _useOther: TypedBundle["useOther"] = useOther;
@@ -3156,12 +3160,12 @@ function _useOthers(...args: any[]) {
 }
 
 /**
- * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
- * can call this selector deep down in your component stack to only have the
+ * Given a connection ID (as obtained by using `useOthersConnectionIds`) or a user ID,
+ * you can call this selector deep down in your component stack to only have the
  * component re-render if properties for this particular user change.
  *
  * @example
- * // Returns only the selected values re-renders whenever that selection changes)
+ * // Returns only the selected values (re-renders whenever that selection changes)
  * const { x, y } = useOther(2, user => user.presence.cursor);
  */
 const _useOtherSuspense: TypedBundle["suspense"]["useOther"] = useOtherSuspense;

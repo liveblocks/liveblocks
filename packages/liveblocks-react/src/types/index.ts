@@ -910,12 +910,12 @@ type RoomContextBundleCommon<
   ): ReadonlyArray<readonly [connectionId: number, data: T]>;
 
   /**
-   * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
-   * can call this selector deep down in your component stack to only have the
+   * Given a connection ID (as obtained by using `useOthersConnectionIds`) or a user ID,
+   * you can call this selector deep down in your component stack to only have the
    * component re-render if properties for this particular user change.
    *
    * @example
-   * // Returns only the selected values re-renders whenever that selection changes)
+   * // Returns only the selected values (re-renders whenever that selection changes)
    * const { x, y } = useOther(2, user => user.presence.cursor);
    */
   useOther<T>(
