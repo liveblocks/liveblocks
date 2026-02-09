@@ -4827,6 +4827,7 @@
     "/management/projects": {
       "get": {
         "summary": "List projects",
+        "x-badge": "Beta",
         "description": "Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -4903,6 +4904,7 @@
       },
       "post": {
         "summary": "Create project",
+        "x-badge": "Beta",
         "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
         "tags": ["Management"],
         "responses": {
@@ -4975,6 +4977,7 @@
     "/management/projects/{projectId}": {
       "get": {
         "summary": "Get project",
+        "x-badge": "Beta",
         "description": "Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5016,6 +5019,7 @@
       },
       "post": {
         "summary": "Update project",
+        "x-badge": "Beta",
         "description": "Updates an existing project specified by its ID. This endpoint allows you to modify project details such as the project name and the version creation timeout. The `versionCreationTimeout` can be set to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from the request body will not be updated. Requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5074,6 +5078,7 @@
       },
       "delete": {
         "summary": "Delete project",
+        "x-badge": "Beta",
         "description": "Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5107,6 +5112,7 @@
     "/management/projects/{projectId}/api-keys/public/activate": {
       "post": {
         "summary": "Activate public key",
+        "x-badge": "Beta",
         "description": "Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5140,6 +5146,7 @@
     "/management/projects/{projectId}/api-keys/public/deactivate": {
       "post": {
         "summary": "Deactivate public key",
+        "x-badge": "Beta",
         "description": "Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5173,6 +5180,7 @@
     "/management/projects/{projectId}/api-keys/public/roll": {
       "post": {
         "summary": "Roll public key",
+        "x-badge": "Beta",
         "description": "Rolls (rotates) the public API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the public key is not currently enabled for the project, a 403 error response is returned. If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
         "tags": ["Management"],
         "parameters": [
@@ -5233,6 +5241,7 @@
     "/management/projects/{projectId}/api-keys/secret/roll": {
       "post": {
         "summary": "Roll secret key",
+        "x-badge": "Beta",
         "description": "Rolls (rotates) the secret API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
         "tags": ["Management"],
         "parameters": [
@@ -5293,6 +5302,7 @@
     "/management/projects/{projectId}/webhooks": {
       "get": {
         "summary": "List webhooks",
+        "x-badge": "Beta",
         "description": "Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The response includes an array of webhook objects associated with the specified project, as well as a `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter from the `nextCursor` value in the previous response to fetch subsequent pages. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5353,6 +5363,7 @@
       },
       "post": {
         "summary": "Create webhook",
+        "x-badge": "Beta",
         "description": "Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5419,6 +5430,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}": {
       "get": {
         "summary": "Get webhook",
+        "x-badge": "Beta",
         "description": "Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook does not exist. This endpoint requires the `read:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -5466,6 +5478,7 @@
       },
       "post": {
         "summary": "Update webhook",
+        "x-badge": "Beta",
         "description": "Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation errors. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -5537,6 +5550,7 @@
       },
       "delete": {
         "summary": "Delete webhook",
+        "x-badge": "Beta",
         "description": "Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or `404` if the project or webhook does not exist. Requires `write:all`.",
         "tags": ["Management"],
         "parameters": [
@@ -5579,6 +5593,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}/secret/roll": {
       "post": {
         "summary": "Roll webhook secret",
+        "x-badge": "Beta",
         "description": "Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24 hours. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -5628,6 +5643,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}/additional-headers": {
       "post": {
         "summary": "Patch webhook headers",
+        "x-badge": "Beta",
         "description": "Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -5696,6 +5712,7 @@
       },
       "get": {
         "summary": "Get webhook headers",
+        "x-badge": "Beta",
         "description": "Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires `read:all`.",
         "tags": ["Management"],
         "parameters": [
@@ -5745,6 +5762,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}/delete-additional-headers": {
       "post": {
         "summary": "Delete webhook headers",
+        "x-badge": "Beta",
         "description": "Remove selected additional headers from a webhook. Send header names in `headers` field; other headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise, a 422 error response is returned.",
         "tags": ["Management"],
         "parameters": [
@@ -5813,6 +5831,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}/recover-failed-messages": {
       "post": {
         "summary": "Recover failed webhook messages",
+        "x-badge": "Beta",
         "description": "Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -5874,6 +5893,7 @@
     "/management/projects/{projectId}/webhooks/{webhookId}/test": {
       "post": {
         "summary": "Send test webhook",
+        "x-badge": "Beta",
         "description": "Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
         "tags": ["Management"],
         "parameters": [
@@ -8521,6 +8541,38 @@
                   "suggestion": "Please use a secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
                   "docs": ""
                 }
+              },
+              "MISSING_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "MISSING_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Missing management api access token in authentication header",
+                  "suggestion": "Please provide a management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "INVALID_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "INVALID_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Invalid management api access token",
+                  "suggestion": "Please provide a valid management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "REVOKED_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "REVOKED_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Revoked management api access token",
+                  "suggestion": "Please provide an active management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "EXPIRED_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "EXPIRED_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Expired management api access token",
+                  "suggestion": "Please provide a not expired management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
               }
             }
           }
@@ -8565,6 +8617,22 @@
                   "suggestion": "Please provide a management api access token with required scope: 'read:all'.",
                   "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
                 }
+              },
+              "FEATURE_NOT_ENABLED": {
+                "value": {
+                  "error": "FEATURE_NOT_ENABLED",
+                  "message": "The \"Management API\" feature is not enabled for this account.",
+                  "suggestion": "If you want access to this feature, please contact us at support@liveblocks.io",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "PUBLIC_KEY_NOT_ENABLED": {
+                "value": {
+                  "error": "PUBLIC_KEY_NOT_ENABLED",
+                  "message": "Public key not enabled",
+                  "suggestion": "Please enable the public key for the project",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
               }
             }
           }
@@ -8584,6 +8652,22 @@
                   "message": "Room not found.",
                   "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
                   "docs": ""
+                }
+              },
+              "WEBHOOK_NOT_FOUND": {
+                "value": {
+                  "error": "WEBHOOK_NOT_FOUND",
+                  "message": "Webhook \"ep_xxx\" not found.",
+                  "suggestion": "Please use a valid webhook ID, webhook IDs are available in the dashboard: https://liveblocks.io/dashboard/webhooks",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "NOT_EXISTING_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "NOT_EXISTING_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Not existing management api access token",
+                  "suggestion": "Please provide an existing management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
                 }
               }
             }
