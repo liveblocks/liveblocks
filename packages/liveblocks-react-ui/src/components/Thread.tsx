@@ -581,48 +581,27 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  dropdownItems={({ children }) => {
-                    const threadDropdownItems = isFirstComment ? (
-                      <>
-                        <DefaultComment.DropdownItem
-                          onSelect={handleSubscribeChange}
-                          icon={
-                            subscriptionStatus === "subscribed" ? (
-                              <BellCrossedIcon />
-                            ) : (
-                              <BellIcon />
-                            )
-                          }
-                        >
-                          {subscriptionStatus === "subscribed"
-                            ? $.THREAD_UNSUBSCRIBE
-                            : $.THREAD_SUBSCRIBE}
-                        </DefaultComment.DropdownItem>
-                      </>
-                    ) : null;
-
-                    if (typeof commentDropdownItems === "function") {
-                      return commentDropdownItems({
-                        children: (
-                          <>
-                            {threadDropdownItems}
-                            {children}
-                          </>
-                        ),
-                        comment,
-                      });
-                    }
-
-                    return threadDropdownItems ||
-                      commentDropdownItems ||
-                      children ? (
-                      <>
-                        {threadDropdownItems}
-                        {children}
-                        {commentDropdownItems}
-                      </>
-                    ) : null;
-                  }}
+                  internalDropdownItems={
+                    isFirstComment ? (
+                      <DefaultComment.DropdownItem
+                        onSelect={handleSubscribeChange}
+                        icon={
+                          subscriptionStatus === "subscribed" ? (
+                            <BellCrossedIcon />
+                          ) : (
+                            <BellIcon />
+                          )
+                        }
+                      >
+                        {subscriptionStatus === "subscribed"
+                          ? $.THREAD_UNSUBSCRIBE
+                          : $.THREAD_SUBSCRIBE}
+                      </DefaultComment.DropdownItem>
+                    ) : undefined
+                  }
+                  dropdownItems={
+                    commentDropdownItems as CommentProps["dropdownItems"]
+                  }
                 />
               );
 

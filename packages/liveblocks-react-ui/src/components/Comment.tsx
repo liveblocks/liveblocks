@@ -209,6 +209,11 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
    * @internal
    */
   actionsClassName?: string;
+
+  /**
+   * @internal
+   */
+  internalDropdownItems?: ReactNode;
 }
 
 export interface CommentAvatarProps extends ComponentProps<"div"> {
@@ -654,6 +659,7 @@ export const Comment = Object.assign(
         className,
         actions,
         actionsClassName,
+        internalDropdownItems,
         children,
         ...props
       },
@@ -793,7 +799,7 @@ export const Comment = Object.assign(
         return null;
       }
 
-      const defaultDropdownItems =
+      const commentDropdownItems =
         comment.userId === currentUserId ? (
           <>
             <CommentDropdownItem onSelect={handleEdit} icon={<EditIcon />}>
@@ -802,6 +808,13 @@ export const Comment = Object.assign(
             <CommentDropdownItem onSelect={handleDelete} icon={<DeleteIcon />}>
               {$.COMMENT_DELETE}
             </CommentDropdownItem>
+          </>
+        ) : null;
+      const defaultDropdownItems =
+        internalDropdownItems || commentDropdownItems ? (
+          <>
+            {internalDropdownItems}
+            {commentDropdownItems}
           </>
         ) : null;
 
