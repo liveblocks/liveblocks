@@ -9,13 +9,10 @@ import {
   useStorage,
   useOthers,
   useSelf,
-  useCreateThread,
   useUpdateMyPresence,
   useThreads,
 } from "@liveblocks/react/suspense";
-import {
-  useUser,
-} from "@liveblocks/react";
+import { useUser } from "@liveblocks/react";
 import {
   AllCommunityModule,
   ColDef,
@@ -53,12 +50,30 @@ function MainGrid() {
 
   const { threads } = useThreads();
 
-  const colDefs = useMemo<ColDef[]>(() =>[
-    { field: "make", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
-    { field: "model", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
-    { field: "price", cellRenderer: (params: CustomCellRendererProps) => <AvatarCell {...params} threads={threads} /> },
-    { field: "electric" },
-  ], [threads]);
+  const colDefs = useMemo<ColDef[]>(
+    () => [
+      {
+        field: "make",
+        cellRenderer: (params: CustomCellRendererProps) => (
+          <AvatarCell {...params} threads={threads} />
+        ),
+      },
+      {
+        field: "model",
+        cellRenderer: (params: CustomCellRendererProps) => (
+          <AvatarCell {...params} threads={threads} />
+        ),
+      },
+      {
+        field: "price",
+        cellRenderer: (params: CustomCellRendererProps) => (
+          <AvatarCell {...params} threads={threads} />
+        ),
+      },
+      { field: "electric" },
+    ],
+    [threads]
+  );
 
   const handleCellEditRequest = useMutation(
     ({ storage }, event: CellEditRequestEvent) => {
@@ -102,23 +117,26 @@ function MainGrid() {
     setMyPresence({ isEditing: false });
   }, []);
 
-  const handleCellFocused = useMutation(({ setMyPresence }, event: CellFocusedEvent) => {
-    const rowIndex = event.rowIndex;
-    const field = (event.column as any)?.colId;
+  const handleCellFocused = useMutation(
+    ({ setMyPresence }, event: CellFocusedEvent) => {
+      const rowIndex = event.rowIndex;
+      const field = (event.column as any)?.colId;
 
-    if (rowIndex === null || field === undefined) {
-      return;
-    }
+      if (rowIndex === null || field === undefined) {
+        return;
+      }
 
-    const rowNode = event.api.getDisplayedRowAtIndex(rowIndex);
-    const rowId = rowNode?.id;
+      const rowNode = event.api.getDisplayedRowAtIndex(rowIndex);
+      const rowId = rowNode?.id;
 
-    if (!rowId) {
-      return;
-    }
+      if (!rowId) {
+        return;
+      }
 
-    setMyPresence({ focusedCell: { rowId, field } });
-  }, []);
+      setMyPresence({ focusedCell: { rowId, field } });
+    },
+    []
+  );
 
   // Clear focus presence when clicking outside the grid
   useEffect(() => {
@@ -131,8 +149,8 @@ function MainGrid() {
       }
     };
 
-    document.addEventListener('focusin', handleFocusIn);
-    return () => document.removeEventListener('focusin', handleFocusIn);
+    document.addEventListener("focusin", handleFocusIn);
+    return () => document.removeEventListener("focusin", handleFocusIn);
   }, []);
 
   return (
@@ -153,22 +171,22 @@ function MainGrid() {
   );
 }
 
-function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] }) {
+function AvatarCell(
+  params: CustomCellRendererProps & { threads: ThreadData[] }
+) {
   const rowId = params?.data?.id;
   const field = params?.colDef?.field;
 
-  const createThread = useCreateThread();
   const [composerOpen, setComposerOpen] = useState(false);
   const [threadOpen, setThreadOpen] = useState(false);
-  
-  
+
   const thisThread = params.threads.find(
     (thread) =>
-       thread.metadata.rowId === rowId &&
-       thread.metadata.field === field);
+      thread.metadata.rowId === rowId && thread.metadata.field === field
+  );
 
-  const { user }  = useUser(thisThread?.comments[0]?.userId || "");
-  
+  const { user } = useUser(thisThread?.comments[0]?.userId || "");
+
   const selfFocused = useSelf(
     (me) =>
       me.presence.focusedCell?.rowId === rowId &&
@@ -193,30 +211,43 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
         <div
           className="absolute inset-0 bg-transparent"
           style={{ border: `2px solid ${mostRecentFocused.info.color}` }}
+        >
+          <div
+            className="absolute bottom-full left-0 text-xs px-1 py-0.5 -ml-0.5"
+            style={{ backgroundColor: mostRecentFocused.info.color }}
+          >
+            {mostRecentFocused.info.name}
+          </div>
+        </div>
+      ) : null}
+      {selfFocused ? (
+        <div
+          className="absolute inset-0 bg-transparent -z-10 group"
+          style={{ border: `2px solid var(--ag-range-selection-border-color)` }}
         />
       ) : null}
-      <div className="pr-6">
-        {params.value}
-      </div>
+      <div className="pr-6">{params.value}</div>
 
       {thisThread ? (
         <Popover.Root open={threadOpen} onOpenChange={setThreadOpen}>
           <Popover.Trigger asChild>
             <button className="w-6 h-6 rounded-full overflow-hidden p-0 border-none bg-transparent cursor-pointer">
               {user?.avatar ? (
-                <img 
-                  src={user.avatar} 
-                  alt={user.name || "User"} 
+                <img
+                  src={user.avatar}
+                  alt={user.name || "User"}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="bg-gray-200 dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center">💬</span>
+                <span className="bg-gray-200 dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center">
+                  💬
+                </span>
               )}
             </button>
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content sideOffset={8}>
-              <Thread 
+              <Thread
                 thread={thisThread}
                 className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px] max-h-[500px]"
               />
@@ -226,21 +257,23 @@ function AvatarCell(params: CustomCellRendererProps & { threads: ThreadData[] })
       ) : (
         <Popover.Root open={composerOpen} onOpenChange={setComposerOpen}>
           <Popover.Trigger asChild>
-            <button className="justify-center items-center group-hover:flex opacity-0 invisible group-hover:opacity-100 group-hover:visible rounded-full bg-gray-200 dark:bg-gray-800 w-6 h-6">+</button>
+            <button className="justify-center items-center group-hover:flex opacity-0 invisible group-hover:opacity-100 group-hover:visible rounded-full bg-gray-200 dark:bg-gray-800 w-6 h-6">
+              +
+            </button>
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Content sideOffset={8}>
-              <Composer 
-                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px]" 
-                onSubmit={() => setComposerOpen(false)} 
+              <Composer
+                className="shadow-lg border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden w-[300px]"
+                onSubmit={() => setComposerOpen(false)}
                 metadata={{ rowId, field }}
-                // autoFocus 
+                // autoFocus
               />
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
       )}
-      
+
       {/* {othersEditing.map(({ connectionId, presence, info }) => (
         <img key={connectionId} src={info.avatar} width={24} height={24} className="absolute right-2 rounded-full" />
       ))} */}

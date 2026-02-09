@@ -19,10 +19,28 @@ export default function Page() {
       initialPresence={{ isEditing: false, focusedCell: null }}
       initialStorage={{
         rowData: new LiveList([
-          new LiveObject({ id: nanoid(), make: "Tesla", model: "Model Y", price: 64950, electric: true }),
-          new LiveObject({ id: nanoid(), make: "Ford", model: "F-Series", price: 33850, electric: false }),
-          new LiveObject({ id: nanoid(), make: "Toyota", model: "Corolla", price: 29600, electric: false }),
-        ])
+          new LiveObject({
+            id: nanoid(),
+            make: "Tesla",
+            model: "Model Y",
+            price: 64950,
+            electric: true,
+          }),
+          new LiveObject({
+            id: nanoid(),
+            make: "Ford",
+            model: "F-Series",
+            price: 33850,
+            electric: false,
+          }),
+          new LiveObject({
+            id: nanoid(),
+            make: "Toyota",
+            model: "Corolla",
+            price: 29600,
+            electric: false,
+          }),
+        ]),
       }}
     >
       <ErrorBoundary
