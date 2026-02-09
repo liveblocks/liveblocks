@@ -973,7 +973,68 @@ setting `maxVisibleComments` to an object.
 <Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
 ```
 
-##### Custom dropdown items
+##### Customize comments
+
+You can provide a custom `Comment` component via the `components` prop to fully
+customize how comments are rendered within a thread. You can render a fully
+custom component in the provided `Comment` slot but you can also keep most of
+the defaults by using the default
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) component, but now
+you gain access to more customization options.
+
+The `children` prop on `Comment` allows overriding or wrapping the comments’
+content, while the `additionalContent` prop can be useful to render custom
+content integrated into the comments’ content, just below the comment body.
+
+`Comment` also offers `avatar` and `author` props to allow overriding or
+customizing the comment’s displayed avatar and author respectively.
+`Comment.Avatar` and `Comment.Author` can be used to retain the default behavior
+and styles but with more control over them.
+
+```tsx
+import { Comment, Thread } from "@liveblocks/react-ui";
+
+<Thread
+  thread={thread}
+  components={{
+    Comment: ({ comment, ...props }) => (
+      <Comment
+        comment={comment}
+        avatar={
+          <div className="custom-avatar">
+            <Comment.Avatar userId={props.comment.userId} />
+            <div className="custom-badge" />
+          </div>
+        }
+        author={
+          <span className="custom-author">
+            <Comment.Author userId={props.comment.userId} />
+            <span>Custom label</span>
+          </span>
+        }
+        additionalContent={
+          <div className="custom-additional-content">
+            Content below the comment's body (above reactions and attachments)
+          </div>
+        }
+        {...props}
+      >
+        {({ children }) => (
+          <div className="custom-content-wrapper">
+            {children}
+            <div>
+              Content below the comment's content (including reactions and
+              attachments)
+            </div>
+          </div>
+        )}
+      </Comment>
+    ),
+  }}
+/>;
+```
+
+##### Customize dropdown items
 
 `Thread` shows a dropdown menu for threads and comments which contains actions
 related to them: “Subscribe to thread”, “Edit comment”, “Delete comment”, etc.
@@ -1195,6 +1256,23 @@ icon next to the item’s label.
     type="Partial<GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<GlobalComponents & ThreadComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### components [#Thread-components]
+
+Override the component’s components, including providing a custom `Comment`
+component.
+
+<PropertiesList>
+  <PropertiesListItem name="Comment" type="ComponentType<CommentProps>">
+    The component used to display comments.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1520,6 +1598,14 @@ function Component() {
   <PropertiesListItem name="comment" type="CommentData" required>
     The comment to display.
   </PropertiesListItem>
+  <PropertiesListItem name="avatar" type="ReactNode">
+    The comment’s avatar. Can be combined with `Comment.Avatar` to easily follow
+    default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="author" type="ReactNode">
+    The comment’s author. Can be combined with `Comment.Author` to easily follow
+    default styles.
+  </PropertiesListItem>
   <PropertiesListItem
     name="showActions"
     type='boolean | "hover"'
@@ -1543,6 +1629,9 @@ function Component() {
   <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
     Whether to indent the comment’s content.
   </PropertiesListItem>
+  <PropertiesListItem name="additionalContent" type="ReactNode">
+    Additional content to display below the comment’s body.
+  </PropertiesListItem>
   <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
     Whether to show the comment if it was deleted. If set to `false`, it will
     render deleted comments as `null`.
@@ -1553,6 +1642,14 @@ function Component() {
     detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
   >
     Add (or change) items to display in the comment’s dropdown.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="ReactNode | (props) => ReactNode"
+    detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
+  >
+    Override the comment’s content. Receives the comment data and the default
+    content as children.
   </PropertiesListItem>
   <PropertiesListItem
     name="onCommentEdit"
@@ -1594,6 +1691,92 @@ function Component() {
     type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Avatar [#Comment.Avatar]
+
+Displays a comment’s avatar. Use this within the `avatar` prop to follow default
+styles while customizing the avatar.
+
+```tsx
+<Comment
+  comment={comment}
+  avatar={
+    <div className="custom-avatar-wrapper">
+      <Comment.Avatar userId={comment.userId} />
+      <div className="custom-badge" />
+    </div>
+  }
+/>
+```
+
+###### Props [#Comment.Avatar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string" required>
+    The user ID to display the avatar for.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Author [#Comment.Author]
+
+Displays a comment’s author. Use this within the `author` prop to follow default
+styles while customizing the author.
+
+```tsx
+<Comment
+  comment={comment}
+  author={
+    <span className="custom-author-wrapper">
+      <Comment.Author userId={comment.userId} />
+      <span>Custom label</span>
+    </span>
+  }
+/>
+```
+
+###### Props [#Comment.Author-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string" required>
+    The user ID to display the author for.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.DropdownItem [#Comment.DropdownItem]
+
+Displays a dropdown item in the comment's dropdown menu. Use this within the
+`dropdownItems` prop to add custom actions.
+
+```tsx
+<Comment
+  comment={comment}
+  dropdownItems={
+    <>
+      <Comment.DropdownItem
+        onSelect={() => console.log("Custom action")}
+        icon={<Icon.QuestionMark />}
+      >
+        Custom action
+      </Comment.DropdownItem>
+    </>
+  }
+/>
+```
+
+###### Props [#Comment.DropdownItem-props]
+
+<PropertiesList>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this dropdown item.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onSelect"
+    type="function"
+    detailedType="(event: Event) => void"
+  >
+    The event handler called when the dropdown item is selected.
   </PropertiesListItem>
 </PropertiesList>
 
