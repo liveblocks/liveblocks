@@ -11,7 +11,6 @@ import { createLiveblocksClient } from "../../../../../utils/createClient";
 
 const client = createLiveblocksClient({
   authEndpoint: "/api/auth/access-token",
-  largeMessageStrategy: "split",
 });
 
 // Storage starts empty, can grow arbitrarily
