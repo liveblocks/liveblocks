@@ -1,12 +1,5 @@
 import { LiveList, LiveObject } from "@liveblocks/client";
-
-type Row = {
-  id: string;
-  make: string;
-  model: string;
-  price: number;
-  electric: boolean;
-};
+import type { MarketingRow } from "./src/data/defaultTableData";
 
 declare global {
   interface Liveblocks {
@@ -15,7 +8,7 @@ declare global {
       isEditing: boolean;
     };
     Storage: {
-      rowData: LiveList<LiveObject<Row>>;
+      rowData: LiveList<LiveObject<MarketingRow>>;
     };
     // Custom user info set when authenticating with a secret key
     UserMeta: {

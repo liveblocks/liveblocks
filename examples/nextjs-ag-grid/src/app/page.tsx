@@ -6,41 +6,18 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
-import { LiveList, LiveObject } from "@liveblocks/client";
 import { Grid } from "./grid";
-import { nanoid } from "@liveblocks/core";
+import { createDefaultRowData } from "../data/defaultTableData";
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-ag-grid-new-4");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-ag-grid-new-7");
 
   return (
     <RoomProvider
       id={roomId}
       initialPresence={{ isEditing: false, focusedCell: null }}
       initialStorage={{
-        rowData: new LiveList([
-          new LiveObject({
-            id: nanoid(),
-            make: "Tesla",
-            model: "Model Y",
-            price: 64950,
-            electric: true,
-          }),
-          new LiveObject({
-            id: nanoid(),
-            make: "Ford",
-            model: "F-Series",
-            price: 33850,
-            electric: false,
-          }),
-          new LiveObject({
-            id: nanoid(),
-            make: "Toyota",
-            model: "Corolla",
-            price: 29600,
-            electric: false,
-          }),
-        ]),
+        rowData: createDefaultRowData(),
       }}
     >
       <ErrorBoundary
