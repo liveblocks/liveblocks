@@ -2,7 +2,7 @@
   "name": "@liveblocks/yjs",
   "version": "3.13.4",
   "description": "Integrate your existing or new Yjs documents with Liveblocks.",
-  "icense": "Apache-2.0",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
