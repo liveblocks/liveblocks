@@ -21,9 +21,9 @@ pressure on our edge workers, which are limited in capacity. A 50 MiB document,
 including its overhead, could easily cause an OOM crash in an edge worker on
 engine v1, causing the room to become inaccessible.
 
-Rooms on engine v2 now stream their document data directly from our persisted
-storage layer, keeping only minimal data in memory. Conflict resolution and
-mutations happen directly in the storage layer too.
+Rooms on the v2 Storage engine now stream their document data directly from our
+persisted storage layer, keeping only minimal data in memory. Conflict
+resolution and mutations happen directly in the storage layer too.
 
 This enables arbitrarily large documents—server memory is no longer the
 bottleneck (browser memory, network speed, or your app’s rendering performance
@@ -74,7 +74,8 @@ This is equivalent to setting `engine={2}` on all new rooms going forward.
 
 ### Migrating existing rooms
 
-Eventually, we will transparently migrate all existing room data from engine v1
-to engine v2, and the explicit opt-in `engine` option will no longer have an
-effect, but we will announce this ahead of time. This process will be a seamless
-and uninterrupted continuation for rooms, and require no action on your part.
+Eventually, we will transparently migrate all existing room data from the v1 to
+the v2 Storage engine, and the explicit opt-in `engine` option will no longer
+have an effect, but we will announce this ahead of time. This process will be a
+seamless and uninterrupted continuation for rooms, and require no action on your
+part.

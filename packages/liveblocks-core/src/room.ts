@@ -1273,9 +1273,10 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   backgroundKeepAliveTimeout?: number;
 
   /**
-   * @deprecated For new rooms, use `engine: 2` instead. Engine v2 rooms have
-   * native support for streaming. This flag will be removed in a future
-   * version, but will continue to work for existing engine v1 rooms for now.
+   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
+   * Storage engine have native support for streaming. This flag will be
+   * removed in a future version, but will continue to work for existing engine
+   * v1 rooms for now.
    */
   unstable_streamData?: boolean;
 
