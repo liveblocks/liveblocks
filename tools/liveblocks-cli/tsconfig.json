@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    // Add Bun type definitions
+    "types": ["bun-types"],
+
+    // Enable latest features
+    "lib": ["esnext"],
+    "target": "esnext",
+
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+
+    // Best practices
+    "alwaysStrict": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
+}

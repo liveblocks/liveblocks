@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liveblocks Dev Server</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0f0f0f;
+      color: #e5e5e5;
+      min-height: 100vh;
+      margin: 0;
+      padding: 3rem 2rem;
+    }
+    main { max-width: 1000px; margin: 0 auto; }
+    h1 { color: #fff; font-size: 1.5rem; margin: 0 0 2rem; }
+    h2 { color: #ccc; font-size: 1rem; font-weight: 500; margin: 0 0 1rem; }
+    .pickers { display: flex; gap: 1rem; margin-bottom: 2rem; }
+    fieldset {
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      margin: 0;
+      flex: 1;
+    }
+    legend { color: #888; font-size: 0.75rem; text-transform: uppercase; padding: 0 0.5rem; }
+    label { display: block; cursor: pointer; padding: 0.25rem 0; }
+    label.nested { margin-left: 1.5rem; color: #999; }
+    label.disabled { color: #555; cursor: default; }
+    input[type="radio"] { margin-right: 0.5rem; accent-color: #7c6aef; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+    .column h3 { color: #888; font-size: 0.75rem; font-weight: 500; margin: 0 0 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .column pre { margin: 0; min-height: 200px; }
+    .note { color: #555; font-style: italic; margin: 0; padding: 1rem 0; }
+    pre {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+    code { font-family: "SF Mono", Consolas, monospace; }
+    .kw { color: #c586c0; }
+    .str { color: #ce9178; }
+    .fn { color: #dcdcaa; }
+    .prop { color: #9cdcfe; }
+    .cmt { color: #6a9955; }
+    .hl {
+      display: inline-block;
+      width: calc(100% + 2.5rem);
+      margin: 0 -1.25rem;
+      padding: 0 1.25rem;
+      background: rgba(124, 106, 239, 0.15);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { background: rgba(124, 106, 239, 0.1); }
+      50% { background: rgba(124, 106, 239, 0.22); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Liveblocks Dev Server</h1>
+
+    <h2>How do you want to use Liveblocks?</h2>
+    <div class="pickers">
+      <fieldset>
+        <legend>Library</legend>
+        <label><input type="radio" name="library" value="client" checked onchange="update()"> @liveblocks/client</label>
+        <label><input type="radio" name="library" value="react" onchange="update()"> @liveblocks/react</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Authentication</legend>
+        <label><input type="radio" name="auth" value="public" checked onchange="update()"> Public key</label>
+        <label><input type="radio" name="auth" value="secret" onchange="update()"> Secret key <span style="color:#666">(production)</span></label>
+        <label class="nested disabled" id="label-id"><input type="radio" name="token" value="id" disabled onchange="update()"> ID tokens</label>
+        <label class="nested disabled" id="label-access"><input type="radio" name="token" value="access" checked disabled onchange="update()"> Access tokens</label>
+      </fieldset>
+    </div>
+
+    <div class="columns">
+      <div class="column">
+        <h3>Your frontend</h3>
+        <pre><code id="frontend-snippet"></code></pre>
+      </div>
+      <div class="column" id="backend-column">
+        <h3>Your backend</h3>
+        <p class="note" id="backend-note">No backend changes required for public key auth.</p>
+        <pre id="backend-pre"><code id="backend-snippet"></code></pre>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function h(cls, text) {
+      return `<span class="${cls}">${text}</span>`;
+    }
+
+    const kw = t => h('kw', t);
+    const str = t => h('str', `"${t}"`);
+    const fn = t => h('fn', t);
+    const prop = t => h('prop', t);
+    const cmt = t => h('cmt', t);
+    const hl = t => h('hl', t); // highlighted line
+
+    function update() {
+      const auth = document.querySelector('input[name="auth"]:checked').value;
+      const token = document.querySelector('input[name="token"]:checked').value;
+      const library = document.querySelector('input[name="library"]:checked').value;
+
+      // Enable/disable token options
+      const isSecret = auth === 'secret';
+      document.querySelectorAll('input[name="token"]').forEach(el => el.disabled = !isSecret);
+      document.getElementById('label-id').classList.toggle('disabled', !isSecret);
+      document.getElementById('label-access').classList.toggle('disabled', !isSecret);
+
+      // Show note or code block for backend
+      const noteEl = document.getElementById('backend-note');
+      const preEl = document.getElementById('backend-pre');
+      if (!isSecret) {
+        noteEl.style.display = 'block';
+        noteEl.textContent = 'No backend changes required for public key auth.';
+        preEl.style.display = 'none';
+      } else if (token === 'id') {
+        noteEl.style.display = 'block';
+        noteEl.textContent = 'ID tokens are not supported with the local dev server. 😢';
+        preEl.style.display = 'block';
+        preEl.style.opacity = '0.5';
+        preEl.style.filter = 'grayscale(100%)';
+      } else {
+        noteEl.style.display = 'none';
+        preEl.style.display = 'block';
+        preEl.style.opacity = '1';
+        preEl.style.filter = 'none';
+      }
+
+      let frontend = '';
+      let backend = '';
+
+      if (library === 'client') {
+        if (auth === 'public') {
+          frontend = `${kw('import')} { ${fn('createClient')} } ${kw('from')} ${str('@liveblocks/client')};
+
+${kw('const')} ${prop('client')} = ${fn('createClient')}({
+${hl(`  ${prop('baseUrl')}: ${str('http://localhost:1153')},`)}
+${hl(`  ${prop('publicApiKey')}: ${str('pk_localdev')},`)}
+});`;
+        } else {
+          frontend = `${kw('import')} { ${fn('createClient')} } ${kw('from')} ${str('@liveblocks/client')};
+
+${kw('const')} ${prop('client')} = ${fn('createClient')}({
+${hl(`  ${prop('baseUrl')}: ${str('http://localhost:1153')},`)}
+${hl(`  ${prop('authEndpoint')}: ${str('/api/liveblocks-auth')},`)}
+});`;
+        }
+      } else {
+        // React
+        if (auth === 'public') {
+          frontend = `${kw('import')} { ${fn('LiveblocksProvider')}, ${fn('RoomProvider')} } ${kw('from')} ${str('@liveblocks/react')};
+
+${kw('function')} ${fn('App')}() {
+  ${kw('return')} (
+    &lt;${fn('LiveblocksProvider')}
+${hl(`      ${prop('baseUrl')}=${str('http://localhost:1153')}`)}
+${hl(`      ${prop('publicApiKey')}=${str('pk_localdev')}`)}
+    &gt;
+      &lt;${fn('RoomProvider')} ${prop('id')}=${str('my-room')}&gt;
+        {${cmt('/* your app */')}}
+      &lt;/${fn('RoomProvider')}&gt;
+    &lt;/${fn('LiveblocksProvider')}&gt;
+  );
+}`;
+        } else {
+          frontend = `${kw('import')} { ${fn('LiveblocksProvider')}, ${fn('RoomProvider')} } ${kw('from')} ${str('@liveblocks/react')};
+
+${kw('function')} ${fn('App')}() {
+  ${kw('return')} (
+    &lt;${fn('LiveblocksProvider')}
+${hl(`      ${prop('baseUrl')}=${str('http://localhost:1153')}`)}
+${hl(`      ${prop('authEndpoint')}=${str('/api/liveblocks-auth')}`)}
+    &gt;
+      &lt;${fn('RoomProvider')} ${prop('id')}=${str('my-room')}&gt;
+        {${cmt('/* your app */')}}
+      &lt;/${fn('RoomProvider')}&gt;
+    &lt;/${fn('LiveblocksProvider')}&gt;
+  );
+}`;
+        }
+      }
+
+      // Backend code (only for secret key auth)
+      if (auth === 'secret') {
+        if (token === 'access') {
+          backend = `${cmt('// In api/liveblocks-auth/route.ts')}
+${kw('import')} { ${fn('Liveblocks')} } ${kw('from')} ${str('@liveblocks/node')};
+
+${kw('const')} ${prop('liveblocks')} = ${kw('new')} ${fn('Liveblocks')}({
+${hl(`  ${prop('secret')}: ${str('sk_localdev')},`)}
+${hl(`  ${prop('baseUrl')}: ${str('http://localhost:1153')},`)}
+});
+
+${kw('export async function')} ${fn('POST')}() {
+  ${kw('const')} ${prop('user')} = ${cmt('// ... get user from your own session')};
+
+  ${kw('const')} ${prop('session')} = ${prop('liveblocks')}.${fn('prepareSession')}(
+    ${prop('user')}.${prop('id')},
+    { ${prop('userInfo')}: { ${prop('name')}: ${prop('user')}.${prop('name')} } }
+  );
+  ${prop('session')}.${fn('allow')}(${str('*')}, ${prop('session')}.${prop('FULL_ACCESS')});
+
+  ${kw('const')} { ${prop('status')}, ${prop('body')} } = ${kw('await')} ${prop('session')}.${fn('authorize')}();
+  ${kw('return new')} ${fn('Response')}(${prop('body')}, { ${prop('status')} });
+}`;
+        } else {
+          backend = `${cmt('// In api/liveblocks-auth/route.ts')}
+${kw('import')} { ${fn('Liveblocks')} } ${kw('from')} ${str('@liveblocks/node')};
+
+${kw('const')} ${prop('liveblocks')} = ${kw('new')} ${fn('Liveblocks')}({
+  ${prop('secret')}: ${str('sk_localdev')},
+  ${prop('baseUrl')}: ${str('http://localhost:1153')},
+});
+
+${kw('export async function')} ${fn('POST')}() {
+  ${kw('const')} ${prop('user')} = ${cmt('// ... get user from your own session')};
+
+  ${kw('const')} { ${prop('status')}, ${prop('body')} } = ${kw('await')} ${prop('liveblocks')}.${fn('identifyUser')}({
+    ${prop('userId')}: ${prop('user')}.${prop('id')},
+    ${prop('groupIds')}: [],
+  });
+
+  ${kw('return new')} ${fn('Response')}(${prop('body')}, { ${prop('status')} });
+}`;
+        }
+      }
+
+      document.getElementById('frontend-snippet').innerHTML = frontend;
+      document.getElementById('backend-snippet').innerHTML = backend;
+    }
+
+    update();
+  </script>
+</body>
+</html>
