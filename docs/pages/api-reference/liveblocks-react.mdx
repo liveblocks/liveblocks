@@ -375,7 +375,9 @@ function App() {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments), [Text Editor](/docs/ready-made-features/text-editor), and [Notifications](/docs/ready-made-features/notifications). Return an array of
+    [Comments](/docs/ready-made-features/comments), [Text
+    Editor](/docs/ready-made-features/text-editor), and
+    [Notifications](/docs/ready-made-features/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveUsers).
   </PropertiesListItem>
@@ -393,7 +395,8 @@ function App() {
     detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
   >
     A function that resolves group information in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of
     `GroupInfo` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveGroupsInfo).
   </PropertiesListItem>
@@ -402,8 +405,10 @@ function App() {
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of user IDs or mention objects.
-    [Learn more](#LiveblocksProviderResolveMentionSuggestions).
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of user IDs
+    or mention objects. [Learn
+    more](#LiveblocksProviderResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -416,8 +421,9 @@ function App() {
     detailedtype='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
     defaultValue={`"bottom-right"`}
   >
-    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
-    [Learn more](#Powered-by-Liveblocks-branding).
+    The location of the "Powered by Liveblocks" badge. Can be set to either
+    `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`. [Learn
+    more](#Powered-by-Liveblocks-branding).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -2355,9 +2361,9 @@ function App() {
   <PropertiesListItem name="engine" type="1 | 2">
     Preferred storage engine version to use when creating the room. Only takes
     effect if the room doesn’t exist yet. This value is ignored after the first
-    render. Engine 2 supports larger documents, is more performant, has native
-    streaming support, and will become the default in the future. [Learn
-    more](/docs/guides/the-new-storage-engine-and-its-benefits).
+    render. The v2 Storage engine supports larger documents, is more performant,
+    has native streaming support, and will become the default in the future.
+    [Learn more](/docs/guides/about-the-new-storage-engine).
   </PropertiesListItem>
 </PropertiesList>
 

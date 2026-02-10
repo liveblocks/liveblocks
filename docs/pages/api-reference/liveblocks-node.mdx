@@ -3165,6 +3165,9 @@ const copilot = await liveblocks.createAiCopilot({
   // Optional, additional knowledge context for the copilot
   knowledgePrompt: "Use our company's style guide when providing examples.",
 
+  // Optional, always retrieve knowledge sources on each query
+  alwaysUseKnowledge: true,
+
   // Required, the AI provider to use
   provider: "openai",
 
@@ -3296,6 +3299,9 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
 
   // Optional, update the knowledge prompt
   knowledgePrompt: "Reference our latest guidelines.",
+
+  // Optional, always retrieve knowledge sources on each query
+  alwaysUseKnowledge: true,
 
   // Optional, update provider-specific options (replaces the entire nested options object)
   // Set to null to clear options

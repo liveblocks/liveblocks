@@ -18,6 +18,28 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 6 (2026-02-06)
+
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
+## Examples
+
+- Fixed BlockNote example.
+- Updated Nuxt example.
+
+## Documentation
+
+- Update Next.js authentication guides to use `.env.local`.
+
+## Contributors
+
+bxff, marcbouchenoire, ctnicholas
+
 # Week 5 (2026-01-30)
 
 ## Documentation
@@ -50,7 +72,7 @@ ctnicholas, stevenfabre, pierrelevaillant
 
 # Week 4 (2026-01-23)
 
-## 3.13.3
+## v3.13.3
 
 ### `@liveblocks/client`
 

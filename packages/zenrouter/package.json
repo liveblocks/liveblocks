@@ -1,0 +1,54 @@
+{
+  "name": "zenrouter",
+  "private": true,
+  "version": "1.0.0",
+  "description": "An opinionated router library for building APIs following best practices.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "bugs": {
+    "url": "https://github.com/liveblocks/zenrouter/issues"
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "format": "eslint --color --fix src/ test/; prettier --write src/ test/",
+    "lint": "eslint --color src/ test/",
+    "lint:package": "publint --strict && attw --pack",
+    "test": "vitest run --color",
+    "test:watch": "vitest watch --color",
+    "test:types": "tsd"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "hotscript": "^1.0.13",
+    "nanoid": "^3"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "decoders": "^2.8.0-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/zenrouter.git"
+  },
+  "sideEffects": false
+}

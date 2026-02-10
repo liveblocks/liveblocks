@@ -175,7 +175,9 @@ const client = createClient({
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments), [Text Editor](/docs/ready-made-features/text-editor), and [Notifications](/docs/ready-made-features/notifications). Return an array of
+    [Comments](/docs/ready-made-features/comments), [Text
+    Editor](/docs/ready-made-features/text-editor), and
+    [Notifications](/docs/ready-made-features/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
@@ -193,7 +195,8 @@ const client = createClient({
     detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
   >
     A function that resolves group information in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of
     `GroupInfo` objects in the same order they arrived. [Learn
     more](#createClientResolveGroupsInfo).
   </PropertiesListItem>
@@ -202,8 +205,9 @@ const client = createClient({
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of user IDs or mention objects.
-    [Learn more](#createClientResolveMentionSuggestions).
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of user IDs
+    or mention objects. [Learn more](#createClientResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -215,8 +219,9 @@ const client = createClient({
     detailedType='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
     defaultValue={`"bottom-right"`}
   >
-    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
-    [Learn more](#createClientBadgeLocation).
+    The location of the "Powered by Liveblocks" badge. Can be set to either
+    `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`. [Learn
+    more](#createClientBadgeLocation).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -863,10 +868,10 @@ Note that it’s possible to [add types to your room](#typing-your-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.engine" type="1 | 2">
     Preferred storage engine version to use when creating the room. Only takes
-    effect if the room doesn’t exist yet. Engine 2 supports larger documents, is
-    more performant, has native streaming support, and will become the default
-    in the future. [Learn more](/docs/guides/the-new-storage-engine-and-its-benefits).
-  </PropertiesListItem>
+    effect if the room doesn’t exist yet. The v2 Storage engine supports larger
+    documents, is more performant, has native streaming support, and will become
+    the default in the future. [Learn
+    more](/docs/guides/about-the-new-storage-engine).
 </PropertiesList>
 
 #### Setting initial Presence [#setting-initial-presence]
