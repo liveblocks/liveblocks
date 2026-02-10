@@ -26,8 +26,6 @@ export type { FloatingComposerProps } from "./components/FloatingComposer";
 export { FloatingComposer } from "./components/FloatingComposer";
 export type { FloatingThreadProps } from "./components/FloatingThread";
 export { FloatingThread } from "./components/FloatingThread";
-export type { FloatingThreadComposerProps } from "./components/FloatingThreadComposer";
-export { FloatingThreadComposer } from "./components/FloatingThreadComposer";
 export type { HistoryVersionSummaryProps } from "./components/HistoryVersionSummary";
 export { HistoryVersionSummary } from "./components/HistoryVersionSummary";
 export type { HistoryVersionSummaryListProps } from "./components/HistoryVersionSummaryList";

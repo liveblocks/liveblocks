@@ -111,7 +111,7 @@ function Canvas() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-canvas-separate"
+    "liveblocks:examples:nextjs-comments-playground-canvas"
   );
 
   return (

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
-import { FloatingThreadComposer } from "@liveblocks/react-ui";
+import { FloatingThread, FloatingComposer } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -46,17 +46,20 @@ function Example() {
                     <div className="table-cell-inner">
                       <span className="cell-content">{row[col]}</span>
 
-                      <FloatingThreadComposer
-                        thread={thread}
-                        metadata={{ cellId }}
-                      >
-                        <button
-                          className="thread-indicator"
-                          data-has-thread={thread ? "" : undefined}
-                        >
-                          {thread ? "💬" : "＋"}
-                        </button>
-                      </FloatingThreadComposer>
+                      {thread ? (
+                        <FloatingThread thread={thread}>
+                          <button
+                            className="thread-indicator"
+                            data-has-thread=""
+                          >
+                            💬
+                          </button>
+                        </FloatingThread>
+                      ) : (
+                        <FloatingComposer metadata={{ cellId }}>
+                          <button className="thread-indicator">＋</button>
+                        </FloatingComposer>
+                      )}
                     </div>
                   </td>
                 );
@@ -71,7 +74,7 @@ function Example() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-table-merged"
+    "liveblocks:examples:nextjs-comments-playground-table"
   );
 
   return (
