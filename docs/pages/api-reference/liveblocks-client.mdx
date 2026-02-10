@@ -236,9 +236,12 @@ const client = createClient({
     name="unstable_streamData"
     type="boolean"
     defaultValue="false"
+    deprecated
   >
-    Experimental. Stream the initial Storage content over HTTP, instead of
-    waiting for a large initial WebSocket message to be sent from the server.
+    Deprecated. For new rooms, use [`engine: 2`](#Client.enterRoom) instead.
+    Engine 2 rooms have native support for streaming. This flag will be removed
+    in a future version, but will continue to work for existing engine 1 rooms
+    for now. [Learn more](/docs/guides/the-new-storage-engine-and-its-benefits).
   </PropertiesListItem>
 </PropertiesList>
 
@@ -871,6 +874,13 @@ Note that it’s possible to [add types to your room](#typing-your-data).
     defaultValue="true"
   >
     Whether the room immediately connects to Liveblocks servers.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.engine" type="1 | 2">
+    Preferred storage engine version to use when creating the room. Only takes
+    effect if the room doesn’t exist yet. Engine 2 supports larger documents, is
+    more performant, has native streaming support, and will become the default
+    in the future. [Learn
+    more](/docs/guides/the-new-storage-engine-and-its-benefits).
   </PropertiesListItem>
 </PropertiesList>
 

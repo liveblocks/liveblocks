@@ -4966,6 +4966,11 @@
           },
           "metadata": {
             "type": "object"
+          },
+          "engine": {
+            "type": "integer",
+            "enum": [1, 2],
+            "description": "Preferred storage engine version to use when creating new rooms. Engine v2 rooms support larger documents, is more performant, has native streaming support, and will become the default in the future."
           }
         },
         "required": ["id", "defaultAccesses"]
