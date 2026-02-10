@@ -4,7 +4,7 @@ meta:
   description: "Learn about our improved v2 Storage engine and how to enable it"
 ---
 
-Since v3.14, rooms can be powered by our new b2 Storage engine. Switching is
+Since v3.14, rooms can be powered by our new v2 Storage engine. Switching is
 **seamless and requires no code changes**. Rooms on v1 or v2 behave identically
 from your app’s perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs
 Storage all work the same way.
@@ -70,7 +70,8 @@ option when v3.14 is officially released.
 
 ### Migrating existing rooms
 
-Eventually, we will transparently migrate all existing room data from engine v1
-to engine v2, and the explicit opt-in `engine` option will no longer have an
-effect, but we will announce this ahead of time. This process will be a seamless
-and uninterrupted continuation for rooms, and require no action on your part.
+Eventually, we will transparently migrate all existing room data from the v1 to
+the v2 Storage engine, and the explicit opt-in `engine` option will no longer
+have an effect, but we will announce this ahead of time. This process will be a
+seamless and uninterrupted continuation for rooms, and require no action on your
+part.
