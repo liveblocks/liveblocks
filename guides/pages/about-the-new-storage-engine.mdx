@@ -21,9 +21,9 @@ pressure on our edge workers, which are limited in capacity. A 50 MiB document,
 including its overhead, could easily cause an OOM crash in an edge worker on
 engine v1, causing the room to become inaccessible.
 
-Rooms on engine v2 now stream their document data directly from our persisted
-storage layer, keeping only minimal data in memory. Conflict resolution and
-mutations happen directly in the storage layer too.
+Rooms on the v2 Storage engine now stream their document data directly from our
+persisted storage layer, keeping only minimal data in memory. Conflict
+resolution and mutations happen directly in the storage layer too.
 
 This enables arbitrarily large documents—server memory is no longer the
 bottleneck (browser memory, network speed, or your app’s rendering performance
