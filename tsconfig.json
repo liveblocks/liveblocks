@@ -1,0 +1,26 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "module": "node16",
+    "moduleResolution": "node16",
+
+    "target": "es2020",
+    "lib": [],
+    "skipLibCheck": true,
+
+    "noUncheckedIndexedAccess": false, // overwritten from base tsconfig to relax a bit
+
+    "paths": {
+      "~": ["./src"],
+      "~/*": ["./src/*"],
+      "~test": ["./test"],
+      "~test/*": ["./test/*"]
+    }
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
+}
