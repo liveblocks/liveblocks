@@ -4823,6 +4823,1141 @@
         },
         "operationId": "get-web-knowledge-source-links"
       }
+    },
+    "/management/projects": {
+      "get": {
+        "summary": "List projects",
+        "x-badge": "Beta",
+        "description": "Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of projects and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectsResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "projects": [
+                        {
+                          "id": "683d49ed6b4d1cec5a597b13",
+                          "teamId": "team_123",
+                          "type": "dev",
+                          "name": "Frimousse",
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "updatedAt": "2024-09-03T12:34:56.000Z",
+                          "publicKey": {
+                            "activated": true,
+                            "createdAt": "2024-09-03T12:34:56.000Z",
+                            "value": "pk_dev_123"
+                          },
+                          "secretKey": {
+                            "createdAt": "2024-09-03T12:34:56.000Z",
+                            "value": "sk_dev_123"
+                          },
+                          "region": "earth",
+                          "versionCreationTimeout": false
+                        }
+                      ],
+                      "nextCursor": "eyJpZCI6IjY4M2Q0OWVkNmI0ZDFjZWM1YTU5N2IxMyIsImNyZWF0ZWRBdCI6MTcyNTI4NzcwMDAwMH0="
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "get-management-projects"
+      },
+      "post": {
+        "summary": "Create project",
+        "x-badge": "Beta",
+        "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
+        "tags": ["Management"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "project": {
+                        "id": "683d49ed6b4d1cec5a597b13",
+                        "teamId": "team_123",
+                        "type": "dev",
+                        "name": "Frimousse",
+                        "createdAt": "2024-09-03T12:34:56.000Z",
+                        "updatedAt": "2024-09-03T12:34:56.000Z",
+                        "publicKey": {
+                          "activated": true,
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "value": "pk_dev_123"
+                        },
+                        "secretKey": {
+                          "createdAt": "2024-09-03T12:34:56.000Z",
+                          "value": "sk_dev_123"
+                        },
+                        "region": "earth",
+                        "versionCreationTimeout": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-projects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateManagementProject"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "Frimousse",
+                    "type": "dev",
+                    "versionCreationTimeout": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}": {
+      "get": {
+        "summary": "Get project",
+        "x-badge": "Beta",
+        "description": "Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "get-management-project"
+      },
+      "post": {
+        "summary": "Update project",
+        "x-badge": "Beta",
+        "description": "Updates an existing project specified by its ID. This endpoint allows you to modify project details such as the project name and the version creation timeout. The `versionCreationTimeout` can be set to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from the request body will not be updated. Requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateManagementProject"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "Valleys",
+                    "versionCreationTimeout": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete project",
+        "x-badge": "Beta",
+        "description": "Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The project was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-management-project"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/activate": {
+      "post": {
+        "summary": "Activate public key",
+        "x-badge": "Beta",
+        "description": "Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The public key was activated."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "post-management-project-public-key-activate"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/deactivate": {
+      "post": {
+        "summary": "Deactivate public key",
+        "x-badge": "Beta",
+        "description": "Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The public key was deactivated."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "post-management-project-public-key-deactivate"
+      }
+    },
+    "/management/projects/{projectId}/api-keys/public/roll": {
+      "post": {
+        "summary": "Roll public key",
+        "x-badge": "Beta",
+        "description": "Rolls (rotates) the public API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the public key is not currently enabled for the project, a 403 error response is returned. If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the rolled public key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectPublicKeyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project-public-key-roll",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "expirationIn": "1 hour"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/api-keys/secret/roll": {
+      "post": {
+        "summary": "Roll secret key",
+        "x-badge": "Beta",
+        "description": "Rolls (rotates) the secret API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the rolled secret key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementProjectSecretKeyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-project-secret-key-roll",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "expirationIn": "3 days"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/webhooks": {
+      "get": {
+        "summary": "List webhooks",
+        "x-badge": "Beta",
+        "description": "Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The response includes an array of webhook objects associated with the specified project, as well as a `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter from the `nextCursor` value in the previous response to fetch subsequent pages. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of webhooks to return. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of webhooks and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhooksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "get-management-webhooks"
+      },
+      "post": {
+        "summary": "Create webhook",
+        "x-badge": "Beta",
+        "description": "Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created webhook.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhooks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateManagementWebhook"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "url": "https://example.com/webhooks",
+                    "subscribedEvents": ["storageUpdated", "userEntered"],
+                    "rateLimit": 100,
+                    "additionalHeaders": {
+                      "LB-X-FOO": "bar"
+                    },
+                    "storageUpdatedThrottleSeconds": 10,
+                    "yDocUpdatedThrottleSeconds": 10
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}": {
+      "get": {
+        "summary": "Get webhook",
+        "x-badge": "Beta",
+        "description": "Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook does not exist. This endpoint requires the `read:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the webhook.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-management-webhook"
+      },
+      "post": {
+        "summary": "Update webhook",
+        "x-badge": "Beta",
+        "description": "Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation errors. This endpoint requires the `write:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated webhook.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateManagementWebhook"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "url": "https://example.com/webhooks",
+                    "subscribedEvents": ["storageUpdated", "userEntered"],
+                    "rateLimit": 100,
+                    "storageUpdatedThrottleSeconds": 10,
+                    "yDocUpdatedThrottleSeconds": 10,
+                    "disabled": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete webhook",
+        "x-badge": "Beta",
+        "description": "Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or `404` if the project or webhook does not exist. Requires `write:all`.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The webhook was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-management-webhook"
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}/secret/roll": {
+      "post": {
+        "summary": "Roll webhook secret",
+        "x-badge": "Beta",
+        "description": "Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24 hours. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the rotated secret key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookSecretRotateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "post-management-webhook-secret-roll"
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}/additional-headers": {
+      "post": {
+        "summary": "Patch webhook headers",
+        "x-badge": "Beta",
+        "description": "Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhook-headers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementWebhookHeadersPatch"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "headers": {
+                      "X-Custom-Header": "value"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get webhook headers",
+        "x-badge": "Beta",
+        "description": "Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires `read:all`.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-management-webhook-headers"
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}/delete-additional-headers": {
+      "post": {
+        "summary": "Delete webhook headers",
+        "x-badge": "Beta",
+        "description": "Remove selected additional headers from a webhook. Send header names in `headers` field; other headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise, a 422 error response is returned.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated headers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhook-headers-delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementWebhookHeadersDelete"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "headers": ["X-Custom-Header", "X-Another-Header"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}/recover-failed-messages": {
+      "post": {
+        "summary": "Recover failed webhook messages",
+        "x-badge": "Beta",
+        "description": "Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The recover task was started."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhook-recover-failed-messages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementWebhookRecoverRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "since": "2026-01-21T00:00:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/management/projects/{projectId}/webhooks/{webhookId}/test": {
+      "post": {
+        "summary": "Send test webhook",
+        "x-badge": "Beta",
+        "description": "Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
+        "tags": ["Management"],
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the project"
+          },
+          {
+            "name": "webhookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the webhook"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the test message ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementWebhookTestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-management-webhook-test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ManagementWebhookTestRequest"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "subscribedEvent": "storageUpdated"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6891,6 +8026,493 @@
             "type": "string"
           }
         }
+      },
+      "ManagementProjectType": {
+        "title": "ManagementProjectType",
+        "type": "string",
+        "enum": ["dev", "prod"]
+      },
+      "ManagementProjectRegion": {
+        "title": "ManagementProjectRegion",
+        "type": "string",
+        "enum": ["earth", "eu", "fedramp"]
+      },
+      "ManagementProjectVersionCreationTimeout": {
+        "title": "ManagementProjectVersionCreationTimeout",
+        "description": "False to disable timeout or number of seconds between 30 and 300.",
+        "oneOf": [
+          {
+            "type": "boolean",
+            "enum": [false]
+          },
+          {
+            "type": "number",
+            "minimum": 30,
+            "maximum": 300
+          }
+        ]
+      },
+      "ManagementProjectPublicKey": {
+        "title": "ManagementProjectPublicKey",
+        "type": "object",
+        "properties": {
+          "activated": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["activated", "createdAt", "value"]
+      },
+      "ManagementProjectSecretKey": {
+        "title": "ManagementProjectSecretKey",
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["createdAt", "value"]
+      },
+      "ManagementProject": {
+        "title": "ManagementProject",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ManagementProjectType"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publicKey": {
+            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+          },
+          "secretKey": {
+            "$ref": "#/components/schemas/ManagementProjectSecretKey",
+            "nullable": true
+          },
+          "region": {
+            "$ref": "#/components/schemas/ManagementProjectRegion"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
+          }
+        },
+        "required": [
+          "id",
+          "teamId",
+          "type",
+          "name",
+          "createdAt",
+          "updatedAt",
+          "publicKey",
+          "secretKey",
+          "region",
+          "versionCreationTimeout"
+        ]
+      },
+      "CreateManagementProject": {
+        "title": "CreateManagementProject",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ManagementProjectType"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout",
+            "default": false
+          }
+        },
+        "required": ["type"]
+      },
+      "UpdateManagementProject": {
+        "title": "UpdateManagementProject",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "versionCreationTimeout": {
+            "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
+          }
+        }
+      },
+      "ManagementProjectKeyRollRequest": {
+        "title": "ManagementProjectKeyRollRequest",
+        "type": "object",
+        "properties": {
+          "expirationIn": {
+            "type": "string",
+            "enum": [
+              "now",
+              "1h",
+              "1hour",
+              "1 hour",
+              "24hrs",
+              "24hours",
+              "24 hours",
+              "3d",
+              "3days",
+              "3 days",
+              "7d",
+              "7days",
+              "7 days"
+            ],
+            "default": "now"
+          }
+        }
+      },
+      "ManagementProjectsResponse": {
+        "title": "ManagementProjectsResponse",
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementProject"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ManagementProjectResponse": {
+        "title": "ManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"]
+      },
+      "ManagementProjectPublicKeyResponse": {
+        "title": "ManagementProjectPublicKeyResponse",
+        "type": "object",
+        "properties": {
+          "publicKey": {
+            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+          }
+        },
+        "required": ["publicKey"]
+      },
+      "ManagementProjectSecretKeyResponse": {
+        "title": "ManagementProjectSecretKeyResponse",
+        "type": "object",
+        "properties": {
+          "secretKey": {
+            "$ref": "#/components/schemas/ManagementProjectSecretKey"
+          }
+        },
+        "required": ["secretKey"]
+      },
+      "ManagementWebhookEvent": {
+        "title": "ManagementWebhookEvent",
+        "type": "string",
+        "enum": [
+          "storageUpdated",
+          "userEntered",
+          "userLeft",
+          "roomCreated",
+          "roomDeleted",
+          "commentCreated",
+          "commentEdited",
+          "commentDeleted",
+          "commentReactionAdded",
+          "commentReactionRemoved",
+          "commentMetadataUpdated",
+          "threadMetadataUpdated",
+          "threadCreated",
+          "threadDeleted",
+          "ydocUpdated",
+          "notification",
+          "threadMarkedAsResolved",
+          "threadMarkedAsUnresolved"
+        ]
+      },
+      "ManagementWebhookSecret": {
+        "title": "ManagementWebhookSecret",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": ["value"]
+      },
+      "ManagementWebhook": {
+        "title": "ManagementWebhook",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "rateLimit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65534
+          },
+          "subscribedEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementWebhookEvent"
+            }
+          },
+          "secret": {
+            "$ref": "#/components/schemas/ManagementWebhookSecret",
+            "nullable": true
+          },
+          "additionalHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "storageUpdatedThrottleSeconds": {
+            "type": "number"
+          },
+          "yDocUpdatedThrottleSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "updatedAt",
+          "url",
+          "disabled",
+          "subscribedEvents",
+          "secret",
+          "storageUpdatedThrottleSeconds",
+          "yDocUpdatedThrottleSeconds"
+        ]
+      },
+      "CreateManagementWebhook": {
+        "title": "CreateManagementWebhook",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "subscribedEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementWebhookEvent"
+            }
+          },
+          "rateLimit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65534
+          },
+          "additionalHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "storageUpdatedThrottleSeconds": {
+            "type": "number"
+          },
+          "yDocUpdatedThrottleSeconds": {
+            "type": "number"
+          }
+        },
+        "required": ["url", "subscribedEvents"]
+      },
+      "UpdateManagementWebhook": {
+        "title": "UpdateManagementWebhook",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "subscribedEvents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementWebhookEvent"
+            }
+          },
+          "rateLimit": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65534
+          },
+          "storageUpdatedThrottleSeconds": {
+            "type": "number"
+          },
+          "yDocUpdatedThrottleSeconds": {
+            "type": "number"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ManagementWebhookHeadersPatch": {
+        "title": "ManagementWebhookHeadersPatch",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["headers"]
+      },
+      "ManagementWebhookHeadersDelete": {
+        "title": "ManagementWebhookHeadersDelete",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["headers"]
+      },
+      "ManagementWebhookHeadersResponse": {
+        "title": "ManagementWebhookHeadersResponse",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["headers"]
+      },
+      "ManagementWebhooksResponse": {
+        "title": "ManagementWebhooksResponse",
+        "type": "object",
+        "properties": {
+          "webhooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementWebhook"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ManagementWebhookResponse": {
+        "title": "ManagementWebhookResponse",
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "$ref": "#/components/schemas/ManagementWebhook"
+          }
+        },
+        "required": ["webhook"]
+      },
+      "ManagementWebhookSecretRotateResponse": {
+        "title": "ManagementWebhookSecretRotateResponse",
+        "type": "object",
+        "properties": {
+          "secret": {
+            "$ref": "#/components/schemas/ManagementWebhookSecret"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["secret", "message"]
+      },
+      "ManagementWebhookRecoverRequest": {
+        "title": "ManagementWebhookRecoverRequest",
+        "type": "object",
+        "properties": {
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["since"]
+      },
+      "ManagementWebhookTestRequest": {
+        "title": "ManagementWebhookTestRequest",
+        "type": "object",
+        "properties": {
+          "subscribedEvent": {
+            "$ref": "#/components/schemas/ManagementWebhookEvent"
+          }
+        },
+        "required": ["subscribedEvent"]
+      },
+      "ManagementWebhookTestResponse": {
+        "title": "ManagementWebhookTestResponse",
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "deliveredAt": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            },
+            "required": ["id"]
+          }
+        },
+        "required": ["message"]
       }
     },
     "securitySchemes": {
@@ -6923,6 +8545,38 @@
                   "message": "Missing secret key in authentication header",
                   "suggestion": "Please use a secret key, the secret key is available in the dashboard: https://liveblocks.io/dashboard/apikeys",
                   "docs": ""
+                }
+              },
+              "MISSING_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "MISSING_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Missing management api access token in authentication header",
+                  "suggestion": "Please provide a management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "INVALID_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "INVALID_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Invalid management api access token",
+                  "suggestion": "Please provide a valid management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "REVOKED_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "REVOKED_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Revoked management api access token",
+                  "suggestion": "Please provide an active management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "EXPIRED_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "EXPIRED_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Expired management api access token",
+                  "suggestion": "Please provide a not expired management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
                 }
               }
             }
@@ -6960,6 +8614,30 @@
                   "suggestion": "Please add the user’s ID or one of the user’s group IDs to the room first.",
                   "docs": ""
                 }
+              },
+              "INVALID_MANAGEMENT_API_ACCESS_TOKEN_SCOPE": {
+                "value": {
+                  "error": "INVALID_MANAGEMENT_API_ACCESS_TOKEN_SCOPE",
+                  "message": "Invalid management api access token scope",
+                  "suggestion": "Please provide a management api access token with required scope: 'read:all'.",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "FEATURE_NOT_ENABLED": {
+                "value": {
+                  "error": "FEATURE_NOT_ENABLED",
+                  "message": "The \"Management API\" feature is not enabled for this account.",
+                  "suggestion": "If you want access to this feature, please contact us at support@liveblocks.io",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "PUBLIC_KEY_NOT_ENABLED": {
+                "value": {
+                  "error": "PUBLIC_KEY_NOT_ENABLED",
+                  "message": "Public key not enabled",
+                  "suggestion": "Please enable the public key for the project",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
               }
             }
           }
@@ -6979,6 +8657,22 @@
                   "message": "Room not found.",
                   "suggestion": "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms.",
                   "docs": ""
+                }
+              },
+              "WEBHOOK_NOT_FOUND": {
+                "value": {
+                  "error": "WEBHOOK_NOT_FOUND",
+                  "message": "Webhook \"ep_xxx\" not found.",
+                  "suggestion": "Please use a valid webhook ID, webhook IDs are available in the dashboard: https://liveblocks.io/dashboard/webhooks",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+                }
+              },
+              "NOT_EXISTING_MANAGEMENT_API_ACCESS_TOKEN": {
+                "value": {
+                  "error": "NOT_EXISTING_MANAGEMENT_API_ACCESS_TOKEN",
+                  "message": "Not existing management api access token",
+                  "suggestion": "Please provide an existing management api access token in the authentication header",
+                  "docs": "https://liveblocks.io/docs/api-reference/rest-api-endpoints"
                 }
               }
             }
@@ -7204,6 +8898,9 @@
     },
     {
       "name": "AI"
+    },
+    {
+      "name": "Management"
     },
     {
       "name": "Deprecated"
