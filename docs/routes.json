@@ -641,6 +641,10 @@
         "path": "/platform/rest-api"
       },
       {
+        "title": "Management API",
+        "path": "/platform/management-api"
+      },
+      {
         "title": "Account management",
         "path": "/platform/account-management",
         "routes": [
