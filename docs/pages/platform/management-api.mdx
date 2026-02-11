@@ -68,8 +68,10 @@ You can select one or both scopes depending on your needs. Once you've
 configured your token name and scopes, click **Generate new token** to create
 it.
 
-<Banner title="Coming soon">
-  More granular scopes will be available in a future update.
+<Banner title="Upcoming">
+  More granular scopes will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
 </Banner>
 
 After generation, a dialog will appear displaying your new Management API token.
@@ -100,8 +102,10 @@ All Management API access tokens expire after one year from the date of
 generation. The expiration date is displayed when you generate a new token, and
 you can view it for existing tokens in the Management API tokens list.
 
-<Banner title="Coming soon">
-  Custom expiration dates will be available in a future update.
+<Banner title="Upcoming">
+  Custom expiration dates will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
 </Banner>
 
 When a token expires, you'll need to generate a new token to continue using the
@@ -169,18 +173,18 @@ jobs:
 
 ## Rate limiting
 
-The Management API enforces rate limits to ensure fair usage and system stability.
-By default, each Management API access token (MAAT) is limited to **1,000 requests per
-60 seconds**.
+The Management API enforces rate limits to ensure fair usage and system
+stability. By default, each Management API access token (MAAT) is limited to
+**1,000 requests per 60 seconds**.
 
-This limit applies cumulatively across all requests made with a single access token.
-If you exceed this limit, all API calls using that token will be blocked for the
-next minute, and the API will return a `429 Too Many Requests` HTTP status
-response.
+This limit applies cumulatively across all requests made with a single access
+token. If you exceed this limit, all API calls using that token will be blocked
+for the next minute, and the API will return a `429 Too Many Requests` HTTP
+status response.
 
-Rate limits are subject to our fair use policy. If you need higher rate limits for
-your use case, please contact [sales@liveblocks.io](mailto:sales@liveblocks.io) to
-discuss your requirements.
+Rate limits are subject to our fair use policy. If you need higher rate limits
+for your use case, please contact
+[sales@liveblocks.io](mailto:sales@liveblocks.io) to discuss your requirements.
 
 ## API reference
 
