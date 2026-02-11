@@ -251,6 +251,11 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => Boolean(comment.body));
     }, [showDeletedComments, thread.comments]);
+    const commentsCount = useMemo(() => {
+      return showDeletedComments
+        ? thread.comments.length
+        : thread.comments.filter((comment) => comment.body).length;
+    }, [showDeletedComments, thread.comments]);
     const hiddenComments = useMemo(() => {
       const maxVisibleCommentsCount =
         typeof maxVisibleComments === "number"
@@ -435,6 +440,8 @@ export const Thread = forwardRef(
       }
     }, [subscriptionStatus, subscribe, unsubscribe]);
 
+    let currentCommentIndex = 0;
+
     return (
       <TooltipProvider>
         <div
@@ -449,8 +456,9 @@ export const Thread = forwardRef(
           {...props}
           ref={forwardedRef}
         >
-          <div className="lb-thread-comments">
+          <div className="lb-thread-comments" role="feed">
             {thread.comments.map((comment, index) => {
+              const isNonDeletedComment = showDeletedComments || comment.body;
               const isFirstComment = index === firstCommentIndex;
               const isUnread =
                 unreadIndex !== undefined && index >= unreadIndex;
@@ -464,7 +472,7 @@ export const Thread = forwardRef(
               if (isFirstHiddenComment) {
                 return (
                   <div
-                    key={`${comment.id}-show-more`}
+                    key={`${comment.id}:show-more`}
                     className="lb-thread-show-more"
                   >
                     <Button
@@ -478,6 +486,10 @@ export const Thread = forwardRef(
                 );
               }
 
+              if (isNonDeletedComment) {
+                currentCommentIndex++;
+              }
+
               if (isHidden) {
                 return null;
               }
@@ -485,6 +497,9 @@ export const Thread = forwardRef(
               const children = (
                 <Comment
                   key={comment.id}
+                  tabIndex={0}
+                  aria-posinset={currentCommentIndex}
+                  aria-setsize={commentsCount}
                   overrides={overrides}
                   className="lb-thread-comment"
                   data-unread={isUnread ? "" : undefined}

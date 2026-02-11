@@ -1346,6 +1346,7 @@
   padding: var(--lb-spacing);
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
+  outline: none;
   font-weight: 400;
   scroll-margin: var(--lb-spacing);
 
@@ -1371,7 +1372,7 @@
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
 
-  &:where([data-editing]) {
+  &:where([data-editing], :focus-visible) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
