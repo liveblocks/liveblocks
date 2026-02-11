@@ -1171,6 +1171,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       >
         <Editable
           dir={dir}
+          tabIndex={isDisabled ? -1 : 0}
           enterKeyHint={mentionDraft ? "enter" : "send"}
           autoCapitalize="sentences"
           aria-label="Composer editor"

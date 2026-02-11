@@ -443,6 +443,7 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
       >
         <Editable
           dir={dir}
+          tabIndex={isDisabled ? -1 : 0}
           enterKeyHint="send"
           autoCapitalize="sentences"
           aria-label="Composer editor"
