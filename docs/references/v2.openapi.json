@@ -14,7 +14,9 @@
       "get": {
         "summary": "Get rooms",
         "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [
           {
             "schema": {
@@ -54,7 +56,9 @@
           {
             "schema": {
               "type": "string",
-              "examples": ["userId=user1"]
+              "examples": [
+                "userId=user1"
+              ]
             },
             "in": "query",
             "name": "userId",
@@ -63,7 +67,9 @@
           {
             "schema": {
               "type": "string",
-              "examples": ["groupsIds=group1,group2"]
+              "examples": [
+                "groupsIds=group1,group2"
+              ]
             },
             "in": "query",
             "name": "groupIds",
@@ -89,15 +95,25 @@
                           "lastConnectionAt": "2022-08-08T23:23:15.281Z",
                           "createdAt": "2022-08-08T23:23:15.281Z",
                           "metadata": {
-                            "name": ["My room"],
-                            "type": ["whiteboard"]
+                            "name": [
+                              "My room"
+                            ],
+                            "type": [
+                              "whiteboard"
+                            ]
                           },
-                          "defaultAccesses": ["room:write"],
+                          "defaultAccesses": [
+                            "room:write"
+                          ],
                           "groupsAccesses": {
-                            "product": ["room:write"]
+                            "product": [
+                              "room:write"
+                            ]
                           },
                           "usersAccesses": {
-                            "vinod": ["room:write"]
+                            "vinod": [
+                              "room:write"
+                            ]
                           }
                         }
                       ]
@@ -122,7 +138,9 @@
       "post": {
         "summary": "Create room",
         "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [],
         "responses": {
           "200": {
@@ -142,12 +160,18 @@
                       "metadata": {
                         "color": "blue"
                       },
-                      "defaultAccesses": ["room:write"],
+                      "defaultAccesses": [
+                        "room:write"
+                      ],
                       "groupsAccesses": {
-                        "product": ["room:write"]
+                        "product": [
+                          "room:write"
+                        ]
                       },
                       "usersAccesses": {
-                        "alice": ["room:write"]
+                        "alice": [
+                          "room:write"
+                        ]
                       }
                     }
                   }
@@ -179,15 +203,21 @@
                 "example": {
                   "value": {
                     "id": "my-room-3ebc26e2bf96",
-                    "defaultAccesses": ["room:write"],
+                    "defaultAccesses": [
+                      "room:write"
+                    ],
                     "metadata": {
                       "color": "blue"
                     },
                     "usersAccesses": {
-                      "alice": ["room:write"]
+                      "alice": [
+                        "room:write"
+                      ]
                     },
                     "groupsAccesses": {
-                      "product": ["room:write"]
+                      "product": [
+                        "room:write"
+                      ]
                     }
                   }
                 }
@@ -200,7 +230,9 @@
     "/rooms/{roomId}": {
       "get": {
         "summary": "Get room",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "operationId": "get-rooms-roomId",
         "parameters": [
           {
@@ -231,15 +263,26 @@
                       "metadata": {
                         "color": "blue",
                         "size": "10",
-                        "target": ["abc", "def"]
+                        "target": [
+                          "abc",
+                          "def"
+                        ]
                       },
-                      "defaultAccesses": ["room:write"],
+                      "defaultAccesses": [
+                        "room:write"
+                      ],
                       "groupsAccesses": {
-                        "marketing": ["room:write"]
+                        "marketing": [
+                          "room:write"
+                        ]
                       },
                       "usersAccesses": {
-                        "alice": ["room:write"],
-                        "vinod": ["room:write"]
+                        "alice": [
+                          "room:write"
+                        ],
+                        "vinod": [
+                          "room:write"
+                        ]
                       }
                     }
                   }
@@ -261,7 +304,9 @@
       },
       "post": {
         "summary": "Update room",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [
           {
             "schema": {
@@ -291,15 +336,26 @@
                       "metadata": {
                         "color": "blue",
                         "size": "10",
-                        "target": ["abc", "def"]
+                        "target": [
+                          "abc",
+                          "def"
+                        ]
                       },
-                      "defaultAccesses": ["room:write"],
+                      "defaultAccesses": [
+                        "room:write"
+                      ],
                       "groupsAccesses": {
-                        "marketing": ["room:write"]
+                        "marketing": [
+                          "room:write"
+                        ]
                       },
                       "usersAccesses": {
-                        "alice": ["room:write"],
-                        "vinod": ["room:write"]
+                        "alice": [
+                          "room:write"
+                        ],
+                        "vinod": [
+                          "room:write"
+                        ]
                       }
                     }
                   }
@@ -331,13 +387,21 @@
               "examples": {
                 "example": {
                   "value": {
-                    "defaultAccesses": ["room:write"],
+                    "defaultAccesses": [
+                      "room:write"
+                    ],
                     "usersAccesses": {
-                      "vinod": ["room:write"],
-                      "alice": ["room:write"]
+                      "vinod": [
+                        "room:write"
+                      ],
+                      "alice": [
+                        "room:write"
+                      ]
                     },
                     "groupsAccesses": {
-                      "marketing": ["room:write"]
+                      "marketing": [
+                        "room:write"
+                      ]
                     },
                     "metadata": {
                       "color": "blue"
@@ -363,7 +427,9 @@
       },
       "delete": {
         "summary": "Delete room",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "responses": {
           "204": {
             "description": "Success. The room was deleted"
@@ -471,7 +537,9 @@
     "/rooms/{roomId}/prewarm": {
       "get": {
         "summary": "Prewarm room",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "operationId": "get-rooms-roomId-prewarm",
         "parameters": [
           {
@@ -504,7 +572,9 @@
     "/rooms/{roomId}/upsert": {
       "post": {
         "summary": "Upsert (update or create) room",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [
           {
             "schema": {
@@ -534,15 +604,26 @@
                       "metadata": {
                         "color": "blue",
                         "size": "10",
-                        "target": ["abc", "def"]
+                        "target": [
+                          "abc",
+                          "def"
+                        ]
                       },
-                      "defaultAccesses": ["room:write"],
+                      "defaultAccesses": [
+                        "room:write"
+                      ],
                       "groupsAccesses": {
-                        "marketing": ["room:write"]
+                        "marketing": [
+                          "room:write"
+                        ]
                       },
                       "usersAccesses": {
-                        "alice": ["room:write"],
-                        "vinod": ["room:write"]
+                        "alice": [
+                          "room:write"
+                        ],
+                        "vinod": [
+                          "room:write"
+                        ]
                       }
                     }
                   }
@@ -573,18 +654,26 @@
                   "value": {
                     "update": {
                       "usersAccesses": {
-                        "vinod": ["room:write"],
-                        "alice": ["room:write"]
+                        "vinod": [
+                          "room:write"
+                        ],
+                        "alice": [
+                          "room:write"
+                        ]
                       },
                       "groupsAccesses": {
-                        "marketing": ["room:write"]
+                        "marketing": [
+                          "room:write"
+                        ]
                       },
                       "metadata": {
                         "color": "blue"
                       }
                     },
                     "create": {
-                      "defaultAccesses": ["room:write"]
+                      "defaultAccesses": [
+                        "room:write"
+                      ]
                     }
                   }
                 }
@@ -609,7 +698,9 @@
     "/rooms/{roomId}/update-room-id": {
       "post": {
         "summary": "Update room ID",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [
           {
             "schema": {
@@ -639,15 +730,26 @@
                       "metadata": {
                         "color": "blue",
                         "size": "10",
-                        "target": ["abc", "def"]
+                        "target": [
+                          "abc",
+                          "def"
+                        ]
                       },
-                      "defaultAccesses": ["room:write"],
+                      "defaultAccesses": [
+                        "room:write"
+                      ],
                       "groupsAccesses": {
-                        "marketing": ["room:write"]
+                        "marketing": [
+                          "room:write"
+                        ]
                       },
                       "usersAccesses": {
-                        "alice": ["room:write"],
-                        "vinod": ["room:write"]
+                        "alice": [
+                          "room:write"
+                        ],
+                        "vinod": [
+                          "room:write"
+                        ]
                       }
                     }
                   }
@@ -700,7 +802,9 @@
     "/rooms/{roomId}/active_users": {
       "get": {
         "summary": "Get active users",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "operationId": "get-rooms-roomId-active-users",
         "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
         "parameters": [
@@ -761,7 +865,9 @@
       "post": {
         "summary": "Broadcast event to a room",
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).",
-        "tags": ["Room"],
+        "tags": [
+          "Room"
+        ],
         "parameters": [
           {
             "schema": {
@@ -813,7 +919,9 @@
       "get": {
         "summary": "Get Storage document",
         "description": "Returns the contents of the room’s Storage tree.  Corresponds to [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "parameters": [
           {
             "schema": {
@@ -827,7 +935,10 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["plain-lson", "json"]
+              "enum": [
+                "plain-lson",
+                "json"
+              ]
             },
             "name": "format",
             "in": "query",
@@ -847,7 +958,10 @@
                       "type": "string"
                     },
                     "data": {
-                      "type": ["string", "object"]
+                      "type": [
+                        "string",
+                        "object"
+                      ]
                     }
                   }
                 },
@@ -864,7 +978,10 @@
                         },
                         "aLiveList": {
                           "liveblocksType": "LiveList",
-                          "data": ["a", "b"]
+                          "data": [
+                            "a",
+                            "b"
+                          ]
                         },
                         "aLiveMap": {
                           "liveblocksType": "LiveMap",
@@ -894,7 +1011,9 @@
       },
       "post": {
         "summary": "Initialize Storage document",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "operationId": "post-rooms-roomId-storage",
         "parameters": [
           {
@@ -919,7 +1038,10 @@
                       "type": "string"
                     },
                     "data": {
-                      "type": ["string", "object"]
+                      "type": [
+                        "string",
+                        "object"
+                      ]
                     }
                   }
                 },
@@ -936,7 +1058,10 @@
                         },
                         "aLiveList": {
                           "liveblocksType": "LiveList",
-                          "data": ["a", "b"]
+                          "data": [
+                            "a",
+                            "b"
+                          ]
                         },
                         "aLiveMap": {
                           "liveblocksType": "LiveMap",
@@ -1010,7 +1135,10 @@
                       },
                       "aLiveList": {
                         "liveblocksType": "LiveList",
-                        "data": ["a", "b"]
+                        "data": [
+                          "a",
+                          "b"
+                        ]
                       },
                       "aLiveMap": {
                         "liveblocksType": "LiveMap",
@@ -1029,7 +1157,9 @@
       },
       "delete": {
         "summary": "Delete Storage document",
-        "tags": ["Storage"],
+        "tags": [
+          "Storage"
+        ],
         "operationId": "delete-rooms-roomId-storage",
         "parameters": [
           {
@@ -1063,7 +1193,9 @@
       "get": {
         "summary": "Get Yjs document",
         "description": "This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "parameters": [
           {
             "name": "roomId",
@@ -1096,7 +1228,13 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"]
+              "enum": [
+                "ymap",
+                "ytext",
+                "yxmltext",
+                "yxmlfragment",
+                "yarray"
+              ]
             },
             "name": "type",
             "in": "query",
@@ -1136,7 +1274,9 @@
       },
       "put": {
         "summary": "Send a binary Yjs update",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "parameters": [
           {
             "schema": {
@@ -1164,6 +1304,13 @@
               "application/json": {
                 "schema": {
                   "status": 200
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "message": "Yjs document updated successfully"
+                    }
+                  }
                 }
               }
             }
@@ -1196,7 +1343,9 @@
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
         "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "parameters": [
           {
             "name": "roomId",
@@ -1246,7 +1395,9 @@
       "get": {
         "summary": "Get Yjs version history",
         "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "operationId": "get-rooms-roomId-versions",
         "parameters": [
           {
@@ -1328,7 +1479,9 @@
       "get": {
         "summary": "Get Yjs document version",
         "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "operationId": "get-rooms-roomId-version-versionId",
         "parameters": [
           {
@@ -1378,7 +1531,9 @@
       "post": {
         "summary": "Create Yjs version snapshot",
         "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
-        "tags": ["Yjs"],
+        "tags": [
+          "Yjs"
+        ],
         "operationId": "post-rooms-roomId-version",
         "parameters": [
           {
@@ -1427,7 +1582,9 @@
       "get": {
         "summary": "Get room threads",
         "description": "This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "roomId",
@@ -1513,7 +1670,9 @@
       "post": {
         "summary": "Create thread",
         "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "operationId": "post-rooms-roomId-threads",
         "parameters": [
           {
@@ -1609,7 +1768,9 @@
     "/rooms/{roomId}/threads/{threadId}": {
       "get": {
         "summary": "Get thread",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
         "operationId": "get-rooms-roomId-threads-threadId",
         "parameters": [
@@ -1684,7 +1845,9 @@
       },
       "delete": {
         "summary": "Delete thread",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
         "operationId": "delete-rooms-roomId-threads-threadId",
         "parameters": [
@@ -1727,7 +1890,9 @@
       "get": {
         "summary": "Get thread participants",
         "x-badge": "Deprecated",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "operationId": "get-rooms-roomId-threads-threadId-participants",
         "parameters": [
@@ -1769,7 +1934,10 @@
                 "examples": {
                   "Success": {
                     "value": {
-                      "participantIds": ["user-1", "user-2"]
+                      "participantIds": [
+                        "user-1",
+                        "user-2"
+                      ]
                     }
                   }
                 }
@@ -1791,7 +1959,9 @@
     "/rooms/{roomId}/threads/{threadId}/metadata": {
       "post": {
         "summary": "Edit thread metadata",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
         "operationId": "post-rooms-roomId-threads-threadId-metadata",
         "parameters": [
@@ -1864,7 +2034,9 @@
     "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
       "post": {
         "summary": "Mark thread as resolved",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint marks a thread as resolved.",
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
         "parameters": [
@@ -1894,6 +2066,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "thread",
+                      "id": "th_sf8s6sh6sddABC",
+                      "roomId": "my-room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "th_sf8s6sh6sddABC",
+                          "roomId": "my-room-id",
+                          "id": "cm_s83smf8sDEF",
+                          "userId": "alice",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "body": {
+                            "version": 1,
+                            "content": [
+                              {
+                                "type": "paragraph",
+                                "children": [
+                                  {
+                                    "text": "Hello!"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "metadata": {},
+                          "reactions": [],
+                          "attachments": []
+                        }
+                      ],
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "metadata": {},
+                      "resolved": true
+                    }
+                  }
                 }
               }
             }
@@ -1910,7 +2121,9 @@
     "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
       "post": {
         "summary": "Mark thread as unresolved",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint marks a thread as unresolved.",
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
         "parameters": [
@@ -1940,6 +2153,45 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Thread"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "thread",
+                      "id": "th_sf8s6sh6sddABC",
+                      "roomId": "my-room-id",
+                      "comments": [
+                        {
+                          "type": "comment",
+                          "threadId": "th_sf8s6sh6sddABC",
+                          "roomId": "my-room-id",
+                          "id": "cm_s83smf8sDEF",
+                          "userId": "alice",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "body": {
+                            "version": 1,
+                            "content": [
+                              {
+                                "type": "paragraph",
+                                "children": [
+                                  {
+                                    "text": "Hello!"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "metadata": {},
+                          "reactions": [],
+                          "attachments": []
+                        }
+                      ],
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "metadata": {},
+                      "resolved": false
+                    }
+                  }
                 }
               }
             }
@@ -1956,7 +2208,9 @@
     "/rooms/{roomId}/threads/{threadId}/subscribe": {
       "post": {
         "summary": "Subscribe to thread",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
         "operationId": "post-rooms-roomId-threads-threadId-subscribe",
         "parameters": [
@@ -1985,10 +2239,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["userId"],
+                "required": [
+                  "userId"
+                ],
                 "properties": {
                   "userId": {
                     "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice"
                   }
                 }
               }
@@ -2002,6 +2265,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Subscription"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "kind": "thread",
+                      "subjectId": "th_sf8s6sh6sddABC",
+                      "userId": "alice",
+                      "createdAt": "2024-01-01T00:00:00.000Z"
+                    }
+                  }
                 }
               }
             }
@@ -2036,7 +2309,9 @@
     "/rooms/{roomId}/threads/{threadId}/unsubscribe": {
       "post": {
         "summary": "Unsubscribe from thread",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
         "operationId": "post-rooms-roomId-threads-threadId-unsubscribe",
         "parameters": [
@@ -2065,10 +2340,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["userId"],
+                "required": [
+                  "userId"
+                ],
                 "properties": {
                   "userId": {
                     "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice"
                   }
                 }
               }
@@ -2083,6 +2367,16 @@
                 "schema": {
                   "type": "object",
                   "properties": {}
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "kind": "thread",
+                      "subjectId": "th_sf8s6sh6sddABC",
+                      "userId": "alice",
+                      "createdAt": "2024-01-01T00:00:00.000Z"
+                    }
+                  }
                 }
               }
             }
@@ -2117,7 +2411,9 @@
     "/rooms/{roomId}/threads/{threadId}/subscriptions": {
       "get": {
         "summary": "Get thread subscriptions",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
         "operationId": "get-rooms-roomId-threads-threadId-subscriptions",
         "parameters": [
@@ -2155,6 +2451,24 @@
                       }
                     }
                   }
+                },
+                "examples": {
+                  "example": {
+                    "value": [
+                      {
+                        "kind": "thread",
+                        "subjectId": "th_sf8s6sh6sddABC",
+                        "userId": "alice",
+                        "createdAt": "2024-01-01T00:00:00.000Z"
+                      },
+                      {
+                        "kind": "thread",
+                        "subjectId": "th_sf8s6sh6sddABC",
+                        "userId": "bob",
+                        "createdAt": "2024-01-02T00:00:00.000Z"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -2191,7 +2505,9 @@
       "post": {
         "summary": "Create comment",
         "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "operationId": "post-rooms-roomId-threads-threadId-comments",
         "parameters": [
           {
@@ -2283,7 +2599,9 @@
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
       "get": {
         "summary": "Get comment",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
         "operationId": "get-rooms-roomId-threads-threadId-comments-commentId",
         "parameters": [
@@ -2358,7 +2676,9 @@
       "post": {
         "summary": "Edit comment",
         "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId",
         "parameters": [
           {
@@ -2452,7 +2772,9 @@
       },
       "delete": {
         "summary": "Delete comment",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "parameters": [
           {
             "name": "roomId",
@@ -2504,7 +2826,9 @@
       "post": {
         "summary": "Add comment reaction",
         "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-add-reaction",
         "parameters": [
           {
@@ -2592,7 +2916,9 @@
       "post": {
         "summary": "Remove comment reaction",
         "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
         "parameters": [
           {
@@ -2660,7 +2986,9 @@
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/metadata": {
       "post": {
         "summary": "Edit comment metadata",
-        "tags": ["Comments"],
+        "tags": [
+          "Comments"
+        ],
         "description": "This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).",
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-metadata",
         "parameters": [
@@ -2744,7 +3072,9 @@
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "operationId": "post-authorize-user",
         "responses": {
           "200": {
@@ -2784,9 +3114,15 @@
                     },
                     "tenantId": "acme-corp",
                     "permissions": {
-                      "my-room-1": ["room:write"],
-                      "my-room-2": ["room:write"],
-                      "my-room-*": ["room:read"]
+                      "my-room-1": [
+                        "room:write"
+                      ],
+                      "my-room-2": [
+                        "room:write"
+                      ],
+                      "my-room-*": [
+                        "room:read"
+                      ]
                     }
                   }
                 }
@@ -2800,7 +3136,9 @@
     "/identify-user": {
       "post": {
         "summary": "Get ID token with secret key",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "operationId": "post-identify-user",
         "responses": {
           "200": {
@@ -2835,7 +3173,10 @@
                   "value": {
                     "userId": "user-123",
                     "tenantId": "acme-corp",
-                    "groupIds": ["marketing", "engineering"],
+                    "groupIds": [
+                      "marketing",
+                      "engineering"
+                    ],
                     "userInfo": {
                       "name": "bob",
                       "avatar": "https://example.org/images/user123.jpg"
@@ -2854,7 +3195,9 @@
         "summary": "Get single-room token with secret key",
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "parameters": [
           {
             "schema": {
@@ -2908,10 +3251,16 @@
                 "example": {
                   "value": {
                     "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
-                    "groupIds": ["g1", "g2"],
+                    "groupIds": [
+                      "g1",
+                      "g2"
+                    ],
                     "userInfo": {
                       "name": "bob",
-                      "colors": ["blue", "red"]
+                      "colors": [
+                        "blue",
+                        "red"
+                      ]
                     }
                   }
                 }
@@ -2925,7 +3274,9 @@
       "post": {
         "summary": "Get single-room token with public key",
         "x-badge": "Deprecated",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "operationId": "post-public-authorize",
         "parameters": [
           {
@@ -3006,7 +3357,9 @@
       ],
       "get": {
         "summary": "Get inbox notification",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "userId",
@@ -3043,6 +3396,18 @@
                       "$ref": "#/components/schemas/InboxNotificationCustomData"
                     }
                   ]
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "id": "in_sf8s6sh6sddABC",
+                      "kind": "thread",
+                      "threadId": "th_sf8s6sh6sddABC",
+                      "roomId": "my-room-id",
+                      "notifiedAt": "2024-01-01T00:00:00.000Z",
+                      "readAt": null
+                    }
+                  }
                 }
               }
             }
@@ -3060,7 +3425,9 @@
       },
       "delete": {
         "summary": "Delete inbox notification",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "userId",
@@ -3112,7 +3479,9 @@
       ],
       "delete": {
         "summary": "Delete all inbox notifications",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "userId",
@@ -3143,7 +3512,9 @@
       },
       "get": {
         "summary": "Get all inbox notifications",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "parameters": [
           {
             "name": "userId",
@@ -3209,6 +3580,34 @@
                       }
                     ]
                   }
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": null,
+                      "data": [
+                        {
+                          "id": "in_sf8s6sh6sddABC",
+                          "kind": "thread",
+                          "threadId": "th_sf8s6sh6sddABC",
+                          "roomId": "my-room-id",
+                          "notifiedAt": "2024-01-01T00:00:00.000Z",
+                          "readAt": null
+                        },
+                        {
+                          "id": "in_x72hdj2jskDEF",
+                          "kind": "$fileUploaded",
+                          "subjectId": "file123",
+                          "roomId": "my-room-id",
+                          "notifiedAt": "2024-01-02T00:00:00.000Z",
+                          "readAt": "2024-01-02T12:00:00.000Z",
+                          "activityData": {
+                            "url": "https://example.com/file"
+                          }
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -3235,7 +3634,9 @@
       ],
       "get": {
         "summary": "Get notification settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "get-users-userId-notification-settings",
         "description": "This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).",
         "parameters": [
@@ -3296,7 +3697,9 @@
       },
       "post": {
         "summary": "Update notification settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "post-users-userId-notification-settings",
         "description": "This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).",
         "parameters": [
@@ -3385,7 +3788,9 @@
       },
       "delete": {
         "summary": "Delete notification settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "delete-users-userId-notification-settings",
         "description": "This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).",
         "parameters": [
@@ -3433,7 +3838,9 @@
       ],
       "get": {
         "summary": "Get room subscription settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "get-rooms-roomId-users-userId-subscription-settings",
         "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
@@ -3463,6 +3870,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "threads": "all",
+                      "textMentions": "mine"
+                    }
+                  }
                 }
               }
             }
@@ -3480,7 +3895,9 @@
       },
       "post": {
         "summary": "Update room subscription settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "post-rooms-roomId-users-userId-subscription-settings",
         "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
@@ -3510,6 +3927,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "threads": "replies_and_mentions",
+                      "textMentions": "mine"
+                    }
+                  }
                 }
               }
             }
@@ -3532,6 +3957,14 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RoomSubscriptionSettings"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "threads": "replies_and_mentions",
+                    "textMentions": "mine"
+                  }
+                }
               }
             }
           }
@@ -3539,7 +3972,9 @@
       },
       "delete": {
         "summary": "Delete room subscription settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "delete-rooms-roomId-users-userId-subscription-settings",
         "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
@@ -3591,7 +4026,9 @@
       ],
       "get": {
         "summary": "Get user room subscription settings",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "get-users-userId-subscription-settings",
         "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
         "parameters": [
@@ -3647,6 +4084,24 @@
                       }
                     }
                   }
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "data": [
+                        {
+                          "threads": "all",
+                          "textMentions": "mine",
+                          "roomId": "my-room-id"
+                        },
+                        {
+                          "threads": "none",
+                          "textMentions": "none",
+                          "roomId": "another-room-id"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -3685,7 +4140,9 @@
       "get": {
         "summary": "Get room notification settings",
         "operationId": "get-rooms-roomId-users-userId-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -3715,6 +4172,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "threads": "all",
+                      "textMentions": "mine"
+                    }
+                  }
                 }
               }
             }
@@ -3733,7 +4198,9 @@
       "post": {
         "summary": "Update room notification settings",
         "operationId": "post-rooms-roomId-users-userId-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](post-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -3763,6 +4230,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "threads": "replies_and_mentions",
+                      "textMentions": "mine"
+                    }
+                  }
                 }
               }
             }
@@ -3785,6 +4260,14 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RoomSubscriptionSettings"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "threads": "replies_and_mentions",
+                    "textMentions": "mine"
+                  }
+                }
               }
             }
           }
@@ -3793,7 +4276,9 @@
       "delete": {
         "summary": "Delete room notification settings",
         "operationId": "delete-rooms-roomId-users-userId-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": [
+          "Deprecated"
+        ],
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -3836,7 +4321,9 @@
       "parameters": [],
       "post": {
         "summary": "Trigger inbox notification",
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "operationId": "post-inbox-notifications-trigger",
         "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
         "responses": {
@@ -3861,6 +4348,18 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TriggerInboxNotification"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "alice",
+                    "kind": "$fileUploaded",
+                    "subjectId": "file123",
+                    "activityData": {
+                      "url": "https://example.com/file"
+                    }
+                  }
+                }
               }
             }
           }
@@ -3871,13 +4370,30 @@
       "post": {
         "summary": "Create group",
         "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "post-groups",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateGroup"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "groupId": "engineering",
+                    "memberIds": [
+                      "alice",
+                      "bob"
+                    ],
+                    "tenantId": "my-tenant",
+                    "scopes": {
+                      "mention": true
+                    }
+                  }
+                }
               }
             }
           }
@@ -3889,6 +4405,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "group",
+                      "id": "engineering",
+                      "tenantId": "my-tenant",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "scopes": {
+                        "mention": true
+                      },
+                      "members": [
+                        {
+                          "id": "alice",
+                          "addedAt": "2024-01-01T00:00:00.000Z"
+                        },
+                        {
+                          "id": "bob",
+                          "addedAt": "2024-01-02T00:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -3910,7 +4450,9 @@
       "get": {
         "summary": "Get groups",
         "description": "This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "get-groups",
         "parameters": [
           {
@@ -3940,6 +4482,35 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetGroups"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": "W1siaWQiLCJ...",
+                      "data": [
+                        {
+                          "type": "group",
+                          "id": "engineering",
+                          "tenantId": "my-tenant",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "scopes": {
+                            "mention": true
+                          },
+                          "members": [
+                            {
+                              "id": "alice",
+                              "addedAt": "2024-01-01T00:00:00.000Z"
+                            },
+                            {
+                              "id": "bob",
+                              "addedAt": "2024-01-02T00:00:00.000Z"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -3957,7 +4528,9 @@
       "get": {
         "summary": "Get group",
         "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-reference/liveblocks-node#get-group).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "get-groups-groupId",
         "parameters": [
           {
@@ -3977,6 +4550,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "group",
+                      "id": "engineering",
+                      "tenantId": "my-tenant",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "scopes": {
+                        "mention": true
+                      },
+                      "members": [
+                        {
+                          "id": "alice",
+                          "addedAt": "2024-01-01T00:00:00.000Z"
+                        },
+                        {
+                          "id": "bob",
+                          "addedAt": "2024-01-02T00:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -3995,7 +4592,9 @@
       "delete": {
         "summary": "Delete group",
         "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-reference/liveblocks-node#delete-group).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "delete-groups-groupId",
         "parameters": [
           {
@@ -4028,7 +4627,9 @@
       "post": {
         "summary": "Add group members",
         "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "post-groups-groupId-add-members",
         "parameters": [
           {
@@ -4046,6 +4647,15 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AddGroupMembers"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "memberIds": [
+                      "charlie"
+                    ]
+                  }
+                }
               }
             }
           }
@@ -4057,6 +4667,34 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "group",
+                      "id": "engineering",
+                      "tenantId": "my-tenant",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "scopes": {
+                        "mention": true
+                      },
+                      "members": [
+                        {
+                          "id": "alice",
+                          "addedAt": "2024-01-01T00:00:00.000Z"
+                        },
+                        {
+                          "id": "bob",
+                          "addedAt": "2024-01-02T00:00:00.000Z"
+                        },
+                        {
+                          "id": "charlie",
+                          "addedAt": "2024-01-03T00:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4080,7 +4718,9 @@
       "post": {
         "summary": "Remove group members",
         "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "post-groups-groupId-remove-members",
         "parameters": [
           {
@@ -4098,6 +4738,15 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RemoveGroupMembers"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "memberIds": [
+                      "bob"
+                    ]
+                  }
+                }
               }
             }
           }
@@ -4109,6 +4758,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Group"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "group",
+                      "id": "engineering",
+                      "tenantId": "my-tenant",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "scopes": {
+                        "mention": true
+                      },
+                      "members": [
+                        {
+                          "id": "alice",
+                          "addedAt": "2024-01-01T00:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4132,7 +4801,9 @@
       "get": {
         "summary": "Get user groups",
         "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).",
-        "tags": ["Groups"],
+        "tags": [
+          "Groups"
+        ],
         "operationId": "get-users-userId-groups",
         "parameters": [
           {
@@ -4171,6 +4842,35 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetUserGroups"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": null,
+                      "data": [
+                        {
+                          "type": "group",
+                          "id": "engineering",
+                          "tenantId": "my-tenant",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "scopes": {
+                            "mention": true
+                          },
+                          "members": [
+                            {
+                              "id": "alice",
+                              "addedAt": "2024-01-01T00:00:00.000Z"
+                            },
+                            {
+                              "id": "bob",
+                              "addedAt": "2024-01-02T00:00:00.000Z"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4191,7 +4891,9 @@
       "get": {
         "summary": "Get AI copilots",
         "description": "This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-reference/liveblocks-node#get-ai-copilots).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4220,6 +4922,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetAiCopilots"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": null,
+                      "data": [
+                        {
+                          "type": "copilot",
+                          "id": "cp_abc123",
+                          "name": "My Copilot",
+                          "description": "A helpful AI assistant",
+                          "systemPrompt": "You are a helpful assistant.",
+                          "provider": "openai",
+                          "providerModel": "gpt-4o",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "settings": {
+                            "temperature": 0.7,
+                            "maxTokens": 4096
+                          }
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4236,7 +4962,9 @@
       "post": {
         "summary": "Create AI copilot",
         "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "responses": {
           "201": {
             "description": "Created. Returns the created AI copilot.",
@@ -4244,6 +4972,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AiCopilot"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "copilot",
+                      "id": "cp_abc123",
+                      "name": "My Copilot",
+                      "description": "A helpful AI assistant",
+                      "systemPrompt": "You are a helpful assistant.",
+                      "provider": "openai",
+                      "providerModel": "gpt-4o",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "settings": {
+                        "temperature": 0.7,
+                        "maxTokens": 4096
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4264,6 +5011,17 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateAiCopilot"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "My Copilot",
+                    "systemPrompt": "You are a helpful assistant.",
+                    "provider": "openai",
+                    "providerApiKey": "sk-...",
+                    "providerModel": "gpt-4o"
+                  }
+                }
               }
             }
           }
@@ -4274,7 +5032,9 @@
       "get": {
         "summary": "Get AI copilot",
         "description": "This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-reference/liveblocks-node#get-ai-copilot).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4293,6 +5053,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AiCopilot"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "copilot",
+                      "id": "cp_abc123",
+                      "name": "My Copilot",
+                      "description": "A helpful AI assistant",
+                      "systemPrompt": "You are a helpful assistant.",
+                      "provider": "openai",
+                      "providerModel": "gpt-4o",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "settings": {
+                        "temperature": 0.7,
+                        "maxTokens": 4096
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4312,7 +5091,9 @@
       "post": {
         "summary": "Update AI copilot",
         "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4331,6 +5112,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AiCopilot"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "copilot",
+                      "id": "cp_abc123",
+                      "name": "Updated Copilot",
+                      "description": "A helpful AI assistant",
+                      "systemPrompt": "You are an updated helpful assistant.",
+                      "provider": "openai",
+                      "providerModel": "gpt-4o-mini",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "settings": {
+                        "temperature": 0.7,
+                        "maxTokens": 4096
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4354,6 +5154,15 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateAiCopilot"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "name": "Updated Copilot",
+                    "systemPrompt": "You are an updated helpful assistant.",
+                    "providerModel": "gpt-4o-mini"
+                  }
+                }
               }
             }
           }
@@ -4362,7 +5171,9 @@
       "delete": {
         "summary": "Delete AI copilot",
         "description": "This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-node#delete-ai-copilot).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4395,7 +5206,9 @@
       "get": {
         "summary": "Get knowledge sources",
         "description": "This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4433,6 +5246,39 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetKnowledgeSources"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": null,
+                      "data": [
+                        {
+                          "type": "ai-knowledge-web-source",
+                          "id": "ks_abc123",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                          "status": "ready",
+                          "link": {
+                            "url": "https://example.com/docs",
+                            "type": "crawl"
+                          }
+                        },
+                        {
+                          "type": "ai-knowledge-file-source",
+                          "id": "ks_def456",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                          "status": "ready",
+                          "file": {
+                            "name": "knowledge-base.pdf",
+                            "mimeType": "application/pdf"
+                          }
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4454,7 +5300,9 @@
       "get": {
         "summary": "Get knowledge source",
         "description": "This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4482,6 +5330,22 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/KnowledgeSource"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "ai-knowledge-web-source",
+                      "id": "ks_abc123",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                      "status": "ready",
+                      "link": {
+                        "url": "https://example.com/docs",
+                        "type": "crawl"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4503,7 +5367,9 @@
       "post": {
         "summary": "Create web knowledge source",
         "description": "This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-reference/liveblocks-node#create-web-knowledge-source).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4527,6 +5393,22 @@
                       "type": "string"
                     }
                   }
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "ai-knowledge-web-source",
+                      "id": "ks_abc123",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                      "status": "ready",
+                      "link": {
+                        "url": "https://example.com/docs",
+                        "type": "crawl"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4547,6 +5429,14 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateWebKnowledgeSource"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "url": "https://example.com/docs",
+                    "type": "crawl"
+                  }
+                }
               }
             }
           }
@@ -4557,7 +5447,9 @@
       "put": {
         "summary": "Create file knowledge source",
         "description": "This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-source).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4588,6 +5480,22 @@
                   "properties": {
                     "id": {
                       "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "ai-knowledge-file-source",
+                      "id": "ks_def456",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                      "status": "ready",
+                      "file": {
+                        "name": "knowledge-base.pdf",
+                        "mimeType": "application/pdf"
+                      }
                     }
                   }
                 }
@@ -4621,7 +5529,9 @@
       "get": {
         "summary": "Get file knowledge source content",
         "description": "This endpoint returns the content of a file knowledge source as Markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4657,6 +5567,22 @@
                       "type": "string"
                     }
                   }
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "ai-knowledge-file-source",
+                      "id": "ks_def456",
+                      "createdAt": "2024-01-01T00:00:00.000Z",
+                      "updatedAt": "2024-01-01T00:00:00.000Z",
+                      "lastIndexedAt": "2024-01-01T00:00:00.000Z",
+                      "status": "ready",
+                      "file": {
+                        "name": "knowledge-base.pdf",
+                        "mimeType": "application/pdf"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -4676,7 +5602,9 @@
       "delete": {
         "summary": "Delete file knowledge source",
         "description": "This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4718,7 +5646,9 @@
       "delete": {
         "summary": "Delete web knowledge source",
         "description": "This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4760,7 +5690,9 @@
       "get": {
         "summary": "Get web knowledge source links",
         "description": "This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).",
-        "tags": ["AI"],
+        "tags": [
+          "AI"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4807,6 +5739,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetWebKnowledgeSourceLinks"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "nextCursor": null,
+                      "data": [
+                        {
+                          "id": "lnk_abc123",
+                          "url": "https://example.com/docs/getting-started",
+                          "status": "ready",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "lastIndexedAt": "2024-01-01T00:00:00.000Z"
+                        },
+                        {
+                          "id": "lnk_def456",
+                          "url": "https://example.com/docs/api-reference",
+                          "status": "ready",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "lastIndexedAt": "2024-01-01T00:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -4829,7 +5784,9 @@
         "summary": "List projects",
         "x-badge": "Beta",
         "description": "Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "schema": {
@@ -4906,7 +5863,9 @@
         "summary": "Create project",
         "x-badge": "Beta",
         "description": "Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the created project.",
@@ -4979,7 +5938,9 @@
         "summary": "Get project",
         "x-badge": "Beta",
         "description": "Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -4998,6 +5959,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementProjectResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "project": {
+                        "id": "proj_abc123",
+                        "teamId": "team_abc123",
+                        "type": "dev",
+                        "name": "My Project",
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "updatedAt": "2024-01-01T00:00:00.000Z",
+                        "publicKey": {
+                          "activated": true,
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "value": "pk_test_abc123"
+                        },
+                        "secretKey": {
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "value": "sk_test_abc123"
+                        },
+                        "region": "earth",
+                        "versionCreationTimeout": 120
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5021,7 +6007,9 @@
         "summary": "Update project",
         "x-badge": "Beta",
         "description": "Updates an existing project specified by its ID. This endpoint allows you to modify project details such as the project name and the version creation timeout. The `versionCreationTimeout` can be set to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from the request body will not be updated. Requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5040,6 +6028,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementProjectResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "project": {
+                        "id": "proj_abc123",
+                        "teamId": "team_abc123",
+                        "type": "dev",
+                        "name": "Updated Project",
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "updatedAt": "2024-01-01T00:00:00.000Z",
+                        "publicKey": {
+                          "activated": true,
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "value": "pk_test_abc123"
+                        },
+                        "secretKey": {
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "value": "sk_test_abc123"
+                        },
+                        "region": "earth",
+                        "versionCreationTimeout": 120
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5080,7 +6093,9 @@
         "summary": "Delete project",
         "x-badge": "Beta",
         "description": "Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5114,7 +6129,9 @@
         "summary": "Activate public key",
         "x-badge": "Beta",
         "description": "Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5148,7 +6165,9 @@
         "summary": "Deactivate public key",
         "x-badge": "Beta",
         "description": "Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5182,7 +6201,9 @@
         "summary": "Roll public key",
         "x-badge": "Beta",
         "description": "Rolls (rotates) the public API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the public key is not currently enabled for the project, a 403 error response is returned. If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5201,6 +6222,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementProjectPublicKeyResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "publicKey": {
+                        "activated": true,
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "value": "pk_test_new_abc123"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5243,7 +6275,9 @@
         "summary": "Roll secret key",
         "x-badge": "Beta",
         "description": "Rolls (rotates) the secret API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.\n\nIf the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5262,6 +6296,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementProjectSecretKeyResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "secretKey": {
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "value": "sk_test_new_abc123"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5304,7 +6348,9 @@
         "summary": "List webhooks",
         "x-badge": "Beta",
         "description": "Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The response includes an array of webhook objects associated with the specified project, as well as a `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter from the `nextCursor` value in the previous response to fetch subsequent pages. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5342,6 +6388,32 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhooksResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "webhooks": [
+                        {
+                          "id": "wh_abc123",
+                          "createdAt": "2024-01-01T00:00:00.000Z",
+                          "updatedAt": "2024-01-01T00:00:00.000Z",
+                          "url": "https://example.com/webhooks",
+                          "disabled": false,
+                          "subscribedEvents": [
+                            "storageUpdated",
+                            "userEntered",
+                            "userLeft"
+                          ],
+                          "secret": {
+                            "value": "whsec_abc123"
+                          },
+                          "storageUpdatedThrottleSeconds": 0,
+                          "yDocUpdatedThrottleSeconds": 0
+                        }
+                      ],
+                      "nextCursor": null
+                    }
+                  }
                 }
               }
             }
@@ -5365,7 +6437,9 @@
         "summary": "Create webhook",
         "x-badge": "Beta",
         "description": "Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5384,6 +6458,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "webhook": {
+                        "id": "wh_abc123",
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "updatedAt": "2024-01-01T00:00:00.000Z",
+                        "url": "https://example.com/webhooks",
+                        "disabled": false,
+                        "subscribedEvents": [
+                          "storageUpdated",
+                          "userEntered",
+                          "userLeft"
+                        ],
+                        "secret": {
+                          "value": "whsec_abc123"
+                        },
+                        "storageUpdatedThrottleSeconds": 0,
+                        "yDocUpdatedThrottleSeconds": 0
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5412,7 +6509,10 @@
                 "example": {
                   "value": {
                     "url": "https://example.com/webhooks",
-                    "subscribedEvents": ["storageUpdated", "userEntered"],
+                    "subscribedEvents": [
+                      "storageUpdated",
+                      "userEntered"
+                    ],
                     "rateLimit": 100,
                     "additionalHeaders": {
                       "LB-X-FOO": "bar"
@@ -5432,7 +6532,9 @@
         "summary": "Get webhook",
         "x-badge": "Beta",
         "description": "Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook does not exist. This endpoint requires the `read:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5460,6 +6562,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "webhook": {
+                        "id": "wh_abc123",
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "updatedAt": "2024-01-01T00:00:00.000Z",
+                        "url": "https://example.com/webhooks",
+                        "disabled": false,
+                        "subscribedEvents": [
+                          "storageUpdated",
+                          "userEntered",
+                          "userLeft"
+                        ],
+                        "secret": {
+                          "value": "whsec_abc123"
+                        },
+                        "storageUpdatedThrottleSeconds": 0,
+                        "yDocUpdatedThrottleSeconds": 0
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5480,7 +6605,9 @@
         "summary": "Update webhook",
         "x-badge": "Beta",
         "description": "Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation errors. This endpoint requires the `write:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5508,6 +6635,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "webhook": {
+                        "id": "wh_abc123",
+                        "createdAt": "2024-01-01T00:00:00.000Z",
+                        "updatedAt": "2024-01-01T00:00:00.000Z",
+                        "url": "https://example.com/webhooks/v2",
+                        "disabled": false,
+                        "subscribedEvents": [
+                          "storageUpdated",
+                          "userEntered",
+                          "userLeft"
+                        ],
+                        "secret": {
+                          "value": "whsec_abc123"
+                        },
+                        "storageUpdatedThrottleSeconds": 0,
+                        "yDocUpdatedThrottleSeconds": 0
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5536,7 +6686,10 @@
                 "example": {
                   "value": {
                     "url": "https://example.com/webhooks",
-                    "subscribedEvents": ["storageUpdated", "userEntered"],
+                    "subscribedEvents": [
+                      "storageUpdated",
+                      "userEntered"
+                    ],
                     "rateLimit": 100,
                     "storageUpdatedThrottleSeconds": 10,
                     "yDocUpdatedThrottleSeconds": 10,
@@ -5552,7 +6705,9 @@
         "summary": "Delete webhook",
         "x-badge": "Beta",
         "description": "Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or `404` if the project or webhook does not exist. Requires `write:all`.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5595,7 +6750,9 @@
         "summary": "Roll webhook secret",
         "x-badge": "Beta",
         "description": "Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24 hours. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5623,6 +6780,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookSecretRotateResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "secret": {
+                        "value": "whsec_new_abc123"
+                      },
+                      "message": "Secret rotated successfully"
+                    }
+                  }
                 }
               }
             }
@@ -5645,7 +6812,9 @@
         "summary": "Patch webhook headers",
         "x-badge": "Beta",
         "description": "Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5673,6 +6842,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "headers": {
+                        "X-Custom-Header": "custom-value",
+                        "Authorization": "Bearer token123"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5714,7 +6893,9 @@
         "summary": "Get webhook headers",
         "x-badge": "Beta",
         "description": "Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires `read:all`.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5742,6 +6923,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "headers": {
+                        "X-Custom-Header": "custom-value",
+                        "Authorization": "Bearer token123"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5764,7 +6955,9 @@
         "summary": "Delete webhook headers",
         "x-badge": "Beta",
         "description": "Remove selected additional headers from a webhook. Send header names in `headers` field; other headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise, a 422 error response is returned.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5792,6 +6985,13 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "headers": {}
+                    }
+                  }
                 }
               }
             }
@@ -5819,7 +7019,10 @@
               "examples": {
                 "example": {
                   "value": {
-                    "headers": ["X-Custom-Header", "X-Another-Header"]
+                    "headers": [
+                      "X-Custom-Header",
+                      "X-Another-Header"
+                    ]
                   }
                 }
               }
@@ -5833,7 +7036,9 @@
         "summary": "Recover failed webhook messages",
         "x-badge": "Beta",
         "description": "Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5895,7 +7100,9 @@
         "summary": "Send test webhook",
         "x-badge": "Beta",
         "description": "Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.",
-        "tags": ["Management"],
+        "tags": [
+          "Management"
+        ],
         "parameters": [
           {
             "name": "projectId",
@@ -5923,6 +7130,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ManagementWebhookTestResponse"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "message": {
+                        "id": "msg_abc123",
+                        "deliveredAt": "2024-01-01T00:00:00.000Z"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5971,7 +7188,9 @@
           },
           "type": {
             "type": "string",
-            "enum": ["room"]
+            "enum": [
+              "room"
+            ]
           },
           "lastConnectionAt": {
             "type": "string",
@@ -5988,7 +7207,10 @@
             }
           },
           "defaultAccesses": {
-            "type": ["string", "array"],
+            "type": [
+              "string",
+              "array"
+            ],
             "uniqueItems": true,
             "items": {}
           },
@@ -6006,21 +7228,33 @@
         "additionalProperties": false,
         "properties": {
           "defaultAccesses": {
-            "type": ["array", "null"],
+            "type": [
+              "array",
+              "null"
+            ],
             "items": {
               "type": "string"
             }
           },
           "usersAccesses": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
           },
           "groupsAccesses": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
           },
           "metadata": {
-            "type": ["object", "null"],
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
           }
         }
@@ -6034,21 +7268,33 @@
             "type": "object",
             "properties": {
               "defaultAccesses": {
-                "type": ["array", "null"],
+                "type": [
+                  "array",
+                  "null"
+                ],
                 "items": {
                   "type": "string"
                 }
               },
               "usersAccesses": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
               },
               "groupsAccesses": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
               },
               "metadata": {
-                "type": ["object", "null"],
+                "type": [
+                  "object",
+                  "null"
+                ],
                 "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
               }
             }
@@ -6057,28 +7303,40 @@
             "type": "object",
             "properties": {
               "defaultAccesses": {
-                "type": ["array"],
+                "type": [
+                  "array"
+                ],
                 "items": {
                   "type": "string"
                 }
               },
               "usersAccesses": {
-                "type": ["object"],
+                "type": [
+                  "object"
+                ],
                 "description": "A map of user identifiers to permissions list."
               },
               "groupsAccesses": {
-                "type": ["object"],
+                "type": [
+                  "object"
+                ],
                 "description": "A map of group identifiers to permissions list."
               },
               "metadata": {
-                "type": ["object"],
+                "type": [
+                  "object"
+                ],
                 "description": "A map of metadata keys to their values (`string` or `string[]`)."
               }
             },
-            "required": ["defaultAccesses"]
+            "required": [
+              "defaultAccesses"
+            ]
           }
         },
-        "required": ["update"]
+        "required": [
+          "update"
+        ]
       },
       "CreateRoom": {
         "title": "CreateRoom",
@@ -6104,11 +7362,17 @@
           },
           "engine": {
             "type": "integer",
-            "enum": [1, 2],
+            "enum": [
+              1,
+              2
+            ],
             "description": "Preferred storage engine version to use when creating new rooms. The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will become the default in the future."
           }
         },
-        "required": ["id", "defaultAccesses"]
+        "required": [
+          "id",
+          "defaultAccesses"
+        ]
       },
       "Error": {
         "title": "Error",
@@ -6241,7 +7505,10 @@
                   "type": "object"
                 },
                 "defaultAccesses": {
-                  "type": ["string", "array"],
+                  "type": [
+                    "string",
+                    "array"
+                  ],
                   "items": {}
                 },
                 "usersAccesses": {
@@ -6270,7 +7537,9 @@
               "properties": {
                 "type": {
                   "type": "string",
-                  "enum": ["historyVersion"],
+                  "enum": [
+                    "historyVersion"
+                  ],
                   "description": "Type identifier for the version history object"
                 },
                 "id": {
@@ -6297,15 +7566,25 @@
                 },
                 "kind": {
                   "type": "string",
-                  "enum": ["yjs"],
+                  "enum": [
+                    "yjs"
+                  ],
                   "description": "Type of document (yjs for Yjs documents)"
                 }
               },
-              "required": ["type", "id", "createdAt", "authors", "kind"]
+              "required": [
+                "type",
+                "id",
+                "createdAt",
+                "authors",
+                "kind"
+              ]
             }
           }
         },
-        "required": ["data"]
+        "required": [
+          "data"
+        ]
       },
       "CreateYjsVersion": {
         "title": "CreateYjsVersion",
@@ -6319,10 +7598,14 @@
                 "description": "Unique identifier for the created version"
               }
             },
-            "required": ["id"]
+            "required": [
+              "id"
+            ]
           }
         },
-        "required": ["data"]
+        "required": [
+          "data"
+        ]
       },
       "ActiveUsersResponse": {
         "title": "ActiveUsersResponse",
@@ -6502,13 +7785,18 @@
                 "$ref": "#/components/schemas/CommentMetadata"
               }
             },
-            "required": ["userId", "body"]
+            "required": [
+              "userId",
+              "body"
+            ]
           },
           "metadata": {
             "type": "object"
           }
         },
-        "required": ["comment"],
+        "required": [
+          "comment"
+        ],
         "examples": [
           {
             "comment": {
@@ -6545,7 +7833,10 @@
             "format": "date-time"
           }
         },
-        "required": ["metadata", "userId"],
+        "required": [
+          "metadata",
+          "userId"
+        ],
         "examples": [
           {
             "metadata": {
@@ -6613,7 +7904,10 @@
             "format": "date-time"
           }
         },
-        "required": ["metadata", "userId"],
+        "required": [
+          "metadata",
+          "userId"
+        ],
         "examples": [
           {
             "metadata": {
@@ -6633,7 +7927,9 @@
             "const": "comment",
             "readOnly": true,
             "default": "comment",
-            "examples": ["comment"]
+            "examples": [
+              "comment"
+            ]
           },
           "threadId": {
             "type": "string"
@@ -6666,7 +7962,14 @@
             "$ref": "#/components/schemas/CommentMetadata"
           }
         },
-        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
+        "required": [
+          "type",
+          "threadId",
+          "roomId",
+          "id",
+          "userId",
+          "createdAt"
+        ],
         "examples": [
           {
             "type": "comment",
@@ -6702,7 +8005,10 @@
             "$ref": "#/components/schemas/CommentMetadata"
           }
         },
-        "required": ["userId", "body"],
+        "required": [
+          "userId",
+          "body"
+        ],
         "examples": [
           {
             "userId": "alice",
@@ -6734,7 +8040,9 @@
             "$ref": "#/components/schemas/CommentMetadata"
           }
         },
-        "required": ["body"],
+        "required": [
+          "body"
+        ],
         "examples": [
           {
             "editedAt": "2022-07-13T14:32:50.697Z",
@@ -6765,7 +8073,10 @@
             "type": "string"
           }
         },
-        "required": ["userId", "emoji"],
+        "required": [
+          "userId",
+          "emoji"
+        ],
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -6789,7 +8100,10 @@
             "type": "string"
           }
         },
-        "required": ["userId", "emoji"],
+        "required": [
+          "userId",
+          "emoji"
+        ],
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -6813,7 +8127,10 @@
             "type": "string"
           }
         },
-        "required": ["userId", "emoji"],
+        "required": [
+          "userId",
+          "emoji"
+        ],
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -6933,10 +8250,17 @@
         "type": "object",
         "properties": {
           "threads": {
-            "enum": ["all", "replies_and_mentions", "none"]
+            "enum": [
+              "all",
+              "replies_and_mentions",
+              "none"
+            ]
           },
           "textMentions": {
-            "enum": ["mine", "none"]
+            "enum": [
+              "mine",
+              "none"
+            ]
           }
         }
       },
@@ -6945,10 +8269,17 @@
         "type": "object",
         "properties": {
           "threads": {
-            "enum": ["all", "replies_and_mentions", "none"]
+            "enum": [
+              "all",
+              "replies_and_mentions",
+              "none"
+            ]
           },
           "textMentions": {
-            "enum": ["mine", "none"]
+            "enum": [
+              "mine",
+              "none"
+            ]
           },
           "roomId": {
             "type": "string"
@@ -6975,7 +8306,12 @@
             "type": "object"
           }
         },
-        "required": ["userId", "kind", "subjectId", "activityData"],
+        "required": [
+          "userId",
+          "kind",
+          "subjectId",
+          "activityData"
+        ],
         "examples": [
           {
             "userId": "alice",
@@ -7081,14 +8417,20 @@
                     "properties": {
                       "reasoningEffort": {
                         "type": "string",
-                        "enum": ["low", "medium", "high"]
+                        "enum": [
+                          "low",
+                          "medium",
+                          "high"
+                        ]
                       },
                       "webSearch": {
                         "type": "object",
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7183,7 +8525,10 @@
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "s"]
+                            "required": [
+                              "type",
+                              "s"
+                            ]
                           },
                           {
                             "type": "object",
@@ -7192,7 +8537,9 @@
                                 "const": "disabled"
                               }
                             },
-                            "required": ["type"]
+                            "required": [
+                              "type"
+                            ]
                           }
                         ]
                       },
@@ -7201,7 +8548,9 @@
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7428,14 +8777,20 @@
                     "properties": {
                       "reasoningEffort": {
                         "type": "string",
-                        "enum": ["low", "medium", "high"]
+                        "enum": [
+                          "low",
+                          "medium",
+                          "high"
+                        ]
                       },
                       "webSearch": {
                         "type": "object",
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7462,7 +8817,10 @@
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "budgetTokens"]
+                            "required": [
+                              "type",
+                              "budgetTokens"
+                            ]
                           },
                           {
                             "type": "object",
@@ -7471,7 +8829,9 @@
                                 "const": "disabled"
                               }
                             },
-                            "required": ["type"]
+                            "required": [
+                              "type"
+                            ]
                           }
                         ]
                       },
@@ -7480,7 +8840,9 @@
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7516,7 +8878,12 @@
           },
           "provider": {
             "type": "string",
-            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+            "enum": [
+              "openai",
+              "anthropic",
+              "google",
+              "openai-compatible"
+            ]
           },
           "compatibleProviderName": {
             "type": "string"
@@ -7572,14 +8939,20 @@
                     "properties": {
                       "reasoningEffort": {
                         "type": "string",
-                        "enum": ["low", "medium", "high"]
+                        "enum": [
+                          "low",
+                          "medium",
+                          "high"
+                        ]
                       },
                       "webSearch": {
                         "type": "object",
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7606,7 +8979,10 @@
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "budgetTokens"]
+                            "required": [
+                              "type",
+                              "budgetTokens"
+                            ]
                           },
                           {
                             "type": "object",
@@ -7615,7 +8991,9 @@
                                 "const": "disabled"
                               }
                             },
-                            "required": ["type"]
+                            "required": [
+                              "type"
+                            ]
                           }
                         ]
                       },
@@ -7624,7 +9002,9 @@
                         "properties": {
                           "allowedDomains": {
                             "type": "array",
-                            "items": { "type": "string" }
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         }
                       }
@@ -7660,7 +9040,12 @@
           },
           "provider": {
             "type": "string",
-            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+            "enum": [
+              "openai",
+              "anthropic",
+              "google",
+              "openai-compatible"
+            ]
           },
           "compatibleProviderName": {
             "type": "string"
@@ -7749,7 +9134,11 @@
               },
               "status": {
                 "type": "string",
-                "enum": ["ingesting", "ready", "error"]
+                "enum": [
+                  "ingesting",
+                  "ready",
+                  "error"
+                ]
               },
               "errorMessage": {
                 "type": "string"
@@ -7762,7 +9151,11 @@
                   },
                   "type": {
                     "type": "string",
-                    "enum": ["individual_link", "crawl", "sitemap"]
+                    "enum": [
+                      "individual_link",
+                      "crawl",
+                      "sitemap"
+                    ]
                   }
                 }
               }
@@ -7791,7 +9184,11 @@
               },
               "status": {
                 "type": "string",
-                "enum": ["ingesting", "ready", "error"]
+                "enum": [
+                  "ingesting",
+                  "ready",
+                  "error"
+                ]
               },
               "errorMessage": {
                 "type": "string"
@@ -7823,10 +9220,18 @@
           },
           "type": {
             "type": "string",
-            "enum": ["individual_link", "crawl", "sitemap"]
+            "enum": [
+              "individual_link",
+              "crawl",
+              "sitemap"
+            ]
           }
         },
-        "required": ["copilotId", "url", "type"]
+        "required": [
+          "copilotId",
+          "url",
+          "type"
+        ]
       },
       "GetKnowledgeSources": {
         "title": "GetKnowledgeSources",
@@ -7855,7 +9260,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ingesting", "ready", "error"]
+            "enum": [
+              "ingesting",
+              "ready",
+              "error"
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -7866,7 +9275,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "url", "status", "createdAt", "lastIndexedAt"]
+        "required": [
+          "id",
+          "url",
+          "status",
+          "createdAt",
+          "lastIndexedAt"
+        ]
       },
       "GetWebKnowledgeSourceLinks": {
         "title": "GetWebKnowledgeSourceLinks",
@@ -7889,7 +9304,9 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["group"]
+            "enum": [
+              "group"
+            ]
           },
           "id": {
             "type": "string"
@@ -7942,7 +9359,10 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "addedAt"]
+        "required": [
+          "id",
+          "addedAt"
+        ]
       },
       "CreateGroup": {
         "title": "CreateGroup",
@@ -7969,7 +9389,9 @@
             }
           }
         },
-        "required": ["groupId"]
+        "required": [
+          "groupId"
+        ]
       },
       "AddGroupMembers": {
         "title": "AddGroupMembers",
@@ -7982,7 +9404,9 @@
             }
           }
         },
-        "required": ["memberIds"]
+        "required": [
+          "memberIds"
+        ]
       },
       "RemoveGroupMembers": {
         "title": "RemoveGroupMembers",
@@ -7995,7 +9419,9 @@
             }
           }
         },
-        "required": ["memberIds"]
+        "required": [
+          "memberIds"
+        ]
       },
       "GetGroups": {
         "title": "GetGroups",
@@ -8030,12 +9456,19 @@
       "ManagementProjectType": {
         "title": "ManagementProjectType",
         "type": "string",
-        "enum": ["dev", "prod"]
+        "enum": [
+          "dev",
+          "prod"
+        ]
       },
       "ManagementProjectRegion": {
         "title": "ManagementProjectRegion",
         "type": "string",
-        "enum": ["earth", "eu", "fedramp"]
+        "enum": [
+          "earth",
+          "eu",
+          "fedramp"
+        ]
       },
       "ManagementProjectVersionCreationTimeout": {
         "title": "ManagementProjectVersionCreationTimeout",
@@ -8043,7 +9476,9 @@
         "oneOf": [
           {
             "type": "boolean",
-            "enum": [false]
+            "enum": [
+              false
+            ]
           },
           {
             "type": "number",
@@ -8067,7 +9502,11 @@
             "type": "string"
           }
         },
-        "required": ["activated", "createdAt", "value"]
+        "required": [
+          "activated",
+          "createdAt",
+          "value"
+        ]
       },
       "ManagementProjectSecretKey": {
         "title": "ManagementProjectSecretKey",
@@ -8081,7 +9520,10 @@
             "type": "string"
           }
         },
-        "required": ["createdAt", "value"]
+        "required": [
+          "createdAt",
+          "value"
+        ]
       },
       "ManagementProject": {
         "title": "ManagementProject",
@@ -8149,7 +9591,9 @@
             "default": false
           }
         },
-        "required": ["type"]
+        "required": [
+          "type"
+        ]
       },
       "UpdateManagementProject": {
         "title": "UpdateManagementProject",
@@ -8212,7 +9656,9 @@
             "$ref": "#/components/schemas/ManagementProject"
           }
         },
-        "required": ["project"]
+        "required": [
+          "project"
+        ]
       },
       "ManagementProjectPublicKeyResponse": {
         "title": "ManagementProjectPublicKeyResponse",
@@ -8222,7 +9668,9 @@
             "$ref": "#/components/schemas/ManagementProjectPublicKey"
           }
         },
-        "required": ["publicKey"]
+        "required": [
+          "publicKey"
+        ]
       },
       "ManagementProjectSecretKeyResponse": {
         "title": "ManagementProjectSecretKeyResponse",
@@ -8232,7 +9680,9 @@
             "$ref": "#/components/schemas/ManagementProjectSecretKey"
           }
         },
-        "required": ["secretKey"]
+        "required": [
+          "secretKey"
+        ]
       },
       "ManagementWebhookEvent": {
         "title": "ManagementWebhookEvent",
@@ -8266,7 +9716,9 @@
             "type": "string"
           }
         },
-        "required": ["value"]
+        "required": [
+          "value"
+        ]
       },
       "ManagementWebhook": {
         "title": "ManagementWebhook",
@@ -8362,7 +9814,10 @@
             "type": "number"
           }
         },
-        "required": ["url", "subscribedEvents"]
+        "required": [
+          "url",
+          "subscribedEvents"
+        ]
       },
       "UpdateManagementWebhook": {
         "title": "UpdateManagementWebhook",
@@ -8405,7 +9860,9 @@
             }
           }
         },
-        "required": ["headers"]
+        "required": [
+          "headers"
+        ]
       },
       "ManagementWebhookHeadersDelete": {
         "title": "ManagementWebhookHeadersDelete",
@@ -8418,7 +9875,9 @@
             }
           }
         },
-        "required": ["headers"]
+        "required": [
+          "headers"
+        ]
       },
       "ManagementWebhookHeadersResponse": {
         "title": "ManagementWebhookHeadersResponse",
@@ -8431,7 +9890,9 @@
             }
           }
         },
-        "required": ["headers"]
+        "required": [
+          "headers"
+        ]
       },
       "ManagementWebhooksResponse": {
         "title": "ManagementWebhooksResponse",
@@ -8457,7 +9918,9 @@
             "$ref": "#/components/schemas/ManagementWebhook"
           }
         },
-        "required": ["webhook"]
+        "required": [
+          "webhook"
+        ]
       },
       "ManagementWebhookSecretRotateResponse": {
         "title": "ManagementWebhookSecretRotateResponse",
@@ -8470,7 +9933,10 @@
             "type": "string"
           }
         },
-        "required": ["secret", "message"]
+        "required": [
+          "secret",
+          "message"
+        ]
       },
       "ManagementWebhookRecoverRequest": {
         "title": "ManagementWebhookRecoverRequest",
@@ -8481,7 +9947,9 @@
             "format": "date-time"
           }
         },
-        "required": ["since"]
+        "required": [
+          "since"
+        ]
       },
       "ManagementWebhookTestRequest": {
         "title": "ManagementWebhookTestRequest",
@@ -8491,7 +9959,9 @@
             "$ref": "#/components/schemas/ManagementWebhookEvent"
           }
         },
-        "required": ["subscribedEvent"]
+        "required": [
+          "subscribedEvent"
+        ]
       },
       "ManagementWebhookTestResponse": {
         "title": "ManagementWebhookTestResponse",
@@ -8509,10 +9979,14 @@
                 "nullable": true
               }
             },
-            "required": ["id"]
+            "required": [
+              "id"
+            ]
           }
         },
-        "required": ["message"]
+        "required": [
+          "message"
+        ]
       }
     },
     "securitySchemes": {
