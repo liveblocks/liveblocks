@@ -1,7 +1,7 @@
 "use client";
 
 import type { BaseMetadata, DCM, DTM, Relax } from "@liveblocks/core";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { Popover as PopoverPrimitive } from "radix-ui";
 import {
   type ForwardedRef,
   forwardRef,

@@ -6,7 +6,7 @@ import {
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type { FocusEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
   forwardRef,
@@ -101,7 +101,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "form";
+    const Component = asChild ? SlotPrimitive.Slot : "form";
     const client = useClient();
     const formRef = useRef<HTMLFormElement | null>(null);
     const editor = useInitial(() =>
@@ -476,7 +476,7 @@ export const AiComposerSubmit = forwardRef<
   HTMLButtonElement,
   AiComposerSubmitProps
 >(({ disabled, asChild, ...props }, forwardedRef) => {
-  const Component = asChild ? Slot : "button";
+  const Component = asChild ? SlotPrimitive.Slot : "button";
   const { isDisabled: isComposerDisabled, canSubmit } = useAiComposer();
   const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
@@ -504,7 +504,7 @@ export const AiComposerAbort = forwardRef<
   HTMLButtonElement,
   AiComposerSubmitProps
 >(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
-  const Component = asChild ? Slot : "button";
+  const Component = asChild ? SlotPrimitive.Slot : "button";
   const { isDisabled: isComposerDisabled, canAbort, abort } = useAiComposer();
   const isDisabled = isComposerDisabled || disabled || !canAbort;
 

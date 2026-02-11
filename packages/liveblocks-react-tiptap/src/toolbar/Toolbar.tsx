@@ -23,9 +23,8 @@ import {
   UnderlineIcon,
   UndoIcon,
 } from "@liveblocks/react-ui/_private";
-import * as SelectPrimitive from "@radix-ui/react-select";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
 import { type Editor, useEditorState } from "@tiptap/react";
+import { Select as SelectPrimitive, Toggle as TogglePrimitive } from "radix-ui";
 import type {
   ComponentProps,
   ComponentType,

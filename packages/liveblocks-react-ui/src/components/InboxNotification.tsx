@@ -21,8 +21,7 @@ import {
   useRoomInfo,
 } from "@liveblocks/react";
 import { useRoomThreadSubscription } from "@liveblocks/react/_private";
-import { Slot } from "@radix-ui/react-slot";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Slot } from "radix-ui";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
@@ -63,7 +62,7 @@ import {
 } from "./internal/InboxNotificationThread";
 import { List } from "./internal/List";
 import { Room } from "./internal/Room";
-import { Tooltip } from "./internal/Tooltip";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 type ComponentTypeWithRef<
@@ -278,7 +277,7 @@ const InboxNotificationLayout = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
-    const Component = asChild ? Slot : Anchor;
+    const Component = asChild ? Slot.Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
     const deleteInboxNotification = useDeleteInboxNotification();

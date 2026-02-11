@@ -1,5 +1,5 @@
 import type { AiAssistantMessage } from "@liveblocks/core";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import { forwardRef, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
@@ -43,7 +43,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
  */
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const {
       ReasoningPart,
       RetrievalPart,

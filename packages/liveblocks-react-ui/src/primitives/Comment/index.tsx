@@ -4,7 +4,7 @@ import {
   MENTION_CHARACTER,
   sanitizeUrl,
 } from "@liveblocks/core";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
@@ -27,7 +27,7 @@ const COMMENT_LINK_NAME = "CommentLink";
  */
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "span";
+    const Component = asChild ? SlotPrimitive.Slot : "span";
 
     return (
       <Component {...props} ref={forwardedRef}>
@@ -45,7 +45,7 @@ const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
  */
 const CommentLink = forwardRef<HTMLAnchorElement, CommentLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "a";
+    const Component = asChild ? SlotPrimitive.Slot : "a";
 
     return (
       <Component
@@ -82,7 +82,7 @@ const defaultBodyComponents: CommentBodyComponents = {
  */
 const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
   ({ body, components, style, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const { Mention, Link } = useMemo(
       () => ({ ...defaultBodyComponents, ...components }),
       [components]

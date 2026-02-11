@@ -1,6 +1,6 @@
 "use client";
 
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { Tooltip as TooltipPrimitive } from "radix-ui";
 import type { ComponentProps, ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
@@ -139,4 +139,4 @@ function ShortcutTooltipKey({ name, ...props }: ShortcutTooltipKeyProps) {
   );
 }
 
-export { TooltipProvider } from "@radix-ui/react-tooltip";
+export const TooltipProvider = TooltipPrimitive.Provider;

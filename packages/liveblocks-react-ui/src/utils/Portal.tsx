@@ -1,6 +1,6 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
+import { Slot } from "radix-ui";
 import { forwardRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -17,7 +17,7 @@ interface PortalProps extends ComponentPropsWithSlot<"div"> {
 
 const Portal = forwardRef<HTMLDivElement, PortalProps>(
   ({ container = document?.body, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? Slot.Slot : "div";
 
     return container
       ? createPortal(

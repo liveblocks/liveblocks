@@ -1,4 +1,4 @@
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
@@ -19,7 +19,7 @@ export const List = forwardRef<HTMLSpanElement, ListProps>(
     { values, formatRemaining, truncate, locale, className, asChild, ...props },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "span";
+    const Component = asChild ? SlotPrimitive.Slot : "span";
     const $ = useOverrides();
     const formatRemainingWithDefault = formatRemaining ?? $.LIST_REMAINING;
     const formattedList = useMemo(() => {

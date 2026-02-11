@@ -1,7 +1,7 @@
 "use client";
 
 import type { Relax } from "@liveblocks/core";
-import { Slot } from "@radix-ui/react-slot";
+import { Slot as SlotPrimitive } from "radix-ui";
 import { forwardRef, type ReactNode, useMemo } from "react";
 
 import type { ComponentPropsWithSlot } from "../types";
@@ -305,7 +305,7 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "time";
+    const Component = asChild ? SlotPrimitive.Slot : "time";
     const [rerender, key] = useRerender();
     const resolvedDuration = useMemo(() => {
       if (duration !== undefined) {
