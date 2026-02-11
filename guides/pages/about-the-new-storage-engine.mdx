@@ -48,12 +48,12 @@ The engine is assigned at room creation time and cannot be changed afterward.
 Specify the `engine` option when entering a room. This only affects new rooms—if
 the room already exists, the room stays on its original engine version.
 
-With `LiveblocksProvider`:
+With `RoomProvider`:
 
 ```tsx
-<LiveblocksProvider id="my-new-room" engine={2}>
+<RoomProvider id="my-new-room" engine={2}>
   {children}
-</LiveblocksProvider>
+</RoomProvider>
 ```
 
 With vanilla client:
