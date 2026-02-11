@@ -5,10 +5,8 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   type ForwardedRef,
   forwardRef,
-  type KeyboardEvent,
   type ReactNode,
   type RefAttributes,
-  useCallback,
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
@@ -58,7 +56,6 @@ export const FloatingThread = forwardRef(
       align = "start",
       alignOffset,
       overrides,
-      onKeyDown,
       className,
       ...props
     }: FloatingThreadProps<TM, CM>,
@@ -70,17 +67,6 @@ export const FloatingThread = forwardRef(
       defaultOpen ?? false,
       open,
       onOpenChange
-    );
-
-    const handleKeyDown = useCallback(
-      (event: KeyboardEvent<HTMLDivElement>) => {
-        onKeyDown?.(event);
-
-        if (event.key === "Escape") {
-          setIsOpen(false);
-        }
-      },
-      [onKeyDown, setIsOpen]
     );
 
     return (
@@ -98,7 +84,17 @@ export const FloatingThread = forwardRef(
             align={align}
             alignOffset={alignOffset}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            onPointerDownOutside={(event) => {
+            onEscapeKeyDown={(event) => {
+              if (event.defaultPrevented) {
+                return;
+              }
+
+              setIsOpen(false);
+
+              // Prevent further parent layers from closing
+              event.preventDefault();
+            }}
+            onInteractOutside={(event) => {
               // Prevent closing when interacting with elements inside portals
               // (e.g., emoji picker, dropdowns)
               const target = event.target as HTMLElement;
@@ -112,7 +108,6 @@ export const FloatingThread = forwardRef(
               ref={forwardedRef}
               thread={thread}
               overrides={overrides}
-              onKeyDown={handleKeyDown}
               {...props}
             />
           </PopoverPrimitive.Content>
