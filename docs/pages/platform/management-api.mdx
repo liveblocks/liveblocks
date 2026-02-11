@@ -8,7 +8,7 @@ meta:
 <Banner>
   The Management API is currently in private beta for Enterprise customers.
   Reach out to [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on
-  your account.
+  your team.
 </Banner>
 
 The Liveblocks Management API allows you to interact programmatically with your
@@ -28,7 +28,7 @@ https://api.liveblocks.io/v2/management
 ## How it works
 
 When Management API is enabled, you'll need to authenticate your requests using
-an access token. This access token is generated from your Liveblocks account and
+an access token. This access token is generated from your Liveblocks team and
 can be found in the [dashboard](/dashboard/team-settings) teams settings page
 under the **Management API** section.
 
@@ -45,6 +45,12 @@ under the **Management API** section.
 
 To generate a new Management API access token click the “**Generate new
 token…**” button to open the token generation dialog.
+
+<Banner>
+  Management API access tokens are team-linked and can only be created by team
+  owners. If you don't have team owner permissions, contact your team owner to
+  generate a token for you.
+</Banner>
 
 <Figure>
   <Image
@@ -82,7 +88,9 @@ depending on your needs.
 ```
 
 <Banner title="Coming soon">
-  More granular scopes will be available in a future update.
+  More granular scopes will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
 </Banner>
 
 ### Generate new token
@@ -122,7 +130,9 @@ Management API. Make sure to rotate your tokens before they expire to avoid
 interruptions in your API access.
 
 <Banner title="Coming soon">
-  Custom expiration dates will be available in a future update.
+  Custom expiration dates will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
 </Banner>
 
 ## Revoking an access token
@@ -184,6 +194,21 @@ jobs:
             -H "Authorization: Bearer lbs_*******************" \
             -H "Content-Type: application/json"
 ```
+
+## Rate limiting
+
+The Management API enforces rate limits to ensure fair usage and system
+stability. By default, each Management API access token (MAAT) is limited to
+**1,000 requests per 60 seconds**.
+
+This limit applies cumulatively across all requests made with a single access
+token. If you exceed this limit, all API calls using that token will be blocked
+for the next minute, and the API will return a `429 Too Many Requests` HTTP
+status response.
+
+Rate limits are subject to our fair use policy. If you need higher rate limits
+for your use case, please contact
+[sales@liveblocks.io](mailto:sales@liveblocks.io) to discuss your requirements.
 
 ## API reference
 
