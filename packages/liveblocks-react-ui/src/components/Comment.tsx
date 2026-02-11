@@ -648,6 +648,7 @@ export const Comment = Object.assign(
       },
       forwardedRef
     ) => {
+      const bodyId = `${comment.id}:body`;
       const ref = useRef<HTMLDivElement>(null);
       const mergedRefs = useRefs(forwardedRef, ref);
       const currentUserId = useCurrentUserId();
@@ -815,6 +816,7 @@ export const Comment = Object.assign(
               />
             )}
             <div
+              role="article"
               id={comment.id}
               className={cn(
                 "lb-root lb-comment",
@@ -828,6 +830,7 @@ export const Comment = Object.assign(
               data-editing={isEditing ? "" : undefined}
               // In some cases, `:target` doesn't work as expected so we also define it manually.
               data-target={isTarget ? "" : undefined}
+              aria-labelledby={bodyId}
               dir={$.dir}
               {...props}
               ref={mergedRefs}
@@ -953,6 +956,7 @@ export const Comment = Object.assign(
                   <>
                     <CommentPrimitive.Body
                       className="lb-comment-body"
+                      id={bodyId}
                       body={comment.body}
                       components={{
                         Mention: ({ mention }) => (
