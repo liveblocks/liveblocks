@@ -4,10 +4,12 @@ meta:
   description: "Learn about our improved v2 Storage engine and how to enable it"
 ---
 
-Since v3.14, rooms can be powered by our new v2 Storage engine. Switching is
-**seamless and requires no code changes**. Rooms on v1 or v2 behave identically
-from your app’s perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs
-Storage all work the same way.
+Since v3.14, rooms can be powered by our new v2 Storage engine—a ground-up
+rearchitecture that removes server-side memory limits, enabling faster initial
+loads and support for much larger documents. Switching is **seamless and
+requires no code changes**. Rooms on v1 or v2 behave identically from your app's
+perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs Storage all work
+the same way.
 
 If you switch, you may notice faster initial loads and support for larger
 documents. We’re enabling opting-in to v2 now for those eager to try it out and
@@ -16,7 +18,7 @@ give us feedback. Soon it will become the default for everyone.
 ## What are the benefits?
 
 The main architectural leap of v2 is that the Liveblocks server no longer needs
-to keep the entire document in memory. Historically, large documents put memory
+to keep the entire document in memory. In v1, large documents put memory
 pressure on our edge workers, which are limited in capacity. A 50 MiB document,
 including its overhead, could easily cause an OOM crash in an edge worker on
 engine v1, causing the room to become inaccessible.
@@ -32,8 +34,6 @@ might now be).
 Initial load time will be faster, especially for larger documents: the server
 can start streaming immediately without buffering, and our wire protocol has
 been compacted to reduce transmission overhead.
-
-Lastly, v2 enables us to ship future Liveblocks features not possible on v1.
 
 ## How to enable it
 
