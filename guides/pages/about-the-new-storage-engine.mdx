@@ -20,7 +20,7 @@ The main architectural leap of v2 is that the Liveblocks server no longer needs
 to keep the entire document in memory. In v1, large documents put memory
 pressure on our edge workers, which are limited in capacity. A 50 MiB document,
 including its overhead, could easily cause an OOM crash in an edge worker on
-the v1 engine, causing the room to become inaccessible.
+the v1 engine, in turn causing the room to become inaccessible.
 
 Rooms on the v2 Storage engine now stream their document data directly from our
 persisted storage layer, keeping only minimal data in memory. Conflict
