@@ -167,6 +167,21 @@ jobs:
             -H "Content-Type: application/json"
 ```
 
+## Rate limiting
+
+The Management API enforces rate limits to ensure fair usage and system stability.
+By default, each Management API access token (MAAT) is limited to **1,000 requests per
+60 seconds**.
+
+This limit applies cumulatively across all requests made with a single access token.
+If you exceed this limit, all API calls using that token will be blocked for the
+next minute, and the API will return a `429 Too Many Requests` HTTP status
+response.
+
+Rate limits are subject to our fair use policy. If you need higher rate limits for
+your use case, please contact [sales@liveblocks.io](mailto:sales@liveblocks.io) to
+discuss your requirements.
+
 ## API reference
 
 See the [API reference](api-reference/rest-api-endpoints#Management) for more
