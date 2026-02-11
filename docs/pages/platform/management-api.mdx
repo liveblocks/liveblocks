@@ -12,7 +12,7 @@ meta:
 </Banner>
 
 The Liveblocks Management API allows you to interact programmatically with your
-Liveblocks' projects and webhooks. With the API, you can create, update, and
+Liveblocks projects and webhooks. With the API, you can create, update, and
 delete projects, webhooks, and more.
 
 The Liveblocks Management API is organized around REST. The API has predictable
@@ -43,8 +43,8 @@ under the **Management API** section.
 
 ## Generating an access token
 
-To generate a new Management API access token click the **+ Generate new
-token...** button to open the token generation dialog.
+To generate a new Management API access token click the “**Generate new
+token…**” button to open the token generation dialog.
 
 <Figure>
   <Image
@@ -55,25 +55,42 @@ token...** button to open the token generation dialog.
   />
 </Figure>
 
-In the dialog, you'll need to provide a name for your token. The token name
-helps you identify and manage multiple tokens later. Next, select the scopes
-that define what permissions your token will have:
+In the dialog, some options are available.
+
+### Token name
+
+A name for your token, which is used to help you identify and manage your
+tokens.
+
+```text title="Token name"
+LB-MANAGEMENT-API-ACCESS-TOKEN
+```
+
+### Scopes
+
+Scopes that define your token's permissions. You can select one or both scopes
+depending on your needs.
 
 - **Read**: Allows viewing data but not modifying it. Grants read access to all
   resources.
 - **Write**: Allows creating, modifying, and deleting data. Grants write access
   to all resources.
 
-You can select one or both scopes depending on your needs. Once you've
-configured your token name and scopes, click **Generate new token** to create
-it.
+```text title="Scopes"
+✔︎ Read
+✔︎ Write
+```
 
 <Banner title="Coming soon">
   More granular scopes will be available in a future update.
 </Banner>
 
-After generation, a dialog will appear displaying your new Management API token.
-This is the **only time** you'll be able to view and copy the full token value.
+### Generate new token
+
+Once you've configured your token name and scopes, click **Generate new token**
+to create it. After generation, a dialog will appear displaying your new
+Management API token. This is the **only time** you'll be able to view and copy
+the full token value.
 
 <Figure>
   <Image
@@ -84,10 +101,10 @@ This is the **only time** you'll be able to view and copy the full token value.
   />
 </Figure>
 
-**Important:** Save and store this token in a secure place, such as a password
-manager or secret store. You won't be able to see it again after closing this
-dialog. Use the copy icon in the dialog to copy the token to your clipboard
-before clicking **Done**.
+**Save and store this token in a secure place**, such as a password manager or
+secret store. You won't be able to see it again after closing this dialog. Use
+the copy icon in the dialog to copy the token to your clipboard before clicking
+“**Done**”.
 
 After you close the dialog, your new token will appear in the Management API
 tokens list. The token value will be partially obscured for security, showing
@@ -100,13 +117,13 @@ All Management API access tokens expire after one year from the date of
 generation. The expiration date is displayed when you generate a new token, and
 you can view it for existing tokens in the Management API tokens list.
 
-<Banner title="Coming soon">
-  Custom expiration dates will be available in a future update.
-</Banner>
-
 When a token expires, you'll need to generate a new token to continue using the
 Management API. Make sure to rotate your tokens before they expire to avoid
 interruptions in your API access.
+
+<Banner title="Coming soon">
+  Custom expiration dates will be available in a future update.
+</Banner>
 
 ## Revoking an access token
 
@@ -123,11 +140,11 @@ appear asking you to confirm the revocation.
   />
 </Figure>
 
-<Banner type="warning">
+<Banner title="This action cannot be undone" type="warning">
   Revoking a token will immediately block Management API access for any
   application or script using it. This may break integrations that depend on the
-  token. **This action cannot be undone.** Once revoked, you cannot restore the
-  token and will need to generate a new one if you need to restore access.
+  token. Once revoked, you cannot restore the token and will need to generate a
+  new one if you need to restore access.
 </Banner>
 
 Before revoking a token, make sure to:
@@ -137,14 +154,15 @@ Before revoking a token, make sure to:
   the new token
 - Confirm that revoking the token won't disrupt critical operations
 
-If you're certain you want to proceed, click **Yes I understand, revoke token**
-in the confirmation dialog. The token will be immediately revoked and removed
-from your tokens list.
+If you're certain you want to proceed, click “**Yes I understand, revoke
+token**” in the confirmation dialog. The token will be immediately revoked and
+removed from your tokens list.
 
 ## Usage
 
 The Management API can be called from any terminals or in CI/CI pipelines using
-the `curl` command.
+the `curl` command. Pass your management token, e.g. `lbs_sd7H24...`, in the
+`Authorization` header.
 
 ```bash highlight="2-3"
 # >_ terminal
