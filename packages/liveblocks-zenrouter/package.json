@@ -1,7 +1,6 @@
 {
-  "name": "zenrouter",
-  "private": true,
-  "version": "1.0.0",
+  "name": "@liveblocks/zenrouter",
+  "version": "1.0.3",
   "description": "An opinionated router library for building APIs following best practices.",
   "type": "module",
   "main": "./dist/index.js",
@@ -48,7 +47,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/liveblocks/zenrouter.git"
+    "url": "git+https://github.com/liveblocks/zenrouter.git"
   },
   "sideEffects": false
 }

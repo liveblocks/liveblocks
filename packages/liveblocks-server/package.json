@@ -1,7 +1,6 @@
 {
   "name": "@liveblocks/server",
-  "private": true,
-  "version": "0.0.1",
+  "version": "1.0.3",
   "description": "Liveblocks backend server foundation.",
   "type": "module",
   "main": "./dist/index.js",
@@ -51,11 +50,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/liveblocks/liveblocks.git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-server"
   },
   "sideEffects": false,
   "dependencies": {
+    "@liveblocks/core": "3.14.0-rc1",
     "async-mutex": "^0.4.0",
     "decoders": "^2.8.0-1",
     "itertools": "^2.3.2",

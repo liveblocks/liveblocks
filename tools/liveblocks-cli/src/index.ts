@@ -15,12 +15,38 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { execFileSync, spawnSync } from "node:child_process";
+
 import { parse } from "@bomb.sh/args";
 
 import type { SubCommand } from "./SubCommand.js";
 
-function isBun(): boolean {
-  return typeof Bun !== "undefined";
+function isBunInstalled(): boolean {
+  try {
+    execFileSync("bun", ["--version"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Re-execute the current command under Bun. This is used when the CLI is
+ * invoked via Node (e.g. `npx liveblocks dev`) but the subcommand requires the
+ * Bun runtime. If Bun is available on the system, we transparently re-exec
+ * under it.
+ */
+function reExecWithBun(): never {
+  if (isBunInstalled()) {
+    const result = spawnSync("bun", process.argv.slice(1), {
+      stdio: "inherit",
+    });
+    process.exit(result.status ?? 1);
+  } else {
+    console.error("The Liveblocks local dev server requires Bun.");
+    console.error("See https://liveblocks.io/docs/get-started/dev-server for more information."); // prettier-ignore
+    process.exit(1);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -47,13 +73,13 @@ const commandArgv = subIndex >= 0 ? argv.slice(subIndex + 1) : [];
 async function loadCommand(name: string): Promise<SubCommand | undefined> {
   switch (name) {
     case "dev": {
-      if (!isBun()) {
-        console.error("The Liveblocks local dev server requires Bun.");
-        console.error("See https://liveblocks.io/docs/get-started/dev-server for more information."); // prettier-ignore
-        process.exit(1);
+      if (typeof Bun === "undefined") {
+        reExecWithBun();
       }
       return (await import("./dev-server/index.js")).default;
     }
+    case "upgrade":
+      return (await import("./upgrade/index.js")).default;
     default:
       return undefined;
   }
@@ -61,6 +87,7 @@ async function loadCommand(name: string): Promise<SubCommand | undefined> {
 
 const COMMAND_NAMES: Record<string, string> = {
   dev: "Start the local Liveblocks dev server",
+  upgrade: "Upgrade all Liveblocks packages",
 };
 
 // ---------------------------------------------------------------------------
@@ -98,7 +125,7 @@ async function main(): Promise<void> {
     await cmd.run(commandArgv);
   } else {
     console.error(`Unknown command: ${command}`);
-    console.error("Run \"liveblocks --help\" for usage.");
+    console.error('Run "liveblocks --help" for usage.');
     process.exit(1);
   }
 }

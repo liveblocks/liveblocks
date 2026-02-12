@@ -16,56 +16,56 @@
  */
 
 import { parse } from "@bomb.sh/args";
-import type { JsonObject } from "@liveblocks/core";
-import type { SessionKey, Ticket } from "@liveblocks/server";
-import { DefaultMap, Room } from "@liveblocks/server";
+import { WebsocketCloseCodes as CloseCode } from "@liveblocks/core";
+import type { Room, SessionKey, Ticket } from "@liveblocks/server";
+import { ZenRelay } from "@liveblocks/zenrouter";
 import Bun from "bun";
-import { ZenRelay } from "zenrouter";
 
 import type { SubCommand } from "../SubCommand.js";
 import { authorizeWebSocket } from "./auth";
-import { BunSQLiteDriver } from "./plugins/BunSQLiteDriver";
+import type { ClientMeta, RoomMeta, SessionMeta } from "./db/rooms";
+import * as RoomsDB from "./db/rooms";
 import { zen as authRoutes } from "./routes/auth";
-import { zen as mainRoutes } from "./routes/main";
+import { zen as clientApiRoutes } from "./routes/client-api.js";
 import { zen as publicRoutes } from "./routes/public";
-
-type RoomMeta = string; // Room metadata: just use the room ID
-type SessionMeta = never;
-type ClientMeta = JsonObject; // Public session metadata, sent to clients in ROOM_STATE
+import { zen as restApiRoutes } from "./routes/rest-api.js";
 
 type SocketData = {
-  readonly room: Room<RoomMeta, SessionMeta, ClientMeta>;
-  readonly ticket: Ticket<SessionMeta, ClientMeta>;
-  readonly sessionKey: SessionKey;
+  readonly room?: Room<RoomMeta, SessionMeta, ClientMeta>;
+  readonly ticket?: Ticket<SessionMeta, ClientMeta>;
+  readonly sessionKey?: SessionKey;
+  readonly refuseConnection?: {
+    readonly code: CloseCode;
+    readonly message: string;
+  };
 };
 
-// Stores a list of all "loaded room instances"
-const rooms = new DefaultMap<string, Room<RoomMeta, SessionMeta, ClientMeta>>(
-  (roomId) => {
-    const storage = new BunSQLiteDriver(
-      `.liveblocks/v1/rooms/${encodeURIComponent(roomId)}.db`
-    );
-    const room = new Room<RoomMeta, SessionMeta, ClientMeta>(roomId, {
-      storage,
-      // hooks: {
-      //   onSessionDidStart(session) {
-      //     const numSessions = room.numSessions;
-      //     console.log(`Users in room: ${numSessions - 1} → ${numSessions}`);
-      //   },
-      //
-      //   onSessionDidEnd(session) {
-      //     const numSessions = room.numSessions;
-      //     console.log(`Users in room: ${numSessions + 1} → ${numSessions}`);
-      //   },
-      // },
-    });
-    return room;
+function refuseSocketConnection(
+  server: Bun.Server<SocketData>,
+  req: Request,
+  code: CloseCode,
+  message: string
+): Response | undefined {
+  const success = server.upgrade(req, {
+    data: {
+      refuseConnection: { code, message },
+    },
+  });
+
+  if (success) {
+    // Bun automatically returns a 101 Switching Protocols if the upgrade succeeds.
+    // The connection will be closed in the open handler.
+    return undefined;
   }
-);
+
+  // If upgrade failed, return an error response
+  return new Response("Could not upgrade to WebSocket", { status: 426 });
+}
 
 const zen = new ZenRelay();
 zen.relay("/v2/authorize-user/*", authRoutes); // Require sk_* header
-zen.relay("/v2/*", mainRoutes); // Require JWT header
+zen.relay("/v2/c/*", clientApiRoutes); // Require JWT header
+zen.relay("/v2/*", restApiRoutes); // Require Auth header (Bearer sk_*)
 zen.relay("/*", publicRoutes); // Require no auth
 
 // L → 1
@@ -100,18 +100,27 @@ const dev: SubCommand = {
 
     const port = Number(args.port) || DEFAULT_PORT;
     const server = Bun.serve<SocketData>({
+      hostname: "localhost",
       port,
 
       async fetch(req, server) {
         // WebSocket bypass - handle upgrades directly
         if (req.headers.get("Upgrade") === "websocket") {
           const authResult = authorizeWebSocket(req);
-          if (!authResult) return new Response("Unauthorized", { status: 403 });
+
+          if (!authResult) {
+            return refuseSocketConnection(
+              server,
+              req,
+              CloseCode.NOT_ALLOWED,
+              "You have no access to this room"
+            );
+          }
 
           const [roomId, ticketData] = authResult;
 
           // Look up or create the room for the requested room ID
-          const room = rooms.getOrCreate(roomId);
+          const room = RoomsDB.getOrCreate(roomId);
           await room.load();
 
           const ticket = await room.createTicket(ticketData);
@@ -145,20 +154,35 @@ const dev: SubCommand = {
       websocket: {
         // The socket is opened
         open(ws): void {
-          const { room, ticket } = ws.data;
-          room.startBrowserSession(ticket, ws);
+          const { refuseConnection, room, ticket } = ws.data;
+
+          // If this connection should be refused, close it immediately
+          if (refuseConnection) {
+            ws.close(refuseConnection.code, refuseConnection.message);
+            return;
+          }
+
+          if (room && ticket) {
+            room.startBrowserSession(ticket, ws);
+          }
         },
 
         // A message is received
         async message(ws, data): Promise<void> {
           const { room, sessionKey } = ws.data;
-          await room.handleData(sessionKey, data);
+          // Ignore messages for refused connections
+          if (room && sessionKey) {
+            await room.handleData(sessionKey, data);
+          }
         },
 
         // The socket is closed by the client side
         close(ws, code, message): void {
           const { room, sessionKey } = ws.data;
-          room.endBrowserSession(sessionKey, code, message);
+          // Ignore close events for refused connections
+          if (room && sessionKey) {
+            room.endBrowserSession(sessionKey, code, message);
+          }
         },
 
         // The socket is ready to receive more data
