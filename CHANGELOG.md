@@ -1,6 +1,13 @@
 ## vNEXT (not yet released)
 
-- ...
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
+
+-
 
 ## v3.13.4
 
