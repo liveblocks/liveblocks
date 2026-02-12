@@ -1,6 +1,6 @@
 ## vNEXT (not yet released)
 
-## v3.13.4
+## v3.13.5
 
 ### `@liveblocks/react-tiptap`
 
