@@ -39,7 +39,13 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
     const otherIds = useOthers((others) => others.map((user) => user.id));
     const selfId = useSelf((self) => self.id);
     const userIds = useMemo(() => {
-      return [selfId, ...otherIds, ...additionalUserIds];
+      const uniqueUserIds = new Set([
+        selfId,
+        ...otherIds,
+        ...additionalUserIds,
+      ]);
+
+      return [...uniqueUserIds];
     }, [selfId, otherIds, additionalUserIds]);
 
     if (userIds.length === 0) {
