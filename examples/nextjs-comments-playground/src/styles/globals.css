@@ -175,39 +175,6 @@ main h1 {
   cursor: crosshair;
 }
 
-/* Pin styles */
-.canvas-page .pin {
-  width: 20px;
-  height: 20px;
-  background: #44f;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  cursor: pointer;
-  box-shadow:
-    0 2px 8px rgba(68, 68, 255, 0.35),
-    0 0 0 2px #fff;
-}
-
-.canvas-page .pin:hover {
-  box-shadow:
-    0 4px 12px rgba(68, 68, 255, 0.4),
-    0 0 0 2px #fff;
-}
-
-.canvas-page .pin[data-pending] {
-  background: #f59e0b;
-  box-shadow:
-    0 2px 8px rgba(245, 158, 11, 0.35),
-    0 0 0 2px #fff;
-}
-
-.canvas-page .pin[data-resolved] {
-  background: #22c55e;
-  box-shadow:
-    0 2px 8px rgba(34, 197, 94, 0.35),
-    0 0 0 2px #fff;
-}
-
 .loading,
 .error {
   position: absolute;
@@ -294,26 +261,5 @@ main h1 {
     box-shadow:
       0 1px 3px rgba(0, 0, 0, 0.3),
       0 0 0 1px rgba(255, 255, 255, 0.05);
-  }
-
-  .canvas-page .pin {
-    background: #77f;
-    box-shadow:
-      0 2px 8px rgba(119, 119, 255, 0.35),
-      0 0 0 2px #1a1a1a;
-  }
-
-  .canvas-page .pin[data-pending] {
-    background: #fbbf24;
-    box-shadow:
-      0 2px 8px rgba(251, 191, 36, 0.35),
-      0 0 0 2px #1a1a1a;
-  }
-
-  .canvas-page .pin[data-resolved] {
-    background: #22c55e;
-    box-shadow:
-      0 2px 8px rgba(34, 197, 94, 0.35),
-      0 0 0 2px #1a1a1a;
   }
 }

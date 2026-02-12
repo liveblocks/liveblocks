@@ -20,6 +20,8 @@ export type {
   CommentProps,
 } from "./components/Comment";
 export { Comment } from "./components/Comment";
+export type { CommentPinProps } from "./components/CommentPin";
+export { CommentPin } from "./components/CommentPin";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
 export type { FloatingComposerProps } from "./components/FloatingComposer";

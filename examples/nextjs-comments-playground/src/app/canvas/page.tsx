@@ -4,7 +4,11 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
-import { FloatingThread, FloatingComposer } from "@liveblocks/react-ui";
+import {
+  FloatingThread,
+  FloatingComposer,
+  CommentPin,
+} from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -69,12 +73,13 @@ function Canvas() {
               setOpenThreadId(open ? thread.id : null)
             }
           >
-            <div
+            <CommentPin
               className="pin"
+              userId={thread.comments[0]?.userId}
               style={{
                 position: "absolute",
-                left: thread.metadata.x! - 10,
-                top: thread.metadata.y! - 20,
+                left: thread.metadata.x!,
+                top: thread.metadata.y!,
               }}
             />
           </FloatingThread>
@@ -93,13 +98,12 @@ function Canvas() {
             }}
             autoFocus
           >
-            <div
+            <CommentPin
               className="pin"
-              data-pending=""
               style={{
                 position: "absolute",
-                left: newPin.x - 10,
-                top: newPin.y - 20,
+                left: newPin.x,
+                top: newPin.y,
               }}
             />
           </FloatingComposer>

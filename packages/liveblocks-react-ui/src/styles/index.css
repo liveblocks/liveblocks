@@ -1677,13 +1677,71 @@
 }
 
 /*************************************
- *            Floating Composer      *
+ *         Floating Composer         *
  *************************************/
 
 .lb-floating-composer {
   --lb-floating-composer-size: 350px;
 
   inline-size: var(--lb-floating-composer-size);
+}
+
+/*************************************
+ *            Comment Pin            *
+ *************************************/
+
+.lb-comment-pin {
+  --lb-comment-pin-size: 32px;
+  --lb-comment-pin-padding: 4px;
+
+  @include button;
+
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--lb-comment-pin-size);
+  block-size: var(--lb-comment-pin-size);
+  padding: var(--lb-comment-pin-padding);
+  border-radius: $lb-radius-full;
+  background: var(--lb-background);
+  box-shadow: var(--lb-elevation-shadow);
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
+
+  &:where([data-corner="top-left"]) {
+    border-start-start-radius: 2px;
+    transform: translate(0, 0);
+  }
+
+  &:where([data-corner="top-right"]) {
+    border-start-end-radius: 2px;
+    transform: translate(-100%, 0);
+  }
+
+  &:where([data-corner="bottom-right"]) {
+    border-end-end-radius: 2px;
+    transform: translate(-100%, -100%);
+  }
+
+  &:where([data-corner="bottom-left"]) {
+    border-end-start-radius: 2px;
+    transform: translate(0, -100%);
+  }
+}
+
+.lb-comment-pin-avatar {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 /*************************************
@@ -2319,6 +2377,7 @@
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
   box-shadow: var(--lb-elevation-shadow);
+  isolation: isolate;
 
   &::after {
     content: "";
