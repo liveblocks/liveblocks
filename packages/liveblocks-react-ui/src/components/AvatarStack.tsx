@@ -17,9 +17,9 @@ import { User } from "./internal/User";
 
 export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   /**
-   * Whether to include the current user in the stack.
+   * Optional additional user IDs to include in the stack.
    */
-  includeSelf?: boolean;
+  userIds?: string[];
 
   /**
    * Override the component's strings.
@@ -32,15 +32,15 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
  */
 export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
   (
-    { includeSelf = true, overrides, className, style, ...props },
+    { userIds: additionalUserIds = [], overrides, className, style, ...props },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
     const otherIds = useOthers((others) => others.map((user) => user.id));
     const selfId = useSelf((self) => self.id);
     const userIds = useMemo(() => {
-      return includeSelf && selfId ? [selfId, ...otherIds] : otherIds;
-    }, [includeSelf, selfId, otherIds]);
+      return [selfId, ...otherIds, ...additionalUserIds];
+    }, [selfId, otherIds, additionalUserIds]);
 
     if (userIds.length === 0) {
       return null;
