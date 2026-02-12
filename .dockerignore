@@ -1,13 +1,10 @@
 # Git
 .git
 
-# Dependencies (will be installed fresh in the build)
+# Dependencies and build artifacts
 node_modules
-
-# Build artifacts (will be rebuilt in the build)
 dist
 
-# Documentation and non-source directories
 docs
 examples
 e2e
@@ -16,12 +13,10 @@ tutorial
 starter-kits
 assets
 
-# IDE / editor config
 .idea
 .vscode
 .vim
 
-# Misc
 .turbo
 .next
 .nuxt
