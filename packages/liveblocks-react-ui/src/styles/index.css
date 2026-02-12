@@ -1750,28 +1750,35 @@
 
 .lb-avatar-stack {
   --lb-avatar-stack-size: 24px;
-  --lb-avatar-stack-overlap: 6px;
+  --lb-avatar-stack-overlap: calc(0.25 * var(--lb-avatar-stack-size));
+  --lb-avatar-stack-gap: 2px;
 
   display: flex;
   flex-direction: row;
+  isolation: isolate;
 }
 
 .lb-avatar-stack-avatar {
   position: relative;
+  z-index: calc(
+    var(--lb-avatar-stack-count) - var(--lb-avatar-stack-avatar-index)
+  );
   inline-size: var(--lb-avatar-stack-size);
   block-size: var(--lb-avatar-stack-size);
   margin-inline-end: calc(-1 * var(--lb-avatar-stack-overlap));
   border-radius: $lb-radius-full;
 
   &:where(:not(:first-child)) {
-    --lb-avatar-stack-cutout-size: calc(var(--lb-avatar-stack-size) / 2 + 2px);
+    --lb-avatar-stack-mask-size: calc(
+      var(--lb-avatar-stack-size) / 2 + var(--lb-avatar-stack-gap)
+    );
 
     mask-image: radial-gradient(
       circle at
         calc(var(--lb-avatar-stack-overlap) - var(--lb-avatar-stack-size) / 2)
         50%,
-      transparent var(--lb-avatar-stack-cutout-size),
-      black var(--lb-avatar-stack-cutout-size)
+      transparent var(--lb-avatar-stack-mask-size),
+      black calc(var(--lb-avatar-stack-mask-size) + 0.375px)
     );
   }
 }

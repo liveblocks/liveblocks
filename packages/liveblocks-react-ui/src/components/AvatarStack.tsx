@@ -1,7 +1,7 @@
 "use client";
 
 import { useOthers, useSelf } from "@liveblocks/react";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import { forwardRef, useMemo } from "react";
 
 import {
@@ -31,7 +31,10 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
  * Displays a stack of avatars for the users currently present in the room.
  */
 export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
-  ({ includeSelf = true, overrides, className, ...props }, forwardedRef) => {
+  (
+    { includeSelf = true, overrides, className, style, ...props },
+    forwardedRef
+  ) => {
     const $ = useOverrides(overrides);
     const otherIds = useOthers((others) => others.map((user) => user.id));
     const selfId = useSelf((self) => self.id);
@@ -48,10 +51,16 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
         <div
           className={cn("lb-root lb-avatar-stack", className)}
           dir={$.dir}
+          style={
+            {
+              "--lb-avatar-stack-count": userIds.length - 1,
+              ...style,
+            } as CSSProperties
+          }
           {...props}
           ref={forwardedRef}
         >
-          {userIds.map((userId) => {
+          {userIds.map((userId, index) => {
             if (!userId) {
               return null;
             }
@@ -65,7 +74,13 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
                 side="top"
                 align="center"
               >
-                <Avatar userId={userId} className="lb-avatar-stack-avatar" />
+                <Avatar
+                  userId={userId}
+                  className="lb-avatar-stack-avatar"
+                  style={
+                    { "--lb-avatar-stack-avatar-index": index } as CSSProperties
+                  }
+                />
               </Tooltip>
             );
           })}

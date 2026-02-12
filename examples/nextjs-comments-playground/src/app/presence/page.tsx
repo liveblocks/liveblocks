@@ -12,7 +12,7 @@ function Presence() {
   return (
     <main className="presence-page">
       <header className="presence-toolbar">
-        <h1>Presence Demo</h1>
+        <h1>Presence</h1>
         <AvatarStack />
       </header>
 
