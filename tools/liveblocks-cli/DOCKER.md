@@ -5,8 +5,6 @@ Run the Liveblocks dev server in a container.
 ## Quick start
 
 ```bash
-docker pull ghcr.io/liveblocks/liveblocks/dev-server:latest
-
 docker run -p 1153:1153 ghcr.io/liveblocks/liveblocks/dev-server:latest
 ```
 
@@ -35,7 +33,7 @@ docker run -p 1153:1153 \
 
 ## Verifying image signatures
 
-Images are signed with [cosign](https://docs.sigstore.dev/cosign/overview/) using keyless (Sigstore OIDC) signing.
+Images are signed with [cosign](https://docs.sigstore.dev/cosign/) using keyless (Sigstore OIDC) signing.
 
 ### Verify the image signature
 
@@ -47,6 +45,8 @@ cosign verify \
 ```
 
 ### Verify the SBOM attestation
+
+Each image has an attached [SBOM](https://www.cisa.gov/sbom) (Software Bill of Materials) — a machine-readable inventory of every package included in the image. You can verify its authenticity:
 
 ```bash
 cosign verify-attestation \

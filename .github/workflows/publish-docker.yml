@@ -4,10 +4,19 @@ on:
   push:
     tags:
       - "v*"
+  pull_request:
+    paths:
+      - "tools/liveblocks-cli/Dockerfile"
+      - "tools/liveblocks-cli/docker-healthcheck.ts"
+      - ".github/workflows/publish-docker.yml"
   schedule:
     # Nightly build at 03:00 UTC
     - cron: "0 3 * * *"
   workflow_dispatch:
+    inputs:
+      cli_version:
+        description: "CLI version to install from npm (e.g. 1.0.3)"
+        required: true
 
 env:
   REGISTRY: ghcr.io
@@ -43,12 +52,19 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.cli_version }}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
           else
-            echo "version=nightly" >> "$GITHUB_OUTPUT"
+            echo "version=latest" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -73,7 +89,7 @@ jobs:
           context: .
           file: tools/liveblocks-cli/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -85,6 +101,7 @@ jobs:
       # --- Security scanning ---
 
       - name: Vulnerability scan with Grype
+        if: github.event_name != 'pull_request'
         uses: anchore/scan-action@v6
         id: grype
         with:
@@ -94,13 +111,14 @@ jobs:
 
       - name: Upload Grype SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
 
       # --- SBOM generation ---
 
       - name: Generate SBOM with Syft
+        if: github.event_name != 'pull_request'
         uses: anchore/sbom-action@v0
         id: sbom
         with:
@@ -111,14 +129,17 @@ jobs:
       # --- Signing and attestation ---
 
       - name: Install cosign
+        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image with cosign
+        if: github.event_name != 'pull_request'
         run: |
           cosign sign --yes \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
       - name: Attest SBOM with cosign
+        if: github.event_name != 'pull_request'
         run: |
           cosign attest --yes \
             --predicate sbom.cdx.json \
@@ -126,6 +147,7 @@ jobs:
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
       - name: Upload SBOM artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx
