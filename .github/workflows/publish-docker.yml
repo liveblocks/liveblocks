@@ -86,8 +86,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: tools/liveblocks-cli/Dockerfile
+          context: tools/liveblocks-cli
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
