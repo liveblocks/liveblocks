@@ -14,9 +14,10 @@ The server is ready when `curl http://localhost:1153/health` returns `{"status":
 
 ## Configuration
 
-| Variable | Default | Description                     |
-| -------- | ------- | ------------------------------- |
-| `PORT`   | `1153`  | Port the dev server listens on  |
+| Variable | Default   | Description                     |
+| -------- | --------- | ------------------------------- |
+| `PORT`   | `1153`    | Port the dev server listens on  |
+| `HOST`   | `0.0.0.0` | Host to bind to                 |
 
 ```bash
 docker run -p 8080:8080 -e PORT=8080 ghcr.io/liveblocks/liveblocks/dev-server:latest
