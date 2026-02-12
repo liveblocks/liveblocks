@@ -1784,6 +1784,33 @@
 }
 
 /*************************************
+ *           Users Tooltip           *
+ *************************************/
+
+.lb-users-tooltip-list {
+  --lb-users-tooltip-avatar-size: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.625 * var(--lb-spacing));
+  margin: 0;
+  padding-inline: 0;
+  padding-block: calc(0.75 * var(--lb-spacing));
+  list-style: none;
+}
+
+.lb-users-tooltip-list-item {
+  display: flex;
+  gap: calc(0.625 * var(--lb-spacing));
+  align-items: center;
+
+  :where(.lb-avatar) {
+    inline-size: var(--lb-users-tooltip-avatar-size);
+    block-size: var(--lb-users-tooltip-avatar-size);
+  }
+}
+
+/*************************************
  *            Attachments            *
  *************************************/
 

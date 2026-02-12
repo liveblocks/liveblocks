@@ -13,12 +13,13 @@ function Presence() {
     <main className="presence-page">
       <header className="presence-toolbar">
         <h1>Presence</h1>
-        <AvatarStack />
+        <AvatarStack max={1} />
       </header>
 
       <div className="presence-content">
         <AvatarStack
           style={{ "--lb-avatar-stack-size": "48px" } as CSSProperties}
+          max={1}
         />
         <p className="hint">Open this page in multiple tabs to see presence</p>
       </div>
