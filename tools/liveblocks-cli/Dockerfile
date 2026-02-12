@@ -36,4 +36,4 @@ EXPOSE 1153
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
   CMD ["bun", "run", "docker-healthcheck.ts"]
 
-ENTRYPOINT ["/bin/sh", "-c", "exec bun run node_modules/liveblocks/dist/index.js dev${PORT:+ --port $PORT}"]
+ENTRYPOINT ["/bin/sh", "-c", "exec bun run node_modules/liveblocks/dist/index.js dev${PORT:+ --port $PORT}${HOST:+ --host $HOST}"]

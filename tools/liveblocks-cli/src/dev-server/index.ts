@@ -79,7 +79,7 @@ const dev: SubCommand = {
 
   run(_argv) {
     const args = parse(_argv, {
-      string: ["port"],
+      string: ["port", "host"],
       boolean: ["help"],
       default: { port: DEFAULT_PORT },
       alias: { h: "help", p: "port" },
@@ -94,14 +94,19 @@ const dev: SubCommand = {
       console.log(
         `  -p, --port   Port to listen on (default: ${DEFAULT_PORT})`
       );
+      console.log(
+        "      --host   Host to bind to (default: localhost)"
+      );
       console.log("  -h, --help   Show this help message");
       return;
     }
 
     const port = Number(args.port) || DEFAULT_PORT;
+    const hostname = args.host || "localhost";
     const server = Bun.serve<SocketData>({
       hostname: "localhost",
       port,
+      hostname,
 
       async fetch(req, server) {
         // WebSocket bypass - handle upgrades directly
