@@ -1,0 +1,36 @@
+# Git
+.git
+
+# Dependencies (will be installed fresh in the build)
+node_modules
+
+# Build artifacts (will be rebuilt in the build)
+dist
+
+# Documentation and non-source directories
+docs
+examples
+e2e
+guides
+tutorial
+starter-kits
+assets
+
+# IDE / editor config
+.idea
+.vscode
+.vim
+
+# Misc
+.turbo
+.next
+.nuxt
+.vercel
+coverage
+*.tsbuildinfo
+*.pem
+.DS_Store
+.env*
+.claude
+CLAUDE.local.md
+.mcp.json
