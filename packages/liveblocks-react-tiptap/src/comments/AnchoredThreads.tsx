@@ -209,14 +209,15 @@ export function AnchoredThreads({
     >
       {orderedThreads.map(({ thread, position }) => {
         // In blocknote, it's possible for this to be undefined
-        if (!editor.view) {
+        if (!editor.view || editor.view.isDestroyed) {
           return null;
         }
         const coords = editor.view.coordsAtPos(
           Math.min(position.from, editor.state.doc.content.size - 1)
         );
         const rect = getRectFromCoords(coords);
-        const offset = editor.options.element?.getBoundingClientRect().top ?? 0;
+
+        const offset = editor.view.dom.getBoundingClientRect().top ?? 0;
 
         let top = rect.top - offset;
 
