@@ -68,6 +68,7 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUiConfig } from "../../config";
+import { useCurrentUserId } from "../../shared";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -84,6 +85,7 @@ import { requestSubmit } from "../../utils/request-submit";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useObservable } from "../../utils/use-observable";
+import { usePreResolveUser } from "../../utils/use-pre-resolve-user";
 import { useRefs } from "../../utils/use-refs";
 import { withEmptyClearFormatting } from "../slate/plugins/empty-clear-formatting";
 import { withNormalize } from "../slate/plugins/normalize";
@@ -875,6 +877,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       isDisabled: isComposerDisabled,
       isFocused,
     } = useComposer();
+    const currentUserId = useCurrentUserId();
+    const preResolveUser = usePreResolveUser();
     const isDisabled = isComposerDisabled || disabled;
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
@@ -1074,9 +1078,15 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
         if (!event.isDefaultPrevented()) {
           setFocused(true);
+
+          // Pre-resolve the current user's info the first time
+          // they focus a composer editor.
+          if (currentUserId) {
+            preResolveUser(currentUserId);
+          }
         }
       },
-      [onFocus, setFocused]
+      [onFocus, setFocused, currentUserId, preResolveUser]
     );
 
     const handleBlur = useCallback(
