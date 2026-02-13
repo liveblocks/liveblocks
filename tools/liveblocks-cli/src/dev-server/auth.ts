@@ -15,8 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { Permission } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
 import type { CreateTicketOptions } from "@liveblocks/server";
 import { ProtocolVersion } from "@liveblocks/server";
 
@@ -86,15 +85,35 @@ export function authorizeWebSocket(
       return null; // TODO Error with a clear/helpful message
     }
 
-    return [
-      roomId,
-      {
-        version,
-        id: payload.uid,
-        info: payload.ui,
-        scopes: getScopesForRoom(roomId, payload.perms),
-      },
-    ];
+    if (payload.k === "acc") {
+      const scopes = getScopesForRoom(roomId, payload.perms);
+      if (scopes.length === 0) {
+        return null;
+      }
+
+      return [
+        roomId,
+        {
+          version,
+          id: payload.uid,
+          info: payload.ui,
+          scopes,
+        },
+      ];
+    } else if (payload.k === "id") {
+      // TODO Warning that ID tokens are not fully supported yet
+      return [
+        roomId,
+        {
+          version,
+          id: payload.uid,
+          info: payload.ui,
+          scopes: [Permission.Write],
+        },
+      ];
+    }
+
+    return null; // TODO Error with a clear/helpful message
   }
 
   // Otherwise check if ?pubkey= is present (public key auth - anonymous user)

@@ -3,8 +3,9 @@
     // Add Bun type definitions
     "types": ["bun-types"],
 
-    // Enable latest features
-    "lib": ["esnext"],
+    // "dom" is needed so bun-types uses standard DOM types for Request/Headers
+    // instead of falling back to undici-types (which is incomplete)
+    "lib": ["esnext", "dom"],
     "target": "esnext",
 
     "noEmit": true,

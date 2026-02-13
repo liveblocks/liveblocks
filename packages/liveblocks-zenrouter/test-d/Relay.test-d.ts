@@ -1,5 +1,5 @@
 import { expectType } from "tsd";
-import { ZenRelay, ZenRouter } from "zenrouter";
+import { ZenRelay, ZenRouter } from "@liveblocks/zenrouter";
 
 declare const req: Request;
 

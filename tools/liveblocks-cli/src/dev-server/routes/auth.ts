@@ -16,39 +16,19 @@
  */
 
 import { Permission } from "@liveblocks/core";
+import { ZenRouter } from "@liveblocks/zenrouter";
 import { array, enum_, object, optional, record, string } from "decoders";
-import { json, ZenRouter } from "zenrouter";
 
+import { authorizeSecretKey } from "../lib/auth";
 import { userInfo } from "../lib/decoders";
 import { createJwtLite } from "../lib/jwt-lite";
+import { NOT_IMPLEMENTED } from "../responses";
 
 // Valid permission values (from @liveblocks/core Permission enum)
 const permission = enum_(Permission);
 
 export const zen = new ZenRouter({
-  authorize: ({ req }) => {
-    const header = req.headers.get("Authorization");
-    if (header === "Bearer sk_localdev") {
-      return true;
-    }
-
-    // Provide better error messages
-    if (!header)
-      throw json({ error: "Unauthorized", message: "Missing secret key" }, 401);
-
-    if (header.startsWith("Bearer "))
-      throw json(
-        {
-          error: "Forbidden",
-          message:
-            "Invalid secret key. The Liveblocks dev server can only be used with 'sk_localdev' as a secret key",
-        },
-        403
-      );
-
-    // If it's not a common mistake, return a generic 403 response
-    return false;
-  },
+  authorize: ({ req }) => authorizeSecretKey(req),
 });
 
 zen.route(
@@ -72,13 +52,8 @@ zen.route(
   }
 );
 
-zen.route("POST /v2/identify-user", () => {
-  throw json(
-    {
-      error: "Not supported",
-      message:
-        "ID tokens are not supported with the local dev server. To develop locally, use access tokens instead (via POST /v2/authorize-user).",
-    },
-    404
-  );
-});
+zen.route("POST /v2/identify-user", () =>
+  NOT_IMPLEMENTED(
+    "ID tokens are not supported with the local dev server. To develop locally, use access tokens instead (via POST /v2/authorize-user)."
+  )
+);
