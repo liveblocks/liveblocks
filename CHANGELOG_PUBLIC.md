@@ -20,6 +20,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 7 (2026-02-13)
 
+## v3.13.5
+
+### `@liveblocks/react-blocknote`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which was causing change source to be incorrectly set in BlockNote.
+
 ## Documentation
 
 - Add `.md` to the end of any docs page to view a markdown representation of it.
@@ -32,7 +38,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nimeshnayaju
 
 # Week 6 (2026-02-06)
 
