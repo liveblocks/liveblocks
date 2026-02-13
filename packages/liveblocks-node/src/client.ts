@@ -702,6 +702,8 @@ function inflateWebKnowledgeSourceLink(
 export class Liveblocks {
   readonly #secret: string;
   readonly #baseUrl: URL;
+  /** Only used as a hint to produce better error messages. */
+  readonly #localDev: boolean;
 
   /**
    * Interact with the Liveblocks API from your Node.js backend.
@@ -712,6 +714,8 @@ export class Liveblocks {
     assertSecretKey(secret, "secret");
     this.#secret = secret;
     this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
+    this.#localDev =
+      !!options.baseUrl && /^https?:\/\/localhost[:/]/.test(options.baseUrl);
   }
 
   async #post(
@@ -824,7 +828,8 @@ export class Liveblocks {
       this.#post.bind(this),
       userId,
       options?.userInfo,
-      options?.organizationId ?? options?.tenantId
+      options?.organizationId ?? options?.tenantId,
+      this.#localDev
     );
   }
 
@@ -914,10 +919,12 @@ export class Liveblocks {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body: `Call to ${urljoin(
-          this.#baseUrl,
-          path
-        )} failed. See "error" for more information.`,
+        body: this.#localDev
+          ? "Could not connect to your Liveblocks dev server. Is it running?"
+          : `Call to ${urljoin(
+              this.#baseUrl,
+              path
+            )} failed. See "error" for more information.`,
         error: er as Error | undefined,
       };
     }

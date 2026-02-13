@@ -91,6 +91,8 @@ export class Session {
   #userId: string;
   #userInfo?: IUserInfo;
   #organizationId?: string;
+  /** Only used as a hint to produce better error messages. */
+  #localDev: boolean;
   #sealed = false;
   readonly #permissions: Map<string, Set<Permission>> = new Map();
 
@@ -99,7 +101,8 @@ export class Session {
     postFn: PostFn,
     userId: string,
     userInfo?: IUserInfo,
-    organizationId?: string
+    organizationId?: string,
+    localDev?: boolean
   ) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
@@ -107,6 +110,7 @@ export class Session {
     this.#userId = userId;
     this.#userInfo = userInfo;
     this.#organizationId = organizationId;
+    this.#localDev = localDev ?? false;
   }
 
   #getOrCreate(roomId: string): Set<Permission> {
@@ -218,7 +222,10 @@ export class Session {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body: 'Call to /v2/authorize-user failed. See "error" for more information.',
+        body:
+          this.#localDev
+            ? "Could not connect to your Liveblocks dev server. Is it running?"
+            : 'Call to /v2/authorize-user failed. See "error" for more information.',
         error: er as Error | undefined,
       };
     }
