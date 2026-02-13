@@ -50,3 +50,13 @@ npx turbo build && env HEADLESS=1 playwright test --retries=5 --
 # Documentation
 
 All documentation lives in the `docs/` directory, as Markdown files.
+
+# Packages maintained elsewhere
+
+The following packages are primarily maintained from our backend monorepo for
+ease of changes. If you have access to the Liveblocks backend repo, avoid making
+changes to them directly here — prefer editing the source in the backend repo.
+
+- `packages/liveblocks-server`
+- `packages/liveblocks-zenrouter`
+- `tools/liveblocks-cli`
