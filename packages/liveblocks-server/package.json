@@ -1,0 +1,66 @@
+{
+  "name": "@liveblocks/server",
+  "version": "1.0.3",
+  "description": "Liveblocks backend server foundation.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "keywords": [
+    "liveblocks",
+    "multiplayer",
+    "live-cursors",
+    "collaborative"
+  ],
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "format": "(eslint --color --fix src/ test/ || true) && prettier --write src/ test/",
+    "lint": "eslint --color src/ test/",
+    "lint:package": "publint --strict && attw --pack",
+    "test": "vitest run --color",
+    "test:watch": "vitest watch --color",
+    "test:types": "tsd",
+    "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.js"
+  },
+  "license": "AGPL-3.0-or-later",
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "eslint-plugin-license-header": "^0.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-server"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@liveblocks/core": "3.14.0-rc1",
+    "async-mutex": "^0.4.0",
+    "decoders": "^2.8.0-1",
+    "itertools": "^2.3.2",
+    "js-base64": "^3.7.5",
+    "nanoid": "^3",
+    "yjs": "^13.6.10"
+  }
+}

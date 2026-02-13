@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // Add Bun type definitions
+    "types": ["bun-types"],
+
+    // "dom" is needed so bun-types uses standard DOM types for Request/Headers
+    // instead of falling back to undici-types (which is incomplete)
+    "lib": ["esnext", "dom"],
+    "target": "esnext",
+
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+
+    // Best practices
+    "alwaysStrict": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
+}

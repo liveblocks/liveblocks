@@ -5,7 +5,10 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "!packages/liveblocks-server",
+    "!packages/liveblocks-zenrouter",
     "tools/*",
+    "!tools/liveblocks-cli",
     "e2e/next-ai-kitchen-sink",
     "e2e/next-sandbox",
     "e2e/node-sandbox"
