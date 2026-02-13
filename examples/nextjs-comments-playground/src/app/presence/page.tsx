@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -11,16 +12,28 @@ import { ErrorBoundary } from "react-error-boundary";
 function Presence() {
   return (
     <main className="min-h-screen max-w-none py-0 gap-0 flex flex-col">
-      <header className="fixed top-0 left-0 right-0 flex items-center justify-between py-4 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <h1 className="text-lg text-gray-900 dark:text-white">Presence</h1>
+      <header className="fixed top-0 left-0 right-0 flex items-center justify-between py-4 px-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          >
+            ← Home
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Presence
+          </h1>
+        </div>
         <AvatarStack />
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-16">
-        <AvatarStack className="[--lb-avatar-stack-size:48px]" />
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Open this page in multiple tabs to see presence
-        </p>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-8 flex flex-col items-center gap-6">
+          <AvatarStack className="[--lb-avatar-stack-size:48px]" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Open this page in multiple tabs to see presence
+          </p>
+        </div>
       </div>
     </main>
   );

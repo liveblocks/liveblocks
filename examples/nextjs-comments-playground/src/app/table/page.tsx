@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
@@ -21,12 +22,20 @@ function Example() {
   const { threads } = useThreads();
 
   return (
-    <main className="flex flex-col gap-4 py-8 px-4 mx-auto max-w-[800px]">
-      <h1 className="text-2xl text-gray-900 dark:text-white">Task Tracker</h1>
+    <main className="flex flex-col gap-4 py-10 px-4 mx-auto max-w-[800px]">
+      <Link
+        href="/"
+        className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+      >
+        ← Back to home
+      </Link>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        Task Tracker
+      </h1>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Click any cell to add or view a comment
       </p>
-      <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow">
+      <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
         <thead>
           <tr>
             <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">

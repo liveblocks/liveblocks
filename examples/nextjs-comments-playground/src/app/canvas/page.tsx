@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
@@ -18,14 +19,22 @@ function Canvas() {
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
 
   return (
-    <main className="flex flex-col gap-4 py-8 px-4 mx-auto max-w-[1200px]">
-      <h1 className="text-2xl text-gray-900 dark:text-white">Design Review</h1>
+    <main className="flex flex-col gap-4 py-10 px-4 mx-auto max-w-[1200px]">
+      <Link
+        href="/"
+        className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+      >
+        ← Back to home
+      </Link>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        Design Review
+      </h1>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Click anywhere to leave a comment
       </p>
 
       <div
-        className="relative h-[500px] bg-white dark:bg-gray-800 rounded-xl cursor-crosshair shadow"
+        className="relative h-[500px] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 cursor-crosshair shadow-sm"
         onClick={(e) => {
           if ((e.target as Element).closest("[data-pin]")) return;
           const rect = e.currentTarget.getBoundingClientRect();
