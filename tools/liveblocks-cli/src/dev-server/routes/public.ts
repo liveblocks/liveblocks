@@ -28,4 +28,6 @@ export const zen = new ZenRouter({
 zen.route("GET /v7", () => abort(426));
 zen.route("GET /v8", () => abort(426));
 
+zen.route("GET /health", () => Response.json({ status: "ok" }));
+
 zen.route("GET /", () => html(welcomeHtml as unknown as string));

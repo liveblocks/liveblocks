@@ -79,9 +79,8 @@ const dev: SubCommand = {
 
   run(_argv) {
     const args = parse(_argv, {
-      string: ["port"],
+      string: ["port", "host"],
       boolean: ["help"],
-      default: { port: DEFAULT_PORT },
       alias: { h: "help", p: "port" },
     });
 
@@ -92,15 +91,20 @@ const dev: SubCommand = {
       console.log();
       console.log("Options:");
       console.log(
-        `  -p, --port   Port to listen on (default: ${DEFAULT_PORT})`
+        `  -p, --port   Port to listen on (env: PORT, default: ${DEFAULT_PORT})`
+      );
+      console.log(
+        "      --host   Host to bind to (env: HOST, default: localhost)"
       );
       console.log("  -h, --help   Show this help message");
       return;
     }
 
-    const port = Number(args.port) || DEFAULT_PORT;
+    // Precedence: CLI flag > env var > default
+    const port = Number(args.port) || Number(process.env.PORT) || DEFAULT_PORT;
+    const hostname = args.host || process.env.HOST || "localhost";
     const server = Bun.serve<SocketData>({
-      hostname: "localhost",
+      hostname,
       port,
 
       async fetch(req, server) {
