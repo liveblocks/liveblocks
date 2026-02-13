@@ -1200,6 +1200,23 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
+  test("undoing while history is paused", () => {
+    const { room } = createTestableRoom({});
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+    expect(room.getPresence()).toEqual({ x: 1 });
+
+    room.history.pause();
+    room.updatePresence({ x: 2 }, { addToHistory: true });
+    expect(room.getPresence()).toEqual({ x: 2 });
+
+    room.history.undo();
+
+    expect(room.getPresence()).toEqual({ x: 0 });
+    //                                      ^ NOTE: Without the .pause() call, this would be 1
+  });
+
   test("undo redo with presence that do not impact presence", () => {
     const { room } = createTestableRoom({});
     // room.connect();  // Seems not even needed?
