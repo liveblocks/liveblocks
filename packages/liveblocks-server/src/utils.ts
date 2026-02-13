@@ -19,6 +19,7 @@ import type { BaseUserMeta, JsonObject } from "@liveblocks/core";
 import { ServerMsgCode } from "@liveblocks/core";
 
 import type { RoomStateServerMsg } from "~/protocol";
+import type { LeasedSession } from "~/types";
 
 /**
  * Concatenates multiple Uint8Arrays into a single Uint8Array.
@@ -49,4 +50,13 @@ export function makeRoomStateMsg(
     users,
     meta: publicMeta ?? {},
   };
+}
+
+/**
+ * Check if a leased session is expired.
+ * Returns true if the current time is greater than or equal to updatedAt + ttl.
+ */
+export function isLeasedSessionExpired(leasedSession: LeasedSession): boolean {
+  const now = Date.now();
+  return now >= leasedSession.updatedAt + leasedSession.ttl;
 }

@@ -153,7 +153,7 @@ const dev: SubCommand = {
 
       websocket: {
         // The socket is opened
-        open(ws): void {
+        async open(ws): Promise<void> {
           const { refuseConnection, room, ticket } = ws.data;
 
           // If this connection should be refused, close it immediately
@@ -163,7 +163,7 @@ const dev: SubCommand = {
           }
 
           if (room && ticket) {
-            room.startBrowserSession(ticket, ws);
+            await room.startBrowserSession(ticket, ws);
           }
         },
 

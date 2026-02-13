@@ -17,6 +17,7 @@
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import type {
+  IUserInfo,
   Json,
   JsonObject,
   NodeStream,
@@ -31,6 +32,7 @@ import type {
   IReadableSnapshot,
   IStorageDriver,
   IStorageDriverNodeAPI,
+  LeasedSession,
   Logger,
   Pos,
   YDocId,
@@ -72,6 +74,15 @@ type YdocsRow = {
   doc_id: string;
   key: string;
   data: Uint8Array;
+};
+
+type LeasedSessionRow = {
+  session_id: string;
+  jpresence: string; // JSON
+  updated_at: number; // timestamp in milliseconds
+  juserinfo: string; // JSON (IUserInfo)
+  ttl: number; // milliseconds
+  actor_id: number;
 };
 
 /**
@@ -342,6 +353,21 @@ export class BunSQLiteDriver implements IStorageDriver {
         data    BLOB NOT NULL,
         PRIMARY KEY (doc_id, key)
       )`
+    );
+
+    // Create a table for leased sessions
+    db.run(
+      `CREATE TABLE IF NOT EXISTS leased_sessions (
+        session_id  TEXT NOT NULL PRIMARY KEY,
+        jpresence   TEXT NOT NULL,
+        updated_at  INTEGER NOT NULL,
+        juserinfo   TEXT NOT NULL,
+        ttl         INTEGER NOT NULL,
+        actor_id    INTEGER NOT NULL
+      )`
+    );
+    db.run(
+      "CREATE INDEX IF NOT EXISTS idx_leased_sessions_expiry ON leased_sessions(updated_at, ttl)"
     );
 
     this.db = db;
@@ -711,6 +737,72 @@ export class BunSQLiteDriver implements IStorageDriver {
   /** @private Only use this in unit tests, never in production. */
   DANGEROUSLY_wipe_all_y_updates() {
     this.db.query("DELETE FROM ydocs").run(); // spicey
+  }
+
+  list_leased_sessions(): Iterable<[string, LeasedSession]> {
+    const rows = this.db
+      .query<LeasedSessionRow, []>(
+        "SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions"
+      )
+      .all();
+    return Array.from(rows, (row) => [
+      row.session_id,
+      {
+        sessionId: row.session_id,
+        presence: tryParseJson<Json>(row.jpresence) ?? null,
+        updatedAt: row.updated_at,
+        info: tryParseJson<IUserInfo>(row.juserinfo) ?? { name: "" },
+        ttl: row.ttl,
+        actorId: row.actor_id,
+      },
+    ]);
+  }
+
+  get_leased_session(sessionId: string): LeasedSession | undefined {
+    const row = this.db
+      .query<LeasedSessionRow, [string]>(
+        "SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions WHERE session_id = ?"
+      )
+      .get(sessionId) as LeasedSessionRow | null | undefined;
+    if (row === undefined || row === null) {
+      return undefined;
+    }
+    return {
+      sessionId: row.session_id,
+      presence: tryParseJson<Json>(row.jpresence) ?? null,
+      updatedAt: row.updated_at,
+      info: tryParseJson<IUserInfo>(row.juserinfo) ?? { name: "" },
+      ttl: row.ttl,
+      actorId: row.actor_id,
+    };
+  }
+
+  put_leased_session(session: LeasedSession): void {
+    this.db
+      .query(
+        `INSERT INTO leased_sessions (session_id, jpresence, updated_at, juserinfo, ttl, actor_id)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (session_id) DO UPDATE SET
+           jpresence = excluded.jpresence,
+           updated_at = excluded.updated_at,
+           juserinfo = excluded.juserinfo,
+           ttl = excluded.ttl,
+           actor_id = excluded.actor_id`
+      )
+      .run(
+        session.sessionId,
+        JSON.stringify(session.presence),
+        session.updatedAt,
+        JSON.stringify(session.info),
+        session.ttl,
+        session.actorId
+      );
+  }
+
+  delete_leased_session(sessionId: string): void {
+    this.db
+      .query("DELETE FROM leased_sessions WHERE session_id = ?")
+      .run(sessionId);
   }
 
   close() {

@@ -28,7 +28,7 @@ import type {
 
 import type { YDocId } from "~/decoders/y-types";
 import type { Logger } from "~/lib/Logger";
-import type { Pos } from "~/types";
+import type { LeasedSession, Pos } from "~/types";
 
 /**
  * An isolated, read-only copy of the storage document at a point in time.
@@ -263,4 +263,36 @@ export interface IStorageDriver {
    * @private Test-only: never use in production.
    */
   DANGEROUSLY_wipe_all_y_updates(): Awaitable<void>;
+
+  // ---------------------------------------------------------------------------
+  // Leased Session APIs (key-value store for leased sessions)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List all leased sessions.
+   * Note: Does NOT filter by expiration - returns all stored sessions.
+   * Expiration logic is handled at the Room.ts level.
+   */
+  list_leased_sessions(): Awaitable<
+    Iterable<[sessionId: string, session: LeasedSession]>
+  >;
+
+  /**
+   * Get a specific leased session by session ID.
+   * Note: Does NOT check expiration - returns the stored session if it exists.
+   * Expiration logic is handled at the Room.ts level.
+   */
+  get_leased_session(sessionId: string): Awaitable<LeasedSession | undefined>;
+
+  /**
+   * Create or update a leased session.
+   * Note: This is a full replace operation - the caller is responsible for
+   * merging/patching presence if needed.
+   */
+  put_leased_session(session: LeasedSession): Awaitable<void>;
+
+  /**
+   * Delete a leased session by session ID.
+   */
+  delete_leased_session(sessionId: string): Awaitable<void>;
 }

@@ -34,8 +34,14 @@ export type { MetadataDB } from "~/MetadataDB";
 export { makeMetadataDB } from "~/MetadataDB";
 export * from "~/protocol";
 export * from "~/Room";
-export type { Pos } from "~/types";
-export { concatUint8Arrays } from "~/utils";
+export type {
+  LeasedSession,
+  NodeMap,
+  NodeStream,
+  NodeTuple,
+  Pos,
+} from "~/types";
+export { concatUint8Arrays, isLeasedSessionExpired } from "~/utils";
 
 // YYY Maybe isolate logger into a completely separate package, i.e. @liveblocks/logger?
 export * from "~/lib/Logger";
