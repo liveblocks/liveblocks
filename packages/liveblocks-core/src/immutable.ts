@@ -81,10 +81,12 @@ export function lsonToJson(value: Lson): Json {
  *
  * As such, the returned result will not contain any Json arrays or Json
  * objects anymore.
+ *
+ * @internal
  */
-function deepLiveify(value: Lson | LsonObject): Lson {
+export function _deepLiveify(value: Lson | LsonObject): Lson {
   if (Array.isArray(value)) {
-    return new LiveList(value.map(deepLiveify));
+    return new LiveList(value.map(_deepLiveify));
   } else if (isPlainObject(value)) {
     const init: LsonObject = {};
     for (const key in value) {
@@ -92,7 +94,7 @@ function deepLiveify(value: Lson | LsonObject): Lson {
       if (val === undefined) {
         continue;
       }
-      init[key] = deepLiveify(val);
+      init[key] = _deepLiveify(val);
     }
     return new LiveObject(init);
   } else {
@@ -152,7 +154,7 @@ export function patchLiveList<T extends Lson>(
   if (i > prevEnd) {
     if (i <= nextEnd) {
       while (i <= nextEnd) {
-        liveList.insert(deepLiveify(next[i]) as T, i);
+        liveList.insert(_deepLiveify(next[i]) as T, i);
         //                                   ^^^^ FIXME Not entirely true
         i++;
       }
@@ -176,14 +178,14 @@ export function patchLiveList<T extends Lson>(
       ) {
         patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.set(i, deepLiveify(nextNode) as T);
+        liveList.set(i, _deepLiveify(nextNode) as T);
         //                                    ^^^^ FIXME Not entirely true
       }
 
       i++;
     }
     while (i <= nextEnd) {
-      liveList.insert(deepLiveify(next[i]) as T, i);
+      liveList.insert(_deepLiveify(next[i]) as T, i);
       //                                   ^^^^ FIXME Not entirely true
       i++;
     }
@@ -217,7 +219,7 @@ export function patchLiveObjectKey<
   if (next === undefined) {
     liveObject.delete(key);
   } else if (value === undefined) {
-    liveObject.set(key, deepLiveify(next) as O[K]);
+    liveObject.set(key, _deepLiveify(next) as O[K]);
     //                                    ^^^^^^^ FIXME Not entirely true
   } else if (prev === next) {
     return;
@@ -230,7 +232,7 @@ export function patchLiveObjectKey<
   ) {
     patchLiveObject(value, prev, next);
   } else {
-    liveObject.set(key, deepLiveify(next) as O[K]);
+    liveObject.set(key, _deepLiveify(next) as O[K]);
     //                                    ^^^^^^^ FIXME Not entirely true
   }
 }

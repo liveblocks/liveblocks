@@ -189,6 +189,7 @@ export {
   withTimeout,
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
+export { generateOpsFromJson } from "./mutations";
 export type {
   ContextualPromptContext,
   ContextualPromptResponse,
