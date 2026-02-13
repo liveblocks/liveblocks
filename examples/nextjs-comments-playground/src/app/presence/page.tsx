@@ -1,6 +1,6 @@
 "use client";
 
-import { CSSProperties, useMemo } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
@@ -10,18 +10,17 @@ import { ErrorBoundary } from "react-error-boundary";
 
 function Presence() {
   return (
-    <main className="presence-page">
-      <header className="presence-toolbar">
-        <h1>Presence</h1>
-        <AvatarStack max={1} />
+    <main className="min-h-screen max-w-none py-0 gap-0 flex flex-col">
+      <header className="fixed top-0 left-0 right-0 flex items-center justify-between py-4 px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <h1 className="text-lg text-gray-900 dark:text-white">Presence</h1>
+        <AvatarStack />
       </header>
 
-      <div className="presence-content">
-        <AvatarStack
-          style={{ "--lb-avatar-stack-size": "48px" } as CSSProperties}
-          max={1}
-        />
-        <p className="hint">Open this page in multiple tabs to see presence</p>
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-16">
+        <AvatarStack className="[--lb-avatar-stack-size:48px]" />
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Open this page in multiple tabs to see presence
+        </p>
       </div>
     </main>
   );
@@ -36,7 +35,9 @@ export default function Page() {
     <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
-          <div className="error">There was an error while connecting.</div>
+          <div className="absolute inset-0 w-screen h-screen flex place-content-center place-items-center text-gray-900 dark:text-white">
+            There was an error while connecting.
+          </div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>

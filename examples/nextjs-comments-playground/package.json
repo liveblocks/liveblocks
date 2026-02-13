@@ -19,9 +19,11 @@
     "react-error-boundary": "^4.0.13"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^20.4.10",
     "@types/react": "^18.3.27",
     "prettier": "^3.3.3",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.4.5"
   }
 }

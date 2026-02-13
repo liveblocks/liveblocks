@@ -21,20 +21,31 @@ function Example() {
   const { threads } = useThreads();
 
   return (
-    <main>
-      <h1>Task Tracker</h1>
-      <p className="hint">Click any cell to add or view a comment</p>
-      <table className="data-table">
+    <main className="flex flex-col gap-4 py-8 px-4 mx-auto max-w-[800px]">
+      <h1 className="text-2xl text-gray-900 dark:text-white">Task Tracker</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Click any cell to add or view a comment
+      </p>
+      <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow">
         <thead>
           <tr>
-            <th>Task</th>
-            <th>Status</th>
-            <th>Priority</th>
+            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+              Task
+            </th>
+            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+              Status
+            </th>
+            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+              Priority
+            </th>
           </tr>
         </thead>
         <tbody>
           {TABLE_DATA.map((row) => (
-            <tr key={row.id}>
+            <tr
+              key={row.id}
+              className="dark:hover:bg-gray-700 last:[&>td]:border-b-0"
+            >
               {COLUMNS.map((col) => {
                 const cellId = `${row.id}-${col}`;
                 const thread = threads.find(
@@ -42,14 +53,17 @@ function Example() {
                 );
 
                 return (
-                  <td key={cellId} className="table-cell">
-                    <div className="table-cell-inner">
-                      <span className="cell-content">{row[col]}</span>
+                  <td
+                    key={cellId}
+                    className="relative p-0 text-left border-b border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex items-center justify-between gap-2 py-3 px-4">
+                      <span className="flex-1 min-w-0">{row[col]}</span>
 
                       {thread ? (
                         <FloatingThread thread={thread}>
                           <button
-                            className="thread-indicator"
+                            className="flex items-center justify-center flex-shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-150"
                             data-has-thread=""
                           >
                             💬
@@ -57,7 +71,9 @@ function Example() {
                         </FloatingThread>
                       ) : (
                         <FloatingComposer metadata={{ cellId }}>
-                          <button className="thread-indicator">＋</button>
+                          <button className="flex items-center justify-center flex-shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150">
+                            ＋
+                          </button>
                         </FloatingComposer>
                       )}
                     </div>
@@ -81,7 +97,9 @@ export default function Page() {
     <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
-          <div className="error">There was an error while getting threads.</div>
+          <div className="absolute inset-0 w-screen h-screen flex place-content-center place-items-center text-gray-900 dark:text-white">
+            There was an error while getting threads.
+          </div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../../components/Loading";
@@ -16,54 +16,23 @@ function Canvas() {
   const { threads } = useThreads();
   const [newPin, setNewPin] = useState<{ x: number; y: number } | null>(null);
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
-  const [pendingPin, setPendingPin] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const prevThreadIdsRef = useRef<Set<string>>(new Set());
-
-  // When a new thread appears matching pending coordinates, open it
-  useEffect(() => {
-    if (!pendingPin) return;
-
-    const currentIds = new Set(threads.map((t) => t.id));
-    const newThreads = threads.filter(
-      (t) => !prevThreadIdsRef.current.has(t.id)
-    );
-
-    // Find a new thread that matches our pending pin coordinates
-    const matchingThread = newThreads.find(
-      (t) => t.metadata.x === pendingPin.x && t.metadata.y === pendingPin.y
-    );
-
-    if (matchingThread) {
-      setOpenThreadId(matchingThread.id);
-      setPendingPin(null);
-    }
-
-    prevThreadIdsRef.current = currentIds;
-  }, [threads, pendingPin]);
-
-  // Keep track of thread IDs even when not waiting for a pending pin
-  useEffect(() => {
-    prevThreadIdsRef.current = new Set(threads.map((t) => t.id));
-  }, [threads]);
 
   return (
-    <main className="canvas-page">
-      <h1>Design Review</h1>
-      <p className="hint">Click anywhere to leave a comment</p>
+    <main className="flex flex-col gap-4 py-8 px-4 mx-auto max-w-[1200px]">
+      <h1 className="text-2xl text-gray-900 dark:text-white">Design Review</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Click anywhere to leave a comment
+      </p>
 
       <div
-        className="canvas"
+        className="relative h-[500px] bg-white dark:bg-gray-800 rounded-xl cursor-crosshair shadow"
         onClick={(e) => {
-          if ((e.target as Element).closest(".pin")) return;
+          if ((e.target as Element).closest("[data-pin]")) return;
           const rect = e.currentTarget.getBoundingClientRect();
           setNewPin({ x: e.clientX - rect.left, y: e.clientY - rect.top });
           setOpenThreadId(null);
         }}
       >
-        {/* Existing threads */}
         {threads.map((thread) => (
           <FloatingThread
             key={thread.id}
@@ -74,7 +43,7 @@ function Canvas() {
             }
           >
             <CommentPin
-              className="pin"
+              data-pin
               userId={thread.comments[0]?.userId}
               style={{
                 position: "absolute",
@@ -85,21 +54,16 @@ function Canvas() {
           </FloatingThread>
         ))}
 
-        {/* New composer */}
         {newPin && (
           <FloatingComposer
             metadata={{ x: newPin.x, y: newPin.y }}
             open
             onOpenChange={(open: boolean) => !open && setNewPin(null)}
-            onComposerSubmit={() => {
-              // Store coordinates to match the new thread when it appears
-              setPendingPin({ x: newPin.x, y: newPin.y });
-              setNewPin(null);
-            }}
+            onComposerSubmit={() => setNewPin(null)}
             autoFocus
           >
             <CommentPin
-              className="pin"
+              data-pin
               style={{
                 position: "absolute",
                 left: newPin.x,
@@ -122,7 +86,9 @@ export default function Page() {
     <RoomProvider id={roomId}>
       <ErrorBoundary
         fallback={
-          <div className="error">There was an error while getting threads.</div>
+          <div className="absolute inset-0 w-screen h-screen flex place-content-center place-items-center text-gray-900 dark:text-white">
+            There was an error while getting threads.
+          </div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
