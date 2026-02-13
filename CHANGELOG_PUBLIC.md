@@ -18,6 +18,28 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 7 (2026-02-13)
+
+## v3.13.5
+
+### `@liveblocks/react-blocknote`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which was causing change source to be incorrectly set in BlockNote.
+
+## Documentation
+
+- Add `.md` to the end of any docs page to view a markdown representation of it.
+- This `.md` is mentioned as an `alternate` link on each docs page.
+- Fetching any docs page with a priority `text/markdown` header will return markdown.
+
+## Showcase
+
+- New item: [Multiplayer table](https://liveblocks.io/showcase/multiplayer-table).
+
+## Contributors
+
+ctnicholas, nimeshnayaju
+
 # Week 6 (2026-02-06)
 
 ## v3.13.4
