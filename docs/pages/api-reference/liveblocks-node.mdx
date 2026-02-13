@@ -1157,6 +1157,38 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
+#### Liveblocks.setPresence [#post-rooms-roomId-presence]
+
+Sets ephemeral presence for a user in a room without requiring a WebSocket
+connection. The presence data automatically expires after the specified TTL
+(time-to-live). This is useful for scenarios like showing an AI agent’s
+presence in a room. The presence is broadcast to all connected users in the
+room. This is a wrapper around the
+[Set Presence API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence)
+and returns no response on success.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {
+    status: "active",
+    cursor: { x: 100, y: 200 },
+  },
+  userInfo: {
+    name: "AI Assistant",
+    avatar: "https://example.com/avatar.png",
+  },
+  ttl: 60, // optional, 2–3599 seconds
+});
+```
+
+- **userId** (required): The ID of the user to set presence for.
+- **data** (required): Presence data as a JSON object.
+- **userInfo** (required): User information; `name` must be a non-empty string.
+  `avatar` and `color` are optional.
+- **ttl** (optional): Time-to-live in seconds (minimum 2, maximum 3599). Defaults to 60. After
+  this duration, the presence expires automatically.
+
 ### Groups
 
 Groups allow you to manage users for group mentions in comments and text

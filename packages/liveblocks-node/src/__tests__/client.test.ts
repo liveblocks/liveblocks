@@ -118,6 +118,9 @@ describe("client", () => {
     }),
     http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/prewarm`, () => {
       return new HttpResponse(null, { status: 204 });
+    }),
+    http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
+      return new HttpResponse(null, { status: 204 });
     })
   );
 
@@ -624,6 +627,65 @@ describe("client", () => {
       await expect(client.getActiveUsers("123")).resolves.toEqual({
         data: activeUsers,
       });
+    });
+  });
+
+  describe("set presence", () => {
+    test("should successfully set presence when receiving 204 response", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active", cursor: { x: 100, y: 200 } },
+          userInfo: {
+            name: "AI Assistant",
+            avatar: "https://example.com/avatar.png",
+          },
+          ttl: 60,
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    test("should handle optional ttl parameter", async () => {
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active" },
+          userInfo: { name: "AI Assistant" },
+        }),
+      ).resolves.toBeUndefined();
+    });
+
+    test("should throw LiveblocksError on failure", async () => {
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
+          return HttpResponse.json(
+            { error: "INVALID_REQUEST", message: "Invalid presence data" },
+            { status: 422 },
+          );
+        }),
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      try {
+        await client.setPresence("room-123", {
+          userId: "agent-ai",
+          data: { status: "active" },
+          userInfo: { name: "AI Assistant" },
+        });
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(422);
+          expect(err.message).toBe("Invalid presence data");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
     });
   });
 

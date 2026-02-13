@@ -757,6 +757,71 @@
         }
       }
     },
+    "/rooms/{roomId}/presence": {
+      "post": {
+        "summary": "Set ephemeral presence",
+        "description": "This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room.",
+        "tags": ["Room"],
+        "operationId": "post-rooms-roomId-presence",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPresence"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "userId": "agent-123",
+                    "data": {
+                      "status": "active",
+                      "cursor": {
+                        "x": 100,
+                        "y": 200
+                      }
+                    },
+                    "userInfo": {
+                      "name": "AI Assistant",
+                      "avatar": "https://example.org/images/agent123.jpg"
+                    },
+                    "ttl": 60
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Success. Presence was set for the user in the room."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/broadcast_event": {
       "post": {
         "summary": "Broadcast event to a room",
@@ -8513,6 +8578,47 @@
           }
         },
         "required": ["message"]
+      },
+      "SetPresence": {
+        "title": "SetPresence",
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID of the user to set presence for"
+          },
+          "data": {
+            "type": "object",
+            "description": "Presence data as a JSON object"
+          },
+          "userInfo": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Required name for the user (must be a non-empty string)"
+              },
+              "avatar": {
+                "type": "string",
+                "description": "Optional avatar URL for the user"
+              },
+              "color": {
+                "type": "string",
+                "description": "Optional color for the user"
+              }
+            },
+            "required": ["name"],
+            "description": "User information object with required name field"
+          },
+          "ttl": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 3599,
+            "description": "Time-to-live in seconds (minimum: 2, maximum: 3599). After this duration, the presence will automatically expire."
+          }
+        },
+        "required": ["userId", "data", "userInfo"]
       }
     },
     "securitySchemes": {
