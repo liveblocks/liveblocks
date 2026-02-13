@@ -13,6 +13,8 @@
     "@liveblocks/node": "file:../../packages/liveblocks-node",
     "@liveblocks/react": "file:../../packages/liveblocks-react",
     "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "ag-grid-community": "^35.1.0",
+    "ag-grid-react": "^35.1.0",
     "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

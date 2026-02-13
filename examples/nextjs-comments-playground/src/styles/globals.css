@@ -1,12 +1,11 @@
 @import "tailwindcss";
-
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
 @layer base {
   html,
   body {
-    @apply m-0 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white font-sans;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white font-sans;
   }
 }
 
@@ -18,4 +17,26 @@
   .lb-root {
     --lb-accent: #77f;
   }
+}
+
+/* Selected cells, to make cell presence work */
+.ag-cell-focus:not(.ag-cell-range-selected):focus-within,
+.ag-cell-range-single-cell,
+.ag-cell-range-single-cell.ag-cell-range-handle,
+.ag-context-menu-open .ag-cell-focus:not(.ag-cell-range-selected),
+.ag-context-menu-open
+  .ag-full-width-row.ag-row-focus
+  .ag-cell-wrapper.ag-row-group,
+.ag-full-width-row.ag-row-focus:focus .ag-cell-wrapper.ag-row-group {
+  border-width: 0px;
+  overflow: visible;
+  /* outline: 2px solid var(--ag-range-selection-border-color);
+  outline-offset: -2px; */
+}
+
+/* Non-selected cells, to make cell presence work */
+.ag-cell,
+.ag-full-width-row .ag-cell-wrapper.ag-row-group {
+  border-width: 0;
+  overflow: visible !important;
 }
