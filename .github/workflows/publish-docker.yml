@@ -20,7 +20,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/dev-server
+  IMAGE_NAME: liveblocks/cli
 
 jobs:
   build-and-push:
@@ -73,6 +73,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.url=https://github.com/liveblocks/liveblocks
+            org.opencontainers.image.source=https://github.com/liveblocks/liveblocks
           tags: |
             # Release tags: X.Y.Z, X.Y, latest
             type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
@@ -109,7 +112,7 @@ jobs:
           output-format: sarif
 
       - name: Upload Grype SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && github.event_name != 'pull_request'
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
