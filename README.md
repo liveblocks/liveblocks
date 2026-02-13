@@ -77,6 +77,12 @@ notifications, and more.
 - [Examples](https://liveblocks.io/examples) - [`/examples`](./examples)
 - [Changelog](https://liveblocks.io/changelog)
 
+## CI
+
+- [Dev Server Action](./.github/actions/dev-server) - Reusable GitHub Action
+  that installs Bun, builds the CLI, and starts the local dev server. Requires
+  `npm install` to have been run first.
+
 ## Community and support
 
 - [GitHub issues](https://github.com/liveblocks/liveblocks/issues) to file bugs

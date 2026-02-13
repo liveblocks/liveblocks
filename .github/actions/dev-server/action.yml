@@ -1,0 +1,37 @@
+name: "Start Liveblocks Dev Server"
+description: >
+  Installs Bun, builds the Liveblocks CLI, and starts the local dev server.
+  Prerequisite: npm install must have been run before using this action.
+
+inputs:
+  port:
+    description: "Port for the dev server to listen on"
+    required: false
+    default: "1153"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Bun
+      uses: oven-sh/setup-bun@v1
+
+    - name: Build Liveblocks CLI
+      shell: bash
+      run: npm run build -- --filter liveblocks
+
+    - name: Start dev server
+      shell: bash
+      run: |
+        bunx liveblocks dev --port ${{ inputs.port }} &
+
+        # Wait for the server to be ready
+        for i in $(seq 1 30); do
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:${{ inputs.port }}/health | grep -q "200"; then
+            echo "Dev server is up and responding on port ${{ inputs.port }}"
+            exit 0
+          fi
+          sleep 1
+        done
+
+        echo "Dev server failed to start within 30 seconds"
+        exit 1
