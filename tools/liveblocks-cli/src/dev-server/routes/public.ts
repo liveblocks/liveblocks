@@ -29,4 +29,11 @@ zen.route("GET /v7", () => abort(426));
 zen.route("GET /v8", () => abort(426));
 
 zen.route("GET /health", () => json({ status: "ok" }));
-zen.route("GET /", () => html(welcomeHtml as unknown as string));
+zen.route("GET /", () =>
+  html(
+    (welcomeHtml as unknown as string).replace(
+      "__VERSION__",
+      typeof __VERSION__ !== "undefined" ? __VERSION__ : "dev"
+    )
+  )
+);
