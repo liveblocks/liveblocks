@@ -44,7 +44,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "@testing-library/dom": "^10.4.0",
-    "msw": "^2.10.4",
+    "msw": "^2.11.6",
     "zustand": "^5.0.1"
   },
   "sideEffects": false,
