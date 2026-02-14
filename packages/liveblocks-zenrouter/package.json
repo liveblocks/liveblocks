@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zenrouter",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "An opinionated router library for building APIs following best practices.",
   "type": "module",
   "main": "./dist/index.js",
