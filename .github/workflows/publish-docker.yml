@@ -1,0 +1,157 @@
+name: Publish Docker image
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+    paths:
+      - "tools/liveblocks-cli/Dockerfile"
+      - "tools/liveblocks-cli/docker-healthcheck.ts"
+      - ".github/workflows/publish-docker.yml"
+  schedule:
+    # Nightly build at 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      cli_version:
+        description: "CLI version to install from npm (e.g. 1.0.3)"
+        required: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: liveblocks/cli
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Required for cosign keyless signing
+      security-events: write # Required for SARIF upload
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.cli_version }}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.url=https://github.com/liveblocks/liveblocks
+            org.opencontainers.image.source=https://github.com/liveblocks/liveblocks
+          tags: |
+            # Release tags: X.Y.Z, X.Y, latest
+            type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_release }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.is_release }}
+            # Nightly tags
+            type=raw,value=nightly,enable=${{ steps.version.outputs.is_release == 'false' }}
+            type=raw,value=nightly-{{date 'YYYYMMDD'}},enable=${{ steps.version.outputs.is_release == 'false' }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: tools/liveblocks-cli
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            CLI_VERSION=${{ steps.version.outputs.version }}
+            VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # --- Security scanning ---
+
+      - name: Vulnerability scan with Grype
+        if: github.event_name != 'pull_request'
+        uses: anchore/scan-action@v6
+        id: grype
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          fail-build: false
+          output-format: sarif
+
+      - name: Upload Grype SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && github.event_name != 'pull_request'
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+
+      # --- SBOM generation ---
+
+      - name: Generate SBOM with Syft
+        if: github.event_name != 'pull_request'
+        uses: anchore/sbom-action@v0
+        id: sbom
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+
+      # --- Signing and attestation ---
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image with cosign
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign sign --yes \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
+
+      - name: Attest SBOM with cosign
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign attest --yes \
+            --predicate sbom.cdx.json \
+            --type cyclonedx \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
+
+      - name: Upload SBOM artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.cdx.json
+          retention-days: 90
