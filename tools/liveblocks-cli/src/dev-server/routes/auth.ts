@@ -19,10 +19,10 @@ import { Permission } from "@liveblocks/core";
 import { ZenRouter } from "@liveblocks/zenrouter";
 import { array, enum_, object, optional, record, string } from "decoders";
 
-import { authorizeSecretKey } from "../lib/auth";
-import { userInfo } from "../lib/decoders";
-import { createJwtLite } from "../lib/jwt-lite";
-import { NOT_IMPLEMENTED } from "../responses";
+import { authorizeSecretKey } from "~/dev-server/lib/auth";
+import { userInfo } from "~/dev-server/lib/decoders";
+import { createJwtLite } from "~/dev-server/lib/jwt-lite";
+import { NOT_IMPLEMENTED } from "~/dev-server/responses";
 
 // Valid permission values (from @liveblocks/core Permission enum)
 const permission = enum_(Permission);
@@ -54,6 +54,6 @@ zen.route(
 
 zen.route("POST /v2/identify-user", () =>
   NOT_IMPLEMENTED(
-    "ID tokens are not supported with the local dev server. To develop locally, use access tokens instead (via POST /v2/authorize-user)."
+    "ID tokens are not supported in the Liveblocks dev server. To develop locally, use access tokens instead (via POST /v2/authorize-user)"
   )
 );

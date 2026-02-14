@@ -20,7 +20,7 @@ import { DefaultMap, Room } from "@liveblocks/server";
 import { mkdirSync, readdirSync } from "fs";
 import { resolve } from "path";
 
-import { BunSQLiteDriver } from "../plugins/BunSQLiteDriver";
+import { BunSQLiteDriver } from "./BunSQLiteDriver";
 
 const DB_PATH = ".liveblocks/v1/rooms";
 

@@ -17,7 +17,7 @@
     "add-license-headers": "eslint --fix 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}'",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}'",
     "lint:package": "publint --strict && attw --pack",
-    "format": "eslint --fix 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}'",
+    "format": "eslint --fix src/ test/ ; prettier --write src/ test/",
     "test": "bun test",
     "test:typescript": "tsc --noEmit"
   },

@@ -28,10 +28,10 @@ import { constant, enum_, object, string } from "decoders";
 import { Base64 } from "js-base64";
 import * as Y from "yjs";
 
-import * as RoomsDB from "../db/rooms";
-import { authorizeSecretKey } from "../lib/auth";
-import { yDocToJson } from "../lib/ydoc";
-import { DUMMY, NOT_IMPLEMENTED } from "../responses";
+import * as RoomsDB from "~/dev-server/db/rooms";
+import { authorizeSecretKey } from "~/dev-server/lib/auth";
+import { yDocToJson } from "~/dev-server/lib/ydoc";
+import { NOT_IMPLEMENTED, XWARN } from "~/dev-server/responses";
 
 enum SerializationFormat {
   PlainLson = "plain-lson", // the default
@@ -86,7 +86,7 @@ zen.route("GET /v2/rooms", () => {
     usersAccesses: {},
   }));
 
-  return DUMMY(
+  return XWARN(
     { data, nextPage: null, nextCursor: null },
     200,
     "The Liveblocks dev server doesn't implement room permissions or pagination yet, so all rooms are returned in a single page with nextPage set to null.",

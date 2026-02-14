@@ -741,9 +741,10 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   list_leased_sessions(): Iterable<[string, LeasedSession]> {
     const rows = this.db
-      .query<LeasedSessionRow, []>(
-        "SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions"
-      )
+      .query<
+        LeasedSessionRow,
+        []
+      >("SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions")
       .all();
     return Array.from(rows, (row) => [
       row.session_id,
@@ -760,9 +761,10 @@ export class BunSQLiteDriver implements IStorageDriver {
 
   get_leased_session(sessionId: string): LeasedSession | undefined {
     const row = this.db
-      .query<LeasedSessionRow, [string]>(
-        "SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions WHERE session_id = ?"
-      )
+      .query<
+        LeasedSessionRow,
+        [string]
+      >("SELECT session_id, jpresence, updated_at, juserinfo, ttl, actor_id FROM leased_sessions WHERE session_id = ?")
       .get(sessionId) as LeasedSessionRow | null | undefined;
     if (row === undefined || row === null) {
       return undefined;

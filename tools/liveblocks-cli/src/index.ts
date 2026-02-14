@@ -19,7 +19,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 
 import { parse } from "@bomb.sh/args";
 
-import type { SubCommand } from "./SubCommand.js";
+import type { SubCommand } from "~/interfaces/SubCommand";
 
 function isBunInstalled(): boolean {
   try {
@@ -99,7 +99,7 @@ function showHelp(): void {
   console.log();
   console.log("Usage: liveblocks <command> [options]");
   console.log();
-  console.log("SubCommands:");
+  console.log("Commands:");
   for (const [name, desc] of Object.entries(COMMAND_NAMES)) {
     console.log(`  ${name.padEnd(12)} ${desc}`);
   }

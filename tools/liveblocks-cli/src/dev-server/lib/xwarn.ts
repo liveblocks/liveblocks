@@ -15,18 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { abort, html, json, ZenRouter } from "@liveblocks/zenrouter";
+import { yellow } from "~/lib/term-colors";
 
-import welcomeHtml from "~/dev-server/static/welcome.html";
+const seenWarnings = new Set<string>();
 
-export const zen = new ZenRouter({
-  authorize: () => true, // Fine for public routes
-});
+export function warnOnce(message: string | undefined, key = message): void {
+  if (key && !seenWarnings.has(key)) {
+    seenWarnings.add(key);
+    console.log(yellow(`  ⚠ ${message ?? key}`));
+  }
+}
 
-// Happy path for WebSocket upgrades is handled by Bun server directly (not ZenRouter)
-// If the happy path isn't taken, reject the connections
-zen.route("GET /v7", () => abort(426));
-zen.route("GET /v8", () => abort(426));
-
-zen.route("GET /health", () => json({ status: "ok" }));
-zen.route("GET /", () => html(welcomeHtml as unknown as string));
+export function clearWarnings(): void {
+  seenWarnings.clear();
+}

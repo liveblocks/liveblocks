@@ -17,6 +17,8 @@
 
 import { json } from "@liveblocks/zenrouter";
 
+import { XWARN } from "../responses";
+
 /**
  * Authorizes a request by checking for a valid secret key in the Authorization header.
  * Returns true if authorized, throws an error response if unauthorized, or returns false
@@ -33,13 +35,14 @@ export function authorizeSecretKey(req: Request): boolean {
     throw json({ error: "Unauthorized", message: "Missing secret key" }, 401);
 
   if (header.startsWith("Bearer "))
-    throw json(
+    throw XWARN(
       {
         error: "Forbidden",
         message:
-          "Invalid secret key. The Liveblocks dev server can only be used with 'sk_localdev' as a secret key",
+          "Invalid secret key. You can only use 'sk_localdev' as a secret key",
       },
-      403
+      403,
+      "You can only use 'sk_localdev' as the secret key"
     );
 
   // If it's not a common mistake, return a generic 403 response

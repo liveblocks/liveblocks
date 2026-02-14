@@ -21,18 +21,16 @@ WORKDIR /app
 
 RUN bun install liveblocks@${CLI_VERSION}
 
-COPY docker-healthcheck.ts ./
+COPY scripts/docker-healthcheck.ts ./scripts/
 
 RUN mkdir -p /app/.liveblocks && chown liveblocks:liveblocks /app/.liveblocks
 VOLUME /app/.liveblocks
 
 USER liveblocks
 
-ENV HOST=0.0.0.0
-ENV PORT=1153
 EXPOSE 1153
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
-  CMD ["bun", "run", "docker-healthcheck.ts"]
+  CMD ["bun", "run", "scripts/docker-healthcheck.ts"]
 
-ENTRYPOINT ["bun", "run", "node_modules/liveblocks/dist/index.js", "dev"]
+ENTRYPOINT ["bun", "run", "node_modules/liveblocks/dist/index.js", "dev", "--host", "0.0.0.0"]

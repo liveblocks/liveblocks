@@ -17,8 +17,8 @@
 
 import { ZenRouter } from "@liveblocks/zenrouter";
 
-import { verifyJwtLite } from "../lib/jwt-lite";
-import { DUMMY, NOT_IMPLEMENTED } from "../responses";
+import { verifyJwtLite } from "~/dev-server/lib/jwt-lite";
+import { DUMMY, NOT_IMPLEMENTED } from "~/dev-server/responses";
 
 export const zen = new ZenRouter({
   cors: {
@@ -113,6 +113,12 @@ zen.route("GET /v2/c/rooms/<roomId>/threads/delta", () => {
   });
 });
 
+zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
+  return DUMMY({
+    status: "ok",
+  });
+});
+
 /**
  * ------------------------------------------------------------
  * NOT IMPLEMENTED ROUTES
@@ -127,7 +133,6 @@ zen.route("GET /v2/c/rooms/<roomId>/threads/delta", () => {
   zen.route("POST /v2/c/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>/complete", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/c/rooms/<roomId>/attachments/<attachmentId>/multipart/<uploadId>", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/attachments/presigned-urls", () => NOT_IMPLEMENTED());
-  zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/send-message", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/c/rooms/<roomId>/storage", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/version", () => NOT_IMPLEMENTED());

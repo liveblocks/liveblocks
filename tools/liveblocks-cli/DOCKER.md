@@ -8,18 +8,13 @@ Run the Liveblocks dev server in a container.
 docker run -p 1153:1153 ghcr.io/liveblocks/cli
 ```
 
-The server is ready when `curl http://localhost:1153/health` returns `{"status":"ok"}`.
-
-## Configuration
-
-| Variable | Default   | Description                     |
-| -------- | --------- | ------------------------------- |
-| `PORT`   | `1153`    | Port the dev server listens on  |
-| `HOST`   | `0.0.0.0` | Host to bind to                 |
+The server is ready when `curl http://localhost:1153/health` returns
+`{"status":"ok"}`.
 
 ## Persisting room data
 
-SQLite databases for room storage are written to `/app/.liveblocks` inside the container. Mount a volume to persist data across restarts:
+SQLite databases for room storage are written to `/app/.liveblocks` inside the
+container. Mount a volume to persist data across restarts:
 
 ```bash
 docker run -p 1153:1153 \
@@ -29,7 +24,8 @@ docker run -p 1153:1153 \
 
 ## Verifying image signatures
 
-Images are signed with [cosign](https://docs.sigstore.dev/cosign/) using keyless (Sigstore OIDC) signing.
+Images are signed with [cosign](https://docs.sigstore.dev/cosign/) using keyless
+(Sigstore OIDC) signing.
 
 ### Verify the image signature
 
@@ -42,7 +38,9 @@ cosign verify \
 
 ### Verify the SBOM attestation
 
-Each image has an attached [SBOM](https://www.cisa.gov/sbom) (Software Bill of Materials) — a machine-readable inventory of every package included in the image. You can verify its authenticity:
+Each image has an attached [SBOM](https://www.cisa.gov/sbom) (Software Bill of
+Materials) — a machine-readable inventory of every package included in the
+image. You can verify its authenticity:
 
 ```bash
 cosign verify-attestation \

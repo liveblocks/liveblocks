@@ -20,7 +20,7 @@ import { execFileSync } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
-import type { SubCommand } from "../SubCommand.js";
+import type { SubCommand } from "~/interfaces/SubCommand";
 
 type PackageJson = {
   dependencies?: Record<string, string>;

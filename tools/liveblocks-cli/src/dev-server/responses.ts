@@ -16,34 +16,49 @@
  */
 
 import type { JsonObject } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { json } from "@liveblocks/zenrouter";
+
+/**
+ * Like `json()`, but also attaches X-LB-Warn and optional X-LB-Warn-Key
+ * response headers.
+ */
+export function XWARN<J extends JsonObject>(
+  data: J,
+  status: number | undefined,
+  message: string,
+  warnKey?: string
+): Response {
+  const headers: HeadersInit = {};
+  headers["X-LB-Warn"] = message;
+  if (warnKey) headers["X-LB-Warn-Key"] = warnKey;
+  return json(data, status, headers);
+}
 
 /**
  * Make it obvious to callers that this is a dummy response, and that the
  * Liveblocks dev server not yet supports this endpoint for real.
  *
- * NOTE: The message is returned as a response header (X-LB-Dummy) visible to
+ * NOTE: The message is returned as a response header (X-LB-Warn) visible to
  * the local developer using the dev server. This is intentional — it helps
  * them understand which endpoints are fully implemented vs stubbed.
  *
- * @param dummyKey - Optional uniqueness key sent as X-LB-Dummy-Key header.
- *   Allows the client to deduplicate warnings, so it can track which dummy
- *   responses it has already surfaced to the developer and only show new ones.
+ * @param warnKey - Optional uniqueness key sent as X-LB-Warn-Key header.
+ *   Allows the client to deduplicate warnings, so it can track which warnings
+ *   it has already surfaced to the developer and only show new ones.
  */
 export function DUMMY<J extends JsonObject>(
   data: J,
   status?: number | undefined,
-  message = "This is a dummy response.",
-  dummyKey?: string
+  message = "This is a dummy response."
 ): Response {
-  const headers: HeadersInit = {};
-  headers["X-LB-Dummy"] = message;
-  if (dummyKey) headers["X-LB-Dummy-Key"] = dummyKey;
-  return json(data, status, headers);
+  // Use a unique key so warnOnce doesn't deduplicate across different dummy
+  // endpoints — each one should warn independently.
+  return XWARN(data, status, message, nanoid());
 }
 
 export function NOT_IMPLEMENTED(
-  message = "This endpoint isn't implemented in the Liveblocks dev server (yet)"
+  message = "This endpoint isn't implemented in the Liveblocks dev server"
 ): Response {
   return json(
     {
@@ -52,6 +67,7 @@ export function NOT_IMPLEMENTED(
       // TODO: Add link to docs explaining the roadmap and current set of
       // supported features
     },
-    501
+    501,
+    { "X-LB-Warn": message }
   );
 }

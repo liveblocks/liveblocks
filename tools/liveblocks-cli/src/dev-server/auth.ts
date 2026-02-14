@@ -54,7 +54,9 @@ function getScopesForRoom(
 //
 export function authorizeWebSocket(
   req: Request
-): [roomId: string, ticketData: CreateTicketOptions<never, never>] | null {
+):
+  | { ok: true; roomId: string; ticketData: CreateTicketOptions<never, never> }
+  | { ok: false; xwarn?: string } {
   const url = new URL(req.url);
 
   // Explicit version _must_ be used to upgrade
@@ -67,14 +69,14 @@ export function authorizeWebSocket(
 
   // Expect this URL to be for wss://domain/v7?roomId=...
   if (version === null) {
-    return null; // TODO Error with a clear/helpful message
+    return { ok: false }; // TODO Emit helpful X-Warn here, or not?
   }
 
   const roomId = url.searchParams.get("roomId");
   if (!roomId) {
     // This is also the place to enforce specific room ID constraints if you
     // want to
-    return null; // TODO Error with a clear/helpful message
+    return { ok: false }; // TODO Emit helpful X-Warn here, or not?
   }
 
   // First check if ?tok= is present (token-based auth)
@@ -82,53 +84,63 @@ export function authorizeWebSocket(
   if (token !== null) {
     const payload = verifyJwtLite(token);
     if (!payload) {
-      return null; // TODO Error with a clear/helpful message
+      return { ok: false }; // TODO Emit helpful X-Warn here, or not?
     }
 
     if (payload.k === "acc") {
       const scopes = getScopesForRoom(roomId, payload.perms);
       if (scopes.length === 0) {
-        return null;
+        return { ok: false }; // TODO Emit helpful X-Warn here, or not?
       }
 
-      return [
+      return {
+        ok: true,
         roomId,
-        {
+        ticketData: {
           version,
           id: payload.uid,
           info: payload.ui,
           scopes,
         },
-      ];
+      };
     } else if (payload.k === "id") {
       // TODO Warning that ID tokens are not fully supported yet
-      return [
+      return {
+        ok: true,
         roomId,
-        {
+        ticketData: {
           version,
           id: payload.uid,
           info: payload.ui,
           scopes: [Permission.Write],
         },
-      ];
+      };
     }
 
-    return null; // TODO Error with a clear/helpful message
+    return { ok: false }; // TODO Emit helpful X-Warn here, or not?
   }
 
   // Otherwise check if ?pubkey= is present (public key auth - anonymous user)
   const pubkey = url.searchParams.get("pubkey");
-  if (pubkey === "pk_localdev") {
-    return [
+  if (pubkey !== null) {
+    if (pubkey !== "pk_localdev") {
+      return {
+        ok: false,
+        xwarn: "You can only use 'pk_localdev' as the public key",
+      };
+    }
+
+    return {
+      ok: true,
       roomId,
-      {
+      ticketData: {
         version,
         anonymousId: nanoid(),
         scopes: ["room:write"], // Public key auth always gets full write access
       },
-    ];
+    };
   }
 
-  // Neither token nor valid pubkey provided
-  return null; // TODO Error with a clear/helpful message
+  // Neither token nor pubkey provided
+  return { ok: false }; // TODO Emit helpful X-Warn here, or not?
 }

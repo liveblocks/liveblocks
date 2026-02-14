@@ -23,7 +23,8 @@ import type { NodeMap } from "@liveblocks/core";
 import { Database } from "bun:sqlite";
 import { describe } from "bun:test";
 
-import { BunSQLiteDriver } from "../../../src/dev-server/plugins/BunSQLiteDriver";
+import { BunSQLiteDriver } from "~/dev-server/db/BunSQLiteDriver";
+
 import { generateFullTestSuite } from "./_generateFullTestSuite";
 
 /** Directly write raw nodes to Bun SQLite, bypassing driver */
