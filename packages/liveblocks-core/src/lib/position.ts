@@ -55,7 +55,7 @@ export type Pos = Brand<string, "Pos">;
 const MIN_CODE = 32; // ASCII code of the lowest alphabet char (e.g. ' ')
 const MAX_CODE = 126; // ASCII code of the highest alphabet char (e.g. '~')
 
-const NUM_DIGITS = MAX_CODE - MIN_CODE + 1;
+const NUM_DIGITS = MAX_CODE - MIN_CODE + 1; // 95
 
 const ZERO: string = nthDigit(0); // " "
 
@@ -166,39 +166,119 @@ function before(pos: Pos): Pos {
 /**
  * Given any position value, computes the canonical position "after" it.
  *
- * The equivalent in a decimal number system would be:
- *   after(.001)  // .1
- *   after(.1)    // .2
- *   after(.101)  // .2
- *   after(.2)    // .3
- *   after(.3)    // .4
- *   ...
- *   after(.8)    // .9
- *   after(.9)    // .91
- *   after(.91)   // .92
- *   after(.9123) // .92
- *   ...
- *   after(.98)   // .99
- *   after(.99)   // .991
- *   after(.9999) // .99991
+ * Uses "viewport-based allocation" (V=2+3) to bound position length growth
+ * when repeatedly pushing items. Instead of always incrementing the last digit
+ * (which leads to O(n/94) length growth), we treat positions as fixed-width
+ * numbers within a "viewport" of V digits.
+ *
+ * - V=2: positions stay ≤2 chars for first ~8,900 pushes
+ * - V=5: positions stay ≤5 chars for next ~848k pushes
+ * - V=8, V=11, ...: each +3 adds capacity for ~848k more pushes
+ *
+ * This keeps position lengths dramatically smaller for typical usage while
+ * remaining backward compatible with all existing position strings.
+ *
+ * Viewport growth: V=2 → V=5 → V=8 → V=11 → ...
+ *
+ * Examples (conceptually in decimal):
+ *   after(.1)  // .11 (within V=2 viewport)
+ *   after(.11) // .12
+ *   after(.99) // .99001 (overflow V=2, extend to V=5)
  *
  */
+const VIEWPORT_START = 2;
+const VIEWPORT_STEP = 3;
+
 function after(pos: Pos): Pos {
-  for (let i = 0; i <= pos.length - 1; i++) {
+  // For positions with any chars outside valid range, just append ONE.
+  // This guarantees result > pos for any input string.
+  for (let i = 0; i < pos.length; i++) {
     const code = pos.charCodeAt(i);
-
-    // Scan away all leading "nines", if there are any
-    if (code >= MAX_CODE) {
-      continue;
+    if (code < MIN_CODE || code > MAX_CODE) {
+      return (pos + ONE) as Pos;
     }
-
-    // Now, i points to the first non-"nine" digit
-    return (pos.substring(0, i) + String.fromCharCode(code + 1)) as Pos;
   }
 
-  // If we end up here, it means the input consisted of only "nines", means we
-  // can just append a ONE digit.
+  // Strip trailing zeros for canonical form
+  while (pos.length > 1 && pos.charCodeAt(pos.length - 1) === MIN_CODE) {
+    pos = pos.slice(0, -1) as Pos;
+  }
+
+  // Handle empty/zero input
+  if (pos.length === 0 || pos === ZERO) {
+    return ONE;
+  }
+
+  // Determine viewport: V=2, then 5, 8, 11, ...
+  let viewport = VIEWPORT_START;
+  if (pos.length > VIEWPORT_START) {
+    viewport =
+      VIEWPORT_START +
+      Math.ceil((pos.length - VIEWPORT_START) / VIEWPORT_STEP) * VIEWPORT_STEP;
+  }
+
+  // Try to increment within current viewport
+  const result = incrementWithinViewport(pos, viewport);
+  if (result !== null) {
+    return result;
+  }
+
+  // Overflow: extend viewport and increment
+  viewport += VIEWPORT_STEP;
+  const extendedResult = incrementWithinViewport(pos, viewport);
+  if (extendedResult !== null) {
+    return extendedResult;
+  }
+
+  // Fallback (should rarely happen): just append
   return (pos + ONE) as Pos;
+}
+
+/**
+ * Increment a position string within a fixed viewport width.
+ * Returns null if overflow occurs (all digits were at max).
+ */
+function incrementWithinViewport(pos: Pos, viewport: number): Pos | null {
+  // Build array of digit values, padded to viewport width
+  const digits: number[] = [];
+  for (let i = 0; i < viewport; i++) {
+    if (i < pos.length) {
+      digits.push(pos.charCodeAt(i) - MIN_CODE);
+    } else {
+      digits.push(0); // Pad with zeros
+    }
+  }
+
+  // Increment from right to left with carry
+  let carry = 1;
+  for (let i = viewport - 1; i >= 0 && carry; i--) {
+    const sum = digits[i] + carry;
+    if (sum >= NUM_DIGITS) {
+      digits[i] = 0;
+      carry = 1;
+    } else {
+      digits[i] = sum;
+      carry = 0;
+    }
+  }
+
+  // If carry remains, we overflowed the viewport
+  if (carry) {
+    return null;
+  }
+
+  // Convert back to string, stripping trailing zeros
+  let result = "";
+  for (const d of digits) {
+    result += String.fromCharCode(d + MIN_CODE);
+  }
+
+  // Strip trailing zeros
+  while (result.length > 1 && result.charCodeAt(result.length - 1) === MIN_CODE) {
+    result = result.slice(0, -1);
+  }
+
+  return result as Pos;
 }
 
 /**

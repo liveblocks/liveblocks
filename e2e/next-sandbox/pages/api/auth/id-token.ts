@@ -11,8 +11,6 @@ const SECRET_KEY = nn(
 
 const liveblocks = new Liveblocks({
   secret: SECRET_KEY,
-
-  // @ts-expect-error - Hidden setting
   baseUrl: nn(
     process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
     "Please specify NEXT_PUBLIC_LIVEBLOCKS_BASE_URL env var"

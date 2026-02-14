@@ -8,7 +8,7 @@ import type {
   Op,
 } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { SerializedCrdt } from "../protocol/SerializedCrdt";
+import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
 import type { LiveNode, Lson } from "./Lson";

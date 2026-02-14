@@ -48,9 +48,7 @@ raised significantly for rooms on the v2 engine:
 
 The engine is assigned at room creation time and cannot be changed afterward.
 
-1. Upgrade to the latest release candidate:
-   `npx create-liveblocks-app@latest --upgrade=rc` (it will put you on
-   3.14.0-rc1 or later)
+1. Upgrade to v3.14+: `npx liveblocks@latest upgrade`
 2. Opt-in to v2 (see options below)
 
 ### Per-room opt-in
@@ -74,9 +72,14 @@ const { room, leave } = client.enterRoom("my-new-room", { engine: 2 });
 
 ### Dashboard opt-in
 
-Soon, you'll also be able to opt-in without code changes directly from your
-[Liveblocks dashboard](https://liveblocks.io/dashboard). We will enable this
-option when v3.14 is officially released.
+Alternatively, you can opt-in without code changes directly from your
+[Liveblocks dashboard](https://liveblocks.io/dashboard):
+
+1. Click Settings
+2. Toggle "Enable v2 Storage engine for new rooms"
+
+This is equivalent to setting `engine={2}` on all new rooms going forward.
+**Note: this toggle affects all projects in your account.**
 
 ### Warning
 

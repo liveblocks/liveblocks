@@ -18,6 +18,7 @@ import type {
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
 import { Composer as DefaultComposer } from "@liveblocks/react-ui";
+import { Portal } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type {
   ComponentType,
@@ -26,7 +27,6 @@ import type {
   MouseEvent,
 } from "react";
 import { forwardRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 
 import type { ExtendedChainedCommands } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
@@ -193,27 +193,28 @@ export const FloatingComposer = forwardRef<
     return null;
   }
 
-  return createPortal(
-    <div
-      className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-    >
-      <Composer
-        ref={forwardedRef}
-        autoFocus
-        {...props}
-        onKeyDown={handleKeyDown}
-        onComposerSubmit={handleComposerSubmit}
-        onClick={handleClick}
-      />
-    </div>,
-    document.body
+  return (
+    <Portal asChild>
+      <div
+        className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+      >
+        <Composer
+          ref={forwardedRef}
+          autoFocus
+          {...props}
+          onKeyDown={handleKeyDown}
+          onComposerSubmit={handleComposerSubmit}
+          onClick={handleClick}
+        />
+      </div>
+    </Portal>
   );
 });

@@ -7,11 +7,18 @@ const P2 = "room:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
-function makeSession(options?: { secret?: string; tenantId?: string }) {
+function makeSession(options?: {
+  secret?: string;
+  tenantId?: string;
+  organizationId?: string;
+}) {
   const client = new Liveblocks({
     secret: options?.secret ?? "sk_testingtesting",
   });
-  return client.prepareSession("user-123", { tenantId: options?.tenantId });
+  return client.prepareSession("user-123", {
+    tenantId: options?.tenantId,
+    organizationId: options?.organizationId,
+  });
 }
 
 describe("authorization (new API)", () => {
@@ -219,11 +226,23 @@ describe("authorization (new API)", () => {
     );
   });
 
+  /**
+   * @deprecated Use organizationId instead.
+   */
   test("can set tenantId when creating session", () => {
     const session = makeSession({ tenantId: "tenant-123" });
     expect(session).toBeDefined();
 
     // The session should have the tenantId set internally
+    // We can verify this by checking that the session can be used normally
+    expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
+  });
+
+  test("can set organizationId when creating session", () => {
+    const session = makeSession({ organizationId: "org-123" });
+    expect(session).toBeDefined();
+
+    // The session should have the organizationId set internally
     // We can verify this by checking that the session can be used normally
     expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
   });
@@ -236,6 +255,9 @@ describe("authorization (new API)", () => {
     expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
   });
 
+  /**
+   * @deprecated Use organizationId instead.
+   */
   test("tenantId can be passed through client prepareSession", () => {
     const client = new Liveblocks({
       secret: "sk_testingtesting",
@@ -247,6 +269,20 @@ describe("authorization (new API)", () => {
     expect(session).toBeDefined();
 
     // Verify the session works normally with tenantId
+    expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
+  });
+
+  test("organizationId can be passed through client prepareSession", () => {
+    const client = new Liveblocks({
+      secret: "sk_testingtesting",
+    });
+
+    const session = client.prepareSession("user-123", {
+      organizationId: "org-456",
+    });
+    expect(session).toBeDefined();
+
+    // Verify the session works normally with organizationId
     expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
   });
 });

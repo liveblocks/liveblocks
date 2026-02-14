@@ -1,9 +1,15 @@
 import { describe, expect, test } from "vitest";
 
-import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils";
+import {
+  FIFTH_POSITION,
+  FIRST_POSITION,
+  FOURTH_POSITION,
+  SECOND_POSITION,
+  THIRD_POSITION,
+} from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import type { NodeMap } from "../../types/NodeMap";
+import type { NodeMap } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import {
   findNonSerializableValue,
   getTreesDiffOperations,
@@ -12,6 +18,14 @@ import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
 import { toPlainLson } from "../utils";
+
+test("Common first positions", () => {
+  expect.soft(FIRST_POSITION).toBe("!");
+  expect.soft(SECOND_POSITION).toBe("!!"); // V=2+3 algo jumps it to two chars immediately
+  expect.soft(THIRD_POSITION).toBe('!"');
+  expect.soft(FOURTH_POSITION).toBe("!#");
+  expect.soft(FIFTH_POSITION).toBe("!$");
+});
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {

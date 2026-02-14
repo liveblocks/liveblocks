@@ -375,7 +375,9 @@ function App() {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments), [Text Editor](/docs/ready-made-features/text-editor), and [Notifications](/docs/ready-made-features/notifications). Return an array of
+    [Comments](/docs/ready-made-features/comments), [Text
+    Editor](/docs/ready-made-features/text-editor), and
+    [Notifications](/docs/ready-made-features/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveUsers).
   </PropertiesListItem>
@@ -393,7 +395,8 @@ function App() {
     detailedType="async? (args: ResolveGroupsInfoArgs) => (GroupInfo | undefined)[] | undefined"
   >
     A function that resolves group information in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of
     `GroupInfo` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveGroupsInfo).
   </PropertiesListItem>
@@ -402,8 +405,10 @@ function App() {
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of user IDs or mention objects.
-    [Learn more](#LiveblocksProviderResolveMentionSuggestions).
+    [Comments](/docs/ready-made-features/comments) and [Text
+    Editor](/docs/ready-made-features/text-editor). Return an array of user IDs
+    or mention objects. [Learn
+    more](#LiveblocksProviderResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -412,35 +417,24 @@ function App() {
     Native](#LiveblocksProviderReactNative).
   </PropertiesListItem>
   <PropertiesListItem
-    name="largeMessageStrategy"
-    detailedType='"default" | "split" | "experimental-fallback-to-http"'
-    defaultValue={`"default"`}
-  >
-    <div className="-mb-3">
-      How to handle WebSocket messages that are larger than the maximum message size. Can be set to one of these values:
-    </div>
-
-    - `"default"` Don’t send anything, but log the error to the console and notify useErrorListener.
-    - `"split"` Break the message up into chunks each of which is smaller than the maximum message size.
-      Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
-    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
-
-  </PropertiesListItem>
-  <PropertiesListItem
     name="badgeLocation"
     detailedtype='"top-right" | "bottom-right" | "bottom-left" | "top-left"'
     defaultValue={`"bottom-right"`}
   >
-    The location of the "Powered by Liveblocks" badge. Can be set to either `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`.
-    [Learn more](#Powered-by-Liveblocks-branding).
+    The location of the "Powered by Liveblocks" badge. Can be set to either
+    `"top-right"`, `"bottom-right"`, `"bottom-left"`, or `"top-left"`. [Learn
+    more](#Powered-by-Liveblocks-branding).
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
     type="boolean"
     defaultValue="false"
+    deprecated
   >
-    Experimental. Stream the initial Storage content over HTTP, instead of
-    waiting for a large initial WebSocket message to be sent from the server.
+    Deprecated. For new rooms, use [`engine: 2`](#RoomProvider) instead. Engine
+    2 rooms have native support for streaming. This flag will be removed in a
+    future version, but will continue to work for existing engine 1 rooms for
+    now. [Learn more](/docs/guides/the-new-storage-engine-and-its-benefits).
   </PropertiesListItem>
 </PropertiesList>
 

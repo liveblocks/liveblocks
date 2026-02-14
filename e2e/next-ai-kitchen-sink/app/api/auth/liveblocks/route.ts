@@ -18,11 +18,10 @@ const USERS = [
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // @ts-expect-error
   baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
