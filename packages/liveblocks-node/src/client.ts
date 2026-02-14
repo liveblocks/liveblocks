@@ -634,6 +634,18 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+export type SetPresenceOptions = {
+  userId: string;
+  data: JsonObject;
+  userInfo: {
+    name: string;
+    avatar?: string;
+    color?: string;
+    [key: string]: Json | undefined;
+  };
+  ttl?: number;
+};
+
 /**
  * Converts ISO-formatted date strings to Date instances on RoomDataPlain
  * values.
@@ -1212,6 +1224,38 @@ export class Liveblocks {
     const res = await this.#post(
       url`/v2/rooms/${roomId}/broadcast_event`,
       message,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Sets ephemeral presence for a user in a room without requiring a WebSocket connection.
+   * The presence data will automatically expire after the specified TTL.
+   * This is useful for scenarios like showing an AI agent's presence in a room.
+   *
+   * @param roomId The id of the room to set presence in.
+   * @param params.userId The ID of the user to set presence for.
+   * @param params.data The presence data as a JSON object.
+   * @param params.userInfo User information with required name field (non-empty string).
+   * @param params.ttl (optional) Time-to-live in seconds. If not specified, the default TTL is 60 seconds. (minimum: 2, maximum: 3599).
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async setPresence(
+    roomId: string,
+    params: SetPresenceOptions,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/presence`,
+      {
+        userId: params.userId,
+        data: params.data,
+        userInfo: params.userInfo,
+        ttl: params.ttl,
+      },
       options
     );
     if (!res.ok) {
