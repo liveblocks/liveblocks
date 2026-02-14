@@ -4,7 +4,7 @@ import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { createRoomContext } from "../room";
+import { createRoomContext, useRoom as useRoomGlobal } from "../room";
 import {
   useCanRedo,
   useCanUndo,
@@ -85,10 +85,7 @@ describe("RoomProvider", () => {
     expect(authEndpointMock).toHaveBeenCalled();
   });
 
-  // TODO: This behavior is a bug that should be fixed. Each createRoomContext()
-  // call should create its own isolated React context, allowing nested providers
-  // from different contexts to coexist independently.
-  test("nested providers from different contexts share the same React context", () => {
+  test("nested providers from different contexts should return their respective rooms", () => {
     const client = createClient({ authEndpoint: "/api/auth" });
 
     const contextA = createRoomContext(client);
@@ -97,10 +94,12 @@ describe("RoomProvider", () => {
     function TestComponent() {
       const roomA = contextA.useRoom();
       const roomB = contextB.useRoom();
+      const innermost = useRoomGlobal();
       return (
         <div>
           <span data-testid="room-a">{roomA.id}</span>
           <span data-testid="room-b">{roomB.id}</span>
+          <span data-testid="innermost">{innermost.id}</span>
         </div>
       );
     }
@@ -121,10 +120,9 @@ describe("RoomProvider", () => {
       </contextA.RoomProvider>
     );
 
-    // All contexts share the same underlying RoomContext, so the innermost
-    // provider wins and both hooks return the same room
-    expect(getByTestId("room-a").textContent).toBe("room-b"); // TODO: Should be "room-a" once fixed
+    expect(getByTestId("room-a").textContent).toBe("room-a");
     expect(getByTestId("room-b").textContent).toBe("room-b");
+    expect(getByTestId("innermost").textContent).toBe("room-b");
   });
 });
 

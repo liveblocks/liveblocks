@@ -31,6 +31,7 @@ import type {
   LiveblocksErrorContext,
   MentionData,
   OpaqueClient,
+  OpaqueRoom,
   RoomEventMessage,
   RoomSubscriptionSettings,
   SignalType,
@@ -54,6 +55,7 @@ import {
 } from "@liveblocks/core";
 import type { Context } from "react";
 import {
+  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -65,7 +67,7 @@ import {
 
 import { config } from "./config";
 import {
-  RoomContext,
+  GlobalRoomContext,
   useClient,
   useIsInsideRoom,
   useRoomOrNull,
@@ -186,33 +188,6 @@ const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
 >();
-const _bundles = new WeakMap<
-  OpaqueClient,
-  RoomContextBundle<
-    JsonObject,
-    LsonObject,
-    BaseUserMeta,
-    Json,
-    BaseMetadata,
-    BaseMetadata
-  >
->();
-
-function getOrCreateRoomContextBundle<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  let bundle = _bundles.get(client);
-  if (!bundle) {
-    bundle = makeRoomContextBundle(client);
-    _bundles.set(client, bundle);
-  }
-  return bundle as unknown as RoomContextBundle<P, S, U, E, TM, CM>;
-}
 
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
@@ -348,166 +323,6 @@ type RoomLeavePair<
   leave: () => void;
 };
 
-function makeRoomContextBundle<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
->(client: Client<U>): RoomContextBundle<P, S, U, E, TM, CM> {
-  type TRoom = Room<P, S, U, E, TM, CM>;
-
-  function RoomProvider_withImplicitLiveblocksProvider(
-    props: RoomProviderProps<P, S>
-  ) {
-    // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
-    // factory-bound version of the RoomProvider will create an implicit
-    // LiveblocksProvider. This means that if an end user nests this
-    // RoomProvider under a LiveblocksProvider context, that would be an error.
-    // However, we'll allow that nesting only in this specific situation, and
-    // only because this wrapper will keep the Liveblocks context and the Room
-    // context consistent internally.
-    return (
-      <LiveblocksProviderWithClient client={client} allowNesting>
-        {/* @ts-expect-error {...props} is the same type as props */}
-        <RoomProvider {...props} />
-      </LiveblocksProviderWithClient>
-    );
-  }
-
-  const shared = createSharedContext<U>(client);
-
-  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
-    RoomContext: RoomContext as Context<TRoom | null>,
-    RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
-
-    useRoom,
-    useStatus,
-
-    useBroadcastEvent,
-    useOthersListener,
-    useLostConnectionListener,
-    useEventListener,
-
-    useHistory,
-    useUndo,
-    useRedo,
-    useCanRedo,
-    useCanUndo,
-
-    useStorageRoot,
-    useStorage,
-
-    useSelf,
-    useMyPresence,
-    useUpdateMyPresence,
-    useOthers,
-    useOthersMapped,
-    useOthersConnectionIds,
-    useOther,
-
-    // prettier-ignore
-    useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["useMutation"],
-
-    useThreads,
-    useSearchComments,
-
-    // prettier-ignore
-    useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["useCreateThread"],
-
-    useDeleteThread,
-    useEditThreadMetadata,
-    useMarkThreadAsResolved,
-    useMarkThreadAsUnresolved,
-    useSubscribeToThread,
-    useUnsubscribeFromThread,
-    useCreateComment,
-    useEditComment,
-    useEditCommentMetadata,
-    useDeleteComment,
-    useAddReaction,
-    useRemoveReaction,
-    useMarkThreadAsRead,
-    useThreadSubscription,
-    useAttachmentUrl,
-
-    useHistoryVersions,
-    useHistoryVersionData,
-
-    useRoomSubscriptionSettings,
-    useUpdateRoomSubscriptionSettings,
-
-    ...shared.classic,
-
-    suspense: {
-      RoomContext: RoomContext as Context<TRoom | null>,
-      RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
-
-      useRoom,
-      useStatus,
-
-      useBroadcastEvent,
-      useOthersListener,
-      useLostConnectionListener,
-      useEventListener,
-
-      useHistory,
-      useUndo,
-      useRedo,
-      useCanRedo,
-      useCanUndo,
-
-      useStorageRoot,
-      useStorage: useStorageSuspense,
-
-      useSelf: useSelfSuspense,
-      useMyPresence,
-      useUpdateMyPresence,
-      useOthers: useOthersSuspense,
-      useOthersMapped: useOthersMappedSuspense,
-      useOthersConnectionIds: useOthersConnectionIdsSuspense,
-      useOther: useOtherSuspense,
-
-      // prettier-ignore
-      useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useMutation"],
-
-      useThreads: useThreadsSuspense,
-
-      // prettier-ignore
-      useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM>["suspense"]["useCreateThread"],
-
-      useDeleteThread,
-      useEditThreadMetadata,
-      useMarkThreadAsResolved,
-      useMarkThreadAsUnresolved,
-      useSubscribeToThread,
-      useUnsubscribeFromThread,
-      useCreateComment,
-      useEditComment,
-      useEditCommentMetadata,
-      useDeleteComment,
-      useAddReaction,
-      useRemoveReaction,
-      useMarkThreadAsRead,
-      useThreadSubscription,
-      useAttachmentUrl: useAttachmentUrlSuspense,
-
-      // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
-      useHistoryVersions: useHistoryVersionsSuspense,
-
-      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
-      useUpdateRoomSubscriptionSettings,
-
-      ...shared.suspense,
-    },
-  };
-
-  return Object.defineProperty(bundle, kInternal, {
-    enumerable: false,
-  });
-}
-
 function RoomProvider<
   P extends JsonObject,
   S extends LsonObject,
@@ -515,7 +330,12 @@ function RoomProvider<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
->(props: RoomProviderProps<P, S>) {
+>(
+  props: RoomProviderProps<P, S> & {
+    /** @internal */
+    BoundRoomContext: Context<OpaqueRoom | null>;
+  }
+) {
   const client = useClient<U>();
   const [cache] = useState(
     () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
@@ -597,10 +417,11 @@ function RoomProviderInner<
 >(
   props: RoomProviderProps<P, S> & {
     stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
+    BoundRoomContext?: Context<OpaqueRoom | null>;
   }
 ) {
   const client = useClient<U>();
-  const { id: roomId, stableEnterRoom } = props;
+  const { id: roomId, stableEnterRoom, BoundRoomContext } = props;
 
   if (process.env.NODE_ENV !== "production") {
     if (!roomId) {
@@ -726,8 +547,61 @@ function RoomProviderInner<
   }, [roomId, frozenProps, stableEnterRoom]);
 
   return (
-    <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+    <GlobalRoomContext.Provider value={room}>
+      {BoundRoomContext ? (
+        <BoundRoomContext.Provider value={room}>
+          {props.children}
+        </BoundRoomContext.Provider>
+      ) : (
+        props.children
+      )}
+    </GlobalRoomContext.Provider>
   );
+}
+
+/**
+ * @internal
+ */
+function useRoom_withRoomContext<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: false }
+): Room<P, S, U, E, TM, CM>;
+function useRoom_withRoomContext<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: boolean }
+): Room<P, S, U, E, TM, CM> | null;
+function useRoom_withRoomContext<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: { allowOutsideRoom: boolean }
+): Room<P, S, U, E, TM, CM> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM>(RoomContext);
+
+  if (room === null && !options?.allowOutsideRoom) {
+    throw new Error("RoomProvider is missing from the React tree.");
+  }
+
+  return room;
 }
 
 function useRoom<
@@ -754,11 +628,23 @@ function useRoom<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
-  const room = useRoomOrNull<P, S, U, E, TM, CM>();
-  if (room === null && !options?.allowOutsideRoom) {
-    throw new Error("RoomProvider is missing from the React tree.");
-  }
-  return room;
+  return useRoom_withRoomContext<P, S, U, E, TM, CM>(
+    GlobalRoomContext,
+    options
+  );
+}
+
+/**
+ * @internal
+ */
+function useStatus_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): Status {
+  const room = useRoom_withRoomContext(RoomContext);
+  const subscribe = room.events.status.subscribe;
+  const getSnapshot = room.getStatus;
+  const getServerSnapshot = room.getStatus;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
@@ -766,11 +652,7 @@ function useRoom<
  * a re-render whenever it changes. Can be used to render a status badge.
  */
 function useStatus(): Status {
-  const room = useRoom();
-  const subscribe = room.events.status.subscribe;
-  const getSnapshot = room.getStatus;
-  const getServerSnapshot = room.getStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useStatus_withRoomContext(GlobalRoomContext);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -862,11 +744,15 @@ function useMentionSuggestionsCache() {
   return client[kInternal].mentionSuggestionsCache;
 }
 
-function useBroadcastEvent<E extends Json>(): (
-  event: E,
-  options?: BroadcastOptions
-) => void {
-  const room = useRoom<never, never, never, E, never>();
+/**
+ * @internal
+ */
+function useBroadcastEvent_withRoomContext<E extends Json>(
+  RoomContext: Context<OpaqueRoom | null>
+): (event: E, options?: BroadcastOptions) => void {
+  const room = useRoom_withRoomContext<never, never, never, E, never, never>(
+    RoomContext
+  );
   return useCallback(
     (
       event: E,
@@ -878,13 +764,53 @@ function useBroadcastEvent<E extends Json>(): (
   );
 }
 
-function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+function useBroadcastEvent<E extends Json>(): (
+  event: E,
+  options?: BroadcastOptions
+) => void {
+  return useBroadcastEvent_withRoomContext<E>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useOthersListener_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   callback: (event: OthersEvent<P, U>) => void
 ) {
-  const room = useRoom<P, never, U, never, never>();
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
   const savedCallback = useLatest(callback);
   useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
+    [room, savedCallback]
+  );
+}
+
+function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
+  callback: (event: OthersEvent<P, U>) => void
+) {
+  return useOthersListener_withRoomContext<P, U>(GlobalRoomContext, callback);
+}
+
+/**
+ * @internal
+ */
+function useLostConnectionListener_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: (event: LostConnectionEvent) => void
+): void {
+  const room = useRoom_withRoomContext(RoomContext);
+  const savedCallback = useLatest(callback);
+  useEffect(
+    () =>
+      room.events.lostConnection.subscribe((event) =>
+        savedCallback.current(event)
+      ),
     [room, savedCallback]
   );
 }
@@ -912,23 +838,23 @@ function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
 function useLostConnectionListener(
   callback: (event: LostConnectionEvent) => void
 ): void {
-  const room = useRoom();
-  const savedCallback = useLatest(callback);
-  useEffect(
-    () =>
-      room.events.lostConnection.subscribe((event) =>
-        savedCallback.current(event)
-      ),
-    [room, savedCallback]
-  );
+  return useLostConnectionListener_withRoomContext(GlobalRoomContext, callback);
 }
 
-function useEventListener<
+/**
+ * @internal
+ */
+function useEventListener_withRoomContext<
   P extends JsonObject,
   U extends BaseUserMeta,
   E extends Json,
->(callback: (data: RoomEventMessage<P, U, E>) => void): void {
-  const room = useRoom<P, never, U, E, never>();
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: (data: RoomEventMessage<P, U, E>) => void
+): void {
+  const room = useRoom_withRoomContext<P, never, U, E, never, never>(
+    RoomContext
+  );
   const savedCallback = useLatest(callback);
   useEffect(() => {
     const listener = (eventData: RoomEventMessage<P, U, E>) => {
@@ -939,11 +865,37 @@ function useEventListener<
   }, [room, savedCallback]);
 }
 
+function useEventListener<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+>(callback: (data: RoomEventMessage<P, U, E>) => void): void {
+  return useEventListener_withRoomContext<P, U, E>(GlobalRoomContext, callback);
+}
+
+/**
+ * @internal
+ */
+function useHistory_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): History {
+  return useRoom_withRoomContext(RoomContext).history;
+}
+
 /**
  * Returns the room.history
  */
 function useHistory(): History {
-  return useRoom().history;
+  return useHistory_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUndo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): () => void {
+  return useHistory_withRoomContext(RoomContext).undo;
 }
 
 /**
@@ -951,7 +903,16 @@ function useHistory(): History {
  * client. It does not impact operations made by other clients.
  */
 function useUndo(): () => void {
-  return useHistory().undo;
+  return useUndo_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRedo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): () => void {
+  return useHistory_withRoomContext(RoomContext).redo;
 }
 
 /**
@@ -959,45 +920,77 @@ function useUndo(): () => void {
  * client. It does not impact operations made by other clients.
  */
 function useRedo(): () => void {
-  return useHistory().redo;
+  return useRedo_withRoomContext(GlobalRoomContext);
 }
 
 /**
- * Returns whether there are any operations to undo.
+ * @internal
  */
-function useCanUndo(): boolean {
-  const room = useRoom();
+function useCanUndo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): boolean {
+  const room = useRoom_withRoomContext(RoomContext);
   const subscribe = room.events.history.subscribe;
   const canUndo = room.history.canUndo;
   return useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
 /**
- * Returns whether there are any operations to redo.
+ * Returns whether there are any operations to undo.
  */
-function useCanRedo(): boolean {
-  const room = useRoom();
+function useCanUndo(): boolean {
+  return useCanUndo_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useCanRedo_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): boolean {
+  const room = useRoom_withRoomContext(RoomContext);
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
   return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
-function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
-  P,
-  U
-> | null;
-function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * Returns whether there are any operations to redo.
+ */
+function useCanRedo(): boolean {
+  return useCanRedo_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useSelf_withRoomContext<P extends JsonObject, U extends BaseUserMeta>(
+  RoomContext: Context<OpaqueRoom | null>
+): User<P, U> | null;
+function useSelf_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   selector: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null;
-function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+function useSelf_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   maybeSelector?: (me: User<P, U>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | User<P, U> | null {
   type Snapshot = User<P, U> | null;
   type Selection = T | null;
 
-  const room = useRoom<P, never, U, never, never>();
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.self.subscribe;
   const getSnapshot: () => Snapshot = room.getSelf;
 
@@ -1018,11 +1011,34 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   );
 }
 
-function useMyPresence<P extends JsonObject>(): [
+function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
   P,
-  (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
-] {
-  const room = useRoom<P, never, never, never, never>();
+  U
+> | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null;
+function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
+  maybeSelector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | User<P, U> | null {
+  return useSelf_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    maybeSelector as (me: User<P, U>) => T,
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useMyPresence_withRoomContext<P extends JsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): [P, (patch: Partial<P>, options?: { addToHistory: boolean }) => void] {
+  const room = useRoom_withRoomContext<P, never, never, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
   const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -1030,11 +1046,69 @@ function useMyPresence<P extends JsonObject>(): [
   return [presence, setPresence];
 }
 
+function useMyPresence<P extends JsonObject>(): [
+  P,
+  (patch: Partial<P>, options?: { addToHistory: boolean }) => void,
+] {
+  return useMyPresence_withRoomContext<P>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUpdateMyPresence_withRoomContext<P extends JsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): (patch: Partial<P>, options?: { addToHistory: boolean }) => void {
+  return useRoom_withRoomContext<P, never, never, never, never, never>(
+    RoomContext
+  ).updatePresence;
+}
+
 function useUpdateMyPresence<P extends JsonObject>(): (
   patch: Partial<P>,
   options?: { addToHistory: boolean }
 ) => void {
-  return useRoom<P, never, never, never, never>().updatePresence;
+  return useUpdateMyPresence_withRoomContext<P>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): readonly User<P, U>[];
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthers_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  const room = useRoom_withRoomContext<P, never, U, never, never, never>(
+    RoomContext
+  );
+  const subscribe = room.events.others.subscribe;
+  const getSnapshot = room.getOthers;
+  const getServerSnapshot = alwaysEmptyList;
+  return useSyncExternalStoreWithSelector(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+    selector ?? (identity as (others: readonly User<P, U>[]) => T),
+    isEqual
+  );
 }
 
 function useOthers<
@@ -1049,20 +1123,22 @@ function useOthers<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  const room = useRoom<P, never, U, never, never>();
-  const subscribe = room.events.others.subscribe;
-  const getSnapshot = room.getOthers;
-  const getServerSnapshot = alwaysEmptyList;
-  return useSyncExternalStoreWithSelector(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-    selector ?? (identity as (others: readonly User<P, U>[]) => T),
+  return useOthers_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    selector as (others: readonly User<P, U>[]) => T,
     isEqual
   );
 }
 
-function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * @internal
+ */
+function useOthersMapped_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
@@ -1090,7 +1166,35 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
     [itemIsEqual]
   );
 
-  return useOthers(wrappedSelector, wrappedIsEqual);
+  return useOthers_withRoomContext<P, U, ReadonlyArray<readonly [number, T]>>(
+    RoomContext,
+    wrappedSelector,
+    wrappedIsEqual
+  );
+}
+
+function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  return useOthersMapped_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    itemSelector,
+    itemIsEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersConnectionIds_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): readonly number[] {
+  return useOthers_withRoomContext(
+    RoomContext,
+    selectorFor_useOthersConnectionIds,
+    shallow
+  );
 }
 
 /**
@@ -1108,14 +1212,22 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
  * // [2, 4, 7]
  */
 function useOthersConnectionIds(): readonly number[] {
-  return useOthers(selectorFor_useOthersConnectionIds, shallow);
+  return useOthersConnectionIds_withRoomContext(GlobalRoomContext);
 }
 
 const NOT_FOUND = Symbol();
 
 type NotFound = typeof NOT_FOUND;
 
-function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
+/**
+ * @internal
+ */
+function useOther_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   connectionId: number,
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
@@ -1141,7 +1253,11 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
     [isEqual]
   );
 
-  const other = useOthers(wrappedSelector, wrappedIsEqual);
+  const other = useOthers_withRoomContext<P, U, T | NotFound>(
+    RoomContext,
+    wrappedSelector,
+    wrappedIsEqual
+  );
   if (other === NOT_FOUND) {
     throw new Error(
       `No such other user with connection id ${connectionId} exists`
@@ -1151,29 +1267,63 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   return other;
 }
 
-/** @internal */
-function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
-  const room = useRoom<never, S, never, never, never>();
+function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  return useOther_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useMutableStorageRoot_withRoomContext<S extends LsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): LiveObject<S> | null {
+  const room = useRoom_withRoomContext<never, S, never, never, never, never>(
+    RoomContext
+  );
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-// NOTE: This API exists for backward compatible reasons
-function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
-  return [useMutableStorageRoot<S>()];
+/**
+ * @internal
+ */
+function useStorageRoot_withRoomContext<S extends LsonObject>(
+  RoomContext: Context<OpaqueRoom | null>
+): [root: LiveObject<S> | null] {
+  return [useMutableStorageRoot_withRoomContext<S>(RoomContext)];
 }
 
-function useStorage<S extends LsonObject, T>(
+// NOTE: This API exists for backward compatible reasons
+function useStorageRoot<S extends LsonObject>(): [root: LiveObject<S> | null] {
+  return useStorageRoot_withRoomContext<S>(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useStorage_withRoomContext<S extends LsonObject, T>(
+  RoomContext: Context<OpaqueRoom | null>,
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T | null, curr: T | null) => boolean
 ): T | null {
   type Snapshot = ToImmutable<S> | null;
   type Selection = T | null;
 
-  const room = useRoom<never, S, never, never, never>();
-  const rootOrNull = useMutableStorageRoot<S>();
+  const room = useRoom_withRoomContext<never, S, never, never, never, never>(
+    RoomContext
+  );
+  const rootOrNull = useMutableStorageRoot_withRoomContext<S>(RoomContext);
 
   const wrappedSelector = useCallback(
     (rootOrNull: Snapshot): Selection =>
@@ -1210,7 +1360,17 @@ function useStorage<S extends LsonObject, T>(
   );
 }
 
-function useMutation<
+function useStorage<S extends LsonObject, T>(
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T | null, curr: T | null) => boolean
+): T | null {
+  return useStorage_withRoomContext<S, T>(GlobalRoomContext, selector, isEqual);
+}
+
+/**
+ * @internal
+ */
+function useMutation_withRoomContext<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
@@ -1218,8 +1378,12 @@ function useMutation<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
->(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
-  const room = useRoom<P, S, U, E, TM, CM>();
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  callback: F,
+  deps: readonly unknown[]
+): OmitFirstArg<F> {
+  const room = useRoom_withRoomContext<P, S, U, E, TM, CM>(RoomContext);
   return useMemo(
     () => {
       return ((...args) =>
@@ -1238,13 +1402,36 @@ function useMutation<
   );
 }
 
-function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+function useMutation<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+  F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+>(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
+  return useMutation_withRoomContext<P, S, U, E, TM, CM, F>(
+    GlobalRoomContext,
+    callback,
+    deps
+  );
+}
+
+/**
+ * @internal
+ */
+function useThreads_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncResult<TM, CM> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const { store, getOrCreateThreadsPollerForRoomId } = getRoomExtrasForClient<
     TM,
     CM
@@ -1283,7 +1470,17 @@ function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
   return result;
 }
 
-function useSearchComments<TM extends BaseMetadata>(
+function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncResult<TM, CM> {
+  return useThreads_withRoomContext<TM, CM>(GlobalRoomContext, options);
+}
+
+/**
+ * @internal
+ */
+function useSearchComments_withRoomContext<TM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseSearchCommentsOptions<TM>
 ): SearchCommentsAsyncResult {
   const [result, setResult] = useState<SearchCommentsAsyncResult>({
@@ -1298,7 +1495,7 @@ function useSearchComments<TM extends BaseMetadata>(
   const timeout = useRef<number | null>(null);
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const queryKey = stableStringify([room.id, options.query]);
 
@@ -1367,10 +1564,28 @@ function useSearchComments<TM extends BaseMetadata>(
   return result;
 }
 
+function useSearchComments<TM extends BaseMetadata>(
+  options: UseSearchCommentsOptions<TM>
+): SearchCommentsAsyncResult {
+  return useSearchComments_withRoomContext<TM>(GlobalRoomContext, options);
+}
+
+/**
+ * @internal
+ */
+function useCreateThread_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: CreateThreadOptions<TM, CM>) => ThreadData<TM, CM> {
+  return useCreateRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useCreateThread<TM extends BaseMetadata, CM extends BaseMetadata>(): (
   options: CreateThreadOptions<TM, CM>
 ) => ThreadData<TM, CM> {
-  return useCreateRoomThread(useRoom().id);
+  return useCreateThread_withRoomContext<TM, CM>(GlobalRoomContext);
 }
 
 /**
@@ -1461,8 +1676,17 @@ function useCreateRoomThread<TM extends BaseMetadata, CM extends BaseMetadata>(
   );
 }
 
+/**
+ * @internal
+ */
+function useDeleteThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (threadId: string) => void {
+  return useDeleteRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useDeleteThread(): (threadId: string) => void {
-  return useDeleteRoomThread(useRoom().id);
+  return useDeleteThread_withRoomContext(GlobalRoomContext);
 }
 
 function useDeleteRoomThread(roomId: string): (threadId: string) => void {
@@ -1502,8 +1726,17 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   );
 }
 
+/**
+ * @internal
+ */
+function useEditThreadMetadata_withRoomContext<TM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useEditRoomThreadMetadata<TM>(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useEditThreadMetadata<TM extends BaseMetadata>() {
-  return useEditRoomThreadMetadata<TM>(useRoom().id);
+  return useEditThreadMetadata_withRoomContext<TM>(GlobalRoomContext);
 }
 
 function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
@@ -1549,8 +1782,19 @@ function useEditRoomThreadMetadata<TM extends BaseMetadata>(roomId: string) {
   );
 }
 
+/**
+ * @internal
+ */
+function useEditCommentMetadata_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useEditRoomCommentMetadata<CM>(
+    useRoom_withRoomContext(RoomContext).id
+  );
+}
+
 function useEditCommentMetadata<CM extends BaseMetadata>() {
-  return useEditRoomCommentMetadata<CM>(useRoom().id);
+  return useEditCommentMetadata_withRoomContext<CM>(GlobalRoomContext);
 }
 
 function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
@@ -1606,6 +1850,15 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useCreateComment_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: CreateCommentOptions<CM>) => CommentData<CM> {
+  return useCreateRoomComment(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that adds a comment to a thread.
  *
  * @example
@@ -1615,7 +1868,7 @@ function useEditRoomCommentMetadata<CM extends BaseMetadata>(roomId: string) {
 function useCreateComment<CM extends BaseMetadata>(): (
   options: CreateCommentOptions<CM>
 ) => CommentData<CM> {
-  return useCreateRoomComment(useRoom().id);
+  return useCreateComment_withRoomContext<CM>(GlobalRoomContext);
 }
 
 /**
@@ -1690,6 +1943,15 @@ function useCreateRoomComment<CM extends BaseMetadata>(
 }
 
 /**
+ * @internal
+ */
+function useEditComment_withRoomContext<CM extends BaseMetadata>(
+  RoomContext: Context<OpaqueRoom | null>
+): (options: EditCommentOptions<CM>) => void {
+  return useEditRoomComment<CM>(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that edits a comment.
  *
  * @example
@@ -1699,7 +1961,7 @@ function useCreateRoomComment<CM extends BaseMetadata>(
 function useEditComment<CM extends BaseMetadata>(): (
   options: EditCommentOptions<CM>
 ) => void {
-  return useEditRoomComment<CM>(useRoom().id);
+  return useEditComment_withRoomContext<CM>(GlobalRoomContext);
 }
 
 /**
@@ -1795,6 +2057,15 @@ function useEditRoomComment<CM extends BaseMetadata>(
 }
 
 /**
+ * @internal
+ */
+function useDeleteComment_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useDeleteRoomComment(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that deletes a comment.
  * If it is the last non-deleted comment, the thread also gets deleted.
  *
@@ -1803,7 +2074,7 @@ function useEditRoomComment<CM extends BaseMetadata>(
  * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
  */
 function useDeleteComment() {
-  return useDeleteRoomComment(useRoom().id);
+  return useDeleteComment_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -1845,8 +2116,17 @@ function useDeleteRoomComment(roomId: string) {
   );
 }
 
+/**
+ * @internal
+ */
+function useAddReaction_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useAddRoomCommentReaction(useRoom_withRoomContext(RoomContext).id);
+}
+
 function useAddReaction() {
-  return useAddRoomCommentReaction(useRoom().id);
+  return useAddReaction_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -1904,6 +2184,15 @@ function useAddRoomCommentReaction(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useRemoveReaction_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useRemoveRoomCommentReaction(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that removes a reaction on a comment.
  *
  * @example
@@ -1911,7 +2200,7 @@ function useAddRoomCommentReaction(roomId: string) {
  * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
  */
 function useRemoveReaction() {
-  return useRemoveRoomCommentReaction(useRoom().id);
+  return useRemoveReaction_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -1965,16 +2254,6 @@ function useRemoveRoomCommentReaction(roomId: string) {
     },
     [client, roomId]
   );
-}
-/**
- * Returns a function that marks a thread as read.
- *
- * @example
- * const markThreadAsRead = useMarkThreadAsRead();
- * markThreadAsRead("th_xxx");
- */
-function useMarkThreadAsRead() {
-  return useMarkRoomThreadAsRead(useRoom().id);
 }
 
 /**
@@ -2036,6 +2315,36 @@ function useMarkRoomThreadAsRead(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useMarkThreadAsRead_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useMarkRoomThreadAsRead(room.id);
+}
+
+/**
+ * Returns a function that marks a thread as read.
+ *
+ * @example
+ * const markThreadAsRead = useMarkThreadAsRead();
+ * markThreadAsRead("th_xxx");
+ */
+function useMarkThreadAsRead() {
+  return useMarkThreadAsRead_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useMarkThreadAsResolved_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useMarkRoomThreadAsResolved(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that marks a thread as resolved.
  *
  * @example
@@ -2043,7 +2352,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
  * markThreadAsResolved("th_xxx");
  */
 function useMarkThreadAsResolved() {
-  return useMarkRoomThreadAsResolved(useRoom().id);
+  return useMarkThreadAsResolved_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2087,6 +2396,15 @@ function useMarkRoomThreadAsResolved(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useMarkThreadAsUnresolved_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useMarkRoomThreadAsUnresolved(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that marks a thread as unresolved.
  *
  * @example
@@ -2094,7 +2412,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
  * markThreadAsUnresolved("th_xxx");
  */
 function useMarkThreadAsUnresolved() {
-  return useMarkRoomThreadAsUnresolved(useRoom().id);
+  return useMarkThreadAsUnresolved_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2138,6 +2456,15 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useSubscribeToThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useSubscribeToRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that subscribes the user to a thread.
  *
  * @example
@@ -2145,7 +2472,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
  * subscribeToThread("th_xxx");
  */
 function useSubscribeToThread() {
-  return useSubscribeToRoomThread(useRoom().id);
+  return useSubscribeToThread_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2182,6 +2509,15 @@ function useSubscribeToRoomThread(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useUnsubscribeFromThread_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
+  return useUnsubscribeFromRoomThread(useRoom_withRoomContext(RoomContext).id);
+}
+
+/**
  * Returns a function that unsubscribes the user from a thread.
  *
  * @example
@@ -2189,7 +2525,7 @@ function useSubscribeToRoomThread(roomId: string) {
  * unsubscribeFromThread("th_xxx");
  */
 function useUnsubscribeFromThread() {
-  return useUnsubscribeFromRoomThread(useRoom().id);
+  return useUnsubscribeFromThread_withRoomContext(GlobalRoomContext);
 }
 
 /**
@@ -2231,6 +2567,19 @@ function useUnsubscribeFromRoomThread(roomId: string) {
 }
 
 /**
+ * @internal
+ */
+function useThreadSubscription_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  threadId: string
+): ThreadSubscription {
+  return useRoomThreadSubscription(
+    useRoom_withRoomContext(RoomContext).id,
+    threadId
+  );
+}
+
+/**
  * Returns the subscription status of a thread, methods to update it, and when
  * the thread was last read.
  *
@@ -2238,7 +2587,7 @@ function useUnsubscribeFromRoomThread(roomId: string) {
  * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
-  return useRoomThreadSubscription(useRoom().id, threadId);
+  return useThreadSubscription_withRoomContext(GlobalRoomContext, threadId);
 }
 
 /**
@@ -2294,19 +2643,18 @@ function useRoomThreadSubscription(
 }
 
 /**
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- *
- * @example
- * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ * @internal
  */
-function useRoomSubscriptionSettings(): [
+function useRoomSubscriptionSettings_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): [
   RoomSubscriptionSettingsAsyncResult,
   (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
-  const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+  const updateRoomSubscriptionSettings =
+    useUpdateRoomSubscriptionSettings_withRoomContext(RoomContext);
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const { store, getOrCreateSubscriptionSettingsPollerForRoomId } =
     getRoomExtrasForClient(client);
 
@@ -2352,7 +2700,19 @@ function useRoomSubscriptionSettings(): [
  * @example
  * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
  */
-function useRoomSubscriptionSettingsSuspense(): [
+function useRoomSubscriptionSettings(): [
+  RoomSubscriptionSettingsAsyncResult,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  return useRoomSubscriptionSettings_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useRoomSubscriptionSettingsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): [
   RoomSubscriptionSettingsAsyncSuccess,
   (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
@@ -2361,7 +2721,7 @@ function useRoomSubscriptionSettingsSuspense(): [
 
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   // Suspend until there are at least some inbox notifications
   use(
@@ -2373,7 +2733,7 @@ function useRoomSubscriptionSettingsSuspense(): [
   // We're in a Suspense world here, and as such, the useRoomSubscriptionSettings()
   // hook is expected to only return success results when we're here.
   const [settings, updateRoomSubscriptionSettings] =
-    useRoomSubscriptionSettings();
+    useRoomSubscriptionSettings_withRoomContext(RoomContext);
   assert(!settings.error, "Did not expect error");
   assert(!settings.isLoading, "Did not expect loading");
 
@@ -2383,18 +2743,30 @@ function useRoomSubscriptionSettingsSuspense(): [
 }
 
 /**
- * Returns the version data bianry for a given version
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  *
  * @example
- * const {data} = useHistoryVersionData(versionId);
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
  */
-function useHistoryVersionData(
+function useRoomSubscriptionSettingsSuspense(): [
+  RoomSubscriptionSettingsAsyncSuccess,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  return useRoomSubscriptionSettingsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersionData_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
   versionId: string
 ): HistoryVersionDataAsyncResult {
   const [state, setState] = useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   useEffect(() => {
     setState({ isLoading: true });
     const load = async () => {
@@ -2424,14 +2796,25 @@ function useHistoryVersionData(
 }
 
 /**
- * (Private beta) Returns a history of versions of the current room.
+ * Returns the version data bianry for a given version
  *
  * @example
- * const { versions, error, isLoading } = useHistoryVersions();
+ * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersions(): HistoryVersionsAsyncResult {
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  return useHistoryVersionData_withRoomContext(GlobalRoomContext, versionId);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersions_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): HistoryVersionsAsyncResult {
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const { store, getOrCreateVersionsPollerForRoomId } =
     getRoomExtrasForClient(client);
@@ -2465,35 +2848,51 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
  * (Private beta) Returns a history of versions of the current room.
  *
  * @example
- * const { versions } = useHistoryVersions();
+ * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
+  return useHistoryVersions_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useHistoryVersionsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): HistoryVersionsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   const store = getRoomExtrasForClient(client).store;
 
   use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
-  const result = useHistoryVersions();
+  const result = useHistoryVersions_withRoomContext(RoomContext);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
 }
 
 /**
- * Returns a function that updates the user's subscription settings
- * for the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
- * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
- * updateRoomSubscriptionSettings({ threads: "all" });
+ * const { versions } = useHistoryVersions();
  */
-function useUpdateRoomSubscriptionSettings() {
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+  return useHistoryVersionsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useUpdateRoomSubscriptionSettings_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+) {
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
     (settings: Partial<RoomSubscriptionSettings>) => {
       const { store, onMutationFailure, pollThreadsForRoomId } =
@@ -2535,12 +2934,62 @@ function useUpdateRoomSubscriptionSettings() {
   );
 }
 
-function useSuspendUntilPresenceReady(): void {
+/**
+ * Returns a function that updates the user's subscription settings
+ * for the current room.
+ *
+ * @example
+ * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+ * updateRoomSubscriptionSettings({ threads: "all" });
+ */
+function useUpdateRoomSubscriptionSettings() {
+  return useUpdateRoomSubscriptionSettings_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useSuspendUntilPresenceReady_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): void {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilPresenceReady());
+}
+
+/**
+ * @internal
+ */
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): User<P, U>;
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useSelfSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (me: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | User<P, U> {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useSelf_withRoomContext<P, U, T>(
+    RoomContext,
+    selector as (me: User<P, U>) => T,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T | User<P, U>;
 }
 
 function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -2555,11 +3004,44 @@ function useSelfSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (me: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | User<P, U> {
-  useSuspendUntilPresenceReady();
-  return useSelf(
+  return useSelfSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
     selector as (me: User<P, U>) => T,
-    isEqual as (prev: T | null, curr: T | null) => boolean
-  ) as T | User<P, U>;
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+>(RoomContext: Context<OpaqueRoom | null>): readonly User<P, U>[];
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T;
+function useOthersSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector?: (others: readonly User<P, U>[]) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T | readonly User<P, U>[] {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthers_withRoomContext<P, U, T>(
+    RoomContext,
+    selector as (others: readonly User<P, U>[]) => T,
+    isEqual as (prev: T, curr: T) => boolean
+  ) as T | readonly User<P, U>[];
 }
 
 function useOthersSuspense<
@@ -2574,11 +3056,21 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector?: (others: readonly User<P, U>[]) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T | readonly User<P, U>[] {
-  useSuspendUntilPresenceReady();
-  return useOthers(
+  return useOthersSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
     selector as (others: readonly User<P, U>[]) => T,
-    isEqual as (prev: T, curr: T) => boolean
-  ) as T | readonly User<P, U>[];
+    isEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOthersConnectionIdsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): readonly number[] {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthersConnectionIds_withRoomContext(RoomContext);
 }
 
 /**
@@ -2596,8 +3088,27 @@ function useOthersSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
  * // [2, 4, 7]
  */
 function useOthersConnectionIdsSuspense(): readonly number[] {
-  useSuspendUntilPresenceReady();
-  return useOthersConnectionIds();
+  return useOthersConnectionIdsSuspense_withRoomContext(GlobalRoomContext);
+}
+
+/**
+ * @internal
+ */
+function useOthersMappedSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  itemSelector: (other: User<P, U>) => T,
+  itemIsEqual?: (prev: T, curr: T) => boolean
+): ReadonlyArray<readonly [connectionId: number, data: T]> {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOthersMapped_withRoomContext<P, U, T>(
+    RoomContext,
+    itemSelector,
+    itemIsEqual
+  );
 }
 
 function useOthersMappedSuspense<
@@ -2608,8 +3119,33 @@ function useOthersMappedSuspense<
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  useSuspendUntilPresenceReady();
-  return useOthersMapped(itemSelector, itemIsEqual);
+  return useOthersMappedSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    itemSelector,
+    itemIsEqual
+  );
+}
+
+/**
+ * @internal
+ */
+function useOtherSuspense_withRoomContext<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+  T,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
+  connectionId: number,
+  selector: (other: User<P, U>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilPresenceReady_withRoomContext(RoomContext);
+  return useOther_withRoomContext<P, U, T>(
+    RoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
 }
 
 function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
@@ -2617,47 +3153,85 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilPresenceReady();
-  return useOther(connectionId, selector, isEqual);
+  return useOtherSuspense_withRoomContext<P, U, T>(
+    GlobalRoomContext,
+    connectionId,
+    selector,
+    isEqual
+  );
 }
 
-function useSuspendUntilStorageReady(): void {
+/**
+ * @internal
+ */
+function useSuspendUntilStorageReady_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): void {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilStorageReady());
+}
+
+/**
+ * @internal
+ */
+function useStorageSuspense_withRoomContext<S extends LsonObject, T>(
+  RoomContext: Context<OpaqueRoom | null>,
+  selector: (root: ToImmutable<S>) => T,
+  isEqual?: (prev: T, curr: T) => boolean
+): T {
+  useSuspendUntilStorageReady_withRoomContext(RoomContext);
+  return useStorage_withRoomContext(
+    RoomContext,
+    selector,
+    isEqual as (prev: T | null, curr: T | null) => boolean
+  ) as T;
 }
 
 function useStorageSuspense<S extends LsonObject, T>(
   selector: (root: ToImmutable<S>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  useSuspendUntilStorageReady();
-  return useStorage(
+  return useStorageSuspense_withRoomContext<S, T>(
+    GlobalRoomContext,
     selector,
-    isEqual as (prev: T | null, curr: T | null) => boolean
-  ) as T;
+    isEqual
+  );
 }
 
-function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+/**
+ * @internal
+ */
+function useThreadsSuspense_withRoomContext<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  RoomContext: Context<OpaqueRoom | null>,
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncSuccess<TM, CM> {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
-  const room = useRoom();
+  const room = useRoom_withRoomContext(RoomContext);
 
   const { store } = getRoomExtrasForClient<TM, CM>(client);
   const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useThreads<TM, CM>(options);
+  const result = useThreads_withRoomContext<TM, CM>(RoomContext, options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
+}
+
+function useThreadsSuspense<TM extends BaseMetadata, CM extends BaseMetadata>(
+  options: UseThreadsOptions<TM> = {}
+): ThreadsAsyncSuccess<TM, CM> {
+  return useThreadsSuspense_withRoomContext<TM, CM>(GlobalRoomContext, options);
 }
 
 function selectorFor_useAttachmentUrl(
@@ -2684,14 +3258,24 @@ function selectorFor_useAttachmentUrl(
 }
 
 /**
+ * @internal
+ */
+function useAttachmentUrl_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  attachmentId: string
+): AttachmentUrlAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useRoomAttachmentUrl(attachmentId, room.id);
+}
+
+/**
  * Returns a presigned URL for an attachment by its ID.
  *
  * @example
  * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
  */
 function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
-  const room = useRoom();
-  return useRoomAttachmentUrl(attachmentId, room.id);
+  return useAttachmentUrl_withRoomContext(GlobalRoomContext, attachmentId);
 }
 
 /**
@@ -2724,13 +3308,13 @@ function useRoomAttachmentUrl(
 }
 
 /**
- * Returns a presigned URL for an attachment by its ID.
- *
- * @example
- * const { url } = useAttachmentUrl("at_xxx");
+ * @internal
  */
-function useAttachmentUrlSuspense(attachmentId: string) {
-  const room = useRoom();
+function useAttachmentUrlSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  attachmentId: string
+) {
+  const room = useRoom_withRoomContext(RoomContext);
   const { attachmentUrlsStore } = room[kInternal];
 
   const getAttachmentUrlState = useCallback(
@@ -2763,6 +3347,19 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 }
 
 /**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrlSuspense(attachmentId: string) {
+  return useAttachmentUrlSuspense_withRoomContext(
+    GlobalRoomContext,
+    attachmentId
+  );
+}
+
+/**
  * @private For internal use only. Do not rely on this hook.
  */
 function useRoomPermissions(roomId: string) {
@@ -2784,7 +3381,507 @@ export function createRoomContext<
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  return getOrCreateRoomContextBundle<P, S, U, E, TM, CM>(client);
+  type TRoom = Room<P, S, U, E, TM, CM>;
+  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM>;
+
+  const BoundRoomContext = createContext<OpaqueRoom | null>(null);
+
+  function RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext(
+    props: RoomProviderProps<P, S>
+  ) {
+    // NOTE: Normally, nesting LiveblocksProvider is not allowed. This
+    // factory-bound version of the RoomProvider will create an implicit
+    // LiveblocksProvider. This means that if an end user nests this
+    // RoomProvider under a LiveblocksProvider context, that would be an error.
+    // However, we'll allow that nesting only in this specific situation, and
+    // only because this wrapper will keep the Liveblocks context and the Room
+    // context consistent internally.
+    return (
+      <LiveblocksProviderWithClient client={client} allowNesting>
+        {/* @ts-expect-error {...props} is the same type as props */}
+        <RoomProvider {...props} BoundRoomContext={BoundRoomContext} />
+      </LiveblocksProviderWithClient>
+    );
+  }
+
+  function useRoom_withBoundRoomContext(
+    ...args: Parameters<typeof useRoom<P, S, U, E, TM, CM>>
+  ) {
+    return useRoom_withRoomContext<P, S, U, E, TM, CM>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useStatus_withBoundRoomContext() {
+    return useStatus_withRoomContext(BoundRoomContext);
+  }
+
+  function useBroadcastEvent_withBoundRoomContext() {
+    return useBroadcastEvent_withRoomContext<E>(BoundRoomContext);
+  }
+
+  function useOthersListener_withBoundRoomContext(
+    ...args: Parameters<typeof useOthersListener<P, U>>
+  ) {
+    return useOthersListener_withRoomContext<P, U>(BoundRoomContext, ...args);
+  }
+
+  function useLostConnectionListener_withBoundRoomContext(
+    ...args: Parameters<typeof useLostConnectionListener>
+  ) {
+    return useLostConnectionListener_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useEventListener_withBoundRoomContext(
+    ...args: Parameters<typeof useEventListener<P, U, E>>
+  ) {
+    return useEventListener_withRoomContext<P, U, E>(BoundRoomContext, ...args);
+  }
+
+  function useMarkThreadAsRead_withBoundRoomContext() {
+    return useMarkThreadAsRead_withRoomContext(BoundRoomContext);
+  }
+
+  function useHistory_withBoundRoomContext() {
+    return useHistory_withRoomContext(BoundRoomContext);
+  }
+
+  function useUndo_withBoundRoomContext() {
+    return useUndo_withRoomContext(BoundRoomContext);
+  }
+
+  function useRedo_withBoundRoomContext() {
+    return useRedo_withRoomContext(BoundRoomContext);
+  }
+
+  function useCanUndo_withBoundRoomContext() {
+    return useCanUndo_withRoomContext(BoundRoomContext);
+  }
+
+  function useCanRedo_withBoundRoomContext() {
+    return useCanRedo_withRoomContext(BoundRoomContext);
+  }
+
+  function useStorageRoot_withBoundRoomContext() {
+    return useStorageRoot_withRoomContext<S>(BoundRoomContext);
+  }
+
+  function useStorage_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useStorage<S, T>>
+  ) {
+    return useStorage_withRoomContext<S, T>(BoundRoomContext, ...args);
+  }
+
+  function useStorageSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useStorageSuspense<S, T>>
+  ) {
+    return useStorageSuspense_withRoomContext<S, T>(BoundRoomContext, ...args);
+  }
+
+  function useSelf_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useSelf<P, U, T>>
+  ) {
+    return useSelf_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useMyPresence_withBoundRoomContext() {
+    return useMyPresence_withRoomContext<P>(BoundRoomContext);
+  }
+
+  function useUpdateMyPresence_withBoundRoomContext() {
+    return useUpdateMyPresence_withRoomContext<P>(BoundRoomContext);
+  }
+
+  function useOthers_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthers<P, U, T>>
+  ) {
+    return useOthers_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useOthersMapped_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthersMapped<P, U, T>>
+  ) {
+    return useOthersMapped_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useOthersConnectionIds_withBoundRoomContext() {
+    return useOthersConnectionIds_withRoomContext(BoundRoomContext);
+  }
+
+  function useOther_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOther<P, U, T>>
+  ) {
+    return useOther_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useSelfSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useSelfSuspense<P, U, T>>
+  ) {
+    return useSelfSuspense_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useOthersSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthersSuspense<P, U, T>>
+  ) {
+    return useOthersSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useOthersMappedSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOthersMappedSuspense<P, U, T>>
+  ) {
+    return useOthersMappedSuspense_withRoomContext<P, U, T>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useOthersConnectionIdsSuspense_withBoundRoomContext() {
+    return useOthersConnectionIdsSuspense_withRoomContext(BoundRoomContext);
+  }
+
+  function useOtherSuspense_withBoundRoomContext<T>(
+    ...args: Parameters<typeof useOtherSuspense<P, U, T>>
+  ) {
+    return useOtherSuspense_withRoomContext<P, U, T>(BoundRoomContext, ...args);
+  }
+
+  function useMutation_withBoundRoomContext<
+    F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
+  >(...args: Parameters<typeof useMutation<P, S, U, E, TM, CM, F>>) {
+    return useMutation_withRoomContext<P, S, U, E, TM, CM, F>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useThreads_withBoundRoomContext(
+    ...args: Parameters<typeof useThreads<TM, CM>>
+  ) {
+    return useThreads_withRoomContext<TM, CM>(BoundRoomContext, ...args);
+  }
+
+  function useCreateThread_withBoundRoomContext() {
+    return useCreateThread_withRoomContext<TM, CM>(BoundRoomContext);
+  }
+
+  function useDeleteThread_withBoundRoomContext() {
+    return useDeleteThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useEditThreadMetadata_withBoundRoomContext() {
+    return useEditThreadMetadata_withRoomContext<TM>(BoundRoomContext);
+  }
+
+  function useMarkThreadAsResolved_withBoundRoomContext() {
+    return useMarkThreadAsResolved_withRoomContext(BoundRoomContext);
+  }
+
+  function useMarkThreadAsUnresolved_withBoundRoomContext() {
+    return useMarkThreadAsUnresolved_withRoomContext(BoundRoomContext);
+  }
+
+  function useThreadsSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useThreadsSuspense<TM, CM>>
+  ) {
+    return useThreadsSuspense_withRoomContext<TM, CM>(
+      BoundRoomContext,
+      ...args
+    );
+  }
+
+  function useSubscribeToThread_withBoundRoomContext() {
+    return useSubscribeToThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useUnsubscribeFromThread_withBoundRoomContext() {
+    return useUnsubscribeFromThread_withRoomContext(BoundRoomContext);
+  }
+
+  function useCreateComment_withBoundRoomContext() {
+    return useCreateComment_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useEditComment_withBoundRoomContext() {
+    return useEditComment_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useEditCommentMetadata_withBoundRoomContext() {
+    return useEditCommentMetadata_withRoomContext<CM>(BoundRoomContext);
+  }
+
+  function useDeleteComment_withBoundRoomContext() {
+    return useDeleteComment_withRoomContext(BoundRoomContext);
+  }
+
+  function useAddReaction_withBoundRoomContext() {
+    return useAddReaction_withRoomContext(BoundRoomContext);
+  }
+
+  function useRemoveReaction_withBoundRoomContext() {
+    return useRemoveReaction_withRoomContext(BoundRoomContext);
+  }
+
+  function useThreadSubscription_withBoundRoomContext(
+    ...args: Parameters<typeof useThreadSubscription>
+  ) {
+    return useThreadSubscription_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useAttachmentUrl_withBoundRoomContext(
+    ...args: Parameters<typeof useAttachmentUrl>
+  ) {
+    return useAttachmentUrl_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useAttachmentUrlSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useAttachmentUrlSuspense>
+  ) {
+    return useAttachmentUrlSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useSearchComments_withBoundRoomContext(
+    ...args: Parameters<typeof useSearchComments<TM>>
+  ) {
+    return useSearchComments_withRoomContext<TM>(BoundRoomContext, ...args);
+  }
+
+  function useHistoryVersions_withBoundRoomContext() {
+    return useHistoryVersions_withRoomContext(BoundRoomContext);
+  }
+
+  function useHistoryVersionsSuspense_withBoundRoomContext() {
+    return useHistoryVersionsSuspense_withRoomContext(BoundRoomContext);
+  }
+
+  function useHistoryVersionData_withBoundRoomContext(
+    ...args: Parameters<typeof useHistoryVersionData>
+  ) {
+    return useHistoryVersionData_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useRoomSubscriptionSettings_withBoundRoomContext() {
+    return useRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
+  }
+
+  function useRoomSubscriptionSettingsSuspense_withBoundRoomContext() {
+    return useRoomSubscriptionSettingsSuspense_withRoomContext(
+      BoundRoomContext
+    );
+  }
+
+  function useUpdateRoomSubscriptionSettings_withBoundRoomContext() {
+    return useUpdateRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
+  }
+
+  const shared = createSharedContext(client as Client<U>);
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
+    RoomContext: BoundRoomContext as Context<TRoom | null>,
+    RoomProvider:
+      RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
+
+    // prettier-ignore
+    useRoom: useRoom_withBoundRoomContext as TRoomBundle["useRoom"],
+    // prettier-ignore
+    useStatus: useStatus_withBoundRoomContext as TRoomBundle["useStatus"],
+    // prettier-ignore
+    useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as TRoomBundle["useBroadcastEvent"],
+    // prettier-ignore
+    useOthersListener: useOthersListener_withBoundRoomContext as TRoomBundle["useOthersListener"],
+    // prettier-ignore
+    useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as TRoomBundle["useLostConnectionListener"],
+    // prettier-ignore
+    useEventListener: useEventListener_withBoundRoomContext as TRoomBundle["useEventListener"],
+
+    // prettier-ignore
+    useHistory: useHistory_withBoundRoomContext as TRoomBundle["useHistory"],
+    // prettier-ignore
+    useUndo: useUndo_withBoundRoomContext as TRoomBundle["useUndo"],
+    // prettier-ignore
+    useRedo: useRedo_withBoundRoomContext as TRoomBundle["useRedo"],
+    // prettier-ignore
+    useCanUndo: useCanUndo_withBoundRoomContext as TRoomBundle["useCanUndo"],
+    // prettier-ignore
+    useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["useCanRedo"],
+
+    // prettier-ignore
+    useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["useStorageRoot"],
+    // prettier-ignore
+    useStorage: useStorage_withBoundRoomContext as TRoomBundle["useStorage"],
+    // prettier-ignore
+    useMutation: useMutation_withBoundRoomContext as TRoomBundle["useMutation"],
+
+    // prettier-ignore
+    useSelf: useSelf_withBoundRoomContext as TRoomBundle["useSelf"],
+    // prettier-ignore
+    useMyPresence: useMyPresence_withBoundRoomContext as TRoomBundle["useMyPresence"],
+    // prettier-ignore
+    useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as TRoomBundle["useUpdateMyPresence"],
+    // prettier-ignore
+    useOthers: useOthers_withBoundRoomContext as TRoomBundle["useOthers"],
+    // prettier-ignore
+    useOthersMapped: useOthersMapped_withBoundRoomContext as TRoomBundle["useOthersMapped"],
+    // prettier-ignore
+    useOthersConnectionIds: useOthersConnectionIds_withBoundRoomContext as TRoomBundle["useOthersConnectionIds"],
+    // prettier-ignore
+    useOther: useOther_withBoundRoomContext as TRoomBundle["useOther"],
+
+    // prettier-ignore
+    useThreads: useThreads_withBoundRoomContext as TRoomBundle["useThreads"],
+    // prettier-ignore
+    useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["useCreateThread"],
+    // prettier-ignore
+    useDeleteThread: useDeleteThread_withBoundRoomContext as TRoomBundle["useDeleteThread"],
+    // prettier-ignore
+    useEditThreadMetadata: useEditThreadMetadata_withBoundRoomContext as TRoomBundle["useEditThreadMetadata"],
+    // prettier-ignore
+    useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsResolved"],
+    // prettier-ignore
+    useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["useMarkThreadAsUnresolved"],
+    // prettier-ignore
+    useSubscribeToThread: useSubscribeToThread_withBoundRoomContext as TRoomBundle["useSubscribeToThread"],
+    // prettier-ignore
+    useUnsubscribeFromThread: useUnsubscribeFromThread_withBoundRoomContext as TRoomBundle["useUnsubscribeFromThread"],
+    // prettier-ignore
+    useCreateComment: useCreateComment_withBoundRoomContext as TRoomBundle["useCreateComment"],
+    // prettier-ignore
+    useEditComment: useEditComment_withBoundRoomContext as TRoomBundle["useEditComment"],
+    // prettier-ignore
+    useEditCommentMetadata: useEditCommentMetadata_withBoundRoomContext as TRoomBundle["useEditCommentMetadata"],
+    // prettier-ignore
+    useDeleteComment: useDeleteComment_withBoundRoomContext as TRoomBundle["useDeleteComment"],
+    // prettier-ignore
+    useAddReaction: useAddReaction_withBoundRoomContext as TRoomBundle["useAddReaction"],
+    // prettier-ignore
+    useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["useRemoveReaction"],
+    // prettier-ignore
+    useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["useMarkThreadAsRead"],
+    // prettier-ignore
+    useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["useThreadSubscription"],
+    // prettier-ignore
+    useAttachmentUrl: useAttachmentUrl_withBoundRoomContext as TRoomBundle["useAttachmentUrl"],
+    // prettier-ignore
+    useSearchComments: useSearchComments_withBoundRoomContext as TRoomBundle["useSearchComments"],
+
+    // prettier-ignore
+    useHistoryVersions: useHistoryVersions_withBoundRoomContext as TRoomBundle["useHistoryVersions"],
+    // prettier-ignore
+    useHistoryVersionData: useHistoryVersionData_withBoundRoomContext as TRoomBundle["useHistoryVersionData"],
+
+    // prettier-ignore
+    useRoomSubscriptionSettings: useRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useRoomSubscriptionSettings"],
+    // prettier-ignore
+    useUpdateRoomSubscriptionSettings: useUpdateRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["useUpdateRoomSubscriptionSettings"],
+
+    ...shared.classic,
+
+    suspense: {
+      RoomContext: BoundRoomContext as Context<TRoom | null>,
+      RoomProvider:
+        RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
+
+      // prettier-ignore
+      useRoom: useRoom_withBoundRoomContext as TRoomBundle["suspense"]["useRoom"],
+      // prettier-ignore
+      useStatus: useStatus_withBoundRoomContext as TRoomBundle["suspense"]["useStatus"],
+      // prettier-ignore
+      useBroadcastEvent: useBroadcastEvent_withBoundRoomContext as TRoomBundle["suspense"]["useBroadcastEvent"],
+      // prettier-ignore
+      useOthersListener: useOthersListener_withBoundRoomContext as TRoomBundle["suspense"]["useOthersListener"],
+      // prettier-ignore
+      useLostConnectionListener: useLostConnectionListener_withBoundRoomContext as TRoomBundle["suspense"]["useLostConnectionListener"],
+      // prettier-ignore
+      useEventListener: useEventListener_withBoundRoomContext as TRoomBundle["suspense"]["useEventListener"],
+
+      // prettier-ignore
+      useHistory: useHistory_withBoundRoomContext as TRoomBundle["suspense"]["useHistory"],
+      // prettier-ignore
+      useUndo: useUndo_withBoundRoomContext as TRoomBundle["suspense"]["useUndo"],
+      // prettier-ignore
+      useRedo: useRedo_withBoundRoomContext as TRoomBundle["suspense"]["useRedo"],
+      // prettier-ignore
+      useCanUndo: useCanUndo_withBoundRoomContext as TRoomBundle["suspense"]["useCanUndo"],
+      // prettier-ignore
+      useCanRedo: useCanRedo_withBoundRoomContext as TRoomBundle["suspense"]["useCanRedo"],
+
+      // prettier-ignore
+      useStorageRoot: useStorageRoot_withBoundRoomContext as TRoomBundle["suspense"]["useStorageRoot"],
+      // prettier-ignore
+      useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
+      // prettier-ignore
+      useMutation: useMutation as TRoomBundle["suspense"]["useMutation"],
+
+      // prettier-ignore
+      useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
+      // prettier-ignore
+      useMyPresence: useMyPresence_withBoundRoomContext as TRoomBundle["suspense"]["useMyPresence"],
+      // prettier-ignore
+      useUpdateMyPresence: useUpdateMyPresence_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateMyPresence"],
+      // prettier-ignore
+      useOthers: useOthersSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthers"],
+      // prettier-ignore
+      useOthersMapped: useOthersMappedSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthersMapped"],
+      // prettier-ignore
+      useOthersConnectionIds: useOthersConnectionIdsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOthersConnectionIds"],
+      // prettier-ignore
+      useOther: useOtherSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useOther"],
+
+      // prettier-ignore
+      useThreads: useThreadsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useThreads"],
+      // prettier-ignore
+      useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["suspense"]["useCreateThread"],
+      // prettier-ignore
+      useDeleteThread: useDeleteThread_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteThread"],
+      // prettier-ignore
+      useEditThreadMetadata: useEditThreadMetadata_withBoundRoomContext as TRoomBundle["suspense"]["useEditThreadMetadata"],
+      // prettier-ignore
+      useMarkThreadAsResolved: useMarkThreadAsResolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsResolved"],
+      // prettier-ignore
+      useMarkThreadAsUnresolved: useMarkThreadAsUnresolved_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsUnresolved"],
+      // prettier-ignore
+      useSubscribeToThread: useSubscribeToThread_withBoundRoomContext as TRoomBundle["suspense"]["useSubscribeToThread"],
+      // prettier-ignore
+      useUnsubscribeFromThread: useUnsubscribeFromThread_withBoundRoomContext as TRoomBundle["suspense"]["useUnsubscribeFromThread"],
+      // prettier-ignore
+      useCreateComment: useCreateComment_withBoundRoomContext as TRoomBundle["suspense"]["useCreateComment"],
+      // prettier-ignore
+      useEditComment: useEditComment_withBoundRoomContext as TRoomBundle["suspense"]["useEditComment"],
+      // prettier-ignore
+      useEditCommentMetadata: useEditCommentMetadata_withBoundRoomContext as TRoomBundle["suspense"]["useEditCommentMetadata"],
+      // prettier-ignore
+      useDeleteComment: useDeleteComment_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteComment"],
+      // prettier-ignore
+      useAddReaction: useAddReaction_withBoundRoomContext as TRoomBundle["suspense"]["useAddReaction"],
+      // prettier-ignore
+      useRemoveReaction: useRemoveReaction_withBoundRoomContext as TRoomBundle["suspense"]["useRemoveReaction"],
+      // prettier-ignore
+      useMarkThreadAsRead: useMarkThreadAsRead_withBoundRoomContext as TRoomBundle["suspense"]["useMarkThreadAsRead"],
+      // prettier-ignore
+      useThreadSubscription: useThreadSubscription_withBoundRoomContext as TRoomBundle["suspense"]["useThreadSubscription"],
+      // prettier-ignore
+      useAttachmentUrl: useAttachmentUrlSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useAttachmentUrl"],
+
+      // prettier-ignore
+      useHistoryVersions: useHistoryVersionsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useHistoryVersions"],
+
+      // prettier-ignore
+      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useRoomSubscriptionSettings"],
+      // prettier-ignore
+      useUpdateRoomSubscriptionSettings: useUpdateRoomSubscriptionSettings_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateRoomSubscriptionSettings"],
+
+      // No Suspense version: useSearchComments
+      // No Suspense version: useHistoryVersionData
+
+      ...shared.suspense,
+    },
+  };
+
+  return Object.defineProperty(bundle, kInternal, {
+    enumerable: false,
+  });
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
