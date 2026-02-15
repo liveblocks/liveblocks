@@ -4,9 +4,12 @@ on:
   push:
     tags:
       - "v*"
-  schedule:
-    # Nightly build at 03:00 UTC
-    - cron: "0 3 * * *"
+  pull_request:
+    paths:
+      - "tools/liveblocks-cli/Dockerfile"
+      - "tools/liveblocks-cli/docker-healthcheck.ts"
+      - "tools/liveblocks-cli/scripts/**"
+      - ".github/workflows/publish-docker.yml"
   workflow_dispatch:
 
 env:
@@ -48,7 +51,7 @@ jobs:
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
           else
-            echo "version=nightly" >> "$GITHUB_OUTPUT"
+            echo "version=latest" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -58,13 +61,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Release tags: X.Y.Z, X.Y, latest
             type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_release }}
             type=raw,value=latest,enable=${{ steps.version.outputs.is_release }}
-            # Nightly tags
-            type=raw,value=nightly,enable=${{ steps.version.outputs.is_release == 'false' }}
-            type=raw,value=nightly-{{date 'YYYYMMDD'}},enable=${{ steps.version.outputs.is_release == 'false' }}
 
       - name: Build and push
         id: build
@@ -72,7 +71,7 @@ jobs:
         with:
           context: tools/liveblocks-cli
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -84,6 +83,7 @@ jobs:
       # --- Security scanning ---
 
       - name: Vulnerability scan with Grype
+        if: github.event_name != 'pull_request'
         uses: anchore/scan-action@v6
         id: grype
         with:
@@ -93,13 +93,14 @@ jobs:
 
       - name: Upload Grype SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
 
       # --- SBOM generation ---
 
       - name: Generate SBOM with Syft
+        if: github.event_name != 'pull_request'
         uses: anchore/sbom-action@v0
         id: sbom
         with:
@@ -110,14 +111,17 @@ jobs:
       # --- Signing and attestation ---
 
       - name: Install cosign
+        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3
 
       - name: Sign image with cosign
+        if: github.event_name != 'pull_request'
         run: |
           cosign sign --yes \
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
       - name: Attest SBOM with cosign
+        if: github.event_name != 'pull_request'
         run: |
           cosign attest --yes \
             --predicate sbom.cdx.json \
@@ -125,6 +129,7 @@ jobs:
             "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}"
 
       - name: Upload SBOM artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx
