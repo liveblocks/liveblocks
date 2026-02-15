@@ -65,6 +65,7 @@ jobs:
             type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_release }}
             type=raw,value=latest,enable=${{ steps.version.outputs.is_release }}
+            type=ref,event=pr
 
       - name: Build and push
         id: build
@@ -72,7 +73,7 @@ jobs:
         with:
           context: tools/liveblocks-cli
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
