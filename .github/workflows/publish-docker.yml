@@ -9,6 +9,7 @@ on:
       - "tools/liveblocks-cli/Dockerfile"
       - "tools/liveblocks-cli/docker-healthcheck.ts"
       - "tools/liveblocks-cli/scripts/**"
+      - "packages/liveblocks-server/**"
       - ".github/workflows/publish-docker.yml"
   workflow_dispatch:
 
