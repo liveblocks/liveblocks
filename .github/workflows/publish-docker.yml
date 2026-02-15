@@ -61,6 +61,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Tag push v1.2.3  → 1.2.3, 1.2, latest
+          # PR #3060         → pr-3060
+          # workflow_dispatch → (no tags — add type=sha if needed)
           tags: |
             type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_release }}
