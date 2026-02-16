@@ -1,16 +1,11 @@
-const seenWarnings = new Set<string>();
-
-function warnOnce(message: string | undefined, key = message): void {
-  if (key && !seenWarnings.has(key)) {
-    seenWarnings.add(key);
-    console.warn(`  ⚠ [Liveblocks] ${message ?? key}`);
-  }
-}
-
-export function xwarn(resp: Response): void {
+export function xwarn(resp: Response, method: string, path: string): void {
   const message = resp.headers.get("X-LB-Warn");
   if (message) {
-    const key = resp.headers.get("X-LB-Warn-Key") ?? message;
-    warnOnce(message, key);
+    const msg = `  ⚠ [Liveblocks] ${message} (${method} ${path})`;
+    if (resp.ok) {
+      console.warn(msg);
+    } else {
+      console.error(msg);
+    }
   }
 }

@@ -25,7 +25,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import { warnOnce } from "./lib/warnings";
+import * as console from "./lib/fancy-console";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -2087,8 +2087,13 @@ class HttpClient {
     // Surface dev-server warnings to the developer
     const xwarn = response.headers.get("X-LB-Warn");
     if (xwarn) {
-      const key = response.headers.get("X-LB-Warn-Key") ?? xwarn;
-      warnOnce(xwarn, key);
+      const method = options?.method?.toUpperCase() ?? "GET";
+      const msg = `${xwarn} (${method} ${endpoint})`;
+      if (response.ok) {
+        console.warn(msg);
+      } else {
+        console.error(msg);
+      }
     }
 
     return response;

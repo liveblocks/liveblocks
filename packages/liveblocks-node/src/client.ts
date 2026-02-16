@@ -735,7 +735,7 @@ export class Liveblocks {
       body: JSON.stringify(json),
       signal: options?.signal,
     });
-    xwarn(res);
+    xwarn(res, "POST", path);
     return res;
   }
 
@@ -757,7 +757,7 @@ export class Liveblocks {
       body: body as Uint8Array<ArrayBuffer>,
       signal: options?.signal,
     });
-    xwarn(res);
+    xwarn(res, "PUT", path);
     return res;
   }
 
@@ -776,7 +776,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
-    xwarn(res);
+    xwarn(res, "DELETE", path);
     return res;
   }
 
@@ -795,7 +795,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
-    xwarn(res);
+    xwarn(res, "GET", path);
     return res;
   }
 
