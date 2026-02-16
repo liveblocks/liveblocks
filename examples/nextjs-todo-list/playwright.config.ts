@@ -6,7 +6,10 @@ const LIVEBLOCKS_PORT = 1153;
 export default defineConfig({
   testDir: "./test",
   retries: process.env.CI ? 2 : 0,
-  use: { baseURL: `http://localhost:${NEXT_PORT}` },
+  use: {
+    baseURL: `http://localhost:${NEXT_PORT}`,
+    trace: "on-first-retry",
+  },
   webServer: [
     // Locally, start the liveblocks dev server via bunx.
     // In CI it runs as a Docker service container instead.

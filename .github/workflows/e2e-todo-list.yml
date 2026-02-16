@@ -47,6 +47,20 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
+      - name: Wait for Liveblocks dev server
+        working-directory: .
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:1153/ > /dev/null 2>&1; then
+              echo "Liveblocks dev server is ready"
+              exit 0
+            fi
+            echo "Waiting for Liveblocks dev server... ($i/30)"
+            sleep 1
+          done
+          echo "::error::Liveblocks dev server failed to start"
+          exit 1
+
       - name: Build
         run: npm run build
 
