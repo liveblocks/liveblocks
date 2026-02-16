@@ -1,0 +1,34 @@
+import { defineConfig } from "@playwright/test";
+
+const NEXT_PORT = 3009;
+const LIVEBLOCKS_PORT = 1153;
+
+export default defineConfig({
+  testDir: "./test",
+  retries: process.env.CI ? 2 : 0,
+  use: { baseURL: `http://localhost:${NEXT_PORT}` },
+  webServer: [
+    // Locally, start the liveblocks dev server via bunx.
+    // In CI it runs as a Docker service container instead.
+    ...(process.env.CI
+      ? []
+      : [
+          {
+            command: `bunx liveblocks dev --port ${LIVEBLOCKS_PORT}`,
+            port: LIVEBLOCKS_PORT,
+            reuseExistingServer: true,
+          },
+        ]),
+    {
+      command: process.env.CI
+        ? `npx next start --port ${NEXT_PORT}`
+        : `npx next dev --port ${NEXT_PORT}`,
+      port: NEXT_PORT,
+      reuseExistingServer: !process.env.CI,
+      env: {
+        NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: "pk_localdev",
+        NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: `http://localhost:${LIVEBLOCKS_PORT}`,
+      },
+    },
+  ],
+});
