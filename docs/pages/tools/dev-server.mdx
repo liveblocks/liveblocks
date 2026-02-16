@@ -15,26 +15,30 @@ package internally.
 
 ## Features
 
-| Feature                                                                                                                    | Support |
-| -------------------------------------------------------------------------------------------------------------------------- | ------- |
-| Presence                                                                                                                   | ✅      |
-| [Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage) (LiveObject, LiveList, LiveMap) | ✅      |
-| [Liveblocks Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs)                                         | ✅      |
-| Broadcast                                                                                                                  | ✅      |
-| Public key auth                                                                                                            | ✅      |
-| Access token auth                                                                                                          | ✅      |
-| ID token authentication                                                                                                    | ❌      |
-| Room management REST APIs                                                                                                  | ⚠️¹     |
-| Comments & Threads APIs                                                                                                    | ❌²     |
-| Notifications APIs                                                                                                         | ❌²     |
+The dev server fully supports all
+[Multiplayer](/docs/ready-made-features/multiplayer) features, and partially
+supports other APIs. [Learn more](#Partially-supported-features).
 
-¹ <small>_The most basic room APIs are partially supported, but room permissions
-and metadata are not fully implemented yet. For example, you can create a room
-with the dev server, but you won’t be able to set permissions, or query by
-metadata._</small>  
-² <small>_While not implemented, the most basic APIs will return dummy data, so
-you can still use the Liveblocks dev server to test other Liveblocks features in
-your app._</small>
+| Feature                                                                                                                            | Support |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage) (LiveObject, Presence, Broadcast, etc.) | ✅      |
+| [Liveblocks Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs)                                                 | ✅      |
+| [Text editors](/docs/ready-made-features/multiplayer/text-editor) (Tiptap, BlockNote, Lexical)                                     | ✅ ¹    |
+| [Public key authentication](/docs/api-reference/liveblocks-react#LiveblocksProviderPublicKey)                                      | ✅      |
+| [Access token authentication](/docs/authentication/access-token)                                                                   | ✅      |
+| [ID token authentication](/docs/authentication)                                                                                    | ❌      |
+| [Room Node.js methods](/docs/api-reference/liveblocks-node#Room)                                                                   | ⚠️ ²    |
+| [Room REST APIs](/docs/api-reference/rest-api-endpoints#Room)                                                                      | ⚠️ ²    |
+| [Comments](/docs/ready-made-features/comments)                                                                                     | ❌ ³    |
+| [Notifications](/docs/ready-made-features/notifications)                                                                           | ❌ ³    |
+| [AI Agents](/docs/ready-made-features/ai-agents)                                                                                   | ❌      |
+| Other APIs                                                                                                                         | ❌      |
+
+¹ <small>_Excluding features related to Comments and Notifications._</small>  
+² <small>_Basic room APIs are partially supported, but room permissions and
+metadata are not fully implemented yet._</small>  
+³ <small>_Basic APIs will return dummy data, so you can still use the Liveblocks
+dev server to test other features in your app._</small>
 
 ## Set up the dev server
 
@@ -129,6 +133,63 @@ To persist data between container restarts, mount a volume:
 
 ```bash
 docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/cli dev
+```
+
+## Partially supported features
+
+In future, we plan to support more features in the dev server. A number of
+unsupported features are partially implemented so you can run your app without
+seeing errors. For example, `useThreads` is not supported yet, but it will
+always return an empty array so you can still view your application.
+
+```tsx title="React"
+// ✅ Fully supported
+const others = useOthers();
+const shapes = useStorage((root) => root.shapes);
+
+// ⚠️ Returns dummy data such as empty arrays
+const { threads } = useThreads();
+const { inboxNotifications } = useInboxNotifications();
+
+// ⚠️ Nothing happens when calling unsupported functions
+const createNewThread = useCreateThread();
+createNewThread({ body: {}, attachments: [] });
+```
+
+```ts title="Node.js"
+// ✅ Fully supported
+const storage = await liveblocks.getStorageDocument("my-room-id");
+await liveblocks.broadcastEvent("my-room-id", { type: "REFRESH" });
+
+// ⚠️ Room APIs are supported without permissions and metadata
+await liveblocks.createRoom("my-new-room-id", {
+  defaultAccesses: ["room:write"],
+  metadata: { title: "My title" },
+});
+// { metadata: {}, defaultAccesses: [], ... }
+await liveblocks.getRoom("my-new-room-id");
+
+// ⚠️ Returns dummy data such as empty arrays
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+});
+
+// ⚠️ Nothing happens when calling unsupported functions
+await liveblocks.createThread({
+  roomId: "my-room-id",
+  body: {},
+});
+```
+
+## REST API
+
+The REST API supports the same set of features as the Node.js package. To use
+it, point your requests to the dev server URL and use `sk_localdev` as the
+secret key.
+
+```bash
+curl http://localhost:1153/v2/* \
+  -H 'Authorization: Bearer sk_localdev'
 ```
 
 ## Source code
