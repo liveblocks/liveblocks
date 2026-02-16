@@ -4,10 +4,16 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
+    paths:
+      - "tools/liveblocks-cli/Dockerfile"
+      - "tools/liveblocks-cli/scripts/**"
+      - "packages/liveblocks-server/**"
+      - ".github/workflows/publish-docker.yml"
   # pull_request:
   #   paths:
   #     - "tools/liveblocks-cli/Dockerfile"
-  #     - "tools/liveblocks-cli/docker-healthcheck.ts"
   #     - "tools/liveblocks-cli/scripts/**"
   #     - "packages/liveblocks-server/**"
   #     - ".github/workflows/publish-docker.yml"
@@ -61,15 +67,17 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # Tag push v1.2.3  → 1.2.3, 1.2, latest
-          # PR #3060         → pr-3060
-          # workflow_dispatch → sha-a1b2c3d
+          # Tag push v1.2.3     → 1.2.3, 1.2, latest
+          # Push to main        → main, sha-a1b2c3d
+          # PR #3060            → pr-3060
+          # workflow_dispatch   → sha-a1b2c3d
           tags: |
             type=semver,pattern={{version}},enable=${{ steps.version.outputs.is_release }}
             type=semver,pattern={{major}}.{{minor}},enable=${{ steps.version.outputs.is_release }}
             type=raw,value=latest,enable=${{ steps.version.outputs.is_release }}
+            type=ref,event=branch
             type=ref,event=pr
-            type=sha,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha
 
       - name: Build and push
         id: build
