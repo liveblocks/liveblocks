@@ -14,11 +14,6 @@ jobs:
         image: ghcr.io/liveblocks/dev-server:sha-59d071a
         env:
           LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0"
-        options: >-
-          --health-cmd "curl -sf http://localhost:1153/health || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
         ports:
           - 1153:1153
 
