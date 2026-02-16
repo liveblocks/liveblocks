@@ -1,0 +1,146 @@
+# Reusable workflow: build, scan, sign and publish a Docker image to GHCR.
+name: Build, scan, and publish a Docker image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+        description: "Image name (e.g. liveblocks/cli)"
+      dockerfile:
+        required: false
+        type: string
+        default: "Dockerfile"
+        description: "Dockerfile path relative to context"
+      context:
+        required: false
+        type: string
+        default: "tools/liveblocks-cli"
+      build-args:
+        required: false
+        type: string
+      is_release:
+        required: true
+        type: string
+      scan:
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      tags:
+        value: ${{ jobs.build.outputs.tags }}
+      digest:
+        value: ${{ jobs.build.outputs.digest }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ inputs.image }}
+          tags: |
+            type=semver,pattern={{version}},enable=${{ inputs.is_release }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.is_release }}
+            type=raw,value=latest,enable=${{ inputs.is_release }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.context }}/${{ inputs.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ inputs.build-args }}
+          cache-from: type=gha,scope=${{ inputs.image }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image }}
+
+      # --- Security scanning ---
+
+      - name: Vulnerability scan with Grype
+        if: inputs.scan && github.event_name != 'pull_request'
+        uses: anchore/scan-action@v6
+        id: grype
+        with:
+          image: ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}
+          fail-build: false
+          output-format: sarif
+
+      - name: Upload Grype SARIF to GitHub Security
+        if: inputs.scan && always() && github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.grype.outputs.sarif }}
+
+      - name: Generate SBOM with Syft
+        if: inputs.scan && github.event_name != 'pull_request'
+        uses: anchore/sbom-action@v0
+        id: sbom
+        with:
+          image: ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+
+      # --- Signing ---
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign image with cosign
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign sign --yes \
+            "ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}"
+
+      - name: Attest SBOM with cosign
+        if: inputs.scan && github.event_name != 'pull_request'
+        run: |
+          cosign attest --yes \
+            --predicate sbom.cdx.json \
+            --type cyclonedx \
+            "ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}"
+
+      - name: Upload SBOM artifact
+        if: inputs.scan && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ inputs.image }}
+          path: sbom.cdx.json
+          retention-days: 90

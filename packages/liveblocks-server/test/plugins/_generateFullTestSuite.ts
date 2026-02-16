@@ -90,6 +90,7 @@ import type {
   UpdateObjectOp,
 } from "~/protocol";
 import { Storage } from "~/Storage";
+import type { LeasedSession } from "~/types";
 import { YjsStorage } from "~/YjsStorage";
 
 // Project-specific way to turn b64 string into Uint8Array
@@ -121,7 +122,9 @@ function expectToThrow(fn: () => Awaitable<unknown>, errorPattern: RegExp) {
 }
 
 // SYNC-SLOT: directives
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 // SYNC-SLOT-END: directives
 
 const KNOWN_DOC_KEYS = ["root", "0:do", "0:dl", "0:dm"];
@@ -663,6 +666,23 @@ export function generateArbitraries(config?: {
     },
 
     metaPair: () => fc.tuple(arb.metaKey(), arb.json()),
+
+    sessionId: () =>
+      fc.oneof({ withCrossShrink: true }, fc.constant("session-1"), fc.uuid()),
+
+    leasedSession: (): fc.Arbitrary<LeasedSession> =>
+      fc.record({
+        sessionId: arb.sessionId(),
+        presence: arb.json(),
+        updatedAt: fc.integer({ min: 0, max: Date.now() }),
+        info: fc.record({
+          name: fc.string(),
+        }),
+        ttl: fc.integer({ min: 1000, max: 300000 }), // 1s to 5min
+        actorId: fc.nat(),
+      }),
+
+    leasedSessionPair: () => fc.tuple(arb.sessionId(), arb.leasedSession()),
 
     // -------------------------------------------------------------------------
     // Storage-specific arbitraries (ported from test/storage/arbitraries.ts)
@@ -2956,6 +2976,332 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               expect(
                 new Map(await driver.iter_y_updates(anotherDocId))
               ).toEqual(new Map());
+            }
+          )
+        )
+      ));
+  });
+
+  describe("leased session API impl", () => {
+    test("list_leased_sessions on empty store is empty", () =>
+      runTest(async (driver) => {
+        const sessions = Array.from(await driver.list_leased_sessions());
+        expect(sessions).toEqual([]);
+      }));
+
+    test("get_leased_session on empty store is undefined", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(arb.sessionId(), async (sessionId) => {
+            expect(await driver.get_leased_session(sessionId)).toEqual(
+              undefined
+            );
+          })
+        )
+      ));
+
+    test("put_leased_session + get_leased_session", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.sessionId(),
+            arb.leasedSession(),
+
+            async (sessionId, session) => {
+              session.sessionId = sessionId;
+              await driver.put_leased_session(session);
+              expect(await driver.get_leased_session(sessionId)).toEqual(
+                session
+              );
+
+              // Cleanup: delete the session added in this iteration
+              await driver.delete_leased_session(sessionId);
+            }
+          )
+        )
+      ));
+
+    test("put_leased_session (overwrite) + get_leased_session", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.sessionId(),
+            arb.leasedSession(),
+            arb.leasedSession(),
+
+            async (sessionId, session1, session2) => {
+              // Put first session
+              session1.sessionId = sessionId;
+              await driver.put_leased_session(session1);
+              expect(await driver.get_leased_session(sessionId)).toEqual(
+                session1
+              );
+
+              // Overwrite with second session
+              session2.sessionId = sessionId;
+              await driver.put_leased_session(session2);
+              expect(await driver.get_leased_session(sessionId)).toEqual(
+                session2
+              );
+
+              // Cleanup: delete the session added in this iteration
+              await driver.delete_leased_session(sessionId);
+            }
+          )
+        )
+      ));
+
+    test("put_leased_session + delete_leased_session + get_leased_session", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.sessionId(),
+            arb.leasedSession(),
+
+            async (sessionId, session) => {
+              session.sessionId = sessionId;
+              await driver.put_leased_session(session);
+              expect(await driver.get_leased_session(sessionId)).toEqual(
+                session
+              );
+
+              await driver.delete_leased_session(sessionId);
+              expect(await driver.get_leased_session(sessionId)).toEqual(
+                undefined
+              );
+            }
+          )
+        )
+      ));
+
+    test("delete_leased_session on non-existent session is no-op", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(arb.sessionId(), async (sessionId) => {
+            // Deleting a session that doesn't exist should not throw
+            await driver.delete_leased_session(sessionId);
+            expect(await driver.get_leased_session(sessionId)).toEqual(
+              undefined
+            );
+          })
+        )
+      ));
+
+    test("put_leased_session + list_leased_sessions", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            fc
+              .array(arb.leasedSessionPair())
+              .map((x) => new Map(x))
+              .filter((m) => m.size > 0), // At least one session
+
+            async (entries) => {
+              // Put all sessions
+              for (const [sessionId, session] of entries) {
+                session.sessionId = sessionId;
+                await driver.put_leased_session(session);
+              }
+
+              // List should return all sessions
+              const listed = new Map(await driver.list_leased_sessions());
+              expect(listed).toEqual(entries);
+
+              // Cleanup: delete all sessions added in this iteration
+              for (const [sessionId] of entries) {
+                await driver.delete_leased_session(sessionId);
+              }
+            }
+          )
+        )
+      ));
+
+    test("put multiple sessions + get each individually", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            fc.array(arb.leasedSessionPair()).map((x) => new Map(x)),
+
+            async (entries) => {
+              // Put all sessions
+              for (const [sessionId, session] of entries) {
+                session.sessionId = sessionId;
+                await driver.put_leased_session(session);
+              }
+
+              // Get each session individually and verify
+              for (const [sessionId, expectedSession] of entries) {
+                expect(await driver.get_leased_session(sessionId)).toEqual(
+                  expectedSession
+                );
+              }
+
+              // Cleanup: delete all sessions added in this iteration
+              for (const [sessionId] of entries) {
+                await driver.delete_leased_session(sessionId);
+              }
+            }
+          )
+        )
+      ));
+
+    test("delete specific session leaves others intact", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            arb.leasedSessionPair(),
+            arb.leasedSessionPair(),
+            arb.leasedSessionPair(),
+
+            async (entry1, entry2, entry3) => {
+              const [sessionId1, session1] = entry1;
+              const [sessionId2, session2] = entry2;
+              const [sessionId3, session3] = entry3;
+
+              // Ensure all session IDs are unique
+              fc.pre(sessionId1 !== sessionId2);
+              fc.pre(sessionId1 !== sessionId3);
+              fc.pre(sessionId2 !== sessionId3);
+
+              // Put all three sessions
+              session1.sessionId = sessionId1;
+              session2.sessionId = sessionId2;
+              session3.sessionId = sessionId3;
+              await Promise.all([
+                driver.put_leased_session(session1),
+                driver.put_leased_session(session2),
+                driver.put_leased_session(session3),
+              ]);
+
+              // Verify all exist
+              expect(await driver.get_leased_session(sessionId1)).toEqual(
+                session1
+              );
+              expect(await driver.get_leased_session(sessionId2)).toEqual(
+                session2
+              );
+              expect(await driver.get_leased_session(sessionId3)).toEqual(
+                session3
+              );
+
+              // Delete first session
+              await driver.delete_leased_session(sessionId1);
+              expect(await driver.get_leased_session(sessionId1)).toEqual(
+                undefined
+              );
+              expect(await driver.get_leased_session(sessionId2)).toEqual(
+                session2
+              );
+              expect(await driver.get_leased_session(sessionId3)).toEqual(
+                session3
+              );
+
+              // Delete second session
+              await driver.delete_leased_session(sessionId2);
+              expect(await driver.get_leased_session(sessionId1)).toEqual(
+                undefined
+              );
+              expect(await driver.get_leased_session(sessionId2)).toEqual(
+                undefined
+              );
+              expect(await driver.get_leased_session(sessionId3)).toEqual(
+                session3
+              );
+
+              // Delete third session
+              await driver.delete_leased_session(sessionId3);
+              expect(await driver.get_leased_session(sessionId1)).toEqual(
+                undefined
+              );
+              expect(await driver.get_leased_session(sessionId2)).toEqual(
+                undefined
+              );
+              expect(await driver.get_leased_session(sessionId3)).toEqual(
+                undefined
+              );
+
+              // List should be empty
+              expect(Array.from(await driver.list_leased_sessions())).toEqual(
+                []
+              );
+            }
+          )
+        )
+      ));
+
+    test("list_leased_sessions returns all sessions in any order", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            fc
+              .array(arb.leasedSessionPair())
+              .map((x) => new Map(x))
+              .filter((m) => m.size > 0),
+
+            async (entries) => {
+              // Put all sessions
+              for (const [sessionId, session] of entries) {
+                session.sessionId = sessionId;
+                await driver.put_leased_session(session);
+              }
+
+              // Get listed sessions and convert to a map
+              const listed = new Map(await driver.list_leased_sessions());
+
+              // Both should have the same size
+              expect(listed.size).toEqual(entries.size);
+
+              // Each entry should match
+              for (const [sessionId, expectedSession] of entries) {
+                expect(listed.get(sessionId)).toEqual(expectedSession);
+              }
+
+              // Cleanup: delete all sessions added in this iteration
+              for (const [sessionId] of entries) {
+                await driver.delete_leased_session(sessionId);
+              }
+            }
+          )
+        )
+      ));
+
+    test("concurrent put_leased_session operations", () =>
+      runTest(async (driver) =>
+        fc.assert(
+          fc.asyncProperty(
+            fc
+              .array(arb.leasedSessionPair(), { minLength: 3, maxLength: 10 })
+              .map((x) => new Map(x))
+              .filter((m) => m.size >= 3),
+
+            async (entries) => {
+              // Put all sessions concurrently
+              await Promise.all(
+                Array.from(entries).map(([sessionId, session]) => {
+                  session.sessionId = sessionId;
+                  return driver.put_leased_session(session);
+                })
+              );
+
+              // Verify all sessions exist
+              const results = await Promise.all(
+                Array.from(entries.keys()).map((sessionId) =>
+                  driver.get_leased_session(sessionId)
+                )
+              );
+
+              let idx = 0;
+              for (const [, expectedSession] of entries) {
+                expect(results[idx]).toEqual(expectedSession);
+                idx++;
+              }
+
+              // Cleanup: delete all sessions added in this iteration
+              await Promise.all(
+                Array.from(entries.keys()).map((sessionId) =>
+                  driver.delete_leased_session(sessionId)
+                )
+              );
             }
           )
         )

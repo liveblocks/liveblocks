@@ -1,7 +1,7 @@
 import { expectError, expectType } from "tsd";
 import { number, numeric, object, string } from "decoders";
 
-import { HttpError, ValidationError, ZenRouter } from "zenrouter";
+import { HttpError, ValidationError, ZenRouter } from "@liveblocks/zenrouter";
 
 declare const req: Request;
 

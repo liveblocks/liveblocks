@@ -37,6 +37,7 @@ import type {
   IReadableSnapshot,
   IStorageDriver,
   IStorageDriverNodeAPI,
+  LeasedSession,
 } from "~/interfaces";
 import { NestedMap } from "~/lib/NestedMap";
 import { quote } from "~/lib/text";
@@ -124,6 +125,7 @@ export class InMemoryDriver implements IStorageDriver {
   private _nodes: NodeMap;
   private _metadb: Map<string, Json>;
   private _ydb: Map<string, Uint8Array>;
+  private _leasedSessions: Map<string, LeasedSession>;
 
   constructor(options?: {
     initialActor?: number;
@@ -132,6 +134,7 @@ export class InMemoryDriver implements IStorageDriver {
     this._nodes = new Map();
     this._metadb = new Map();
     this._ydb = new Map();
+    this._leasedSessions = new Map();
 
     this._nextActor = options?.initialActor ?? -1;
 
@@ -160,6 +163,22 @@ export class InMemoryDriver implements IStorageDriver {
   }
   async delete_meta(key: string) {
     this._metadb.delete(key);
+  }
+
+  async list_leased_sessions() {
+    return this._leasedSessions.entries();
+  }
+
+  async get_leased_session(sessionId: string) {
+    return this._leasedSessions.get(sessionId);
+  }
+
+  async put_leased_session(session: LeasedSession) {
+    this._leasedSessions.set(session.sessionId, session);
+  }
+
+  async delete_leased_session(sessionId: string) {
+    this._leasedSessions.delete(sessionId);
   }
 
   next_actor() {
