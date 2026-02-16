@@ -18,6 +18,7 @@ import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
+import * as console from "./lib/fancy-console";
 import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { Signal } from "./lib/signals";
@@ -25,7 +26,6 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import * as console from "./lib/fancy-console";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
