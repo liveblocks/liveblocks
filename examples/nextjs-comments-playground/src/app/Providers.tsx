@@ -1,12 +1,14 @@
 "use client";
 
-import { LiveblocksProvider } from "@liveblocks/react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren, Suspense } from "react";
+import { authWithRandomUser } from "..//example";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
+      throttle={16}
+      authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(

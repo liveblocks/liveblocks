@@ -347,7 +347,7 @@ function AvatarCell(
           onOpenChange={setThreadOpen}
           className="w-[300px] max-h-[500px]"
         >
-          <button className="w-6 h-6 rounded-full overflow-hidden p-0 border-none bg-transparent cursor-pointer">
+          <button className="flex-none size-6 rounded-full overflow-hidden p-0 border-none bg-transparent cursor-pointer">
             {user?.avatar ? (
               <img
                 src={user.avatar}
@@ -355,7 +355,7 @@ function AvatarCell(
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="bg-gray-200 dark:bg-gray-800 rounded-full w-6 h-6 flex items-center justify-center">
+              <span className="bg-gray-200 dark:bg-gray-800 rounded-full size-6 flex items-center justify-center">
                 💬
               </span>
             )}
@@ -369,7 +369,7 @@ function AvatarCell(
           onSubmit={() => setComposerOpen(false)}
           metadata={{ rowId, field }}
         >
-          <button className="justify-center items-center group-hover:flex opacity-0 invisible group-hover:opacity-100 group-hover:visible rounded-full bg-gray-200 dark:bg-gray-800 w-6 h-6">
+          <button className="flex-none justify-center items-center group-hover:flex opacity-0 invisible group-hover:opacity-100 group-hover:visible rounded-full bg-gray-200 dark:bg-gray-800 size-6">
             +
           </button>
         </FloatingComposer>

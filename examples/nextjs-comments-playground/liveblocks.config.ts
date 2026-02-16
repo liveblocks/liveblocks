@@ -12,6 +12,7 @@ declare global {
       };
     };
     Presence: {
+      cursor?: { x: number; y: number } | null;
       focusedCell?: { rowId: string; field: string } | null;
       isEditing?: boolean;
     };
