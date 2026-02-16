@@ -15,16 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { abort, html, ZenRouter } from "zenrouter";
+import { abort, html, json, ZenRouter } from "@liveblocks/zenrouter";
 
-import welcomeHtml from "../static/welcome.html";
+import welcomeHtml from "~/dev-server/static/welcome.html";
 
 export const zen = new ZenRouter({
   authorize: () => true, // Fine for public routes
 });
 
 // Happy path for WebSocket upgrades is handled by Bun server directly (not ZenRouter)
+// If the happy path isn't taken, reject the connections
 zen.route("GET /v7", () => abort(426));
 zen.route("GET /v8", () => abort(426));
 
-zen.route("GET /", () => html(welcomeHtml as unknown as string));
+zen.route("GET /health", () => json({ status: "ok" }));
+zen.route("GET /", () =>
+  html(
+    (welcomeHtml as unknown as string).replace(
+      "__VERSION__",
+      typeof __VERSION__ !== "undefined" ? __VERSION__ : "dev"
+    )
+  )
+);

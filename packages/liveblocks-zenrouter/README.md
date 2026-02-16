@@ -6,7 +6,7 @@ patterns that remain maintable over time as your application grows.
 ## Installation
 
 ```
-npm i zenrouter
+npm i @liveblocks/zenrouter
 ```
 
 ## Purpose
@@ -17,7 +17,7 @@ The main purpose of this router is to implement an API backend.
 
 ```ts
 import { object, string } from "decoders";
-import { Router } from "zenrouter";
+import { Router } from "@liveblocks/zenrouter";
 
 const app = new Router(/* ... */);
 

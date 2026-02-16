@@ -15,21 +15,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { ZenRouter } from "zenrouter";
+import { execSync } from "node:child_process";
 
-import { verifyJwtLite } from "../lib/jwt-lite";
+export function copyToClipboard(text: string): void {
+  const cmd =
+    process.platform === "darwin"
+      ? "pbcopy"
+      : process.platform === "win32"
+        ? "clip.exe"
+        : "xclip -selection clipboard";
 
-export const zen = new ZenRouter({
-  authorize: ({ req }) => {
-    const header = req.headers.get("Authorization");
-    if (!header?.startsWith("Bearer ")) return false;
-
-    const token = header.slice(7); // Remove "Bearer " prefix
-    const payload = verifyJwtLite(token);
-    return payload !== null;
-  },
-});
-
-zen.route("GET /v2/rooms/<roomId>/storage", () => {
-  return { root: "Implement me" };
-});
+  execSync(cmd, { input: text });
+}

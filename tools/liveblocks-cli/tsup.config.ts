@@ -15,6 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { readFileSync, writeFileSync } from "node:fs";
 import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -31,6 +32,12 @@ export default defineConfig({
 
   // Bun-only modules — left as bare imports for Bun to resolve at runtime
   external: ["bun", "bun:sqlite"],
+
+  async onSuccess() {
+    const entry = "dist/index.js";
+    const content = readFileSync(entry, "utf-8");
+    writeFileSync(entry, "#!/usr/bin/env node\n" + content);
+  },
 
   esbuildOptions(options, _context) {
     // Replace __VERSION__ globals with concrete version

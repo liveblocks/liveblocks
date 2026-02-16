@@ -15,6 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { asPos } from "@liveblocks/core";
+import type { asPos, IUserInfo, Json, SerializedCrdt } from "@liveblocks/core";
 
 export type Pos = ReturnType<typeof asPos>;
+export type NodeTuple<T extends SerializedCrdt = SerializedCrdt> = [
+  id: string,
+  value: T,
+];
+
+export type NodeMap = {
+  size: number;
+  [Symbol.iterator]: () => IterableIterator<[id: string, node: SerializedCrdt]>;
+  clear: () => void;
+  delete: (key: string) => boolean;
+  get: (key: string) => SerializedCrdt | undefined;
+  has: (key: string) => boolean;
+  keys: () => Iterable<string>;
+  set(key: string, value: SerializedCrdt): void;
+};
+
+export type NodeStream = Iterable<NodeTuple>;
+
+/**
+ * Leased session data structure for server-side sessions with temporarily persisted presence.
+ */
+export type LeasedSession = {
+  sessionId: string; // The session's ID
+  presence: Json;
+  updatedAt: number; // timestamp in milliseconds
+  info: IUserInfo;
+  ttl: number; // time-to-live in milliseconds (default: 60000 = 1 minute)
+  actorId: number;
+};

@@ -2,6 +2,14 @@
 
 Liveblocks command line interface.
 
+## Run with Docker
+
+```bash
+docker run -P ghcr.io/liveblocks/cli
+```
+
+See [DOCKER.md](./DOCKER.md) for configuration, volume mounts, and image signature verification.
+
 ## License
 
 Licensed under the GNU Affero General Public License v3.0 or later, Copyright ©
