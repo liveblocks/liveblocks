@@ -470,6 +470,13 @@
     "date": "2026-01-29"
   },
   {
+    "title": "The new Storage engine and its benefits",
+    "path": "/about-the-new-storage-engine",
+    "topics": [],
+    "technologies": ["storage"],
+    "date": "2026-02-10"
+  },
+  {
     "title": "How to set up Continuous Integration (CI) testing",
     "path": "/how-to-set-up-continuous-integration-ci-testing",
     "topics": ["tutorials", "testing"],

@@ -1,8 +1,22 @@
 ## vNEXT (not yet released)
 
-- ...
+## v3.13.5
 
-## 3.13.3
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
+
+-
+
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
+## v3.13.3
 
 ### `@liveblocks/client`
 
