@@ -115,8 +115,13 @@ const dev: SubCommand = {
       return;
     }
 
-    const port = parsePort(args.port) ?? DEFAULT_PORT;
-    const hostname = args.host || "localhost";
+    // Precedence: CLI flag > env var > default
+    const port =
+      parsePort(args.port) ??
+      parsePort(process.env.LIVEBLOCKS_DEVSERVER_PORT) ??
+      DEFAULT_PORT;
+    const hostname =
+      args.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
 
     if (await isPortInUse(port, hostname)) {
       console.error(
