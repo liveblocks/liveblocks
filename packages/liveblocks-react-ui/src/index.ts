@@ -26,6 +26,8 @@ export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
 export type { CursorProps } from "./components/Cursor";
 export { Cursor } from "./components/Cursor";
+export type { CursorsProps } from "./components/Cursors";
+export { Cursors } from "./components/Cursors";
 export type { FloatingComposerProps } from "./components/FloatingComposer";
 export { FloatingComposer } from "./components/FloatingComposer";
 export type { FloatingThreadProps } from "./components/FloatingThread";

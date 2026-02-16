@@ -1811,7 +1811,7 @@
 }
 
 /*************************************
- *            Cursor                 *
+ *              Cursor               *
  *************************************/
 
 .lb-cursor {
@@ -1853,6 +1853,23 @@
   opacity: 0.95;
   filter: invert(1) grayscale(1) brightness(1.3) contrast(9000);
   mix-blend-mode: luminosity;
+}
+
+/*************************************
+ *              Cursors              *
+ *************************************/
+
+.lb-cursors {
+  position: relative;
+  isolation: isolate;
+}
+
+.lb-cursors-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  isolation: isolate;
 }
 
 /*************************************
