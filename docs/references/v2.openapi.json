@@ -8609,7 +8609,7 @@
               }
             },
             "required": ["name"],
-            "description": "User information object with required name field"
+            "description": "Metadata about the user or agent"
           },
           "ttl": {
             "type": "integer",
@@ -8618,7 +8618,7 @@
             "description": "Time-to-live in seconds (minimum: 2, maximum: 3599). After this duration, the presence will automatically expire."
           }
         },
-        "required": ["userId", "data", "userInfo"]
+        "required": ["userId", "data"]
       }
     },
     "securitySchemes": {

@@ -1161,9 +1161,9 @@ useEventListener(({ event, user, connectionId }) => {
 
 Sets ephemeral presence for a user in a room without requiring a WebSocket
 connection. The presence data automatically expires after the specified TTL
-(time-to-live). This is useful for scenarios like showing an AI agent’s
-presence in a room. The presence is broadcast to all connected users in the
-room. This is a wrapper around the
+(time-to-live). This is useful for scenarios like showing an AI agent’s presence
+in a room. The presence is broadcast to all connected users in the room. This is
+a wrapper around the
 [Set Presence API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence)
 and returns no response on success.
 
@@ -1184,10 +1184,9 @@ await liveblocks.setPresence("my-room-id", {
 
 - **userId** (required): The ID of the user to set presence for.
 - **data** (required): Presence data as a JSON object.
-- **userInfo** (required): User information; `name` must be a non-empty string.
-  `avatar` and `color` are optional.
-- **ttl** (optional): Time-to-live in seconds (minimum 2, maximum 3599). Defaults to 60. After
-  this duration, the presence expires automatically.
+- **userInfo** (optional): Metadata about the user or agent
+- **ttl** (optional): Time-to-live in seconds (minimum 2, maximum 3599).
+  Defaults to 60. After this duration, the presence expires automatically.
 
 ### Groups
 
