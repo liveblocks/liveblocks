@@ -120,21 +120,6 @@ const liveblocks = new Liveblocks({
   app config for you. Just press 'p'.
 </Banner>
 
-## Docker
-
-You can run the dev server as a Docker container, which is useful for CI
-environments where you may not have Bun installed.
-
-```bash
-docker run -p 1153:1153 ghcr.io/liveblocks/cli dev
-```
-
-To persist data between container restarts, mount a volume:
-
-```bash
-docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/cli dev
-```
-
 ## Partially supported features
 
 In future, we plan to support more features in the dev server. A number of
@@ -192,7 +177,75 @@ curl http://localhost:1153/v2/* \
   -H 'Authorization: Bearer sk_localdev'
 ```
 
+## Continuous Integration (CI) testing
+
+You can use the dev server in CI environments by setting up a test environment
+file and running the dev server as a service container. Learn more in our guide
+on
+[how to set up Continuous Integration (CI) testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing).
+
+## Docker
+
+You can run the dev server as a Docker container, which is useful for CI
+environments where you may not have Bun installed.
+
+```bash
+docker run -p 1153:1153 ghcr.io/liveblocks/cli dev
+```
+
+To persist data between container restarts, mount a volume:
+
+```bash
+docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/cli dev
+```
+
 ## Source code
 
 The source code is available in our
 [GitHub repository](https://github.com/liveblocks/liveblocks/tree/main/tools/liveblocks-cli).
+
+## Examples supporting the dev server
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced/nextjs-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+
+</ListGrid>
