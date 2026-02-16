@@ -7,14 +7,12 @@ on:
     branches:
       - main
     paths:
-      - "tools/liveblocks-cli/Dockerfile"
-      - "tools/liveblocks-cli/scripts/**"
+      - "tools/liveblocks-cli/**"
       - "packages/liveblocks-server/**"
       - ".github/workflows/publish-docker.yml"
   # pull_request:
   #   paths:
-  #     - "tools/liveblocks-cli/Dockerfile"
-  #     - "tools/liveblocks-cli/scripts/**"
+  #     - "tools/liveblocks-cli/**"
   #     - "packages/liveblocks-server/**"
   #     - ".github/workflows/publish-docker.yml"
   workflow_dispatch:
