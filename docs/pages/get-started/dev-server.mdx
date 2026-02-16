@@ -13,10 +13,8 @@ development environment for building with Liveblocks.
 
 <Banner title="Only Multiplayer is supported" type="warning">
 
-The Liveblocks dev server only supports
-[Storage](/ready-made-features/multiplayer/sync-engine/liveblocks-storage) and
-[Yjs](/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
-[Learn more](/docs/tools/dev-server).
+The Liveblocks dev server does not support all features you can use in
+production. [Learn more](/docs/tools/dev-server).
 
 </Banner>
 
@@ -28,9 +26,9 @@ The Liveblocks dev server only supports
     <StepTitle>Install Bun</StepTitle>
     <StepContent>
 
-      Liveblocks dev server requires bun to be installed.
+      The Liveblocks dev server requires [Bun](https://bun.sh/) to be installed.
 
-      ```bash trackEvent="install_liveblocks"
+      ```bash
       npm install -g bun
       ```
 
@@ -41,24 +39,92 @@ The Liveblocks dev server only supports
     <StepTitle>Run the dev server</StepTitle>
     <StepContent>
 
-      Run the dev server.
+      Start the dev server from your project directory. It runs on port 1153
+      by default.
 
       ```bash
-      bunx TODO ...
+      npx liveblocks dev
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Point your app at the dev server</StepTitle>
+    <StepContent>
+      To configure manually, point both your client and your Node backend at
+      the dev server.
+
+      <Banner title="Press 'p' to have it done for you!" type="info">
+        If you run your dev server from your project directory, it will
+        auto-detect the places you need to update to point at the dev server,
+        and can generate an AI prompt for you to make all the necessary config
+        changes. Just press <kbd>p</kbd>!
+      </Banner>
+
+      #### In your client
+
+      Set the `baseUrl` so the client connects to the dev server:
+
+      ```ts
+      import { createClient } from "@liveblocks/client";
+
+      const client = createClient({
+        // +++
+        baseUrl: "http://localhost:1153",
+        // +++
+        authEndpoint: "/api/liveblocks-auth",
+      });
+      ```
+
+      Or, if you're using `@liveblocks/react`:
+
+      ```tsx
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      function App() {
+        return (
+          <LiveblocksProvider
+            // +++
+            baseUrl="http://localhost:1153"
+            // +++
+            authEndpoint="/api/liveblocks-auth"
+          >
+            {/* Your app */}
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+      #### In your Node backend
+
+      Set the `baseUrl` and use `"sk_localdev"` as the secret key:
+
+      ```ts
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        // +++
+        baseUrl: "http://localhost:1153",
+        secret: "sk_localdev",
+        // +++
+      });
       ```
 
     </StepContent>
 
   </Step>
   <Step lastStep>
-    <StepTitle>Next: set up tests</StepTitle>
+    <StepTitle>Next: explore and test</StepTitle>
     <StepContent>
 
-      TODO is this the next step?
+      You're all set! Open your app and start building collaborative features
+      against the local dev server. When you're ready, check out the full
+      reference or learn how to run the dev server in CI.
 
       <Button asChild className="not-markdown">
-        <a href="/docs/authentication">
-          Set up authentication
+        <a href="/docs/tools/dev-server">
+          Dev server reference
         </a>
       </Button>
     </StepContent>
@@ -68,12 +134,12 @@ The Liveblocks dev server only supports
 
 ## What to read next
 
-Congratulations! You now have set up the foundation to start building
-collaborative experiences for your React application.
+Congratulations! You now have a local development environment for building
+collaborative experiences.
 
-- [Liveblocks dev server](/docs/tools/dev-server)
+- [Dev server reference](/docs/tools/dev-server)
 - [How to set up Continuous Integration (CI) testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing)
-- [@liveblocks/server repo](TODO directory of this)
+- [`@liveblocks/server` source code](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-server)
 
 ---
 
@@ -120,4 +186,5 @@ collaborative experiences for your React application.
     technologies={["nextjs"]}
     openInNewWindow
   />
+
 </ListGrid>
