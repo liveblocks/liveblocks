@@ -75,6 +75,7 @@ import {
 
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
+import { xwarn } from "./lib/xwarn";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -704,7 +705,6 @@ export class Liveblocks {
   readonly #baseUrl: URL;
   /** Only used as a hint to produce better error messages. */
   readonly #localDev: boolean;
-
   /**
    * Interact with the Liveblocks API from your Node.js backend.
    */
@@ -735,6 +735,7 @@ export class Liveblocks {
       body: JSON.stringify(json),
       signal: options?.signal,
     });
+    xwarn(res);
     return res;
   }
 
@@ -750,12 +751,14 @@ export class Liveblocks {
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, {
+    const res = await fetch(url, {
       method: "PUT",
       headers,
       body: body as Uint8Array<ArrayBuffer>,
       signal: options?.signal,
     });
+    xwarn(res);
+    return res;
   }
 
   async #delete(
@@ -773,6 +776,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res);
     return res;
   }
 
@@ -791,6 +795,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res);
     return res;
   }
 

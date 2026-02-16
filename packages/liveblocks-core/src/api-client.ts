@@ -25,6 +25,7 @@ import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import { warnOnce } from "./lib/warnings";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -2068,7 +2069,7 @@ class HttpClient {
     }
 
     const url = urljoin(this.#baseUrl, endpoint, params);
-    return await this.#fetchPolyfill(url, {
+    const response = await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -2082,6 +2083,15 @@ class HttpClient {
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
+
+    // Surface dev-server warnings to the developer
+    const xwarn = response.headers.get("X-LB-Warn");
+    if (xwarn) {
+      const key = response.headers.get("X-LB-Warn-Key") ?? xwarn;
+      warnOnce(xwarn, key);
+    }
+
+    return response;
   }
 
   /**
