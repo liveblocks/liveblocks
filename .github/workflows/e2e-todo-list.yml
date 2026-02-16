@@ -10,12 +10,6 @@ jobs:
   e2e-todo-list:
     runs-on: ubuntu-latest
 
-    services:
-      liveblocks:
-        image: ghcr.io/liveblocks/dev-server:sha-59d071a
-        ports:
-          - 1153:1153
-
     strategy:
       matrix:
         node-version: [22.21.0]
@@ -47,11 +41,15 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
+      - name: Start Liveblocks dev server
+        working-directory: .
+        run: docker run -d --network host ghcr.io/liveblocks/dev-server:sha-59d071a
+
       - name: Wait for Liveblocks dev server
         working-directory: .
         run: |
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:1153/ > /dev/null 2>&1; then
+            if curl -sf http://localhost:1153/health > /dev/null 2>&1; then
               echo "Liveblocks dev server is ready"
               exit 0
             fi
