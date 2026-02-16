@@ -8,12 +8,16 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
-  getTreesDiffOperations,
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
+import type { CrdtDocumentShadow } from "./crdts/wasm-adapter";
+import {
+  createDocumentShadow,
+  getTreesDiffOperations,
+} from "./crdts/wasm-adapter";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -1193,6 +1197,7 @@ type RoomState<
 
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
+  wasmShadow: CrdtDocumentShadow | null;
 
   readonly undoStack: Stackframe<P>[][];
   readonly redoStack: Stackframe<P>[][];
@@ -1449,6 +1454,7 @@ export function createRoom<
       isStorageWritable,
     }),
     root: undefined,
+    wasmShadow: null,
 
     undoStack: [],
     redoStack: [],
@@ -1579,6 +1585,16 @@ export function createRoom<
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
+    // Forward user-originated ops to the persistent WASM shadow
+    if (context.wasmShadow && ops.length > 0) {
+      try {
+        context.wasmShadow.applyOps(ops, "local");
+      } catch {
+        context.wasmShadow.free();
+        context.wasmShadow = null;
+      }
+    }
+
     if (context.activeBatch) {
       for (const op of ops) {
         context.activeBatch.ops.push(op);
@@ -1732,6 +1748,22 @@ export function createRoom<
         nodes as NodeStream,
         context.pool
       );
+
+      // Initialize the persistent WASM shadow on first load
+      if (context.wasmShadow === null) {
+        try {
+          context.wasmShadow = createDocumentShadow();
+        } catch {
+          context.wasmShadow = null;
+        }
+      }
+      try {
+        const items = Array.from(nodes.entries()) as IdTuple<SerializedCrdt>[];
+        context.wasmShadow?.initFromItems(items);
+      } catch {
+        context.wasmShadow?.free();
+        context.wasmShadow = null;
+      }
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1753,6 +1785,42 @@ export function createRoom<
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
     context.undoStack.length = stackSizeBefore;
+  }
+
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+    if (context.root === undefined) {
+      return;
+    }
+
+    let ops: Op[];
+    if (context.wasmShadow) {
+      // Fast path: diff persistent shadow against new snapshot
+      // (avoids serializing all JS nodes on every reconnect)
+      try {
+        ops = context.wasmShadow.diffAgainstSnapshot(items);
+        // Re-sync shadow to authoritative server state
+        context.wasmShadow.initFromItems(items);
+      } catch {
+        // Shadow desync — fall back to JS diff and discard shadow
+        context.wasmShadow.free();
+        context.wasmShadow = null;
+        const currentItems: NodeMap = new Map();
+        for (const [id, node] of context.pool.nodes) {
+          currentItems.set(id, node._serialize());
+        }
+        ops = getTreesDiffOperations(currentItems, new Map(items));
+      }
+    } else {
+      // Fallback: original JS path
+      const currentItems: NodeMap = new Map();
+      for (const [id, node] of context.pool.nodes) {
+        currentItems.set(id, node._serialize());
+      }
+      ops = getTreesDiffOperations(currentItems, new Map(items));
+    }
+
+    const result = applyRemoteOps(ops);
+    notify(result.updates);
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -1912,6 +1980,22 @@ export function createRoom<
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
+        // Forward successfully applied ops to the persistent WASM shadow
+        if (context.wasmShadow) {
+          const sourceStr =
+            source === OpSource.LOCAL
+              ? "local"
+              : source === OpSource.OURS
+                ? "ours"
+                : "theirs";
+          try {
+            context.wasmShadow.applyOp(op, sourceStr);
+          } catch {
+            context.wasmShadow.free();
+            context.wasmShadow = null;
+          }
+        }
+
         const nodeId = applyOpResult.modified.node._id;
 
         // If the modified node was created in the same batch, we don't want
@@ -3087,6 +3171,10 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        // Free the persistent WASM shadow
+        context.wasmShadow?.free();
+        context.wasmShadow = null;
+
         // remove the roomWillDestroy event from the event hub
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
