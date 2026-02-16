@@ -42,90 +42,117 @@ dev server to test other features in your app._</small>
 
 ## Set up the dev server
 
-### Prerequisites
+The development server currently only supports connecting with
+[public key](/docs/api-reference/liveblocks-client#createClientPublicKey) or
+[access token](/docs/authentication/access-token) authentication. ID token
+authentication will be supported in future.
 
-The dev server requires [Bun](https://bun.sh/) to be installed:
+<Steps>
 
-```bash
-npm install -g bun
-```
+  <Step>
+    <StepTitle>Install Bun</StepTitle>
+    <StepContent>
 
-### Start the server
+      The Liveblocks dev server requires [Bun](https://bun.sh/) to be installed.
 
-Run the dev server from your project directory:
+      ```bash
+      npm install -g bun
+      ```
 
-```bash
-npx liveblocks dev
-```
+    </StepContent>
 
-The server starts on port 1153 by default and will wait for your app to connect
-to it.
+  </Step>
+  <Step>
+    <StepTitle>Run the dev server</StepTitle>
+    <StepContent>
 
-### Point your app at the dev server
+      Start the dev server from your project directory—it runs on [`http://localhost:1153`](http://localhost:1153).
 
-To use the dev server, set the `baseUrl` option in your Liveblocks config to
-point to `http://localhost:1153`.
+      ```bash
+      npx liveblocks dev
+      ```
 
-#### Using `@liveblocks/client`
+    </StepContent>
 
-```ts
-import { createClient } from "@liveblocks/client";
+  </Step>
+  <Step>
+    <StepTitle>Connect to the dev server</StepTitle>
+    <StepContent>
+      Point your client and auth endpoint to the dev server. The easiest way to
+      do this is run the dev server and press `p`. It copies a prompt you can 
+      paste into your AI code editor, which will intelligently make the changes
+      for you.
 
-const client = createClient({
-  // +++
-  baseUrl: "http://localhost:1153",
-  // +++
-  authEndpoint: "/api/liveblocks-auth",
-});
-```
+      If you don’t use the prompt, you can manually add `baseUrl` and change
+      your `secret` key:
 
-#### Using `@liveblocks/react`
+      ```tsx
+      import { LiveblocksProvider } from "@liveblocks/react";
 
-```tsx
-import { LiveblocksProvider } from "@liveblocks/react";
+      function App() {
+        return (
+          <LiveblocksProvider
+            // +++
+            baseUrl="http://localhost:1153"
+            // +++
+            authEndpoint="/api/liveblocks-auth"
+          >
+            {/* Your app */}
+          </LiveblocksProvider>
+        );
+      }
+      ```
 
-function App() {
-  return (
-    <LiveblocksProvider
-      // +++
-      baseUrl="http://localhost:1153"
-      // +++
-      authEndpoint="/api/liveblocks-auth"
-    >
-      {/* Your app */}
-    </LiveblocksProvider>
-  );
-}
-```
+      ```ts
+      import { Liveblocks } from "@liveblocks/node";
 
-In your auth endpoint, use the `sk_localdev` secret key and point the Liveblocks
-Node client at the dev server:
+      const liveblocks = new Liveblocks({
+        // +++
+        baseUrl: "http://localhost:1153",
+        secret: "sk_localdev",
+        // +++
+      });
+      ```
 
-```ts
-import { Liveblocks } from "@liveblocks/node";
+      ```tsx isCollapsable isCollapsed title="Alternate snippet for public key"
+      // Only edit this file for public key
+      import { LiveblocksProvider } from "@liveblocks/react";
 
-const liveblocks = new Liveblocks({
-  // +++
-  baseUrl: "http://localhost:1153",
-  secret: "sk_localdev",
-  // +++
-});
-```
+      function App() {
+        return (
+          <LiveblocksProvider
+            // +++
+            baseUrl="http://localhost:1153"
+            publicApiKey="pk_localdev"
+            // +++
+          >
+            {/* Your app */}
+          </LiveblocksProvider>
+        );
+      }
+      ```
 
-<Banner title="Press 'p' to copy as AI prompt">
-  When you first run `npx liveblocks dev` inside your project directory, it will
-  automatically point out where you need to adjust your client configuration to
-  connect your app to the dev server, and even provide you with an AI prompt
-  that will let your favorite AI assistant make the necessary changes to your
-  app config for you. Just press 'p'.
-</Banner>
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Complete</StepTitle>
+    <StepContent>
+
+      You're all set up, open your app and start building collaborative features
+      using the local dev server, or [set up CI testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing)
+      with your application.
+
+    </StepContent>
+
+  </Step>
+</Steps>
 
 ## Partially supported features
 
-In future, we plan to support more features in the dev server. A number of
-unsupported features are partially implemented so you can run your app without
-seeing errors. For example, `useThreads` is not supported yet, but it will
-always return an empty array so you can still view your application.
+A number of unsupported features are partially implemented so you can run your
+app without seeing errors. For example, `useThreads` is not supported yet, but
+it will always return an empty array so you can still view your application.
 
 ```tsx title="React"
 // ✅ Fully supported
@@ -146,7 +173,7 @@ createNewThread({ body: {}, attachments: [] });
 const storage = await liveblocks.getStorageDocument("my-room-id");
 await liveblocks.broadcastEvent("my-room-id", { type: "REFRESH" });
 
-// ⚠️ Room APIs are supported without permissions and metadata
+// ⚠️ Room APIs are supported but permissions and metadata are ignored
 await liveblocks.createRoom("my-new-room-id", {
   defaultAccesses: ["room:write"],
   metadata: { title: "My title" },
@@ -165,6 +192,8 @@ await liveblocks.createThread({
   body: {},
 });
 ```
+
+In future, we plan to support more features in the dev server.
 
 ## REST API
 
@@ -204,7 +233,10 @@ docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/c
 The source code is available in our
 [GitHub repository](https://github.com/liveblocks/liveblocks/tree/main/tools/liveblocks-cli).
 
-## Examples supporting the dev server
+## Examples
+
+The following examples fully support the dev server, follow their “Dev server
+setup” instructions to get started.
 
 <ListGrid columns={2}>
   <ExampleCard

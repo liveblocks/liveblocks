@@ -315,11 +315,6 @@
             "title": "Custom",
             "href": "/get-started/custom",
             "hidden": true
-          },
-          {
-            "title": "How to set up the Liveblocks dev server",
-            "path": "/get-started/dev-server",
-            "hidden": true
           }
         ]
       },
