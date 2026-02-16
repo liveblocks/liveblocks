@@ -872,6 +872,13 @@ Note that it’s possible to [add types to your room](#typing-your-data).
   >
     Whether the room immediately connects to Liveblocks servers.
   </PropertiesListItem>
+  <PropertiesListItem name="options.engine" type="1 | 2">
+    Preferred storage engine version to use when creating the room. Only takes
+    effect if the room doesn’t exist yet. The v2 Storage engine supports larger
+    documents, is more performant, has native streaming support, and will become
+    the default in the future. [Learn
+    more](/docs/guides/about-the-new-storage-engine).
+  </PropertiesListItem>
 </PropertiesList>
 
 #### Setting initial Presence [#setting-initial-presence]
