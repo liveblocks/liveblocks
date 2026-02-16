@@ -29,8 +29,11 @@ function Presence() {
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-16">
         <Cursor />
-        <Cursor label="Stacy" color="#f00" />
-        <Cursor label="Chris" color="#0f0" />
+        <Cursor label="Stacy" color="oklch(76.8% 0.233 130.85)" />
+        <Cursor
+          label="Chris"
+          className="[--lb-cursor-color:var(--color-rose-500)]!"
+        />
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-8 flex flex-col items-center gap-6">
           <AvatarStack className="[--lb-avatar-stack-size:48px]" />
           <p className="text-sm text-gray-500 dark:text-gray-400">
