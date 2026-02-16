@@ -9,7 +9,7 @@
     "e2e/next-ai-kitchen-sink",
     "e2e/next-sandbox",
     "e2e/node-sandbox",
-    "examples/nextjs-comments-playground"
+    "e2e/nextjs-components-playground"
   ],
   "scripts": {
     "build": "turbo run build",

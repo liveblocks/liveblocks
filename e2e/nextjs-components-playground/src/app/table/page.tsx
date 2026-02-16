@@ -30,7 +30,7 @@ function Example() {
         ← Back to home
       </Link>
       <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-        Task Tracker
+        Table Comments
       </h1>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Click any cell to add or view a comment
@@ -72,7 +72,7 @@ function Example() {
                       {thread ? (
                         <FloatingThread thread={thread}>
                           <button
-                            className="flex items-center justify-center flex-shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-150"
+                            className="flex items-center justify-center shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-150"
                             data-has-thread=""
                           >
                             💬
@@ -80,7 +80,7 @@ function Example() {
                         </FloatingThread>
                       ) : (
                         <FloatingComposer metadata={{ cellId }}>
-                          <button className="flex items-center justify-center flex-shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150">
+                          <button className="flex items-center justify-center shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150">
                             ＋
                           </button>
                         </FloatingComposer>
@@ -99,7 +99,7 @@ function Example() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-table"
+    "liveblocks:examples:nextjs-components-playground-table"
   );
 
   return (

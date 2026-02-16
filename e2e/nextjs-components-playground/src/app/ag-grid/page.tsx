@@ -11,7 +11,7 @@ import { createDefaultRowData } from "./defaultTableData";
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-ag-grid"
+    "liveblocks:examples:nextjs-components-playground-ag-grid"
   );
 
   return (

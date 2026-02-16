@@ -27,7 +27,7 @@ function Canvas() {
         ← Back to home
       </Link>
       <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-        Design Review
+        Canvas Comments
       </h1>
       <p className="text-sm text-gray-500 dark:text-gray-400">
         Click anywhere to leave a comment
@@ -54,6 +54,7 @@ function Canvas() {
             <CommentPin
               data-pin
               userId={thread.comments[0]?.userId}
+              corner="top-left"
               style={{
                 position: "absolute",
                 left: thread.metadata.x!,
@@ -88,7 +89,7 @@ function Canvas() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-canvas"
+    "liveblocks:examples:nextjs-components-playground-canvas"
   );
 
   return (

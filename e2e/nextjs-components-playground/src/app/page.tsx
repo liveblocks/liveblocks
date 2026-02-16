@@ -4,7 +4,7 @@ export default function HomePage() {
   return (
     <main className="max-w-[800px] mx-auto px-4 py-12 flex flex-col gap-6">
       <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">
-        Liveblocks Comments Playground
+        Liveblocks Playground
       </h1>
 
       <div className="grid gap-3 sm:grid-cols-3">

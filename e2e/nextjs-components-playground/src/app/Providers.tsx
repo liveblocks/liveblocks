@@ -2,7 +2,7 @@
 
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren, Suspense } from "react";
-import { authWithRandomUser } from "..//example";
+import { authWithRandomUser } from "../example";
 
 export function Providers({ children }: PropsWithChildren) {
   return (

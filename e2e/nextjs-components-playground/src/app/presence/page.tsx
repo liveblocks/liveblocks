@@ -93,7 +93,7 @@ function Presence() {
 
 export default function Page() {
   const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-comments-playground-presence"
+    "liveblocks:examples:nextjs-components-playground-presence"
   );
 
   return (

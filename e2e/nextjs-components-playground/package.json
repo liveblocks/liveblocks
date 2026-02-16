@@ -1,6 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments-playground",
-  "description": "This example shows how to build comments with Liveblocks and Next.js.",
+  "name": "@liveblocks-examples/nextjs-components-playground",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
