@@ -1,0 +1,60 @@
+name: Docker images
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - main
+    paths:
+      - "tools/liveblocks-cli/**"
+      - "packages/liveblocks-server/**"
+      - ".github/workflows/publish-docker-images.yml"
+      - ".github/workflows/docker-image.yml"
+  # pull_request:
+  #   paths:
+  #     - "tools/liveblocks-cli/**"
+  #     - "packages/liveblocks-server/**"
+  #     - ".github/workflows/publish-docker-images.yml"
+  #     - ".github/workflows/docker-image.yml"
+  workflow_dispatch:
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      is_release: ${{ steps.v.outputs.is_release }}
+    steps:
+      - name: Extract version
+        id: v
+        run: |
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=latest" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish-cli-image:
+    needs: version
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      image: liveblocks/cli
+      is_release: ${{ needs.version.outputs.is_release }}
+      scan: true
+      build-args: |
+        CLI_VERSION=${{ needs.version.outputs.version }}
+        VERSION=${{ needs.version.outputs.version }}
+
+  publish-dev-server-image:
+    needs: [version, publish-cli-image]
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      image: liveblocks/dev-server
+      dockerfile: Dockerfile.dev-server
+      is_release: ${{ needs.version.outputs.is_release }}
+      scan: true
+      build-args: |
+        CLI_TAG=${{ needs.version.outputs.version }}
