@@ -24,6 +24,8 @@ export type { CommentPinProps } from "./components/CommentPin";
 export { CommentPin } from "./components/CommentPin";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
+export type { CursorProps } from "./components/Cursor";
+export { Cursor } from "./components/Cursor";
 export type { FloatingComposerProps } from "./components/FloatingComposer";
 export { FloatingComposer } from "./components/FloatingComposer";
 export type { FloatingThreadProps } from "./components/FloatingThread";

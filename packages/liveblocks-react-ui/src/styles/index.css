@@ -1811,6 +1811,46 @@
 }
 
 /*************************************
+ *            Cursor                 *
+ *************************************/
+
+.lb-cursor {
+  --lb-cursor-color: var(--lb-accent);
+  --lb-cursor-pointer-size: 1rem;
+
+  position: relative;
+  inline-size: 0;
+  block-size: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.lb-cursor-pointer {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  inline-size: var(--lb-cursor-pointer-size);
+  block-size: var(--lb-cursor-pointer-size);
+  color: var(--lb-cursor-color);
+}
+
+.lb-cursor-bubble {
+  position: absolute;
+  inset-inline-start: calc(0.8125 * var(--lb-cursor-pointer-size));
+  inset-block-start: calc(0.8125 * var(--lb-cursor-pointer-size));
+  padding: calc(0.3125 * var(--lb-spacing)) calc(0.5625 * var(--lb-spacing));
+  border-radius: calc(0.5 * (1lh + 2 * 0.3125 * var(--lb-spacing)));
+  background: var(--lb-cursor-color);
+  line-height: 1;
+}
+
+.lb-cursor-bubble-label {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/*************************************
  *            Attachments            *
  *************************************/
 

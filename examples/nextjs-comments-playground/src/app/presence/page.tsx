@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { AvatarStack } from "@liveblocks/react-ui";
+import { AvatarStack, Cursor } from "@liveblocks/react-ui";
 import { Loading } from "../../components/Loading";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -28,6 +28,9 @@ function Presence() {
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-16">
+        <Cursor />
+        <Cursor label="Stacy" color="#f00" />
+        <Cursor label="Chris" color="#0f0" />
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-8 flex flex-col items-center gap-6">
           <AvatarStack className="[--lb-avatar-stack-size:48px]" />
           <p className="text-sm text-gray-500 dark:text-gray-400">
