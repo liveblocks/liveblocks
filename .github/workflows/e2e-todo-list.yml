@@ -1,10 +1,9 @@
 name: E2E Todo List
 
 on:
-  pull_request:
-    paths:
-      - "examples/nextjs-todo-list/**"
-      - ".github/workflows/e2e-todo-list.yml"
+  push:
+    branches:
+      - mz2/todo-playwright-tests
 
 jobs:
   e2e-todo-list:
