@@ -4,7 +4,7 @@
 #   docker build --build-arg CLI_VERSION=1.0.3 tools/liveblocks-cli/
 # ------------------------------------------------------------------
 
-FROM oven/bun:1@sha256:856da45d07aeb62eb38ea3e7f9e1794c0143a4ff63efb00e6c4491b627e2a521
+FROM oven/bun:1-alpine@sha256:9028ee7a60a04777190f0c3129ce49c73384d3fc918f3e5c75f5af188e431981
 
 ARG CLI_VERSION=latest
 ARG VERSION=dev
@@ -14,8 +14,8 @@ LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 LABEL org.opencontainers.image.title="Liveblocks Dev Server"
 LABEL org.opencontainers.image.description="Local development server for Liveblocks"
 
-RUN groupadd --gid 1001 liveblocks && \
-    useradd --uid 1001 --gid liveblocks --create-home liveblocks
+RUN addgroup -g 1001 liveblocks && \
+    adduser -u 1001 -G liveblocks -h /home/liveblocks -D liveblocks
 
 WORKDIR /app
 
