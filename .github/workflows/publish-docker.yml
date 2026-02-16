@@ -15,7 +15,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/dev-server
+  IMAGE_NAME: liveblocks/cli
 
 jobs:
   build-and-push:
