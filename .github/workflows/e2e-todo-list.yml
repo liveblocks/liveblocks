@@ -12,7 +12,8 @@ jobs:
     services:
       liveblocks:
         image: ghcr.io/liveblocks/dev-server:sha-59d071a
-        command: dev --host 0.0.0.0
+        env:
+          LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0"
         options: >-
           --health-cmd "curl -sf http://localhost:1153/health || exit 1"
           --health-interval 5s
