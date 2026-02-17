@@ -1853,6 +1853,7 @@
   opacity: 0.95;
   filter: invert(1) grayscale(1) brightness(1.3) contrast(9000);
   mix-blend-mode: luminosity;
+  will-change: transform;
 }
 
 /*************************************
@@ -1861,6 +1862,7 @@
 
 .lb-cursors {
   position: relative;
+  overflow: clip;
   isolation: isolate;
 }
 
