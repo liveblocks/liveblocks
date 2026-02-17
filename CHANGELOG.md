@@ -1,14 +1,5 @@
 ## vNEXT (not yet released)
 
-## v3.13.5
-
-### `@liveblocks/react-tiptap`
-
-- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
-  was causing change source to be incorrectly set in Blocknote.
-
--
-
 ## v3.14.0 (WIP)
 
 This release adds support for opting-in to the new storage engine on a per-room
@@ -70,6 +61,13 @@ or:
 
 - Deprecated `tenantId` parameter in client methods, use `organizationId`
   instead.
+
+## v3.13.5
+
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
 
 ## v3.13.4
 
