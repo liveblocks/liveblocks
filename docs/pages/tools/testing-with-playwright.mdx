@@ -257,8 +257,6 @@ jobs:
     services:
       liveblocks:
         image: ghcr.io/liveblocks/dev-server:latest
-        env:
-          LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0"
         ports:
           - 1153:1153
 
@@ -295,8 +293,6 @@ jobs:
 
 Key points:
 
-- **`LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0"`** — The dev server must bind to
-  `0.0.0.0` inside the container so it's reachable via Docker port mapping.
 - **`NEXT_PUBLIC_` env vars** — These are set at the job level so they're
   available during both `npm run build` (where Next.js inlines them) and test
   execution.

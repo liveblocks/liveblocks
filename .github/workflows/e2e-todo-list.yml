@@ -12,8 +12,6 @@ jobs:
     services:
       liveblocks:
         image: ghcr.io/liveblocks/dev-server:sha-7fc2281
-        env:
-          LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0"
         ports:
           - 1153:1153
 
