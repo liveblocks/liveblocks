@@ -48,3 +48,6 @@ specs/
 
 # Liveblocks local config
 .liveblocks/
+
+# Rust build artifacts
+target/
