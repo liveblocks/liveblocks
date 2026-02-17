@@ -19,7 +19,11 @@ import { makePosition as jsMakePosition } from "../lib/position";
 import type { Op } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import type { NodeMap } from "../types/NodeMap";
-import type { CrdtDocumentShadow, CrdtEngine } from "./impl-selector";
+import type {
+  CrdtDocumentShadow,
+  CrdtEngine,
+  RoomStorageEngineJS,
+} from "./impl-selector";
 import {
   _resetForTesting,
   _setEngine,
@@ -119,6 +123,15 @@ export function getBackend(): "wasm" | "js" {
   return getEngine(jsEngine).backend;
 }
 
+/**
+ * Create a WASM-backed room storage engine.
+ * Returns null if the active engine doesn't support it (JS fallback).
+ */
+export function createStorageEngine(): RoomStorageEngineJS | null {
+  const engine = getEngine(jsEngine);
+  return engine.createStorageEngine?.() ?? null;
+}
+
 // Re-export utilities from impl-selector for convenience
 export { isWasmAvailable, isWasmReady, _setEngine, _resetForTesting };
-export type { CrdtDocumentShadow, CrdtEngine };
+export type { CrdtDocumentShadow, CrdtEngine, RoomStorageEngineJS };

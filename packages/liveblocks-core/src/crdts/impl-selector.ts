@@ -33,6 +33,51 @@ export interface CrdtDocumentShadow {
 }
 
 /**
+ * Interface for the WASM-backed RoomStorageEngine.
+ * Matches the wasm_bindgen exports from `RoomStorageEngineHandle`.
+ */
+export interface RoomStorageEngineJS {
+  // -- onDispatch helpers ---
+  onDispatchOutsideBatch(reverse: unknown): void;
+  batchAccumulate(ops: unknown, reverse: unknown): void;
+  addToUndoStack(frames: unknown): void;
+
+  // -- Undo/redo ---
+  undo(): unknown | undefined;
+  redo(): unknown | undefined;
+  pushRedo(frames: unknown): void;
+  pushUndo(frames: unknown): void;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  clearHistory(): void;
+  saveUndoCheckpoint(): number;
+  restoreUndoCheckpoint(checkpoint: number): void;
+
+  // -- History pause/resume ---
+  pauseHistory(): void;
+  resumeHistory(): void;
+
+  // -- Batch ---
+  startBatch(): void;
+  endBatch(): { ops: unknown[]; reverse: unknown[]; hadOps: boolean } | undefined;
+
+  // -- Unacked ops ---
+  trackUnackedOp(opId: string, op: unknown): void;
+  classifyRemoteOp(op: unknown): "ours" | "theirs";
+  hasUnackedOps(): boolean;
+  getUnackedOps(): unknown[];
+
+  // -- Storage status ---
+  storageSyncStatus(rootLoaded: boolean, requested: boolean): string;
+
+  // -- DevTools ---
+  getUndoStack(): unknown;
+
+  // -- Cleanup ---
+  free(): void;
+}
+
+/**
  * The computation-heavy CRDT functions that can be backed by WASM.
  * Both the JS and WASM implementations expose this same interface.
  */
@@ -54,6 +99,9 @@ export interface CrdtEngine {
 
   /** Create a persistent document shadow for fast reconnect diffs. */
   createDocumentShadow?(): CrdtDocumentShadow;
+
+  /** Create a room storage engine for undo/redo, batch, unacked ops. */
+  createStorageEngine?(): RoomStorageEngineJS;
 }
 
 let wasmModule: unknown | null = null;
@@ -184,6 +232,9 @@ function createWasmEngine(_module: unknown): CrdtEngine {
       new (): WasmDocumentHandle;
       fromItems: (items: unknown) => WasmDocumentHandle;
     };
+    RoomStorageEngineHandle?: {
+      new (): RoomStorageEngineJS;
+    };
   };
 
   return {
@@ -238,6 +289,13 @@ function createWasmEngine(_module: unknown): CrdtEngine {
           handle.free();
         },
       };
+    },
+
+    createStorageEngine(): RoomStorageEngineJS | undefined {
+      if (mod.RoomStorageEngineHandle) {
+        return new mod.RoomStorageEngineHandle();
+      }
+      return undefined;
     },
   };
 }

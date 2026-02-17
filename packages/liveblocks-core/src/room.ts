@@ -18,6 +18,8 @@ import {
   createDocumentShadow,
   getTreesDiffOperations,
 } from "./crdts/wasm-adapter";
+import type { HistoryEngine, Stackframe, PresenceStackframe } from "./room-engine";
+import { createHistoryEngine } from "./room-engine";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -1130,13 +1132,6 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
-
-type PresenceStackframe<P extends JsonObject> = {
-  readonly type: "presence";
-  readonly data: P;
-};
-
 type IdFactory = () => string;
 
 export type StaticSessionInfo = {
@@ -1199,32 +1194,20 @@ type RoomState<
   root: LiveObject<S> | undefined;
   wasmShadow: CrdtDocumentShadow | null;
 
-  readonly undoStack: Stackframe<P>[][];
-  readonly redoStack: Stackframe<P>[][];
+  /** Unified engine owning undo/redo stacks, batch state, unacked ops. */
+  readonly historyEngine: HistoryEngine<P>;
 
   /**
-   * When history is paused, all operations will get queued up here. When
-   * history is resumed, these operations get "committed" to the undo stack.
-   */
-  pausedHistory: null | Deque<Stackframe<P>>;
-
-  /**
-   * Place to collect all mutations during a batch. Ops will be sent over the
-   * wire after the batch is ended.
+   * Place to collect storageUpdates and presence flags during a batch.
+   * The ops/reverse accumulation is handled by historyEngine.
    */
   activeBatch: {
-    ops: ClientWireOp[];
-    reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
   } | null;
-
-  // A registry of yet-unacknowledged Ops. These Ops have already been
-  // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, ClientWireOp>;
 };
 
 export type Polyfills = {
@@ -1455,13 +1438,9 @@ export function createRoom<
     }),
     root: undefined,
     wasmShadow: null,
-
-    undoStack: [],
-    redoStack: [],
-    pausedHistory: null,
+    historyEngine: createHistoryEngine<P>(),
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
 
   // Accumulates nodes as initial storage arrives in chunks via
@@ -1596,9 +1575,7 @@ export function createRoom<
     }
 
     if (context.activeBatch) {
-      for (const op of ops) {
-        context.activeBatch.ops.push(op);
-      }
+      context.historyEngine.batchAccumulate(ops, reverse);
       for (const [key, value] of storageUpdates) {
         context.activeBatch.updates.storageUpdates.set(
           key,
@@ -1608,10 +1585,9 @@ export function createRoom<
           )
         );
       }
-      context.activeBatch.reverseOps.pushLeft(reverse);
     } else {
-      addToUndoStack(reverse);
-      context.redoStack.length = 0;
+      context.historyEngine.onDispatchOutsideBatch(reverse);
+      onHistoryChange();
       dispatchOps(ops);
       notify({ storageUpdates });
     }
@@ -1769,7 +1745,7 @@ export function createRoom<
     const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
-    const stackSizeBefore = context.undoStack.length;
+    const stackSizeBefore = context.historyEngine.saveUndoCheckpoint();
     for (const key in context.initialStorage) {
       if (context.root.get(key) === undefined) {
         if (canWrite) {
@@ -1784,7 +1760,7 @@ export function createRoom<
 
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
-    context.undoStack.length = stackSizeBefore;
+    context.historyEngine.restoreUndoCheckpoint(stackSizeBefore);
   }
 
   function updateRoot(items: IdTuple<SerializedCrdt>[]) {
@@ -1821,24 +1797,6 @@ export function createRoom<
 
     const result = applyRemoteOps(ops);
     notify(result.updates);
-  }
-
-  function _addToRealUndoStack(frames: Stackframe<P>[]) {
-    // If undo stack is too large, we remove the older item
-    if (context.undoStack.length >= 50) {
-      context.undoStack.shift();
-    }
-
-    context.undoStack.push(frames);
-    onHistoryChange();
-  }
-
-  function addToUndoStack(frames: Stackframe<P>[]) {
-    if (context.pausedHistory !== null) {
-      context.pausedHistory.pushLeft(frames);
-    } else {
-      _addToRealUndoStack(frames);
-    }
   }
 
   type NotifyUpdates = {
@@ -1969,13 +1927,8 @@ export function createRoom<
 
       if (isLocal) {
         source = OpSource.LOCAL;
-      } else if (op.opId !== undefined) {
-        context.unacknowledgedOps.delete(op.opId);
-        source = OpSource.OURS;
       } else {
-        // Remotely generated Ops (and fix Ops as a special case of that)
-        // don't have opId anymore.
-        source = OpSource.THEIRS;
+        source = context.historyEngine.classifyRemoteOp(op);
       }
 
       const applyOpResult = applyOp(op, source);
@@ -2114,7 +2067,7 @@ export function createRoom<
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
-        context.activeBatch.reverseOps.pushLeft({
+        context.historyEngine.batchAddReverse({
           type: "presence",
           data: oldValues,
         });
@@ -2123,7 +2076,8 @@ export function createRoom<
     } else {
       flushNowOrSoon();
       if (options?.addToHistory) {
-        addToUndoStack([{ type: "presence", data: oldValues }]);
+        context.historyEngine.addToUndoStack([{ type: "presence", data: oldValues }]);
+        onHistoryChange();
       }
       notify({ presence: true });
     }
@@ -2218,8 +2172,8 @@ export function createRoom<
     return { type: "reset" };
   }
 
-  function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
-  function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
+  function canUndo() { return context.historyEngine.canUndo(); } // prettier-ignore
+  function canRedo() { return context.historyEngine.canRedo(); } // prettier-ignore
   function onHistoryChange() {
     eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
@@ -2436,7 +2390,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(op.opId, op);
+        context.historyEngine.trackUnackedOp(op.opId, op);
       }
       notifyStorageStatus();
     }
@@ -2557,7 +2511,7 @@ export function createRoom<
   let _resolveStoragePromise: (() => void) | null = null;
 
   function processInitialStorage(nodes: NodeMap) {
-    const unacknowledgedOps = new Map(context.unacknowledgedOps);
+    const unacknowledgedOps = context.historyEngine.snapshotUnackedOps();
     createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
@@ -2670,16 +2624,15 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const frames = context.undoStack.pop();
+
+    const frames = context.historyEngine.undo();
     if (frames === undefined) {
       return;
     }
 
-    context.pausedHistory = null;
     const result = applyLocalOps(frames);
-
     notify(result.updates);
-    context.redoStack.push(result.reverse);
+    context.historyEngine.pushToRedo(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -2693,16 +2646,14 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const frames = context.redoStack.pop();
+    const frames = context.historyEngine.redo();
     if (frames === undefined) {
       return;
     }
 
-    context.pausedHistory = null;
     const result = applyLocalOps(frames);
-
     notify(result.updates);
-    context.undoStack.push(result.reverse);
+    context.historyEngine.pushToUndo(result.reverse);
     onHistoryChange();
 
     for (const op of result.opsToEmit) {
@@ -2712,8 +2663,7 @@ export function createRoom<
   }
 
   function clear() {
-    context.undoStack.length = 0;
-    context.redoStack.length = 0;
+    context.historyEngine.clearHistory();
   }
 
   function batch<T>(callback: () => T): T {
@@ -2726,35 +2676,30 @@ export function createRoom<
 
     let returnValue: T = undefined as unknown as T;
 
+    context.historyEngine.startBatch();
     context.activeBatch = {
-      ops: [],
       updates: {
         storageUpdates: new Map(),
         presence: false,
         others: [],
       },
-      reverseOps: new Deque(),
     };
     try {
       returnValue = callback();
     } finally {
-      // "Pop" the current batch of the state, closing the active batch, but
-      // handling it separately here
       const currentBatch = context.activeBatch;
       context.activeBatch = null;
 
-      if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(Array.from(currentBatch.reverseOps));
-      }
-
-      if (currentBatch.ops.length > 0) {
-        // Only clear the redo stack if something has changed during a batch
-        // Clear the redo stack because batch is always called from a local operation
-        context.redoStack.length = 0;
-      }
-
-      if (currentBatch.ops.length > 0) {
-        dispatchOps(currentBatch.ops);
+      const batchResult = context.historyEngine.endBatch();
+      if (batchResult) {
+        if (batchResult.reverse.length > 0) {
+          // Respects paused history (same as original addToUndoStack)
+          context.historyEngine.addToUndoStack(batchResult.reverse);
+          onHistoryChange();
+        }
+        if (batchResult.hadOps) {
+          dispatchOps(batchResult.ops);
+        }
       }
 
       notify(currentBatch.updates);
@@ -2765,17 +2710,12 @@ export function createRoom<
   }
 
   function pauseHistory() {
-    if (context.pausedHistory === null) {
-      context.pausedHistory = new Deque();
-    }
+    context.historyEngine.pauseHistory();
   }
 
   function resumeHistory() {
-    const frames = context.pausedHistory;
-    context.pausedHistory = null;
-    if (frames !== null && frames.length > 0) {
-      _addToRealUndoStack(Array.from(frames));
-    }
+    context.historyEngine.resumeHistory();
+    onHistoryChange();
   }
 
   // Register a global source of pending changes for Storage™, so that the
@@ -2783,13 +2723,10 @@ export function createRoom<
   const syncSourceForStorage = config.createSyncSource();
 
   function getStorageStatus(): StorageStatus {
-    if (context.root === undefined) {
-      return _getStorage$ === null ? "not-loaded" : "loading";
-    } else {
-      return context.unacknowledgedOps.size === 0
-        ? "synchronized"
-        : "synchronizing";
-    }
+    return context.historyEngine.storageSyncStatus(
+      context.root !== undefined,
+      _getStorage$ !== null
+    );
   }
 
   /**
@@ -3110,7 +3047,7 @@ export function createRoom<
     {
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
-        get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
+        get undoStack() { return context.historyEngine.getUndoStack() as readonly (readonly Readonly<Stackframe<JsonObject>>[])[]; }, // prettier-ignore
         get nodeCount() { return context.pool.nodes.size }, // prettier-ignore
 
         getYjsProvider() {
@@ -3171,7 +3108,8 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        // Free the persistent WASM shadow
+        // Free WASM resources
+        context.historyEngine.destroy();
         context.wasmShadow?.free();
         context.wasmShadow = null;
 
