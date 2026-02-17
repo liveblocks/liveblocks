@@ -11,15 +11,15 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: [
-    // Locally, start the liveblocks dev server via bunx.
+    // Locally, start the liveblocks dev server via npx.
     // In CI it runs as a Docker service container instead
     // (see .github/workflows/e2e-todo-list.yml), or you can keep this
-    // entry and let Playwright start `bunx liveblocks dev` in CI too.
+    // entry and let Playwright start `npx liveblocks dev` in CI too.
     ...(process.env.CI
       ? []
       : [
           {
-            command: `bunx liveblocks dev --port ${LIVEBLOCKS_PORT}`,
+            command: `npx liveblocks dev --port ${LIVEBLOCKS_PORT}`,
             port: LIVEBLOCKS_PORT,
             reuseExistingServer: true,
           },
