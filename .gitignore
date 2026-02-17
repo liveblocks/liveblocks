@@ -27,6 +27,13 @@ yarn-error.log*
 *.pem
 .DS_Store
 
+# Playwright
+test-results/
+playwright-report/
+
+# Liveblocks local dev server storage
+.liveblocks/
+
 # Claude Code configs
 .claude/cache/
 .claude/*.local.json
