@@ -62,6 +62,15 @@ jobs:
             "@liveblocks/codemod",
             "@liveblocks/emails",
           ]
+        engine: [js]
+        include:
+          # Also test @liveblocks/core with the WASM engine
+          - node-version: 22.21.0
+            pkg: "@liveblocks/core"
+            engine: wasm
+
+    env:
+      LIVEBLOCKS_ENGINE: ${{ matrix.engine == 'wasm' && 'wasm' || '' }}
 
     steps:
       - name: Checkout
@@ -76,6 +85,30 @@ jobs:
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
+      - name: Install Rust toolchain
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Cache Cargo registry & build
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
+        uses: actions/cache@v4
+        with:
+          key: cargo-wasm-${{ hashFiles('packages/liveblocks-wasm/Cargo.lock') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/liveblocks-wasm/target
+          restore-keys: cargo-wasm-
+
+      - name: Build WASM package
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
+        run: wasm-pack build --target nodejs
+        working-directory: packages/liveblocks-wasm
+
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
@@ -85,10 +118,10 @@ jobs:
         id: turbo-cache
         uses: actions/cache@v4
         with:
-          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-${{ matrix.engine }}-bust3
           path: node_modules/.cache/turbo
           restore-keys:
-            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust3
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-${{ matrix.engine }}-bust3
 
       - name: Install Bun
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -107,6 +140,11 @@ jobs:
             echo "$CHANGED"
             exit 1
           fi
+
+      - name: Run Rust tests
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
+        run: cargo test
+        working-directory: packages/liveblocks-wasm
 
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -127,72 +165,6 @@ jobs:
       - name: Run public NPM packaging lint checks
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
-
-  # WASM equivalence tests for @liveblocks/core
-  test-wasm:
-    needs: check_for_code_changes
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.21.0]
-
-    env:
-      LIVEBLOCKS_ENGINE: wasm
-
-    steps:
-      - name: Checkout
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
-
-      - name: Use Node ${{ matrix.node-version }}
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
-
-      - name: Install Rust toolchain
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install wasm-pack
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-
-      - name: Cache Cargo registry & build
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/cache@v4
-        with:
-          key: cargo-wasm-${{ hashFiles('packages/liveblocks-wasm/Cargo.lock') }}
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            packages/liveblocks-wasm/target
-          restore-keys: cargo-wasm-
-
-      - name: Build WASM package
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: wasm-pack build --target nodejs
-        working-directory: packages/liveblocks-wasm
-
-      - name: Install dependencies
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
-
-      - name: Build JS packages
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run build -- --filter @liveblocks/core
-
-      - name: Run Rust tests
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: cargo test
-        working-directory: packages/liveblocks-wasm
-
-      - name: Run WASM equivalence tests
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test -- --filter @liveblocks/core
 
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
@@ -334,7 +306,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter node-sandbox
 
-  # E2E tests defined in @liveblocks/core package
+  # E2E client specs — runs with both JS and WASM engines
   e2e-client-specs:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
@@ -342,49 +314,13 @@ jobs:
     strategy:
       matrix:
         node-version: [22.21.0]
-
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/checkout@v4
-
-      - name: Use Node ${{ matrix.node-version }}
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: "**/package-lock.json"
-
-      - name: Install Bun
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        uses: oven-sh/setup-bun@v1
-
-      - name: Install dependencies
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm install
-
-      - name: Run e2e client specs tests
-        if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test:e2e
-        working-directory: packages/liveblocks-core
-
-  # E2E client specs with WASM engine
-  e2e-client-specs-wasm:
-    needs: check_for_code_changes
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.21.0]
+        engine: [js, wasm]
 
     timeout-minutes: 60
 
     env:
       LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
-      LIVEBLOCKS_ENGINE: wasm
+      LIVEBLOCKS_ENGINE: ${{ matrix.engine == 'wasm' && 'wasm' || '' }}
 
     steps:
       - name: Checkout
@@ -400,15 +336,15 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install Rust toolchain
-        if: needs.check_for_code_changes.outputs.changes == 'true'
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install wasm-pack
-        if: needs.check_for_code_changes.outputs.changes == 'true'
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Cache Cargo registry & build
-        if: needs.check_for_code_changes.outputs.changes == 'true'
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
         uses: actions/cache@v4
         with:
           key: cargo-wasm-${{ hashFiles('packages/liveblocks-wasm/Cargo.lock') }}
@@ -419,7 +355,7 @@ jobs:
           restore-keys: cargo-wasm-
 
       - name: Build WASM package
-        if: needs.check_for_code_changes.outputs.changes == 'true'
+        if: needs.check_for_code_changes.outputs.changes == 'true' && matrix.engine == 'wasm'
         run: wasm-pack build --target nodejs
         working-directory: packages/liveblocks-wasm
 
@@ -427,7 +363,7 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
 
-      - name: Run e2e client specs tests (WASM)
+      - name: Run e2e client specs tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:e2e
         working-directory: packages/liveblocks-core
