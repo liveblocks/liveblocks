@@ -12,6 +12,11 @@ use wasm_bindgen::prelude::*;
 
 use crate::types::Op;
 
+/// Serialize a value to JsValue using json-compatible mode (plain objects, not Maps).
+fn to_js<T: Serialize>(value: &T) -> Result<JsValue, serde_wasm_bindgen::Error> {
+    value.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
+}
+
 // ---------------------------------------------------------------------------
 // Stackframe — mirrors the TS union `Op | { type: "presence", data: P }`
 // ---------------------------------------------------------------------------
@@ -384,7 +389,7 @@ impl RoomStorageEngineHandle {
     #[wasm_bindgen]
     pub fn undo(&mut self) -> Result<JsValue, JsError> {
         match self.engine.undo() {
-            Some(frames) => Ok(serde_wasm_bindgen::to_value(&frames)?),
+            Some(frames) => Ok(to_js(&frames)?),
             None => Ok(JsValue::UNDEFINED),
         }
     }
@@ -393,7 +398,7 @@ impl RoomStorageEngineHandle {
     #[wasm_bindgen]
     pub fn redo(&mut self) -> Result<JsValue, JsError> {
         match self.engine.redo() {
-            Some(frames) => Ok(serde_wasm_bindgen::to_value(&frames)?),
+            Some(frames) => Ok(to_js(&frames)?),
             None => Ok(JsValue::UNDEFINED),
         }
     }
@@ -469,12 +474,14 @@ impl RoomStorageEngineHandle {
         match self.engine.end_batch() {
             Some((ops, reverse)) => {
                 let had_ops = !ops.is_empty();
-                let result = serde_json::json!({
-                    "ops": serde_json::to_value(&ops)?,
-                    "reverse": serde_json::to_value(&reverse)?,
-                    "hadOps": had_ops,
-                });
-                Ok(serde_wasm_bindgen::to_value(&result)?)
+                #[derive(Serialize)]
+                struct BatchResult {
+                    ops: Vec<Op>,
+                    reverse: Vec<Stackframe>,
+                    #[serde(rename = "hadOps")]
+                    had_ops: bool,
+                }
+                Ok(to_js(&BatchResult { ops, reverse, had_ops })?)
             }
             None => Ok(JsValue::UNDEFINED),
         }
@@ -508,7 +515,7 @@ impl RoomStorageEngineHandle {
     #[wasm_bindgen(js_name = "getUnackedOps")]
     pub fn get_unacked_ops(&self) -> Result<JsValue, JsError> {
         let ops: Vec<&Op> = self.engine.get_unacked_ops().values().collect();
-        Ok(serde_wasm_bindgen::to_value(&ops)?)
+        Ok(to_js(&ops)?)
     }
 
     // -- Storage status -----------------------------------------------------
@@ -536,7 +543,7 @@ impl RoomStorageEngineHandle {
     /// Return the full undo stack as JsValue (for DevTools introspection).
     #[wasm_bindgen(js_name = "getUndoStack")]
     pub fn get_undo_stack(&self) -> Result<JsValue, JsError> {
-        Ok(serde_wasm_bindgen::to_value(&self.engine.undo_stack)?)
+        Ok(to_js(&self.engine.undo_stack)?)
     }
 }
 

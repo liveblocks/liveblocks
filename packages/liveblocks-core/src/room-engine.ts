@@ -282,7 +282,8 @@ export class JSHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
 // WASM implementation (delegates to RoomStorageEngineHandle)
 // ---------------------------------------------------------------------------
 
-class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
+/** @internal Exported for testing. */
+export class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
   constructor(private engine: RoomStorageEngineJS) {}
 
   onDispatchOutsideBatch(reverse: Stackframe<P>[]): void {
