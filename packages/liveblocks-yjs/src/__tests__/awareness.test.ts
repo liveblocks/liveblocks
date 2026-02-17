@@ -1,6 +1,6 @@
 import type { JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, onTestFinished, test } from "vitest";
 import * as Y from "yjs";
 
 import { LiveblocksYjsProvider } from "..";
@@ -32,20 +32,13 @@ function createDevServerClient() {
 }
 
 describe("presence (dev server)", () => {
-  const cleanups: (() => void)[] = [];
-
-  afterEach(() => {
-    cleanups.forEach((fn) => fn());
-    cleanups.length = 0;
-  });
-
   test("Setting local state should remove local state", async () => {
     const client = createDevServerClient();
     const roomId = `test-room-${crypto.randomUUID()}`;
     const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>(roomId, {
       initialPresence: {},
     });
-    cleanups.push(leave);
+    onTestFinished(leave);
 
     await waitForSelf(room);
 
@@ -68,7 +61,7 @@ describe("presence (dev server)", () => {
     const { room, leave } = client.enterRoom<{ __yjs?: JsonObject }>(roomId, {
       initialPresence: {},
     });
-    cleanups.push(leave);
+    onTestFinished(leave);
 
     await waitForSelf(room);
 
@@ -95,7 +88,7 @@ describe("presence (dev server)", () => {
     const { room: roomA, leave: leaveA } = clientA.enterRoom<{
       __yjs?: JsonObject;
     }>(roomId, { initialPresence: {} });
-    cleanups.push(leaveA);
+    onTestFinished(leaveA);
     await waitForSelf(roomA);
 
     const yDocA = new Y.Doc();
@@ -111,7 +104,7 @@ describe("presence (dev server)", () => {
     const { room: roomB, leave: leaveB } = clientB.enterRoom<{
       __yjs?: JsonObject;
     }>(roomId, { initialPresence: {} });
-    cleanups.push(leaveB);
+    onTestFinished(leaveB);
     await waitForSelf(roomB);
 
     const yDocB = new Y.Doc();
@@ -129,10 +122,7 @@ describe("presence (dev server)", () => {
     // Client B's clientID should appear in add or update events (with a real
     // server, the "enter" event fires before __yjs_clientid is in presence,
     // so the clientID first appears in an "update" event, not "added")
-    const allMentioned = updates.flatMap((u) => [
-      ...u.added,
-      ...u.updated,
-    ]);
+    const allMentioned = updates.flatMap((u) => [...u.added, ...u.updated]);
     expect(allMentioned).toContain(yDocB.clientID);
   });
 });
