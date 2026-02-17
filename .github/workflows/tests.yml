@@ -34,6 +34,13 @@ jobs:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
 
+    # Run the Liveblocks dev server on port 1154 for all tests
+    services:
+      liveblocks:
+        image: ghcr.io/liveblocks/dev-server:main
+        ports:
+          - 1154:1153
+
     strategy:
       matrix:
         node-version: [22.21.0]
@@ -103,7 +110,7 @@ jobs:
 
       - name: Run unit tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: npm run test -- --filter ${{ matrix.pkg }} -- --coverage
+        run: npm run test:ci -- --filter ${{ matrix.pkg }} -- --coverage
 
       - name: Run type tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
