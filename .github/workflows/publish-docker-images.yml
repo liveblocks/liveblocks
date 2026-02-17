@@ -36,7 +36,9 @@ jobs:
             echo "is_release=true" >> "$GITHUB_OUTPUT"
             echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=latest" >> "$GITHUB_OUTPUT"
+            # Resolve the actual version from npm to bust Docker layer cache
+            VERSION=$(npm view liveblocks version)
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
             echo "cli_tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
           fi
