@@ -13,15 +13,15 @@
  * and the JS engine is used as normal.
  */
 
-import { _setEngine } from "../crdts/impl-selector";
 import type { CrdtEngine, RoomStorageEngineJS } from "../crdts/impl-selector";
+import { _setEngine } from "../crdts/impl-selector";
 import type { Op } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import type { NodeMap } from "../types/NodeMap";
 
 if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const path = require("path");
     // Resolve relative to this file's location to work regardless of cwd.
     // This file: packages/liveblocks-core/src/__tests__/wasm-engine-setup.ts
@@ -30,7 +30,7 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
       __dirname,
       "../../../liveblocks-wasm/pkg/liveblocks_wasm.js"
     );
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const wasmPkg = require(pkgPath) as {
       makePosition: (before?: string | null, after?: string | null) => string;
       DocumentHandle: {

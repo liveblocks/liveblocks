@@ -11,13 +11,14 @@
  *   - storage status computation
  */
 
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { OpCode } from "../protocol/Op";
-import type { Op, ClientWireOp } from "../protocol/Op";
+import { afterEach,beforeEach, describe, expect, test } from "vitest";
+
 import { OpSource } from "../crdts/AbstractCrdt";
-import { JSHistoryEngine, WasmHistoryEngine } from "../room-engine";
-import type { HistoryEngine, Stackframe } from "../room-engine";
 import type { RoomStorageEngineJS } from "../crdts/impl-selector";
+import type { ClientWireOp,Op } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type { HistoryEngine, Stackframe } from "../room-engine";
+import { JSHistoryEngine, WasmHistoryEngine } from "../room-engine";
 
 type P = { x: number; cursor?: { x: number; y: number } };
 
@@ -51,14 +52,14 @@ let wasmModule: { RoomStorageEngineHandle: new () => RoomStorageEngineJS } | nul
 try {
   // Load the WASM module for testing.
   // The bundler-target pkg auto-imports the .wasm via ESM import.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   const path = require("path");
   // Resolve relative to this file's location to work regardless of cwd.
   const jsPath = path.resolve(
     __dirname,
     "../../../liveblocks-wasm/pkg/liveblocks_wasm.js"
   );
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   const wasmPkg = require(jsPath);
   // Verify the module is actually functional
   if (typeof wasmPkg.RoomStorageEngineHandle === "function") {

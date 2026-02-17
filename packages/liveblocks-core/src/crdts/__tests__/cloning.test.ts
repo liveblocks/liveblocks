@@ -71,8 +71,8 @@ describe("cloning LiveStructures", () => {
 
   test(
     "[property] deep cloning of LiveStructures",
-    () =>
-      fc.assert(
+    async () => {
+      await fc.assert(
         fc.asyncProperty(
           liveStructure,
 
@@ -89,14 +89,15 @@ describe("cloning LiveStructures", () => {
             expect(imm.a).toEqual(imm.b);
           }
         )
-      ),
+      );
+    },
     PROPERTY_TIMEOUT
   );
 
   test(
     "[property] deep cloning of LiveStructures (twice)",
-    () =>
-      fc.assert(
+    async () => {
+      await fc.assert(
         fc.asyncProperty(
           liveStructure,
 
@@ -114,14 +115,15 @@ describe("cloning LiveStructures", () => {
             expect(imm.a).toEqual(imm.b);
           }
         )
-      ),
+      );
+    },
     PROPERTY_TIMEOUT
   );
 
   test(
     "[property] deep cloning of LSON data (= LiveStructures or JSON)",
-    () =>
-      fc.assert(
+    async () => {
+      await fc.assert(
         fc.asyncProperty(
           lson,
 
@@ -141,7 +143,8 @@ describe("cloning LiveStructures", () => {
             expect(imm.a).toEqual(imm.b);
           }
         )
-      ),
+      );
+    },
     PROPERTY_TIMEOUT
   );
 });

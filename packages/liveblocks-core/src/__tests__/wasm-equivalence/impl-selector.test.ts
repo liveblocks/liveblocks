@@ -4,8 +4,8 @@ const WASM_LOCKED = process.env.LIVEBLOCKS_ENGINE === "wasm";
 
 import type { CrdtEngine } from "../../crdts/impl-selector";
 import {
-  _setEngine,
   _resetForTesting,
+  _setEngine,
   getEngine,
   initWasm,
   isWasmAvailable,

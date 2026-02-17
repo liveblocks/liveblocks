@@ -133,5 +133,5 @@ export function createStorageEngine(): RoomStorageEngineJS | null {
 }
 
 // Re-export utilities from impl-selector for convenience
-export { isWasmAvailable, isWasmReady, _setEngine, _resetForTesting };
+export { _resetForTesting,_setEngine, isWasmAvailable, isWasmReady };
 export type { CrdtDocumentShadow, CrdtEngine, RoomStorageEngineJS };

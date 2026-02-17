@@ -8,12 +8,11 @@
  * room.ts calls this interface uniformly with no branching.
  */
 
-import type { JsonObject } from "./lib/Json";
-import { Deque } from "./lib/Deque";
-import type { Op } from "./protocol/Op";
-import type { ClientWireOp } from "./protocol/Op";
 import type { RoomStorageEngineJS } from "./crdts/impl-selector";
 import { createStorageEngine, getBackend } from "./crdts/wasm-adapter";
+import { Deque } from "./lib/Deque";
+import type { JsonObject } from "./lib/Json";
+import type { ClientWireOp,Op  } from "./protocol/Op";
 
 type StorageStatus =
   | "not-loaded"
@@ -228,7 +227,7 @@ export class JSHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
       this.redoStack.length = 0;
     }
 
-    const reverse = Array.from(reverseDeque) as Stackframe<P>[];
+    const reverse = Array.from(reverseDeque);
     return { ops, reverse, hadOps: ops.length > 0 };
   }
 
@@ -268,6 +267,7 @@ export class JSHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
 
   getUndoStack(): unknown {
     // Deep clone to prevent mutation of internal state
+    // eslint-disable-next-line no-restricted-syntax -- deep clone, not untrusted input
     return JSON.parse(JSON.stringify(this.undoStack));
   }
 

@@ -6,18 +6,18 @@
  * implementation produces identical results to the JS implementation.
  */
 
+import { _resetForTesting } from "../../crdts/impl-selector";
+import { getTreesDiffOperations as jsGetTreesDiffOperations } from "../../crdts/liveblocks-helpers";
+import {
+  deserializeItems,
+  getTreesDiffOperations,
+  makePosition,
+} from "../../crdts/wasm-adapter";
+import type { Pos } from "../../lib/position";
+import { makePosition as jsMakePosition } from "../../lib/position";
 import type { Op } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import type { NodeMap } from "../../types/NodeMap";
-import { _resetForTesting } from "../../crdts/impl-selector";
-import {
-  makePosition,
-  getTreesDiffOperations,
-  deserializeItems,
-} from "../../crdts/wasm-adapter";
-import { makePosition as jsMakePosition } from "../../lib/position";
-import type { Pos } from "../../lib/position";
-import { getTreesDiffOperations as jsGetTreesDiffOperations } from "../../crdts/liveblocks-helpers";
 
 /**
  * A test-friendly engine interface that exposes the same operations
@@ -98,6 +98,7 @@ export function getTestEngines(): TestEngine[] {
 export function describeForEachEngine(
   fn: (engine: TestEngine) => void
 ): void {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/consistent-type-imports
   const { describe } = require("vitest") as typeof import("vitest");
   for (const engine of getTestEngines()) {
     describe(`[${engine.name}]`, () => {

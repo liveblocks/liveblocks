@@ -45,8 +45,8 @@ export interface RoomStorageEngineJS {
   addToUndoStack(frames: unknown): void;
 
   // -- Undo/redo ---
-  undo(): unknown | undefined;
-  redo(): unknown | undefined;
+  undo(): unknown;
+  redo(): unknown;
   pushRedo(frames: unknown): void;
   pushUndo(frames: unknown): void;
   canUndo(): boolean;
@@ -106,7 +106,7 @@ export interface CrdtEngine {
   createStorageEngine?(): RoomStorageEngineJS;
 }
 
-let wasmModule: unknown | null = null;
+let wasmModule: unknown = null;
 let wasmInitPromise: Promise<boolean> | null = null;
 /** True once initWasm() has resolved (regardless of success/failure). */
 let initSettled = false;

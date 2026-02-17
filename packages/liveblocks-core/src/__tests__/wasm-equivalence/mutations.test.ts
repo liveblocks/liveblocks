@@ -8,32 +8,28 @@
  *
  * These tests only run when LIVEBLOCKS_ENGINE=wasm.
  */
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import path from "path";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { OpCode } from "../../protocol/Op";
-import type { Op } from "../../protocol/Op";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import type { LiveList } from "../../crdts/LiveList";
+import type { LiveMap } from "../../crdts/LiveMap";
 import type { WasmMutationResult } from "../../crdts/wasm-mutation-adapter";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import {
   createSerializedList,
   createSerializedMap,
   createSerializedRegister,
   createSerializedRoot,
-  prepareIsolatedStorageTest,
   FIRST_POSITION,
+  prepareIsolatedStorageTest,
   SECOND_POSITION,
 } from "../_utils";
-import { LiveList } from "../../crdts/LiveList";
-import { LiveMap } from "../../crdts/LiveMap";
 
 const IS_WASM = process.env.LIVEBLOCKS_ENGINE === "wasm";
 
 // Skip the entire suite if not running under WASM engine
 const describeMaybe = IS_WASM ? describe : describe.skip;
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const path = require("path");
 
 interface WasmDocumentHandle {
   root: WasmLiveObjectHandle | undefined;
@@ -95,7 +91,7 @@ beforeAll(() => {
     __dirname,
     "../../../../liveblocks-wasm/pkg/liveblocks_wasm.js"
   );
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
   wasmPkg = require(pkgPath) as WasmPkg;
 });
 
@@ -112,70 +108,14 @@ function createWasmDoc(
 }
 
 /**
- * Strip fields that differ between JS and WASM but are not semantically relevant
- * for comparison: `node` references in StorageUpdates, and normalize op shapes.
+ * Access a field on an op by treating it as a record.
+ * Ops are a discriminated union, so we need to cast when accessing
+ * fields that only exist on specific variants.
  */
-function normalizeOp(op: Op): Record<string, unknown> {
-  // Clone and remove undefined fields
-  const normalized: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(op)) {
-    if (value !== undefined) {
-      normalized[key] = value;
-    }
-  }
-  return normalized;
-}
-
-/**
- * Compare forward ops structurally, ignoring opId counters but checking format.
- */
-function compareOps(jsOps: Op[], wasmOps: Op[]): void {
-  expect(wasmOps.length).toBe(jsOps.length);
-
-  for (let i = 0; i < jsOps.length; i++) {
-    const jsOp = normalizeOp(jsOps[i]!);
-    const wasmOp = normalizeOp(wasmOps[i]!);
-
-    // Op type must match
-    expect(wasmOp.type).toBe(jsOp.type);
-
-    // Node id/parentId/parentKey must match
-    if ("id" in jsOp) expect(wasmOp.id).toBe(jsOp.id);
-    if ("parentId" in jsOp) expect(wasmOp.parentId).toBe(jsOp.parentId);
-    if ("parentKey" in jsOp) expect(wasmOp.parentKey).toBe(jsOp.parentKey);
-
-    // Data payload must match
-    if ("data" in jsOp) expect(wasmOp.data).toEqual(jsOp.data);
-
-    // Intent hack fields
-    if ("intent" in jsOp) expect(wasmOp.intent).toBe(jsOp.intent);
-    if ("deletedId" in jsOp) expect(wasmOp.deletedId).toBe(jsOp.deletedId);
-
-    // opId format: "{connectionId}:{counter}"
-    if (jsOp.opId) {
-      expect(wasmOp.opId).toMatch(/^\d+:\d+$/);
-    }
-  }
-}
-
-/**
- * Compare reverse ops structurally.
- */
-function compareReverseOps(jsRev: Op[], wasmRev: Op[]): void {
-  expect(wasmRev.length).toBe(jsRev.length);
-
-  for (let i = 0; i < jsRev.length; i++) {
-    const jsOp = normalizeOp(jsRev[i]!);
-    const wasmOp = normalizeOp(wasmRev[i]!);
-
-    expect(wasmOp.type).toBe(jsOp.type);
-    if ("id" in jsOp) expect(wasmOp.id).toBe(jsOp.id);
-    if ("parentId" in jsOp) expect(wasmOp.parentId).toBe(jsOp.parentId);
-    if ("parentKey" in jsOp) expect(wasmOp.parentKey).toBe(jsOp.parentKey);
-    if ("data" in jsOp) expect(wasmOp.data).toEqual(jsOp.data);
-    if ("intent" in jsOp) expect(wasmOp.intent).toBe(jsOp.intent);
-    if ("deletedId" in jsOp) expect(wasmOp.deletedId).toBe(jsOp.deletedId);
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function opField(op: unknown, field: string): any {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
+  return (op as any)[field];
 }
 
 describeMaybe("JS↔WASM Mutation Equivalence", () => {
@@ -189,16 +129,10 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
 
       // --- JS path ---
-      const { root, room } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest<{
         name?: string;
       }>(items, ACTOR);
       root.set("name", "Alice");
-      const jsOps = room[
-        // @ts-expect-error internal access
-        "__internal"
-      ] as unknown;
-      // Use a different approach: capture ops from the WebSocket messages
-      // We need to look at what the JS side dispatched
 
       // --- WASM path ---
       const doc = createWasmDoc(items, ACTOR);
@@ -209,27 +143,27 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       expect(result).toBeDefined();
       expect(result.ops).toBeDefined();
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.UPDATE_OBJECT);
+      expect(result.ops[0].type).toBe(OpCode.UPDATE_OBJECT);
       expect(result.reverseOps).toBeDefined();
       expect(result.reverseOps.length).toBe(1);
       // New key → reverse is DELETE_OBJECT_KEY
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_OBJECT_KEY);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_OBJECT_KEY);
       expect(result.update).toBeDefined();
       expect(result.update.type).toBe("liveObjectUpdate");
       expect(result.update.nodeId).toBe("root");
 
       // Verify opId format
-      expect(result.ops[0]!.opId).toMatch(/^\d+:\d+$/);
+      expect(result.ops[0].opId).toMatch(/^\d+:\d+$/);
 
       // Verify forward op data
-      expect((result.ops[0] as Record<string, unknown>).data).toEqual({
+      expect(opField(result.ops[0], "data")).toEqual({
         name: "Alice",
       });
 
       doc.free();
     });
 
-    it("set(key, value) — existing key", async () => {
+    it("set(key, value) — existing key", () => {
       const items: IdTuple<SerializedCrdt>[] = [
         createSerializedRoot({ name: "Alice" }),
       ];
@@ -239,24 +173,24 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmRoot.set("name", "Bob");
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.UPDATE_OBJECT);
-      expect((result.ops[0] as Record<string, unknown>).data).toEqual({
+      expect(result.ops[0].type).toBe(OpCode.UPDATE_OBJECT);
+      expect(opField(result.ops[0], "data")).toEqual({
         name: "Bob",
       });
 
       // Existing key → reverse is UPDATE_OBJECT with old value
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.UPDATE_OBJECT);
-      expect(
-        (result.reverseOps[0] as Record<string, unknown>).data
-      ).toEqual({ name: "Alice" });
+      expect(result.reverseOps[0].type).toBe(OpCode.UPDATE_OBJECT);
+      expect(opField(result.reverseOps[0], "data")).toEqual({
+        name: "Alice",
+      });
 
       expect(result.update.type).toBe("liveObjectUpdate");
 
       doc.free();
     });
 
-    it("update({a, b}) — multiple keys", async () => {
+    it("update({a, b}) — multiple keys", () => {
       const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
 
       const doc = createWasmDoc(items, ACTOR);
@@ -264,8 +198,8 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmRoot.update({ a: 1, b: 2 });
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.UPDATE_OBJECT);
-      expect((result.ops[0] as Record<string, unknown>).data).toEqual({
+      expect(result.ops[0].type).toBe(OpCode.UPDATE_OBJECT);
+      expect(opField(result.ops[0], "data")).toEqual({
         a: 1,
         b: 2,
       });
@@ -282,7 +216,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       doc.free();
     });
 
-    it("delete(key) — existing key", async () => {
+    it("delete(key) — existing key", () => {
       const items: IdTuple<SerializedCrdt>[] = [
         createSerializedRoot({ name: "Alice" }),
       ];
@@ -292,14 +226,14 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmRoot.delete("name");
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.DELETE_OBJECT_KEY);
+      expect(result.ops[0].type).toBe(OpCode.DELETE_OBJECT_KEY);
 
       // Reverse is UPDATE_OBJECT with old value
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.UPDATE_OBJECT);
-      expect(
-        (result.reverseOps[0] as Record<string, unknown>).data
-      ).toEqual({ name: "Alice" });
+      expect(result.reverseOps[0].type).toBe(OpCode.UPDATE_OBJECT);
+      expect(opField(result.reverseOps[0], "data")).toEqual({
+        name: "Alice",
+      });
 
       expect(result.update.type).toBe("liveObjectUpdate");
       expect(result.update.nodeId).toBe("root");
@@ -331,7 +265,6 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
         items: LiveList<string>;
       }>(items, ACTOR);
       const jsList = root.get("items");
-      // Capture length before push to verify mutation
       const jsBefore = jsList.length;
       jsList.push("C");
       expect(jsList.length).toBe(jsBefore + 1);
@@ -343,26 +276,24 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.push("C");
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect((result.ops[0] as Record<string, unknown>).parentId).toBe(
-        "0:0"
-      );
-      expect((result.ops[0] as Record<string, unknown>).data).toBe("C");
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.ops[0], "parentId")).toBe("0:0");
+      expect(opField(result.ops[0], "data")).toBe("C");
 
       // Reverse: DELETE_CRDT to undo the push
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_CRDT);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_CRDT);
 
       expect(result.update.type).toBe("liveListUpdate");
       expect(result.update.nodeId).toBe("0:0");
 
       // Verify opId format
-      expect(result.ops[0]!.opId).toMatch(/^\d+:\d+$/);
+      expect(result.ops[0].opId).toMatch(/^\d+:\d+$/);
 
       doc.free();
     });
 
-    it("insert(value, index)", async () => {
+    it("insert(value, index)", () => {
       const items = makeListItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -370,22 +301,21 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.insert("X", 1); // insert at index 1
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect((result.ops[0] as Record<string, unknown>).data).toBe("X");
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.ops[0], "data")).toBe("X");
 
       // Position should be between FIRST_POSITION and SECOND_POSITION
-      const parentKey = (result.ops[0] as Record<string, unknown>)
-        .parentKey as string;
+      const parentKey = opField(result.ops[0], "parentKey") as string;
       expect(parentKey > FIRST_POSITION).toBe(true);
       expect(parentKey < SECOND_POSITION).toBe(true);
 
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_CRDT);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_CRDT);
 
       doc.free();
     });
 
-    it("move(from, to)", async () => {
+    it("move(from, to)", () => {
       const items = makeListItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -393,18 +323,18 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.move(0, 1); // move "A" after "B"
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.SET_PARENT_KEY);
+      expect(result.ops[0].type).toBe(OpCode.SET_PARENT_KEY);
 
       // Reverse: SET_PARENT_KEY back to old position
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.SET_PARENT_KEY);
+      expect(result.reverseOps[0].type).toBe(OpCode.SET_PARENT_KEY);
 
       expect(result.update.type).toBe("liveListUpdate");
 
       doc.free();
     });
 
-    it("delete(index)", async () => {
+    it("delete(index)", () => {
       const items = makeListItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -412,19 +342,19 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.delete(0); // delete "A"
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.DELETE_CRDT);
-      expect((result.ops[0] as Record<string, unknown>).id).toBe("0:1");
+      expect(result.ops[0].type).toBe(OpCode.DELETE_CRDT);
+      expect(opField(result.ops[0], "id")).toBe("0:1");
 
       // Reverse: CREATE_REGISTER chain to recreate "A"
       expect(result.reverseOps.length).toBeGreaterThanOrEqual(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.CREATE_REGISTER);
+      expect(result.reverseOps[0].type).toBe(OpCode.CREATE_REGISTER);
 
       expect(result.update.type).toBe("liveListUpdate");
 
       doc.free();
     });
 
-    it("set(index, value)", async () => {
+    it("set(index, value)", () => {
       const items = makeListItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -432,25 +362,21 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.set(0, "Z"); // replace "A" with "Z"
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect((result.ops[0] as Record<string, unknown>).data).toBe("Z");
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.ops[0], "data")).toBe("Z");
 
       // Intent hack: forward op has intent="set" and deletedId
-      expect((result.ops[0] as Record<string, unknown>).intent).toBe("set");
-      expect(
-        (result.ops[0] as Record<string, unknown>).deletedId
-      ).toBe("0:1");
+      expect(opField(result.ops[0], "intent")).toBe("set");
+      expect(opField(result.ops[0], "deletedId")).toBe("0:1");
 
       // Reverse: CREATE_REGISTER with intent="set"
       expect(result.reverseOps.length).toBeGreaterThanOrEqual(1);
-      expect(
-        (result.reverseOps[0] as Record<string, unknown>).intent
-      ).toBe("set");
+      expect(opField(result.reverseOps[0], "intent")).toBe("set");
 
       doc.free();
     });
 
-    it("clear()", async () => {
+    it("clear()", () => {
       const items = makeListItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -507,20 +433,14 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmMap.set("key2", "value2");
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect((result.ops[0] as Record<string, unknown>).parentId).toBe(
-        "0:0"
-      );
-      expect((result.ops[0] as Record<string, unknown>).parentKey).toBe(
-        "key2"
-      );
-      expect((result.ops[0] as Record<string, unknown>).data).toBe(
-        "value2"
-      );
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.ops[0], "parentId")).toBe("0:0");
+      expect(opField(result.ops[0], "parentKey")).toBe("key2");
+      expect(opField(result.ops[0], "data")).toBe("value2");
 
       // No old value → reverse is DELETE_CRDT
       expect(result.reverseOps.length).toBe(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_CRDT);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_CRDT);
 
       expect(result.update.type).toBe("liveMapUpdate");
       expect(result.update.nodeId).toBe("0:0");
@@ -528,7 +448,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       doc.free();
     });
 
-    it("set(key, value) — replacing existing", async () => {
+    it("set(key, value) — replacing existing", () => {
       const items = makeMapItems();
 
       const doc = createWasmDoc(items, ACTOR);
@@ -536,35 +456,31 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmMap.set("key1", "newValue");
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect((result.ops[0] as Record<string, unknown>).data).toBe(
-        "newValue"
-      );
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.ops[0], "data")).toBe("newValue");
 
       // Old value existed → reverse is CREATE_REGISTER chain (recreate old register)
       expect(result.reverseOps.length).toBeGreaterThanOrEqual(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect(
-        (result.reverseOps[0] as Record<string, unknown>).data
-      ).toBe("value1");
+      expect(result.reverseOps[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(opField(result.reverseOps[0], "data")).toBe("value1");
 
       doc.free();
     });
 
-    it("delete(key)", async () => {
+    it("delete(key)", () => {
       const items = makeMapItems();
 
       const doc = createWasmDoc(items, ACTOR);
       const wasmMap = doc.getMapById("0:0")!;
-      const result = wasmMap.delete("key1") as unknown as WasmMutationResult;
+      const result = wasmMap.delete("key1") as WasmMutationResult;
 
       expect(result.ops.length).toBe(1);
-      expect(result.ops[0]!.type).toBe(OpCode.DELETE_CRDT);
-      expect((result.ops[0] as Record<string, unknown>).id).toBe("0:1");
+      expect(result.ops[0].type).toBe(OpCode.DELETE_CRDT);
+      expect(opField(result.ops[0], "id")).toBe("0:1");
 
       // Reverse: CREATE_REGISTER chain to recreate deleted entry
       expect(result.reverseOps.length).toBeGreaterThanOrEqual(1);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.CREATE_REGISTER);
+      expect(result.reverseOps[0].type).toBe(OpCode.CREATE_REGISTER);
 
       expect(result.update.type).toBe("liveMapUpdate");
       expect(result.update.nodeId).toBe("0:0");
@@ -585,7 +501,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       ];
 
       // JS path
-      const { root, room } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest<{
         x: number;
       }>(items, ACTOR);
       root.set("x", 42);
@@ -596,17 +512,13 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmRoot.set("x", 42);
 
       // Both should produce UPDATE_OBJECT forward op
-      expect(result.ops[0]!.type).toBe(OpCode.UPDATE_OBJECT);
+      expect(result.ops[0].type).toBe(OpCode.UPDATE_OBJECT);
       // Both should produce UPDATE_OBJECT reverse op (existing key)
-      expect(result.reverseOps[0]!.type).toBe(OpCode.UPDATE_OBJECT);
+      expect(result.reverseOps[0].type).toBe(OpCode.UPDATE_OBJECT);
 
       // Verify data payloads match
-      expect((result.ops[0] as Record<string, unknown>).data).toEqual({
-        x: 42,
-      });
-      expect(
-        (result.reverseOps[0] as Record<string, unknown>).data
-      ).toEqual({ x: 1 });
+      expect(opField(result.ops[0], "data")).toEqual({ x: 42 });
+      expect(opField(result.reverseOps[0], "data")).toEqual({ x: 1 });
 
       doc.free();
     });
@@ -629,8 +541,8 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmList.push("hello");
 
       // Both should produce CREATE_REGISTER forward, DELETE_CRDT reverse
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_CRDT);
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_CRDT);
 
       doc.free();
     });
@@ -653,8 +565,8 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmMap.set("k", "v");
 
       // Both should produce CREATE_REGISTER forward, DELETE_CRDT reverse
-      expect(result.ops[0]!.type).toBe(OpCode.CREATE_REGISTER);
-      expect(result.reverseOps[0]!.type).toBe(OpCode.DELETE_CRDT);
+      expect(result.ops[0].type).toBe(OpCode.CREATE_REGISTER);
+      expect(result.reverseOps[0].type).toBe(OpCode.DELETE_CRDT);
 
       doc.free();
     });
@@ -672,7 +584,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const result = wasmRoot.set("x", 1);
 
       // opId should start with "42:"
-      expect(result.ops[0]!.opId).toMatch(/^42:\d+$/);
+      expect(result.ops[0].opId).toMatch(/^42:\d+$/);
 
       doc.free();
     });
@@ -683,13 +595,13 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
       const doc = createWasmDoc(items, 1);
       const root1 = doc.root!;
       const r1 = root1.set("x", 1);
-      expect(r1.ops[0]!.opId).toMatch(/^1:\d+$/);
+      expect(r1.ops[0].opId).toMatch(/^1:\d+$/);
 
       // Change connection ID
       doc.setConnectionId(99);
       const root2 = doc.root!;
       const r2 = root2.set("y", 2);
-      expect(r2.ops[0]!.opId).toMatch(/^99:\d+$/);
+      expect(r2.ops[0].opId).toMatch(/^99:\d+$/);
 
       doc.free();
     });
