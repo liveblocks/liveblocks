@@ -33,4 +33,4 @@ while ! curl -sf "http://localhost:$PORT/health" >/dev/null 2>&1; do
 done
 
 # Run vitest
-NODE_OPTIONS="--no-deprecation" npx vitest run
+NODE_OPTIONS="--no-deprecation" npx vitest run --coverage
