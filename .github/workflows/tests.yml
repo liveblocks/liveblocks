@@ -128,6 +128,72 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
+  # WASM equivalence tests for @liveblocks/core
+  test-wasm:
+    needs: check_for_code_changes
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.21.0]
+
+    env:
+      LIVEBLOCKS_ENGINE: wasm
+
+    steps:
+      - name: Checkout
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: actions/checkout@v4
+
+      - name: Use Node ${{ matrix.node-version }}
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install Rust toolchain
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Cache Cargo registry & build
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: actions/cache@v4
+        with:
+          key: cargo-wasm-${{ hashFiles('packages/liveblocks-wasm/Cargo.lock') }}
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/liveblocks-wasm/target
+          restore-keys: cargo-wasm-
+
+      - name: Build WASM package
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: wasm-pack build --target nodejs
+        working-directory: packages/liveblocks-wasm
+
+      - name: Install dependencies
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: npm install
+
+      - name: Build JS packages
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: npm run build -- --filter @liveblocks/core
+
+      - name: Run Rust tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: cargo test
+        working-directory: packages/liveblocks-wasm
+
+      - name: Run WASM equivalence tests
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: npm run test -- --filter @liveblocks/core
+
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:
     needs: check_for_code_changes
