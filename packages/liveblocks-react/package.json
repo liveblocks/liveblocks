@@ -55,6 +55,7 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
     "test": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always",
+    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always --watch",
     "test:deps": "depcruise src --exclude __tests__",

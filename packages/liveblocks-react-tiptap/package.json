@@ -39,6 +39,7 @@
     "lint:package": "publint --strict && attw --pack",
     "start": "npm run dev",
     "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
