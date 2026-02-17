@@ -32,18 +32,43 @@ inconsistencies in production applications.
 
 ## Running Tests
 
-Run all e2e tests:
+### Against the local dev server (recommended for development)
+
+Start the dev server in a separate terminal:
+
+```bash
+bunx liveblocks dev --port 1153
+```
+
+Then run e2e tests:
+
+```bash
+npm run test:e2e:devserver
+```
+
+With WASM engine:
+
+```bash
+LIVEBLOCKS_ENGINE=wasm npm run test:e2e:devserver
+```
+
+All 44 e2e tests are compatible with the local dev server. The dev server uses
+`pk_localdev` as the public key and runs on `http://localhost:1153`.
+
+### Against the production API
+
+```bash
+LIVEBLOCKS_PUBLIC_KEY=pk_... npm run test:e2e
+```
+
+Or with turbo:
 
 ```bash
 npx turbo test:e2e
 ```
 
-Run a specific test file:
+### Running a specific test file
 
 ```bash
-npx turbo test:e2e -- e2e/list-insert.test.ts
+npm run test:e2e:devserver -- e2e/list-insert.test.ts
 ```
-
-**Note**: Since these tests run against an actual production deployment, they
-require a `LIVEBLOCKS_PUBLIC_KEY` environment variable to connect to the
-Liveblocks service.

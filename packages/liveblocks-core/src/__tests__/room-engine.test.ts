@@ -53,9 +53,10 @@ try {
   // The bundler-target pkg auto-imports the .wasm via ESM import.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require("path");
+  // Resolve relative to this file's location to work regardless of cwd.
   const jsPath = path.resolve(
-    process.cwd(),
-    "packages/liveblocks-crdt-wasm/pkg/liveblocks_crdt_wasm.js"
+    __dirname,
+    "../../../liveblocks-wasm/pkg/liveblocks_wasm.js"
   );
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const wasmPkg = require(jsPath);

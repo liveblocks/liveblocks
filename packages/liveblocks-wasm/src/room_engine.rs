@@ -4,7 +4,9 @@
 //! The engine is a "consulted data store": JS calls it with batch operations
 //! and receives structured responses. No fine-grained per-op boundary crossings.
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+
+use indexmap::IndexMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
@@ -107,7 +109,7 @@ pub struct RoomStorageEngine {
     undo_stack: Vec<Vec<Stackframe>>,
     redo_stack: Vec<Vec<Stackframe>>,
     paused_history: Option<VecDeque<Stackframe>>,
-    unacked_ops: HashMap<String, Op>,
+    unacked_ops: IndexMap<String, Op>,
     active_batch: Option<BatchState>,
 }
 
@@ -117,7 +119,7 @@ impl RoomStorageEngine {
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
             paused_history: None,
-            unacked_ops: HashMap::new(),
+            unacked_ops: IndexMap::new(),
             active_batch: None,
         }
     }
@@ -229,7 +231,7 @@ impl RoomStorageEngine {
     /// (and we remove it); otherwise it's THEIRS.
     pub fn classify_remote_op(&mut self, op: &Op) -> OpSourceResult {
         if let Some(ref op_id) = op.op_id {
-            if self.unacked_ops.remove(op_id).is_some() {
+            if self.unacked_ops.shift_remove(op_id).is_some() {
                 return OpSourceResult::Ours;
             }
         }
@@ -240,7 +242,7 @@ impl RoomStorageEngine {
         !self.unacked_ops.is_empty()
     }
 
-    pub fn get_unacked_ops(&self) -> &HashMap<String, Op> {
+    pub fn get_unacked_ops(&self) -> &IndexMap<String, Op> {
         &self.unacked_ops
     }
 

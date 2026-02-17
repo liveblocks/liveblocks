@@ -13,7 +13,7 @@ import { Deque } from "./lib/Deque";
 import type { Op } from "./protocol/Op";
 import type { ClientWireOp } from "./protocol/Op";
 import type { RoomStorageEngineJS } from "./crdts/impl-selector";
-import { createStorageEngine } from "./crdts/wasm-adapter";
+import { createStorageEngine, getBackend } from "./crdts/wasm-adapter";
 
 type StorageStatus =
   | "not-loaded"
@@ -284,13 +284,17 @@ export class JSHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
 
 /** @internal Exported for testing. */
 export class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
+  private _destroyed = false;
+
   constructor(private engine: RoomStorageEngineJS) {}
 
   onDispatchOutsideBatch(reverse: Stackframe<P>[]): void {
+    if (this._destroyed) return;
     this.engine.onDispatchOutsideBatch(reverse);
   }
 
   addToUndoStack(frames: Stackframe<P>[]): void {
+    if (this._destroyed) return;
     this.engine.addToUndoStack(frames);
   }
 
@@ -364,19 +368,29 @@ export class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P>
   }
 
   trackUnackedOp(opId: string, op: ClientWireOp): void {
-    this.engine.trackUnackedOp(opId, op);
+    if (this._destroyed) return;
+    try {
+      this.engine.trackUnackedOp(opId, op);
+    } catch {
+      // Op data may contain non-serializable values (functions, symbols, etc.)
+      // that cannot cross the WASM boundary. Skip tracking — the server will
+      // also reject unserializable data so this op will never be acknowledged.
+    }
   }
 
   classifyRemoteOp(op: Op): OpSource {
+    if (this._destroyed) return OpSource.THEIRS;
     const result = this.engine.classifyRemoteOp(op);
     return result === "ours" ? OpSource.OURS : OpSource.THEIRS;
   }
 
   hasUnackedOps(): boolean {
+    if (this._destroyed) return false;
     return this.engine.hasUnackedOps();
   }
 
   snapshotUnackedOps(): Map<string, ClientWireOp> {
+    if (this._destroyed) return new Map();
     const opsArray = this.engine.getUnackedOps() as ClientWireOp[];
     const map = new Map<string, ClientWireOp>();
     for (const op of opsArray) {
@@ -386,14 +400,18 @@ export class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P>
   }
 
   storageSyncStatus(rootLoaded: boolean, requested: boolean): StorageStatus {
+    if (this._destroyed) return "not-loaded";
     return this.engine.storageSyncStatus(rootLoaded, requested) as StorageStatus;
   }
 
   getUndoStack(): unknown {
+    if (this._destroyed) return [];
     return this.engine.getUndoStack();
   }
 
   destroy(): void {
+    if (this._destroyed) return;
+    this._destroyed = true;
     this.engine.free();
   }
 }
@@ -403,12 +421,22 @@ export class WasmHistoryEngine<P extends JsonObject> implements HistoryEngine<P>
 // ---------------------------------------------------------------------------
 
 /**
- * Create the best available history engine.
- * Returns WASM-backed if available, JS fallback otherwise.
+ * Create a history engine based on the active backend.
+ *
+ * When the backend is "wasm", creates a WASM-backed engine (throws if the
+ * WASM RoomStorageEngine is unavailable — no silent fallback).
+ * When the backend is "js", creates a pure-JS engine.
  */
 export function createHistoryEngine<P extends JsonObject>(): HistoryEngine<P> {
-  const wasmEngine = createStorageEngine();
-  if (wasmEngine) {
+  const backend = getBackend();
+  if (backend === "wasm") {
+    const wasmEngine = createStorageEngine();
+    if (!wasmEngine) {
+      throw new Error(
+        "WASM backend is active but createStorageEngine() returned null. " +
+          "Ensure the WASM module exposes RoomStorageEngineHandle."
+      );
+    }
     return new WasmHistoryEngine<P>(wasmEngine);
   }
   return new JSHistoryEngine<P>();

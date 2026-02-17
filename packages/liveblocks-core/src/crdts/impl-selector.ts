@@ -110,6 +110,8 @@ let wasmInitPromise: Promise<boolean> | null = null;
 let initSettled = false;
 /** Cached engine, set only after init has settled (or via _setEngine). */
 let selectedEngine: CrdtEngine | null = null;
+/** When true, _setEngine(null) and _resetForTesting() preserve the engine. */
+let engineLocked = false;
 
 /**
  * Check if WebAssembly is available in the current environment.
@@ -145,7 +147,7 @@ export async function initWasm(): Promise<boolean> {
     try {
       // Dynamic import of the WASM package.
       // Use a variable to prevent bundlers from statically resolving this.
-      const wasmPkg = "liveblocks-crdt-wasm";
+      const wasmPkg = "liveblocks-wasm";
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       wasmModule = await import(/* @vite-ignore */ wasmPkg);
       initSettled = true;
@@ -202,22 +204,32 @@ export function getEngine(jsEngine: CrdtEngine): CrdtEngine {
 
 /**
  * Force the engine to use a specific backend (for testing).
+ * When `lock` is true, subsequent calls with null and _resetForTesting()
+ * will preserve the engine — use this for global test setup (e.g., WASM mode).
  * @internal
  */
-export function _setEngine(engine: CrdtEngine | null): void {
+export function _setEngine(engine: CrdtEngine | null, lock = false): void {
+  if (engine === null && engineLocked) {
+    // Locked engine cannot be cleared — silently ignore
+    return;
+  }
   selectedEngine = engine;
+  engineLocked = engine !== null && lock;
 }
 
 /**
  * Reset ALL internal state (for testing only).
  * Clears the cached engine, init promise, init settled flag, and WASM module.
+ * If the engine is locked, it is preserved.
  * @internal
  */
 export function _resetForTesting(): void {
   wasmModule = null;
   wasmInitPromise = null;
   initSettled = false;
-  selectedEngine = null;
+  if (!engineLocked) {
+    selectedEngine = null;
+  }
 }
 
 /**

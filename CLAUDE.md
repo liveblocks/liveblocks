@@ -60,3 +60,10 @@ changes to them directly here — prefer editing the source in the backend repo.
 - `packages/liveblocks-server`
 - `packages/liveblocks-zenrouter`
 - `tools/liveblocks-cli`
+
+## Active Technologies
+- Rust (stable, latest) + TypeScript 5.x (existing) + wasm-bindgen, wasm-pack, serde, serde-wasm-bindgen, slotmap (generational arena) (001-crdt-rust-wasm)
+- N/A (in-memory CRDT tree, persisted by server) (001-crdt-rust-wasm)
+
+## Recent Changes
+- 001-crdt-rust-wasm: Added Rust (stable, latest) + TypeScript 5.x (existing) + wasm-bindgen, wasm-pack, serde, serde-wasm-bindgen, slotmap (generational arena)

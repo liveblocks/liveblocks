@@ -44,7 +44,7 @@ export async function loadWasmEngine(): Promise<BenchEngine | null> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const wasmMod = await import(
-      "../../liveblocks-crdt-wasm/pkg-node/liveblocks_crdt_wasm.js"
+      "../../liveblocks-wasm/pkg-node/liveblocks_wasm.js"
     );
     const mod = wasmMod as {
       makePosition: (before?: string | null, after?: string | null) => string;
@@ -101,7 +101,7 @@ export async function loadWasmShadow(): Promise<BenchShadow | null> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const wasmMod = await import(
-      "../../liveblocks-crdt-wasm/pkg-node/liveblocks_crdt_wasm.js"
+      "../../liveblocks-wasm/pkg-node/liveblocks_wasm.js"
     );
     const mod = wasmMod as {
       DocumentHandle: {
