@@ -40,3 +40,11 @@ playwright-report/
 CLAUDE.local.md
 
 .mcp.json
+
+# Speckit / specs
+.claude/commands/speckit.*
+.specify/
+specs/
+
+# Liveblocks local config
+.liveblocks/
