@@ -89,8 +89,7 @@ zen.route("GET /v2/rooms", () => {
   return XWARN(
     { data, nextPage: null, nextCursor: null },
     200,
-    "The Liveblocks dev server doesn't implement room permissions or pagination yet, so all rooms are returned in a single page with nextPage set to null.",
-    "GET /v2/rooms"
+    "The Liveblocks dev server doesn't implement room permissions or pagination yet."
   );
 });
 

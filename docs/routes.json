@@ -719,6 +719,10 @@
     "defaultCollapsed": true,
     "routes": [
       {
+        "title": "Dev server",
+        "path": "/tools/dev-server"
+      },
+      {
         "title": "DevTools extension",
         "path": "/tools/devtools"
       },
@@ -733,6 +737,11 @@
       {
         "title": "Frimousse",
         "href": "https://frimousse.liveblocks.io"
+      },
+      {
+        "title": "How to set up CI testing",
+        "path": "/guides/how-to-set-up-continuous-integration-ci-testing",
+        "hidden": true
       }
     ]
   },

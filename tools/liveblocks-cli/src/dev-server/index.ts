@@ -33,7 +33,7 @@ import {
 } from "./lib/check-liveblocks-setup";
 import { copyToClipboard } from "./lib/clipboard";
 import { isPortInUse } from "./lib/probe-port";
-import { clearWarnings, warnOnce } from "./lib/xwarn";
+import { warn } from "./lib/xwarn";
 import { zen as authRoutes } from "./routes/auth";
 import { zen as clientApiRoutes } from "./routes/client-api";
 import { zen as publicRoutes } from "./routes/public";
@@ -99,7 +99,8 @@ const dev: SubCommand = {
   async run(_argv) {
     const args = parse(_argv, {
       string: ["port", "host"],
-      boolean: ["help"],
+      boolean: ["help", "check", "ephemeral", "ci"],
+      default: { check: true },
       alias: { h: "help", p: "port" },
     });
 
@@ -109,10 +110,20 @@ const dev: SubCommand = {
       console.log("Start the local Liveblocks dev server");
       console.log();
       console.log("Options:");
-      console.log(`  -p, --port   Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
-      console.log("      --host   Host to bind to (default: localhost)");
-      console.log("  -h, --help   Show this help message");
+      console.log(`  --port, -p    Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
+      console.log("  --host        Host to bind to (default: localhost)");
+      console.log("  --ci          Best defaults for CI (same as --ephemeral --no-check)"); // prettier-ignore
+      console.log("  --no-check    Skip project setup check");
+      console.log("  --ephemeral   Do not persist state between restarts"); // prettier-ignore
+      console.log("                  (Recommended for running unit tests.)"); // prettier-ignore
+      console.log("  --help, -h    Show this help message");
       return;
+    }
+
+    // --ci is a shorthand for --ephemeral --no-check
+    if (args.ci) {
+      args.ephemeral = true;
+      args.check = false;
     }
 
     // Precedence: CLI flag > env var > default
@@ -122,6 +133,8 @@ const dev: SubCommand = {
       DEFAULT_PORT;
     const hostname =
       args.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
+
+    const ephemeralPath = args.ephemeral ? RoomsDB.useEphemeralStorage() : null;
 
     if (await isPortInUse(port, hostname)) {
       console.error(
@@ -140,7 +153,7 @@ const dev: SubCommand = {
           const authResult = authorizeWebSocket(req);
 
           if (!authResult.ok) {
-            warnOnce(authResult.xwarn);
+            warn(authResult.xwarn, true);
             return refuseSocketConnection(
               server,
               req,
@@ -186,8 +199,7 @@ const dev: SubCommand = {
               : green(String(status));
         console.log(`${colorStatus} ${route}`);
         const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
-        const warnKey = resp.headers.get("X-LB-Warn-Key") ?? undefined;
-        warnOnce(warnMsg, warnKey);
+        warn(warnMsg, !resp.ok);
         return resp;
       },
 
@@ -247,12 +259,21 @@ const dev: SubCommand = {
     console.log(
       `Liveblocks dev server running at http://${server.hostname}:${server.port}`
     );
+    if (ephemeralPath) {
+      console.log(dim(`Ephemeral mode, using ${ephemeralPath}`));
+    }
 
     // Check if the current project is configured to use the local dev server
-    const configIssues = await checkLiveblocksSetup(port);
+    const configIssues = args.check ? await checkLiveblocksSetup(port) : [];
     const baseUrl = `http://localhost:${port}`;
 
-    console.log(dim("Press ") + bold("q") + dim(" to quit, ") + bold("c") + dim(" to clear"));
+    console.log(
+      dim("Press ") +
+        bold("q") +
+        dim(" to quit, ") +
+        bold("c") +
+        dim(" to clear")
+    );
 
     // Listen for keypresses
     if (process.stdin.isTTY) {
@@ -261,10 +282,12 @@ const dev: SubCommand = {
       process.stdin.on("data", (data: Buffer) => {
         const ch = data.toString();
         if (ch === "q" || ch === "\x03" /* Ctrl-C */) {
-          void server.stop().then(() => process.exit(0));
+          void server.stop().then(() => {
+            RoomsDB.cleanup();
+            process.exit(0);
+          });
         } else if (ch === "c") {
           console.clear();
-          clearWarnings();
         } else if (ch === "p") {
           if (configIssues.length > 0) {
             const prompt = buildFixPrompt(configIssues, baseUrl);

@@ -119,21 +119,32 @@ export async function checkLiveblocksSetup(
   port: number
 ): Promise<ConfigIssue[]> {
   const baseUrl = `http://localhost:${port}`;
+
+  // Run both greps in parallel: one for all call-site patterns, one for all
+  // baseUrl patterns. This reduces up to 6 sequential git-grep invocations
+  // down to 2 parallel ones.
+  const allPatterns = CHECKS.map((c) => c.pattern);
+  const allExpected = [...new Set(CHECKS.map((c) => c.expected))];
+
+  const [callSiteMatches, baseUrlMatches] = await Promise.all([
+    gitGrep(...allPatterns),
+    gitGrep(...allExpected),
+  ]);
+
+  // Fast path: no call sites found at all
+  if (callSiteMatches.length === 0) return [];
+
+  const filesWithBaseUrl = new Set(baseUrlMatches.map((m) => m.file));
+
   const issues: ConfigIssue[] = [];
+  for (const m of callSiteMatches) {
+    if (isCommentedOut(m.text)) continue;
+    if (filesWithBaseUrl.has(m.file)) continue;
 
-  for (const check of CHECKS) {
-    const matches = (await gitGrep(check.pattern)).filter(
-      (m) => !isCommentedOut(m.text)
-    );
-    if (matches.length === 0) continue;
-
-    const baseUrlMatches = await gitGrep(check.expected);
-    const filesWithBaseUrl = new Set(baseUrlMatches.map((m) => m.file));
-
-    for (const m of matches) {
-      if (!filesWithBaseUrl.has(m.file)) {
-        issues.push({ match: m, check });
-      }
+    // Determine which check this match belongs to
+    const check = CHECKS.find((c) => m.text.includes(c.pattern));
+    if (check) {
+      issues.push({ match: m, check });
     }
   }
 
@@ -154,6 +165,8 @@ export async function checkLiveblocksSetup(
     console.log(dim("  ╭───────────────────────────────────────────────────────╮")); // prettier-ignore
     console.log(dim("  │ 💡 ") + "Press " + bold("p") + " to copy an AI fix prompt to your clipboard" + dim(" │")); // prettier-ignore
     console.log(dim("  ╰───────────────────────────────────────────────────────╯")); // prettier-ignore
+    console.log();
+    console.log(dim("  To skip this check, use --no-check"));
     console.log();
   }
 

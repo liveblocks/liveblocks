@@ -16,23 +16,17 @@
  */
 
 import type { JsonObject } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
 import { json } from "@liveblocks/zenrouter";
 
 /**
- * Like `json()`, but also attaches X-LB-Warn and optional X-LB-Warn-Key
- * response headers.
+ * Like `json()`, but also attaches an X-LB-Warn response header.
  */
 export function XWARN<J extends JsonObject>(
   data: J,
   status: number | undefined,
-  message: string,
-  warnKey?: string
+  message: string
 ): Response {
-  const headers: HeadersInit = {};
-  headers["X-LB-Warn"] = message;
-  if (warnKey) headers["X-LB-Warn-Key"] = warnKey;
-  return json(data, status, headers);
+  return json(data, status, { "X-LB-Warn": message });
 }
 
 /**
@@ -42,23 +36,17 @@ export function XWARN<J extends JsonObject>(
  * NOTE: The message is returned as a response header (X-LB-Warn) visible to
  * the local developer using the dev server. This is intentional — it helps
  * them understand which endpoints are fully implemented vs stubbed.
- *
- * @param warnKey - Optional uniqueness key sent as X-LB-Warn-Key header.
- *   Allows the client to deduplicate warnings, so it can track which warnings
- *   it has already surfaced to the developer and only show new ones.
  */
 export function DUMMY<J extends JsonObject>(
   data: J,
   status?: number | undefined,
   message = "This is a dummy response."
 ): Response {
-  // Use a unique key so warnOnce doesn't deduplicate across different dummy
-  // endpoints — each one should warn independently.
-  return XWARN(data, status, message, nanoid());
+  return XWARN(data, status, message);
 }
 
 export function NOT_IMPLEMENTED(
-  message = "This endpoint isn't implemented in the Liveblocks dev server"
+  message = "This endpoint isn't implemented in the Liveblocks dev server."
 ): Response {
   return json(
     {

@@ -105,8 +105,8 @@ function showHelp(): void {
   }
   console.log();
   console.log("Options:");
-  console.log("  -h, --help       Show this help message");
-  console.log("  -v, --version    Show version number");
+  console.log("  --help, -h      Show this help message");
+  console.log("  --version, -v   Show version number");
 }
 
 async function main(): Promise<void> {

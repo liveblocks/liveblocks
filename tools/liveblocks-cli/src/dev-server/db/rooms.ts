@@ -17,12 +17,25 @@
 
 import type { JsonObject, PlainLsonObject } from "@liveblocks/core";
 import { DefaultMap, Room } from "@liveblocks/server";
-import { mkdirSync, readdirSync } from "fs";
-import { resolve } from "path";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "fs";
+import { tmpdir } from "os";
+import { join, resolve } from "path";
 
 import { BunSQLiteDriver } from "./BunSQLiteDriver";
 
-const DB_PATH = ".liveblocks/v1/rooms";
+const DEFAULT_DB_PATH = ".liveblocks/v1/rooms";
+let basePath = DEFAULT_DB_PATH;
+let isEphemeral = false;
+
+/**
+ * Initialize the rooms database. When persist is false, a temp directory is
+ * used and cleaned up on exit via `cleanup()`.
+ */
+export function useEphemeralStorage(): string {
+  basePath = mkdtempSync(join(tmpdir(), "liveblocks-dev-"));
+  isEphemeral = true;
+  return basePath;
+}
 
 export type RoomMeta = string; // Room metadata: just use the room ID
 export type SessionMeta = never;
@@ -33,7 +46,7 @@ const instances = new DefaultMap<
   string,
   Room<RoomMeta, SessionMeta, ClientMeta>
 >((roomId) => {
-  mkdirSync(DB_PATH, { recursive: true });
+  mkdirSync(basePath, { recursive: true });
   const storage = new BunSQLiteDriver(getSqlitePath(roomId));
   const room = new Room<RoomMeta, SessionMeta, ClientMeta>(roomId, {
     storage,
@@ -53,8 +66,8 @@ const instances = new DefaultMap<
 });
 
 function getSqlitePath(roomId: string): string {
-  const resolved = resolve(DB_PATH, `${encodeURIComponent(roomId)}.db`);
-  if (!resolved.startsWith(resolve(DB_PATH) + "/")) {
+  const resolved = resolve(basePath, `${encodeURIComponent(roomId)}.db`);
+  if (!resolved.startsWith(resolve(basePath) + "/")) {
     throw new Error("Invalid room ID");
   }
   return resolved;
@@ -83,8 +96,8 @@ export async function exists(roomId: string): Promise<boolean> {
  */
 export function getAll(): string[] {
   try {
-    mkdirSync(DB_PATH, { recursive: true });
-    const files = readdirSync(DB_PATH);
+    mkdirSync(basePath, { recursive: true });
+    const files = readdirSync(basePath);
     const roomIds = files
       .filter((file) => file.endsWith(".db"))
       .map((file) => decodeURIComponent(file.replace(/\.db$/, "")));
@@ -127,5 +140,20 @@ export async function remove(roomId: string): Promise<void> {
     await Bun.file(path).unlink(); // Delete the file
   } catch (error) {
     // File might not exist, ignore
+  }
+}
+
+/**
+ * Unload all room instances and, if in ephemeral mode, remove the temp
+ * directory.
+ */
+export function cleanup(): void {
+  for (const room of instances.values()) {
+    room.unload();
+  }
+  instances.clear();
+
+  if (isEphemeral) {
+    rmSync(basePath, { recursive: true, force: true });
   }
 }

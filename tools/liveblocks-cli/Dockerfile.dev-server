@@ -1,4 +1,4 @@
-# Dev server image — extends liveblocks/cli with CMD ["dev"]
+# Dev server image — extends liveblocks/cli with CMD ["dev", "--ci"]
 ARG CLI_TAG
 FROM ghcr.io/liveblocks/cli:${CLI_TAG}
-CMD ["dev"]
+CMD ["dev", "--ci"]

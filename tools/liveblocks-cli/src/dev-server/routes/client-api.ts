@@ -24,6 +24,7 @@ export const zen = new ZenRouter({
   cors: {
     allowCredentials: true,
     maxAge: 600,
+    exposeHeaders: ["X-LB-Warn"],
   },
   authorize: ({ req }) => {
     const header = req.headers.get("Authorization");
@@ -81,6 +82,21 @@ zen.route("GET /v2/c/inbox-notifications", () => {
 
 zen.route("GET /v2/c/inbox-notifications/count", () => {
   return DUMMY({ count: 0 });
+});
+
+zen.route("GET /v2/c/inbox-notifications/delta", () => {
+  return DUMMY({
+    inboxNotifications: [],
+    threads: [],
+    subscriptions: [],
+    groups: [],
+    deletedInboxNotifications: [],
+    deletedThreads: [],
+    deletedSubscriptions: [],
+    meta: {
+      requestedAt: new Date().toISOString(),
+    },
+  });
 });
 
 // TODO: Verify the authenticated user's permission for this room before
@@ -159,7 +175,6 @@ zen.route("POST /v2/c/rooms/<roomId>/text-metadata", () => {
   zen.route("GET /v2/c/rooms/<roomId>/subscription-settings", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/notification-settings", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/rooms/<roomId>/subscription-settings", () => NOT_IMPLEMENTED());
-  zen.route("GET /v2/c/inbox-notifications/delta", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/c/inbox-notifications", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/c/inbox-notifications/read", () => NOT_IMPLEMENTED());
   zen.route("DELETE /v2/c/inbox-notifications/<inboxNotificationId>", () => NOT_IMPLEMENTED());

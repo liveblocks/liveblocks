@@ -60,15 +60,13 @@ const upgrade: SubCommand = {
     if (args.help) {
       console.log("Usage: liveblocks upgrade [version]");
       console.log();
-      console.log(
-        "Upgrade all @liveblocks/* packages in your project to the same version."
-      );
+      console.log("Upgrade all @liveblocks/* packages in your project to the same version."); // prettier-ignore
       console.log();
       console.log("Arguments:");
       console.log('  version      Target version or tag (default: "latest")');
       console.log();
       console.log("Options:");
-      console.log("  -h, --help   Show this help message");
+      console.log("  --help, -h   Show this help message");
       return;
     }
 
