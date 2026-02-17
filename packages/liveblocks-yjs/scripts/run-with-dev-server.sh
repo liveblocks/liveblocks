@@ -8,7 +8,7 @@ fi
 PORT="$2"
 
 # Start dev server in the background, suppress output
-npx --yes liveblocks dev --no-check --ephemeral --port "$PORT" >/dev/null 2>&1 &
+npx --yes liveblocks dev --ci --port "$PORT" >/dev/null 2>&1 &
 DEV_SERVER_PID=$!
 
 cleanup() {

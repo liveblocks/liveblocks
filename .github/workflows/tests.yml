@@ -37,7 +37,7 @@ jobs:
     # Run the Liveblocks dev server on port 1154 for all tests
     services:
       liveblocks:
-        image: ghcr.io/liveblocks/dev-server:latest
+        image: ghcr.io/liveblocks/dev-server:main
         ports:
           - 1154:1153
 
