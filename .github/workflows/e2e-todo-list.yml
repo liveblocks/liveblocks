@@ -11,7 +11,7 @@ jobs:
 
     services:
       liveblocks:
-        image: ghcr.io/liveblocks/dev-server:sha-7fc2281
+        image: ghcr.io/liveblocks/dev-server:latest
         ports:
           - 1153:1153
 
