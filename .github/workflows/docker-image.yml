@@ -141,6 +141,6 @@ jobs:
         if: inputs.scan && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-${{ inputs.image }}
+          name: sbom-${{ steps.meta.outputs.version }}
           path: sbom.cdx.json
           retention-days: 90
