@@ -48,6 +48,16 @@ jobs:
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
 
+      - name: Verify dev server is reachable from host
+        working-directory: .
+        run: |
+          curl -sf http://localhost:1153/health || {
+            echo "ERROR: Dev server is not reachable at http://localhost:1153"
+            echo "The server may have bound to localhost instead of 0.0.0.0 inside the container."
+            exit 1
+          }
+          echo "Dev server is reachable."
+
       - name: Build
         run: npm run build
 
