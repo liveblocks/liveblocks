@@ -29,7 +29,7 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test": "./scripts/run-with-dev-server.sh --port 1154",
     "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "tsd",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
@@ -45,7 +45,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
     "@testing-library/dom": "^10.4.0",
-    "msw": "^2.10.4",
+
     "zustand": "^5.0.1"
   },
   "sideEffects": false,
