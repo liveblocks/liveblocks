@@ -484,8 +484,8 @@
     "date": "2026-02-06"
   },
   {
-    "title": "End-to-end testing a Liveblocks app with Playwright",
-    "path": "/end-to-end-testing-with-playwright",
+    "title": "How to set up End-to-End (E2E) testing with Playwright",
+    "path": "/how-to-set-up-end-to-end-e2e-testing-with-playwright",
     "topics": ["tutorials", "testing"],
     "technologies": ["nextjs", "react"],
     "date": "2026-02-17"
