@@ -11,12 +11,12 @@ on:
       - "packages/liveblocks-server/**"
       - ".github/workflows/publish-docker-images.yml"
       - ".github/workflows/docker-image.yml"
-  # pull_request:
-  #   paths:
-  #     - "tools/liveblocks-cli/**"
-  #     - "packages/liveblocks-server/**"
-  #     - ".github/workflows/publish-docker-images.yml"
-  #     - ".github/workflows/docker-image.yml"
+  pull_request:
+    paths:
+      - "tools/liveblocks-cli/**"
+      - "packages/liveblocks-server/**"
+      - ".github/workflows/publish-docker-images.yml"
+      - ".github/workflows/docker-image.yml"
   workflow_dispatch:
     inputs:
       version:
