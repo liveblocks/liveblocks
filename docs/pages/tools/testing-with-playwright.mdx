@@ -22,7 +22,6 @@ as a reference, but a similar approach works with any Liveblocks project.
 - A Liveblocks app that uses `@liveblocks/react` (or any other Liveblocks
   client package)
 - Node.js 18+
-- [Bun](https://bun.sh) (used by the Liveblocks dev server)
 
 ## Overview
 
@@ -94,7 +93,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: [
-    // Locally, start the Liveblocks dev server via bunx.
+    // Locally, start the Liveblocks dev server via npx.
     // In CI it runs as a Docker service container instead.
     ...(process.env.CI
       ? []
@@ -151,7 +150,7 @@ function roomId(testInfo: { workerIndex: number; title: string }) {
 }
 
 test("should add a todo", async ({ page }, testInfo) => {
-  await page.goto(`/?exampleId=${roomId(testInfo)}`);
+  await page.goto(`/?roomId=${roomId(testInfo)}`);
   const input = page.getByPlaceholder("What needs to be done?");
   await expect(input).toBeVisible();
 
@@ -175,8 +174,8 @@ test("should sync a new todo to a second client", async ({ page }, testInfo) => 
   const room = roomId(testInfo);
   const page2 = await page.context().newPage();
 
-  await page.goto(`/?exampleId=${room}`);
-  await page2.goto(`/?exampleId=${room}`);
+  await page.goto(`/?roomId=${room}`);
+  await page2.goto(`/?roomId=${room}`);
 
   const input1 = page.getByPlaceholder("What needs to be done?");
   await expect(input1).toBeVisible();
@@ -209,8 +208,8 @@ test("should show typing indicator to other user", async (
   const room = roomId(testInfo);
   const page2 = await page.context().newPage();
 
-  await page.goto(`/?exampleId=${room}`);
-  await page2.goto(`/?exampleId=${room}`);
+  await page.goto(`/?roomId=${room}`);
+  await page2.goto(`/?roomId=${room}`);
 
   const input1 = page.getByPlaceholder("What needs to be done?");
   await expect(input1).toBeVisible();
@@ -242,7 +241,7 @@ app, run all tests, then shut everything down.
 
 In CI environments like GitHub Actions, use the
 [Liveblocks dev server Docker image](https://github.com/liveblocks/liveblocks/pkgs/container/dev-server)
-as a service container instead of starting it via `bunx`:
+as a service container instead of starting it via `npx`:
 
 ```yaml file=".github/workflows/e2e.yml"
 name: E2E Tests
@@ -326,4 +325,4 @@ workflow built using this guide. You can use it as a starting point:
   [Playwright trace](https://playwright.dev/docs/trace-viewer) on the first
   retry, which is invaluable for debugging.
 - **`reuseExistingServer`** — During local development, keep the dev server
-  running separately (`bunx liveblocks dev`) for faster test iteration.
+  running separately (`npx liveblocks dev`) for faster test iteration.
