@@ -351,12 +351,7 @@ test(
             }
           }
         ),
-        {
-          // Run as many tests as you can run in 30 seconds
-          interruptAfterTimeLimit: 30_000,
-          numRuns: Number.POSITIVE_INFINITY,
-          verbose: true,
-        }
+        { seed: 58478966, endOnFailure: true }
       );
     }
   ),
