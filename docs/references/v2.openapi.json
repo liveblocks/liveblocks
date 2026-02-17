@@ -8597,7 +8597,7 @@
               "name": {
                 "type": "string",
                 "minLength": 1,
-                "description": "Required name for the user (must be a non-empty string)"
+                "description": "Optional name for the user or agent"
               },
               "avatar": {
                 "type": "string",
@@ -8608,7 +8608,7 @@
                 "description": "Optional color for the user"
               }
             },
-            "required": ["name"],
+            "required": [],
             "description": "Metadata about the user or agent"
           },
           "ttl": {
