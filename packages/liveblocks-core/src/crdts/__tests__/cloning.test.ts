@@ -67,7 +67,7 @@ describe("cloning LiveStructures", () => {
   // overhead when LIVEBLOCKS_ENGINE=wasm. Each iteration serializes reverse ops
   // through the wasm-bindgen boundary; for deeply nested randomly-generated
   // structures this adds ~4-5x overhead vs pure JS.
-  const PROPERTY_TIMEOUT = 15_000;
+  const PROPERTY_TIMEOUT = 30_000;
 
   test(
     "[property] deep cloning of LiveStructures",
