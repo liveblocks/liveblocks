@@ -23,6 +23,11 @@ on:
       is_release:
         required: true
         type: string
+      version:
+        required: false
+        type: string
+        default: ""
+        description: "Explicit version for tagging (e.g. 1.0.6). Used when triggered externally without a git tag."
       scan:
         required: false
         type: boolean
@@ -64,15 +69,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute major.minor version
+        id: version-parts
+        if: inputs.version != ''
+        run: |
+          VERSION="${{ inputs.version }}"
+          MAJOR_MINOR="${VERSION%.*}"
+          echo "major_minor=${MAJOR_MINOR}" >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ inputs.image }}
           tags: |
-            type=semver,pattern={{version}},enable=${{ inputs.is_release }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.is_release }}
-            type=raw,value=latest,enable=${{ inputs.is_release }}
+            type=semver,pattern={{version}},enable=${{ inputs.is_release == 'true' && inputs.version == '' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.is_release == 'true' && inputs.version == '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+            type=raw,value=${{ steps.version-parts.outputs.major_minor }},enable=${{ inputs.version != '' }}
+            type=raw,value=latest,enable=${{ inputs.is_release == 'true' }}
             type=ref,event=branch
             type=ref,event=pr
             type=sha

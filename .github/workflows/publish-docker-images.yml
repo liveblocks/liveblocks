@@ -18,6 +18,11 @@ on:
   #     - ".github/workflows/publish-docker-images.yml"
   #     - ".github/workflows/docker-image.yml"
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: false
+        description: "CLI package version to build Docker images for (e.g. 1.0.6). When provided, images are tagged as a release."
 
 jobs:
   version:
@@ -30,7 +35,12 @@ jobs:
       - name: Extract version
         id: v
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+          if [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
@@ -49,6 +59,7 @@ jobs:
     with:
       image: liveblocks/cli
       is_release: ${{ needs.version.outputs.is_release }}
+      version: ${{ needs.version.outputs.is_release == 'true' && needs.version.outputs.version || '' }}
       scan: true
       build-args: |
         CLI_VERSION=${{ needs.version.outputs.version }}
@@ -61,6 +72,7 @@ jobs:
       image: liveblocks/dev-server
       dockerfile: Dockerfile.dev-server
       is_release: ${{ needs.version.outputs.is_release }}
+      version: ${{ needs.version.outputs.is_release == 'true' && needs.version.outputs.version || '' }}
       scan: true
       build-args: |
         CLI_TAG=${{ needs.version.outputs.cli_tag }}
