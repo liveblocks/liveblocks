@@ -28,6 +28,8 @@ export interface CrdtDocumentShadow {
   applyOps(ops: readonly Op[], source: "local" | "ours" | "theirs"): void;
   /** Fast diff: compute ops to reconcile THIS shadow's state against a new snapshot. */
   diffAgainstSnapshot(newItems: IdTuple<SerializedCrdt>[]): Op[];
+  /** Set the connection ID so WASM-generated ops use the correct actor prefix. */
+  setConnectionId(id: number): void;
   /** Free WASM memory. */
   free(): void;
 }
@@ -297,6 +299,9 @@ function createWasmEngine(_module: unknown): CrdtEngine {
         diffAgainstSnapshot(newItems: IdTuple<SerializedCrdt>[]): Op[] {
           return handle.getTreesDiffOperations(newItems) as Op[];
         },
+        setConnectionId(id: number): void {
+          handle.setConnectionId(id);
+        },
         free(): void {
           handle.free();
         },
@@ -320,6 +325,7 @@ interface WasmDocumentHandle {
   initFromItems(items: unknown): void;
   applyOp(op: unknown, source: string): unknown;
   applyOps(ops: unknown, source: string): unknown;
+  setConnectionId(id: number): void;
   serialize(): unknown;
   toPlainLson(): unknown;
   free(): void;

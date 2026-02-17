@@ -99,6 +99,17 @@ pub fn is_ignored_op(op: &Op) -> bool {
     op.op_code == OpCode::DeleteCrdt && op.id == "ACK"
 }
 
+/// Result of a mutation operation on a handle.
+/// Contains forward ops (to send to server), reverse ops (for undo),
+/// and the storage update notification.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MutationResult {
+    pub ops: Vec<Op>,
+    pub reverse_ops: Vec<Op>,
+    pub update: crate::updates::StorageUpdate,
+}
+
 /// Result of applying an operation to a CRDT node.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ApplyResult {

@@ -4,6 +4,24 @@ use crate::document::Document;
 use crate::position;
 use crate::types::{Json, Op, OpCode};
 
+/// Information returned by `push_with_id`.
+pub struct PushInfo {
+    /// The fractional position assigned to the new item.
+    pub position: String,
+}
+
+/// Information returned by `insert_with_id`.
+pub struct InsertInfo {
+    /// The fractional position assigned to the new item.
+    pub position: String,
+}
+
+/// Information returned by `set_with_id`.
+pub struct SetInfo {
+    /// The fractional position of the replaced item.
+    pub position: String,
+}
+
 /// Get the number of items in a LiveList.
 pub fn length(doc: &Document, key: NodeKey) -> usize {
     let Some(node) = doc.get_node(key) else {
@@ -99,6 +117,39 @@ pub fn push_child(doc: &mut Document, key: NodeKey, child_key: NodeKey) {
     }
 }
 
+/// Push a plain JSON value to the end of a LiveList, using a specific register ID.
+/// Returns the computed fractional position for op construction.
+pub fn push_with_id(
+    doc: &mut Document,
+    key: NodeKey,
+    value: Json,
+    reg_id: &str,
+) -> PushInfo {
+    let last_pos = get_last_pos(doc, key);
+    let new_pos = match last_pos {
+        Some(pos) => position::after(&pos),
+        None => position::make_position(None, None),
+    };
+
+    let node_id = doc
+        .get_node(key)
+        .map(|n| n.id.clone())
+        .unwrap_or_default();
+    let mut reg_node = CrdtNode::new_register(reg_id.to_string(), value);
+    reg_node.parent_id = Some(node_id);
+    reg_node.parent_key = Some(new_pos.clone());
+
+    let reg_key = doc.insert_node(reg_node);
+
+    if let Some(node) = doc.get_node_mut(key)
+        && let CrdtData::List { children, .. } = &mut node.data
+    {
+        children.push((new_pos.clone(), reg_key));
+    }
+
+    PushInfo { position: new_pos }
+}
+
 /// Insert a plain JSON value at a given index in a LiveList.
 pub fn insert(doc: &mut Document, key: NodeKey, index: usize, value: Json) {
     let Some(node) = doc.get_node(key) else {
@@ -124,6 +175,94 @@ pub fn insert(doc: &mut Document, key: NodeKey, index: usize, value: Json) {
     {
         children.insert(index, (new_pos, reg_key));
     }
+}
+
+/// Insert a plain JSON value at a given index, using a specific register ID.
+/// Returns the computed fractional position for op construction.
+pub fn insert_with_id(
+    doc: &mut Document,
+    key: NodeKey,
+    index: usize,
+    value: Json,
+    reg_id: &str,
+) -> InsertInfo {
+    let (before_pos, after_pos) = get_neighbor_positions(doc, key, index);
+    let new_pos = position::make_position(before_pos.as_deref(), after_pos.as_deref());
+
+    let node_id = doc
+        .get_node(key)
+        .map(|n| n.id.clone())
+        .unwrap_or_default();
+    let mut reg_node = CrdtNode::new_register(reg_id.to_string(), value);
+    reg_node.parent_id = Some(node_id);
+    reg_node.parent_key = Some(new_pos.clone());
+
+    let reg_key = doc.insert_node(reg_node);
+
+    if let Some(node) = doc.get_node_mut(key)
+        && let CrdtData::List { children, .. } = &mut node.data
+    {
+        children.insert(index, (new_pos.clone(), reg_key));
+    }
+
+    InsertInfo { position: new_pos }
+}
+
+/// Replace the value at a given index using a specific register ID.
+/// Caller must capture old child info BEFORE calling this (the old child
+/// is removed from the arena).
+pub fn set_with_id(
+    doc: &mut Document,
+    key: NodeKey,
+    index: usize,
+    value: Json,
+    new_reg_id: &str,
+) -> SetInfo {
+    let (pos, old_child_key) = {
+        let Some(node) = doc.get_node(key) else {
+            return SetInfo {
+                position: String::new(),
+            };
+        };
+        match &node.data {
+            CrdtData::List { children, .. } => {
+                if index >= children.len() {
+                    return SetInfo {
+                        position: String::new(),
+                    };
+                }
+                (children[index].0.clone(), children[index].1)
+            }
+            _ => {
+                return SetInfo {
+                    position: String::new(),
+                }
+            }
+        }
+    };
+
+    // Remove old child
+    doc.remove_node(old_child_key);
+
+    // Create new register at same position
+    let node_id = doc
+        .get_node(key)
+        .map(|n| n.id.clone())
+        .unwrap_or_default();
+    let mut reg_node = CrdtNode::new_register(new_reg_id.to_string(), value);
+    reg_node.parent_id = Some(node_id);
+    reg_node.parent_key = Some(pos.clone());
+
+    let new_child_key = doc.insert_node(reg_node);
+
+    if let Some(node) = doc.get_node_mut(key)
+        && let CrdtData::List { children, .. } = &mut node.data
+        && index < children.len()
+    {
+        children[index] = (pos.clone(), new_child_key);
+    }
+
+    SetInfo { position: pos }
 }
 
 /// Delete the item at a given index from a LiveList.

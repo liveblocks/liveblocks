@@ -80,6 +80,43 @@ pub fn set(doc: &mut Document, key: NodeKey, map_key: &str, value: Json) {
     }
 }
 
+/// Set a plain JSON value at a key in a LiveMap, using a specific register ID.
+/// Like `set`, but the caller provides the register node ID
+/// (a wire-format ID from `IdGenerator`).
+pub fn set_with_id(
+    doc: &mut Document,
+    key: NodeKey,
+    map_key: &str,
+    value: Json,
+    reg_id: &str,
+) {
+    let Some(node) = doc.get_node(key) else {
+        return;
+    };
+    if !matches!(&node.data, CrdtData::Map { .. }) {
+        return;
+    }
+
+    // Remove old child if any
+    remove_child_at_key(doc, key, map_key);
+
+    let node_id = doc
+        .get_node(key)
+        .map(|n| n.id.clone())
+        .unwrap_or_default();
+    let mut reg_node = CrdtNode::new_register(reg_id.to_string(), value);
+    reg_node.parent_id = Some(node_id);
+    reg_node.parent_key = Some(map_key.to_string());
+
+    let reg_key = doc.insert_node(reg_node);
+
+    if let Some(node) = doc.get_node_mut(key)
+        && let CrdtData::Map { children, .. } = &mut node.data
+    {
+        children.insert(map_key.to_string(), reg_key);
+    }
+}
+
 /// Set a child CRDT node at a key in a LiveMap.
 pub fn set_child(doc: &mut Document, key: NodeKey, map_key: &str, child_key: NodeKey) {
     let Some(node) = doc.get_node(key) else {

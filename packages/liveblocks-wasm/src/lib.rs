@@ -2,6 +2,7 @@ pub mod arena;
 pub mod crdt;
 pub mod document;
 pub mod handles;
+pub mod id_gen;
 pub mod ops;
 pub mod pool;
 pub mod position;

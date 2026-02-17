@@ -8,11 +8,16 @@ use crate::types::Json;
 pub enum UpdateDelta {
     /// A property/key was set to a new value.
     Set {
+        #[serde(rename = "oldValue")]
         old_value: Option<Json>,
+        #[serde(rename = "newValue")]
         new_value: Json,
     },
     /// A property/key was deleted.
-    Delete { old_value: Json },
+    Delete {
+        #[serde(rename = "oldValue")]
+        old_value: Json,
+    },
 }
 
 /// Entry in a LiveList update notification.
@@ -21,15 +26,20 @@ pub enum UpdateDelta {
 pub enum ListUpdateEntry {
     Set {
         index: usize,
+        #[serde(rename = "oldValue")]
         old_value: Option<Json>,
+        #[serde(rename = "newValue")]
         new_value: Json,
     },
     Delete {
         index: usize,
+        #[serde(rename = "oldValue")]
         old_value: Json,
     },
     Move {
+        #[serde(rename = "previousIndex")]
         previous_index: usize,
+        #[serde(rename = "newIndex")]
         new_index: usize,
         value: Json,
     },
@@ -44,14 +54,17 @@ pub enum ListUpdateEntry {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum StorageUpdate {
     LiveObjectUpdate {
+        #[serde(rename = "nodeId")]
         node_id: String,
         updates: std::collections::HashMap<String, UpdateDelta>,
     },
     LiveListUpdate {
+        #[serde(rename = "nodeId")]
         node_id: String,
         updates: Vec<ListUpdateEntry>,
     },
     LiveMapUpdate {
+        #[serde(rename = "nodeId")]
         node_id: String,
         updates: std::collections::HashMap<String, UpdateDelta>,
     },

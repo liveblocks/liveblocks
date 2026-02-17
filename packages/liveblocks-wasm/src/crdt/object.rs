@@ -60,6 +60,34 @@ pub fn set_plain(doc: &mut Document, key: NodeKey, prop: &str, value: Json) {
     }
 }
 
+/// Set a plain JSON value on a LiveObject property using a specific register ID.
+/// Like `set_plain`, but the caller provides the register node ID
+/// (a wire-format ID from `IdGenerator`).
+pub fn set_plain_with_id(
+    doc: &mut Document,
+    key: NodeKey,
+    prop: &str,
+    value: Json,
+    reg_id: &str,
+) {
+    let mut reg_node = crate::crdt::node::CrdtNode::new_register(reg_id.to_string(), value);
+
+    let parent_id = doc.get_node(key).map(|n| n.id.clone());
+    reg_node.parent_id = parent_id;
+    reg_node.parent_key = Some(prop.to_string());
+
+    // Remove old child if any
+    remove_child_at_key(doc, key, prop);
+
+    let reg_key = doc.insert_node(reg_node);
+
+    if let Some(node) = doc.get_node_mut(key)
+        && let CrdtData::Object { children, .. } = &mut node.data
+    {
+        children.insert(prop.to_string(), reg_key);
+    }
+}
+
 /// Set a child CRDT node at a property on a LiveObject.
 pub fn set_child(doc: &mut Document, key: NodeKey, prop: &str, child_key: NodeKey) {
     // Set parent info on the child

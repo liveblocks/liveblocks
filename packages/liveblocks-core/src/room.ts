@@ -1736,6 +1736,10 @@ export function createRoom<
       try {
         const items = Array.from(nodes.entries()) as IdTuple<SerializedCrdt>[];
         context.wasmShadow?.initFromItems(items);
+        const actorId = context.dynamicSessionInfoSig.get()?.actor;
+        if (actorId !== undefined) {
+          context.wasmShadow?.setConnectionId(actorId);
+        }
       } catch {
         context.wasmShadow?.free();
         context.wasmShadow = null;
@@ -2139,6 +2143,7 @@ export function createRoom<
       meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
+    context.wasmShadow?.setConnectionId(message.actor);
     notifySelfChanged();
 
     // Inject brand badge if meta.showBrand is true

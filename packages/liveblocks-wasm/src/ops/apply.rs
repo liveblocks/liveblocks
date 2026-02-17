@@ -576,7 +576,7 @@ fn build_reverse_for_map_key(
 }
 
 /// Generate CREATE_* ops to recreate a node and its subtree.
-fn generate_create_ops_for_subtree(doc: &Document, node_key: NodeKey) -> Vec<Op> {
+pub fn generate_create_ops_for_subtree(doc: &Document, node_key: NodeKey) -> Vec<Op> {
     let node = match doc.get_node(node_key) {
         Some(n) => n,
         None => return vec![],

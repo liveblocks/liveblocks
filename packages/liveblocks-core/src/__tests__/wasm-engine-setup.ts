@@ -88,6 +88,9 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
           diffAgainstSnapshot(newItems: IdTuple<SerializedCrdt>[]): Op[] {
             return handle.getTreesDiffOperations(newItems) as Op[];
           },
+          setConnectionId(id: number) {
+            handle.setConnectionId(id);
+          },
           free() {
             handle.free();
           },
@@ -118,6 +121,7 @@ interface WasmDocumentHandle {
   initFromItems(items: unknown): void;
   applyOp(op: unknown, source: string): unknown;
   applyOps(ops: unknown, source: string): unknown;
+  setConnectionId(id: number): void;
   serialize(): unknown;
   toPlainLson(): unknown;
   free(): void;
