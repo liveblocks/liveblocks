@@ -222,10 +222,9 @@ export class Session {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body:
-          this.#localDev
-            ? "Could not connect to your Liveblocks dev server. Is it running?"
-            : 'Call to /v2/authorize-user failed. See "error" for more information.',
+        body: this.#localDev
+          ? "Could not connect to your Liveblocks dev server. Is it running?"
+          : 'Call to /v2/authorize-user failed. See "error" for more information.',
         error: er as Error | undefined,
       };
     }

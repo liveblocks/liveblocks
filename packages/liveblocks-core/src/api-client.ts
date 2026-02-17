@@ -18,6 +18,7 @@ import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
+import * as console from "./lib/fancy-console";
 import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { Signal } from "./lib/signals";
@@ -2068,7 +2069,7 @@ class HttpClient {
     }
 
     const url = urljoin(this.#baseUrl, endpoint, params);
-    return await this.#fetchPolyfill(url, {
+    const response = await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -2082,6 +2083,20 @@ class HttpClient {
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
+
+    // Surface dev-server warnings to the developer
+    const xwarn = response.headers.get("X-LB-Warn");
+    if (xwarn) {
+      const method = options?.method?.toUpperCase() ?? "GET";
+      const msg = `${xwarn} (${method} ${endpoint})`;
+      if (response.ok) {
+        console.warn(msg);
+      } else {
+        console.error(msg);
+      }
+    }
+
+    return response;
   }
 
   /**
