@@ -29,7 +29,8 @@
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test": "./scripts/run-with-dev-server.sh --port 1154",
+    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
@@ -45,8 +46,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/vitest-config": "*",
-    "@testing-library/jest-dom": "^6.4.6",
-    "msw": "^2.7.3"
+    "@testing-library/jest-dom": "^6.4.6"
   },
   "sideEffects": false,
   "bugs": {
