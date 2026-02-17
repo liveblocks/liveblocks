@@ -100,7 +100,7 @@ export default defineConfig({
       ? []
       : [
           {
-            command: `bunx liveblocks dev --port ${LIVEBLOCKS_PORT}`,
+            command: `npx liveblocks dev --ephemeral --no-check --port ${LIVEBLOCKS_PORT}`,
             port: LIVEBLOCKS_PORT,
             reuseExistingServer: true,
           },
