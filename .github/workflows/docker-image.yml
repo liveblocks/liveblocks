@@ -23,11 +23,11 @@ on:
       is_release:
         required: true
         type: string
-      version:
-        required: false
+        description: "'true' for release builds (tag push or workflow_dispatch with version), 'false' otherwise. Controls whether latest tag and version tags are applied."
+      release_version:
+        required: true
         type: string
-        default: ""
-        description: "Explicit version for tagging (e.g. 1.0.6). Used when triggered externally without a git tag."
+        description: "Explicit semver for tagging (e.g. 1.0.6, without v prefix). Non-empty only for workflow_dispatch triggers where there is no git tag for type=semver to derive from. Pass empty string for tag-push and non-release builds."
       scan:
         required: false
         type: boolean
@@ -71,22 +71,41 @@ jobs:
 
       - name: Compute major.minor version
         id: version-parts
-        if: inputs.version != ''
+        if: inputs.release_version != ''
         run: |
-          VERSION="${{ inputs.version }}"
+          VERSION="${{ inputs.release_version }}"
           MAJOR_MINOR="${VERSION%.*}"
           echo "major_minor=${MAJOR_MINOR}" >> "$GITHUB_OUTPUT"
 
+      # Tags applied per trigger type:
+      #
+      # Tag push (e.g. v1.0.6):
+      #   - 1.0.6, 1.0, latest  (from type=semver + type=raw)
+      #   - main                 (from type=ref,event=branch)
+      #   - sha-abc1234          (from type=sha)
+      #
+      # workflow_dispatch with release_version=1.0.6:
+      #   - 1.0.6, 1.0, latest  (from type=raw with explicit version)
+      #   - main                 (from type=ref,event=branch)
+      #   - sha-abc1234          (from type=sha)
+      #
+      # Branch push (non-release):
+      #   - main                 (from type=ref,event=branch)
+      #   - sha-abc1234          (from type=sha)
+      #
+      # Pull request:
+      #   - pr-123               (from type=ref,event=pr)
+      #   - sha-abc1234          (from type=sha)
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ inputs.image }}
           tags: |
-            type=semver,pattern={{version}},enable=${{ inputs.is_release == 'true' && inputs.version == '' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.is_release == 'true' && inputs.version == '' }}
-            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
-            type=raw,value=${{ steps.version-parts.outputs.major_minor }},enable=${{ inputs.version != '' }}
+            type=semver,pattern={{version}},enable=${{ inputs.is_release == 'true' && inputs.release_version == '' }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ inputs.is_release == 'true' && inputs.release_version == '' }}
+            type=raw,value=${{ inputs.release_version }},enable=${{ inputs.release_version != '' }}
+            type=raw,value=${{ steps.version-parts.outputs.major_minor }},enable=${{ inputs.release_version != '' }}
             type=raw,value=latest,enable=${{ inputs.is_release == 'true' }}
             type=ref,event=branch
             type=ref,event=pr
