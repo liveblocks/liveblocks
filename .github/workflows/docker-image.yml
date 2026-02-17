@@ -137,10 +137,19 @@ jobs:
             --type cyclonedx \
             "ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}"
 
+      - name: Compute SBOM artifact name
+        if: inputs.scan && github.event_name != 'pull_request'
+        id: sbom-name
+        run: |
+          SAFE_NAME="${IMAGE_NAME//\//-}"
+          echo "artifact=sbom-${SAFE_NAME}" >> "$GITHUB_OUTPUT"
+        env:
+          IMAGE_NAME: ${{ inputs.image }}
+
       - name: Upload SBOM artifact
         if: inputs.scan && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: sbom-${{ steps.build.outputs.imageid }}
+          name: ${{ steps.sbom-name.outputs.artifact }}
           path: sbom.cdx.json
           retention-days: 90
