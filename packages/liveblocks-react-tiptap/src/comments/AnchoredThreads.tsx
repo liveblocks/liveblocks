@@ -216,7 +216,10 @@ export function AnchoredThreads({
           Math.min(position.from, editor.state.doc.content.size - 1)
         );
         const rect = getRectFromCoords(coords);
-        const offset = editor.options.element?.getBoundingClientRect().top ?? 0;
+        let offset = 0;
+        if (editor.options.element instanceof HTMLElement) {
+          offset = editor.options.element.getBoundingClientRect().top;
+        }
 
         let top = rect.top - offset;
 

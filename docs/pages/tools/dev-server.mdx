@@ -1,0 +1,282 @@
+---
+meta:
+  title: "Dev server"
+  parentTitle: "Tools"
+  description:
+    "Run a local Liveblocks dev server for multiplayer development and testing
+    without hitting production."
+---
+
+The Liveblocks dev server is a local server that lets you develop and test
+multiplayer features without connecting to Liveblocks production servers. It is
+built on our open-source
+[`@liveblocks/server`](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-server)
+package internally.
+
+## Features
+
+The dev server fully supports all
+[Multiplayer](/docs/ready-made-features/multiplayer) features, and partially
+supports other APIs. [Learn more](#Partially-supported-features).
+
+| Feature                                                                                                                            | Support |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage) (LiveObject, Presence, Broadcast, etc.) | ✅      |
+| [Liveblocks Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs)                                                 | ✅      |
+| [Text editors](/docs/ready-made-features/multiplayer/text-editor) (Tiptap, BlockNote, Lexical)                                     | ✅ ¹    |
+| [Public key authentication](/docs/api-reference/liveblocks-react#LiveblocksProviderPublicKey)                                      | ✅      |
+| [Access token authentication](/docs/authentication/access-token)                                                                   | ✅      |
+| [ID token authentication](/docs/authentication)                                                                                    | ❌      |
+| [Room Node.js methods](/docs/api-reference/liveblocks-node#Room)                                                                   | ⚠️ ²    |
+| [Room REST APIs](/docs/api-reference/rest-api-endpoints#Room)                                                                      | ⚠️ ²    |
+| [Comments](/docs/ready-made-features/comments)                                                                                     | ❌ ³    |
+| [Notifications](/docs/ready-made-features/notifications)                                                                           | ❌ ³    |
+| [AI Agents](/docs/ready-made-features/ai-agents)                                                                                   | ❌      |
+| Other APIs                                                                                                                         | ❌      |
+
+¹ <small>_Excluding features related to Comments and Notifications._</small>  
+² <small>_Basic room APIs are partially supported, but room permissions and
+metadata are not fully implemented yet._</small>  
+³ <small>_Basic APIs will return dummy data, so you can still use the Liveblocks
+dev server to test other features in your app._</small>
+
+## Set up the dev server
+
+The development server currently only supports connecting with
+[public key](/docs/api-reference/liveblocks-client#createClientPublicKey) or
+[access token](/docs/authentication/access-token) authentication. ID token
+authentication will be supported in future.
+
+<Steps>
+
+  <Step>
+    <StepTitle>Install Bun</StepTitle>
+    <StepContent>
+
+      The Liveblocks dev server requires [Bun](https://bun.sh/) to be installed.
+
+      ```bash
+      npm install -g bun
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Run the dev server</StepTitle>
+    <StepContent>
+
+      Start the dev server from your project directory—it runs on [`http://localhost:1153`](http://localhost:1153).
+
+      ```bash
+      npx liveblocks dev
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Connect to the dev server</StepTitle>
+    <StepContent>
+      Point your client and auth endpoint to the dev server. The easiest way to
+      do this is run the dev server and press `p`. It copies a prompt you can 
+      paste into your AI code editor, which will intelligently make the changes
+      for you.
+
+      If you don’t use the prompt, you can manually add `baseUrl` and change
+      your `secret` key:
+
+      ```tsx
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      function App() {
+        return (
+          <LiveblocksProvider
+            // +++
+            baseUrl="http://localhost:1153"
+            // +++
+            authEndpoint="/api/liveblocks-auth"
+          >
+            {/* Your app */}
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+      ```ts
+      import { Liveblocks } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({
+        // +++
+        baseUrl: "http://localhost:1153",
+        secret: "sk_localdev",
+        // +++
+      });
+      ```
+
+      ```tsx isCollapsable isCollapsed title="Alternate snippet for public key"
+      // Only edit this file for public key
+      import { LiveblocksProvider } from "@liveblocks/react";
+
+      function App() {
+        return (
+          <LiveblocksProvider
+            // +++
+            baseUrl="http://localhost:1153"
+            publicApiKey="pk_localdev"
+            // +++
+          >
+            {/* Your app */}
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Complete</StepTitle>
+    <StepContent>
+
+      You're all set up, open your app and start building collaborative features
+      using the local dev server, or [set up CI testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing)
+      with your application.
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Partially supported features
+
+A number of unsupported features are partially implemented so you can run your
+app without seeing errors. For example, `useThreads` is not supported yet, but
+it will always return an empty array so you can still view your application.
+
+```tsx title="React"
+// ✅ Fully supported
+const others = useOthers();
+const shapes = useStorage((root) => root.shapes);
+
+// ⚠️ Returns dummy data such as empty arrays
+const { threads } = useThreads();
+const { inboxNotifications } = useInboxNotifications();
+
+// ⚠️ Nothing happens when calling unsupported functions
+const createNewThread = useCreateThread();
+createNewThread({ body: {}, attachments: [] });
+```
+
+```ts title="Node.js"
+// ✅ Fully supported
+const storage = await liveblocks.getStorageDocument("my-room-id");
+await liveblocks.broadcastEvent("my-room-id", { type: "REFRESH" });
+
+// ⚠️ Room APIs are supported but permissions and metadata are ignored
+await liveblocks.createRoom("my-new-room-id", {
+  defaultAccesses: ["room:write"],
+  metadata: { title: "My title" },
+});
+// { metadata: {}, defaultAccesses: [], ... }
+await liveblocks.getRoom("my-new-room-id");
+
+// ⚠️ Returns dummy data such as empty arrays
+const { data: threads } = await liveblocks.getThreads({
+  roomId: "my-room-id",
+});
+
+// ⚠️ Nothing happens when calling unsupported functions
+await liveblocks.createThread({
+  roomId: "my-room-id",
+  body: {},
+});
+```
+
+In future, we plan to support more features in the dev server.
+
+## REST API
+
+The REST API supports the same set of features as the Node.js package. To use
+it, point your requests to the dev server URL and use `sk_localdev` as the
+secret key.
+
+```bash
+curl http://localhost:1153/v2/* \
+  -H 'Authorization: Bearer sk_localdev'
+```
+
+## Continuous Integration (CI) testing
+
+You can use the dev server in CI environments by setting up a test environment
+file and running the dev server as a service container. Learn more in our guide
+on
+[how to set up Continuous Integration (CI) testing](/docs/guides/how-to-set-up-continuous-integration-ci-testing).
+
+## Docker
+
+You can run the dev server as a Docker container, which is useful for CI
+environments where you may not have Bun installed.
+
+```bash
+docker run -p 1153:1153 ghcr.io/liveblocks/cli dev
+```
+
+To persist data between container restarts, mount a volume:
+
+```bash
+docker run -p 1153:1153 -v liveblocks-data:/app/.liveblocks ghcr.io/liveblocks/cli dev
+```
+
+## Source code
+
+The source code is available in our
+[GitHub repository](https://github.com/liveblocks/liveblocks/tree/main/tools/liveblocks-cli).
+
+## Examples
+
+The following examples fully support the dev server.
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Collaborative To-do List",
+      slug: "collaborative-todo-list/nextjs-todo-list",
+      image: "/images/examples/thumbnails/collaborative-todo-list.jpg",
+    }}
+    technologies={["nextjs", "vuejs", "sveltekit", "solidjs", "javascript"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Live Avatar Stack",
+      slug: "live-avatar-stack/nextjs-live-avatars",
+      image: "/images/examples/thumbnails/live-avatar-stack.jpg",
+    }}
+    technologies={["nextjs", "nuxtjs", "vuejs", "sveltekit", "solidjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Spreadsheet",
+      slug: "collaborative-spreadsheet-advanced/nextjs-spreadsheet-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-spreadsheet-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced/nextjs-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+
+</ListGrid>

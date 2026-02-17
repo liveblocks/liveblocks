@@ -21,3 +21,4 @@ export type {
   IStorageDriver,
   IStorageDriverNodeAPI,
 } from "./IStorageDriver";
+export type { LeasedSession } from "~/types";
