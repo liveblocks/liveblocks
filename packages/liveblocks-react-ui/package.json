@@ -70,7 +70,7 @@
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test": "./scripts/run-with-dev-server.sh --port 1154",
     "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
@@ -114,7 +114,7 @@
     "@testing-library/react": "^13.1.1",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "msw": "^2.10.4",
+
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",
