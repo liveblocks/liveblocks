@@ -1,7 +1,6 @@
 ---
 meta:
   title: "End-to-end testing a Liveblocks app with Playwright"
-  parentTitle: "Tools"
   description:
     "Learn how to write end-to-end tests for your Liveblocks application using
     Playwright and the local dev server."
@@ -19,8 +18,8 @@ as a reference, but a similar approach works with any Liveblocks project.
 
 ## Prerequisites
 
-- A Liveblocks app that uses `@liveblocks/react` (or any other Liveblocks
-  client package)
+- A Liveblocks app that uses `@liveblocks/react` (or any other Liveblocks client
+  package)
 - Node.js 18+
 
 ## Overview
@@ -170,7 +169,9 @@ Playwright makes this straightforward — open a second page in the same browser
 context and point it at the same room:
 
 ```ts file="test/todo.spec.ts"
-test("should sync a new todo to a second client", async ({ page }, testInfo) => {
+test("should sync a new todo to a second client", async ({
+  page,
+}, testInfo) => {
   const room = roomId(testInfo);
   const page2 = await page.context().newPage();
 
@@ -179,9 +180,7 @@ test("should sync a new todo to a second client", async ({ page }, testInfo) => 
 
   const input1 = page.getByPlaceholder("What needs to be done?");
   await expect(input1).toBeVisible();
-  await expect(
-    page2.getByPlaceholder("What needs to be done?")
-  ).toBeVisible();
+  await expect(page2.getByPlaceholder("What needs to be done?")).toBeVisible();
 
   // Add a todo on page 1
   await input1.fill("Synced todo");
@@ -201,10 +200,9 @@ test("should sync a new todo to a second client", async ({ page }, testInfo) => 
 You can also verify presence features like typing indicators:
 
 ```ts file="test/todo.spec.ts"
-test("should show typing indicator to other user", async (
-  { page },
-  testInfo
-) => {
+test("should show typing indicator to other user", async ({
+  page,
+}, testInfo) => {
   const room = roomId(testInfo);
   const page2 = await page.context().newPage();
 
@@ -213,9 +211,7 @@ test("should show typing indicator to other user", async (
 
   const input1 = page.getByPlaceholder("What needs to be done?");
   await expect(input1).toBeVisible();
-  await expect(
-    page2.getByPlaceholder("What needs to be done?")
-  ).toBeVisible();
+  await expect(page2.getByPlaceholder("What needs to be done?")).toBeVisible();
 
   // Type on page 1 — page 2 should see the typing indicator
   await input1.fill("Hello");
