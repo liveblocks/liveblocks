@@ -12,7 +12,9 @@ export default defineConfig({
   },
   webServer: [
     // Locally, start the liveblocks dev server via bunx.
-    // In CI it runs as a Docker service container instead.
+    // In CI it runs as a Docker service container instead
+    // (see .github/workflows/e2e-todo-list.yml), or you can keep this
+    // entry and let Playwright start `bunx liveblocks dev` in CI too.
     ...(process.env.CI
       ? []
       : [

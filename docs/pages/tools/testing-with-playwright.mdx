@@ -305,6 +305,20 @@ Key points:
 - **Artifact upload** — On failure, the Playwright HTML report is uploaded so
   you can debug test failures.
 
+## Complete example
+
+The
+[Next.js Todo List example](https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-todo-list)
+in the Liveblocks repository includes a full Playwright test suite and a CI
+workflow built using this guide. You can use it as a starting point:
+
+- [Test file (`test/todo.spec.ts`)](https://github.com/liveblocks/liveblocks/blob/main/examples/nextjs-todo-list/test/todo.spec.ts)
+  — 11 tests covering CRUD, toggle, multi-client sync, and typing indicators
+- [Playwright config (`playwright.config.ts`)](https://github.com/liveblocks/liveblocks/blob/main/examples/nextjs-todo-list/playwright.config.ts)
+  — local dev server + Next.js web server setup
+- [CI workflow (`.github/workflows/e2e-todo-list.yml`)](https://github.com/liveblocks/liveblocks/blob/main/.github/workflows/e2e-todo-list.yml)
+  — GitHub Actions pipeline using the dev server Docker image
+
 ## Tips
 
 - **Unique room IDs per test** — The dev server persists storage to disk, so
