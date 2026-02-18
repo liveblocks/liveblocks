@@ -327,15 +327,10 @@ pub fn move_item(doc: &mut Document, key: NodeKey, from_index: usize, to_index: 
         children.remove(from_index);
     }
 
-    // Calculate the effective target index (after removal)
-    let effective_target = if from_index < to_index {
-        to_index - 1
-    } else {
-        to_index
-    };
-
-    // Compute new position
-    let (before_pos, after_pos) = get_neighbor_positions(doc, key, effective_target + 1);
+    // Compute new position based on target index in the remaining list.
+    // After removing the item, the target slot in the original list maps
+    // to index `to_index` in the remaining list regardless of direction.
+    let (before_pos, after_pos) = get_neighbor_positions(doc, key, to_index);
     let new_pos = if before_pos.is_none() && after_pos.is_none() {
         // List is now empty (shouldn't happen since we just removed one item
         // and are re-inserting it), but handle gracefully
@@ -513,7 +508,7 @@ pub fn to_ops(doc: &Document, key: NodeKey, parent_id: &str, parent_key: &str) -
 
             for (pos, child_key) in children {
                 if let Some(child) = doc.get_node(*child_key) {
-                    let child_ops = match &child.data {
+                    let mut child_ops = match &child.data {
                         CrdtData::Register { .. } => {
                             crate::crdt::register::to_ops(doc, *child_key, &node.id, pos)
                         }
@@ -525,6 +520,11 @@ pub fn to_ops(doc: &Document, key: NodeKey, parent_id: &str, parent_key: &str) -
                             crate::crdt::map::to_ops(doc, *child_key, &node.id, pos)
                         }
                     };
+                    // Match the JS HACK_addIntentAndDeletedIdToOperation:
+                    // each child's first op gets intent: "set".
+                    if let Some(first) = child_ops.first_mut() {
+                        first.intent = Some("set".to_string());
+                    }
                     ops.extend(child_ops);
                 }
             }

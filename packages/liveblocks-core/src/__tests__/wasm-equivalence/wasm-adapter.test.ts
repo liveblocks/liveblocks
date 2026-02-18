@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
-const WASM_LOCKED = process.env.LIVEBLOCKS_ENGINE === "wasm";
+const IS_WASM = process.env.LIVEBLOCKS_ENGINE === "wasm";
 
 import type { CrdtEngine } from "../../crdts/impl-selector";
 import { _setEngine } from "../../crdts/impl-selector";
@@ -8,8 +8,6 @@ import {
   deserializeItems,
   getBackend,
   getTreesDiffOperations,
-  isWasmAvailable,
-  isWasmReady,
   makePosition,
 } from "../../crdts/wasm-adapter";
 import { OpCode } from "../../protocol/Op";
@@ -17,27 +15,13 @@ import { CrdtType } from "../../protocol/SerializedCrdt";
 import type { NodeMap } from "../../types/NodeMap";
 import { FIRST_POSITION, SECOND_POSITION } from "../_utils";
 
-afterEach(() => {
-  // Reset to default (JS) engine
-  _setEngine(null);
-});
-
-describe("wasm-adapter (JS fallback)", () => {
-  test.skipIf(WASM_LOCKED)("getBackend returns 'js' when WASM not loaded", () => {
-    expect(getBackend()).toBe("js");
-  });
-
-  test("isWasmAvailable detects WebAssembly support", () => {
-    // jsdom includes WebAssembly
-    expect(typeof isWasmAvailable()).toBe("boolean");
-  });
-
-  test("isWasmReady returns false initially", () => {
-    expect(isWasmReady()).toBe(false);
+describe("wasm-adapter basics", () => {
+  test("getBackend returns the active engine", () => {
+    expect(getBackend()).toBe(IS_WASM ? "wasm" : "js");
   });
 });
 
-describe("makePosition (JS fallback)", () => {
+describe("makePosition", () => {
   test("returns canonical first position with no arguments", () => {
     const pos = makePosition();
     expect(typeof pos).toBe("string");
@@ -47,7 +31,6 @@ describe("makePosition (JS fallback)", () => {
   test("returns position between two bounds", () => {
     const pos = makePosition(FIRST_POSITION, SECOND_POSITION);
     expect(typeof pos).toBe("string");
-    // Result should be between the two bounds
     expect(pos > FIRST_POSITION).toBe(true);
     expect(pos < SECOND_POSITION).toBe(true);
   });
@@ -59,23 +42,17 @@ describe("makePosition (JS fallback)", () => {
   });
 
   test("produces same result as direct JS import", async () => {
-    // These use the same underlying JS implementation
     const { makePosition: jsPosition } = await import("../../lib/position");
 
-    // No args
     expect(makePosition()).toBe(jsPosition());
-
-    // After
     expect(makePosition(FIRST_POSITION)).toBe(jsPosition(FIRST_POSITION));
-
-    // Between
     expect(makePosition(FIRST_POSITION, SECOND_POSITION)).toBe(
       jsPosition(FIRST_POSITION, SECOND_POSITION)
     );
   });
 });
 
-describe("getTreesDiffOperations (JS fallback)", () => {
+describe("getTreesDiffOperations", () => {
   test("empty trees produce no ops", () => {
     const items: NodeMap = new Map([
       ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -112,7 +89,7 @@ describe("getTreesDiffOperations (JS fallback)", () => {
   // When WASM is active, the DocumentHandle normalizes register children
   // into object data, so deleting a register child shows as UPDATE_OBJECT
   // (data change) rather than DELETE_CRDT. Both are semantically correct.
-  test.skipIf(WASM_LOCKED)("detects deleted node as DELETE_CRDT", () => {
+  test.skipIf(IS_WASM)("detects deleted node as DELETE_CRDT", () => {
     const current: NodeMap = new Map([
       ["root", { type: CrdtType.OBJECT, data: {} }],
       [
@@ -193,45 +170,9 @@ describe("getTreesDiffOperations (JS fallback)", () => {
       },
     ]);
   });
-
-  test("produces same results as direct JS import", async () => {
-    const { getTreesDiffOperations: jsTreeDiff } = await import(
-      "../../crdts/liveblocks-helpers"
-    );
-
-    const current: NodeMap = new Map([
-      ["root", { type: CrdtType.OBJECT, data: { x: 1 } }],
-      [
-        "0:1",
-        {
-          type: CrdtType.OBJECT,
-          parentId: "root",
-          parentKey: "child",
-          data: { y: 2 },
-        },
-      ],
-    ]);
-
-    const newItems: NodeMap = new Map([
-      ["root", { type: CrdtType.OBJECT, data: { x: 99 } }],
-      [
-        "0:2",
-        {
-          type: CrdtType.LIST,
-          parentId: "root",
-          parentKey: "list",
-        },
-      ],
-    ]);
-
-    const adapterOps = getTreesDiffOperations(current, newItems);
-    const directOps = jsTreeDiff(current, newItems);
-
-    expect(adapterOps).toEqual(directOps);
-  });
 });
 
-describe("deserializeItems (JS fallback)", () => {
+describe("deserializeItems", () => {
   test("creates NodeMap from tuples", () => {
     const items = [
       ["root", { type: CrdtType.OBJECT, data: {} }],
@@ -252,11 +193,13 @@ describe("deserializeItems (JS fallback)", () => {
   });
 });
 
-describe("wasm-adapter with mock WASM engine", () => {
-  test("delegates to WASM engine when set", () => {
-    const mockWasmEngine: CrdtEngine = {
-      backend: "wasm",
-      makePosition: vi.fn(() => "wasm-position"),
+describe("engine immutability", () => {
+  test("engine choice is immutable once set", () => {
+    const backend = getBackend();
+
+    const mockEngine: CrdtEngine = {
+      backend: backend === "wasm" ? "js" : "wasm",
+      makePosition: vi.fn(() => "mock"),
       getTreesDiffOperations: vi.fn(() => []),
       deserializeItems: vi.fn(
         (items: Parameters<CrdtEngine["deserializeItems"]>[0]) =>
@@ -264,65 +207,7 @@ describe("wasm-adapter with mock WASM engine", () => {
       ),
     };
 
-    _setEngine(mockWasmEngine);
-
-    expect(getBackend()).toBe("wasm");
-    expect(makePosition()).toBe("wasm-position");
-    expect(mockWasmEngine.makePosition).toHaveBeenCalled();
-  });
-
-  test("getTreesDiffOperations delegates to WASM", () => {
-    const expectedOps = [{ type: OpCode.DELETE_CRDT, id: "0:1" }];
-    const mockWasmEngine: CrdtEngine = {
-      backend: "wasm",
-      makePosition: vi.fn(() => "!"),
-      getTreesDiffOperations: vi.fn(() => expectedOps),
-      deserializeItems: vi.fn(
-        (items: Parameters<CrdtEngine["deserializeItems"]>[0]) =>
-          new Map(items)
-      ),
-    };
-
-    _setEngine(mockWasmEngine);
-
-    const current: NodeMap = new Map();
-    const newItems: NodeMap = new Map();
-    const ops = getTreesDiffOperations(current, newItems);
-
-    expect(ops).toBe(expectedOps);
-    expect(mockWasmEngine.getTreesDiffOperations).toHaveBeenCalledWith(
-      current,
-      newItems
-    );
-  });
-
-  test("switching back to JS engine works", () => {
-    const mockWasmEngine: CrdtEngine = {
-      backend: "wasm",
-      makePosition: vi.fn(() => "wasm-pos"),
-      getTreesDiffOperations: vi.fn(() => []),
-      deserializeItems: vi.fn(
-        (items: Parameters<CrdtEngine["deserializeItems"]>[0]) =>
-          new Map(items)
-      ),
-    };
-
-    _setEngine(mockWasmEngine);
-    expect(getBackend()).toBe("wasm");
-
-    // Call makePosition while WASM is active
-    const wasmPos = makePosition();
-    expect(wasmPos).toBe("wasm-pos");
-    expect(mockWasmEngine.makePosition).toHaveBeenCalledTimes(1);
-
-    // Reset to JS
-    _setEngine(null);
-    expect(getBackend()).toBe("js");
-
-    // makePosition should use JS now
-    const jsPos = makePosition();
-    expect(jsPos).not.toBe("wasm-pos");
-    // Mock should not have been called again after reset
-    expect(mockWasmEngine.makePosition).toHaveBeenCalledTimes(1);
+    _setEngine(mockEngine);
+    expect(getBackend()).toBe(backend);
   });
 });

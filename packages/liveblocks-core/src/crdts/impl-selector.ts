@@ -1,14 +1,12 @@
 /**
  * Implementation selector for CRDT operations.
  *
- * Detects WebAssembly availability and provides a unified interface
- * that delegates to either the WASM or pure JS implementation.
+ * The engine choice is binary and explicit:
+ * - Default: JS engine (no configuration needed)
+ * - WASM: call `_setEngine(wasmEngine)` at startup — it works or it fails
  *
- * IMPORTANT: `initWasm()` MUST be awaited at application startup before
- * any CRDT operations are used. The engine choice (WASM or JS) is made
- * once when initialization settles, and is permanent for the lifetime
- * of the process. There is no background loading — the caller must
- * explicitly await initialization.
+ * Once set, the engine is immutable for the lifetime of the process.
+ * There is no fallback, no auto-detection, and no graceful degradation.
  */
 
 import type { Op } from "../protocol/Op";
@@ -30,6 +28,27 @@ export interface CrdtDocumentShadow {
   diffAgainstSnapshot(newItems: IdTuple<SerializedCrdt>[]): Op[];
   /** Set the connection ID so WASM-generated ops use the correct actor prefix. */
   setConnectionId(id: number): void;
+
+  // -- Mutation delegation --
+  objectUpdate(nodeId: string, data: unknown): unknown;
+  objectDelete(nodeId: string, key: string): unknown;
+  listPush(nodeId: string, value: unknown): unknown;
+  listInsert(nodeId: string, value: unknown, index: number): unknown;
+  listMove(nodeId: string, from: number, to: number): unknown;
+  listDelete(nodeId: string, index: number): unknown;
+  listSet(nodeId: string, index: number, value: unknown): unknown;
+  listClear(nodeId: string): unknown;
+  mapSet(nodeId: string, key: string, value: unknown): unknown;
+  mapDelete(nodeId: string, key: string): unknown;
+
+  // -- ID generation (WASM-owned) --
+  generateId(): string;
+  generateOpId(): string;
+
+  // -- Clock seeding (one-time init at handoff) --
+  setNodeClock(value: number): void;
+  setOpClock(value: number): void;
+
   /** Free WASM memory. */
   free(): void;
 }
@@ -103,143 +122,103 @@ export interface CrdtEngine {
   createDocumentShadow?(): CrdtDocumentShadow;
 
   /** Create a room storage engine for undo/redo, batch, unacked ops. */
-  createStorageEngine?(): RoomStorageEngineJS;
+  createStorageEngine?(): RoomStorageEngineJS | undefined;
 }
 
-let wasmModule: unknown = null;
-let wasmInitPromise: Promise<boolean> | null = null;
-/** True once initWasm() has resolved (regardless of success/failure). */
-let initSettled = false;
-/** Cached engine, set only after init has settled (or via _setEngine). */
+/**
+ * The selected engine. Once set, immutable for the lifetime of the process.
+ */
 let selectedEngine: CrdtEngine | null = null;
-/** When true, _setEngine(null) and _resetForTesting() preserve the engine. */
-let engineLocked = false;
-
-/**
- * Check if WebAssembly is available in the current environment.
- */
-export function isWasmAvailable(): boolean {
-  return (
-    typeof WebAssembly === "object" &&
-    typeof WebAssembly.instantiate === "function"
-  );
-}
-
-/**
- * Initialize the WASM module. MUST be awaited at application startup
- * before any CRDT operations are used.
- *
- * Returns true if WASM was loaded successfully, false if falling back to JS.
- * Safe to call multiple times — subsequent calls return the cached result.
- *
- * After this resolves, all subsequent calls to `getEngine()` will return
- * the chosen engine (WASM or JS) permanently.
- */
-export async function initWasm(): Promise<boolean> {
-  if (wasmInitPromise !== null) {
-    return wasmInitPromise;
-  }
-
-  wasmInitPromise = (async () => {
-    if (!isWasmAvailable()) {
-      initSettled = true;
-      return false;
-    }
-
-    try {
-      // Dynamic import of the WASM package.
-      // Use a variable to prevent bundlers from statically resolving this.
-      const wasmPkg = "liveblocks-wasm";
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      wasmModule = await import(/* @vite-ignore */ wasmPkg);
-      initSettled = true;
-      return true;
-    } catch {
-      // WASM module not available — fall back to JS
-      wasmModule = null;
-      initSettled = true;
-      return false;
-    }
-  })();
-
-  return wasmInitPromise;
-}
-
-/**
- * Check if the WASM module is initialized and ready.
- */
-export function isWasmReady(): boolean {
-  return wasmModule !== null;
-}
 
 /**
  * Get the active CRDT engine.
  *
- * If `initWasm()` has settled, the engine choice is locked in permanently
- * (WASM if loaded, JS otherwise). If init has NOT settled yet, returns
- * the JS engine temporarily without caching — so that once init completes,
- * the correct engine will be picked on the next call.
+ * Returns the engine set via `_setEngine()`, or the provided JS engine
+ * if no engine was explicitly set. The first call locks in the choice
+ * permanently.
  *
  * The JS engine is provided by the caller (the wasm-adapter module)
  * to avoid circular dependencies.
  */
 export function getEngine(jsEngine: CrdtEngine): CrdtEngine {
-  // If explicitly set (via _setEngine), always use that.
   if (selectedEngine !== null) {
     return selectedEngine;
   }
 
-  // If init hasn't settled, return JS without caching.
-  // This avoids permanently locking in JS when WASM is still loading.
-  if (!initSettled) {
-    return jsEngine;
-  }
-
-  // Init has settled — lock in the engine choice permanently.
-  if (wasmModule !== null) {
-    selectedEngine = createWasmEngine(wasmModule);
-  } else {
-    selectedEngine = jsEngine;
-  }
+  // No engine was explicitly set — lock in JS.
+  selectedEngine = jsEngine;
   return selectedEngine;
 }
 
 /**
- * Force the engine to use a specific backend (for testing).
- * When `lock` is true, subsequent calls with null and _resetForTesting()
- * will preserve the engine — use this for global test setup (e.g., WASM mode).
+ * Set the engine. Once set to a non-null value, the engine is
+ * immutable — subsequent calls are ignored.
  * @internal
  */
-export function _setEngine(engine: CrdtEngine | null, lock = false): void {
-  if (engine === null && engineLocked) {
-    // Locked engine cannot be cleared — silently ignore
+export function _setEngine(engine: CrdtEngine | null): void {
+  if (selectedEngine !== null) {
     return;
   }
   selectedEngine = engine;
-  engineLocked = engine !== null && lock;
 }
 
 /**
- * Reset ALL internal state (for testing only).
- * Clears the cached engine, init promise, init settled flag, and WASM module.
- * If the engine is locked, it is preserved.
- * @internal
+ * Opaque type for the WASM DocumentHandle — actual type is from wasm-bindgen.
  */
-export function _resetForTesting(): void {
-  wasmModule = null;
-  wasmInitPromise = null;
-  initSettled = false;
-  if (!engineLocked) {
-    selectedEngine = null;
-  }
+interface WasmDocumentHandle {
+  getTreesDiffOperations(newItems: unknown): unknown;
+  initFromItems(items: unknown): void;
+  applyOp(op: unknown, source: string): unknown;
+  applyOps(ops: unknown, source: string): unknown;
+  setConnectionId(id: number): void;
+  serialize(): unknown;
+  toPlainLson(): unknown;
+
+  // Handle lookup by node ID
+  getObjectById(id: string): WasmLiveObjectHandle | undefined;
+  getListById(id: string): WasmLiveListHandle | undefined;
+  getMapById(id: string): WasmLiveMapHandle | undefined;
+
+  // ID generation
+  generateId(): string;
+  generateOpId(): string;
+
+  // Clock access
+  readonly nodeClock: number;
+  readonly opClock: number;
+  setNodeClock(value: number): void;
+  setOpClock(value: number): void;
+
+  free(): void;
+}
+
+interface WasmLiveObjectHandle {
+  update(data: unknown): unknown;
+  delete(key: string): unknown;
+  free(): void;
+}
+
+interface WasmLiveListHandle {
+  push(v: unknown): unknown;
+  insert(v: unknown, i: number): unknown;
+  move(f: number, t: number): unknown;
+  delete(i: number): unknown;
+  set(i: number, v: unknown): unknown;
+  clear(): unknown;
+  free(): void;
+}
+
+interface WasmLiveMapHandle {
+  set(k: string, v: unknown): unknown;
+  delete(k: string): unknown;
+  free(): void;
 }
 
 /**
- * Create a WASM-backed engine from the loaded module.
+ * Create a WASM-backed engine from a loaded WASM module.
+ * Called by the test setup or production initialization code.
  */
-function createWasmEngine(_module: unknown): CrdtEngine {
-  // The WASM module exports are typed loosely here.
-  // In a full integration, we'd import the generated wasm-bindgen types.
+export function createWasmEngine(_module: unknown): CrdtEngine {
   const mod = _module as {
     makePosition: (before?: string, after?: string) => string;
     DocumentHandle: {
@@ -262,11 +241,9 @@ function createWasmEngine(_module: unknown): CrdtEngine {
       currentItems: NodeMap,
       newItems: NodeMap
     ): Op[] {
-      // Convert NodeMap (Map<string, SerializedCrdt>) to array of tuples
       const currentTuples = Array.from(currentItems.entries());
       const newTuples = Array.from(newItems.entries());
 
-      // Create a WASM document from current items and compute diff
       const doc = mod.DocumentHandle.fromItems(currentTuples);
       try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -279,13 +256,30 @@ function createWasmEngine(_module: unknown): CrdtEngine {
     deserializeItems(
       items: IdTuple<SerializedCrdt>[]
     ): NodeMap {
-      // For now, WASM deserialization returns a NodeMap-compatible structure.
-      // The actual tree is managed inside the WASM document.
       return new Map(items);
     },
 
     createDocumentShadow(): CrdtDocumentShadow {
       const handle: WasmDocumentHandle = new mod.DocumentHandle();
+
+      function withObjectHandle<T>(nodeId: string, fn: (h: WasmLiveObjectHandle) => T): T {
+        const obj = handle.getObjectById(nodeId);
+        if (!obj) throw new Error(`LiveObject node ${nodeId} not found`);
+        try { return fn(obj); } finally { obj.free(); }
+      }
+
+      function withListHandle<T>(nodeId: string, fn: (h: WasmLiveListHandle) => T): T {
+        const list = handle.getListById(nodeId);
+        if (!list) throw new Error(`LiveList node ${nodeId} not found`);
+        try { return fn(list); } finally { list.free(); }
+      }
+
+      function withMapHandle<T>(nodeId: string, fn: (h: WasmLiveMapHandle) => T): T {
+        const map = handle.getMapById(nodeId);
+        if (!map) throw new Error(`LiveMap node ${nodeId} not found`);
+        try { return fn(map); } finally { map.free(); }
+      }
+
       return {
         initFromItems(items: IdTuple<SerializedCrdt>[]): void {
           handle.initFromItems(items);
@@ -302,6 +296,55 @@ function createWasmEngine(_module: unknown): CrdtEngine {
         setConnectionId(id: number): void {
           handle.setConnectionId(id);
         },
+
+        // -- Mutation delegation --
+        objectUpdate(nodeId: string, data: unknown): unknown {
+          return withObjectHandle(nodeId, (h) => h.update(data));
+        },
+        objectDelete(nodeId: string, key: string): unknown {
+          return withObjectHandle(nodeId, (h) => h.delete(key));
+        },
+        listPush(nodeId: string, value: unknown): unknown {
+          return withListHandle(nodeId, (h) => h.push(value));
+        },
+        listInsert(nodeId: string, value: unknown, index: number): unknown {
+          return withListHandle(nodeId, (h) => h.insert(value, index));
+        },
+        listMove(nodeId: string, from: number, to: number): unknown {
+          return withListHandle(nodeId, (h) => h.move(from, to));
+        },
+        listDelete(nodeId: string, index: number): unknown {
+          return withListHandle(nodeId, (h) => h.delete(index));
+        },
+        listSet(nodeId: string, index: number, value: unknown): unknown {
+          return withListHandle(nodeId, (h) => h.set(index, value));
+        },
+        listClear(nodeId: string): unknown {
+          return withListHandle(nodeId, (h) => h.clear());
+        },
+        mapSet(nodeId: string, key: string, value: unknown): unknown {
+          return withMapHandle(nodeId, (h) => h.set(key, value));
+        },
+        mapDelete(nodeId: string, key: string): unknown {
+          return withMapHandle(nodeId, (h) => h.delete(key));
+        },
+
+        // -- ID generation --
+        generateId(): string {
+          return handle.generateId();
+        },
+        generateOpId(): string {
+          return handle.generateOpId();
+        },
+
+        // -- Clock seeding --
+        setNodeClock(value: number): void {
+          handle.setNodeClock(value);
+        },
+        setOpClock(value: number): void {
+          handle.setOpClock(value);
+        },
+
         free(): void {
           handle.free();
         },
@@ -315,18 +358,4 @@ function createWasmEngine(_module: unknown): CrdtEngine {
       return undefined;
     },
   };
-}
-
-/**
- * Opaque type for the WASM DocumentHandle — actual type is from wasm-bindgen.
- */
-interface WasmDocumentHandle {
-  getTreesDiffOperations(newItems: unknown): unknown;
-  initFromItems(items: unknown): void;
-  applyOp(op: unknown, source: string): unknown;
-  applyOps(ops: unknown, source: string): unknown;
-  setConnectionId(id: number): void;
-  serialize(): unknown;
-  toPlainLson(): unknown;
-  free(): void;
 }

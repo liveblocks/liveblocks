@@ -75,6 +75,25 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
 
       createDocumentShadow() {
         const handle = new wasmPkg.DocumentHandle();
+
+        function withObjectHandle<T>(nodeId: string, fn: (h: WasmLiveObjectHandle) => T): T {
+          const obj = handle.getObjectById(nodeId);
+          if (!obj) throw new Error(`LiveObject node ${nodeId} not found`);
+          try { return fn(obj); } finally { obj.free(); }
+        }
+
+        function withListHandle<T>(nodeId: string, fn: (h: WasmLiveListHandle) => T): T {
+          const list = handle.getListById(nodeId);
+          if (!list) throw new Error(`LiveList node ${nodeId} not found`);
+          try { return fn(list); } finally { list.free(); }
+        }
+
+        function withMapHandle<T>(nodeId: string, fn: (h: WasmLiveMapHandle) => T): T {
+          const map = handle.getMapById(nodeId);
+          if (!map) throw new Error(`LiveMap node ${nodeId} not found`);
+          try { return fn(map); } finally { map.free(); }
+        }
+
         return {
           initFromItems(items: IdTuple<SerializedCrdt>[]) {
             handle.initFromItems(items);
@@ -91,6 +110,45 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
           setConnectionId(id: number) {
             handle.setConnectionId(id);
           },
+
+          // Mutation delegation
+          objectUpdate(nodeId: string, data: unknown) {
+            return withObjectHandle(nodeId, (h) => h.update(data));
+          },
+          objectDelete(nodeId: string, key: string) {
+            return withObjectHandle(nodeId, (h) => h.delete(key));
+          },
+          listPush(nodeId: string, value: unknown) {
+            return withListHandle(nodeId, (h) => h.push(value));
+          },
+          listInsert(nodeId: string, value: unknown, index: number) {
+            return withListHandle(nodeId, (h) => h.insert(value, index));
+          },
+          listMove(nodeId: string, from: number, to: number) {
+            return withListHandle(nodeId, (h) => h.move(from, to));
+          },
+          listDelete(nodeId: string, index: number) {
+            return withListHandle(nodeId, (h) => h.delete(index));
+          },
+          listSet(nodeId: string, index: number, value: unknown) {
+            return withListHandle(nodeId, (h) => h.set(index, value));
+          },
+          listClear(nodeId: string) {
+            return withListHandle(nodeId, (h) => h.clear());
+          },
+          mapSet(nodeId: string, key: string, value: unknown) {
+            return withMapHandle(nodeId, (h) => h.set(key, value));
+          },
+          mapDelete(nodeId: string, key: string) {
+            return withMapHandle(nodeId, (h) => h.delete(key));
+          },
+
+          // ID generation
+          generateId() { return handle.generateId(); },
+          generateOpId() { return handle.generateOpId(); },
+          setNodeClock(value: number) { handle.setNodeClock(value); },
+          setOpClock(value: number) { handle.setOpClock(value); },
+
           free() {
             handle.free();
           },
@@ -102,7 +160,7 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
       },
     };
 
-    _setEngine(wasmEngine, /* lock */ true);
+    _setEngine(wasmEngine);
     console.log(
       "[wasm-engine-setup] WASM engine loaded and locked as active engine"
     );
@@ -124,5 +182,41 @@ interface WasmDocumentHandle {
   setConnectionId(id: number): void;
   serialize(): unknown;
   toPlainLson(): unknown;
+
+  // Handle lookup
+  getObjectById(id: string): WasmLiveObjectHandle | undefined;
+  getListById(id: string): WasmLiveListHandle | undefined;
+  getMapById(id: string): WasmLiveMapHandle | undefined;
+
+  // ID generation
+  generateId(): string;
+  generateOpId(): string;
+  readonly nodeClock: number;
+  readonly opClock: number;
+  setNodeClock(value: number): void;
+  setOpClock(value: number): void;
+
+  free(): void;
+}
+
+interface WasmLiveObjectHandle {
+  update(data: unknown): unknown;
+  delete(key: string): unknown;
+  free(): void;
+}
+
+interface WasmLiveListHandle {
+  push(v: unknown): unknown;
+  insert(v: unknown, i: number): unknown;
+  move(f: number, t: number): unknown;
+  delete(i: number): unknown;
+  set(i: number, v: unknown): unknown;
+  clear(): unknown;
+  free(): void;
+}
+
+interface WasmLiveMapHandle {
+  set(k: string, v: unknown): unknown;
+  delete(k: string): unknown;
   free(): void;
 }

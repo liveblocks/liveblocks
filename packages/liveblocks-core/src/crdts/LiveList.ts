@@ -14,6 +14,7 @@ import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {
   creationOpToLiveNode,
   deserialize,
+  isLiveStructure,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
@@ -21,6 +22,11 @@ import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
 import { makePosition } from "./wasm-adapter";
+import type { WasmMutationResult } from "./wasm-mutation-adapter";
+import {
+  translateStorageUpdate,
+  attachSubtreeFromOps,
+} from "./wasm-mutation-adapter";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
@@ -870,6 +876,39 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
     }
 
+    // WASM mutation path: position and ops come from WASM
+    const shadow = this._pool?.wasmShadow;
+    if (shadow && this._pool && this._id) {
+      const wasmValue = isLiveStructure(element)
+        ? (element as AbstractCrdt)._toWasmValue()
+        : element;
+
+      const result = shadow.listInsert(
+        this._id,
+        wasmValue,
+        index
+      ) as WasmMutationResult;
+
+      // Extract position from the first CREATE op
+      const rootOp = result.ops[0] as CreateOp;
+      const position = rootOp.parentKey;
+
+      const value = lsonToLiveNode(element);
+      value._setParentLink(this, position);
+      this._insertAndSort(value);
+
+      attachSubtreeFromOps(result.ops, value, this._pool, this._id, position);
+
+      const storageUpdates = translateStorageUpdate(result.update, this._pool);
+      this._pool.dispatch(
+        result.ops as ClientWireOp[],
+        result.reverseOps,
+        storageUpdates,
+        { skipWasmSync: true }
+      );
+      return;
+    }
+
     const before = this.#items.at(index - 1)?._parentPos;
     const after = this.#items.at(index)?._parentPos;
 
@@ -917,6 +956,36 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     if (index >= this.#items.length) {
       throw new Error("index cannot be greater or equal than the list length");
+    }
+
+    // WASM mutation path: position comes from WASM
+    const shadow = this._pool?.wasmShadow;
+    if (shadow && this._pool && this._id) {
+      const item = this.#items[index];
+
+      const result = shadow.listMove(
+        this._id,
+        index,
+        targetIndex
+      ) as WasmMutationResult;
+
+      // Extract new position from the SET_PARENT_KEY op
+      const setOp = result.ops.find(
+        (op) => op.type === OpCode.SET_PARENT_KEY
+      );
+      if (setOp && setOp.type === OpCode.SET_PARENT_KEY) {
+        item._setParentLink(this, setOp.parentKey);
+        this._sortItems();
+      }
+
+      const storageUpdates = translateStorageUpdate(result.update, this._pool);
+      this._pool.dispatch(
+        result.ops as ClientWireOp[],
+        result.reverseOps,
+        storageUpdates,
+        { skipWasmSync: true }
+      );
+      return;
     }
 
     let beforePosition = null;
@@ -988,6 +1057,24 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.invalidate();
 
     if (this._pool) {
+      // WASM mutation path
+      const shadow = this._pool.wasmShadow;
+      if (shadow && this._id) {
+        const result = shadow.listDelete(
+          this._id,
+          index
+        ) as WasmMutationResult;
+
+        const storageUpdates = translateStorageUpdate(result.update, this._pool);
+        this._pool.dispatch(
+          result.ops as ClientWireOp[],
+          result.reverseOps,
+          storageUpdates,
+          { skipWasmSync: true }
+        );
+        return;
+      }
+
       const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
@@ -1014,6 +1101,27 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   clear(): void {
     this._pool?.assertStorageIsWritable();
     if (this._pool) {
+      // WASM mutation path
+      const shadow = this._pool.wasmShadow;
+      if (shadow && this._id) {
+        for (const item of this.#items) {
+          item._detach();
+        }
+        this.#items = [];
+        this.invalidate();
+
+        const result = shadow.listClear(this._id) as WasmMutationResult;
+
+        const storageUpdates = translateStorageUpdate(result.update, this._pool);
+        this._pool.dispatch(
+          result.ops as ClientWireOp[],
+          result.reverseOps,
+          storageUpdates,
+          { skipWasmSync: true }
+        );
+        return;
+      }
+
       const ops: ClientWireOp[] = [];
       const reverseOps: Op[] = [];
 
@@ -1077,6 +1185,42 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.invalidate();
 
     if (this._pool && this._id) {
+      // WASM mutation path
+      const shadow = this._pool.wasmShadow;
+      if (shadow) {
+        const wasmValue = isLiveStructure(item)
+          ? (item as AbstractCrdt)._toWasmValue()
+          : item;
+
+        const result = shadow.listSet(
+          this._id,
+          index,
+          wasmValue
+        ) as WasmMutationResult;
+
+        attachSubtreeFromOps(
+          result.ops,
+          value,
+          this._pool,
+          this._id,
+          position
+        );
+
+        const wireOps = result.ops as ClientWireOp[];
+        if (wireOps.length > 0) {
+          this.#unacknowledgedSets.set(position, wireOps[0].opId);
+        }
+
+        const storageUpdates = translateStorageUpdate(
+          result.update,
+          this._pool
+        );
+        this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
+          skipWasmSync: true,
+        });
+        return;
+      }
+
       const id = this._pool.generateId();
       value._attach(id, this._pool);
 
@@ -1248,7 +1392,26 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         : undefined
     );
 
+    const itemId = this.#items.at(index)?._id;
     this.#updateItemPositionAt(index, shiftedPosition);
+
+    // Sync the position shift to the WASM shadow so its tree stays
+    // consistent with the JS tree's shifted positions.
+    const shadow = this._pool?.wasmShadow;
+    if (shadow && itemId) {
+      try {
+        shadow.applyOp(
+          {
+            type: OpCode.SET_PARENT_KEY,
+            id: itemId,
+            parentKey: shiftedPosition,
+          },
+          "theirs"
+        );
+      } catch {
+        // Best-effort sync; ignore WASM errors for position shifts
+      }
+    }
   }
 
   /** @internal */
@@ -1280,6 +1443,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as readonly ToImmutable<TItem>[];
+  }
+
+  /** @internal */
+  override _getInternalChildren(): [string, LiveNode][] {
+    return this.#items.map((item, i) => [String(i), item]);
+  }
+
+  /** @internal */
+  _toWasmValue(): unknown {
+    return {
+      __lb_type: "LiveList",
+      __lb_data: this.#items.map((item) =>
+        item instanceof LiveRegister ? item.data : item._toWasmValue()
+      ),
+    };
   }
 
   clone(): LiveList<TItem> {

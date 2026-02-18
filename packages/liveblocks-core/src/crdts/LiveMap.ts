@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
+import type { ClientWireOp, CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { MapStorageNode, SerializedMap } from "../protocol/StorageNode";
 import { CrdtType } from "../protocol/StorageNode";
@@ -13,12 +13,18 @@ import {
   creationOpToLiveNode,
   deserialize,
   isLiveNode,
+  isLiveStructure,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
 import type { LiveNode, Lson } from "./Lson";
 import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
+import type { WasmMutationResult } from "./wasm-mutation-adapter";
+import {
+  translateStorageUpdate,
+  attachSubtreeFromOps,
+} from "./wasm-mutation-adapter";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever
@@ -268,6 +274,36 @@ export class LiveMap<
     this.invalidate();
 
     if (this._pool && this._id) {
+      // WASM mutation path
+      const shadow = this._pool.wasmShadow;
+      if (shadow) {
+        const wasmValue = isLiveStructure(value)
+          ? (value as unknown as AbstractCrdt)._toWasmValue()
+          : value;
+
+        const result = shadow.mapSet(
+          this._id,
+          key,
+          wasmValue
+        ) as WasmMutationResult;
+
+        attachSubtreeFromOps(result.ops, item, this._pool, this._id, key);
+
+        const wireOps = result.ops as ClientWireOp[];
+        if (wireOps.length > 0) {
+          this.#unacknowledgedSet.set(key, wireOps[0].opId);
+        }
+
+        const storageUpdates = translateStorageUpdate(
+          result.update,
+          this._pool
+        );
+        this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
+          skipWasmSync: true,
+        });
+        return;
+      }
+
       const id = this._pool.generateId();
       item._attach(id, this._pool);
 
@@ -325,6 +361,27 @@ export class LiveMap<
     this.invalidate();
 
     if (this._pool && item._id) {
+      // WASM mutation path
+      const shadow = this._pool.wasmShadow;
+      if (shadow && this._id) {
+        const result = shadow.mapDelete(
+          this._id,
+          key
+        ) as WasmMutationResult;
+
+        const storageUpdates = translateStorageUpdate(
+          result.update,
+          this._pool
+        );
+        this._pool.dispatch(
+          result.ops as ClientWireOp[],
+          result.reverseOps,
+          storageUpdates,
+          { skipWasmSync: true }
+        );
+        return true;
+      }
+
       const thisId = nn(this._id);
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(thisId, {
@@ -467,6 +524,22 @@ export class LiveMap<
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
     return freeze(result);
+  }
+
+  /** @internal */
+  override _getInternalChildren(): [string, LiveNode][] {
+    return Array.from(this.#map.entries());
+  }
+
+  /** @internal */
+  _toWasmValue(): unknown {
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of this.#map) {
+      data[key] = isLiveNode(value)
+        ? (value as AbstractCrdt)._toWasmValue()
+        : value;
+    }
+    return { __lb_type: "LiveMap", __lb_data: data };
   }
 
   clone(): LiveMap<TKey, TValue> {

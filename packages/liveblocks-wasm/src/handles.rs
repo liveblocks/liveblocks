@@ -9,6 +9,7 @@ use crate::crdt::node::CrdtData;
 use crate::crdt::{list, map, object};
 use crate::document::Document;
 use crate::id_gen::IdGenerator;
+use crate::lson::{create_lson_subtree, parse_lson, LsonValue};
 use crate::ops::apply;
 use crate::ops::serialize::{
     create_register_op, delete_crdt_op, delete_object_key_op, set_parent_key_op, update_object_op,
@@ -44,8 +45,15 @@ fn js_to_json(val: JsValue) -> Json {
 }
 
 /// Serialize any value to JsValue with maps-as-objects enabled.
+/// Uses `serialize_missing_as_null` so that `Json::Null` (which serde
+/// serializes via `serialize_unit`) becomes `JsValue::NULL` rather than
+/// `JsValue::UNDEFINED`.  This is critical for op data like
+/// `UPDATE_OBJECT { data: { a: null } }` — without it the JS side
+/// sees `{ data: {} }` because `undefined` properties are dropped.
 fn to_js<T: serde::Serialize>(val: &T) -> Result<JsValue, serde_wasm_bindgen::Error> {
-    let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(true)
+        .serialize_missing_as_null(true);
     val.serialize(&serializer)
 }
 
@@ -75,33 +83,28 @@ impl LiveObjectHandle {
     pub(crate) fn node_key(&self) -> NodeKey {
         self.key
     }
-}
 
-#[wasm_bindgen]
-impl LiveObjectHandle {
-    /// Get a property value by key. Returns `undefined` if missing.
-    pub fn get(&self, key: &str) -> JsValue {
-        let doc = self.doc.borrow();
-        match object::get_plain(&doc, self.key, key) {
-            Some(json) => json_to_js(json),
-            None => JsValue::UNDEFINED,
-        }
-    }
-
-    /// Set a property value.
-    /// Returns a MutationResult with forward/reverse ops and storage update.
-    pub fn set(&self, key: &str, value: JsValue) -> JsValue {
-        let value = js_to_json(value);
-
+    /// Set a plain scalar value on a property (UPDATE_OBJECT path).
+    fn set_scalar(&self, key: &str, value: Json) -> JsValue {
         // Capture pre-mutation state
-        let (node_id, old_value) = {
+        let (node_id, old_value, old_crdt_reverse) = {
             let doc = self.doc.borrow();
             let node_id = doc
                 .get_node(self.key)
                 .map(|n| n.id.clone())
                 .unwrap_or_default();
             let old_value = object::get_plain(&doc, self.key, key).cloned();
-            (node_id, old_value)
+            // Check if the old value is a real CRDT child (not a Register)
+            let old_crdt_reverse = object::get_child(&doc, self.key, key)
+                .and_then(|ck| {
+                    let node = doc.get_node(ck)?;
+                    if matches!(&node.data, CrdtData::Register { .. }) {
+                        None
+                    } else {
+                        Some(apply::generate_create_ops_for_subtree(&doc, ck))
+                    }
+                });
+            (node_id, old_value, old_crdt_reverse)
         };
 
         // Generate op_id
@@ -120,7 +123,10 @@ impl LiveObjectHandle {
         fwd_op.op_id = Some(op_id);
 
         // Reverse ops
-        let reverse_ops = if let Some(old_val) = &old_value {
+        let reverse_ops = if let Some(crdt_rev) = old_crdt_reverse {
+            // Old value was a CRDT child — reverse recreates the subtree
+            crdt_rev
+        } else if let Some(old_val) = &old_value {
             let mut rev_data = BTreeMap::new();
             rev_data.insert(key.to_string(), old_val.clone());
             vec![update_object_op(&node_id, rev_data)]
@@ -145,8 +151,93 @@ impl LiveObjectHandle {
         })
     }
 
+    /// Set a tagged LSON value on a property (CREATE_* ops path).
+    fn set_tagged(&self, key: &str, value: Json) -> JsValue {
+        // Capture pre-mutation state
+        let (node_id, old_value, old_reverse_ops) = {
+            let doc = self.doc.borrow();
+            let node_id = doc
+                .get_node(self.key)
+                .map(|n| n.id.clone())
+                .unwrap_or_default();
+            let old_value = object::get_plain(&doc, self.key, key).cloned();
+            let old_child_key = object::get_child(&doc, self.key, key);
+
+            // Distinguish real CRDT children from Register wrappers
+            let is_real_crdt = old_child_key
+                .and_then(|ck| doc.get_node(ck))
+                .is_some_and(|n| !matches!(&n.data, CrdtData::Register { .. }));
+
+            let old_reverse_ops = if is_real_crdt {
+                apply::generate_create_ops_for_subtree(&doc, old_child_key.unwrap())
+            } else if let Some(ref val) = old_value {
+                let mut rev_data = BTreeMap::new();
+                rev_data.insert(key.to_string(), val.clone());
+                vec![update_object_op(&node_id, rev_data)]
+            } else {
+                vec![delete_object_key_op(&node_id, key)]
+            };
+            (node_id, old_value, old_reverse_ops)
+        };
+
+        // Create subtree
+        let (child_key, create_ops) = {
+            let mut doc = self.doc.borrow_mut();
+            let mut id_gen = self.id_gen.borrow_mut();
+            create_lson_subtree(&mut doc, &mut id_gen, &node_id, key, &value)
+        };
+
+        // Attach child to parent object, removing old child if any
+        {
+            let mut doc = self.doc.borrow_mut();
+            object::set_child(&mut doc, self.key, key, child_key);
+        }
+
+        // Update
+        let mut updates = HashMap::new();
+        updates.insert(
+            key.to_string(),
+            UpdateDelta::Set {
+                old_value,
+                new_value: Json::Null, // Placeholder for CRDT child
+            },
+        );
+
+        mutation_result_to_js(&MutationResult {
+            ops: create_ops,
+            reverse_ops: old_reverse_ops,
+            update: StorageUpdate::LiveObjectUpdate { node_id, updates },
+        })
+    }
+}
+
+#[wasm_bindgen]
+impl LiveObjectHandle {
+    /// Get a property value by key. Returns `undefined` if missing.
+    pub fn get(&self, key: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        match object::get_plain(&doc, self.key, key) {
+            Some(json) => json_to_js(json),
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    /// Set a property value.
+    /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports tagged LSON values (LiveObject, LiveList, LiveMap) in addition
+    /// to plain scalars.
+    pub fn set(&self, key: &str, value: JsValue) -> JsValue {
+        let value = js_to_json(value);
+
+        match parse_lson(&value) {
+            LsonValue::Scalar(_) => self.set_scalar(key, value),
+            _ => self.set_tagged(key, value),
+        }
+    }
+
     /// Update multiple properties at once from a JS object.
     /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports a mix of plain scalar and tagged LSON values.
     pub fn update(&self, updates: JsValue) -> JsValue {
         let map = match serde_wasm_bindgen::from_value::<BTreeMap<String, Json>>(updates) {
             Ok(m) => m,
@@ -157,67 +248,159 @@ impl LiveObjectHandle {
             return JsValue::UNDEFINED;
         }
 
+        // Separate scalars from tagged CRDT values
+        let mut scalar_data = BTreeMap::new();
+        let mut tagged_entries: Vec<(String, Json)> = Vec::new();
+        for (k, v) in &map {
+            match parse_lson(v) {
+                LsonValue::Scalar(_) => {
+                    scalar_data.insert(k.clone(), v.clone());
+                }
+                _ => {
+                    tagged_entries.push((k.clone(), v.clone()));
+                }
+            }
+        }
+
         // Capture pre-mutation state
-        let (node_id, old_values) = {
+        let (node_id, old_values, old_crdt_reverse_for_scalars, old_child_reverse) = {
             let doc = self.doc.borrow();
             let node_id = doc
                 .get_node(self.key)
                 .map(|n| n.id.clone())
                 .unwrap_or_default();
-            let old_values: BTreeMap<String, Option<Json>> = map
+            let old_values: BTreeMap<String, Option<Json>> = scalar_data
                 .keys()
                 .map(|k| (k.clone(), object::get_plain(&doc, self.key, k).cloned()))
                 .collect();
-            (node_id, old_values)
+            // For scalars that replace a CRDT child, capture reverse CREATE ops
+            // BEFORE the mutation removes them.
+            let old_crdt_reverse_for_scalars: BTreeMap<String, Vec<Op>> = scalar_data
+                .keys()
+                .filter_map(|k| {
+                    let ck = object::get_child(&doc, self.key, k)?;
+                    let node = doc.get_node(ck)?;
+                    if matches!(&node.data, CrdtData::Register { .. }) {
+                        None // Register = scalar wrapper, handled by old_values
+                    } else {
+                        Some((k.clone(), apply::generate_create_ops_for_subtree(&doc, ck)))
+                    }
+                })
+                .collect();
+            // For tagged entries, capture old child reverse ops.
+            // get_child() returns ANY child including Register wrappers for
+            // scalars.  When the old child is a Register we must generate an
+            // UPDATE_OBJECT reverse (restoring the scalar), NOT CREATE_REGISTER.
+            let old_child_reverse: Vec<(String, Vec<Op>, Option<Json>)> = tagged_entries
+                .iter()
+                .map(|(k, _)| {
+                    let old_plain = object::get_plain(&doc, self.key, k).cloned();
+                    let old_child_key = object::get_child(&doc, self.key, k);
+
+                    // Determine if the old child is a real CRDT (Object/List/Map)
+                    // vs a scalar wrapped in a Register (or absent).
+                    let is_real_crdt = old_child_key
+                        .and_then(|ck| doc.get_node(ck))
+                        .is_some_and(|n| !matches!(&n.data, CrdtData::Register { .. }));
+
+                    let rev_ops = if is_real_crdt {
+                        // Old value was a CRDT child — reverse recreates the subtree
+                        apply::generate_create_ops_for_subtree(&doc, old_child_key.unwrap())
+                    } else if let Some(ref val) = old_plain {
+                        // Old value was a scalar — reverse sets it back
+                        let mut rev_data = BTreeMap::new();
+                        rev_data.insert(k.clone(), val.clone());
+                        vec![update_object_op(&node_id, rev_data)]
+                    } else {
+                        // No old value — reverse deletes the key
+                        vec![delete_object_key_op(&node_id, k)]
+                    };
+                    (k.clone(), rev_ops, old_plain)
+                })
+                .collect();
+            (node_id, old_values, old_crdt_reverse_for_scalars, old_child_reverse)
         };
 
-        // Generate one shared op_id for all keys
-        let op_id = self.id_gen.borrow_mut().generate_op_id();
-
-        // Mutate tree
-        {
-            let mut doc = self.doc.borrow_mut();
-            for (k, v) in &map {
-                object::set_plain(&mut doc, self.key, k, v.clone());
-            }
-        }
-
-        // Forward op: single UPDATE_OBJECT with all key-value pairs
-        let mut fwd_op = update_object_op(&node_id, map.clone());
-        fwd_op.op_id = Some(op_id);
-
-        // Reverse ops: per-key reverse
-        let mut rev_update_data = BTreeMap::new();
-        let mut rev_delete_ops = Vec::new();
-        for (k, old_val) in &old_values {
-            if let Some(val) = old_val {
-                rev_update_data.insert(k.clone(), val.clone());
-            } else {
-                rev_delete_ops.push(delete_object_key_op(&node_id, k));
-            }
-        }
-        let mut reverse_ops = Vec::new();
-        if !rev_update_data.is_empty() {
-            reverse_ops.push(update_object_op(&node_id, rev_update_data));
-        }
-        reverse_ops.extend(rev_delete_ops);
-
-        // Update deltas
+        let mut all_ops = Vec::new();
+        let mut all_reverse = Vec::new();
         let mut update_deltas = HashMap::new();
-        for (k, v) in &map {
-            let old_value = old_values.get(k).and_then(|o| o.clone());
+
+        // Handle scalar keys via UPDATE_OBJECT
+        if !scalar_data.is_empty() {
+            let op_id = self.id_gen.borrow_mut().generate_op_id();
+
+            // Mutate tree for scalars
+            {
+                let mut doc = self.doc.borrow_mut();
+                for (k, v) in &scalar_data {
+                    object::set_plain(&mut doc, self.key, k, v.clone());
+                }
+            }
+
+            let mut fwd_op = update_object_op(&node_id, scalar_data.clone());
+            fwd_op.op_id = Some(op_id);
+            all_ops.push(fwd_op);
+
+            // Reverse ops for scalars
+            let mut rev_update_data = BTreeMap::new();
+            let mut rev_delete_ops = Vec::new();
+            for (k, old_val) in &old_values {
+                if let Some(crdt_rev) = old_crdt_reverse_for_scalars.get(k) {
+                    // Old value was a CRDT child — reverse recreates the subtree
+                    all_reverse.extend(crdt_rev.clone());
+                } else if let Some(val) = old_val {
+                    rev_update_data.insert(k.clone(), val.clone());
+                } else {
+                    rev_delete_ops.push(delete_object_key_op(&node_id, k));
+                }
+            }
+            if !rev_update_data.is_empty() {
+                all_reverse.push(update_object_op(&node_id, rev_update_data));
+            }
+            all_reverse.extend(rev_delete_ops);
+
+            for (k, v) in &scalar_data {
+                let old_value = old_values.get(k).and_then(|o| o.clone());
+                update_deltas.insert(
+                    k.clone(),
+                    UpdateDelta::Set {
+                        old_value,
+                        new_value: v.clone(),
+                    },
+                );
+            }
+        }
+
+        // Handle tagged CRDT entries
+        for (i, (k, v)) in tagged_entries.iter().enumerate() {
+            let (child_key, create_ops) = {
+                let mut doc = self.doc.borrow_mut();
+                let mut id_gen = self.id_gen.borrow_mut();
+                create_lson_subtree(&mut doc, &mut id_gen, &node_id, k, v)
+            };
+
+            {
+                let mut doc = self.doc.borrow_mut();
+                object::set_child(&mut doc, self.key, k, child_key);
+            }
+
+            all_ops.extend(create_ops);
+
+            let (_, ref rev_ops, ref old_plain) = old_child_reverse[i];
+            all_reverse.extend(rev_ops.clone());
+
             update_deltas.insert(
                 k.clone(),
                 UpdateDelta::Set {
-                    old_value,
-                    new_value: v.clone(),
+                    old_value: old_plain.clone(),
+                    new_value: Json::Null, // Placeholder for CRDT child
                 },
             );
         }
 
         mutation_result_to_js(&MutationResult {
-            ops: vec![fwd_op],
-            reverse_ops,
+            ops: all_ops,
+            reverse_ops: all_reverse,
             update: StorageUpdate::LiveObjectUpdate {
                 node_id,
                 updates: update_deltas,
@@ -373,6 +556,7 @@ impl LiveListHandle {
 
     /// Push a value to the end of the list.
     /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports tagged LSON values.
     pub fn push(&self, value: JsValue) -> JsValue {
         let value = js_to_json(value);
 
@@ -387,40 +571,100 @@ impl LiveListHandle {
             (list_id, old_length)
         };
 
-        // Generate IDs
-        let (reg_id, op_id) = {
-            let mut id_gen = self.id_gen.borrow_mut();
-            (id_gen.generate_id(), id_gen.generate_op_id())
-        };
+        match parse_lson(&value) {
+            LsonValue::Scalar(_) => {
+                // Generate IDs
+                let (reg_id, op_id) = {
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    (id_gen.generate_id(), id_gen.generate_op_id())
+                };
 
-        // Mutate tree
-        let info = {
-            let mut doc = self.doc.borrow_mut();
-            list::push_with_id(&mut doc, self.key, value.clone(), &reg_id)
-        };
+                // Mutate tree
+                let info = {
+                    let mut doc = self.doc.borrow_mut();
+                    list::push_with_id(&mut doc, self.key, value.clone(), &reg_id)
+                };
 
-        // Forward op
-        let mut fwd_op = create_register_op(&reg_id, &list_id, &info.position, value.clone());
-        fwd_op.op_id = Some(op_id);
+                // Forward op
+                let mut fwd_op =
+                    create_register_op(&reg_id, &list_id, &info.position, value.clone());
+                fwd_op.op_id = Some(op_id);
 
-        // Reverse op: DELETE_CRDT to undo the push
-        let reverse_ops = vec![delete_crdt_op(&reg_id)];
+                // Reverse op: DELETE_CRDT to undo the push
+                let reverse_ops = vec![delete_crdt_op(&reg_id)];
 
-        mutation_result_to_js(&MutationResult {
-            ops: vec![fwd_op],
-            reverse_ops,
-            update: StorageUpdate::LiveListUpdate {
-                node_id: list_id,
-                updates: vec![ListUpdateEntry::Insert {
-                    index: old_length,
-                    value,
-                }],
-            },
-        })
+                mutation_result_to_js(&MutationResult {
+                    ops: vec![fwd_op],
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Insert {
+                            index: old_length,
+                            value,
+                        }],
+                    },
+                })
+            }
+            _ => {
+                // Compute position for push (after last item)
+                let position = {
+                    let doc = self.doc.borrow();
+                    let last_pos = match doc.get_node(self.key) {
+                        Some(node) => match &node.data {
+                            CrdtData::List { children, .. } => {
+                                children.last().map(|(pos, _)| pos.clone())
+                            }
+                            _ => None,
+                        },
+                        None => None,
+                    };
+                    crate::position::make_position(last_pos.as_deref(), None)
+                };
+
+                // Create subtree
+                let (child_key, create_ops) = {
+                    let mut doc = self.doc.borrow_mut();
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    create_lson_subtree(&mut doc, &mut id_gen, &list_id, &position, &value)
+                };
+
+                // Attach child to list
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    if let Some(node) = doc.get_node_mut(self.key)
+                        && let CrdtData::List { children, .. } = &mut node.data
+                    {
+                        children.push((position, child_key));
+                    }
+                }
+
+                // Reverse: DELETE_CRDT of the root of the subtree
+                let child_id = {
+                    let doc = self.doc.borrow();
+                    doc.get_node(child_key)
+                        .map(|n| n.id.clone())
+                        .unwrap_or_default()
+                };
+                let reverse_ops = vec![delete_crdt_op(&child_id)];
+
+                mutation_result_to_js(&MutationResult {
+                    ops: create_ops,
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Insert {
+                            index: old_length,
+                            value: Json::Null,
+                        }],
+                    },
+                })
+            }
+        }
     }
 
     /// Insert a value at the given index.
     /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports tagged LSON values.
     pub fn insert(&self, value: JsValue, index: usize) -> JsValue {
         let value = js_to_json(value);
 
@@ -431,33 +675,98 @@ impl LiveListHandle {
                 .unwrap_or_default()
         };
 
-        // Generate IDs
-        let (reg_id, op_id) = {
-            let mut id_gen = self.id_gen.borrow_mut();
-            (id_gen.generate_id(), id_gen.generate_op_id())
-        };
+        match parse_lson(&value) {
+            LsonValue::Scalar(_) => {
+                // Generate IDs
+                let (reg_id, op_id) = {
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    (id_gen.generate_id(), id_gen.generate_op_id())
+                };
 
-        // Mutate tree
-        let info = {
-            let mut doc = self.doc.borrow_mut();
-            list::insert_with_id(&mut doc, self.key, index, value.clone(), &reg_id)
-        };
+                // Mutate tree
+                let info = {
+                    let mut doc = self.doc.borrow_mut();
+                    list::insert_with_id(&mut doc, self.key, index, value.clone(), &reg_id)
+                };
 
-        // Forward op
-        let mut fwd_op = create_register_op(&reg_id, &list_id, &info.position, value.clone());
-        fwd_op.op_id = Some(op_id);
+                // Forward op
+                let mut fwd_op =
+                    create_register_op(&reg_id, &list_id, &info.position, value.clone());
+                fwd_op.op_id = Some(op_id);
 
-        // Reverse op: DELETE_CRDT to undo the insert
-        let reverse_ops = vec![delete_crdt_op(&reg_id)];
+                // Reverse op: DELETE_CRDT to undo the insert
+                let reverse_ops = vec![delete_crdt_op(&reg_id)];
 
-        mutation_result_to_js(&MutationResult {
-            ops: vec![fwd_op],
-            reverse_ops,
-            update: StorageUpdate::LiveListUpdate {
-                node_id: list_id,
-                updates: vec![ListUpdateEntry::Insert { index, value }],
-            },
-        })
+                mutation_result_to_js(&MutationResult {
+                    ops: vec![fwd_op],
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Insert { index, value }],
+                    },
+                })
+            }
+            _ => {
+                // Compute position for insert at index
+                let position = {
+                    let doc = self.doc.borrow();
+                    let (before_pos, after_pos) = match doc.get_node(self.key) {
+                        Some(node) => match &node.data {
+                            CrdtData::List { children, .. } => {
+                                let before = if index > 0 {
+                                    children.get(index - 1).map(|(pos, _)| pos.clone())
+                                } else {
+                                    None
+                                };
+                                let after = children.get(index).map(|(pos, _)| pos.clone());
+                                (before, after)
+                            }
+                            _ => (None, None),
+                        },
+                        None => (None, None),
+                    };
+                    crate::position::make_position(before_pos.as_deref(), after_pos.as_deref())
+                };
+
+                // Create subtree
+                let (child_key, create_ops) = {
+                    let mut doc = self.doc.borrow_mut();
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    create_lson_subtree(&mut doc, &mut id_gen, &list_id, &position, &value)
+                };
+
+                // Attach child to list at position
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    if let Some(node) = doc.get_node_mut(self.key)
+                        && let CrdtData::List { children, .. } = &mut node.data
+                    {
+                        children.insert(index, (position, child_key));
+                    }
+                }
+
+                // Reverse: DELETE_CRDT of the root
+                let child_id = {
+                    let doc = self.doc.borrow();
+                    doc.get_node(child_key)
+                        .map(|n| n.id.clone())
+                        .unwrap_or_default()
+                };
+                let reverse_ops = vec![delete_crdt_op(&child_id)];
+
+                mutation_result_to_js(&MutationResult {
+                    ops: create_ops,
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Insert {
+                            index,
+                            value: Json::Null,
+                        }],
+                    },
+                })
+            }
+        }
     }
 
     /// Move an item from one index to another.
@@ -580,6 +889,7 @@ impl LiveListHandle {
 
     /// Replace the value at the given index.
     /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports tagged LSON values.
     ///
     /// Uses the `HACK_addIntentAndDeletedIdToOperation` pattern: the forward op
     /// gets `intent: "set"` + `deleted_id`, and so does the first reverse op.
@@ -614,42 +924,115 @@ impl LiveListHandle {
             (list_id, old_child_id, pos, old_value, reverse_ops)
         };
 
-        // Generate IDs
-        let (new_reg_id, op_id) = {
-            let mut id_gen = self.id_gen.borrow_mut();
-            (id_gen.generate_id(), id_gen.generate_op_id())
-        };
+        match parse_lson(&value) {
+            LsonValue::Scalar(_) => {
+                // Generate IDs
+                let (new_reg_id, op_id) = {
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    (id_gen.generate_id(), id_gen.generate_op_id())
+                };
 
-        // Mutate tree
-        {
-            let mut doc = self.doc.borrow_mut();
-            list::set_with_id(&mut doc, self.key, index, value.clone(), &new_reg_id);
+                // Mutate tree
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    list::set_with_id(&mut doc, self.key, index, value.clone(), &new_reg_id);
+                }
+
+                // Forward op with intent hack
+                let mut fwd_op =
+                    create_register_op(&new_reg_id, &list_id, &position, value.clone());
+                fwd_op.op_id = Some(op_id);
+                fwd_op.intent = Some("set".to_string());
+                fwd_op.deleted_id = Some(old_child_id.clone());
+
+                // Reverse ops with intent hack: first op gets intent + deleted_id
+                if let Some(first) = reverse_ops.first_mut() {
+                    first.intent = Some("set".to_string());
+                    first.deleted_id = Some(new_reg_id.clone());
+                }
+
+                mutation_result_to_js(&MutationResult {
+                    ops: vec![fwd_op],
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Set {
+                            index,
+                            old_value,
+                            new_value: value,
+                        }],
+                    },
+                })
+            }
+            _ => {
+                // Remove old child from list and document
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    // Remove old child node from arena
+                    let old_child_key = match doc.get_node(self.key) {
+                        Some(node) => match &node.data {
+                            CrdtData::List { children, .. } if index < children.len() => {
+                                Some(children[index].1)
+                            }
+                            _ => None,
+                        },
+                        None => None,
+                    };
+                    if let Some(ock) = old_child_key {
+                        doc.remove_node(ock);
+                    }
+                }
+
+                // Create subtree at the same position
+                let (child_key, mut create_ops) = {
+                    let mut doc = self.doc.borrow_mut();
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    create_lson_subtree(&mut doc, &mut id_gen, &list_id, &position, &value)
+                };
+
+                // Replace in list children
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    if let Some(node) = doc.get_node_mut(self.key)
+                        && let CrdtData::List { children, .. } = &mut node.data
+                        && index < children.len()
+                    {
+                        children[index] = (position, child_key);
+                    }
+                }
+
+                // Intent hack on first CREATE op
+                let new_child_id = {
+                    let doc = self.doc.borrow();
+                    doc.get_node(child_key)
+                        .map(|n| n.id.clone())
+                        .unwrap_or_default()
+                };
+                if let Some(first) = create_ops.first_mut() {
+                    first.intent = Some("set".to_string());
+                    first.deleted_id = Some(old_child_id.clone());
+                }
+
+                // Reverse ops with intent hack
+                if let Some(first) = reverse_ops.first_mut() {
+                    first.intent = Some("set".to_string());
+                    first.deleted_id = Some(new_child_id);
+                }
+
+                mutation_result_to_js(&MutationResult {
+                    ops: create_ops,
+                    reverse_ops,
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![ListUpdateEntry::Set {
+                            index,
+                            old_value,
+                            new_value: Json::Null,
+                        }],
+                    },
+                })
+            }
         }
-
-        // Forward op with intent hack
-        let mut fwd_op = create_register_op(&new_reg_id, &list_id, &position, value.clone());
-        fwd_op.op_id = Some(op_id);
-        fwd_op.intent = Some("set".to_string());
-        fwd_op.deleted_id = Some(old_child_id.clone());
-
-        // Reverse ops with intent hack: first op gets intent + deleted_id
-        if let Some(first) = reverse_ops.first_mut() {
-            first.intent = Some("set".to_string());
-            first.deleted_id = Some(new_reg_id.clone());
-        }
-
-        mutation_result_to_js(&MutationResult {
-            ops: vec![fwd_op],
-            reverse_ops,
-            update: StorageUpdate::LiveListUpdate {
-                node_id: list_id,
-                updates: vec![ListUpdateEntry::Set {
-                    index,
-                    old_value,
-                    new_value: value,
-                }],
-            },
-        })
     }
 
     /// Clear all items from the list.
@@ -727,12 +1110,12 @@ impl LiveListHandle {
             })
             .collect();
 
-        // Update entries: report each deletion at its original index
+        // Update entries: report each deletion at index 0, matching the JS
+        // convention where items shift left after each sequential deletion.
         let update_entries: Vec<ListUpdateEntry> = children_info
             .iter()
-            .rev()
-            .map(|(i, _, _, value)| ListUpdateEntry::Delete {
-                index: *i,
+            .map(|(_, _, _, value)| ListUpdateEntry::Delete {
+                index: 0,
                 old_value: value.clone(),
             })
             .collect();
@@ -835,6 +1218,7 @@ impl LiveMapHandle {
 
     /// Set a value at the given key.
     /// Returns a MutationResult with forward/reverse ops and storage update.
+    /// Supports tagged LSON values.
     pub fn set(&self, key: &str, value: JsValue) -> JsValue {
         let value = js_to_json(value);
 
@@ -855,47 +1239,121 @@ impl LiveMapHandle {
             (map_id, old_value, old_reverse_ops)
         };
 
-        // Generate IDs
-        let (reg_id, op_id) = {
-            let mut id_gen = self.id_gen.borrow_mut();
-            (id_gen.generate_id(), id_gen.generate_op_id())
-        };
+        match parse_lson(&value) {
+            LsonValue::Scalar(_) => {
+                // Generate IDs
+                let (reg_id, op_id) = {
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    (id_gen.generate_id(), id_gen.generate_op_id())
+                };
 
-        // Mutate tree
-        {
-            let mut doc = self.doc.borrow_mut();
-            map::set_with_id(&mut doc, self.key, key, value.clone(), &reg_id);
+                // Mutate tree
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    map::set_with_id(&mut doc, self.key, key, value.clone(), &reg_id);
+                }
+
+                // Forward op: CREATE_REGISTER for the new value
+                let mut fwd_op = create_register_op(&reg_id, &map_id, key, value.clone());
+                fwd_op.op_id = Some(op_id);
+
+                // Reverse ops: recreate old child, or DELETE_CRDT if no old value
+                let reverse_ops = if !old_reverse_ops.is_empty() {
+                    old_reverse_ops
+                } else {
+                    // No old value: reverse is DELETE_CRDT of the new register
+                    vec![delete_crdt_op(&reg_id)]
+                };
+
+                let mut update_map = HashMap::new();
+                update_map.insert(
+                    key.to_string(),
+                    UpdateDelta::Set {
+                        old_value,
+                        new_value: value,
+                    },
+                );
+
+                mutation_result_to_js(&MutationResult {
+                    ops: vec![fwd_op],
+                    reverse_ops,
+                    update: StorageUpdate::LiveMapUpdate {
+                        node_id: map_id,
+                        updates: update_map,
+                    },
+                })
+            }
+            _ => {
+                // Remove old child at this key
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    // Remove old child from map and document
+                    let old_child_key = match doc.get_node(self.key) {
+                        Some(node) => match &node.data {
+                            CrdtData::Map { children, .. } => children.get(key).copied(),
+                            _ => None,
+                        },
+                        None => None,
+                    };
+                    if let Some(ock) = old_child_key {
+                        if let Some(node) = doc.get_node_mut(self.key)
+                            && let CrdtData::Map { children, .. } = &mut node.data
+                        {
+                            children.remove(key);
+                        }
+                        doc.remove_node(ock);
+                    }
+                }
+
+                // Create subtree
+                let (child_key, create_ops) = {
+                    let mut doc = self.doc.borrow_mut();
+                    let mut id_gen = self.id_gen.borrow_mut();
+                    create_lson_subtree(&mut doc, &mut id_gen, &map_id, key, &value)
+                };
+
+                // Attach child to map
+                {
+                    let mut doc = self.doc.borrow_mut();
+                    if let Some(node) = doc.get_node_mut(self.key)
+                        && let CrdtData::Map { children, .. } = &mut node.data
+                    {
+                        children.insert(key.to_string(), child_key);
+                    }
+                }
+
+                // Reverse ops
+                let child_id = {
+                    let doc = self.doc.borrow();
+                    doc.get_node(child_key)
+                        .map(|n| n.id.clone())
+                        .unwrap_or_default()
+                };
+                let reverse_ops = if !old_reverse_ops.is_empty() {
+                    old_reverse_ops
+                } else {
+                    vec![delete_crdt_op(&child_id)]
+                };
+
+                let mut update_map = HashMap::new();
+                update_map.insert(
+                    key.to_string(),
+                    UpdateDelta::Set {
+                        old_value,
+                        new_value: Json::Null, // Placeholder for CRDT child
+                    },
+                );
+
+                mutation_result_to_js(&MutationResult {
+                    ops: create_ops,
+                    reverse_ops,
+                    update: StorageUpdate::LiveMapUpdate {
+                        node_id: map_id,
+                        updates: update_map,
+                    },
+                })
+            }
         }
-
-        // Forward op: CREATE_REGISTER for the new value
-        let mut fwd_op = create_register_op(&reg_id, &map_id, key, value.clone());
-        fwd_op.op_id = Some(op_id);
-
-        // Reverse ops: recreate old child, or DELETE_CRDT if no old value
-        let reverse_ops = if !old_reverse_ops.is_empty() {
-            old_reverse_ops
-        } else {
-            // No old value: reverse is DELETE_CRDT of the new register
-            vec![delete_crdt_op(&reg_id)]
-        };
-
-        let mut update_map = HashMap::new();
-        update_map.insert(
-            key.to_string(),
-            UpdateDelta::Set {
-                old_value,
-                new_value: value,
-            },
-        );
-
-        mutation_result_to_js(&MutationResult {
-            ops: vec![fwd_op],
-            reverse_ops,
-            update: StorageUpdate::LiveMapUpdate {
-                node_id: map_id,
-                updates: update_map,
-            },
-        })
     }
 
     /// Delete a key from the map.
@@ -1259,6 +1717,42 @@ impl DocumentHandle {
             }
             _ => None,
         }
+    }
+
+    /// Generate a new node ID from the shared IdGenerator.
+    #[wasm_bindgen(js_name = "generateId")]
+    pub fn generate_id(&self) -> String {
+        self.id_gen.borrow_mut().generate_id()
+    }
+
+    /// Generate a new operation ID from the shared IdGenerator.
+    #[wasm_bindgen(js_name = "generateOpId")]
+    pub fn generate_op_id(&self) -> String {
+        self.id_gen.borrow_mut().generate_op_id()
+    }
+
+    /// Get the current node clock value.
+    #[wasm_bindgen(getter, js_name = "nodeClock")]
+    pub fn node_clock(&self) -> u32 {
+        self.id_gen.borrow().node_clock()
+    }
+
+    /// Get the current op clock value.
+    #[wasm_bindgen(getter, js_name = "opClock")]
+    pub fn op_clock(&self) -> u32 {
+        self.id_gen.borrow().op_clock()
+    }
+
+    /// Set the node clock value.
+    #[wasm_bindgen(js_name = "setNodeClock")]
+    pub fn set_node_clock(&self, value: u32) {
+        self.id_gen.borrow_mut().set_node_clock(value);
+    }
+
+    /// Set the op clock value.
+    #[wasm_bindgen(js_name = "setOpClock")]
+    pub fn set_op_clock(&self, value: u32) {
+        self.id_gen.borrow_mut().set_op_clock(value);
     }
 }
 

@@ -45,6 +45,26 @@ impl IdGenerator {
     pub fn connection_id(&self) -> i32 {
         self.connection_id
     }
+
+    /// Get the current node clock value.
+    pub fn node_clock(&self) -> u32 {
+        self.node_clock
+    }
+
+    /// Get the current op clock value.
+    pub fn op_clock(&self) -> u32 {
+        self.op_clock
+    }
+
+    /// Set the node clock value.
+    pub fn set_node_clock(&mut self, value: u32) {
+        self.node_clock = value;
+    }
+
+    /// Set the op clock value.
+    pub fn set_op_clock(&mut self, value: u32) {
+        self.op_clock = value;
+    }
 }
 
 impl Default for IdGenerator {

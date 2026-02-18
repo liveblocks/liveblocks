@@ -33,6 +33,11 @@ import {
 } from "./liveblocks-helpers";
 import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
+import type { WasmMutationResult } from "./wasm-mutation-adapter";
+import {
+  translateStorageUpdate,
+  attachSubtreeFromOps,
+} from "./wasm-mutation-adapter";
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
@@ -533,6 +538,29 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
+    // WASM mutation path: delegate to WASM handle
+    const shadow = this._pool.wasmShadow;
+    if (shadow) {
+      if (isLiveNode(oldValue)) {
+        oldValue._detach();
+      }
+      this.#map.delete(keyAsString);
+      this.invalidate();
+
+      const result = shadow.objectDelete(
+        this._id,
+        keyAsString
+      ) as WasmMutationResult;
+      const storageUpdates = translateStorageUpdate(result.update, this._pool);
+      this._pool.dispatch(
+        result.ops as ClientWireOp[],
+        result.reverseOps,
+        storageUpdates,
+        { skipWasmSync: true }
+      );
+      return;
+    }
+
     let reverse: Op[];
 
     if (isLiveNode(oldValue)) {
@@ -639,10 +667,95 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
+    // WASM mutation path: delegate to WASM handle for op generation
+    const shadow = this._pool.wasmShadow;
+    if (shadow) {
+      const wasmPatch: Record<string, unknown> = {};
+      const liveNodeEntries: [string, LiveNode][] = [];
+
+      for (const key in patch) {
+        const value: Lson | undefined = patch[key];
+        if (value === undefined) continue;
+
+        // Skip non-serializable values (e.g. functions) — same behavior as
+        // JSON.stringify, which the JS path relies on to silently strip them.
+        if (typeof value === "function" || typeof value === "symbol") continue;
+
+        if (isLiveStructure(value)) {
+          wasmPatch[key] = (value as AbstractCrdt)._toWasmValue();
+          liveNodeEntries.push([key, value]);
+        } else {
+          wasmPatch[key] = value;
+        }
+      }
+
+      // If all values were filtered out (e.g. all functions), nothing to do
+      if (
+        Object.keys(wasmPatch).length === 0 &&
+        liveNodeEntries.length === 0
+      ) {
+        return;
+      }
+
+      const result = shadow.objectUpdate(
+        this._id,
+        wasmPatch
+      ) as WasmMutationResult;
+
+      // Detach old values and update JS map
+      for (const key in patch) {
+        const value = patch[key];
+        if (value === undefined) continue;
+
+        const oldValue = this.#map.get(key);
+        if (isLiveNode(oldValue)) {
+          oldValue._detach();
+        }
+
+        if (isLiveStructure(value)) {
+          value._setParentLink(this, key);
+        }
+
+        this.#map.set(key, value);
+        this.invalidate();
+      }
+
+      // Attach LiveNode children using WASM-generated IDs
+      for (const [key, node] of liveNodeEntries) {
+        attachSubtreeFromOps(result.ops, node, this._pool, this._id, key);
+      }
+
+      // Track unacked ops for conflict resolution
+      const wireOps = result.ops as ClientWireOp[];
+      const updateWireOp = wireOps.find(
+        (op) => op.type === OpCode.UPDATE_OBJECT
+      );
+      for (const key in patch) {
+        if (patch[key] === undefined) continue;
+        if (liveNodeEntries.some(([k]) => k === key)) {
+          const createOp = wireOps.find(
+            (op: ClientWireOp & { parentId?: string; parentKey?: string }) =>
+              op.parentId === this._id && op.parentKey === key
+          );
+          if (createOp) {
+            this.#unackedOpsByKey.set(key, createOp.opId);
+          }
+        } else if (updateWireOp) {
+          this.#unackedOpsByKey.set(key, updateWireOp.opId);
+        }
+      }
+
+      // Dispatch with skipWasmSync since WASM document is already updated
+      const storageUpdates = translateStorageUpdate(result.update, this._pool);
+      this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
+        skipWasmSync: true,
+      });
+      return;
+    }
+
     const ops: ClientWireOp[] = [];
     const reverseOps: Op[] = [];
 
-    const opId = this._pool.generateOpId();
     const updatedProps: JsonObject = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
@@ -694,8 +807,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         }
       } else {
         updatedProps[key] = newValue;
-        // Track locally-generated opId to preserve optimistic update
-        this.#unackedOpsByKey.set(key, opId);
       }
 
       this.#map.set(key, newValue);
@@ -708,6 +819,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     if (Object.keys(updatedProps).length !== 0) {
+      const opId = this._pool.generateOpId();
+      for (const key of Object.keys(updatedProps)) {
+        this.#unackedOpsByKey.set(key, opId);
+      }
       ops.unshift({
         opId,
         id: this._id,
@@ -764,6 +879,30 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as ToImmutable<O>;
+  }
+
+  /** @internal */
+  override _getInternalChildren(): [string, LiveNode][] {
+    const result: [string, LiveNode][] = [];
+    for (const [key, value] of this.#map) {
+      if (isLiveNode(value)) {
+        result.push([key, value]);
+      }
+    }
+    return result;
+  }
+
+  /** @internal */
+  _toWasmValue(): unknown {
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of this.#map) {
+      if (isLiveNode(value)) {
+        data[key] = (value as AbstractCrdt)._toWasmValue();
+      } else {
+        data[key] = value;
+      }
+    }
+    return { __lb_type: "LiveObject", __lb_data: data };
   }
 
   clone(): LiveObject<O> {

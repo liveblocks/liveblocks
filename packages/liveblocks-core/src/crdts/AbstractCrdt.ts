@@ -11,6 +11,7 @@ import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
+import type { CrdtDocumentShadow } from "./impl-selector";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -42,7 +43,8 @@ export interface ManagedPool {
   dispatch: (
     ops: ClientWireOp[],
     reverseOps: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: { skipWasmSync?: boolean }
   ) => void;
 
   /**
@@ -53,6 +55,17 @@ export interface ManagedPool {
    * @returns {void}
    */
   assertStorageIsWritable: () => void;
+
+  /**
+   * When set, the WASM document shadow is active and all ID generation
+   * and mutations should be delegated to it.
+   */
+  wasmShadow?: CrdtDocumentShadow | null;
+
+  /** Current node ID counter value (for one-time handoff to WASM). */
+  readonly nodeClockValue?: number;
+  /** Current op ID counter value (for one-time handoff to WASM). */
+  readonly opClockValue?: number;
 }
 
 export type CreateManagedPoolOptions = {
@@ -69,7 +82,8 @@ export type CreateManagedPoolOptions = {
   onDispatch?: (
     ops: ClientWireOp[],
     reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
+    storageUpdates: Map<string, StorageUpdate>,
+    options?: { skipWasmSync?: boolean }
   ) => void;
 
   /**
@@ -98,7 +112,7 @@ export function createManagedPool(
   let opClock = 0;
   const nodes = new Map<string, LiveNode>();
 
-  return {
+  const pool: ManagedPool = {
     roomId,
     nodes,
 
@@ -106,15 +120,31 @@ export function createManagedPool(
     addNode: (id: string, node: LiveNode) => void nodes.set(id, node),
     deleteNode: (id: string) => void nodes.delete(id),
 
-    generateId: () => `${getCurrentConnectionId()}:${clock++}`,
-    generateOpId: () => `${getCurrentConnectionId()}:${opClock++}`,
+    generateId: () => {
+      if (pool.wasmShadow) return pool.wasmShadow.generateId();
+      return `${getCurrentConnectionId()}:${clock++}`;
+    },
+    generateOpId: () => {
+      if (pool.wasmShadow) return pool.wasmShadow.generateOpId();
+      return `${getCurrentConnectionId()}:${opClock++}`;
+    },
+
+    get nodeClockValue() {
+      return clock;
+    },
+    get opClockValue() {
+      return opClock;
+    },
+
+    wasmShadow: undefined,
 
     dispatch(
       ops: ClientWireOp[],
       reverse: Op[],
-      storageUpdates: Map<string, StorageUpdate>
+      storageUpdates: Map<string, StorageUpdate>,
+      options?: { skipWasmSync?: boolean }
     ) {
-      onDispatch?.(ops, reverse, storageUpdates);
+      onDispatch?.(ops, reverse, storageUpdates, options);
     },
 
     assertStorageIsWritable: () => {
@@ -125,6 +155,7 @@ export function createManagedPool(
       }
     },
   };
+  return pool;
 }
 
 /**
@@ -354,6 +385,23 @@ export abstract class AbstractCrdt {
     this.#pool = pool;
   }
 
+  /**
+   * Attach this node directly with a given ID and pool, WITHOUT recursing
+   * into children. Used when WASM has already generated IDs for the subtree
+   * and we just need to register each node individually.
+   * @internal
+   */
+  _attachDirect(id: string, pool: ManagedPool): void {
+    if (this.#id || this.#pool) {
+      throw new Error("Cannot attach node: already attached");
+    }
+
+    pool.addNode(id, crdtAsLiveNode(this));
+
+    this.#id = id;
+    this.#pool = pool;
+  }
+
   /** @internal */
   abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
 
@@ -478,6 +526,35 @@ export abstract class AbstractCrdt {
 
     // Return cached version
     return this.#cachedImmutable;
+  }
+
+  /**
+   * Return internal children as [key, LiveNode] pairs for WASM subtree
+   * attachment.  Unlike public iteration, this returns raw LiveNode values
+   * (including LiveRegister wrappers) so `attachSubtreeFromOps` can attach
+   * every node in the subtree.
+   * @internal
+   */
+  _getInternalChildren(): [string, LiveNode][] {
+    return [];
+  }
+
+  /**
+   * Convert this Live node to a tagged value for passing to WASM.
+   * Scalars pass through unchanged, LiveStructures get `__lb_type` + `__lb_data`.
+   * @internal
+   */
+  abstract _toWasmValue(): unknown;
+
+  /**
+   * Return the internal children of this node as `[key, LiveNode]` pairs.
+   * Unlike public APIs (`.get()`, `.entries()`), this returns raw LiveNode
+   * instances including LiveRegisters (not unwrapped to plain values).
+   * Used by `attachSubtreeFromOps` to find children that need WASM-generated IDs.
+   * @internal
+   */
+  _getChildEntries(): [string, LiveNode][] {
+    return [];
   }
 
   /**

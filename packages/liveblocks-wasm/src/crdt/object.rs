@@ -119,6 +119,7 @@ pub fn delete_key(doc: &mut Document, key: NodeKey, prop: &str) {
 }
 
 /// Remove the child node at a given property, if any.
+/// Recursively removes the entire subtree for non-register children.
 fn remove_child_at_key(doc: &mut Document, key: NodeKey, prop: &str) {
     let child_key = {
         let node = match doc.get_node(key) {
@@ -132,14 +133,24 @@ fn remove_child_at_key(doc: &mut Document, key: NodeKey, prop: &str) {
     };
 
     let Some(ck) = child_key else { return };
-    // Only remove registers that we created as plain value wrappers
-    // Don't remove external CRDT nodes from the document
-    let is_register = doc
-        .get_node(ck)
-        .is_some_and(|child| matches!(&child.data, CrdtData::Register { .. }));
-    if is_register {
-        doc.remove_node(ck);
+    remove_subtree(doc, ck);
+}
+
+/// Recursively remove a node and all its descendants from the document.
+fn remove_subtree(doc: &mut Document, key: NodeKey) {
+    let child_keys: Vec<NodeKey> = match doc.get_node(key) {
+        Some(node) => match &node.data {
+            CrdtData::Object { children, .. } => children.values().copied().collect(),
+            CrdtData::List { children, .. } => children.iter().map(|(_, k)| *k).collect(),
+            CrdtData::Map { children, .. } => children.values().copied().collect(),
+            CrdtData::Register { .. } => vec![],
+        },
+        None => return,
+    };
+    for ck in child_keys {
+        remove_subtree(doc, ck);
     }
+    doc.remove_node(key);
 }
 
 /// Get all property names from a LiveObject.

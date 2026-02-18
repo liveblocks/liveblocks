@@ -3,6 +3,7 @@ pub mod crdt;
 pub mod document;
 pub mod handles;
 pub mod id_gen;
+pub mod lson;
 pub mod ops;
 pub mod pool;
 pub mod position;
