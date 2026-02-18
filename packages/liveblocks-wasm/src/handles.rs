@@ -1072,7 +1072,14 @@ impl LiveListHandle {
             };
 
             if children.is_empty() {
-                return JsValue::UNDEFINED;
+                return mutation_result_to_js(&MutationResult {
+                    ops: vec![],
+                    reverse_ops: vec![],
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: list_id,
+                        updates: vec![],
+                    },
+                });
             }
 
             // Generate reverse ops (CREATE chains) for ALL children before mutation
