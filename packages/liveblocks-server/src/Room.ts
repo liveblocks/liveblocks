@@ -55,7 +55,8 @@ import { YjsStorage } from "~/YjsStorage";
 
 import { tryCatch } from "./lib/tryCatch";
 import { UniqueMap } from "./lib/UniqueMap";
-import { makeRoomStateMsg } from "./utils";
+import type { LeasedSession } from "./types";
+import { isLeasedSessionExpired, makeRoomStateMsg } from "./utils";
 
 const messagesDecoder = array(clientMsgDecoder);
 
@@ -160,14 +161,12 @@ type AnonymousUser = {
 /*
 
 Session Types: 
-|                                   | Browser Session | Backend Session | Virtual Session |
+|                                   | Browser Session | Backend Session | Leased Session |
 |-----------------------------------|-----------------|-----------------|-----------------|
 | Sends enter/leave/presence events |        ✓        |                 |        ✓        |
 | Visible to other users in room    |        ✓        |                 |        ✓        |
 | Has WebSocket connection          |        ✓        |                 |                 |
 | Updated from                      |     Browser     |    REST API     |  REST API       |
-
-*Note: VirtualSession is not yet implemented. 
 
 */
 
@@ -647,6 +646,64 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
+  private async sendSessionStartMessages(
+    newSession: BrowserSession<SM, CM>,
+    ticket: Ticket<SM, CM>,
+    ctx?: C,
+    defer: (promise: Promise<void>) => void = () => {
+      throw new Error(
+        "One of your hook handlers returned a promise, but no side effect collector was provided. " +
+          "Pass a `defer` callback to sendSessionStartMessages() to collect async side effects."
+      );
+    }
+  ): Promise<void> {
+    const users: Record<ActorID, BaseUserMeta & { scopes: string[] }> = {};
+    // Add regular sessions
+    for (const session of this.otherSessions(ticket.sessionKey)) {
+      users[session.actor] = {
+        id: session.user.id,
+        info: session.user.info,
+        scopes: session.scopes,
+      };
+    }
+
+    // List all active server sessions
+    const leasedSessions: LeasedSession[] = await this.listLeasedSessions(
+      ctx,
+      defer
+    );
+    // Add server sessions
+    for (const leasedSession of leasedSessions) {
+      users[leasedSession.actorId as ActorID] = {
+        id: leasedSession.sessionId,
+        info: leasedSession.info,
+        scopes: [],
+      };
+    }
+
+    // this must happen before presence messages are sent
+    newSession.send(
+      makeRoomStateMsg(
+        newSession.actor,
+        ticket.sessionKey, // called "nonce" in the protocol
+        newSession.scopes,
+        users,
+        ticket.publicMeta
+      )
+    );
+
+    // Send each server session's full presence to the new user
+    // NOTE: this doesn't exist for other browser sessions because those other sessions send from their frontend clients in response to room state messages.
+    for (const leasedSession of leasedSessions) {
+      newSession.send({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        actor: leasedSession.actorId as ActorID,
+        targetActor: newSession.actor, // full presence to new user
+        data: leasedSession.presence as JsonObject,
+      });
+    }
+  }
+
   /**
    * Registers a new BrowserSession into the Room server's session list, along with
    * the socket connection to use for that BrowserSession, now that it is known.
@@ -655,7 +712,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
    * - Sends a ROOM_STATE message to the socket.
    * - Broadcasts a USER_JOINED message to all other sessions in the room.
    */
-  public startBrowserSession(
+  public async startBrowserSession(
     ticket: Ticket<SM, CM>,
     socket: IServerWebSocket,
     ctx?: C,
@@ -665,7 +722,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           "Pass a `defer` callback to startBrowserSession() to collect async side effects."
       );
     }
-  ): void {
+  ): Promise<void> {
     let existing: SessionKey | undefined;
     while (
       (existing = this.sessions.lookupPrimaryKey(ticket.actor)) !== undefined
@@ -692,24 +749,8 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const newSession = new BrowserSession(ticket, socket, this.#_debug);
     this.sessions.set(ticket.sessionKey, newSession);
 
-    const users: Record<ActorID, BaseUserMeta & { scopes: string[] }> = {};
-    for (const session of this.otherSessions(ticket.sessionKey)) {
-      users[session.actor] = {
-        id: session.user.id,
-        info: session.user.info,
-        scopes: session.scopes,
-      };
-    }
-
-    newSession.send(
-      makeRoomStateMsg(
-        newSession.actor,
-        ticket.sessionKey, // called "nonce" in the protocol
-        newSession.scopes,
-        users,
-        ticket.publicMeta
-      )
-    );
+    // send sessions start messages
+    await this.sendSessionStartMessages(newSession, ticket, ctx, defer);
 
     this.sendToOthers(
       ticket.sessionKey,
@@ -937,7 +978,176 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   }
 
   /**
-   * Will send the given ServerMsg to all Sessions, except the Session
+   * Upsert a leased session. Creates a new session if it doesn't exist (or is expired),
+   * or updates an existing session with merged presence.
+   */
+  public async upsertLeasedSession(
+    sessionId: string,
+    presence: JsonObject,
+    ttl: number,
+    info: IUserInfo,
+    ctx?: C,
+    defer: (promise: Promise<void>) => void = () => {
+      throw new Error(
+        "One of your hook handlers returned a promise, but no side effect collector was provided. " +
+          "Pass a `defer` callback to upsertLeasedSession() to collect async side effects."
+      );
+    }
+  ): Promise<void> {
+    const existingSession = await this.driver.get_leased_session(sessionId);
+    const isExpired =
+      existingSession !== undefined && isLeasedSessionExpired(existingSession);
+
+    if (isExpired) {
+      await this.deleteLeasedSession(existingSession, ctx, defer);
+    }
+
+    if (existingSession === undefined || isExpired) {
+      // Creating new session (or was expired)
+      const actorId = await this.getNextActor();
+      const now = Date.now();
+      const session: LeasedSession = {
+        sessionId,
+        presence,
+        updatedAt: now,
+        info,
+        ttl,
+        actorId,
+      };
+
+      await this.driver.put_leased_session(session);
+
+      // Broadcast USER_JOINED to all existing sessions
+      this.sendToAll(
+        {
+          type: ServerMsgCode.USER_JOINED,
+          actor: actorId,
+          id: sessionId,
+          info,
+          scopes: [],
+        },
+        ctx,
+        defer
+      );
+      // now send the presence to all sessions
+      this.sendToAll(
+        {
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          actor: actorId,
+          data: presence,
+          targetActor: 1,
+        },
+        ctx,
+        defer
+      );
+    } else {
+      // Updating existing session (and not expired)
+      // Merge/patch the presence
+      const mergedPresence = {
+        ...(existingSession.presence as JsonObject),
+        ...presence,
+      };
+      const updatedSession: LeasedSession = {
+        ...existingSession,
+        //info, UserInfo is immutable after creation
+        presence: mergedPresence,
+        updatedAt: Date.now(),
+        ttl,
+      };
+
+      await this.driver.put_leased_session(updatedSession);
+
+      // Broadcast UPDATE_PRESENCE WITHOUT targetActor to all sessions (patch)
+      this.sendToAll(
+        {
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          actor: existingSession.actorId,
+          data: presence, // Send only the patch, not the full merged presence
+          // NO targetActor - this makes it a partial presence patch
+        },
+        ctx,
+        defer
+      );
+    }
+  }
+
+  /**
+   * List all server sessions. As a side effect, it will delete expired sessions.
+   */
+  public async listLeasedSessions(
+    ctx?: C,
+    defer: (promise: Promise<void>) => void = () => {
+      throw new Error(
+        "One of your hook handlers returned a promise, but no side effect collector was provided. " +
+          "Pass a `defer` callback to listLeasedSessions() to collect async side effects."
+      );
+    }
+  ): Promise<LeasedSession[]> {
+    await this.load(ctx);
+    const sessions = await this.driver.list_leased_sessions();
+    const validSessions: LeasedSession[] = [];
+    const toDelete: LeasedSession[] = [];
+    for (const [_, session] of sessions) {
+      if (isLeasedSessionExpired(session)) {
+        toDelete.push(session);
+      } else {
+        validSessions.push(session);
+      }
+    }
+
+    for (const session of toDelete) {
+      await this.deleteLeasedSession(session, ctx, defer);
+    }
+
+    return validSessions;
+  }
+
+  /**
+   * Delete a server session and broadcast USER_LEFT to all sessions.
+   */
+  public async deleteLeasedSession(
+    session: LeasedSession,
+    ctx?: C,
+    defer: (promise: Promise<void>) => void = () => {
+      throw new Error(
+        "One of your hook handlers returned a promise, but no side effect collector was provided. " +
+          "Pass a `defer` callback to deleteLeasedSession() to collect async side effects."
+      );
+    }
+  ): Promise<void> {
+    // Broadcast USER_LEFT to all sessions
+    this.sendToAll(
+      {
+        type: ServerMsgCode.USER_LEFT,
+        actor: session.actorId,
+      },
+      ctx,
+      defer
+    );
+    await this.driver.delete_leased_session(session.sessionId);
+  }
+
+  /**
+   * Delete all server sessions and broadcast USER_LEFT to all sessions.
+   */
+  public async deleteAllLeasedSessions(
+    ctx?: C,
+    defer: (promise: Promise<void>) => void = () => {
+      throw new Error(
+        "One of your hook handlers returned a promise, but no side effect collector was provided. " +
+          "Pass a `defer` callback to deleteAllLeasedSessions() to collect async side effects."
+      );
+    }
+  ): Promise<void> {
+    await this.load(ctx);
+    const sessions = await this.driver.list_leased_sessions();
+    for (const [_, session] of sessions) {
+      await this.deleteLeasedSession(session, ctx, defer);
+    }
+  }
+
+  /**
+   * Will send the given ServerMsg through all Session, except the Session
    * where the message originates from.
    */
   public sendToOthers(

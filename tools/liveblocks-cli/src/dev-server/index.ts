@@ -16,56 +16,66 @@
  */
 
 import { parse } from "@bomb.sh/args";
-import type { JsonObject } from "@liveblocks/core";
-import type { SessionKey, Ticket } from "@liveblocks/server";
-import { DefaultMap, Room } from "@liveblocks/server";
+import { WebsocketCloseCodes as CloseCode } from "@liveblocks/core";
+import type { Room, SessionKey, Ticket } from "@liveblocks/server";
+import { ZenRelay } from "@liveblocks/zenrouter";
 import Bun from "bun";
-import { ZenRelay } from "zenrouter";
 
-import type { SubCommand } from "../SubCommand.js";
+import type { SubCommand } from "~/interfaces/SubCommand";
+import { bold, dim, green, red, yellow } from "~/lib/term-colors";
+
 import { authorizeWebSocket } from "./auth";
-import { BunSQLiteDriver } from "./plugins/BunSQLiteDriver";
+import type { ClientMeta, RoomMeta, SessionMeta } from "./db/rooms";
+import * as RoomsDB from "./db/rooms";
+import {
+  buildFixPrompt,
+  checkLiveblocksSetup,
+} from "./lib/check-liveblocks-setup";
+import { copyToClipboard } from "./lib/clipboard";
+import { isPortInUse } from "./lib/probe-port";
+import { warn } from "./lib/xwarn";
 import { zen as authRoutes } from "./routes/auth";
-import { zen as mainRoutes } from "./routes/main";
+import { zen as clientApiRoutes } from "./routes/client-api";
 import { zen as publicRoutes } from "./routes/public";
-
-type RoomMeta = string; // Room metadata: just use the room ID
-type SessionMeta = never;
-type ClientMeta = JsonObject; // Public session metadata, sent to clients in ROOM_STATE
+import { zen as restApiRoutes } from "./routes/rest-api";
 
 type SocketData = {
-  readonly room: Room<RoomMeta, SessionMeta, ClientMeta>;
-  readonly ticket: Ticket<SessionMeta, ClientMeta>;
-  readonly sessionKey: SessionKey;
+  readonly room?: Room<RoomMeta, SessionMeta, ClientMeta>;
+  readonly ticket?: Ticket<SessionMeta, ClientMeta>;
+  readonly sessionKey?: SessionKey;
+  readonly refuseConnection?: {
+    readonly code: CloseCode;
+    readonly message: string;
+  };
 };
 
-// Stores a list of all "loaded room instances"
-const rooms = new DefaultMap<string, Room<RoomMeta, SessionMeta, ClientMeta>>(
-  (roomId) => {
-    const storage = new BunSQLiteDriver(
-      `.liveblocks/v1/rooms/${encodeURIComponent(roomId)}.db`
-    );
-    const room = new Room<RoomMeta, SessionMeta, ClientMeta>(roomId, {
-      storage,
-      // hooks: {
-      //   onSessionDidStart(session) {
-      //     const numSessions = room.numSessions;
-      //     console.log(`Users in room: ${numSessions - 1} → ${numSessions}`);
-      //   },
-      //
-      //   onSessionDidEnd(session) {
-      //     const numSessions = room.numSessions;
-      //     console.log(`Users in room: ${numSessions + 1} → ${numSessions}`);
-      //   },
-      // },
-    });
-    return room;
+function refuseSocketConnection(
+  server: Bun.Server<SocketData>,
+  req: Request,
+  code: CloseCode,
+  message: string
+): Response | undefined {
+  const success = server.upgrade(req, {
+    data: {
+      refuseConnection: { code, message },
+    },
+  });
+
+  if (success) {
+    // Bun automatically returns a 101 Switching Protocols if the upgrade succeeds.
+    // The connection will be closed in the open handler.
+    return undefined;
   }
-);
+
+  // If upgrade failed, return an error response
+  return new Response("Could not upgrade to WebSocket", { status: 426 });
+}
 
 const zen = new ZenRelay();
 zen.relay("/v2/authorize-user/*", authRoutes); // Require sk_* header
-zen.relay("/v2/*", mainRoutes); // Require JWT header
+zen.relay("/v2/identify-user/*", authRoutes); // Require sk_* header
+zen.relay("/v2/c/*", clientApiRoutes); // Require JWT header
+zen.relay("/v2/*", restApiRoutes); // Require Auth header (Bearer sk_*)
 zen.relay("/*", publicRoutes); // Require no auth
 
 // L → 1
@@ -74,14 +84,23 @@ zen.relay("/*", publicRoutes); // Require no auth
 // E → 3 (mirrored)
 const DEFAULT_PORT = 1153;
 
+/**
+ * Parses a string as a positive integer, returning undefined if it's not valid.
+ */
+function parsePort(value: string | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 && n <= 65535 ? n : undefined;
+}
+
 const dev: SubCommand = {
   description: "Start the local Liveblocks dev server",
 
-  run(_argv) {
+  async run(_argv) {
     const args = parse(_argv, {
-      string: ["port"],
-      boolean: ["help"],
-      default: { port: DEFAULT_PORT },
+      string: ["port", "host"],
+      boolean: ["help", "check", "ephemeral", "ci"],
+      default: { check: true },
       alias: { h: "help", p: "port" },
     });
 
@@ -91,27 +110,62 @@ const dev: SubCommand = {
       console.log("Start the local Liveblocks dev server");
       console.log();
       console.log("Options:");
-      console.log(
-        `  -p, --port   Port to listen on (default: ${DEFAULT_PORT})`
-      );
-      console.log("  -h, --help   Show this help message");
+      console.log(`  --port, -p    Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
+      console.log("  --host        Host to bind to (default: localhost)");
+      console.log("  --ci          Best defaults for CI (same as --ephemeral --no-check)"); // prettier-ignore
+      console.log("  --no-check    Skip project setup check");
+      console.log("  --ephemeral   Do not persist state between restarts"); // prettier-ignore
+      console.log("                  (Recommended for running unit tests.)"); // prettier-ignore
+      console.log("  --help, -h    Show this help message");
       return;
     }
 
-    const port = Number(args.port) || DEFAULT_PORT;
+    // --ci is a shorthand for --ephemeral --no-check
+    if (args.ci) {
+      args.ephemeral = true;
+      args.check = false;
+    }
+
+    // Precedence: CLI flag > env var > default
+    const port =
+      parsePort(args.port) ??
+      parsePort(process.env.LIVEBLOCKS_DEVSERVER_PORT) ??
+      DEFAULT_PORT;
+    const hostname =
+      args.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
+
+    const ephemeralPath = args.ephemeral ? RoomsDB.useEphemeralStorage() : null;
+
+    if (await isPortInUse(port, hostname)) {
+      console.error(
+        `Port ${port} is already in use.\nIs another dev server already running?`
+      );
+      process.exit(1);
+    }
+
     const server = Bun.serve<SocketData>({
+      hostname,
       port,
 
       async fetch(req, server) {
         // WebSocket bypass - handle upgrades directly
         if (req.headers.get("Upgrade") === "websocket") {
           const authResult = authorizeWebSocket(req);
-          if (!authResult) return new Response("Unauthorized", { status: 403 });
 
-          const [roomId, ticketData] = authResult;
+          if (!authResult.ok) {
+            warn(authResult.xwarn, true);
+            return refuseSocketConnection(
+              server,
+              req,
+              CloseCode.NOT_ALLOWED,
+              "You have no access to this room"
+            );
+          }
+
+          const { roomId, ticketData } = authResult;
 
           // Look up or create the room for the requested room ID
-          const room = rooms.getOrCreate(roomId);
+          const room = RoomsDB.getOrCreate(roomId);
           await room.load();
 
           const ticket = await room.createTicket(ticketData);
@@ -122,6 +176,7 @@ const dev: SubCommand = {
           if (success) {
             // Bun automatically returns a 101 Switching Protocols
             // if the upgrade succeeds
+            console.log(`${green("101")} WS ${new URL(req.url).pathname}`);
             return undefined;
           }
 
@@ -131,7 +186,21 @@ const dev: SubCommand = {
         }
 
         // Defer all other routing to ZenRouter
-        return zen.fetch(req);
+        // TODO: Maybe port this logging to ZenRouter natively
+        const url = new URL(req.url);
+        const route = `${req.method} ${url.pathname}`;
+        const resp = await zen.fetch(req);
+        const status = resp.status;
+        const colorStatus =
+          status >= 500
+            ? red(String(status))
+            : status >= 400
+              ? yellow(String(status))
+              : green(String(status));
+        console.log(`${colorStatus} ${route}`);
+        const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
+        warn(warnMsg, !resp.ok);
+        return resp;
       },
 
       // Bun will call this if an error happens during the handling of an HTTP request
@@ -144,21 +213,36 @@ const dev: SubCommand = {
 
       websocket: {
         // The socket is opened
-        open(ws): void {
-          const { room, ticket } = ws.data;
-          room.startBrowserSession(ticket, ws);
+        async open(ws): Promise<void> {
+          const { refuseConnection, room, ticket } = ws.data;
+
+          // If this connection should be refused, close it immediately
+          if (refuseConnection) {
+            ws.close(refuseConnection.code, refuseConnection.message);
+            return;
+          }
+
+          if (room && ticket) {
+            await room.startBrowserSession(ticket, ws);
+          }
         },
 
         // A message is received
         async message(ws, data): Promise<void> {
           const { room, sessionKey } = ws.data;
-          await room.handleData(sessionKey, data);
+          // Ignore messages for refused connections
+          if (room && sessionKey) {
+            await room.handleData(sessionKey, data);
+          }
         },
 
         // The socket is closed by the client side
         close(ws, code, message): void {
           const { room, sessionKey } = ws.data;
-          room.endBrowserSession(sessionKey, code, message);
+          // Ignore close events for refused connections
+          if (room && sessionKey) {
+            room.endBrowserSession(sessionKey, code, message);
+          }
         },
 
         // The socket is ready to receive more data
@@ -175,6 +259,46 @@ const dev: SubCommand = {
     console.log(
       `Liveblocks dev server running at http://${server.hostname}:${server.port}`
     );
+    if (ephemeralPath) {
+      console.log(dim(`Ephemeral mode, using ${ephemeralPath}`));
+    }
+
+    // Check if the current project is configured to use the local dev server
+    const configIssues = args.check ? await checkLiveblocksSetup(port) : [];
+    const baseUrl = `http://localhost:${port}`;
+
+    console.log(
+      dim("Press ") +
+        bold("q") +
+        dim(" to quit, ") +
+        bold("c") +
+        dim(" to clear")
+    );
+
+    // Listen for keypresses
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.on("data", (data: Buffer) => {
+        const ch = data.toString();
+        if (ch === "q" || ch === "\x03" /* Ctrl-C */) {
+          void server.stop().then(() => {
+            RoomsDB.cleanup();
+            process.exit(0);
+          });
+        } else if (ch === "c") {
+          console.clear();
+        } else if (ch === "p") {
+          if (configIssues.length > 0) {
+            const prompt = buildFixPrompt(configIssues, baseUrl);
+            copyToClipboard(prompt);
+            console.log(dim("Copied AI fix prompt to clipboard"));
+          } else {
+            console.log(dim("No setup issues detected"));
+          }
+        }
+      });
+    }
   },
 };
 

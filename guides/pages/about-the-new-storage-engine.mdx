@@ -34,6 +34,16 @@ Initial load time will be faster, especially for larger documents: the server
 can start streaming immediately without buffering, and our wire protocol has
 been compacted to reduce transmission overhead.
 
+Several [previously documented platform limits](/docs/platform/limits) have been
+raised significantly for rooms on the v2 engine:
+
+| Item                    | v1 limit | v2 limit |
+| ----------------------- | -------- | -------- |
+| Broadcast event message | 1 MB     | 32 MB    |
+| `LiveObject`            | 128 kB   | 2 MB     |
+| `LiveMap` value         | 128 kB   | 2 MB     |
+| `LiveList` value        | 128 kB   | 2 MB     |
+
 ## How to enable it
 
 The engine is assigned at room creation time and cannot be changed afterward.

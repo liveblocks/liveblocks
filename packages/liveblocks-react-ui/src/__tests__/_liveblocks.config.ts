@@ -2,7 +2,9 @@ import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  publicApiKey: "pk_localdev",
+  baseUrl: "http://localhost:1154",
+  polyfills: { WebSocket: globalThis.WebSocket },
   lostConnectionTimeout: 200, // Use a very quick 200ms
 });
 

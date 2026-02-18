@@ -274,7 +274,10 @@ function incrementWithinViewport(pos: Pos, viewport: number): Pos | null {
   }
 
   // Strip trailing zeros
-  while (result.length > 1 && result.charCodeAt(result.length - 1) === MIN_CODE) {
+  while (
+    result.length > 1 &&
+    result.charCodeAt(result.length - 1) === MIN_CODE
+  ) {
     result = result.slice(0, -1);
   }
 

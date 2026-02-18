@@ -128,11 +128,11 @@ describe("room", () => {
     const ticket3 = await room.createTicket();
     const ticket4 = await room.createTicket();
     const ticket5 = await room.createTicket();
-    room.startBrowserSession(ticket1, new MockServerWebSocket());
-    room.startBrowserSession(ticket2, new MockServerWebSocket());
-    room.startBrowserSession(ticket3, new MockServerWebSocket());
-    room.startBrowserSession(ticket4, new MockServerWebSocket());
-    room.startBrowserSession(ticket5, new MockServerWebSocket());
+    await room.startBrowserSession(ticket1, new MockServerWebSocket());
+    await room.startBrowserSession(ticket2, new MockServerWebSocket());
+    await room.startBrowserSession(ticket3, new MockServerWebSocket());
+    await room.startBrowserSession(ticket4, new MockServerWebSocket());
+    await room.startBrowserSession(ticket5, new MockServerWebSocket());
     expect(room.numSessions).toEqual(5);
   });
 
@@ -143,11 +143,11 @@ describe("room", () => {
     const ticket2 = await room.createTicket();
     const ticket3 = await room.createTicket({ actor: 13 as ActorID });
     expect(room.numSessions).toEqual(0);
-    room.startBrowserSession(ticket1, new MockServerWebSocket());
+    await room.startBrowserSession(ticket1, new MockServerWebSocket());
     expect(room.numSessions).toEqual(1);
-    room.startBrowserSession(ticket2, new MockServerWebSocket());
+    await room.startBrowserSession(ticket2, new MockServerWebSocket());
     expect(room.numSessions).toEqual(2);
-    room.startBrowserSession(ticket3, new MockServerWebSocket());
+    await room.startBrowserSession(ticket3, new MockServerWebSocket());
     expect(room.numSessions).toEqual(2); // Session 1 will have been kicked!
   });
 
@@ -155,7 +155,7 @@ describe("room", () => {
     const room = new Room("my-room");
     await room.load();
     const ticket = await room.createTicket();
-    room.startBrowserSession(ticket, new MockServerWebSocket());
+    await room.startBrowserSession(ticket, new MockServerWebSocket());
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
   });
 });

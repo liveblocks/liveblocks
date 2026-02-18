@@ -75,6 +75,7 @@ import {
 
 import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
+import { xwarn } from "./lib/xwarn";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -651,6 +652,18 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
+export type SetPresenceOptions = {
+  userId: string;
+  data: JsonObject;
+  userInfo?: {
+    name?: string;
+    avatar?: string;
+    color?: string;
+    [key: string]: Json | undefined;
+  };
+  ttl?: number;
+};
+
 /**
  * Converts ISO-formatted date strings to Date instances on RoomDataPlain
  * values.
@@ -702,7 +715,8 @@ function inflateWebKnowledgeSourceLink(
 export class Liveblocks {
   readonly #secret: string;
   readonly #baseUrl: URL;
-
+  /** Only used as a hint to produce better error messages. */
+  readonly #localDev: boolean;
   /**
    * Interact with the Liveblocks API from your Node.js backend.
    */
@@ -712,6 +726,8 @@ export class Liveblocks {
     assertSecretKey(secret, "secret");
     this.#secret = secret;
     this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
+    this.#localDev =
+      !!options.baseUrl && /^https?:\/\/localhost[:/]/.test(options.baseUrl);
   }
 
   async #post(
@@ -731,6 +747,7 @@ export class Liveblocks {
       body: JSON.stringify(json),
       signal: options?.signal,
     });
+    xwarn(res, "POST", path);
     return res;
   }
 
@@ -746,12 +763,14 @@ export class Liveblocks {
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, {
+    const res = await fetch(url, {
       method: "PUT",
       headers,
       body: body as Uint8Array<ArrayBuffer>,
       signal: options?.signal,
     });
+    xwarn(res, "PUT", path);
+    return res;
   }
 
   async #delete(
@@ -769,6 +788,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res, "DELETE", path);
     return res;
   }
 
@@ -787,6 +807,7 @@ export class Liveblocks {
       headers,
       signal: options?.signal,
     });
+    xwarn(res, "GET", path);
     return res;
   }
 
@@ -824,7 +845,8 @@ export class Liveblocks {
       this.#post.bind(this),
       userId,
       options?.userInfo,
-      options?.organizationId ?? options?.tenantId
+      options?.organizationId ?? options?.tenantId,
+      this.#localDev
     );
   }
 
@@ -914,10 +936,12 @@ export class Liveblocks {
     } catch (er) {
       return {
         status: 503 /* Service Unavailable */,
-        body: `Call to ${urljoin(
-          this.#baseUrl,
-          path
-        )} failed. See "error" for more information.`,
+        body: this.#localDev
+          ? "Could not connect to your Liveblocks dev server. Is it running?"
+          : `Call to ${urljoin(
+              this.#baseUrl,
+              path
+            )} failed. See "error" for more information.`,
         error: er as Error | undefined,
       };
     }
@@ -1266,6 +1290,38 @@ export class Liveblocks {
     const res = await this.#post(
       url`/v2/rooms/${roomId}/broadcast_event`,
       message,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Sets ephemeral presence for a user in a room without requiring a WebSocket connection.
+   * The presence data will automatically expire after the specified TTL.
+   * This is useful for scenarios like showing an AI agent's presence in a room.
+   *
+   * @param roomId The id of the room to set presence in.
+   * @param params.userId The ID of the user to set presence for.
+   * @param params.data The presence data as a JSON object.
+   * @param params.userInfo (optional) Metadata about the user or agent
+   * @param params.ttl (optional) Time-to-live in seconds. If not specified, the default TTL is 60 seconds. (minimum: 2, maximum: 3599).
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async setPresence(
+    roomId: string,
+    params: SetPresenceOptions,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/presence`,
+      {
+        userId: params.userId,
+        data: params.data,
+        userInfo: params.userInfo,
+        ttl: params.ttl,
+      },
       options
     );
     if (!res.ok) {

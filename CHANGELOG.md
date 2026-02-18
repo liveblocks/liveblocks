@@ -1,8 +1,6 @@
 ## vNEXT (not yet released)
 
-- ...
-
-## v3.14.0 (WIP)
+## v3.14.0
 
 This release adds support for opting-in to the new storage engine on a per-room
 basis. The new storage engine can support larger documents, is more performant,
@@ -36,7 +34,8 @@ or:
   `client.enterRoom("my-new-room", { engine: 2 })`
 - Internal protocol optimizations to support larger storage documents
 - Add new config option `createClient({ baseUrl: "https://..." })` to allow
-  connecting to alternative hosted Liveblocks environments
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
 - Improve `LiveList` performance when processing large batches of operations
 - Improve `LiveList.push()` efficiency to prevent unbounded position string
   growth over time
@@ -49,7 +48,8 @@ or:
 - Support for selecting the preferred engine when entering new rooms:
   `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
 - Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
-  connecting to alternative hosted Liveblocks environments
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
 - Exclude marking a thread or inbox notification as read from blocking
   navigation when `preventUnsavedChanges` is enabled.
 
@@ -59,10 +59,24 @@ or:
   `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
   `document.body`.
 
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `enterRoom("my-new-room", { engine: 2 })`
+
 ### `@liveblocks/node`
 
+- Add new `.setPresence()` method to set ephemeral presence for a user in a room
+  via the REST API, without requiring a WebSocket connection
 - Deprecated `tenantId` parameter in client methods, use `organizationId`
   instead.
+
+## v3.13.5
+
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
 
 ## v3.13.4
 
