@@ -128,13 +128,13 @@ pub fn set_parent_key_op(id: &str, parent_key: &str) -> Op {
 }
 
 /// Convert an Op to a JsValue via serde-wasm-bindgen.
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 pub fn op_to_js(op: &Op) -> wasm_bindgen::JsValue {
     serde_wasm_bindgen::to_value(op).unwrap_or(wasm_bindgen::JsValue::UNDEFINED)
 }
 
 /// Convert a JsValue to an Op via serde-wasm-bindgen.
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "wasm")]
 pub fn op_from_js(val: wasm_bindgen::JsValue) -> Result<Op, String> {
     serde_wasm_bindgen::from_value(val).map_err(|e| e.to_string())
 }

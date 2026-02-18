@@ -65,11 +65,11 @@ pub fn dispatch_server_msg<C: WebSocketConnector, H: HttpClient>(
         }
 
         ServerMsg::RejectStorageOp {
-            op_ids,
-            reason,
+            op_ids: _op_ids,
+            reason: _reason,
         } => {
             #[cfg(debug_assertions)]
-            eprintln!("Storage ops rejected: {:?} - {}", op_ids, reason);
+            eprintln!("Storage ops rejected: {:?} - {}", _op_ids, _reason);
         }
 
         ServerMsg::UpdateYdoc {

@@ -175,7 +175,7 @@ jobs:
 
       - name: Build WASM package
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: wasm-pack build --target nodejs
+        run: wasm-pack build --target nodejs -- --features wasm
         working-directory: packages/liveblocks-wasm
 
       - name: Install dependencies
@@ -420,7 +420,7 @@ jobs:
 
       - name: Build WASM package
         if: needs.check_for_code_changes.outputs.changes == 'true'
-        run: wasm-pack build --target nodejs
+        run: wasm-pack build --target nodejs -- --features wasm
         working-directory: packages/liveblocks-wasm
 
       - name: Install dependencies
