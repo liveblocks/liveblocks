@@ -895,7 +895,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const value = lsonToLiveNode(element);
       value._setParentLink(this, position);
-      this._insertAndSort(value);
+      this.#insert(value);
 
       attachSubtreeFromOps(result.ops, value, this._pool, this._id, position);
 
@@ -961,7 +961,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // WASM mutation path: position comes from WASM
     const shadow = this._pool?.wasmShadow;
     if (shadow && this._pool && this._id) {
-      const item = this.#items[index];
+      const item = nn(this.#items.at(index));
 
       const result = shadow.listMove(
         this._id,
@@ -975,7 +975,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
       if (setOp && setOp.type === OpCode.SET_PARENT_KEY) {
         item._setParentLink(this, setOp.parentKey);
-        this._sortItems();
+        this.#items.reposition(item);
+        this.invalidate();
       }
 
       const storageUpdates = translateStorageUpdate(result.update, this._pool);
@@ -1107,7 +1108,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         for (const item of this.#items) {
           item._detach();
         }
-        this.#items = [];
+        this.#items.clear();
         this.invalidate();
 
         const result = shadow.listClear(this._id) as WasmMutationResult;
@@ -1447,14 +1448,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   override _getInternalChildren(): [string, LiveNode][] {
-    return this.#items.map((item, i) => [String(i), item]);
+    return Array.from(this.#items, (item, i) => [String(i), item] as [string, LiveNode]);
   }
 
   /** @internal */
   _toWasmValue(): unknown {
     return {
       __lb_type: "LiveList",
-      __lb_data: this.#items.map((item) =>
+      __lb_data: Array.from(this.#items, (item) =>
         item instanceof LiveRegister ? item.data : item._toWasmValue()
       ),
     };

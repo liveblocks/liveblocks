@@ -1,7 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 
-const IS_WASM = process.env.LIVEBLOCKS_ENGINE === "wasm";
-
 import type { CrdtEngine } from "../../crdts/impl-selector";
 import {
   _setEngine,

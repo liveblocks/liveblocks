@@ -9,9 +9,8 @@
 import type { Pos } from "../src/lib/position";
 import { makePosition as jsMakePosition } from "../src/lib/position";
 import type { Op } from "../src/protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../src/protocol/SerializedCrdt";
-import { CrdtType } from "../src/protocol/SerializedCrdt";
-import type { NodeMap } from "../src/types/NodeMap";
+import type { IdTuple, NodeMap, SerializedCrdt } from "../src/protocol/StorageNode";
+import { CrdtType } from "../src/protocol/StorageNode";
 import { getTreesDiffOperations as jsGetTreesDiffOperations } from "../src/crdts/liveblocks-helpers";
 
 export interface BenchEngine {

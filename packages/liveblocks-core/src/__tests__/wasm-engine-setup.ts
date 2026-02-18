@@ -16,8 +16,7 @@
 import type { CrdtEngine, RoomStorageEngineJS } from "../crdts/impl-selector";
 import { _setEngine } from "../crdts/impl-selector";
 import type { Op } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import type { NodeMap } from "../types/NodeMap";
+import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";
 
 if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
   try {

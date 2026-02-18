@@ -4,8 +4,8 @@
  */
 import { bench, describe } from "vitest";
 
-import type { IdTuple, SerializedCrdt } from "../src/protocol/SerializedCrdt";
-import { CrdtType } from "../src/protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "../src/protocol/StorageNode";
+import { CrdtType } from "../src/protocol/StorageNode";
 import { generateNodeMap, jsEngine, loadWasmEngine } from "./setup";
 
 // Generate snapshot data at various sizes

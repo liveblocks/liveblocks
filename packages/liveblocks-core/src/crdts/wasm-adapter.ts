@@ -14,8 +14,7 @@
 import type { Pos } from "../lib/position";
 import { makePosition as jsMakePosition } from "../lib/position";
 import type { Op } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import type { NodeMap } from "../types/NodeMap";
+import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";
 import type {
   CrdtDocumentShadow,
   CrdtEngine,

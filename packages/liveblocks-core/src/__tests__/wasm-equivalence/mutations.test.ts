@@ -15,7 +15,7 @@ import type { LiveList } from "../../crdts/LiveList";
 import type { LiveMap } from "../../crdts/LiveMap";
 import type { WasmMutationResult } from "../../crdts/wasm-mutation-adapter";
 import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import type { StorageNode } from "../../protocol/StorageNode";
 import {
   createSerializedList,
   createSerializedMap,
@@ -99,7 +99,7 @@ beforeAll(() => {
  * Create a WASM DocumentHandle from serialized items with a given connection ID.
  */
 function createWasmDoc(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   connectionId: number
 ): WasmDocumentHandle {
   const doc = wasmPkg.DocumentHandle.fromItems(items);
@@ -126,7 +126,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     const ACTOR = 1;
 
     it("set(key, value) — new key", async () => {
-      const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
+      const items: StorageNode[] = [createSerializedRoot({})];
 
       // --- JS path ---
       const { root } = await prepareIsolatedStorageTest<{
@@ -164,7 +164,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("set(key, value) — existing key", () => {
-      const items: IdTuple<SerializedCrdt>[] = [
+      const items: StorageNode[] = [
         createSerializedRoot({ name: "Alice" }),
       ];
 
@@ -191,7 +191,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("update({a, b}) — multiple keys", () => {
-      const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
+      const items: StorageNode[] = [createSerializedRoot({})];
 
       const doc = createWasmDoc(items, ACTOR);
       const wasmRoot = doc.root!;
@@ -217,7 +217,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("delete(key) — existing key", () => {
-      const items: IdTuple<SerializedCrdt>[] = [
+      const items: StorageNode[] = [
         createSerializedRoot({ name: "Alice" }),
       ];
 
@@ -248,7 +248,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
   describe("LiveList", () => {
     const ACTOR = 1;
 
-    function makeListItems(): IdTuple<SerializedCrdt>[] {
+    function makeListItems(): StorageNode[] {
       return [
         createSerializedRoot({}),
         createSerializedList("0:0", "root", "items"),
@@ -407,7 +407,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
   describe("LiveMap", () => {
     const ACTOR = 1;
 
-    function makeMapItems(): IdTuple<SerializedCrdt>[] {
+    function makeMapItems(): StorageNode[] {
       return [
         createSerializedRoot({}),
         createSerializedMap("0:0", "root", "myMap"),
@@ -496,7 +496,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     const ACTOR = 1;
 
     it("LiveObject.set produces same op types", async () => {
-      const items: IdTuple<SerializedCrdt>[] = [
+      const items: StorageNode[] = [
         createSerializedRoot({ x: 1 }),
       ];
 
@@ -524,7 +524,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("LiveList.push produces same op types", async () => {
-      const items: IdTuple<SerializedCrdt>[] = [
+      const items: StorageNode[] = [
         createSerializedRoot({}),
         createSerializedList("0:0", "root", "items"),
       ];
@@ -548,7 +548,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("LiveMap.set (new key) produces same op types", async () => {
-      const items: IdTuple<SerializedCrdt>[] = [
+      const items: StorageNode[] = [
         createSerializedRoot({}),
         createSerializedMap("0:0", "root", "myMap"),
       ];
@@ -577,7 +577,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
   // ============================================================
   describe("setConnectionId", () => {
     it("opIds use the correct connection ID prefix", () => {
-      const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
+      const items: StorageNode[] = [createSerializedRoot({})];
 
       const doc = createWasmDoc(items, 42);
       const wasmRoot = doc.root!;
@@ -590,7 +590,7 @@ describeMaybe("JS↔WASM Mutation Equivalence", () => {
     });
 
     it("changing connectionId updates opId prefix", () => {
-      const items: IdTuple<SerializedCrdt>[] = [createSerializedRoot({})];
+      const items: StorageNode[] = [createSerializedRoot({})];
 
       const doc = createWasmDoc(items, 1);
       const root1 = doc.root!;

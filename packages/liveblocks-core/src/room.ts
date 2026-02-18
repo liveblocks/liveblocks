@@ -83,6 +83,7 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type {
+  IdTuple,
   NodeMap,
   NodeStream,
   SerializedCrdt,
@@ -1711,13 +1712,34 @@ export function createRoom<
     }
 
     if (context.root !== undefined) {
-      const currentItems: NodeMap = new Map();
-      for (const [id, crdt] of context.pool.nodes) {
-        currentItems.set(id, crdt._serialize());
-      }
+      let ops: Op[];
+      const items = Array.from(nodes.entries()) as IdTuple<SerializedCrdt>[];
 
-      // Get operations that represent the diff between 2 states.
-      const ops = getTreesDiffOperations(currentItems, nodes);
+      if (context.wasmShadow) {
+        // Fast path: diff persistent shadow against new snapshot
+        // (avoids serializing all JS nodes on every reconnect)
+        try {
+          ops = context.wasmShadow.diffAgainstSnapshot(items);
+          // Re-sync shadow to authoritative server state
+          context.wasmShadow.initFromItems(items);
+        } catch {
+          // Shadow desync — fall back to JS diff and discard shadow
+          context.wasmShadow.free();
+          context.wasmShadow = null;
+          const currentItems: NodeMap = new Map();
+          for (const [id, node] of context.pool.nodes) {
+            currentItems.set(id, node._serialize());
+          }
+          ops = getTreesDiffOperations(currentItems, nodes);
+        }
+      } else {
+        // Fallback: original JS path
+        const currentItems: NodeMap = new Map();
+        for (const [id, node] of context.pool.nodes) {
+          currentItems.set(id, node._serialize());
+        }
+        ops = getTreesDiffOperations(currentItems, nodes);
+      }
 
       const result = applyRemoteOps(ops);
       notify(result.updates);
@@ -1774,42 +1796,6 @@ export function createRoom<
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
     context.historyEngine.restoreUndoCheckpoint(stackSizeBefore);
-  }
-
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    let ops: Op[];
-    if (context.wasmShadow) {
-      // Fast path: diff persistent shadow against new snapshot
-      // (avoids serializing all JS nodes on every reconnect)
-      try {
-        ops = context.wasmShadow.diffAgainstSnapshot(items);
-        // Re-sync shadow to authoritative server state
-        context.wasmShadow.initFromItems(items);
-      } catch {
-        // Shadow desync — fall back to JS diff and discard shadow
-        context.wasmShadow.free();
-        context.wasmShadow = null;
-        const currentItems: NodeMap = new Map();
-        for (const [id, node] of context.pool.nodes) {
-          currentItems.set(id, node._serialize());
-        }
-        ops = getTreesDiffOperations(currentItems, new Map(items));
-      }
-    } else {
-      // Fallback: original JS path
-      const currentItems: NodeMap = new Map();
-      for (const [id, node] of context.pool.nodes) {
-        currentItems.set(id, node._serialize());
-      }
-      ops = getTreesDiffOperations(currentItems, new Map(items));
-    }
-
-    const result = applyRemoteOps(ops);
-    notify(result.updates);
   }
 
   type NotifyUpdates = {

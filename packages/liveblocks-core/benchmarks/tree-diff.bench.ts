@@ -6,7 +6,7 @@
  */
 import { bench, describe } from "vitest";
 
-import type { IdTuple, SerializedCrdt } from "../src/protocol/SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "../src/protocol/StorageNode";
 import { generateNodeMap, jsEngine, loadWasmEngine, loadWasmShadow, mutateNodeMap } from "./setup";
 
 // Pre-generate test data at various sizes
