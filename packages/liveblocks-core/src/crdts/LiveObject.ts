@@ -35,8 +35,8 @@ import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
 import type { WasmMutationResult } from "./wasm-mutation-adapter";
 import {
-  translateStorageUpdate,
   attachSubtreeFromOps,
+  translateStorageUpdate,
 } from "./wasm-mutation-adapter";
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
@@ -682,7 +682,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         if (typeof value === "function" || typeof value === "symbol") continue;
 
         if (isLiveStructure(value)) {
-          wasmPatch[key] = (value as AbstractCrdt)._toWasmValue();
+          wasmPatch[key] = (value as LiveNode)._toWasmValue();
           liveNodeEntries.push([key, value]);
         } else {
           wasmPatch[key] = value;
@@ -897,7 +897,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const data: Record<string, unknown> = {};
     for (const [key, value] of this.#map) {
       if (isLiveNode(value)) {
-        data[key] = (value as AbstractCrdt)._toWasmValue();
+        data[key] = (value as LiveNode)._toWasmValue();
       } else {
         data[key] = value;
       }

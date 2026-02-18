@@ -8,8 +8,8 @@
 import { afterEach, describe, expect, test } from "vitest";
 
 import { OpCode } from "../../protocol/Op";
-import { CrdtType } from "../../protocol/StorageNode";
 import type { NodeMap } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import {
   FIRST_POSITION,
   FOURTH_POSITION,

@@ -11,8 +11,8 @@ import {
   makePosition,
 } from "../../crdts/wasm-adapter";
 import { OpCode } from "../../protocol/Op";
-import { CrdtType } from "../../protocol/StorageNode";
 import type { NodeMap } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import { FIRST_POSITION, SECOND_POSITION } from "../_utils";
 
 describe("wasm-adapter basics", () => {

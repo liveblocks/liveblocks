@@ -9,7 +9,6 @@
 import type { ClientWireOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
@@ -182,7 +181,7 @@ export function attachSubtreeFromOps(
   if (!rootOp) return;
 
   // Attach root
-  (rootNode as AbstractCrdt)._attachDirect(rootOp.id, pool);
+  rootNode._attachDirect(rootOp.id, pool);
 
   // Recursively attach children
   attachChildrenFromOps(createOps, rootNode, rootOp.id, pool);
@@ -212,7 +211,7 @@ function attachChildrenFromOps(
       const childOp = childOps[i];
       const [, childNode] = children[i];
 
-      (childNode as AbstractCrdt)._attachDirect(childOp.id, pool);
+      childNode._attachDirect(childOp.id, pool);
       attachChildrenFromOps(ops, childNode, childOp.id, pool);
     }
   } else {
@@ -223,7 +222,7 @@ function attachChildrenFromOps(
 
       const [, childNode] = childEntry;
 
-      (childNode as AbstractCrdt)._attachDirect(childOp.id, pool);
+      childNode._attachDirect(childOp.id, pool);
       attachChildrenFromOps(ops, childNode, childOp.id, pool);
     }
   }
@@ -237,7 +236,7 @@ function getListItemImmutable(node: LiveNode, index: number): unknown {
   const list = node as unknown as { get?(i: number): unknown };
   if (typeof list.get === "function") {
     const item = list.get(index);
-    if (item != null && typeof (item as { toImmutable?(): unknown }).toImmutable === "function") {
+    if (item !== null && item !== undefined && typeof (item as { toImmutable?(): unknown }).toImmutable === "function") {
       return (item as { toImmutable(): unknown }).toImmutable();
     }
     return item;
@@ -254,5 +253,5 @@ function getLiveNodeChildren(node: LiveNode): [string, LiveNode][] {
   if (node instanceof LiveRegister) {
     return [];
   }
-  return (node as AbstractCrdt)._getInternalChildren();
+  return (node as LiveNode)._getInternalChildren();
 }

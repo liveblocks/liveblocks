@@ -24,8 +24,8 @@ import type { ToImmutable } from "./utils";
 import { makePosition } from "./wasm-adapter";
 import type { WasmMutationResult } from "./wasm-mutation-adapter";
 import {
-  translateStorageUpdate,
   attachSubtreeFromOps,
+  translateStorageUpdate,
 } from "./wasm-mutation-adapter";
 
 export type LiveListUpdateDelta =
@@ -880,7 +880,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const shadow = this._pool?.wasmShadow;
     if (shadow && this._pool && this._id) {
       const wasmValue = isLiveStructure(element)
-        ? (element as AbstractCrdt)._toWasmValue()
+        ? (element as LiveNode)._toWasmValue()
         : element;
 
       const result = shadow.listInsert(
@@ -1190,7 +1190,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const shadow = this._pool.wasmShadow;
       if (shadow) {
         const wasmValue = isLiveStructure(item)
-          ? (item as AbstractCrdt)._toWasmValue()
+          ? (item as LiveNode)._toWasmValue()
           : item;
 
         const result = shadow.listSet(

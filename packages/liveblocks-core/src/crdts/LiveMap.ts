@@ -22,8 +22,8 @@ import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
 import type { WasmMutationResult } from "./wasm-mutation-adapter";
 import {
-  translateStorageUpdate,
   attachSubtreeFromOps,
+  translateStorageUpdate,
 } from "./wasm-mutation-adapter";
 
 /**
@@ -278,7 +278,7 @@ export class LiveMap<
       const shadow = this._pool.wasmShadow;
       if (shadow) {
         const wasmValue = isLiveStructure(value)
-          ? (value as unknown as AbstractCrdt)._toWasmValue()
+          ? (value as unknown as LiveNode)._toWasmValue()
           : value;
 
         const result = shadow.mapSet(
@@ -536,7 +536,7 @@ export class LiveMap<
     const data: Record<string, unknown> = {};
     for (const [key, value] of this.#map) {
       data[key] = isLiveNode(value)
-        ? (value as AbstractCrdt)._toWasmValue()
+        ? value._toWasmValue()
         : value;
     }
     return { __lb_type: "LiveMap", __lb_data: data };

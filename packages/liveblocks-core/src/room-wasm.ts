@@ -6,20 +6,66 @@
  * Rust RoomHandle via wasm-bindgen.
  */
 
-import type { Json, JsonObject } from "./lib/Json";
+import type { Status } from "./connection";
+import type { LsonObject } from "./crdts/Lson";
+import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
+import { kInternal } from "./internal";
 import type { Callback } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
-import { kInternal } from "./internal";
-import type { Room, RoomConfig, StorageStatus } from "./room";
-import type { Status } from "./connection";
-import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
-import type { User } from "./types/User";
+import type { Json, JsonObject } from "./lib/Json";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { BaseMetadata } from "./protocol/Comments";
-import type { LsonObject } from "./crdts/Lson";
+import type { Room, RoomConfig, StorageStatus } from "./room";
+import type { User } from "./types/User";
 
-// The RoomHandle type from WASM — typed as any because it's loaded dynamically
-type RoomHandle = any;
+/** Shape of the WASM RoomHandle exposed via wasm-bindgen */
+interface RoomHandle {
+  subscribe(eventType: string, callback: (data: unknown) => void): void;
+  tick(): void;
+  flush(): void;
+  getStatus(): string;
+  connect(): void;
+  disconnect(): void;
+  reconnect(): void;
+  free(): void;
+  getSelf(): unknown;
+  getPresence(): unknown;
+  getOthers(): unknown[] | null;
+  updatePresence(patch: unknown): void;
+  updateYdoc(
+    data: string,
+    guid: string | null,
+    isV2: boolean | null
+  ): void;
+  fetchYdoc(
+    stateVector: string,
+    guid: string | null,
+    isV2: boolean | null
+  ): void;
+  broadcastEvent(event: unknown): void;
+  fetchStorage(): void;
+  getStorageStatus(): string;
+  batch(fn: () => void): void;
+  getActorId(): number | null;
+  undo(): void;
+  redo(): void;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  pauseHistory(): void;
+  resumeHistory(): void;
+}
+
+/** Config object passed to the WASM RoomHandle constructor */
+interface WasmRoomConfig {
+  roomId: string;
+  baseUrl: string;
+  createSocket: (url: string) => unknown;
+  publicApiKey: string | null;
+  authEndpoint: string | null;
+  initialPresence: unknown;
+  throttleDelay: number;
+  lostConnectionTimeout: number;
+}
 
 /**
  * Create a WASM-backed Room that wraps a Rust RoomHandle.
@@ -37,7 +83,7 @@ export function createWasmRoom<
 >(
   options: { initialPresence: P; initialStorage?: S },
   config: RoomConfig<TM, CM>,
-  RoomHandleClass: new (config: any) => RoomHandle,
+  RoomHandleClass: new (config: WasmRoomConfig) => RoomHandle,
 ): Room<P, S, U, E, TM, CM> {
   // The Rust RoomHandle expects createSocket(url) -> IWebSocketInstance.
   // The JS delegates use createSocket(authValue) -> IWebSocketInstance.
@@ -46,7 +92,8 @@ export function createWasmRoom<
   // as a fake auth value that the JS MockWebSocket ignores anyway.
   const createSocketForWasm = (url: string) => {
     const authValue = { type: "secret" as const, token: { raw: url } };
-    return config.delegates.createSocket(authValue as any);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- intentional fake auth value for WASM socket bridge
+    return config.delegates.createSocket(authValue as never);
   };
 
   const handle: RoomHandle = new RoomHandleClass({
@@ -64,63 +111,65 @@ export function createWasmRoom<
   // ---- Event sources ----
   const eventSources = {
     status: makeEventSource<Status>(),
-    lostConnection: makeEventSource<any>(),
-    customEvent: makeEventSource<any>(),
+    lostConnection: makeEventSource<unknown>(),
+    customEvent: makeEventSource<unknown>(),
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
-    others: makeEventSource<any>(),
-    storageBatch: makeEventSource<any[]>(),
+    others: makeEventSource<unknown>(),
+    storageBatch: makeEventSource<unknown[]>(),
     history: makeEventSource<{ canUndo: boolean; canRedo: boolean }>(),
     storageDidLoad: makeEventSource<void>(),
     storageStatus: makeEventSource<StorageStatus>(),
-    ydoc: makeEventSource<any>(),
-    comments: makeEventSource<any>(),
+    ydoc: makeEventSource<unknown>(),
+    comments: makeEventSource<unknown>(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
   // Subscribe to WASM events and forward to EventSources
-  handle.subscribe("status", (data: any) => eventSources.status.notify(data));
-  handle.subscribe("my-presence", (data: any) =>
-    eventSources.myPresence.notify(data),
+  handle.subscribe("status", (data) =>
+    eventSources.status.notify(data as Status),
   );
-  handle.subscribe("others", (data: any) =>
-    eventSources.others.notify(data),
+  handle.subscribe("my-presence", (data) =>
+    eventSources.myPresence.notify(data as P),
   );
+  handle.subscribe("others", (data) => eventSources.others.notify(data));
   handle.subscribe("storage", () => eventSources.storageBatch.notify([]));
   handle.subscribe("storage-loaded", () =>
     eventSources.storageDidLoad.notify(),
   );
-  handle.subscribe("storage-status", (data: any) =>
-    eventSources.storageStatus.notify(data),
+  handle.subscribe("storage-status", (data) =>
+    eventSources.storageStatus.notify(data as StorageStatus),
   );
-  handle.subscribe("event", (data: any) =>
-    eventSources.customEvent.notify(data),
+  handle.subscribe("event", (data) => eventSources.customEvent.notify(data));
+  handle.subscribe("history", (data) =>
+    eventSources.history.notify(
+      data as { canUndo: boolean; canRedo: boolean },
+    ),
   );
-  handle.subscribe("history", (data: any) =>
-    eventSources.history.notify(data),
-  );
-  handle.subscribe("lost-connection", (data: any) =>
+  handle.subscribe("lost-connection", (data) =>
     eventSources.lostConnection.notify(data),
   );
-  handle.subscribe("ydoc", (data: any) => eventSources.ydoc.notify(data));
+  handle.subscribe("ydoc", (data) => eventSources.ydoc.notify(data));
 
   // ---- Storage promise management ----
-  let storagePromise$: Promise<{ root: any }> | null = null;
-  let storageResolve: ((value: { root: any }) => void) | null = null;
+  let storagePromise$: Promise<{ root: unknown }> | null = null;
+  let storageResolve: ((value: { root: unknown }) => void) | null = null;
 
   eventSources.storageDidLoad.subscribe(() => {
     if (storageResolve) {
       // TODO: return actual LiveObject root from WASM handles
-      storageResolve({ root: null as any });
+      storageResolve({ root: null });
       storageResolve = null;
     }
   });
 
   // ---- Subscribe function (overloaded) ----
-  function subscribe(...args: any[]): () => void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Room.subscribe has many overloads
+  function subscribe(...args: unknown[]): () => void {
     const firstArg = args[0];
 
     if (typeof firstArg === "string") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matching Room.subscribe overloads
       const callback = args[1] as Callback<any>;
       switch (firstArg) {
         case "my-presence":
@@ -143,7 +192,9 @@ export function createWasmRoom<
     }
 
     if (typeof firstArg === "function") {
-      return eventSources.storageBatch.subscribe(() => firstArg());
+      return eventSources.storageBatch.subscribe(() =>
+        (firstArg as () => void)(),
+      );
     }
 
     // LiveNode subscribe — TODO
@@ -180,6 +231,8 @@ export function createWasmRoom<
     }
   });
 
+  const notImplemented = () => Promise.reject(new Error("Not implemented in WASM room"));
+
   // ---- Build Room object ----
   const room = {
     [kInternal]: {
@@ -195,27 +248,29 @@ export function createWasmRoom<
       yjsProviderDidChange: makeEventSource<void>().observable,
       getSelf_forDevTools: () => null,
       getOthers_forDevTools: () => [],
-      reportTextEditor: async () => {},
-      createTextMention: async () => {},
-      deleteTextMention: async () => {},
-      listTextVersions: async () => ({
-        versions: [],
-        requestedAt: new Date(),
-      }),
-      listTextVersionsSince: async () => ({
-        versions: [],
-        requestedAt: new Date(),
-      }),
-      getTextVersion: async () => new Response(),
-      createTextVersion: async () => {},
-      executeContextualPrompt: async () => "",
+      reportTextEditor: () => Promise.resolve(),
+      createTextMention: () => Promise.resolve(),
+      deleteTextMention: () => Promise.resolve(),
+      listTextVersions: () =>
+        Promise.resolve({
+          versions: [],
+          requestedAt: new Date(),
+        }),
+      listTextVersionsSince: () =>
+        Promise.resolve({
+          versions: [],
+          requestedAt: new Date(),
+        }),
+      getTextVersion: () => Promise.resolve(new Response()),
+      createTextVersion: () => Promise.resolve(),
+      executeContextualPrompt: () => Promise.resolve(""),
       simulate: {
         explicitClose: () => {},
         rawSend: () => {},
       },
       attachmentUrlsStore: {
-        get: async () => "",
-        getMany: async () => ({}),
+        get: () => Promise.resolve(""),
+        getMany: () => Promise.resolve({}),
       },
     },
 
@@ -254,8 +309,10 @@ export function createWasmRoom<
       handle.fetchYdoc(stateVector, guid ?? null, isV2 ?? null),
 
     // Broadcast
-    broadcastEvent: (event: E, _options?: { shouldQueueEventIfNotReady?: boolean }) =>
-      handle.broadcastEvent(event),
+    broadcastEvent: (
+      event: E,
+      _options?: { shouldQueueEventIfNotReady?: boolean },
+    ) => handle.broadcastEvent(event),
 
     // Storage
     getStorage: () => {
@@ -278,13 +335,13 @@ export function createWasmRoom<
     },
 
     // Readiness
-    isPresenceReady: () => handle.getActorId() != null,
+    isPresenceReady: () => handle.getActorId() !== null,
     isStorageReady: () => handle.getStorageStatus() !== "NotLoaded",
     waitUntilPresenceReady: async () => {
-      if (handle.getActorId() != null) return;
+      if (handle.getActorId() !== null) return;
       await new Promise<void>((resolve) => {
         const unsub = eventSources.status.subscribe(() => {
-          if (handle.getActorId() != null) {
+          if (handle.getActorId() !== null) {
             unsub();
             resolve();
           }
@@ -308,6 +365,7 @@ export function createWasmRoom<
     },
 
     // Subscribe
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any -- Room.subscribe has complex overloads
     subscribe: subscribe as any,
 
     // Events
@@ -328,65 +386,45 @@ export function createWasmRoom<
     },
 
     // Comments/Threads — stubs
-    getThreads: async () => ({
-      threads: [],
-      inboxNotifications: [],
-      subscriptions: [],
-      requestedAt: new Date(),
-      nextCursor: null,
-      permissionHints: {},
-    }),
-    getThreadsSince: async () => ({
-      threads: [],
-      inboxNotifications: [],
-      subscriptions: [],
-      requestedAt: new Date(),
-      permissionHints: {},
-    }),
-    getThread: async () => ({}),
-    createThread: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    deleteThread: async () => {},
-    editThreadMetadata: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    markThreadAsResolved: async () => {},
-    markThreadAsUnresolved: async () => {},
-    subscribeToThread: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    unsubscribeFromThread: async () => {},
-    createComment: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    editComment: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    editCommentMetadata: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    deleteComment: async () => {},
-    addReaction: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    removeReaction: async () => {},
+    getThreads: () =>
+      Promise.resolve({
+        threads: [],
+        inboxNotifications: [],
+        subscriptions: [],
+        requestedAt: new Date(),
+        nextCursor: null,
+        permissionHints: {},
+      }),
+    getThreadsSince: () =>
+      Promise.resolve({
+        threads: [],
+        inboxNotifications: [],
+        subscriptions: [],
+        requestedAt: new Date(),
+        permissionHints: {},
+      }),
+    getThread: () => Promise.resolve({}),
+    createThread: () => notImplemented(),
+    deleteThread: () => Promise.resolve(),
+    editThreadMetadata: () => notImplemented(),
+    markThreadAsResolved: () => Promise.resolve(),
+    markThreadAsUnresolved: () => Promise.resolve(),
+    subscribeToThread: () => notImplemented(),
+    unsubscribeFromThread: () => Promise.resolve(),
+    createComment: () => notImplemented(),
+    editComment: () => notImplemented(),
+    editCommentMetadata: () => notImplemented(),
+    deleteComment: () => Promise.resolve(),
+    addReaction: () => notImplemented(),
+    removeReaction: () => Promise.resolve(),
     prepareAttachment: () => {
       throw new Error("Not implemented in WASM room");
     },
-    uploadAttachment: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    getAttachmentUrl: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    getSubscriptionSettings: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    updateSubscriptionSettings: async () => {
-      throw new Error("Not implemented in WASM room");
-    },
-    markInboxNotificationAsRead: async () => {},
+    uploadAttachment: () => notImplemented(),
+    getAttachmentUrl: () => notImplemented(),
+    getSubscriptionSettings: () => notImplemented(),
+    updateSubscriptionSettings: () => notImplemented(),
+    markInboxNotificationAsRead: () => Promise.resolve(),
   };
 
   return room as unknown as Room<P, S, U, E, TM, CM>;
