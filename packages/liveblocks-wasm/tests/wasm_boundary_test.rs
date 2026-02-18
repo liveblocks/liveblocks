@@ -1,3 +1,4 @@
+#![cfg(feature = "wasm")]
 //! WASM boundary tests — verify all wasm-bindgen exports are callable
 //! from the JS side with correct types and produce expected results.
 //!

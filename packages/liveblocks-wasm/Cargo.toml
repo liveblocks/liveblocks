@@ -12,15 +12,36 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+wasm = ["wasm-bindgen", "js-sys", "serde-wasm-bindgen", "web-sys", "wasm-bindgen-futures", "futures-channel", "futures-util"]
+native = ["tokio", "tokio-tungstenite", "reqwest", "futures-util", "base64"]
+
 [dependencies]
-wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-serde-wasm-bindgen = "0.6"
-slotmap = { version = "1", features = ["serde"] }
-js-sys = "0.3"
 serde_repr = "0.1.20"
+slotmap = { version = "1", features = ["serde"] }
 indexmap = { version = "2", features = ["serde"] }
+
+# WASM-only dependencies
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true, features = [
+    "WebSocket", "MessageEvent", "CloseEvent", "ErrorEvent",
+    "Request", "RequestInit", "RequestMode", "Response", "Headers",
+    "Window",
+] }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+futures-channel = { version = "0.3", optional = true }
+
+# Native-only dependencies
+tokio = { version = "1", optional = true, features = ["rt", "rt-multi-thread", "time", "sync", "macros"] }
+tokio-tungstenite = { version = "0.24", optional = true, features = ["native-tls"] }
+reqwest = { version = "0.12", optional = true, features = ["json"] }
+futures-util = { version = "0.3", optional = true }
+base64 = { version = "0.22", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

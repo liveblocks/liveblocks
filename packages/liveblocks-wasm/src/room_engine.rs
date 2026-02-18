@@ -10,11 +10,14 @@ use indexmap::IndexMap;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
 use crate::types::Op;
 
 /// Serialize a value to JsValue using json-compatible mode (plain objects, not Maps).
+#[cfg(feature = "wasm")]
 fn to_js<T: Serialize>(value: &T) -> Result<JsValue, serde_wasm_bindgen::Error> {
     value.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
 }
@@ -334,11 +337,13 @@ impl Default for RoomStorageEngine {
 // wasm_bindgen handle
 // ---------------------------------------------------------------------------
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub struct RoomStorageEngineHandle {
     engine: RoomStorageEngine,
 }
 
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl RoomStorageEngineHandle {
     #[wasm_bindgen(constructor)]
@@ -549,6 +554,7 @@ impl RoomStorageEngineHandle {
     }
 }
 
+#[cfg(feature = "wasm")]
 impl Default for RoomStorageEngineHandle {
     fn default() -> Self {
         Self::new()
