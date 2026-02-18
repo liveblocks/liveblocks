@@ -188,8 +188,16 @@ fn create_live_list(
     for item in &items {
         let pos = position::make_position(prev_pos.as_deref(), None);
 
-        let (child_key, child_ops) =
+        let (child_key, mut child_ops) =
             create_lson_subtree(doc, id_gen, &node_id, &pos, item);
+
+        // Match JS HACK_addIntentAndDeletedIdToOperation: each child's first
+        // op gets intent: "set" so ACK processing uses #applySetAck instead
+        // of #applyInsertAck. Without this, a subsequent liveList.set() that
+        // supersedes the initial item causes a spurious re-insertion on ACK.
+        if let Some(first) = child_ops.first_mut() {
+            first.intent = Some("set".to_string());
+        }
 
         if let Some(node) = doc.get_node_mut(list_key)
             && let CrdtData::List { children, .. } = &mut node.data
