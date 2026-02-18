@@ -154,7 +154,9 @@ function CustomThread({
                     // Use a custom wrapper to blur spoilers
                     <div
                       className={styles.commentContentWrapper}
-                      data-spoiler={comment.metadata.spoiler}
+                      data-spoiler={
+                        comment.metadata.spoiler === true ? "" : undefined
+                      }
                     >
                       {children}
                     </div>
