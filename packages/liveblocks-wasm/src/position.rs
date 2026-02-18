@@ -4,8 +4,11 @@
 
 const MIN_CODE: u8 = b' '; // 32
 const MAX_CODE: u8 = b'~'; // 126
+const NUM_DIGITS: u8 = MAX_CODE - MIN_CODE + 1; // 95
 const ZERO: char = ' '; // MIN_CODE as char
 const ONE: char = '!'; // MIN_CODE + 1
+const VIEWPORT_START: usize = 2;
+const VIEWPORT_STEP: usize = 3;
 
 /// Check whether a string is a valid Pos value.
 /// Rules: non-empty, no trailing zeroes (trailing ' '), all chars in range.
@@ -61,27 +64,109 @@ fn convert_to_pos(s: &str) -> String {
 }
 
 /// Compute the next position after the given position.
+///
+/// Uses "viewport-based allocation" (V=2+3) to bound position length growth
+/// when repeatedly pushing items. Instead of always incrementing the last digit
+/// (which leads to O(n/94) length growth), we treat positions as fixed-width
+/// numbers within a "viewport" of V digits.
+///
+/// Viewport growth: V=2 → V=5 → V=8 → V=11 → ...
 pub fn after(pos: &str) -> String {
     let bytes = pos.as_bytes();
 
-    for (i, &code) in bytes.iter().enumerate() {
-        let clamped = code.clamp(MIN_CODE, MAX_CODE);
-
-        if clamped < MAX_CODE {
-            // Found a digit that isn't "nine" -- increment it and truncate
-            let mut result = take_n(pos, i);
-            result.push((clamped + 1) as char);
+    // For positions with any chars outside valid range, just append ONE.
+    for &code in bytes {
+        if code < MIN_CODE || code > MAX_CODE {
+            let mut result = pos.to_string();
+            result.push(ONE);
             return result;
         }
     }
 
-    // All digits are "nines" -- append ONE
-    let mut result = String::with_capacity(pos.len() + 1);
-    for &b in bytes {
-        result.push(b.clamp(MIN_CODE, MAX_CODE) as char);
+    // Strip trailing zeros for canonical form
+    let mut canonical = pos.to_string();
+    while canonical.len() > 1
+        && canonical.as_bytes()[canonical.len() - 1] == MIN_CODE
+    {
+        canonical.pop();
     }
-    result.push(ONE);
-    result
+
+    // Handle empty/zero input
+    if canonical.is_empty()
+        || (canonical.len() == 1 && canonical.as_bytes()[0] == MIN_CODE)
+    {
+        return ONE.to_string();
+    }
+
+    // Determine viewport: V=2, then 5, 8, 11, ...
+    let mut viewport = VIEWPORT_START;
+    if canonical.len() > VIEWPORT_START {
+        let extra = canonical.len() - VIEWPORT_START;
+        let steps = (extra + VIEWPORT_STEP - 1) / VIEWPORT_STEP; // ceil div
+        viewport = VIEWPORT_START + steps * VIEWPORT_STEP;
+    }
+
+    // Try to increment within current viewport
+    if let Some(result) = increment_within_viewport(&canonical, viewport) {
+        return result;
+    }
+
+    // Overflow: extend viewport and increment
+    viewport += VIEWPORT_STEP;
+    if let Some(result) = increment_within_viewport(&canonical, viewport) {
+        return result;
+    }
+
+    // Fallback (should rarely happen): just append
+    canonical.push(ONE);
+    canonical
+}
+
+/// Increment a position string within a fixed viewport width.
+/// Returns `None` if overflow occurs (all digits at max).
+fn increment_within_viewport(pos: &str, viewport: usize) -> Option<String> {
+    let bytes = pos.as_bytes();
+
+    // Build array of digit values, padded to viewport width
+    let mut digits: Vec<u8> = Vec::with_capacity(viewport);
+    for i in 0..viewport {
+        if i < bytes.len() {
+            digits.push(bytes[i] - MIN_CODE);
+        } else {
+            digits.push(0); // Pad with zeros
+        }
+    }
+
+    // Increment from right to left with carry
+    let mut carry: u8 = 1;
+    for i in (0..viewport).rev() {
+        if carry == 0 {
+            break;
+        }
+        let sum = digits[i] + carry;
+        if sum >= NUM_DIGITS {
+            digits[i] = 0;
+            carry = 1;
+        } else {
+            digits[i] = sum;
+            carry = 0;
+        }
+    }
+
+    // If carry remains, we overflowed the viewport
+    if carry > 0 {
+        return None;
+    }
+
+    // Convert back to string
+    let mut result: Vec<u8> = digits.iter().map(|&d| d + MIN_CODE).collect();
+
+    // Strip trailing zeros
+    while result.len() > 1 && result[result.len() - 1] == MIN_CODE {
+        result.pop();
+    }
+
+    Some(String::from_utf8(result).expect("All bytes are valid ASCII"))
 }
 
 /// Compute the position before the given position.

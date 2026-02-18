@@ -31,8 +31,8 @@ for (const engine of getTestEngines()) {
       expect(engine.makePosition(undefined, undefined)).toBe(ONE);
     });
 
-    test("after .1 lies .2", () => {
-      expect(engine.makePosition(ONE, undefined)).toBe(TWO);
+    test("after .1 lies .11 (viewport-based)", () => {
+      expect(engine.makePosition(ONE, undefined)).toBe(ONE + ONE);
     });
 
     test("before .9 lies .8", () => {

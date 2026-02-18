@@ -140,58 +140,68 @@ fn as_pos_is_noop_for_valid_positions() {
     assert_eq!(as_pos("~!"), "~!");
 }
 
-// ---- after ----
+// ---- after (viewport-based V=2+3) ----
 
 #[test]
-fn after_hops_to_next_major_digit() {
-    assert_eq!(after(&one()), two());
-    assert_eq!(after(&two()), three());
-    assert_eq!(after(&three()), four());
-    assert_eq!(after(&eight()), nine());
+fn after_increments_within_viewport() {
+    // V=2 viewport: single-digit positions are padded to 2 digits, then incremented
+    assert_eq!(after(&one()), format!("{}{}", one(), one()));     // "!" → "!!"
+    assert_eq!(after(&two()), format!("{}{}", two(), one()));     // '"' → '"!'
+    assert_eq!(after(&three()), format!("{}{}", three(), one())); // '#' → '#!'
+    assert_eq!(after(&eight()), format!("{}{}", eight(), one())); // '}' → '}!'
 }
 
 #[test]
-fn after_appends_one_at_nine() {
+fn after_nine_stays_in_viewport() {
+    // "~" padded to V=2: [94,0] → [94,1] = "~!"
     assert_eq!(after(&nine()), format!("{}{}", nine(), one()));
 }
 
 #[test]
-fn after_appends_at_double_nine() {
+fn after_double_nine_overflows_to_v5() {
+    // "~~" overflows V=2, extends to V=5: [94,94,0,0,0] → [94,94,0,0,1] = "~~  !"
     assert_eq!(
         after(&format!("{}{}", nine(), nine())),
-        format!("{}{}{}", nine(), nine(), one())
+        format!("{}{}{}{}{}", nine(), nine(), zero(), zero(), one())
     );
 }
 
 #[test]
-fn after_truncates_subdigits_when_not_at_nine() {
-    // after(.23101) => .3
+fn after_five_digit_position() {
+    // 5-char position: viewport=5 (already fits)
+    // [2,3,1,0,1] → [2,3,1,0,2]
     let input = format!("{}{}{}{}{}", two(), three(), one(), zero(), one());
     let input = as_pos(&input);
-    assert_eq!(after(&input), three());
+    assert_eq!(
+        after(&input),
+        format!("{}{}{}{}{}", two(), three(), one(), zero(), two())
+    );
 }
 
 #[test]
-fn after_at_edge_with_subdigits() {
-    // after(.8998) => .9
+fn after_four_digit_near_max() {
+    // '}~~}' = 4 chars, viewport=5: [93,94,94,93,0] → [93,94,94,93,1] = '}~~}!'
     let input = as_pos(&format!("{}{}{}{}", eight(), nine(), nine(), eight()));
-    assert_eq!(after(&input), nine());
+    assert_eq!(
+        after(&input),
+        format!("{}{}{}{}{}", eight(), nine(), nine(), eight(), one())
+    );
 }
 
 #[test]
-fn after_at_nine_with_subdigits() {
-    // after(.93) => .94
+fn after_two_digit_within_viewport() {
+    // "~#" = [94,3], viewport=2 → [94,4] = "~$"
     let input = as_pos(&format!("{}{}", nine(), three()));
     assert_eq!(after(&input), format!("{}{}", nine(), four()));
 }
 
 #[test]
-fn after_at_nine_nine_nine() {
-    // after(.999) => .9991
+fn after_triple_nine_overflows_to_v5() {
+    // "~~~" = 3 chars, viewport=5: [94,94,94,0,0] → [94,94,94,0,1] = "~~~ !"
     let input = as_pos(&format!("{}{}{}", nine(), nine(), nine()));
     assert_eq!(
         after(&input),
-        format!("{}{}{}{}", nine(), nine(), nine(), one())
+        format!("{}{}{}{}{}", nine(), nine(), nine(), zero(), one())
     );
 }
 
@@ -299,7 +309,8 @@ fn make_position_default_is_one() {
 
 #[test]
 fn make_position_after_one() {
-    assert_eq!(make_position(Some(&one()), None), two());
+    // Viewport-based allocation: after("!") = "!!" (pad to V=2, increment)
+    assert_eq!(make_position(Some(&one()), None), format!("{}{}", one(), one()));
 }
 
 #[test]
