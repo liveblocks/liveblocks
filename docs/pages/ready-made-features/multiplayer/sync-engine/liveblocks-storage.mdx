@@ -14,6 +14,13 @@ Liveblocks permanently stores Storage data in each
 [room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling and
 maintenance for you.
 
+<Banner title="Interactive tutorial">
+
+Our [interactive React tutorial](/tutorial/react/storage) guides you through
+using each of the concepts listed on this page.
+
+</Banner>
+
 ## Presence
 
 Easily create online presence indicators such as online avatar stacks and live
@@ -189,7 +196,7 @@ function VideoPlayer() {
 We’ve designed a number of hooks to help you handle different network
 conditions, such as
 [`useLostConnectionListener`](/docs/api-reference/liveblocks-react#useLostConnectionListener)
-which helps you render UI when user’s have connection loss..
+which helps you render UI when user’s have connection loss.
 
 ```tsx
 import { toast } from "my-preferred-toast-library";
@@ -212,6 +219,8 @@ function App() {
 }
 ```
 
+### Sync status
+
 [`useSyncStatus`](/docs/api-reference/liveblocks-react#useSyncStatus) is a
 related hook which allows you to render the current sync state in your app,
 before a change has been saved.
@@ -229,6 +238,11 @@ function StorageStatusBadge() {
   // +++
 }
 ```
+
+## Other hooks
+
+A number of other hooks are available to help you with different aspects of
+multiplayer development, check our API reference for more information.
 
 ## API Reference
 
