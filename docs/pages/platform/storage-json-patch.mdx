@@ -10,7 +10,7 @@ The **Storage JSON Patch** endpoint lets you apply partial updates to a room's
 Storage document over HTTP. You send an array of operations (add, remove,
 replace, move, copy, test) and the server applies them in order. This is
 especially useful for languages that don't yet have a native Liveblocks client,
-for example, **Python**—so you can still read and update Storage using the REST
+for example: **Python**, so you can still read and update Storage using the REST
 API.
 
 The format follows the
@@ -129,7 +129,7 @@ fails and no changes are applied. Use `test` to guard against concurrent updates
 The **test** operation is a guard: it succeeds only when the value at the given
 path is equal to the provided value (same type and value). If the test fails,
 the server returns 422 and **does not apply any part of the patch**. This lets
-you implement optimistic checks—for example, only increment a counter if it
+you implement optimistic checks, for example, only increment a counter if it
 still has the value you read earlier.
 
 _note:_ test order matters. A test after a change will take into the account the
@@ -147,11 +147,11 @@ updates are applied.
 When a patch fails, the server responds with **422 Unprocessable Entity**. The
 response body follows the standard API error shape and includes:
 
-- **error** — Error code (e.g. `INVALID_STORAGE_MUTATION_REQUEST`,
+- **error**: Error code (e.g. `INVALID_STORAGE_MUTATION_REQUEST`,
   `UNPROCESSABLE_ENTITY`)
-- **message** — Human-readable description of what went wrong
-- **suggestion** — Optional hint on how to fix the request
-- **docs** — Optional link to documentation
+- **message**: Human-readable description of what went wrong
+- **suggestion**: Optional hint on how to fix the request
+- **docs**: Optional link to documentation
 
 Use these fields to show helpful feedback and retry or correct the request.
 
