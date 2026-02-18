@@ -59,6 +59,11 @@ or:
   `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
   `document.body`.
 
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `enterRoom("my-new-room", { engine: 2 })`
+
 ### `@liveblocks/node`
 
 - Add new `.setPresence()` method to set ephemeral presence for a user in a room
