@@ -16,7 +16,6 @@ import {
   forwardRef,
   useCallback,
   useEffect,
-  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -31,7 +30,15 @@ const STIFFNESS = 320;
 const DAMPING = 32;
 const EPSILON = 0.01;
 
-export type CursorsProps = ComponentPropsWithoutRef<"div">;
+const DEFAULT_PRESENCE_KEY = "$cursor";
+
+export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
+  /**
+   * The key used to store the cursors in users' Presence.
+   * This can be used to have multiple `Cursors` in a single room.
+   */
+  presenceKey?: string;
+}
 
 type Coordinates = {
   x: number;
@@ -155,12 +162,12 @@ function makeCoordinatesSpring() {
 
 function PresenceCursor({
   connectionId,
-  cursorPresenceKey,
+  presenceKey,
   sizeRef,
   sizeEvents,
 }: {
   connectionId: number;
-  cursorPresenceKey: string;
+  presenceKey: string;
   sizeRef: MutableRefObject<Size | null>;
   sizeEvents: EventSource<void>;
 }) {
@@ -198,7 +205,7 @@ function PresenceCursor({
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
       const other = others.find((other) => other.connectionId === connectionId);
-      const cursor = $coordinates(other?.presence[cursorPresenceKey]);
+      const cursor = $coordinates(other?.presence[presenceKey]);
 
       spring.set(cursor ?? null);
     });
@@ -209,7 +216,7 @@ function PresenceCursor({
       unsubscribeSize();
       unsubscribeOther();
     };
-  }, [room, connectionId, cursorPresenceKey, sizeRef, sizeEvents]);
+  }, [room, connectionId, presenceKey, sizeRef, sizeEvents]);
 
   return (
     <Cursor
@@ -225,10 +232,11 @@ function PresenceCursor({
  * Displays multiplayer cursors.
  */
 export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
-  ({ className, children, ...props }, forwardedRef) => {
-    const id = useId();
+  (
+    { className, children, presenceKey = DEFAULT_PRESENCE_KEY, ...props },
+    forwardedRef
+  ) => {
     const ref = useRef<HTMLDivElement>(null);
-    const cursorPresenceKey = `cursors:${id}`;
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
     const sizeRef = useRef<Size | null>(null);
@@ -278,35 +286,35 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
           return;
         }
 
-        const rect = element.getBoundingClientRect();
+        const bounds = element.getBoundingClientRect();
 
-        if (rect.width === 0 || rect.height === 0) {
+        if (bounds.width === 0 || bounds.height === 0) {
           return;
         }
 
         updateMyPresence({
-          [cursorPresenceKey]: {
-            x: (event.clientX - rect.left) / rect.width,
-            y: (event.clientY - rect.top) / rect.height,
+          [presenceKey]: {
+            x: (event.clientX - bounds.left) / bounds.width,
+            y: (event.clientY - bounds.top) / bounds.height,
           },
         });
       },
-      [updateMyPresence, cursorPresenceKey]
+      [updateMyPresence, presenceKey]
     );
 
     const handlePointerLeave = useCallback(() => {
       updateMyPresence({
-        [cursorPresenceKey]: null,
+        [presenceKey]: null,
       });
-    }, [updateMyPresence, cursorPresenceKey]);
+    }, [updateMyPresence, presenceKey]);
 
     useEffect(() => {
       if (!isWindowFocused) {
         updateMyPresence({
-          [cursorPresenceKey]: null,
+          [presenceKey]: null,
         });
       }
-    }, [isWindowFocused, updateMyPresence, cursorPresenceKey]);
+    }, [isWindowFocused, updateMyPresence, presenceKey]);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
@@ -327,7 +335,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
             <PresenceCursor
               key={connectionId}
               connectionId={connectionId}
-              cursorPresenceKey={cursorPresenceKey}
+              presenceKey={presenceKey}
               sizeRef={sizeRef}
               sizeEvents={sizeEvents}
             />
