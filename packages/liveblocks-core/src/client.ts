@@ -50,7 +50,6 @@ import type {
   SubscriptionDeleteInfo,
 } from "./protocol/Subscriptions";
 import type {
-  LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -130,9 +129,9 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
     autoConnect?: boolean;
 
     /**
-     * @private Preferred storage engine version to use when creating the
-     * room. Only takes effect if the room doesn't exist yet. Version
-     * 2 supports streaming and will become the default in the future.
+     * Preferred storage engine version to use when creating the room. Only
+     * takes effect if the room doesn't exist yet. Version 2 can support larger
+     * documents, is more performant, and will become the default in the future.
      */
     engine?: 1 | 2;
   }
@@ -514,7 +513,12 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
-  largeMessageStrategy?: LargeMessageStrategy;
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
+   * Storage engine have native support for streaming. This flag will be
+   * removed in a future version, but will continue to work for existing engine
+   * v1 rooms for now.
+   */
   unstable_streamData?: boolean;
   /**
    * A function that returns a list of mention suggestions matching a string.
@@ -560,10 +564,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   badgeLocation?: BadgeLocation;
 
-  /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
-   */
+  /** Point the client to an alternative Liveblocks server. */
   baseUrl?: string;
 
   /** @internal */
@@ -775,7 +776,6 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
         createSyncSource,

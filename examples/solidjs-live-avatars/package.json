@@ -3,18 +3,19 @@
   "description": "This example shows how to build a live avatar stack with Liveblocks and Solid.js",
   "license": "Apache-2.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
-    "vite": "^2.8.6",
-    "vite-plugin-solid": "^2.2.6"
+    "prettier": "^3.3.3",
+    "vite": "^7.3.1",
+    "vite-plugin-solid": "^2.11.0"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "solid-js": "^1.3.13"
+    "@liveblocks/client": "^3.13.3",
+    "solid-js": "^1.9.11"
   }
 }

@@ -94,7 +94,7 @@ console.log(body);
 
 ## Workspace permissions [#permissions]
 
-Using [tenants](/docs/authentication/tenants), you can create workspaces in your
+Using [organizations](/docs/authentication/organizations), you can create workspaces in your
 application, compartmentalizing all resources such as inbox notifications and
 rooms. This includes everything associated with rooms such as comment threads,
 realtime data stored, and more. This allows you to add a workspace switcher to
@@ -112,14 +112,14 @@ your application, separating each of your customers/organizations.
 
 ### Set up workspace permissions
 
-To set up workspace permissions, pass a `tenantId` when authenticating a user,
+To set up workspace permissions, pass an `organizationId` when authenticating a user,
 ensuring that the user will only have access to resources within this workspace.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
   userId: "olivier@example.com",
   // +++
-  tenantId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 
@@ -127,14 +127,14 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-When creating a resource on the server, such as a room, pass the `tenantId` to
+When creating a resource on the server, such as a room, pass the `organizationId` to
 the resource, to allow the user access.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
   // +++
-  tenantId: "my-tenant-id",
+  organizationId: "my-organization-id",
   // +++
 });
 

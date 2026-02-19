@@ -16,7 +16,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, Portal } from "@liveblocks/react-ui/_private";
 import {
   $getSelection,
   COMMAND_PRIORITY_HIGH,
@@ -31,9 +31,8 @@ import {
   useContext,
   useEffect,
   useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "react";
-import { createPortal } from "react-dom";
 
 import { compareNodes } from "./anchored-threads";
 import {
@@ -148,11 +147,7 @@ export function FloatingThreads({
   if (range === null || isCollapsed === null || !isCollapsed) return null;
 
   return (
-    <FloatingThreadPortal
-      range={range.range}
-      container={document.body}
-      {...props}
-    >
+    <FloatingThreadPortal range={range.range} {...props}>
       {range.threads.map((thread) => (
         <ThreadWrapper
           key={thread.id}
@@ -169,14 +164,12 @@ export function FloatingThreads({
 interface FloatingThreadPortalProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   range: Range;
-  container: HTMLElement;
   children: ReactNode;
 }
 
 export const FLOATING_THREAD_COLLISION_PADDING = 10;
 
 function FloatingThreadPortal({
-  container,
   range,
   children,
   className,
@@ -226,26 +219,27 @@ function FloatingThreadPortal({
     });
   }, [setReference, range]);
 
-  return createPortal(
-    <div
-      ref={setFloating}
-      {...props}
-      style={{
-        ...style,
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-      className={cn(
-        "lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-threads",
-        className
-      )}
-    >
-      {children}
-    </div>,
-    container
+  return (
+    <Portal asChild>
+      <div
+        ref={setFloating}
+        {...props}
+        style={{
+          ...style,
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+        className={cn(
+          "lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-threads",
+          className
+        )}
+      >
+        {children}
+      </div>
+    </Portal>
   );
 }
 

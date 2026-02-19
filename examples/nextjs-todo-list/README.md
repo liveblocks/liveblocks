@@ -52,6 +52,23 @@ Alternatively, you can set up your project manually:
 
 </details>
 
+### Dev server setup
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+You can optionally run this example locally using the
+[Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server).
+
+- Install the example as detailed above
+- Run `npx liveblocks dev` to start the server
+- Add `baseUrl: "http://localhost:1153"` option to `LiveblocksProvider`
+- Replace `publicApiKey` in `LiveblocksProvider` with `"pk_localdev"`
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+
+</details>
+
 ### Deploy on Vercel
 
 <details><summary>Read more</summary>

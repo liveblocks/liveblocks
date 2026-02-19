@@ -10,23 +10,23 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@liveblocks/react-ui": "^3.13.2",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@liveblocks/react-ui": "^3.13.3",
     "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@types/node": "20.3.1",
-    "@types/react-dom": "18.2.5",
-    "next": "14.2.34",
+    "@types/node": "20.3.3",
+    "@types/react-dom": "18.2.25",
+    "next": "^16.1.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-error-boundary": "^4.0.11",
+    "react-error-boundary": "^4.0.13",
     "react-player": "^2.13.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "prettier": "^3.3.2",
+    "@types/react": "^18.3.27",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

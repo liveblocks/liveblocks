@@ -14,6 +14,236 @@ Liveblocks permanently stores Storage data in each
 [room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling and
 maintenance for you.
 
+<Banner title="Interactive tutorial">
+
+Our [interactive React tutorial](/tutorial/react/storage) guides you through
+using each of the concepts listed on this page.
+
+</Banner>
+
+## Presence
+
+Easily create online presence indicators such as online avatar stacks and live
+cursors, with hooks like
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers), which returns an
+array of currently connected users in the room, and
+[`useSelf`](/docs/api-reference/liveblocks-react#useSelf) which returns your own
+data.
+
+```tsx
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  // +++
+  const others = useOthers();
+  const self = useSelf();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {others.map(({ connectionId, info }) => (
+        <img key={connectionId} src={info.avatar} />
+      ))}
+      <img src={self.info.avatar} />
+      // +++
+    </div>
+  );
+}
+```
+
+User info is set when [authenticating with a secret key](/docs/authentication/).
+
+## Conflict-free data structures
+
+Create realtime document state such as shapes on a canvas, notes on a
+whiteboard, or cells in a spreadsheet, with our
+[permanent CRDT-like data structures](/docs/api-reference/liveblocks-react#Data-structures).
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage) returns data
+structures as simple JSON, and
+[`useMutation`](/docs/api-reference/liveblocks-react#useMutation) allows you to
+modify the data structures themselves.
+
+```tsx
+import { useStorage, useMutation } from "@liveblocks/react/suspense";
+
+function MultiplayerCanvas() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  // +++
+  const handleShapeDrag = useMutation(({ storage }, shapeId, { x, y }) => {
+    const shape = storage.get("shapes").get(shapeId);
+    shape.update({ x, y });
+  }, []);
+  // +++
+
+  return (
+    <div>
+      // +++
+      {shapes.map((shape) => (
+        <DraggableShape key={shape.id} shape={shape} onDrag={handleShapeDrag} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+Conflict-free data structures use
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject),
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList), and
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) under the hood, and
+will automatically resolve conflicts when multiple users modify the same data at
+the same time. Additionally, they can be
+[nested to create complex data structures](/docs/api-reference/liveblocks-react#Nesting-data-structures)
+and are
+[automatically typed](/docs/api-reference/liveblocks-react#typing-storage)
+throughout your app.
+
+### Manage document history
+
+Multiplayer undo and redo is
+[notoriously tough to implement](/blog/how-to-build-undo-redo-in-a-multiplayer-environment)
+which is why we provide simple hooks like
+[`useUndo`](/docs/api-reference/liveblocks-react#useUndo) and
+[`useCanUndo`](/docs/api-reference/liveblocks-react#useCanUndo) to handle it for
+you.
+
+```tsx
+import {
+  useStorage,
+  useMutation,
+  useUndo,
+  useCanUndo,
+} from "@liveblocks/react/suspense";
+
+function MultiplayerCanvas() {
+  // +++
+  const undo = useUndo();
+  const canUndo = useCanUndo();
+  // +++
+
+  const shapes = useStorage((root) => root.shapes);
+
+  const handleShapeDrag = useMutation(({ storage }, shapeId, { x, y }) => {
+    const shape = storage.get("shapes").get(shapeId);
+    shape.update({ x, y });
+  }, []);
+
+  return (
+    <div>
+      // +++
+      {canUndo ?? <button onClick={undo}>Undo</button>}
+      // +++
+      {shapes.map((shape) => (
+        <DraggableShape key={shape.id} shape={shape} onDrag={handleShapeDrag} />
+      ))}
+    </div>
+  );
+}
+```
+
+We also provide [`useRedo`](/docs/api-reference/liveblocks-react#useRedo) and
+[`useCanRedo`](/docs/api-reference/liveblocks-react#useCanRedo) to handle redo.
+
+## Broadcast
+
+Broadcast realtime events to other clients, helpful for triggering live actions
+such as playing a video, or for revalidating your database’s data after a
+change.
+[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+sends events, and
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener)
+listens for them.
+
+```tsx
+import {
+  useBroadcastEvent,
+  useEventListener,
+} from "@liveblocks/react/suspense";
+
+function VideoPlayer() {
+  const [playing, setPlaying] = useState(false);
+  // +++
+  const broadcast = useBroadcastEvent();
+  // +++
+
+  // +++
+  useEventListener(({ event }) => {
+    if (event.type === "PLAY_VIDEO") {
+      setPlaying(true);
+    }
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <button onClick={() => broadcast({ type: "PLAY_VIDEO" })}>
+        ▶️ Play Video
+      </button>
+      // +++
+      <Video playing={playing} />
+    </div>
+  );
+}
+```
+
+## Handle connection status
+
+We’ve designed a number of hooks to help you handle different network
+conditions, such as
+[`useLostConnectionListener`](/docs/api-reference/liveblocks-react#useLostConnectionListener)
+which helps you render UI when user’s have connection loss.
+
+```tsx
+import { toast } from "my-preferred-toast-library";
+import { useLostConnectionListener } from "@liveblocks/react/suspense";
+
+function App() {
+  // +++
+  useLostConnectionListener((event) => {
+    if (event === "lost") {
+      return toast.warn("Trying to reconnect…");
+    }
+
+    if (event === "restored") {
+      return toast.success("Successfully reconnected!");
+    }
+  });
+  // +++
+
+  // ...
+}
+```
+
+### Sync status
+
+[`useSyncStatus`](/docs/api-reference/liveblocks-react#useSyncStatus) is a
+related hook which allows you to render the current sync state in your app,
+before a change has been saved.
+
+```tsx
+import { useSyncStatus } from "@liveblocks/react/suspense";
+
+function StorageStatusBadge() {
+  // +++
+  const syncStatus = useSyncStatus({ smooth: true });
+  // +++
+
+  // +++
+  return <div>{syncStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>;
+  // +++
+}
+```
+
+## Other hooks
+
+A number of other hooks are available to help you with different aspects of
+multiplayer development, check our API reference for more information.
+
 ## API Reference
 
 ### Presence

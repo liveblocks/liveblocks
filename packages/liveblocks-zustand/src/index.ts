@@ -16,6 +16,7 @@ import type {
   DS,
   DTM,
   DU,
+  EnterOptions,
   OpaqueClient,
   OpaqueRoom,
   StorageUpdate,
@@ -52,8 +53,12 @@ export type LiveblocksContext<
   /**
    * Enters a room and starts sync it with zustand state
    * @param roomId The id of the room
+   * @param options Optional. Options to pass to the underlying client.enterRoom call (e.g. `engine`).
    */
-  readonly enterRoom: (roomId: string) => () => void;
+  readonly enterRoom: (
+    roomId: string,
+    options?: Pick<EnterOptions, "engine">
+  ) => () => void;
   /**
    * Leaves the currently entered room and stops sync it with zustand state, if
    * any. If enterRoom was not called before, this is a no-op.
@@ -158,7 +163,10 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     let lastRoomId: string | null = null;
     let lastLeaveFn: (() => void) | null = null;
 
-    function enterRoom(newRoomId: string): void {
+    function enterRoom(
+      newRoomId: string,
+      options?: Pick<EnterOptions, "engine">
+    ): void {
       if (lastRoomId === newRoomId) {
         return;
       }
@@ -175,6 +183,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
       ) as unknown as P;
 
       const { room, leave } = client.enterRoom(newRoomId, {
+        engine: options?.engine,
         initialPresence,
       }) as unknown as { room: TRoom; leave: () => void };
       maybeRoom = room;

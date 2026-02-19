@@ -155,6 +155,7 @@ export function dummyGroupData({
     createdAt,
     updatedAt,
     tenantId: "default",
+    organizationId: "default",
     scopes: { mention: true },
     members: [],
     ...overrides,

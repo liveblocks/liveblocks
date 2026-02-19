@@ -10,25 +10,25 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.2",
-    "@liveblocks/node": "^3.13.2",
-    "@liveblocks/react": "^3.13.2",
-    "@liveblocks/yjs": "^3.13.2",
+    "@liveblocks/client": "^3.13.3",
+    "@liveblocks/node": "^3.13.3",
+    "@liveblocks/react": "^3.13.3",
+    "@liveblocks/yjs": "^3.13.3",
     "@slate-yjs/core": "^1.0.2",
     "@slate-yjs/react": "^1.1.0",
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.0.10",
-    "next": "14.2.34",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.0.11",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "slate": "^0.94.1",
     "slate-react": "^0.97.2",
-    "yjs": "^13.6.4"
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
-    "@iconify/react": "^4.1.0",
-    "prettier": "^3.3.2",
+    "@iconify/react": "^4.1.1",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

@@ -18,6 +18,7 @@ import {
   CrossIcon,
   EditIcon,
   LengthenIcon,
+  Portal,
   QuestionMarkIcon,
   SendIcon,
   ShortcutTooltip,
@@ -50,13 +51,9 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import { EditorProvider, useCurrentEditor } from "../context";
-import type {
-  AiToolbarState,
-  ChainedAiCommands,
-} from "../types";
+import type { AiToolbarState, ChainedAiCommands } from "../types";
 import { getDomRangeFromSelection } from "../utils";
 import { DEFAULT_STATE, isContextualPromptDiffResponse } from "./AiExtension";
 
@@ -230,9 +227,7 @@ const AiToolbarSuggestion = forwardRef<
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      (editor.commands).$startAiToolbarThinking(
-        manualPrompt ?? prompt
-      );
+      editor.commands.$startAiToolbarThinking(manualPrompt ?? prompt);
     },
     [editor, manualPrompt]
   );
@@ -256,23 +251,19 @@ function AiToolbarReviewingSuggestions() {
       <>
         <AiToolbarDropdownItem
           icon={<CheckIcon />}
-          onSelect={
-            (editor.commands).$acceptAiToolbarResponse
-          }
+          onSelect={editor.commands.$acceptAiToolbarResponse}
         >
           Accept
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<UndoIcon />}
-          onSelect={
-            (editor.commands).$startAiToolbarThinking
-          }
+          onSelect={editor.commands.$startAiToolbarThinking}
         >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<CrossIcon />}
-          onSelect={(editor.commands).$closeAiToolbar}
+          onSelect={editor.commands.$closeAiToolbar}
         >
           Discard
         </AiToolbarDropdownItem>
@@ -283,23 +274,19 @@ function AiToolbarReviewingSuggestions() {
       <>
         <AiToolbarDropdownItem
           icon={<ArrowCornerDownRightIcon />}
-          onSelect={
-            (editor.commands).$acceptAiToolbarResponse
-          }
+          onSelect={editor.commands.$acceptAiToolbarResponse}
         >
           Insert below
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<UndoIcon />}
-          onSelect={
-            (editor.commands).$startAiToolbarThinking
-          }
+          onSelect={editor.commands.$startAiToolbarThinking}
         >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
           icon={<CrossIcon />}
-          onSelect={(editor.commands).$closeAiToolbar}
+          onSelect={editor.commands.$closeAiToolbar}
         >
           Discard
         </AiToolbarDropdownItem>
@@ -352,7 +339,7 @@ function AiToolbarCustomPromptContent() {
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        (editor.commands)._updateAiToolbarCustomPrompt(
+        editor.commands._updateAiToolbarCustomPrompt(
           (customPrompt) => customPrompt + "\n"
         );
       } else {
@@ -365,7 +352,7 @@ function AiToolbarCustomPromptContent() {
           selectedDropdownItem.click();
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          (editor.commands).$startAiToolbarThinking(
+          editor.commands.$startAiToolbarThinking(
             customPrompt,
             state.phase === "reviewing"
           );
@@ -376,9 +363,7 @@ function AiToolbarCustomPromptContent() {
 
   const handleCustomPromptChange = useCallback(
     (customPrompt: string) => {
-      (editor.commands)._updateAiToolbarCustomPrompt(
-        customPrompt
-      );
+      editor.commands._updateAiToolbarCustomPrompt(customPrompt);
     },
     [editor]
   );
@@ -388,7 +373,7 @@ function AiToolbarCustomPromptContent() {
       return;
     }
 
-    (editor.commands).$startAiToolbarThinking(
+    editor.commands.$startAiToolbarThinking(
       customPrompt,
       state.phase === "reviewing"
     );
@@ -456,10 +441,10 @@ function AiToolbarAsking() {
 function AiToolbarThinking() {
   const editor = useCurrentEditor("AiToolbarThinking", "AiToolbar");
   const contentRef = useRef<HTMLDivElement>(null);
-  const aiName = (editor.storage.liveblocksAi).name;
+  const aiName = editor.storage.liveblocksAi.name;
 
   const handleAbort = useCallback(() => {
-    (editor.commands).$cancelAiToolbarThinking();
+    editor.commands.$cancelAiToolbarThinking();
   }, [editor]);
 
   // Focus the toolbar content and clear the current window selection while thinking
@@ -545,7 +530,7 @@ function AiToolbarContainer({
         event.stopPropagation();
 
         if (state.phase === "thinking") {
-          (editor.commands).$cancelAiToolbarThinking();
+          editor.commands.$cancelAiToolbarThinking();
         } else {
           (editor.chain() as ChainedAiCommands).$closeAiToolbar().focus().run();
         }
@@ -667,9 +652,7 @@ export const AiToolbar = Object.assign(
         useEditorState({
           editor,
           selector: (ctx) => {
-            return (
-              ctx.editor?.storage.liveblocksAi
-            )?.state;
+            return ctx.editor?.storage.liveblocksAi?.state;
           },
         }) ?? DEFAULT_STATE;
       const selection = editor?.state.selection;
@@ -754,7 +737,7 @@ export const AiToolbar = Object.assign(
         }
 
         if (!selection && state.phase !== "closed") {
-          (editor.commands).$closeAiToolbar();
+          editor.commands.$closeAiToolbar();
         }
       }, [state.phase, editor, selection]);
 
@@ -835,7 +818,7 @@ export const AiToolbar = Object.assign(
               ? !dropdownRef.current.contains(event.target as Node)
               : true)
           ) {
-            (editor.commands).$closeAiToolbar();
+            editor.commands.$closeAiToolbar();
           }
         };
 
@@ -852,45 +835,46 @@ export const AiToolbar = Object.assign(
         return null;
       }
 
-      return createPortal(
+      return (
         <TooltipProvider>
           <EditorProvider editor={editor}>
-            <Command
-              role="toolbar"
-              label="AI toolbar"
-              aria-orientation="horizontal"
-              className={cn(
-                "lb-root lb-portal lb-tiptap-ai-toolbar-portal",
-                className
-              )}
-              ref={mergedRefs}
-              style={{
-                position: strategy,
-                top: 0,
-                left: 0,
-                transform: isPositioned
-                  ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-                  : "translate3d(0, -200%, 0)",
-              }}
-              value={selectedDropdownValue}
-              onValueChange={setSelectedDropdownValue}
-              {...props}
-            >
-              <AiToolbarContainer
-                state={state}
-                dropdownRef={dropdownRef}
-                toolbarRef={toolbarRef}
-              >
-                {typeof Suggestions === "function" ? (
-                  <Suggestions children={defaultSuggestions} />
-                ) : (
-                  Suggestions
+            <Portal asChild>
+              <Command
+                role="toolbar"
+                label="AI toolbar"
+                aria-orientation="horizontal"
+                className={cn(
+                  "lb-root lb-portal lb-tiptap-ai-toolbar-portal",
+                  className
                 )}
-              </AiToolbarContainer>
-            </Command>
+                ref={mergedRefs}
+                style={{
+                  position: strategy,
+                  top: 0,
+                  left: 0,
+                  transform: isPositioned
+                    ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                    : "translate3d(0, -200%, 0)",
+                }}
+                value={selectedDropdownValue}
+                onValueChange={setSelectedDropdownValue}
+                {...props}
+              >
+                <AiToolbarContainer
+                  state={state}
+                  dropdownRef={dropdownRef}
+                  toolbarRef={toolbarRef}
+                >
+                  {typeof Suggestions === "function" ? (
+                    <Suggestions children={defaultSuggestions} />
+                  ) : (
+                    Suggestions
+                  )}
+                </AiToolbarContainer>
+              </Command>
+            </Portal>
           </EditorProvider>
-        </TooltipProvider>,
-        document.body
+        </TooltipProvider>
       );
     }
   ),
