@@ -244,8 +244,8 @@ pub fn set_with_id(
         }
     };
 
-    // Remove old child
-    doc.remove_node(old_child_key);
+    // Remove old child (and all its descendants)
+    doc.remove_node_recursive(old_child_key);
 
     // Create new register at same position
     let node_id = doc
@@ -292,8 +292,8 @@ pub fn delete(doc: &mut Document, key: NodeKey, index: usize) {
         children.remove(index);
     }
 
-    // Remove the child node from the document
-    doc.remove_node(child_key);
+    // Remove the child node (and all its descendants) from the document
+    doc.remove_node_recursive(child_key);
 }
 
 /// Move an item from one index to another in a LiveList.
@@ -379,8 +379,8 @@ pub fn set(doc: &mut Document, key: NodeKey, index: usize, value: Json) {
 
     let (pos, old_child_key) = pos_and_old_key;
 
-    // Remove old child
-    doc.remove_node(old_child_key);
+    // Remove old child (and all its descendants)
+    doc.remove_node_recursive(old_child_key);
 
     // Create new register at same position
     let node_id = doc.get_node(key).map(|n| n.id.clone()).unwrap_or_default();
@@ -445,9 +445,9 @@ pub fn clear(doc: &mut Document, key: NodeKey) {
         children.clear();
     }
 
-    // Remove all child nodes
+    // Remove all child nodes (and all their descendants)
     for ck in child_keys {
-        doc.remove_node(ck);
+        doc.remove_node_recursive(ck);
     }
 }
 

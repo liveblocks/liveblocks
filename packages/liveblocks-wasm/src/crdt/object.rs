@@ -324,6 +324,7 @@ pub fn apply_update(doc: &mut Document, key: NodeKey, op: &Op, source: OpSource)
     let mut is_modified = false;
     let mut reverse_data = BTreeMap::new();
     let mut reverse_deletes = Vec::new();
+    let mut reverse_crdt_creates = Vec::new();
     let mut update_deltas = HashMap::new();
 
     for (prop, new_value) in &op_data {
@@ -352,22 +353,40 @@ pub fn apply_update(doc: &mut Document, key: NodeKey, op: &Op, source: OpSource)
             }
         }
 
-        // Capture old value for reverse ops
+        // Capture old value for reverse ops.
+        // Check for both plain scalar values AND CRDT children.
         let old_value = get_plain_value(doc, key, prop);
         if let Some(ref val) = old_value {
+            // Old value was a scalar — reverse restores it
             reverse_data.insert(prop.clone(), val.clone());
         } else {
-            reverse_deletes.push(Op {
-                op_code: OpCode::DeleteObjectKey,
-                id: node_id.clone(),
-                op_id: None,
-                parent_id: None,
-                parent_key: None,
-                data: None,
-                intent: None,
-                deleted_id: None,
-                key: Some(prop.clone()),
+            // Check if the old value is a CRDT child (not a Register)
+            let crdt_reverse = get_child(doc, key, prop).and_then(|ck| {
+                let node = doc.get_node(ck)?;
+                if matches!(&node.data, CrdtData::Register { .. }) {
+                    None
+                } else {
+                    Some(crate::ops::apply::generate_create_ops_for_subtree(doc, ck))
+                }
             });
+
+            if let Some(crdt_ops) = crdt_reverse {
+                // Old value was a CRDT child — reverse recreates the subtree
+                reverse_crdt_creates.extend(crdt_ops);
+            } else {
+                // No old value at all — reverse deletes the key
+                reverse_deletes.push(Op {
+                    op_code: OpCode::DeleteObjectKey,
+                    id: node_id.clone(),
+                    op_id: None,
+                    parent_id: None,
+                    parent_key: None,
+                    data: None,
+                    intent: None,
+                    deleted_id: None,
+                    key: Some(prop.clone()),
+                });
+            }
         }
 
         // Apply the update
@@ -386,7 +405,9 @@ pub fn apply_update(doc: &mut Document, key: NodeKey, op: &Op, source: OpSource)
         return ApplyResult::NotModified;
     }
 
+    // Build reverse ops: CRDT subtree recreations first, then scalar restores, then deletes
     let mut reverse = Vec::new();
+    reverse.extend(reverse_crdt_creates);
     if !reverse_data.is_empty() {
         reverse.push(Op {
             op_code: OpCode::UpdateObject,
@@ -444,7 +465,7 @@ pub fn apply_delete_object_key(
         None => return ApplyResult::NotModified,
     };
 
-    // Generate reverse ops
+    // Generate reverse ops BEFORE removing the child
     let reverse = if let Some(val) = old_value {
         vec![Op {
             op_code: OpCode::UpdateObject,
@@ -462,16 +483,38 @@ pub fn apply_delete_object_key(
             key: None,
         }]
     } else {
-        // Child CRDT node - reverse would be CREATE ops
-        // This will be fully implemented in Phase 4
-        vec![]
+        // Child CRDT node — reverse recreates the subtree
+        get_child(doc, key, &prop)
+            .map(|ck| crate::ops::apply::generate_create_ops_for_subtree(doc, ck))
+            .unwrap_or_default()
+    };
+
+    // Get the deleted child's node ID for CRDT children
+    let deleted_child_id = {
+        let node = doc.get_node(key);
+        node.and_then(|n| match &n.data {
+            CrdtData::Object { children, .. } => children.get(&prop).and_then(|ck| {
+                doc.get_node(*ck).and_then(|child| {
+                    if matches!(&child.data, CrdtData::Register { .. }) {
+                        None
+                    } else {
+                        Some(child.id.clone())
+                    }
+                })
+            }),
+            _ => None,
+        })
     };
 
     let update_delta = if let Some(val) = get_plain_value(doc, key, &prop) {
-        UpdateDelta::Delete { old_value: val }
+        UpdateDelta::Delete {
+            old_value: val,
+            deleted_id: deleted_child_id.clone(),
+        }
     } else {
         UpdateDelta::Delete {
             old_value: Json::Null,
+            deleted_id: deleted_child_id.clone(),
         }
     };
 
@@ -504,7 +547,7 @@ fn get_unacked_op(doc: &Document, key: NodeKey, prop: &str) -> Option<String> {
 }
 
 /// Set the unacked op ID for a property.
-fn set_unacked_op(doc: &mut Document, key: NodeKey, prop: &str, op_id: String) {
+pub fn set_unacked_op(doc: &mut Document, key: NodeKey, prop: &str, op_id: String) {
     if let Some(node) = doc.get_node_mut(key)
         && let CrdtData::Object { unacked_ops, .. } = &mut node.data
     {

@@ -18,35 +18,27 @@ function makeStubEngine(backend: "wasm" | "js"): CrdtEngine {
 }
 
 describe("getEngine", () => {
-  test("returns a consistent engine on subsequent calls", () => {
+  test("returns JS fallback when no WASM engine is set", () => {
+    _setEngine(null); // clear any WASM engine
     const jsEngine = makeStubEngine("js");
-    const engine1 = getEngine(jsEngine);
-    const engine2 = getEngine(jsEngine);
-    expect(engine1).toBe(engine2);
-  });
-});
-
-describe("engine immutability", () => {
-  test("once set, the engine cannot be changed", () => {
-    const jsEngine = makeStubEngine("js");
-
-    // Ensure the engine is set (in WASM mode it's already set by setup,
-    // in JS mode getEngine locks in JS on first call).
-    const engine1 = getEngine(jsEngine);
-
-    // Attempt to override — should be ignored
-    _setEngine(makeStubEngine("wasm"));
-    const engine2 = getEngine(jsEngine);
-
-    expect(engine2).toBe(engine1);
+    expect(getEngine(jsEngine)).toBe(jsEngine);
   });
 
-  test("_setEngine(null) is ignored once engine is set", () => {
+  test("returns WASM engine when set", () => {
     const jsEngine = makeStubEngine("js");
-    const engine = getEngine(jsEngine);
+    const wasmEngine = makeStubEngine("wasm");
+    _setEngine(wasmEngine);
+    expect(getEngine(jsEngine)).toBe(wasmEngine);
+    _setEngine(null); // cleanup
+  });
 
+  test("_setEngine(null) clears the WASM engine", () => {
+    const jsEngine = makeStubEngine("js");
+    const wasmEngine = makeStubEngine("wasm");
+    _setEngine(wasmEngine);
+    expect(getEngine(jsEngine).backend).toBe("wasm");
     _setEngine(null);
-    expect(getEngine(jsEngine)).toBe(engine);
+    expect(getEngine(jsEngine)).toBe(jsEngine);
   });
 });
 

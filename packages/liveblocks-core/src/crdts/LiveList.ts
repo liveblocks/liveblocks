@@ -11,6 +11,7 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { CrdtEntry } from "./impl-selector";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -43,6 +44,14 @@ export type LiveListUpdates<TItem extends Lson> = {
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
 };
+
+/**
+ * Resolve a CrdtEntry from Rust into a Lson value.
+ */
+function resolveEntry(entry: CrdtEntry, pool: ManagedPool): Lson {
+  if (entry.type === "scalar") return entry.value as Lson;
+  return pool.getNode(entry.nodeId) as unknown as Lson;
+}
 
 function childNodeLt(a: LiveNode, b: LiveNode): boolean {
   return a._parentPos < b._parentPos;
@@ -172,6 +181,39 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return this.#items.findIndex(
       (item) => item._getParentKeyOrThrow() === position
     );
+  }
+
+  /**
+   * Adds a child node to #items (sorted by position).
+   * Called from syncJsTreeFromRustResult when Rust-owned mode processes remote ops
+   * that create children under this list.
+   * @internal
+   */
+  _syncAddChild(child: LiveNode): void {
+    this.#items.add(child);
+    this.invalidate();
+  }
+
+  /**
+   * Removes a child node from #items.
+   * Called from syncJsTreeFromRustResult when Rust-owned mode processes remote ops
+   * that delete children from this list.
+   * @internal
+   */
+  _syncRemoveChild(child: LiveNode): void {
+    this.#items.remove(child);
+    this.invalidate();
+  }
+
+  /**
+   * Repositions a child node in #items after its parentKey changed.
+   * Called from syncJsTreeFromRustResult when Rust-owned mode processes remote ops
+   * that move children within this list.
+   * @internal
+   */
+  _syncRepositionChild(child: LiveNode): void {
+    this.#items.reposition(child);
+    this.invalidate();
   }
 
   /** @internal */
@@ -851,6 +893,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Returns the number of elements.
    */
   get length(): number {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return owner.listLength(this._id);
+    }
     return this.#items.length;
   }
 
@@ -870,9 +916,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   insert(element: TItem, index: number): void {
     this._pool?.assertStorageIsWritable();
-    if (index < 0 || index > this.#items.length) {
+    const insertLen = this.length;
+    if (index < 0 || index > insertLen) {
       throw new Error(
-        `Cannot insert list item at index "${index}". index should be between 0 and ${this.#items.length}`
+        `Cannot insert list item at index "${index}". index should be between 0 and ${insertLen}`
       );
     }
 
@@ -944,7 +991,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("targetIndex cannot be less than 0");
     }
 
-    if (targetIndex >= this.#items.length) {
+    const moveLen = this.length;
+    if (targetIndex >= moveLen) {
       throw new Error(
         "targetIndex cannot be greater or equal than the list length"
       );
@@ -954,7 +1002,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("index cannot be less than 0");
     }
 
-    if (index >= this.#items.length) {
+    if (index >= moveLen) {
       throw new Error("index cannot be greater or equal than the list length");
     }
 
@@ -1044,10 +1092,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   delete(index: number): void {
     this._pool?.assertStorageIsWritable();
-    if (index < 0 || index >= this.#items.length) {
+    const delLen = this.length;
+    if (index < 0 || index >= delLen) {
       throw new Error(
         `Cannot delete list item at index "${index}". index should be between 0 and ${
-          this.#items.length - 1
+          delLen - 1
         }`
       );
     }
@@ -1165,10 +1214,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   set(index: number, item: TItem): void {
     this._pool?.assertStorageIsWritable();
-    if (index < 0 || index >= this.#items.length) {
+    const setLen = this.length;
+    if (index < 0 || index >= setLen) {
       throw new Error(
         `Cannot set list item at index "${index}". index should be between 0 and ${
-          this.#items.length - 1
+          setLen - 1
         }`
       );
     }
@@ -1246,6 +1296,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Returns an Array of all the elements in the LiveList.
    */
   toArray(): TItem[] {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return owner.listEntries(this._id).map(
+        (entry) => resolveEntry(entry, this._pool!) as TItem
+      );
+    }
     return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
     //                                                                ^^^^^^^^
     //                                                                FIXME! This isn't safe.
@@ -1301,6 +1357,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns The element at the specified index or undefined.
    */
   get(index: number): TItem | undefined {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const entry = owner.listGetEntry(this._id, index);
+      if (!entry) return undefined;
+      return resolveEntry(entry, this._pool!) as TItem | undefined;
+    }
+
     if (index < 0 || index >= this.#items.length) {
       return undefined;
     }
@@ -1337,6 +1400,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return this.toArray().map(callback);
+    }
     const result: U[] = [];
     let i = 0;
     for (const entry of this.#items) {
@@ -1363,6 +1430,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   [Symbol.iterator](): IterableIterator<TItem> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return this.toArray()[Symbol.iterator]();
+    }
     return new LiveListIterator(this.#items);
   }
 
@@ -1440,6 +1511,28 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _toImmutable(): readonly ToImmutable<TItem>[] {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      // Iterate entries from Rust and delegate child toImmutable to
+      // preserve correct types (LiveMap → Map, LiveList → Array, etc.)
+      const entries = owner.listEntries(this._id);
+      const result: unknown[] = [];
+      for (const entry of entries) {
+        if (entry.type === "scalar") {
+          result.push(entry.value);
+        } else {
+          const childNode = this._pool!.getNode(entry.nodeId);
+          result.push(
+            childNode
+              ? childNode.toImmutable()
+              : entry.value // fallback
+          );
+        }
+      }
+      return (
+        process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+      ) as readonly ToImmutable<TItem>[];
+    }
     const result = Array.from(this.#items, (node) => node.toImmutable());
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)

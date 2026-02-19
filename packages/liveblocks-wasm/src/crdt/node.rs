@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use indexmap::IndexMap;
+
 use crate::arena::NodeKey;
 use crate::types::{CrdtType, Json};
 
@@ -22,10 +24,10 @@ pub enum CrdtData {
         /// Tracks unacknowledged sets: position -> opId.
         unacked_ops: HashMap<String, String>,
     },
-    /// LiveMap: string-keyed map with LWW per-key conflict resolution.
+    /// LiveMap: string-keyed map with insertion-order preservation.
     Map {
-        /// Key -> child node key in arena.
-        children: HashMap<String, NodeKey>,
+        /// Key -> child node key in arena (insertion-ordered).
+        children: IndexMap<String, NodeKey>,
         /// Tracks unacknowledged ops: key -> opId.
         unacked_ops: HashMap<String, String>,
     },
@@ -83,7 +85,7 @@ impl CrdtNode {
             parent_id: None,
             parent_key: None,
             data: CrdtData::Map {
-                children: HashMap::new(),
+                children: IndexMap::new(),
                 unacked_ops: HashMap::new(),
             },
         }

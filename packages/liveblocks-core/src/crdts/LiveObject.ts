@@ -25,6 +25,7 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { CrdtEntry } from "./impl-selector";
 import {
   creationOpToLson,
   deserializeToLson,
@@ -38,6 +39,15 @@ import {
   attachSubtreeFromOps,
   translateStorageUpdate,
 } from "./wasm-mutation-adapter";
+
+/**
+ * Resolve a CrdtEntry from Rust into a Lson value.
+ * Scalar entries are returned as-is; node entries are looked up in the pool.
+ */
+function resolveEntry(entry: CrdtEntry, pool: ManagedPool): Lson {
+  if (entry.type === "scalar") return entry.value as Lson;
+  return pool.getNode(entry.nodeId) as unknown as Lson;
+}
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
@@ -494,6 +504,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const entries = owner.objectEntries(this._id);
+      const obj: Record<string, unknown> = {};
+      for (const [key, entry] of entries) {
+        obj[key] = resolveEntry(entry, this._pool!);
+      }
+      return obj as O;
+    }
     return Object.fromEntries(this.#map) as O;
   }
 
@@ -513,6 +532,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const entry = owner.objectGetEntry(this._id, key as string);
+      if (!entry) return undefined as O[TKey];
+      return resolveEntry(entry, this._pool!) as O[TKey];
+    }
     return this.#map.get(key as string) as O[TKey];
   }
 
@@ -872,6 +897,27 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   _toImmutable(): ToImmutable<O> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      // Iterate entries from Rust and delegate child toImmutable to
+      // preserve correct types (LiveMap → Map, LiveList → Array, etc.)
+      const entries = owner.objectEntries(this._id);
+      const result: { [key: string]: unknown } = {};
+      for (const [key, entry] of entries) {
+        if (entry.type === "scalar") {
+          result[key] = entry.value;
+        } else {
+          // It's a child CRDT node — find the JS wrapper and delegate
+          const childNode = this._pool!.getNode(entry.nodeId);
+          result[key] = childNode
+            ? childNode.toImmutable()
+            : owner.objectToImmutable(entry.nodeId); // fallback
+        }
+      }
+      return (
+        process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+      ) as ToImmutable<O>;
+    }
     const result: { [key: string]: unknown } = {};
     for (const [key, val] of this.#map) {
       result[key] = isLiveStructure(val) ? val.toImmutable() : val;

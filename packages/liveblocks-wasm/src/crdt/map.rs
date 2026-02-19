@@ -165,8 +165,8 @@ pub fn delete(doc: &mut Document, key: NodeKey, map_key: &str) -> bool {
         children.remove(map_key);
     }
 
-    // Remove the child node
-    doc.remove_node(child_key);
+    // Remove the child node (and all its descendants)
+    doc.remove_node_recursive(child_key);
     true
 }
 
@@ -326,7 +326,7 @@ fn remove_child_at_key(doc: &mut Document, key: NodeKey, map_key: &str) {
         {
             children.remove(map_key);
         }
-        // Remove the node from the document
-        doc.remove_node(ck);
+        // Remove the node (and all its descendants) from the document
+        doc.remove_node_recursive(ck);
     }
 }

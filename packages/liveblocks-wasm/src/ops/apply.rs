@@ -106,7 +106,7 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
     };
 
     // Check if node already exists (duplicate/ACK).
-    // For list children, we still need to update the position when it differs
+    // For list children, we need to update the position when it differs
     // (matching JS _applyInsertAck behavior where server may relocate the item).
     if let Some(existing_key) = doc.get_key_by_id(&op.id) {
         let needs_position_update = {
@@ -116,21 +116,98 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
         };
 
         if needs_position_update {
-            // Update the node's parent_key
-            if let Some(node) = doc.get_node_mut(existing_key) {
-                node.parent_key = Some(parent_key.clone());
-            }
+            if let Some(parent_node_key) = doc.get_key_by_id(&parent_id) {
+                // Find previous index before the move
+                let previous_index = {
+                    doc.get_node(parent_node_key).and_then(|p| match &p.data {
+                        CrdtData::List { children, .. } => {
+                            children.iter().position(|(_, ck)| *ck == existing_key)
+                        }
+                        _ => None,
+                    })
+                };
 
-            // Find the parent node and update list if applicable
-            if let Some(parent_node_key) = doc.get_key_by_id(&parent_id)
-                && let Some(parent) = doc.get_node_mut(parent_node_key)
-                && let CrdtData::List { children, .. } = &mut parent.data
-            {
-                // Update position in children vec and re-sort
-                if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == existing_key) {
-                    entry.0 = parent_key;
+                // Shift any item currently at the target position
+                // (matching JS #applyInsertAck → #shiftItemPosition)
+                if let Some(parent) = doc.get_node(parent_node_key)
+                    && let CrdtData::List { children, .. } = &parent.data
+                {
+                    if let Some(conflict_idx) = children
+                        .iter()
+                        .position(|(pos, ck)| pos.as_str() == parent_key && *ck != existing_key)
+                    {
+                        let conflict_child_key = children[conflict_idx].1;
+                        let before_pos = Some(parent_key.clone());
+                        let after_pos =
+                            children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                        let shifted_pos = crate::position::make_position(
+                            before_pos.as_deref(),
+                            after_pos.as_deref(),
+                        );
+                        if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                            child.parent_key = Some(shifted_pos.clone());
+                        }
+                        if let Some(parent) = doc.get_node_mut(parent_node_key)
+                            && let CrdtData::List { children, .. } = &mut parent.data
+                        {
+                            if let Some(entry) =
+                                children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                            {
+                                entry.0 = shifted_pos;
+                            }
+                        }
+                    }
                 }
-                children.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+                // Update the node's parent_key
+                if let Some(node) = doc.get_node_mut(existing_key) {
+                    node.parent_key = Some(parent_key.clone());
+                }
+
+                // Update position in children vec and re-sort
+                if let Some(parent) = doc.get_node_mut(parent_node_key)
+                    && let CrdtData::List { children, .. } = &mut parent.data
+                {
+                    if let Some(entry) =
+                        children.iter_mut().find(|(_, ck)| *ck == existing_key)
+                    {
+                        entry.0 = parent_key;
+                    }
+                    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                }
+
+                // Find new index after the move and return Modified with move update
+                let new_index = {
+                    doc.get_node(parent_node_key).and_then(|p| match &p.data {
+                        CrdtData::List { children, .. } => {
+                            children.iter().position(|(_, ck)| *ck == existing_key)
+                        }
+                        _ => None,
+                    })
+                };
+
+                if let (Some(prev_idx), Some(new_idx)) = (previous_index, new_index) {
+                    if prev_idx != new_idx {
+                        let value =
+                            get_node_immutable_value(doc, existing_key).unwrap_or(Json::Null);
+                        return ApplyResult::Modified {
+                            reverse: vec![],
+                            update: StorageUpdate::LiveListUpdate {
+                                node_id: parent_id,
+                                updates: vec![ListUpdateEntry::Move {
+                                    previous_index: prev_idx,
+                                    new_index: new_idx,
+                                    value,
+                                }],
+                            },
+                        };
+                    }
+                }
+            } else {
+                // No parent found, just update parent_key
+                if let Some(node) = doc.get_node_mut(existing_key) {
+                    node.parent_key = Some(parent_key);
+                }
             }
         }
 
@@ -154,7 +231,7 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
             attach_child_to_object(doc, parent_node_key, &parent_id, &parent_key, op, source)
         }
         CrdtData::List { .. } => {
-            attach_child_to_list(doc, parent_node_key, &parent_id, &parent_key, op)
+            attach_child_to_list(doc, parent_node_key, &parent_id, &parent_key, op, source)
         }
         CrdtData::Map { .. } => {
             attach_child_to_map(doc, parent_node_key, &parent_id, &parent_key, op)
@@ -180,6 +257,28 @@ fn node_from_create_op(op: &Op) -> CrdtNode {
     node.parent_id = op.parent_id.clone();
     node.parent_key = op.parent_key.clone();
     node
+}
+
+/// If the op is CREATE_OBJECT with inline data, populate register children
+/// on the newly created node. This must be called after inserting the node
+/// into the document.
+fn populate_inline_data(doc: &mut Document, child_key: NodeKey, op: &Op) {
+    if op.op_code == OpCode::CreateObject {
+        if let Some(Json::Object(data)) = &op.data {
+            for (key, value) in data {
+                let reg_id = format!("{}:{}", op.id, key);
+                let mut reg = CrdtNode::new_register(reg_id, value.clone());
+                reg.parent_id = Some(op.id.clone());
+                reg.parent_key = Some(key.clone());
+                let reg_key = doc.insert_node(reg);
+                if let Some(child) = doc.get_node_mut(child_key)
+                    && let CrdtData::Object { children, .. } = &mut child.data
+                {
+                    children.insert(key.clone(), reg_key);
+                }
+            }
+        }
+    }
 }
 
 /// Attach a child CRDT node to a LiveObject parent.
@@ -209,7 +308,7 @@ fn attach_child_to_object(
         {
             children.remove(prop);
         }
-        doc.remove_node(old_ck);
+        doc.remove_node_recursive(old_ck);
     }
 
     // Create and insert the new child
@@ -217,22 +316,7 @@ fn attach_child_to_object(
     let child_key = doc.insert_node(child_node);
 
     // If CREATE_OBJECT with inline data, populate register children
-    if op.op_code == OpCode::CreateObject
-        && let Some(Json::Object(data)) = &op.data
-    {
-        for (key, value) in data {
-            let reg_id = format!("{}:{}", op.id, key);
-            let mut reg = CrdtNode::new_register(reg_id, value.clone());
-            reg.parent_id = Some(op.id.clone());
-            reg.parent_key = Some(key.clone());
-            let reg_key = doc.insert_node(reg);
-            if let Some(child) = doc.get_node_mut(child_key)
-                && let CrdtData::Object { children, .. } = &mut child.data
-            {
-                children.insert(key.clone(), reg_key);
-            }
-        }
-    }
+    populate_inline_data(doc, child_key, op);
 
     // Insert child into parent's children map
     if let Some(node) = doc.get_node_mut(parent_key)
@@ -266,8 +350,16 @@ fn attach_child_to_list(
     parent_id: &str,
     position: &str,
     op: &Op,
+    source: OpSource,
 ) -> ApplyResult {
     let is_set_intent = op.intent.as_deref() == Some("set");
+    // Track the actual insertion position (may be shifted for LOCAL source conflicts)
+    let mut actual_position = position.to_string();
+
+    // For set intent, capture CREATE ops for the conflict item BEFORE removing it.
+    // This is needed so undo/redo can restore the replaced item.
+    // Matches JS LiveList.#applySetUndoRedo which builds reverse from existingItem._toOps().
+    let mut conflict_reverse_ops: Vec<Op> = vec![];
 
     if is_set_intent {
         // Handle intent: "set" — this is a "replace" operation.
@@ -285,12 +377,37 @@ fn attach_child_to_list(
             _ => None,
         });
         if let Some(ck) = conflict_key {
+            // Capture CREATE ops for the conflict item before removing it
+            conflict_reverse_ops = generate_create_ops_for_subtree(doc, ck);
+            // Add intent "set" and deleted_id to the first reverse op
+            // (matching JS HACK_addIntentAndDeletedIdToOperation)
+            if let Some(first) = conflict_reverse_ops.first_mut() {
+                first.intent = Some("set".to_string());
+                first.deleted_id = Some(op.id.clone());
+            }
+
+            // Check if this conflict item is the same as the deleted_id
+            let conflict_is_deleted_id = op.deleted_id.as_ref().map_or(false, |did| {
+                doc.get_node(ck).map_or(false, |n| n.id == *did)
+            });
+
+            // Remove from list's children
             if let Some(parent) = doc.get_node_mut(parent_key)
                 && let CrdtData::List { children, .. } = &mut parent.data
             {
                 children.retain(|(_, c)| *c != ck);
             }
-            doc.remove_node(ck);
+
+            if conflict_is_deleted_id {
+                // Normal case: the conflict item IS the one being replaced → fully remove
+                doc.remove_node_recursive(ck);
+            } else {
+                // Implicit delete: the conflict item was locally moved here but
+                // the remote set didn't know about it.
+                // Keep the node in the document arena (don't remove it) so that
+                // a later SET_PARENT_KEY ACK can restore it.
+                // Matches JS LiveList.#implicitlyDeletedItems behavior.
+            }
         }
 
         // Step 2: Remove deleted_id item (may have been already removed in step 1)
@@ -301,43 +418,62 @@ fn attach_child_to_list(
                 {
                     children.retain(|(_, ck)| *ck != deleted_node_key);
                 }
-                doc.remove_node(deleted_node_key);
+                doc.remove_node_recursive(deleted_node_key);
             }
         }
     } else {
         // Regular insert (not set): resolve position conflicts by shifting.
-        // Matches JS LiveList.#shiftItemPosition behavior for remote inserts.
         if let Some(node) = doc.get_node(parent_key)
             && let CrdtData::List { children, .. } = &node.data
         {
             if let Some(conflict_idx) = children.iter().position(|(pos, _)| pos.as_str() == position) {
-                let conflict_child_key = children[conflict_idx].1;
-                let before_pos = Some(position.to_string());
-                let after_pos = children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
-                let shifted_pos = crate::position::make_position(
-                    before_pos.as_deref(),
-                    after_pos.as_deref(),
-                );
-                // Update the conflicting child's parent_key
-                if let Some(child) = doc.get_node_mut(conflict_child_key) {
-                    child.parent_key = Some(shifted_pos.clone());
-                }
-                // Update position in parent's children and re-sort
-                if let Some(parent) = doc.get_node_mut(parent_key)
-                    && let CrdtData::List { children, .. } = &mut parent.data
-                {
-                    if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == conflict_child_key) {
-                        entry.0 = shifted_pos;
+                match source {
+                    OpSource::Theirs => {
+                        // Remote insert: shift the EXISTING item to make room.
+                        // Matches JS LiveList.#applyRemoteInsert → #shiftItemPosition.
+                        let conflict_child_key = children[conflict_idx].1;
+                        let before_pos = Some(position.to_string());
+                        let after_pos = children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                        let shifted_pos = crate::position::make_position(
+                            before_pos.as_deref(),
+                            after_pos.as_deref(),
+                        );
+                        if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                            child.parent_key = Some(shifted_pos.clone());
+                        }
+                        if let Some(parent) = doc.get_node_mut(parent_key)
+                            && let CrdtData::List { children, .. } = &mut parent.data
+                        {
+                            if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == conflict_child_key) {
+                                entry.0 = shifted_pos;
+                            }
+                            children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                        }
                     }
-                    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                    _ => {
+                        // Local/undo-redo insert: shift the NEW item to AFTER the conflict.
+                        // Matches JS LiveList.#applyInsertUndoRedo behavior.
+                        let before_pos = Some(position.to_string());
+                        let after_pos = children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                        let shifted_pos = crate::position::make_position(
+                            before_pos.as_deref(),
+                            after_pos.as_deref(),
+                        );
+                        actual_position = shifted_pos;
+                    }
                 }
             }
         }
     }
 
     // Create and insert the new child
-    let child_node = node_from_create_op(op);
+    let mut child_node = node_from_create_op(op);
+    // Update the child's parent_key to the actual position (may differ from op's position)
+    child_node.parent_key = Some(actual_position.clone());
     let child_key = doc.insert_node(child_node);
+
+    // If CREATE_OBJECT with inline data, populate register children
+    populate_inline_data(doc, child_key, op);
 
     // Insert into the list's children at the correct sorted position
     if let Some(node) = doc.get_node_mut(parent_key)
@@ -345,17 +481,30 @@ fn attach_child_to_list(
     {
         let insert_idx = children
             .iter()
-            .position(|(pos, _)| pos.as_str() > position)
+            .position(|(pos, _)| pos.as_str() > actual_position.as_str())
             .unwrap_or(children.len());
-        children.insert(insert_idx, (position.to_string(), child_key));
+        children.insert(insert_idx, (actual_position.clone(), child_key));
 
-        let updates = vec![ListUpdateEntry::Insert {
-            index: insert_idx,
-            value: Json::Null, // Placeholder
-        }];
+        // Determine update type based on whether this was a set or insert
+        let updates = if is_set_intent && !conflict_reverse_ops.is_empty() {
+            vec![ListUpdateEntry::Set {
+                index: insert_idx,
+                old_value: Some(Json::Null),
+                new_value: Json::Null,
+            }]
+        } else {
+            vec![ListUpdateEntry::Insert {
+                index: insert_idx,
+                value: Json::Null, // Placeholder
+            }]
+        };
 
-        ApplyResult::Modified {
-            reverse: vec![Op {
+        // Use conflict reverse ops if we replaced an existing item (set intent),
+        // otherwise use simple DELETE_CRDT
+        let reverse = if !conflict_reverse_ops.is_empty() {
+            conflict_reverse_ops
+        } else {
+            vec![Op {
                 op_code: OpCode::DeleteCrdt,
                 id: op.id.clone(),
                 op_id: None,
@@ -365,7 +514,11 @@ fn attach_child_to_list(
                 intent: None,
                 deleted_id: None,
                 key: None,
-            }],
+            }]
+        };
+
+        ApplyResult::Modified {
+            reverse,
             update: StorageUpdate::LiveListUpdate {
                 node_id: parent_id.to_string(),
                 updates,
@@ -373,7 +526,7 @@ fn attach_child_to_list(
         }
     } else {
         // Parent is not a list (shouldn't happen)
-        doc.remove_node(child_key);
+        doc.remove_node_recursive(child_key);
         ApplyResult::NotModified
     }
 }
@@ -387,7 +540,10 @@ fn attach_child_to_map(
     op: &Op,
 ) -> ApplyResult {
     // Build reverse from current value at this key
-    let reverse = build_reverse_for_map_key(doc, parent_key, parent_id, map_key);
+    let mut reverse = build_reverse_for_map_key(doc, parent_key, parent_id, map_key);
+
+    // If there was no existing child, reverse is DELETE_CRDT of the new node
+    let had_existing_child = reverse.len() > 0;
 
     // Remove old child at this key
     let old_child_key = {
@@ -403,18 +559,26 @@ fn attach_child_to_map(
         {
             children.remove(map_key);
         }
-        doc.remove_node(old_ck);
+        doc.remove_node_recursive(old_ck);
     }
 
     // Create and insert the new child
     let child_node = node_from_create_op(op);
     let child_key = doc.insert_node(child_node);
 
+    // If CREATE_OBJECT with inline data, populate register children
+    populate_inline_data(doc, child_key, op);
+
     // Insert into map's children
     if let Some(node) = doc.get_node_mut(parent_key)
         && let CrdtData::Map { children, .. } = &mut node.data
     {
         children.insert(map_key.to_string(), child_key);
+    }
+
+    // If there was no existing child, the reverse is DELETE_CRDT of the new node
+    if !had_existing_child {
+        reverse = vec![crate::ops::serialize::delete_crdt_op(&op.id)];
     }
 
     let mut updates = HashMap::new();
@@ -455,8 +619,8 @@ fn apply_delete_crdt(doc: &mut Document, op: &Op) -> ApplyResult {
         None => return ApplyResult::NotModified,
     };
 
-    // Get the node's parent info and generate reverse ops
-    let (parent_id, parent_key_str, _node_id) = {
+    // Get the node's parent info
+    let (parent_id, parent_key_str, deleted_node_id) = {
         let node = match doc.get_node(node_key) {
             Some(n) => n,
             None => return ApplyResult::NotModified,
@@ -468,14 +632,47 @@ fn apply_delete_crdt(doc: &mut Document, op: &Op) -> ApplyResult {
         )
     };
 
+    // Capture the old value BEFORE deleting (for update notifications)
+    let old_value = get_node_immutable_value(doc, node_key);
+
+    // Determine the parent's type and, for lists, the child's index
+    let parent_node_key = parent_id
+        .as_ref()
+        .and_then(|pid| doc.get_key_by_id(pid));
+
+    #[derive(Clone, Copy)]
+    enum ParentKind {
+        Object,
+        List,
+        Map,
+    }
+
+    let (parent_kind, list_index) = if let Some(pk) = parent_node_key {
+        if let Some(parent) = doc.get_node(pk) {
+            match &parent.data {
+                CrdtData::List { children, .. } => {
+                    let idx = children
+                        .iter()
+                        .position(|(_, ck)| *ck == node_key)
+                        .unwrap_or(0);
+                    (ParentKind::List, idx)
+                }
+                CrdtData::Map { .. } => (ParentKind::Map, 0),
+                _ => (ParentKind::Object, 0),
+            }
+        } else {
+            (ParentKind::Object, 0)
+        }
+    } else {
+        (ParentKind::Object, 0)
+    };
+
     // Generate reverse ops (CREATE ops to recreate the subtree)
     let reverse = generate_create_ops_for_subtree(doc, node_key);
 
     // Find and update the parent to remove this child
-    if let Some(pid) = &parent_id
-        && let Some(parent_node_key) = doc.get_key_by_id(pid)
-    {
-        remove_child_from_parent(doc, parent_node_key, &parent_key_str, node_key);
+    if let Some(pk) = parent_node_key {
+        remove_child_from_parent(doc, pk, &parent_key_str, node_key);
     }
 
     // Remove the node (and recursively remove its children)
@@ -483,22 +680,35 @@ fn apply_delete_crdt(doc: &mut Document, op: &Op) -> ApplyResult {
 
     let parent_nid = parent_id.unwrap_or_default();
     let pkey = parent_key_str.unwrap_or_default();
+    let old_val = old_value.unwrap_or(Json::Null);
 
-    let mut updates = HashMap::new();
-    updates.insert(
-        pkey,
-        UpdateDelta::Delete {
-            old_value: Json::Null,
-        },
-    );
-
-    ApplyResult::Modified {
-        reverse,
-        update: StorageUpdate::LiveObjectUpdate {
+    let update = match parent_kind {
+        ParentKind::List => StorageUpdate::LiveListUpdate {
             node_id: parent_nid,
-            updates,
+            updates: vec![ListUpdateEntry::Delete {
+                index: list_index,
+                old_value: old_val,
+            }],
         },
-    }
+        ParentKind::Map => {
+            let mut updates = HashMap::new();
+            updates.insert(pkey, UpdateDelta::Delete { old_value: old_val, deleted_id: Some(deleted_node_id.clone()) });
+            StorageUpdate::LiveMapUpdate {
+                node_id: parent_nid,
+                updates,
+            }
+        }
+        ParentKind::Object => {
+            let mut updates = HashMap::new();
+            updates.insert(pkey, UpdateDelta::Delete { old_value: old_val, deleted_id: Some(deleted_node_id.clone()) });
+            StorageUpdate::LiveObjectUpdate {
+                node_id: parent_nid,
+                updates,
+            }
+        }
+    };
+
+    ApplyResult::Modified { reverse, update }
 }
 
 // ---- DELETE_OBJECT_KEY ----
@@ -539,23 +749,115 @@ fn apply_set_parent_key(doc: &mut Document, op: &Op) -> ApplyResult {
         )
     };
 
+    // If the position is already at the target, no-op
+    if old_parent_key.as_deref() == Some(&new_parent_key) {
+        return ApplyResult::NotModified;
+    }
+
     // Update the node's parent_key
     if let Some(node) = doc.get_node_mut(node_key) {
         node.parent_key = Some(new_parent_key.clone());
     }
 
     // If the parent is a list, update the position and re-sort
+    enum ListChangeKind {
+        Move { previous_index: usize, new_index: usize },
+        Restore { new_index: usize },
+        None,
+    }
+    let mut list_change = ListChangeKind::None;
+
     if let Some(pid) = &parent_id
         && let Some(parent_node_key) = doc.get_key_by_id(pid)
-        && let Some(parent) = doc.get_node_mut(parent_node_key)
-        && let CrdtData::List { children, .. } = &mut parent.data
     {
-        // Find and update the position for this child
-        if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == node_key) {
-            entry.0 = new_parent_key.clone();
+        // Check if node is currently in the list's children
+        let previous_index = {
+            let parent = doc.get_node(parent_node_key);
+            parent.and_then(|p| match &p.data {
+                CrdtData::List { children, .. } => {
+                    children.iter().position(|(_, ck)| *ck == node_key)
+                }
+                _ => None,
+            })
+        };
+
+        // Check if parent is a list
+        let is_list = doc.get_node(parent_node_key).map_or(false, |p| {
+            matches!(&p.data, CrdtData::List { .. })
+        });
+
+        if is_list {
+            if let Some(_prev_idx) = previous_index {
+                // Normal case: node is in the list, update position
+                if let Some(parent) = doc.get_node_mut(parent_node_key)
+                    && let CrdtData::List { children, .. } = &mut parent.data
+                {
+                    if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == node_key) {
+                        entry.0 = new_parent_key.clone();
+                    }
+                    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+                    let new_index = children.iter().position(|(_, ck)| *ck == node_key);
+                    if let Some(new_idx) = new_index {
+                        if _prev_idx != new_idx {
+                            list_change = ListChangeKind::Move {
+                                previous_index: _prev_idx,
+                                new_index: new_idx,
+                            };
+                        }
+                    }
+                }
+            } else {
+                // Implicitly deleted: node exists in document but NOT in parent's children.
+                // Restore it by re-inserting at the new position.
+                // Matches JS LiveList.#applySetChildKeyAck restoring from implicitlyDeletedItems.
+
+                // First, shift any existing item at the target position
+                // (matching JS: existingItem._setParentLink(this, makePosition(newKey, nextPos)))
+                if let Some(parent) = doc.get_node(parent_node_key)
+                    && let CrdtData::List { children, .. } = &parent.data
+                {
+                    if let Some(conflict_idx) = children
+                        .iter()
+                        .position(|(pos, _)| pos.as_str() == new_parent_key.as_str())
+                    {
+                        let conflict_child_key = children[conflict_idx].1;
+                        let before_pos = Some(new_parent_key.clone());
+                        let after_pos =
+                            children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                        let shifted_pos = crate::position::make_position(
+                            before_pos.as_deref(),
+                            after_pos.as_deref(),
+                        );
+                        if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                            child.parent_key = Some(shifted_pos.clone());
+                        }
+                        if let Some(parent) = doc.get_node_mut(parent_node_key)
+                            && let CrdtData::List { children, .. } = &mut parent.data
+                        {
+                            if let Some(entry) =
+                                children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                            {
+                                entry.0 = shifted_pos;
+                            }
+                            children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                        }
+                    }
+                }
+
+                // Now re-insert the restored node
+                if let Some(parent) = doc.get_node_mut(parent_node_key)
+                    && let CrdtData::List { children, .. } = &mut parent.data
+                {
+                    let insert_idx = children
+                        .iter()
+                        .position(|(pos, _)| pos.as_str() > new_parent_key.as_str())
+                        .unwrap_or(children.len());
+                    children.insert(insert_idx, (new_parent_key.clone(), node_key));
+                    list_change = ListChangeKind::Restore { new_index: insert_idx };
+                }
+            }
         }
-        // Re-sort by position
-        children.sort_by(|(a, _), (b, _)| a.cmp(b));
     }
 
     // Generate reverse op
@@ -572,12 +874,46 @@ fn apply_set_parent_key(doc: &mut Document, op: &Op) -> ApplyResult {
     }];
 
     let parent_nid = parent_id.unwrap_or_default();
-    ApplyResult::Modified {
-        reverse,
-        update: StorageUpdate::LiveListUpdate {
-            node_id: parent_nid,
-            updates: vec![],
-        },
+
+    // Build update entry based on what happened
+    let updates = match list_change {
+        ListChangeKind::Move { previous_index, new_index } => {
+            let value = get_node_immutable_value(doc, node_key).unwrap_or(Json::Null);
+            vec![ListUpdateEntry::Move {
+                previous_index,
+                new_index,
+                value,
+            }]
+        }
+        ListChangeKind::Restore { new_index } => {
+            let value = get_node_immutable_value(doc, node_key).unwrap_or(Json::Null);
+            vec![ListUpdateEntry::Insert {
+                index: new_index,
+                value,
+            }]
+        }
+        ListChangeKind::None => vec![],
+    };
+
+    // If we restored an item from implicit delete, always return Modified
+    let is_restored = matches!(list_change, ListChangeKind::Restore { .. });
+    if updates.is_empty() && !is_restored {
+        // No actual change in the list
+        ApplyResult::Modified {
+            reverse,
+            update: StorageUpdate::LiveListUpdate {
+                node_id: parent_nid,
+                updates,
+            },
+        }
+    } else {
+        ApplyResult::Modified {
+            reverse,
+            update: StorageUpdate::LiveListUpdate {
+                node_id: parent_nid,
+                updates,
+            },
+        }
     }
 }
 
@@ -725,24 +1061,18 @@ fn remove_child_from_parent(
 
 /// Recursively remove a node and all its descendants from the document.
 fn remove_node_recursive(doc: &mut Document, node_key: NodeKey) {
-    // Collect child keys first to avoid borrow issues
-    let child_keys: Vec<NodeKey> = {
-        let Some(node) = doc.get_node(node_key) else {
-            return;
-        };
-        match &node.data {
-            CrdtData::Object { children, .. } => children.values().copied().collect(),
-            CrdtData::List { children, .. } => children.iter().map(|(_, ck)| *ck).collect(),
-            CrdtData::Map { children, .. } => children.values().copied().collect(),
-            CrdtData::Register { .. } => vec![],
-        }
-    };
+    doc.remove_node_recursive(node_key);
+}
 
-    // Recursively remove children
-    for ck in child_keys {
-        remove_node_recursive(doc, ck);
+/// Get the immutable value of a node before it is deleted.
+/// For registers, returns the stored data directly.
+/// For CRDT containers, returns a recursive immutable snapshot.
+fn get_node_immutable_value(doc: &Document, key: NodeKey) -> Option<Json> {
+    let node = doc.get_node(key)?;
+    match &node.data {
+        CrdtData::Register { data } => Some(data.clone()),
+        CrdtData::Object { .. } => crate::crdt::object::to_immutable(doc, key),
+        CrdtData::List { .. } => crate::crdt::list::to_immutable(doc, key),
+        CrdtData::Map { .. } => crate::crdt::map::to_immutable(doc, key),
     }
-
-    // Remove this node
-    doc.remove_node(node_key);
 }

@@ -14,7 +14,7 @@ use crate::ops::apply;
 use crate::ops::serialize::{
     create_register_op, delete_crdt_op, delete_object_key_op, set_parent_key_op, update_object_op,
 };
-use crate::types::{Json, MutationResult, Op, OpSource, SerializedCrdt};
+use crate::types::{ApplyResult, CrdtType, Json, MutationResult, Op, OpCode, OpSource, SerializedCrdt};
 use crate::updates::{ListUpdateEntry, StorageUpdate, UpdateDelta};
 
 /// Shared document reference used by all handles.
@@ -89,6 +89,197 @@ fn noop_mutation_result_js(node_id: &str, update_type: &str) -> JsValue {
     })
 }
 
+/// Build a JS entry object for a child node in the CRDT tree.
+/// Returns `{ type: "scalar", value: <json> }` for Registers,
+/// or `{ type: "node", nodeId: <string>, nodeType: <string> }` for CRDT children.
+fn child_to_entry_js(doc: &Document, child_key: NodeKey) -> JsValue {
+    let Some(child) = doc.get_node(child_key) else {
+        return JsValue::UNDEFINED;
+    };
+    let obj = js_sys::Object::new();
+    match &child.data {
+        CrdtData::Register { data } => {
+            let _ = js_sys::Reflect::set(&obj, &"type".into(), &"scalar".into());
+            let _ = js_sys::Reflect::set(&obj, &"value".into(), &json_to_js(data));
+        }
+        _ => {
+            let _ = js_sys::Reflect::set(&obj, &"type".into(), &"node".into());
+            let _ = js_sys::Reflect::set(
+                &obj,
+                &"nodeId".into(),
+                &JsValue::from_str(&child.id),
+            );
+            let node_type_str = match child.node_type {
+                CrdtType::Object => "object",
+                CrdtType::List => "list",
+                CrdtType::Map => "map",
+                CrdtType::Register => "register",
+            };
+            let _ = js_sys::Reflect::set(
+                &obj,
+                &"nodeType".into(),
+                &JsValue::from_str(node_type_str),
+            );
+        }
+    }
+    obj.into()
+}
+
+/// Derive structural changes from a successfully applied op.
+/// Structural changes tell JS which nodes to create/delete/move/invalidate.
+fn derive_structural_changes(op: &Op, changes: &js_sys::Array) {
+    match op.op_code {
+        OpCode::CreateObject | OpCode::CreateList | OpCode::CreateMap => {
+            // A new CRDT node was created — JS needs a wrapper
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"created".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            let node_type = match op.op_code {
+                OpCode::CreateObject => "object",
+                OpCode::CreateList => "list",
+                OpCode::CreateMap => "map",
+                _ => unreachable!(),
+            };
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeType".into(),
+                &JsValue::from_str(node_type),
+            );
+            if let Some(pid) = &op.parent_id {
+                let _ = js_sys::Reflect::set(
+                    &change,
+                    &"parentId".into(),
+                    &JsValue::from_str(pid),
+                );
+            }
+            if let Some(pkey) = &op.parent_key {
+                let _ = js_sys::Reflect::set(
+                    &change,
+                    &"parentKey".into(),
+                    &JsValue::from_str(pkey),
+                );
+            }
+            changes.push(&change);
+
+            // Parent also needs cache invalidation
+            if let Some(pid) = &op.parent_id {
+                let updated = js_sys::Object::new();
+                let _ = js_sys::Reflect::set(&updated, &"type".into(), &"updated".into());
+                let _ = js_sys::Reflect::set(
+                    &updated,
+                    &"nodeId".into(),
+                    &JsValue::from_str(pid),
+                );
+                changes.push(&updated);
+            }
+        }
+        OpCode::CreateRegister => {
+            // Emit "created" for the register so JS creates a LiveRegister wrapper
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"created".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeType".into(),
+                &"register".into(),
+            );
+            if let Some(pid) = &op.parent_id {
+                let _ = js_sys::Reflect::set(
+                    &change,
+                    &"parentId".into(),
+                    &JsValue::from_str(pid),
+                );
+            }
+            if let Some(pkey) = &op.parent_key {
+                let _ = js_sys::Reflect::set(
+                    &change,
+                    &"parentKey".into(),
+                    &JsValue::from_str(pkey),
+                );
+            }
+            // Include register data so JS can create LiveRegister with
+            // the correct value (needed for post-detach iteration).
+            if let Some(ref data) = op.data {
+                if let Ok(v) = to_js(data) {
+                    let _ = js_sys::Reflect::set(
+                        &change,
+                        &"data".into(),
+                        &v,
+                    );
+                }
+            }
+            changes.push(&change);
+
+            // Parent also needs cache invalidation
+            if let Some(pid) = &op.parent_id {
+                let updated = js_sys::Object::new();
+                let _ = js_sys::Reflect::set(&updated, &"type".into(), &"updated".into());
+                let _ = js_sys::Reflect::set(
+                    &updated,
+                    &"nodeId".into(),
+                    &JsValue::from_str(pid),
+                );
+                changes.push(&updated);
+            }
+        }
+        OpCode::DeleteCrdt => {
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"deleted".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            changes.push(&change);
+        }
+        OpCode::SetParentKey => {
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"moved".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            if let Some(pkey) = &op.parent_key {
+                let _ = js_sys::Reflect::set(
+                    &change,
+                    &"newParentKey".into(),
+                    &JsValue::from_str(pkey),
+                );
+            }
+            changes.push(&change);
+        }
+        OpCode::UpdateObject | OpCode::DeleteObjectKey => {
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"updated".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            changes.push(&change);
+        }
+        OpCode::Init => {
+            let change = js_sys::Object::new();
+            let _ = js_sys::Reflect::set(&change, &"type".into(), &"updated".into());
+            let _ = js_sys::Reflect::set(
+                &change,
+                &"nodeId".into(),
+                &JsValue::from_str(&op.id),
+            );
+            changes.push(&change);
+        }
+    }
+}
+
 // ============================================================
 // LiveObjectHandle
 // ============================================================
@@ -137,10 +328,11 @@ impl LiveObjectHandle {
         // Generate op_id
         let op_id = self.id_gen.borrow_mut().generate_op_id();
 
-        // Mutate tree
+        // Mutate tree and track unacked op for ACK handling
         {
             let mut doc = self.doc.borrow_mut();
             object::set_plain(&mut doc, self.key, key, value.clone());
+            object::set_unacked_op(&mut doc, self.key, key, op_id.clone());
         }
 
         // Forward op
@@ -356,11 +548,12 @@ impl LiveObjectHandle {
         if !scalar_data.is_empty() {
             let op_id = self.id_gen.borrow_mut().generate_op_id();
 
-            // Mutate tree for scalars
+            // Mutate tree for scalars and track unacked ops for ACK handling
             {
                 let mut doc = self.doc.borrow_mut();
                 for (k, v) in &scalar_data {
                     object::set_plain(&mut doc, self.key, k, v.clone());
+                    object::set_unacked_op(&mut doc, self.key, k, op_id.clone());
                 }
             }
 
@@ -468,10 +661,12 @@ impl LiveObjectHandle {
             let update_delta = if let Some(ref val) = old_value {
                 UpdateDelta::Delete {
                     old_value: val.clone(),
+                    deleted_id: None,
                 }
             } else {
                 UpdateDelta::Delete {
                     old_value: Json::Null,
+                    deleted_id: None,
                 }
             };
 
@@ -1014,7 +1209,7 @@ impl LiveListHandle {
                         None => None,
                     };
                     if let Some(ock) = old_child_key {
-                        doc.remove_node(ock);
+                        doc.remove_node_recursive(ock);
                     }
                 }
 
@@ -1437,7 +1632,7 @@ impl LiveMapHandle {
         fwd_op.op_id = Some(op_id);
 
         let mut update_map = HashMap::new();
-        update_map.insert(key.to_string(), UpdateDelta::Delete { old_value });
+        update_map.insert(key.to_string(), UpdateDelta::Delete { old_value, deleted_id: None });
 
         mutation_result_to_js(&MutationResult {
             ops: vec![fwd_op],
@@ -1795,6 +1990,438 @@ impl DocumentHandle {
     #[wasm_bindgen(js_name = "setOpClock")]
     pub fn set_op_clock(&self, value: u32) {
         self.id_gen.borrow_mut().set_op_clock(value);
+    }
+
+    // ============================================================
+    // Read delegation APIs (Phase 1)
+    // ============================================================
+
+    /// Get the node type as a string ("object", "list", "map", "register").
+    #[wasm_bindgen(js_name = "getNodeType")]
+    pub fn get_node_type(&self, id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        match doc.get_node_by_id(id) {
+            Some(node) => {
+                let t = match node.node_type {
+                    CrdtType::Object => "object",
+                    CrdtType::List => "list",
+                    CrdtType::Map => "map",
+                    CrdtType::Register => "register",
+                };
+                JsValue::from_str(t)
+            }
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    /// Get parent info for a node: `{ parentId, parentKey }`.
+    #[wasm_bindgen(js_name = "getParentInfo")]
+    pub fn get_parent_info(&self, id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        match doc.get_node_by_id(id) {
+            Some(node) => {
+                let obj = js_sys::Object::new();
+                if let Some(pid) = &node.parent_id {
+                    let _ = js_sys::Reflect::set(
+                        &obj,
+                        &"parentId".into(),
+                        &JsValue::from_str(pid),
+                    );
+                }
+                if let Some(pkey) = &node.parent_key {
+                    let _ = js_sys::Reflect::set(
+                        &obj,
+                        &"parentKey".into(),
+                        &JsValue::from_str(pkey),
+                    );
+                }
+                obj.into()
+            }
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    // -- LiveList reads --
+
+    /// Get the length of a LiveList by node ID.
+    #[wasm_bindgen(js_name = "listLength")]
+    pub fn list_length(&self, list_id: &str) -> usize {
+        let doc = self.doc.borrow();
+        doc.get_key_by_id(list_id)
+            .map(|key| list::length(&doc, key))
+            .unwrap_or(0)
+    }
+
+    /// Get a single entry from a LiveList by index.
+    /// Returns `{ type: "scalar", value }` or `{ type: "node", nodeId, nodeType }`.
+    #[wasm_bindgen(js_name = "listGetEntry")]
+    pub fn list_get_entry(&self, list_id: &str, index: usize) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(list_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let child_key = match list::get_child_key(&doc, key, index) {
+            Some(ck) => ck,
+            None => return JsValue::UNDEFINED,
+        };
+        child_to_entry_js(&doc, child_key)
+    }
+
+    /// Get all entries from a LiveList as a JS array of entry objects.
+    #[wasm_bindgen(js_name = "listEntries")]
+    pub fn list_entries(&self, list_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(list_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let node = match doc.get_node(key) {
+            Some(n) => n,
+            None => return JsValue::UNDEFINED,
+        };
+        match &node.data {
+            CrdtData::List { children, .. } => {
+                let arr = js_sys::Array::new();
+                for (_pos, child_key) in children {
+                    arr.push(&child_to_entry_js(&doc, *child_key));
+                }
+                arr.into()
+            }
+            _ => JsValue::UNDEFINED,
+        }
+    }
+
+    /// Convert a LiveList to its immutable JSON representation.
+    #[wasm_bindgen(js_name = "listToImmutable")]
+    pub fn list_to_immutable(&self, list_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(list_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        match list::to_immutable(&doc, key) {
+            Some(json) => json_to_js(&json),
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    // -- LiveObject reads --
+
+    /// Get a single entry from a LiveObject by key.
+    #[wasm_bindgen(js_name = "objectGetEntry")]
+    pub fn object_get_entry(&self, obj_id: &str, key: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let node_key = match doc.get_key_by_id(obj_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let child_key = match object::get_child(&doc, node_key, key) {
+            Some(ck) => ck,
+            None => return JsValue::UNDEFINED,
+        };
+        child_to_entry_js(&doc, child_key)
+    }
+
+    /// Get all property names from a LiveObject.
+    #[wasm_bindgen(js_name = "objectKeys")]
+    pub fn object_keys(&self, obj_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(obj_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let keys = object::keys(&doc, key);
+        let arr = js_sys::Array::new();
+        for k in keys {
+            arr.push(&JsValue::from_str(&k));
+        }
+        arr.into()
+    }
+
+    /// Get all entries from a LiveObject as a JS array of `[key, entry]` pairs.
+    #[wasm_bindgen(js_name = "objectEntries")]
+    pub fn object_entries(&self, obj_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let node_key = match doc.get_key_by_id(obj_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let node = match doc.get_node(node_key) {
+            Some(n) => n,
+            None => return JsValue::UNDEFINED,
+        };
+        match &node.data {
+            CrdtData::Object { children, .. } => {
+                let arr = js_sys::Array::new();
+                for (prop, child_key) in children {
+                    let pair = js_sys::Array::new();
+                    pair.push(&JsValue::from_str(prop));
+                    pair.push(&child_to_entry_js(&doc, *child_key));
+                    arr.push(&pair);
+                }
+                arr.into()
+            }
+            _ => JsValue::UNDEFINED,
+        }
+    }
+
+    /// Convert a LiveObject to its immutable JSON representation.
+    #[wasm_bindgen(js_name = "objectToImmutable")]
+    pub fn object_to_immutable(&self, obj_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(obj_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        match object::to_immutable(&doc, key) {
+            Some(json) => json_to_js(&json),
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    // -- LiveMap reads --
+
+    /// Get a single entry from a LiveMap by key.
+    #[wasm_bindgen(js_name = "mapGetEntry")]
+    pub fn map_get_entry(&self, map_id: &str, key: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let node_key = match doc.get_key_by_id(map_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let child_key = match map::get_child(&doc, node_key, key) {
+            Some(ck) => ck,
+            None => return JsValue::UNDEFINED,
+        };
+        child_to_entry_js(&doc, child_key)
+    }
+
+    /// Check if a key exists in a LiveMap.
+    #[wasm_bindgen(js_name = "mapHas")]
+    pub fn map_has(&self, map_id: &str, key: &str) -> bool {
+        let doc = self.doc.borrow();
+        doc.get_key_by_id(map_id)
+            .map(|k| map::has(&doc, k, key))
+            .unwrap_or(false)
+    }
+
+    /// Get the size of a LiveMap.
+    #[wasm_bindgen(js_name = "mapSize")]
+    pub fn map_size(&self, map_id: &str) -> usize {
+        let doc = self.doc.borrow();
+        doc.get_key_by_id(map_id)
+            .map(|k| map::size(&doc, k))
+            .unwrap_or(0)
+    }
+
+    /// Get all keys from a LiveMap.
+    #[wasm_bindgen(js_name = "mapKeys")]
+    pub fn map_keys(&self, map_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(map_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let keys = map::keys(&doc, key);
+        let arr = js_sys::Array::new();
+        for k in keys {
+            arr.push(&JsValue::from_str(&k));
+        }
+        arr.into()
+    }
+
+    /// Get all entries from a LiveMap as a JS array of `[key, entry]` pairs.
+    #[wasm_bindgen(js_name = "mapEntries")]
+    pub fn map_entries_with_types(&self, map_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let node_key = match doc.get_key_by_id(map_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let node = match doc.get_node(node_key) {
+            Some(n) => n,
+            None => return JsValue::UNDEFINED,
+        };
+        match &node.data {
+            CrdtData::Map { children, .. } => {
+                let arr = js_sys::Array::new();
+                for (map_key, child_key) in children {
+                    let pair = js_sys::Array::new();
+                    pair.push(&JsValue::from_str(map_key));
+                    pair.push(&child_to_entry_js(&doc, *child_key));
+                    arr.push(&pair);
+                }
+                arr.into()
+            }
+            _ => JsValue::UNDEFINED,
+        }
+    }
+
+    /// Convert a LiveMap to its immutable JSON representation.
+    #[wasm_bindgen(js_name = "mapToImmutable")]
+    pub fn map_to_immutable(&self, map_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(map_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        match map::to_immutable(&doc, key) {
+            Some(json) => json_to_js(&json),
+            None => JsValue::UNDEFINED,
+        }
+    }
+
+    // ============================================================
+    // Rust-owned applyOp with structural changes (Phase 2)
+    // ============================================================
+
+    /// Apply a single operation in Rust-owned mode.
+    /// Returns structural changes alongside the standard result.
+    ///
+    /// Result: `{ modified, reverse?, update?, structuralChanges? }`
+    #[wasm_bindgen(js_name = "applyOpOwned")]
+    pub fn apply_op_owned(&self, op_js: JsValue, source: &str) -> JsValue {
+        let op: Op = match serde_wasm_bindgen::from_value(op_js) {
+            Ok(o) => o,
+            Err(_) => {
+                return JsValue::UNDEFINED;
+            }
+        };
+        let src = parse_op_source(source);
+        let mut doc = self.doc.borrow_mut();
+
+        // Snapshot node IDs before apply to detect deletions
+        let ids_before: std::collections::HashSet<String> =
+            doc.all_node_ids().into_iter().collect();
+
+        let result = apply::apply_op(&mut doc, &op, src);
+
+        match &result {
+            ApplyResult::NotModified => {
+                let obj = js_sys::Object::new();
+                let _ = js_sys::Reflect::set(&obj, &"modified".into(), &JsValue::FALSE);
+                obj.into()
+            }
+            ApplyResult::Modified { reverse, update } => {
+                let obj = js_sys::Object::new();
+                let _ = js_sys::Reflect::set(&obj, &"modified".into(), &JsValue::TRUE);
+
+                // Serialize reverse ops
+                let rev_arr = js_sys::Array::new();
+                for op_item in reverse {
+                    if let Ok(js) = to_js(op_item) {
+                        rev_arr.push(&js);
+                    }
+                }
+                let _ = js_sys::Reflect::set(&obj, &"reverse".into(), &rev_arr);
+
+                // Serialize the update
+                if let Ok(upd) = to_js(update) {
+                    let _ = js_sys::Reflect::set(&obj, &"update".into(), &upd);
+                }
+
+                // Derive structural changes from the op
+                let changes = js_sys::Array::new();
+                derive_structural_changes(&op, &changes);
+
+                // Detect nodes that were deleted during apply (implicit deletes).
+                // We snapshot which removed IDs had a JS wrapper (non-register, or
+                // register children of lists/maps). Register children of objects
+                // are scalar values in JS's #map and don't have pool wrappers.
+                let ids_after: std::collections::HashSet<String> =
+                    doc.all_node_ids().into_iter().collect();
+                for removed_id in ids_before.difference(&ids_after) {
+                    // We don't have the removed node anymore, but we can check
+                    // if the JS pool would have had a wrapper. For safety, emit
+                    // the deletion — syncJsTreeFromRustResult will skip nodes
+                    // not found in the pool.
+                    let del = js_sys::Object::new();
+                    let _ = js_sys::Reflect::set(&del, &"type".into(), &"deleted".into());
+                    let _ = js_sys::Reflect::set(
+                        &del,
+                        &"nodeId".into(),
+                        &JsValue::from_str(removed_id),
+                    );
+                    changes.push(&del);
+                }
+
+                // Detect nodes that were created during apply (inline data registers)
+                for added_id in ids_after.difference(&ids_before) {
+                    // Skip the main op's node ID — it's already handled by derive_structural_changes
+                    if *added_id == op.id {
+                        continue;
+                    }
+                    if let Some(nk) = doc.get_key_by_id(added_id) {
+                        if let Some(node) = doc.get_node(nk) {
+                            // Skip register children of objects — in JS, these are
+                            // scalar values stored in LiveObject's #map, not separate
+                            // LiveRegister wrappers.
+                            if matches!(&node.data, CrdtData::Register { .. }) {
+                                let parent_is_object = node.parent_id.as_ref()
+                                    .and_then(|pid| doc.get_node_by_id(pid))
+                                    .is_some_and(|p| matches!(&p.data, CrdtData::Object { .. }));
+                                if parent_is_object {
+                                    continue;
+                                }
+                            }
+                            let node_type = match &node.data {
+                                CrdtData::Object { .. } => "object",
+                                CrdtData::List { .. } => "list",
+                                CrdtData::Map { .. } => "map",
+                                CrdtData::Register { .. } => "register",
+                            };
+                            let cr = js_sys::Object::new();
+                            let _ = js_sys::Reflect::set(&cr, &"type".into(), &"created".into());
+                            let _ = js_sys::Reflect::set(
+                                &cr,
+                                &"nodeId".into(),
+                                &JsValue::from_str(added_id),
+                            );
+                            let _ = js_sys::Reflect::set(
+                                &cr,
+                                &"nodeType".into(),
+                                &JsValue::from_str(node_type),
+                            );
+                            if let Some(ref pid) = node.parent_id {
+                                let _ = js_sys::Reflect::set(
+                                    &cr,
+                                    &"parentId".into(),
+                                    &JsValue::from_str(pid),
+                                );
+                            }
+                            if let Some(ref pkey) = node.parent_key {
+                                let _ = js_sys::Reflect::set(
+                                    &cr,
+                                    &"parentKey".into(),
+                                    &JsValue::from_str(pkey),
+                                );
+                            }
+                            // Include register data so JS can create LiveRegister
+                            // with the correct value (needed for post-detach iteration).
+                            if let CrdtData::Register { data } = &node.data {
+                                if let Ok(v) = to_js(data) {
+                                    let _ = js_sys::Reflect::set(
+                                        &cr,
+                                        &"data".into(),
+                                        &v,
+                                    );
+                                }
+                            }
+                            changes.push(&cr);
+                        }
+                    }
+                }
+
+                let _ = js_sys::Reflect::set(
+                    &obj,
+                    &"structuralChanges".into(),
+                    &changes,
+                );
+
+                obj.into()
+            }
+        }
     }
 }
 

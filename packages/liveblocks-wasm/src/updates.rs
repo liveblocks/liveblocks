@@ -17,6 +17,10 @@ pub enum UpdateDelta {
     Delete {
         #[serde(rename = "oldValue")]
         old_value: Json,
+        /// The node ID of the deleted child (if it was a CRDT node).
+        /// Used by JS to look up the actual LiveNode wrapper.
+        #[serde(rename = "deletedId", skip_serializing_if = "Option::is_none")]
+        deleted_id: Option<String>,
     },
 }
 

@@ -11,7 +11,7 @@ import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
-import type { CrdtDocumentShadow } from "./impl-selector";
+import type { CrdtDocumentOwner, CrdtDocumentShadow } from "./impl-selector";
 import type { LiveNode, Lson } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -61,6 +61,12 @@ export interface ManagedPool {
    * and mutations should be delegated to it.
    */
   wasmShadow?: CrdtDocumentShadow | null;
+
+  /**
+   * When set, the Rust WASM document is the single source of truth.
+   * JS LiveNode classes delegate reads and remote-op application to it.
+   */
+  wasmOwner?: CrdtDocumentOwner | null;
 
   /** Current node ID counter value (for one-time handoff to WASM). */
   readonly nodeClockValue?: number;
@@ -482,16 +488,22 @@ export abstract class AbstractCrdt {
    * mutation to the Live node.
    */
   invalidate(): void {
-    if (
+    const hadCache =
       this.#cachedImmutable !== undefined ||
-      this.#cachedTreeNode !== undefined
-    ) {
-      this.#cachedImmutable = undefined;
-      this.#cachedTreeNode = undefined;
+      this.#cachedTreeNode !== undefined;
 
-      if (this.parent.type === "HasParent") {
-        this.parent.node.invalidate();
-      }
+    this.#cachedImmutable = undefined;
+    this.#cachedTreeNode = undefined;
+
+    // Always propagate to parent. In WASM-owned mode, a parent's
+    // _toImmutable() delegates to Rust without calling child.toImmutable(),
+    // so the parent's cache can be stale even when this node's cache was
+    // never set. Unconditional propagation ensures ancestors are invalidated.
+    if (this.parent.type === "HasParent") {
+      // Optimization: only recurse if we actually had a cache OR if
+      // the parent might have a stale WASM-delegated cache.
+      // Since we can't cheaply detect the WASM case, always propagate.
+      this.parent.node.invalidate();
     }
   }
 

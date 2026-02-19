@@ -1,16 +1,45 @@
 /**
  * Implementation selector for CRDT operations.
  *
- * The engine choice is binary and explicit:
+ * The engine choice is deterministic:
  * - Default: JS engine (no configuration needed)
- * - WASM: call `_setEngine(wasmEngine)` at startup — it works or it fails
+ * - WASM: set `LIVEBLOCKS_ENGINE=wasm` env var, which triggers `_setEngine()`
  *
- * Once set, the engine is immutable for the lifetime of the process.
- * There is no fallback, no auto-detection, and no graceful degradation.
+ * No locking, no race conditions. `getEngine()` simply returns the WASM
+ * engine if one was set, otherwise the JS engine.
  */
 
 import type { Op } from "../protocol/Op";
 import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";
+
+/**
+ * A single entry in a CRDT container as read from Rust.
+ * Either a scalar (Register-wrapped value) or a reference to a child CRDT node.
+ */
+export type CrdtEntry =
+  | { type: "scalar"; value: unknown }
+  | { type: "node"; nodeId: string; nodeType: string };
+
+/**
+ * A structural change emitted by Rust's applyOpOwned.
+ */
+export type StructuralChange =
+  | { type: "created"; nodeId: string; nodeType: string; parentId: string; parentKey: string; data?: unknown }
+  | { type: "deleted"; nodeId: string }
+  | { type: "moved"; nodeId: string; newParentKey: string }
+  | { type: "updated"; nodeId: string };
+
+/**
+ * Result of applyOpOwned: includes structural changes for JS tree sync.
+ */
+export type OwnedApplyResult =
+  | { modified: false }
+  | {
+      modified: true;
+      reverse: Op[];
+      update: unknown; // WasmStorageUpdate
+      structuralChanges: StructuralChange[];
+    };
 
 /**
  * A persistent WASM document that mirrors the JS tree state.
@@ -50,6 +79,38 @@ export interface CrdtDocumentShadow {
 
   /** Free WASM memory. */
   free(): void;
+}
+
+/**
+ * Rust-owned CRDT document: extends shadow with read delegation and
+ * enhanced applyOp that returns structural changes.
+ * JS LiveNode classes delegate reads to this when active.
+ */
+export interface CrdtDocumentOwner extends CrdtDocumentShadow {
+  // -- Read delegation --
+  listLength(nodeId: string): number;
+  listGetEntry(nodeId: string, index: number): CrdtEntry | undefined;
+  listEntries(nodeId: string): CrdtEntry[];
+  listToImmutable(nodeId: string): unknown;
+
+  objectGetEntry(nodeId: string, key: string): CrdtEntry | undefined;
+  objectKeys(nodeId: string): string[];
+  objectEntries(nodeId: string): [string, CrdtEntry][];
+  objectToImmutable(nodeId: string): unknown;
+
+  mapGetEntry(nodeId: string, key: string): CrdtEntry | undefined;
+  mapHas(nodeId: string, key: string): boolean;
+  mapSize(nodeId: string): number;
+  mapKeys(nodeId: string): string[];
+  mapEntries(nodeId: string): [string, CrdtEntry][];
+  mapToImmutable(nodeId: string): unknown;
+
+  // -- Node structure --
+  getNodeType(nodeId: string): string | undefined;
+  getParentInfo(nodeId: string): { parentId: string; parentKey: string } | undefined;
+
+  // -- Enhanced applyOp with structural changes --
+  applyOpOwned(op: Op, source: "local" | "ours" | "theirs"): OwnedApplyResult;
 }
 
 /**
@@ -118,47 +179,38 @@ export interface CrdtEngine {
   deserializeItems(items: IdTuple<SerializedCrdt>[]): NodeMap;
 
   /** Create a persistent document shadow for fast reconnect diffs. */
-  createDocumentShadow?(): CrdtDocumentShadow;
+  createDocumentShadow?(): CrdtDocumentShadow | CrdtDocumentOwner;
 
   /** Create a room storage engine for undo/redo, batch, unacked ops. */
   createStorageEngine?(): RoomStorageEngineJS | undefined;
 }
 
 /**
- * The selected engine. Once set, immutable for the lifetime of the process.
+ * The WASM engine, if one was set via `_setEngine()`.
+ * null means no WASM engine has been configured — use JS.
  */
-let selectedEngine: CrdtEngine | null = null;
+let wasmEngine: CrdtEngine | null = null;
 
 /**
  * Get the active CRDT engine.
  *
- * Returns the engine set via `_setEngine()`, or the provided JS engine
- * if no engine was explicitly set. The first call locks in the choice
- * permanently.
+ * If a WASM engine was set via `_setEngine()`, returns it.
+ * Otherwise returns the provided JS engine fallback.
  *
+ * There is no locking — this is a pure lookup every time.
  * The JS engine is provided by the caller (the wasm-adapter module)
  * to avoid circular dependencies.
  */
 export function getEngine(jsEngine: CrdtEngine): CrdtEngine {
-  if (selectedEngine !== null) {
-    return selectedEngine;
-  }
-
-  // No engine was explicitly set — lock in JS.
-  selectedEngine = jsEngine;
-  return selectedEngine;
+  return wasmEngine ?? jsEngine;
 }
 
 /**
- * Set the engine. Once set to a non-null value, the engine is
- * immutable — subsequent calls are ignored.
+ * Set the WASM engine. Can be called at any point before use.
  * @internal
  */
 export function _setEngine(engine: CrdtEngine | null): void {
-  if (selectedEngine !== null) {
-    return;
-  }
-  selectedEngine = engine;
+  wasmEngine = engine;
 }
 
 /**
@@ -169,6 +221,7 @@ interface WasmDocumentHandle {
   initFromItems(items: unknown): void;
   applyOp(op: unknown, source: string): unknown;
   applyOps(ops: unknown, source: string): unknown;
+  applyOpOwned(op: unknown, source: string): unknown;
   setConnectionId(id: number): void;
   serialize(): unknown;
   toPlainLson(): unknown;
@@ -177,6 +230,24 @@ interface WasmDocumentHandle {
   getObjectById(id: string): WasmLiveObjectHandle | undefined;
   getListById(id: string): WasmLiveListHandle | undefined;
   getMapById(id: string): WasmLiveMapHandle | undefined;
+
+  // Read delegation APIs
+  getNodeType(id: string): unknown;
+  getParentInfo(id: string): unknown;
+  listLength(listId: string): number;
+  listGetEntry(listId: string, index: number): unknown;
+  listEntries(listId: string): unknown;
+  listToImmutable(listId: string): unknown;
+  objectGetEntry(objId: string, key: string): unknown;
+  objectKeys(objId: string): unknown;
+  objectEntries(objId: string): unknown;
+  objectToImmutable(objId: string): unknown;
+  mapGetEntry(mapId: string, key: string): unknown;
+  mapHas(mapId: string, key: string): boolean;
+  mapSize(mapId: string): number;
+  mapKeys(mapId: string): unknown;
+  mapEntries(mapId: string): unknown;
+  mapToImmutable(mapId: string): unknown;
 
   // ID generation
   generateId(): string;
@@ -258,7 +329,7 @@ export function createWasmEngine(_module: unknown): CrdtEngine {
       return new Map(items);
     },
 
-    createDocumentShadow(): CrdtDocumentShadow {
+    createDocumentShadow(): CrdtDocumentOwner {
       const handle: WasmDocumentHandle = new mod.DocumentHandle();
 
       function withObjectHandle<T>(nodeId: string, fn: (h: WasmLiveObjectHandle) => T): T {
@@ -326,6 +397,63 @@ export function createWasmEngine(_module: unknown): CrdtEngine {
         },
         mapDelete(nodeId: string, key: string): unknown {
           return withMapHandle(nodeId, (h) => h.delete(key));
+        },
+
+        // -- Read delegation --
+        listLength(nodeId: string): number {
+          return handle.listLength(nodeId);
+        },
+        listGetEntry(nodeId: string, index: number): CrdtEntry | undefined {
+          return handle.listGetEntry(nodeId, index) as CrdtEntry | undefined;
+        },
+        listEntries(nodeId: string): CrdtEntry[] {
+          return (handle.listEntries(nodeId) ?? []) as CrdtEntry[];
+        },
+        listToImmutable(nodeId: string): unknown {
+          return handle.listToImmutable(nodeId);
+        },
+        objectGetEntry(nodeId: string, key: string): CrdtEntry | undefined {
+          return handle.objectGetEntry(nodeId, key) as CrdtEntry | undefined;
+        },
+        objectKeys(nodeId: string): string[] {
+          return (handle.objectKeys(nodeId) ?? []) as string[];
+        },
+        objectEntries(nodeId: string): [string, CrdtEntry][] {
+          return (handle.objectEntries(nodeId) ?? []) as [string, CrdtEntry][];
+        },
+        objectToImmutable(nodeId: string): unknown {
+          return handle.objectToImmutable(nodeId);
+        },
+        mapGetEntry(nodeId: string, key: string): CrdtEntry | undefined {
+          return handle.mapGetEntry(nodeId, key) as CrdtEntry | undefined;
+        },
+        mapHas(nodeId: string, key: string): boolean {
+          return handle.mapHas(nodeId, key);
+        },
+        mapSize(nodeId: string): number {
+          return handle.mapSize(nodeId);
+        },
+        mapKeys(nodeId: string): string[] {
+          return (handle.mapKeys(nodeId) ?? []) as string[];
+        },
+        mapEntries(nodeId: string): [string, CrdtEntry][] {
+          return (handle.mapEntries(nodeId) ?? []) as [string, CrdtEntry][];
+        },
+        mapToImmutable(nodeId: string): unknown {
+          return handle.mapToImmutable(nodeId);
+        },
+
+        // -- Node structure --
+        getNodeType(nodeId: string): string | undefined {
+          return handle.getNodeType(nodeId) as string | undefined;
+        },
+        getParentInfo(nodeId: string): { parentId: string; parentKey: string } | undefined {
+          return handle.getParentInfo(nodeId) as { parentId: string; parentKey: string } | undefined;
+        },
+
+        // -- Enhanced applyOp with structural changes --
+        applyOpOwned(op: Op, source: "local" | "ours" | "theirs"): OwnedApplyResult {
+          return handle.applyOpOwned(op, source) as OwnedApplyResult;
         },
 
         // -- ID generation --

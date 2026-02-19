@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::arena::{Arena, NodeKey};
-use crate::crdt::node::CrdtNode;
+use crate::crdt::node::{CrdtData, CrdtNode};
 
 /// The CRDT document: an arena of nodes with ID→key mapping.
 /// This is the main entry point for all CRDT operations.
@@ -65,6 +65,28 @@ impl Document {
         Some(node)
     }
 
+    /// Remove a node and all its descendants from the document.
+    pub fn remove_node_recursive(&mut self, key: NodeKey) {
+        // Collect child keys first to avoid borrow issues
+        let child_keys: Vec<NodeKey> = {
+            let Some(node) = self.arena.get(key) else {
+                return;
+            };
+            match &node.data {
+                CrdtData::Object { children, .. } => children.values().copied().collect(),
+                CrdtData::List { children, .. } => children.iter().map(|(_, ck)| *ck).collect(),
+                CrdtData::Map { children, .. } => children.values().copied().collect(),
+                CrdtData::Register { .. } => vec![],
+            }
+        };
+
+        for ck in child_keys {
+            self.remove_node_recursive(ck);
+        }
+
+        self.remove_node(key);
+    }
+
     /// Get the root node key.
     pub fn root_key(&self) -> Option<NodeKey> {
         self.root_key
@@ -83,6 +105,11 @@ impl Document {
     /// Check if the document has no nodes.
     pub fn is_empty(&self) -> bool {
         self.arena.is_empty()
+    }
+
+    /// Get all node IDs in the document.
+    pub fn all_node_ids(&self) -> Vec<String> {
+        self.id_to_key.keys().cloned().collect()
     }
 }
 

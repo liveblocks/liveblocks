@@ -13,7 +13,7 @@
  * and the JS engine is used as normal.
  */
 
-import type { CrdtEngine, RoomStorageEngineJS } from "../crdts/impl-selector";
+import type { CrdtDocumentOwner, CrdtEntry, CrdtEngine, OwnedApplyResult, RoomStorageEngineJS } from "../crdts/impl-selector";
 import { _setEngine } from "../crdts/impl-selector";
 import type { Op } from "../protocol/Op";
 import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";
@@ -72,7 +72,7 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
         return new Map(items);
       },
 
-      createDocumentShadow() {
+      createDocumentShadow(): CrdtDocumentOwner {
         const handle = new wasmPkg.DocumentHandle();
 
         function withObjectHandle<T>(nodeId: string, fn: (h: WasmLiveObjectHandle) => T): T {
@@ -142,6 +142,51 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
             return withMapHandle(nodeId, (h) => h.delete(key));
           },
 
+          // Read delegation
+          listLength(nodeId: string) { return handle.listLength(nodeId); },
+          listGetEntry(nodeId: string, index: number) {
+            return handle.listGetEntry(nodeId, index) as CrdtEntry | undefined;
+          },
+          listEntries(nodeId: string) {
+            return (handle.listEntries(nodeId) ?? []) as CrdtEntry[];
+          },
+          listToImmutable(nodeId: string) { return handle.listToImmutable(nodeId); },
+          objectGetEntry(nodeId: string, key: string) {
+            return handle.objectGetEntry(nodeId, key) as CrdtEntry | undefined;
+          },
+          objectKeys(nodeId: string) {
+            return (handle.objectKeys(nodeId) ?? []) as string[];
+          },
+          objectEntries(nodeId: string) {
+            return (handle.objectEntries(nodeId) ?? []) as [string, CrdtEntry][];
+          },
+          objectToImmutable(nodeId: string) { return handle.objectToImmutable(nodeId); },
+          mapGetEntry(nodeId: string, key: string) {
+            return handle.mapGetEntry(nodeId, key) as CrdtEntry | undefined;
+          },
+          mapHas(nodeId: string, key: string) { return handle.mapHas(nodeId, key); },
+          mapSize(nodeId: string) { return handle.mapSize(nodeId); },
+          mapKeys(nodeId: string) {
+            return (handle.mapKeys(nodeId) ?? []) as string[];
+          },
+          mapEntries(nodeId: string) {
+            return (handle.mapEntries(nodeId) ?? []) as [string, CrdtEntry][];
+          },
+          mapToImmutable(nodeId: string) { return handle.mapToImmutable(nodeId); },
+
+          // Node structure
+          getNodeType(nodeId: string) {
+            return handle.getNodeType(nodeId) as string | undefined;
+          },
+          getParentInfo(nodeId: string) {
+            return handle.getParentInfo(nodeId) as { parentId: string; parentKey: string } | undefined;
+          },
+
+          // Enhanced applyOp
+          applyOpOwned(op: Op, source: "local" | "ours" | "theirs") {
+            return handle.applyOpOwned(op, source) as OwnedApplyResult;
+          },
+
           // ID generation
           generateId() { return handle.generateId(); },
           generateOpId() { return handle.generateOpId(); },
@@ -178,6 +223,7 @@ interface WasmDocumentHandle {
   initFromItems(items: unknown): void;
   applyOp(op: unknown, source: string): unknown;
   applyOps(ops: unknown, source: string): unknown;
+  applyOpOwned(op: unknown, source: string): unknown;
   setConnectionId(id: number): void;
   serialize(): unknown;
   toPlainLson(): unknown;
@@ -186,6 +232,24 @@ interface WasmDocumentHandle {
   getObjectById(id: string): WasmLiveObjectHandle | undefined;
   getListById(id: string): WasmLiveListHandle | undefined;
   getMapById(id: string): WasmLiveMapHandle | undefined;
+
+  // Read delegation APIs
+  getNodeType(id: string): unknown;
+  getParentInfo(id: string): unknown;
+  listLength(listId: string): number;
+  listGetEntry(listId: string, index: number): unknown;
+  listEntries(listId: string): unknown;
+  listToImmutable(listId: string): unknown;
+  objectGetEntry(objId: string, key: string): unknown;
+  objectKeys(objId: string): unknown;
+  objectEntries(objId: string): unknown;
+  objectToImmutable(objId: string): unknown;
+  mapGetEntry(mapId: string, key: string): unknown;
+  mapHas(mapId: string, key: string): boolean;
+  mapSize(mapId: string): number;
+  mapKeys(mapId: string): unknown;
+  mapEntries(mapId: string): unknown;
+  mapToImmutable(mapId: string): unknown;
 
   // ID generation
   generateId(): string;

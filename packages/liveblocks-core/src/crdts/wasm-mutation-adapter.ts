@@ -40,7 +40,7 @@ export type WasmStorageUpdate =
 
 export type WasmUpdateDelta =
   | { type: "set"; oldValue: unknown; newValue: unknown }
-  | { type: "delete"; oldValue: unknown };
+  | { type: "delete"; oldValue: unknown; deletedId?: string };
 
 export type WasmListUpdateEntry =
   | { type: "insert"; index: number; value: unknown }
@@ -63,7 +63,8 @@ export function dispatchMutationResult(
 
 export function translateStorageUpdate(
   wasmUpdate: WasmStorageUpdate,
-  pool: ManagedPool
+  pool: ManagedPool,
+  deletedNodes?: Map<string, LiveNode>
 ): Map<string, StorageUpdate> {
   const map = new Map<string, StorageUpdate>();
   const node = pool.getNode(wasmUpdate.nodeId);
@@ -76,10 +77,21 @@ export function translateStorageUpdate(
         { type: "update" } | { type: "delete"; deletedItem: unknown }
       > = {};
       for (const [key, delta] of Object.entries(wasmUpdate.updates)) {
-        updates[key] =
-          delta.type === "set"
-            ? { type: "update" }
-            : { type: "delete", deletedItem: delta.oldValue };
+        if (delta.type === "set") {
+          updates[key] = { type: "update" };
+        } else {
+          // If the deleted child was a CRDT node, look up the actual LiveNode
+          // wrapper so subscribers see LiveList/LiveObject/LiveMap.
+          // Check the pre-collected deletedNodes map first (node may have been
+          // detached from the pool by syncJsTreeFromRustResult).
+          const deletedItem =
+            delta.deletedId != null
+              ? deletedNodes?.get(delta.deletedId) ??
+                pool.getNode(delta.deletedId) ??
+                delta.oldValue
+              : delta.oldValue;
+          updates[key] = { type: "delete", deletedItem };
+        }
       }
       map.set(wasmUpdate.nodeId, {
         type: "LiveObject",
@@ -131,10 +143,17 @@ export function translateStorageUpdate(
         { type: "update" } | { type: "delete"; deletedItem: unknown }
       > = {};
       for (const [key, delta] of Object.entries(wasmUpdate.updates)) {
-        updates[key] =
-          delta.type === "set"
-            ? { type: "update" }
-            : { type: "delete", deletedItem: delta.oldValue };
+        if (delta.type === "set") {
+          updates[key] = { type: "update" };
+        } else {
+          const deletedItem =
+            delta.deletedId != null
+              ? deletedNodes?.get(delta.deletedId) ??
+                pool.getNode(delta.deletedId) ??
+                delta.oldValue
+              : delta.oldValue;
+          updates[key] = { type: "delete", deletedItem };
+        }
       }
       map.set(wasmUpdate.nodeId, {
         type: "LiveMap",

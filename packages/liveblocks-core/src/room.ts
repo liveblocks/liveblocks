@@ -6,6 +6,7 @@ import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
+import type { CrdtDocumentOwner, OwnedApplyResult, StructuralChange } from "./crdts/impl-selector";
 import {
   cloneLson,
   isLiveList,
@@ -13,14 +14,19 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
+import { LiveList } from "./crdts/LiveList";
+import { LiveMap } from "./crdts/LiveMap";
 import { LiveObject } from "./crdts/LiveObject";
-import type { LiveStructure, LsonObject } from "./crdts/Lson";
+import { LiveRegister } from "./crdts/LiveRegister";
+import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { CrdtDocumentShadow } from "./crdts/wasm-adapter";
 import {
   createDocumentShadow,
   getTreesDiffOperations,
 } from "./crdts/wasm-adapter";
+import { translateStorageUpdate as translateWasmStorageUpdate } from "./crdts/wasm-mutation-adapter";
+import type { WasmStorageUpdate } from "./crdts/wasm-mutation-adapter";
 import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
@@ -1574,6 +1580,7 @@ export function createRoom<
       } catch {
         context.wasmShadow.free();
         context.wasmShadow = null;
+        context.pool.wasmOwner = undefined;
       }
     }
 
@@ -1720,12 +1727,11 @@ export function createRoom<
         // (avoids serializing all JS nodes on every reconnect)
         try {
           ops = context.wasmShadow.diffAgainstSnapshot(items);
-          // Re-sync shadow to authoritative server state
-          context.wasmShadow.initFromItems(items);
         } catch {
           // Shadow desync — fall back to JS diff and discard shadow
           context.wasmShadow.free();
           context.wasmShadow = null;
+          context.pool.wasmOwner = undefined;
           const currentItems: NodeMap = new Map();
           for (const [id, node] of context.pool.nodes) {
             currentItems.set(id, node._serialize());
@@ -1742,6 +1748,21 @@ export function createRoom<
       }
 
       const result = applyRemoteOps(ops);
+
+      // Re-sync WASM shadow to authoritative server state AFTER applying
+      // diff ops, so applyOpOwned sees the old state and correctly reports
+      // modifications (rather than returning NotModified for nodes that
+      // already exist in the freshly re-initialized document).
+      if (context.wasmShadow) {
+        try {
+          context.wasmShadow.initFromItems(items);
+        } catch {
+          context.wasmShadow.free();
+          context.wasmShadow = null;
+          context.pool.wasmOwner = undefined;
+        }
+      }
+
       notify(result.updates);
     } else {
       // Initialize the persistent WASM shadow BEFORE tree construction so
@@ -1764,11 +1785,17 @@ export function createRoom<
         // Enable WASM delegation for ID generation and mutations
         if (context.wasmShadow) {
           context.pool.wasmShadow = context.wasmShadow;
+          // If the shadow implements CrdtDocumentOwner (has applyOpOwned),
+          // also set wasmOwner so that reads and remote ops are Rust-owned.
+          if ("applyOpOwned" in context.wasmShadow) {
+            context.pool.wasmOwner = context.wasmShadow as CrdtDocumentOwner;
+          }
         }
       } catch {
         context.wasmShadow?.free();
         context.wasmShadow = null;
         context.pool.wasmShadow = undefined;
+        context.pool.wasmOwner = undefined;
       }
 
       context.root = LiveObject._fromItems<S>(
@@ -1932,8 +1959,9 @@ export function createRoom<
 
       const applyOpResult = applyOp(op, source);
       if (applyOpResult.modified) {
-        // Forward successfully applied ops to the persistent WASM shadow
-        if (context.wasmShadow) {
+        // Forward successfully applied ops to the persistent WASM shadow.
+        // Skip when wasmOwner is active — applyOpOwned already applied the op.
+        if (context.wasmShadow && !context.pool.wasmOwner) {
           const sourceStr =
             source === OpSource.LOCAL
               ? "local"
@@ -1945,6 +1973,7 @@ export function createRoom<
           } catch {
             context.wasmShadow.free();
             context.wasmShadow = null;
+            context.pool.wasmOwner = undefined;
           }
         }
 
@@ -1983,7 +2012,199 @@ export function createRoom<
     };
   }
 
+  /**
+   * Create a JS LiveNode wrapper for the given CRDT type.
+   * Used by syncJsTreeFromRustResult to create wrappers for
+   * nodes that Rust created in response to remote ops.
+   */
+  function createLiveNodeForType(
+    nodeType: string,
+    data?: unknown
+  ): LiveNode | null {
+    switch (nodeType) {
+      case "object":
+        return new LiveObject({});
+      case "list":
+        return new LiveList([]);
+      case "map":
+        return new LiveMap();
+      case "register":
+        return new LiveRegister((data ?? undefined) as Json);
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Sync the JS LiveNode tree to match structural changes from Rust's applyOpOwned.
+   * Creates/detaches/moves JS wrappers as needed so that the JS pool stays
+   * in sync with Rust's document state.
+   */
+  function syncJsTreeFromRustResult(
+    structuralChanges: StructuralChange[],
+    pool: ManagedPool
+  ): void {
+    // Collect the set of all node IDs being deleted in this batch.
+    // Used to avoid modifying a parent LiveList's #items when both
+    // parent and child are being deleted — matches JS-mode behavior
+    // where detached LiveLists preserve their children.
+    const deletedIds = new Set<string>();
+    for (const change of structuralChanges) {
+      if (change.type === "deleted") {
+        deletedIds.add(change.nodeId);
+      }
+    }
+
+    for (const change of structuralChanges) {
+      switch (change.type) {
+        case "created": {
+          if (!pool.getNode(change.nodeId)) {
+            const node = createLiveNodeForType(change.nodeType, change.data);
+            if (!node) continue;
+            node._attachDirect(change.nodeId, pool);
+            const parent = pool.getNode(change.parentId);
+            if (parent) {
+              node._setParentLink(parent as LiveNode, change.parentKey);
+              // Keep LiveList's #items in sync
+              if (parent instanceof LiveList) {
+                parent._syncAddChild(node);
+              }
+              parent.invalidate();
+            }
+          }
+          break;
+        }
+        case "deleted": {
+          const node = pool.getNode(change.nodeId);
+          if (node) {
+            // Invalidate the parent chain before detaching so cached
+            // toImmutable values are busted (detach clears the pool ref,
+            // so invalidate must happen first).
+            if (node.parent.type === "HasParent") {
+              const parent = node.parent.node;
+              // Only sync-remove from a LiveList parent when the parent
+              // itself is NOT being deleted in the same batch. When a
+              // whole subtree is deleted, leaving #items untouched
+              // matches JS-mode behavior (detached LiveLists preserve
+              // their children for iteration after detach).
+              if (
+                parent instanceof LiveList &&
+                parent._id != null &&
+                !deletedIds.has(parent._id)
+              ) {
+                parent._syncRemoveChild(node);
+              }
+              parent.invalidate();
+            }
+            node._detach();
+          }
+          break;
+        }
+        case "moved": {
+          const node = pool.getNode(change.nodeId);
+          if (node && node.parent.type === "HasParent") {
+            node._setParentLink(node.parent.node, change.newParentKey);
+            // Keep LiveList's #items sorted correctly
+            const parent = node.parent.node;
+            if (parent instanceof LiveList) {
+              parent._syncRepositionChild(node);
+            }
+            parent.invalidate();
+          }
+          break;
+        }
+        case "updated": {
+          const node = pool.getNode(change.nodeId);
+          if (node) node.invalidate();
+          break;
+        }
+      }
+    }
+  }
+
   function applyOp(op: Op, source: OpSource): ApplyResult {
+    // Rust-owned path: delegate to WASM document, sync JS tree from result
+    if (context.pool.wasmOwner) {
+      if (isIgnoredOp(op)) {
+        return { modified: false };
+      }
+
+      // Acknowledge mechanism: skip remote THEIRS CREATE_* ops targeting
+      // an object property when we have an unacknowledged local op for the
+      // same parentId + parentKey. This matches JS LiveObject.#propToLastUpdate.
+      // Only applies to object parents — list conflicts are handled by Rust's
+      // position-based conflict resolution.
+      if (
+        source === OpSource.THEIRS &&
+        "parentId" in op &&
+        "parentKey" in op &&
+        context.historyEngine.hasUnackedOps()
+      ) {
+        // Check if the parent is an object (not a list/map)
+        const parentNode = context.pool.getNode(op.parentId);
+        if (parentNode && parentNode.constructor.name === "LiveObject") {
+          const unacked = context.historyEngine.snapshotUnackedOps();
+          for (const unackedOp of unacked.values()) {
+            if (
+              "parentId" in unackedOp &&
+              "parentKey" in unackedOp &&
+              unackedOp.parentId === op.parentId &&
+              unackedOp.parentKey === op.parentKey
+            ) {
+              return { modified: false };
+            }
+          }
+        }
+      }
+
+      const sourceStr =
+        source === OpSource.LOCAL
+          ? ("local" as const)
+          : source === OpSource.OURS
+            ? ("ours" as const)
+            : ("theirs" as const);
+
+      const result: OwnedApplyResult =
+        context.pool.wasmOwner.applyOpOwned(op, sourceStr);
+
+      if (!result || !result.modified) {
+        return { modified: false };
+      }
+
+      // Pre-collect references to nodes that will be deleted, so
+      // translateWasmStorageUpdate can still find them after detach.
+      const deletedNodes = new Map<string, LiveNode>();
+      for (const change of result.structuralChanges) {
+        if (change.type === "deleted") {
+          const n = context.pool.getNode(change.nodeId);
+          if (n) deletedNodes.set(change.nodeId, n);
+        }
+      }
+
+      // Sync JS wrapper tree to match what Rust did
+      syncJsTreeFromRustResult(result.structuralChanges, context.pool);
+
+      // Translate the WASM StorageUpdate into JS StorageUpdate with LiveNode refs
+      const storageUpdates = translateWasmStorageUpdate(
+        result.update as WasmStorageUpdate,
+        context.pool,
+        deletedNodes
+      );
+
+      // Find the first update entry (applyOp returns a single update)
+      const [, storageUpdate] =
+        storageUpdates.entries().next().value ?? [];
+
+      if (!storageUpdate) {
+        return { modified: false };
+      }
+
+      return {
+        reverse: result.reverse,
+        modified: storageUpdate,
+      };
+    }
+
     // Explicit case to handle ignored Ops
     if (isIgnoredOp(op)) {
       return { modified: false };
@@ -3112,6 +3333,7 @@ export function createRoom<
         context.historyEngine.destroy();
         context.wasmShadow?.free();
         context.wasmShadow = null;
+        context.pool.wasmOwner = undefined;
 
         // remove the roomWillDestroy event from the event hub
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;

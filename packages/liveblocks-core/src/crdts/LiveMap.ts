@@ -9,6 +9,7 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { CrdtEntry } from "./impl-selector";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -25,6 +26,14 @@ import {
   attachSubtreeFromOps,
   translateStorageUpdate,
 } from "./wasm-mutation-adapter";
+
+/**
+ * Resolve a CrdtEntry from Rust into a Lson value.
+ */
+function resolveEntry(entry: CrdtEntry, pool: ManagedPool): Lson {
+  if (entry.type === "scalar") return entry.value as Lson;
+  return pool.getNode(entry.nodeId) as unknown as Lson;
+}
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever
@@ -245,6 +254,12 @@ export class LiveMap<
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
    */
   get(key: TKey): TValue | undefined {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const entry = owner.mapGetEntry(this._id, key);
+      if (!entry) return undefined;
+      return resolveEntry(entry, this._pool!) as TValue | undefined;
+    }
     const value = this.#map.get(key);
     if (value === undefined) {
       return undefined;
@@ -332,6 +347,10 @@ export class LiveMap<
    * Returns the number of elements in the LiveMap.
    */
   get size(): number {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return owner.mapSize(this._id);
+    }
     return this.#map.size;
   }
 
@@ -340,6 +359,10 @@ export class LiveMap<
    * @param key The key of the element to test for presence.
    */
   has(key: TKey): boolean {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      return owner.mapHas(this._id, key);
+    }
     return this.#map.has(key);
   }
 
@@ -414,6 +437,16 @@ export class LiveMap<
    * Returns a new Iterator object that contains the [key, value] pairs for each element.
    */
   entries(): IterableIterator<[TKey, TValue]> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const rustEntries = owner.mapEntries(this._id);
+      const pool = this._pool!;
+      const resolved: [TKey, TValue][] = rustEntries.map(
+        ([key, entry]) => [key as TKey, resolveEntry(entry, pool) as TValue]
+      );
+      return resolved[Symbol.iterator]();
+    }
+
     const innerIterator = this.#map.entries();
 
     return {
@@ -454,6 +487,11 @@ export class LiveMap<
    * Returns a new Iterator object that contains the keys for each element.
    */
   keys(): IterableIterator<TKey> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const rustKeys = owner.mapKeys(this._id) as TKey[];
+      return rustKeys[Symbol.iterator]();
+    }
     return this.#map.keys();
   }
 
@@ -461,6 +499,16 @@ export class LiveMap<
    * Returns a new Iterator object that contains the values for each element.
    */
   values(): IterableIterator<TValue> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      const rustEntries = owner.mapEntries(this._id);
+      const pool = this._pool!;
+      const resolved: TValue[] = rustEntries.map(
+        ([, entry]) => resolveEntry(entry, pool) as TValue
+      );
+      return resolved[Symbol.iterator]();
+    }
+
     const innerIterator = this.#map.values();
 
     return {
@@ -519,6 +567,27 @@ export class LiveMap<
 
   /** @internal */
   _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
+    const owner = this._pool?.wasmOwner;
+    if (owner && this._id) {
+      // Use entry-based approach to correctly handle nested CRDTs
+      const entries = owner.mapEntries(this._id);
+      const map = new Map<TKey, ToImmutable<TValue>>();
+      for (const [key, entry] of entries) {
+        if (entry.type === "scalar") {
+          map.set(key as TKey, entry.value as ToImmutable<TValue>);
+        } else {
+          // It's a child CRDT node — find the JS wrapper and delegate
+          const childNode = this._pool!.getNode(entry.nodeId);
+          map.set(
+            key as TKey,
+            (childNode
+              ? childNode.toImmutable()
+              : entry.value) as ToImmutable<TValue>
+          );
+        }
+      }
+      return freeze(map);
+    }
     const result: Map<TKey, ToImmutable<TValue>> = new Map();
     for (const [key, value] of this.#map) {
       result.set(key, value.toImmutable() as ToImmutable<TValue>);

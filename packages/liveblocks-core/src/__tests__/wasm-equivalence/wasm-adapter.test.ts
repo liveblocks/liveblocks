@@ -1,9 +1,7 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 const IS_WASM = process.env.LIVEBLOCKS_ENGINE === "wasm";
 
-import type { CrdtEngine } from "../../crdts/impl-selector";
-import { _setEngine } from "../../crdts/impl-selector";
 import {
   deserializeItems,
   getBackend,
@@ -193,21 +191,3 @@ describe("deserializeItems", () => {
   });
 });
 
-describe("engine immutability", () => {
-  test("engine choice is immutable once set", () => {
-    const backend = getBackend();
-
-    const mockEngine: CrdtEngine = {
-      backend: backend === "wasm" ? "js" : "wasm",
-      makePosition: vi.fn(() => "mock"),
-      getTreesDiffOperations: vi.fn(() => []),
-      deserializeItems: vi.fn(
-        (items: Parameters<CrdtEngine["deserializeItems"]>[0]) =>
-          new Map(items)
-      ),
-    };
-
-    _setEngine(mockEngine);
-    expect(getBackend()).toBe(backend);
-  });
-});
