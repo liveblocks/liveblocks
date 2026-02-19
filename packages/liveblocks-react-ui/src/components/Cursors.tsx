@@ -24,6 +24,7 @@ import {
 
 import { type Animatable, makeAnimationLoop } from "../utils/animation-loop";
 import { cn } from "../utils/cn";
+import { useWindowFocus } from "../utils/use-window-focus";
 import { Cursor } from "./Cursor";
 
 const STIFFNESS = 320;
@@ -112,6 +113,9 @@ function makeCoordinatesSpring() {
   };
 
   return {
+    get() {
+      return value;
+    },
     set(point: Coordinates | null) {
       if (point === null) {
         value = null;
@@ -167,38 +171,30 @@ function PresenceCursor({
 
   useLayoutEffect(() => {
     const spring = makeCoordinatesSpring();
-    let lastCoordinates: Coordinates | null = null;
 
-    function applyTransform() {
+    function render() {
       const element = cursorRef.current;
+      const coordinates = spring.get();
 
       if (!element) {
         return;
       }
 
-      if (lastCoordinates === null) {
+      if (coordinates === null) {
         element.style.transform = "translate3d(0, 0, 0)";
         element.style.display = "none";
         return;
       }
 
       if (sizeRef.current) {
-        element.style.transform = `translate3d(${lastCoordinates.x * sizeRef.current.width}px, ${lastCoordinates.y * sizeRef.current.height}px, 0)`;
+        element.style.transform = `translate3d(${coordinates.x * sizeRef.current.width}px, ${coordinates.y * sizeRef.current.height}px, 0)`;
       }
 
       element.style.display = "";
     }
 
-    spring.subscribe((coordinates) => {
-      lastCoordinates = coordinates
-        ? { x: coordinates.x, y: coordinates.y }
-        : null;
-      applyTransform();
-    });
-
-    const unsubscribeResize = sizeEvents.subscribe(() => {
-      applyTransform();
-    });
+    const unsubscribeSpring = spring.subscribe(render);
+    const unsubscribeSize = sizeEvents.subscribe(render);
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
       const other = others.find((other) => other.connectionId === connectionId);
@@ -209,7 +205,8 @@ function PresenceCursor({
 
     return () => {
       spring.dispose();
-      unsubscribeResize();
+      unsubscribeSpring();
+      unsubscribeSize();
       unsubscribeOther();
     };
   }, [room, connectionId, cursorPresenceKey, sizeRef, sizeEvents]);
@@ -236,6 +233,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
     const othersConnectionIds = useOthersConnectionIds();
     const sizeRef = useRef<Size | null>(null);
     const [sizeEvents] = useState(() => makeEventSource<void>());
+    const isWindowFocused = useWindowFocus();
 
     useEffect(() => {
       const element = ref.current;
@@ -301,6 +299,14 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
         [cursorPresenceKey]: null,
       });
     }, [updateMyPresence, cursorPresenceKey]);
+
+    useEffect(() => {
+      if (!isWindowFocused) {
+        updateMyPresence({
+          [cursorPresenceKey]: null,
+        });
+      }
+    }, [isWindowFocused, updateMyPresence, cursorPresenceKey]);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
