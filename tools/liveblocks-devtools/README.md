@@ -101,4 +101,4 @@ learn more about
 Licensed under the Apache License 2.0, Copyright © 2021-present
 [Liveblocks](https://liveblocks.io).
 
-See [LICENSE](../../LICENSE) for more information.
+See [LICENSE](../../licenses/LICENSE-APACHE-2.0) for more information.

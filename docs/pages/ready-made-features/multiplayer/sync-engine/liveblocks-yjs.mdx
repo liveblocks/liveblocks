@@ -12,14 +12,84 @@ text editors such as Notion and Google Docs. Liveblocks permanently stores Yjs
 data in each [room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling
 and maintenance for you.
 
-## Text editor integrations vs sync engines
+<Banner title="Tiptap, BlockNote, Lexical">
 
-If you’re using Tiptap, BlockNote, or Lexical, we recommend using
-[Text Editor](/docs/ready-made-features/multiplayer-editing/text-editor)
-instead. This is an alternative to Sync Datastore, with extra features
-specifically created for those editors. Sync Datastore, powered by Liveblocks
-Yjs and Liveblocks Storage, is intended for use in other editors, or for
-completely custom solutions.
+If you’re using Tiptap, BlockNote, or Lexical, we recommend using our
+[Text Editor plugins](/docs/ready-made-features/multiplayer-editing/text-editor)
+instead. These are alternatives to Yjs, with extra features specifically created
+for those editors. Yjs is intended for other editors, or for completely custom
+solutions.
+
+</Banner>
+
+## Y.Doc
+
+[`Y.Doc`](https://docs.yjs.dev/api/y.doc) is the core data structure used by
+Yjs. It is a JSON-like object that represents the state of a collaborative
+document. It is used to store the content of the document, and to synchronize it
+between clients. In Liveblocks, get the current room’s `Y.Doc` with
+[`getYjsProviderForRoom`](/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
+
+```ts
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  const room = useRoom();
+  // +++
+  const yProvider = getYjsProviderForRoom(room);
+  const yDoc = yProvider.getYDoc();
+  // +++
+
+  // ...
+}
+```
+
+## Shared types
+
+[Shared types](https://docs.yjs.dev/api/shared-types) in Yjs are CRDT-backed
+data structures (like maps, arrays, and text) stored inside a `Y.Doc` that
+automatically synchronize and merge changes across multiple clients without
+conflicts.
+
+```tsx
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  const room = useRoom();
+  const yProvider = getYjsProviderForRoom(room);
+  const yDoc = yProvider.getYDoc();
+
+  // +++
+  const insertText = useCallback(() => {
+    const yText = yDoc.getText("editor"); // Y.Text
+    yText.insert(0, "Hello collaborative world");
+  }, []);
+  // +++
+
+  // +++
+  const changeTheme = useCallback(() => {
+    const yMap = yDoc.getMap("settings"); // Y.Map
+    yMap.set("theme", "dark");
+  }, []);
+  // +++
+
+  // ...
+}
+```
+
+## Text and code editor integrations
+
+Liveblocks Yjs integrates with popular text and code editors such as Slate,
+Monaco, and CodeMirror. Check our get started guides for more information on
+different editors.
+
+<Button asChild>
+  <a href="/docs/get-started/multiplayer/text-documents">
+    Get started with text editor integrations
+  </a>
+</Button>
 
 ## API Reference
 

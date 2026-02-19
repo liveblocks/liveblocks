@@ -90,7 +90,8 @@ notifications, and more.
 
 ## License
 
-Licensed under the Apache License 2.0, Copyright © 2021-present
-[Liveblocks](https://liveblocks.io).
+Most of this repository is licensed under the Apache License 2.0, Copyright
+© 2021-present [Liveblocks](https://liveblocks.io). Some components are
+licensed under AGPL-3.0-or-later.
 
-See [LICENSE](./LICENSE) for more information.
+See [LICENSE](./LICENSE) for details.

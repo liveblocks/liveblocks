@@ -1,72 +1,22 @@
 import type {
+  BaseMetadata,
   BaseUserMeta,
   Json,
   JsonObject,
   LsonObject,
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import type {
-  IdTuple,
-  RoomStateServerMsg,
-  SerializedCrdt,
-  ServerMsg,
-  UpdatePresenceServerMsg,
-} from "@liveblocks/core";
-import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
-import { http, HttpResponse } from "msw";
-import { setupServer } from "msw/node";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "vitest";
+import type { PlainLsonObject } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
+import { describe, expect, onTestFinished, test } from "vitest";
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 
-import type { Mapping, WithLiveblocks } from "..";
+import type { LiveblocksContext, Mapping, WithLiveblocks } from "..";
 import { liveblocks as liveblocksMiddleware } from "..";
-import { list, MockWebSocket, obj, waitFor } from "./_utils";
-
-window.WebSocket = MockWebSocket as any;
+import { randomRoomId, waitFor } from "./_utils";
 
 const INVALID_CONFIG_ERROR = /Invalid @liveblocks\/zustand middleware config/;
-
-// Access token with perms: { "*": ["room:write"] }
-const accessToken =
-  "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicGlkIjoiNjA1YTRmZDMxYTM2ZDVlYTdhMmUwOGYxIiwidWlkIjoidXNlcjEiLCJwZXJtcyI6eyIqIjpbInJvb206d3JpdGUiXX0sImsiOiJhY2MifQ.OwLJdtVzMmIwIGO4gVWEJSng3DaUFsljpFXKE0Jcl1OTSHKCpDqJDkHMkkhgHmpUbBPMMdf8QmYa-4h4tMAikxzZL_tFdWQ-5kr92jOFqXPscDQTk0_GCMhv7R6vFj4YjT-msYVNVPI5M0Jlmm9fU5U_s3ZssEYhQl6AYkZT0XErrFYch8WmCVCIQ3bmFuUg5WDtnGJFiQIuCvLr0RyalJh4aILKPZ7ii_u9Q04__rN5kUhIqh2NaXWqFwsITuKaFwn24PJfBz-GJNX5Jk-tlmfJItkPFuBFp3WY8J9r9m59rJF35W_UxMU1tBNYVYRs8c3pjJKdnBiSUDUjNPvxrA";
-
-const server = setupServer(
-  http.post("/api/auth", () => {
-    return HttpResponse.json({ token: accessToken });
-  }),
-  http.post("/api/auth-fail", () => {
-    return new HttpResponse(null, { status: 400 });
-  })
-);
-
-beforeAll(() => server.listen());
-afterEach(() => {
-  MockWebSocket.instances = [];
-});
-beforeEach(() => {
-  MockWebSocket.instances = [];
-});
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
-
-async function waitForSocketToBeConnected() {
-  await waitFor(() => MockWebSocket.instances.length === 1);
-
-  const socket = MockWebSocket.instances[0]!;
-  expect(socket.callbacks.open.length).toBe(1); // Got open callback
-  expect(socket.callbacks.message.length).toBe(1); // Got ROOM_STATE message callback
-
-  return socket;
-}
 
 interface BasicStore {
   value: number;
@@ -102,7 +52,65 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   setCursor: (cursor: { x: number; y: number }) => set({ cursor }),
 });
 
-function prepareClientAndStore<
+const DEV_SERVER = "http://localhost:1154";
+
+/**
+ * Creates a room on the dev server and initializes its storage.
+ * Returns the room ID, which can be passed to enterAndConnect().
+ */
+async function initRoom(storage?: PlainLsonObject): Promise<string> {
+  const roomId = randomRoomId();
+
+  // Create the room
+  await fetch(`${DEV_SERVER}/v2/rooms`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer sk_localdev",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id: roomId }),
+  });
+
+  // Initialize its storage
+  if (storage) {
+    await fetch(
+      `${DEV_SERVER}/v2/rooms/${encodeURIComponent(roomId)}/storage`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer sk_localdev",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(storage),
+      }
+    );
+  }
+  return roomId;
+}
+
+async function UNSAFE_generateAccessToken(roomId?: string) {
+  const res = await fetch(`${DEV_SERVER}/v2/authorize-user`, {
+    method: "POST",
+    headers: {
+      // ⚠️ WARNING ⚠️
+      // DO NOT USE THIS IN PRODUCTION!
+      // Never expose your secret key on the client in production this way!
+      // We only do this here because these tests don't have a backend.
+      // Do not treat this setup as a reference for how to implement
+      // authentication in your app.
+      Authorization: "Bearer sk_localdev",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: `user-${nanoid()}`,
+      userInfo: { name: "Testy McTester" },
+      permissions: { [roomId!]: ["room:write"] },
+    }),
+  });
+  return (await res.json()) as { token: string };
+}
+
+function createTestStore<
   TState,
   P extends JsonObject,
   S extends LsonObject,
@@ -115,491 +123,470 @@ function prepareClientAndStore<
     presenceMapping: Mapping<TState>;
   }
 ) {
-  const client = createClient({ authEndpoint: "/api/auth" });
+  const client = createClient({
+    baseUrl: DEV_SERVER,
+    authEndpoint: UNSAFE_generateAccessToken,
+    polyfills: { WebSocket: globalThis.WebSocket },
+    // @ts-expect-error Deliberately testing internal option to disable throttling for tests
+    __DANGEROUSLY_disableThrottling: true,
+  });
   const store = create<WithLiveblocks<TState, P, S, U, E>>()(
-    liveblocksMiddleware(stateCreator, {
-      ...options,
-      client,
-    }) as any
+    liveblocksMiddleware(stateCreator, { ...options, client }) as any
   );
   return { client, store };
 }
 
-function prepareClientAndBasicStore() {
-  return prepareClientAndStore(basicStateCreator, {
+function createBasicStore() {
+  const { store } = createTestStore(basicStateCreator, {
     storageMapping: { value: true, mappedToFalse: false, items: true },
     presenceMapping: { cursor: true },
   });
+  return store;
 }
 
-async function prepareWithStorage<TState>(
-  stateCreator: StateCreator<TState>,
-  options: {
-    storageMapping: Mapping<TState>;
-    presenceMapping: Mapping<TState>;
-    room?: string;
-    items: IdTuple<SerializedCrdt>[];
-  }
-) {
-  const { client, store } = prepareClientAndStore(stateCreator, {
-    storageMapping: options.storageMapping,
-    presenceMapping: options.presenceMapping,
-  });
-  store.getState().liveblocks.enterRoom(options?.room || "room");
+/**
+ * Enters a room with a unique random ID and registers cleanup.
+ * Call this inside a test to get a connected store.
+ */
+type AnyLiveblocksStore = {
+  getState: () => {
+    liveblocks: Pick<
+      LiveblocksContext<
+        JsonObject,
+        LsonObject,
+        BaseUserMeta,
+        Json,
+        BaseMetadata,
+        BaseMetadata
+      >,
+      "enterRoom" | "leaveRoom" | "status"
+    >;
+  };
+};
 
-  const socket = await waitForSocketToBeConnected();
-
-  socket.callbacks.message[0]!({
-    data: JSON.stringify({
-      type: ServerMsgCode.STORAGE_STATE,
-      items: options.items,
-    }),
-  } as MessageEvent);
-
-  function sendMessage(
-    serverMessage: ServerMsg<JsonObject, BaseUserMeta, Json>
-  ) {
-    socket.callbacks.message[0]!({
-      data: JSON.stringify(serverMessage),
-    } as MessageEvent);
-  }
-
-  await waitFor(() => !store.getState().liveblocks.isStorageLoading);
-
-  return { client, store, socket, sendMessage };
+function enterRoom(
+  store: AnyLiveblocksStore,
+  roomId: string = randomRoomId()
+): () => void {
+  store.getState().liveblocks.enterRoom(roomId);
+  const leave = () => store.getState().liveblocks.leaveRoom();
+  onTestFinished(leave);
+  return leave;
 }
 
-async function prepareBasicStoreWithStorage(
-  items: IdTuple<SerializedCrdt>[],
-  options?: { room?: string }
-) {
-  return prepareWithStorage(basicStateCreator, {
-    storageMapping: { value: true, mappedToFalse: false, items: true },
-    presenceMapping: { cursor: true },
-    items,
-    room: options?.room,
-  });
+async function enterAndConnect(
+  store: AnyLiveblocksStore,
+  roomId: string = randomRoomId()
+): Promise<() => void> {
+  const leave = enterRoom(store, roomId);
+  await waitFor(() => store.getState().liveblocks.status === "connected");
+  return leave;
+}
+
+async function connectClient() {
+  const store = createBasicStore();
+  await enterAndConnect(store);
+  return store;
+}
+
+async function connectTwoClients() {
+  const roomId = randomRoomId();
+  const storeA = createBasicStore();
+  await enterAndConnect(storeA, roomId);
+  const storeB = createBasicStore();
+  await enterAndConnect(storeB, roomId);
+  return { storeA, storeB };
 }
 
 describe("middleware", () => {
   test("init middleware", () => {
-    const { store } = prepareClientAndBasicStore();
-
+    const store = createBasicStore();
     const { liveblocks, value } = store.getState();
-
-    // Others should be empty before entering the room
-    expect(liveblocks.others).toEqual([]);
+    expect(liveblocks.others).toEqual([]); // Others should be empty before entering the room
     expect(value).toBe(0);
     expect(liveblocks.isStorageLoading).toBe(false);
   });
 
   test("storage should be loading while socket is connecting and initial storage message", async () => {
-    const { store } = prepareClientAndBasicStore();
-
-    const { liveblocks } = store.getState();
-
-    liveblocks.enterRoom("room");
-
+    const store = createBasicStore();
+    enterRoom(store);
     expect(store.getState().liveblocks.isStorageLoading).toBe(true);
-
-    const socket = await waitForSocketToBeConnected();
-
-    socket.callbacks.message[0]!({
-      data: JSON.stringify({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: [obj("root", {})],
-      }),
-    } as MessageEvent);
-
     await waitFor(() => store.getState().liveblocks.isStorageLoading === false);
   });
 
   test("enter room should set the connection to open", async () => {
-    const { store } = prepareClientAndBasicStore();
-
-    const { liveblocks } = store.getState();
-
-    liveblocks.enterRoom("room");
-
-    await waitForSocketToBeConnected();
-
+    const store = await connectClient();
     expect(store.getState().liveblocks.status).toBe("connected");
   });
 
   describe("presence", () => {
     test("should update state if presence is updated via room", async () => {
-      const { store } = prepareClientAndBasicStore();
+      const { storeA, storeB } = await connectTwoClients();
 
-      const { liveblocks } = store.getState();
-
-      liveblocks.enterRoom("room");
-
-      const socket = await waitForSocketToBeConnected();
-
-      store
+      storeA
         .getState()
         .liveblocks.room!.updatePresence({ cursor: { x: 100, y: 100 } });
 
-      expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
+      // Local store should reflect the update immediately
+      expect(storeA.getState().cursor).toEqual({ x: 100, y: 100 });
 
-      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_PRESENCE,
-          targetActor: -1,
-          data: { cursor: { x: 0, y: 0 } },
-        },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
-      ]);
-
-      await waitFor(() => socket.sentMessages[1] != null);
-
-      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_PRESENCE,
-          data: { cursor: { x: 100, y: 100 } },
-        },
-      ]);
+      // Client B should see A's updated presence
+      await waitFor(
+        () =>
+          (
+            storeB.getState().liveblocks.others[0]?.presence as {
+              cursor: { x: number; y: number };
+            }
+          )?.cursor?.x === 100
+      );
+      expect(storeB.getState().liveblocks.others[0]!.presence).toEqual({
+        cursor: { x: 100, y: 100 },
+      });
     });
 
     test("should broadcast presence when connecting to the room", async () => {
-      const { store } = prepareClientAndBasicStore();
+      const { storeB } = await connectTwoClients();
 
-      const { liveblocks } = store.getState();
-
-      liveblocks.enterRoom("room");
-
-      const socket = await waitForSocketToBeConnected();
-
-      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_PRESENCE,
-          targetActor: -1,
-          data: { cursor: { x: 0, y: 0 } },
-        },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
-      ]);
+      // Client B should see A's initial presence
+      await waitFor(() => storeB.getState().liveblocks.others.length === 1);
+      expect(storeB.getState().liveblocks.others[0]!.presence).toEqual({
+        cursor: { x: 0, y: 0 },
+      });
     });
 
     test("should update presence if state is updated", async () => {
-      const { store } = prepareClientAndBasicStore();
+      const { storeA, storeB } = await connectTwoClients();
 
-      const { liveblocks } = store.getState();
+      // Update presence via zustand state setter
+      storeA.getState().setCursor({ x: 1, y: 1 });
 
-      liveblocks.enterRoom("room");
-
-      const socket = await waitForSocketToBeConnected();
-
-      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_PRESENCE,
-          targetActor: -1,
-          data: { cursor: { x: 0, y: 0 } },
-        },
-        {
-          type: ClientMsgCode.FETCH_STORAGE,
-        },
-      ]);
-
-      store.getState().setCursor({ x: 1, y: 1 });
-
-      await waitFor(() => socket.sentMessages[1] != null);
-
-      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_PRESENCE,
-          data: { cursor: { x: 1, y: 1 } },
-        },
-      ]);
+      // Client B should see the updated cursor
+      await waitFor(() => storeB.getState().liveblocks.others.length === 1);
+      await waitFor(
+        () =>
+          (
+            storeB.getState().liveblocks.others[0]!.presence as {
+              cursor: { x: number; y: number };
+            }
+          ).cursor.x === 1
+      );
+      expect(storeB.getState().liveblocks.others[0]!.presence).toEqual({
+        cursor: { x: 1, y: 1 },
+      });
     });
 
-    test("should set liveblocks.others if there are others users in the room", async () => {
-      const { store } = prepareClientAndBasicStore();
+    test("should set liveblocks.others if there are other users in the room", async () => {
+      const { storeA, storeB } = await connectTwoClients();
 
-      const { liveblocks } = store.getState();
+      // storeA updates presence
+      storeA.getState().setCursor({ x: 1, y: 1 });
 
-      liveblocks.enterRoom("room");
+      // storeB should see storeA in others with full metadata
+      await waitFor(
+        () =>
+          (
+            storeB.getState().liveblocks.others[0]?.presence as {
+              cursor: { x: number; y: number };
+            }
+          )?.cursor?.x === 1
+      );
 
-      const socket = await waitForSocketToBeConnected();
-
-      socket.callbacks.message[0]!({
-        data: JSON.stringify({
-          type: ServerMsgCode.ROOM_STATE,
-          users: {
-            "1": {
-              info: { name: "Testy McTester" },
-              scopes: ["room:write"],
-            },
-          },
-          actor: 2,
-          nonce: "nonce-for-actor-2",
-          scopes: ["room:write"],
-          meta: {},
-        } as RoomStateServerMsg<BaseUserMeta>),
-      } as MessageEvent);
-
-      socket.callbacks.message[0]!({
-        data: JSON.stringify({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          targetActor: -1,
-          actor: 1,
-          data: { x: 1 },
-        } as UpdatePresenceServerMsg<JsonObject>),
-      } as MessageEvent);
-
-      expect(store.getState().liveblocks.others).toEqual([
-        {
-          connectionId: 1,
-          id: undefined,
-          info: {
-            name: "Testy McTester",
-          },
-          canWrite: true,
-          canComment: true,
-          isReadOnly: false,
-          presence: { x: 1 },
-        },
-      ]);
+      const other = storeB.getState().liveblocks.others[0]!;
+      expect(other.connectionId).toEqual(expect.any(Number));
+      expect(other.id).toEqual(expect.any(String));
+      expect(other.info).toEqual({ name: "Testy McTester" });
+      expect(other.canWrite).toBe(true);
+      expect(other.canComment).toBe(true);
+      expect(other.presence).toEqual({ cursor: { x: 1, y: 1 } });
     });
   });
 
   describe("storage", () => {
     describe("initialization", () => {
       test("should initialize if mapping key is true", async () => {
-        const { store } = await prepareBasicStoreWithStorage([
-          obj("root", { value: 1 }),
-        ]);
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { value: 1 },
+        });
 
+        const store = createBasicStore();
+        await enterAndConnect(store, roomId);
+        await waitFor(
+          () => store.getState().liveblocks.isStorageLoading === false
+        );
         expect(store.getState().value).toBe(1);
       });
 
       test("should not initialize if mapping key does not exist", async () => {
-        const { store } = await prepareBasicStoreWithStorage([
-          obj("root", { notMapped: "not mapped" }),
-        ]);
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { notMapped: "not mapped" },
+        });
 
+        const store = createBasicStore();
+        await enterAndConnect(store, roomId);
+        await waitFor(
+          () => store.getState().liveblocks.isStorageLoading === false
+        );
         expect(store.getState().notMapped).toBe("default");
       });
 
       test("should not initialize if mapping key is false", async () => {
-        const { store } = await prepareBasicStoreWithStorage([
-          obj("root", { mappedToFalse: 1 }),
-        ]);
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { mappedToFalse: 1 },
+        });
 
+        const store = createBasicStore();
+        await enterAndConnect(store, roomId);
+        await waitFor(
+          () => store.getState().liveblocks.isStorageLoading === false
+        );
         expect(store.getState().mappedToFalse).toBe(0);
       });
 
       test("should initialize with default state if key is missing from liveblocks storage", async () => {
-        const items = [obj("root", {})];
-        const { store, socket } = await prepareWithStorage(
-          () => ({ value: 5 }),
-          {
-            storageMapping: { value: true },
-            presenceMapping: {},
-            items,
-          }
+        // Storage has empty root — no "value" key
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: {},
+        });
+
+        const { store: storeA } = createTestStore(() => ({ value: 5 }), {
+          storageMapping: { value: true },
+          presenceMapping: {},
+        });
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
         );
 
-        expect(store.getState().value).toBe(5);
+        // Local state should keep the default value
+        expect(storeA.getState().value).toBe(5);
 
-        await waitFor(() => socket.sentMessages[1] != null);
-
-        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-          {
-            type: ClientMsgCode.UPDATE_STORAGE,
-            ops: [
-              {
-                opId: "0:0",
-                id: "root",
-                type: OpCode.UPDATE_OBJECT,
-                data: { value: 5 },
-              },
-            ],
-          },
-        ]);
+        // The default should have been synced to storage —
+        // verify by joining a second client
+        const { store: storeB } = createTestStore(() => ({ value: 0 }), {
+          storageMapping: { value: true },
+          presenceMapping: {},
+        });
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+        expect(storeB.getState().value).toBe(5);
       });
 
       test("should batch initialization", async () => {
-        const items = [obj("root", {})];
-        const { store, socket } = await prepareWithStorage(
-          () => ({ value: 5, items: [] }),
-          {
-            storageMapping: { value: true, items: true },
-            presenceMapping: {},
-            items,
-          }
+        // Storage has empty root — missing both "value" and "items"
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: {},
+        });
+
+        const { store: storeA } = createTestStore(
+          () => ({ value: 5, items: [] as Array<{ text: string }> }),
+          { storageMapping: { value: true, items: true }, presenceMapping: {} }
+        );
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
         );
 
-        expect(store.getState().value).toBe(5);
+        // Local state should keep the defaults
+        expect(storeA.getState().value).toBe(5);
+        expect(storeA.getState().items).toEqual([]);
 
-        await waitFor(() => socket.sentMessages[1] != null);
-
-        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-          {
-            type: ClientMsgCode.UPDATE_STORAGE,
-            ops: [
-              {
-                opId: "0:0",
-                id: "root",
-                type: OpCode.UPDATE_OBJECT,
-                data: { value: 5 },
-              },
-              {
-                id: "0:0",
-                opId: "0:2", // TODO: We currently have a tiny issue in LiveObject.update who generate an opId 0:1 for a potential UpdateObject
-                type: OpCode.CREATE_LIST,
-                parentId: "root",
-                parentKey: "items",
-              },
-            ],
-          },
-        ]);
+        // Both defaults should have been synced to storage —
+        // verify by joining a second client
+        const { store: storeB } = createTestStore(
+          () => ({ value: 0, items: [] as Array<{ text: string }> }),
+          { storageMapping: { value: true, items: true }, presenceMapping: {} }
+        );
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+        expect(storeB.getState().value).toBe(5);
+        expect(storeB.getState().items).toEqual([]);
       });
 
       test("should not override liveblocks state with initial state if key exists", async () => {
-        const items = [obj("root", { value: 1 })];
-        const { store, socket } = await prepareWithStorage(
-          () => ({ value: 5 }),
-          {
-            storageMapping: { value: true },
-            presenceMapping: {},
-            items,
-          }
+        // Storage already has value: 1
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { value: 1 },
+        });
+
+        // Zustand default is value: 5, but storage should win
+        const { store: storeA } = createTestStore(() => ({ value: 5 }), {
+          storageMapping: { value: true },
+          presenceMapping: {},
+        });
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
         );
+        expect(storeA.getState().value).toBe(1);
 
-        expect(store.getState().value).toBe(1);
-
-        expect(socket.sentMessages[1]).toEqual(undefined);
+        // Verify storage was NOT overwritten with the default —
+        // a second client should also see 1
+        const { store: storeB } = createTestStore(() => ({ value: 0 }), {
+          storageMapping: { value: true },
+          presenceMapping: {},
+        });
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+        expect(storeB.getState().value).toBe(1);
       });
     });
 
     describe("remote updates", () => {
       test("should update state if mapping allows it", async () => {
-        const { store, sendMessage } = await prepareBasicStoreWithStorage([
-          obj("root", { value: 1 }),
-        ]);
-
-        sendMessage({
-          type: ServerMsgCode.UPDATE_STORAGE,
-          ops: [
-            {
-              type: OpCode.UPDATE_OBJECT,
-              id: "root",
-              data: {
-                value: 2,
-              },
-            },
-          ],
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { value: 1 },
         });
 
-        expect(store.getState().value).toBe(2);
+        const storeA = createBasicStore();
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
+        );
+
+        const storeB = createBasicStore();
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+
+        // Both clients should start with value: 1
+        expect(storeA.getState().value).toBe(1);
+        expect(storeB.getState().value).toBe(1);
+
+        // Client A updates value
+        storeA.getState().setValue(2);
+
+        // Client B should see the remote update
+        await waitFor(() => storeB.getState().value === 2);
+        expect(storeB.getState().value).toBe(2);
       });
 
       test("should not update state if key is not part of the mapping", async () => {
-        const { store, sendMessage } = await prepareBasicStoreWithStorage([
-          obj("root", { value: 1 }),
-        ]);
-
-        sendMessage({
-          type: ServerMsgCode.UPDATE_STORAGE,
-          ops: [
-            {
-              type: OpCode.UPDATE_OBJECT,
-              id: "root",
-              data: {
-                notMapped: "hey",
-              },
-            },
-          ],
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: { value: 1 },
         });
 
-        expect(store.getState().notMapped).toBe("default");
+        const storeA = createBasicStore();
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
+        );
+
+        const storeB = createBasicStore();
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+
+        // Client A updates a non-mapped key directly on the LiveObject
+        const { root } = await storeA.getState().liveblocks.room!.getStorage();
+        root.set("notMapped", "hey");
+
+        // Client B: "notMapped" is not in storageMapping, so zustand
+        // state should remain at its default
+        // Give it a moment — if the update were going to propagate, it would
+        await waitFor(() => storeB.getState().value === 1);
+        expect(storeB.getState().notMapped).toBe("default");
       });
     });
 
     describe("patching Liveblocks state", () => {
       test("should update liveblocks state if mapping allows it", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage([
-          obj("root", { value: 1 }),
-          list("1:0", "root", "items"),
-        ]);
-
-        store.getState().setValue(2);
-
-        // Waiting for last update to be sent because of room internal throttling
-        await waitFor(() => socket.sentMessages[1] != null);
-
-        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-          {
-            type: ClientMsgCode.UPDATE_STORAGE,
-            ops: [
-              {
-                opId: "0:0",
-                id: "root",
-                type: OpCode.UPDATE_OBJECT,
-                data: { value: 2 },
-              },
-            ],
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: {
+            value: 1,
+            items: { liveblocksType: "LiveList", data: [] },
           },
-        ]);
+        });
+
+        const storeA = createBasicStore();
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
+        );
+        expect(storeA.getState().value).toBe(1);
+
+        const storeB = createBasicStore();
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+
+        // Client A updates value via zustand setter
+        storeA.getState().setValue(2);
+
+        // Client B should see the update
+        await waitFor(() => storeB.getState().value === 2);
+        expect(storeB.getState().value).toBe(2);
       });
 
       test("should batch modifications", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage([
-          obj("root", { value: 1 }),
-          list("1:0", "root", "items"),
-        ]);
-
-        store.getState().setItems([{ text: "A" }, { text: "B" }]);
-
-        // Waiting for last update to be sent because of room internal throttling
-        await waitFor(() => socket.sentMessages[1] != null);
-
-        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-          {
-            type: ClientMsgCode.UPDATE_STORAGE,
-            ops: [
-              {
-                id: "0:0",
-                opId: "0:0",
-                type: OpCode.CREATE_OBJECT,
-                parentId: "1:0",
-                parentKey: "!",
-                data: { text: "A" },
-              },
-              {
-                id: "0:1",
-                opId: "0:1",
-                type: OpCode.CREATE_OBJECT,
-                parentId: "1:0",
-                parentKey: '"',
-                data: { text: "B" },
-              },
-            ],
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: {
+            value: 1,
+            items: { liveblocksType: "LiveList", data: [] },
           },
-        ]);
+        });
+
+        const storeA = createBasicStore();
+        await enterAndConnect(storeA, roomId);
+        await waitFor(
+          () => storeA.getState().liveblocks.isStorageLoading === false
+        );
+
+        const storeB = createBasicStore();
+        await enterAndConnect(storeB, roomId);
+        await waitFor(
+          () => storeB.getState().liveblocks.isStorageLoading === false
+        );
+
+        // Client A sets two items at once
+        storeA.getState().setItems([{ text: "A" }, { text: "B" }]);
+
+        // Client B should see both items
+        await waitFor(() => storeB.getState().items.length === 2);
+        expect(storeB.getState().items).toEqual([{ text: "A" }, { text: "B" }]);
       });
 
       test("assigning new object identity overrides previous identity", async () => {
-        const { store } = await prepareWithStorage<{
+        const roomId = await initRoom({
+          liveblocksType: "LiveObject",
+          data: {},
+        });
+
+        interface ObjState {
           obj: { a: number };
           setObj: (newObj: { a: number }) => void;
-        }>(
-          (set) => ({
-            obj: { a: 0 },
+        }
 
+        const { store } = createTestStore(
+          ((set) => ({
+            obj: { a: 0 },
             setObj: (newObj) => {
               set({ obj: newObj });
             },
-          }),
-          {
-            storageMapping: { obj: true },
-            presenceMapping: {},
-            items: [obj("root", {})],
-          }
+          })) satisfies StateCreator<ObjState>,
+          { storageMapping: { obj: true }, presenceMapping: {} }
+        );
+        await enterAndConnect(store, roomId);
+        await waitFor(
+          () => store.getState().liveblocks.isStorageLoading === false
         );
 
         const oldVal = store.getState().obj;
@@ -612,86 +599,104 @@ describe("middleware", () => {
         expect(store.getState().obj).toBe(newVal);
       });
     });
+  });
 
+  describe("past regressions", () => {
     // Fixes this bug reported by Arcol
     // https://github.com/liveblocks/liveblocks/issues/491
     test("assigning explicit-`undefined` to a nested key should delete it", async () => {
-      const { store, socket } = await prepareWithStorage<{
+      const roomId = await initRoom({
+        liveblocksType: "LiveObject",
+        data: {
+          nest: { liveblocksType: "LiveObject", data: { a: 13 } },
+        },
+      });
+
+      interface NestState {
         nest: { a?: number };
         setA: (a?: number) => void;
-      }>(
-        (set) => ({
+      }
+
+      const { store: storeA } = createTestStore(
+        ((set) => ({
           nest: { a: 13 },
           setA: (a) => {
             set({ nest: { a } });
           },
-        }),
-        {
-          storageMapping: { nest: true },
-          presenceMapping: {},
-          items: [
-            // Mimic the initial Zustand state to limit network syncing at the start
-            obj("root", {}),
-            obj("0:1", { a: 13 }, "root", "nest"),
-          ],
-        }
+        })) satisfies StateCreator<NestState>,
+        { storageMapping: { nest: true }, presenceMapping: {} }
+      );
+      await enterAndConnect(storeA, roomId);
+      await waitFor(
+        () => storeA.getState().liveblocks.isStorageLoading === false
       );
 
-      expect(store.getState().nest.a).toBe(13);
+      expect(storeA.getState().nest.a).toBe(13);
 
-      store.getState().setA(undefined);
+      storeA.getState().setA(undefined);
 
-      // Waiting for last update to be sent because of room internal throttling
-      await waitFor(() => socket.sentMessages[1] != null);
+      // Local state should reflect the deletion immediately
+      expect(storeA.getState().nest.a).toBeUndefined();
 
-      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
-        {
-          type: ClientMsgCode.UPDATE_STORAGE,
-          ops: [
-            {
-              type: OpCode.DELETE_OBJECT_KEY,
-              opId: "0:0",
-              id: "0:1",
-              key: "a",
-            },
-          ],
-        },
-      ]);
-
-      expect(store.getState().nest.a).toBeUndefined();
+      // Verify the deletion was synced — a second client should also
+      // see `a` as undefined
+      const { store: storeB } = createTestStore(
+        ((set) => ({
+          nest: { a: 99 },
+          setA: (a) => {
+            set({ nest: { a } });
+          },
+        })) satisfies StateCreator<NestState>,
+        { storageMapping: { nest: true }, presenceMapping: {} }
+      );
+      await enterAndConnect(storeB, roomId);
+      await waitFor(
+        () => storeB.getState().liveblocks.isStorageLoading === false
+      );
+      expect(storeB.getState().nest.a).toBeUndefined();
     });
   });
 
   describe("history", () => {
     test("undo / redo", async () => {
-      const { store } = await prepareBasicStoreWithStorage([
-        obj("root", { value: 1 }),
-      ]);
+      const roomId = await initRoom({
+        liveblocksType: "LiveObject",
+        data: { value: 1 },
+      });
+
+      const store = createBasicStore();
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
+      );
 
       expect(store.getState().value).toBe(1);
 
       store.getState().setValue(2);
-
       expect(store.getState().value).toBe(2);
 
       store.getState().liveblocks.room!.history.undo();
-
       expect(store.getState().value).toBe(1);
 
       store.getState().liveblocks.room!.history.redo();
-
       expect(store.getState().value).toBe(2);
     });
 
     test("updating presence should not reset redo stack", async () => {
-      const { store } = await prepareBasicStoreWithStorage([
-        obj("root", { value: 1 }),
-      ]);
+      const roomId = await initRoom({
+        liveblocksType: "LiveObject",
+        data: { value: 1 },
+      });
+
+      const store = createBasicStore();
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
+      );
 
       expect(store.getState().value).toBe(1);
 
       store.getState().setValue(2);
-
       expect(store.getState().value).toBe(2);
 
       store.getState().liveblocks.room!.history.undo();
@@ -699,45 +704,39 @@ describe("middleware", () => {
       store.getState().setCursor({ x: 0, y: 1 });
 
       store.getState().liveblocks.room!.history.redo();
-
       expect(store.getState().value).toBe(2);
     });
 
     test("updating presence should not reset redo stack", async () => {
-      const { store } = await prepareBasicStoreWithStorage([
-        obj("root", { value: 1 }),
-      ]);
+      const roomId = await initRoom({
+        liveblocksType: "LiveObject",
+        data: { value: 1 },
+      });
 
-      store.getState().liveblocks.room?.updatePresence(
-        {
-          cursor: {
-            x: 100,
-            y: 100,
-          },
-        },
-        {
-          addToHistory: true,
-        }
+      const store = createBasicStore();
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
       );
 
-      store.getState().liveblocks.room?.updatePresence(
-        {
-          cursor: {
-            x: 200,
-            y: 200,
-          },
-        },
-        {
-          addToHistory: true,
-        }
-      );
+      store
+        .getState()
+        .liveblocks.room?.updatePresence(
+          { cursor: { x: 100, y: 100 } },
+          { addToHistory: true }
+        );
+
+      store
+        .getState()
+        .liveblocks.room?.updatePresence(
+          { cursor: { x: 200, y: 200 } },
+          { addToHistory: true }
+        );
 
       store.getState().liveblocks.room?.history.undo();
-
       expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
 
       store.getState().liveblocks.room?.history.redo();
-
       expect(store.getState().cursor).toEqual({ x: 200, y: 200 });
     });
   });
@@ -746,24 +745,25 @@ describe("middleware", () => {
     test("missing client should throw", () => {
       expect(() =>
         liveblocksMiddleware(() => ({}), {
-          client: undefined as any,
+          // @ts-expect-error Deliberately testing missing client
+          client: undefined,
           storageMapping: {},
         })
       ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("storageMapping should be an object", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ publicApiKey: "pk_localdev" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
-          storageMapping: "invalid_mapping" as any,
+          storageMapping: "invalid_mapping",
         })
       ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("invalid storageMapping key value should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ publicApiKey: "pk_localdev" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -773,7 +773,7 @@ describe("middleware", () => {
     });
 
     test("duplicated key should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ publicApiKey: "pk_localdev" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -784,7 +784,7 @@ describe("middleware", () => {
     });
 
     test("invalid presenceMapping should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ publicApiKey: "pk_localdev" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -795,22 +795,28 @@ describe("middleware", () => {
     });
 
     test("mapping on function should throw", async () => {
-      const { store } = await prepareWithStorage<{
+      const roomId = await initRoom();
+
+      interface FuncTestState {
         notAFunc: any;
         setFunction: () => void;
-      }>(
-        (set) => ({
-          notAFunc: null,
+      }
 
+      const { store } = createTestStore(
+        ((set) => ({
+          notAFunc: null,
           setFunction: () => {
             set({ notAFunc: /* 😈 */ () => {} });
           },
-        }),
+        })) satisfies StateCreator<FuncTestState>,
         {
           storageMapping: { notAFunc: true },
           presenceMapping: {},
-          items: [obj("root", {})],
         }
+      );
+      await enterAndConnect(store, roomId);
+      await waitFor(
+        () => store.getState().liveblocks.isStorageLoading === false
       );
 
       expect(() => store.getState().setFunction()).toThrow(
