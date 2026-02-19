@@ -1,3 +1,4 @@
+import type { EventSource } from "@liveblocks/core";
 import { isPlainObject, makeEventSource } from "@liveblocks/core";
 import {
   useOther,
@@ -6,17 +7,22 @@ import {
   useUpdateMyPresence,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
+import type {
+  ComponentPropsWithoutRef,
+  MutableRefObject,
+  PointerEvent,
+} from "react";
 import {
-  type ComponentPropsWithoutRef,
   forwardRef,
-  type PointerEvent,
   useCallback,
+  useEffect,
   useId,
+  useImperativeHandle,
   useRef,
+  useState,
 } from "react";
 
-import type { Animatable } from "../utils/animation-loop";
-import { makeAnimationLoop } from "../utils/animation-loop";
+import { type Animatable, makeAnimationLoop } from "../utils/animation-loop";
 import { cn } from "../utils/cn";
 import { Cursor } from "./Cursor";
 
@@ -29,6 +35,11 @@ export type CursorsProps = ComponentPropsWithoutRef<"div">;
 type Coordinates = {
   x: number;
   y: number;
+};
+
+type Size = {
+  width: number;
+  height: number;
 };
 
 function $string(value: unknown): string | undefined {
@@ -141,9 +152,13 @@ function makeCoordinatesSpring() {
 function PresenceCursor({
   connectionId,
   cursorPresenceKey,
+  sizeRef,
+  sizeEvents,
 }: {
   connectionId: number;
   cursorPresenceKey: string;
+  sizeRef: MutableRefObject<Size | null>;
+  sizeEvents: EventSource<void>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -152,21 +167,37 @@ function PresenceCursor({
 
   useLayoutEffect(() => {
     const spring = makeCoordinatesSpring();
+    let lastCoordinates: Coordinates | null = null;
 
-    spring.subscribe((coordinates) => {
+    function applyTransform() {
       const element = cursorRef.current;
 
       if (!element) {
         return;
       }
 
-      if (coordinates === null) {
+      if (lastCoordinates === null) {
         element.style.transform = "translate3d(0, 0, 0)";
         element.style.display = "none";
-      } else {
-        element.style.transform = `translate3d(${coordinates.x}px, ${coordinates.y}px, 0)`;
-        element.style.display = "";
+        return;
       }
+
+      if (sizeRef.current) {
+        element.style.transform = `translate3d(${lastCoordinates.x * sizeRef.current.width}px, ${lastCoordinates.y * sizeRef.current.height}px, 0)`;
+      }
+
+      element.style.display = "";
+    }
+
+    spring.subscribe((coordinates) => {
+      lastCoordinates = coordinates
+        ? { x: coordinates.x, y: coordinates.y }
+        : null;
+      applyTransform();
+    });
+
+    const unsubscribeResize = sizeEvents.subscribe(() => {
+      applyTransform();
     });
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
@@ -178,9 +209,10 @@ function PresenceCursor({
 
     return () => {
       spring.dispose();
+      unsubscribeResize();
       unsubscribeOther();
     };
-  }, [room, connectionId, cursorPresenceKey]);
+  }, [room, connectionId, cursorPresenceKey, sizeRef, sizeEvents]);
 
   return (
     <Cursor
@@ -198,18 +230,66 @@ function PresenceCursor({
 export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
   ({ className, children, ...props }, forwardedRef) => {
     const id = useId();
+    const ref = useRef<HTMLDivElement>(null);
     const cursorPresenceKey = `cursors:${id}`;
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
+    const sizeRef = useRef<Size | null>(null);
+    const [sizeEvents] = useState(() => makeEventSource<void>());
+
+    useEffect(() => {
+      const element = ref.current;
+
+      if (!element) {
+        return;
+      }
+
+      function setSize(size: Size) {
+        sizeRef.current = size;
+        sizeEvents.notify();
+      }
+
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === element) {
+            setSize({
+              width: entry.contentRect.width,
+              height: entry.contentRect.height,
+            });
+          }
+        }
+      });
+
+      setSize({
+        width: element.clientWidth,
+        height: element.clientHeight,
+      });
+
+      observer.observe(element);
+
+      return () => {
+        observer.disconnect();
+      };
+    }, [sizeEvents]);
 
     const handlePointerMove = useCallback(
       (event: PointerEvent) => {
-        const bounds = event.currentTarget.getBoundingClientRect();
+        const element = ref.current;
+
+        if (!element) {
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+
+        if (rect.width === 0 || rect.height === 0) {
+          return;
+        }
 
         updateMyPresence({
           [cursorPresenceKey]: {
-            x: event.clientX - bounds.left,
-            y: event.clientY - bounds.top,
+            x: (event.clientX - rect.left) / rect.width,
+            y: (event.clientY - rect.top) / rect.height,
           },
         });
       },
@@ -222,13 +302,19 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
       });
     }, [updateMyPresence, cursorPresenceKey]);
 
+    useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
+      forwardedRef,
+      () => ref.current,
+      []
+    );
+
     return (
       <div
         className={cn("lb-root lb-cursors", className)}
         {...props}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
-        ref={forwardedRef}
+        ref={ref}
       >
         <div className="lb-cursors-container">
           {othersConnectionIds.map((connectionId) => (
@@ -236,6 +322,8 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
               key={connectionId}
               connectionId={connectionId}
               cursorPresenceKey={cursorPresenceKey}
+              sizeRef={sizeRef}
+              sizeEvents={sizeEvents}
             />
           ))}
         </div>
