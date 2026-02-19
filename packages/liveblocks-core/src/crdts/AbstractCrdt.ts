@@ -488,10 +488,6 @@ export abstract class AbstractCrdt {
    * mutation to the Live node.
    */
   invalidate(): void {
-    const hadCache =
-      this.#cachedImmutable !== undefined ||
-      this.#cachedTreeNode !== undefined;
-
     this.#cachedImmutable = undefined;
     this.#cachedTreeNode = undefined;
 
@@ -500,9 +496,6 @@ export abstract class AbstractCrdt {
     // so the parent's cache can be stale even when this node's cache was
     // never set. Unconditional propagation ensures ancestors are invalidated.
     if (this.parent.type === "HasParent") {
-      // Optimization: only recurse if we actually had a cache OR if
-      // the parent might have a stale WASM-delegated cache.
-      // Since we can't cheaply detect the WASM case, always propagate.
       this.parent.node.invalidate();
     }
   }

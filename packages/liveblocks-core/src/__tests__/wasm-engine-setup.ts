@@ -206,7 +206,7 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
 
     _setEngine(wasmEngine);
     console.log(
-      "[wasm-engine-setup] WASM engine loaded and locked as active engine"
+      "[wasm-engine-setup] WASM engine loaded and set as active engine"
     );
   } catch (e) {
     console.error(

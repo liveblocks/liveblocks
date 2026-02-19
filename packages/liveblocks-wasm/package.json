@@ -10,7 +10,7 @@
     "pkg/**"
   ],
   "scripts": {
-    "build": "wasm-pack build --target bundler --release",
+    "build": "wasm-pack build --target nodejs --release -- --features wasm",
     "test": "cargo test && wasm-pack test --headless --chrome",
     "lint": "cargo clippy -- -D warnings && cargo fmt --check"
   }

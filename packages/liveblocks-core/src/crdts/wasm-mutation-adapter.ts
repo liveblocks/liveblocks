@@ -107,7 +107,7 @@ export function translateStorageUpdate(
             return {
               type: "insert" as const,
               index: entry.index,
-              item: getListItemImmutable(node, entry.index),
+              item: getListItem(node, entry.index),
             };
           case "delete":
             return {
@@ -120,13 +120,13 @@ export function translateStorageUpdate(
               type: "move" as const,
               index: entry.newIndex,
               previousIndex: entry.previousIndex,
-              item: getListItemImmutable(node, entry.newIndex),
+              item: getListItem(node, entry.newIndex),
             };
           case "set":
             return {
               type: "set" as const,
               index: entry.index,
-              item: getListItemImmutable(node, entry.index),
+              item: getListItem(node, entry.index),
             };
         }
       });
@@ -248,17 +248,16 @@ function attachChildrenFromOps(
 }
 
 /**
- * Get the immutable value of a list item at a given index.
+ * Get the list item at a given index as a LiveNode reference or scalar.
+ * Returns the item directly (not its immutable snapshot) so that subscribers
+ * who call toImmutable() later see the final state after all ops in a batch
+ * have been applied.
  * Uses duck-typing to avoid importing LiveList (which would create circular deps).
  */
-function getListItemImmutable(node: LiveNode, index: number): unknown {
+function getListItem(node: LiveNode, index: number): unknown {
   const list = node as unknown as { get?(i: number): unknown };
   if (typeof list.get === "function") {
-    const item = list.get(index);
-    if (item !== null && item !== undefined && typeof (item as { toImmutable?(): unknown }).toImmutable === "function") {
-      return (item as { toImmutable(): unknown }).toImmutable();
-    }
-    return item;
+    return list.get(index);
   }
   return null;
 }

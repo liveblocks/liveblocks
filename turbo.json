@@ -18,6 +18,11 @@
       ],
       "outputs": ["dist/**"]
     },
+    "@liveblocks/wasm#build": {
+      "dependsOn": [],
+      "inputs": ["src/**/*.rs", "Cargo.toml"],
+      "outputs": ["pkg/**"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
