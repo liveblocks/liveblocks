@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
@@ -20,6 +20,11 @@ const COLUMNS = ["task", "status", "priority"] as const;
 
 function Example() {
   const { threads } = useThreads();
+  const [openCellId, setOpenCellId] = useState<string | null>(null);
+
+  const handleComposerSubmit = useCallback((cellId: string) => {
+    setOpenCellId(cellId);
+  }, []);
 
   return (
     <main className="flex flex-col gap-4 py-10 px-4 mx-auto max-w-[800px]">
@@ -38,13 +43,13 @@ function Example() {
       <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
         <thead>
           <tr>
-            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+            <th className="p-3.5 px-4 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
               Task
             </th>
-            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+            <th className="p-3.5 px-4 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
               Status
             </th>
-            <th className="p-3.5 px-4 bg-gray-50 dark:bg-gray-800 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
+            <th className="p-3.5 px-4 font-semibold text-[11px] uppercase tracking-wider text-gray-500 text-left border-b border-gray-200 dark:border-gray-700">
               Priority
             </th>
           </tr>
@@ -70,7 +75,15 @@ function Example() {
                       <span className="flex-1 min-w-0">{row[col]}</span>
 
                       {thread ? (
-                        <FloatingThread thread={thread}>
+                        <FloatingThread
+                          thread={thread}
+                          defaultOpen={openCellId === cellId}
+                          onOpenChange={(isOpen) => {
+                            if (!isOpen && openCellId === cellId) {
+                              setOpenCellId(null);
+                            }
+                          }}
+                        >
                           <button
                             className="flex items-center justify-center shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors duration-150"
                             data-has-thread=""
@@ -79,7 +92,10 @@ function Example() {
                           </button>
                         </FloatingThread>
                       ) : (
-                        <FloatingComposer metadata={{ cellId }}>
+                        <FloatingComposer
+                          metadata={{ cellId }}
+                          onComposerSubmit={() => handleComposerSubmit(cellId)}
+                        >
                           <button className="flex items-center justify-center shrink-0 w-7 h-7 border-0 rounded-md cursor-pointer text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-150">
                             ＋
                           </button>
