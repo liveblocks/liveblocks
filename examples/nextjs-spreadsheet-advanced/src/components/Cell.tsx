@@ -1,6 +1,6 @@
 import { useGesture } from "@use-gesture/react";
 import cx from "classnames";
-import { sanitize } from "dompurify";
+import dompurify from "dompurify";
 import {
   AnimationPlaybackControls,
   animate,
@@ -226,9 +226,9 @@ export function EditingCell({
           })
           .join("");
 
-        return sanitize(html);
+        return dompurify.sanitize(html);
       } catch {
-        return sanitize(`<span>${formatHtml(value)}</span>`);
+        return dompurify.sanitize(`<span>${formatHtml(value)}</span>`);
       }
     },
     [cellId]

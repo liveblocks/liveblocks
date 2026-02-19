@@ -1,0 +1,90 @@
+name: Publish Docker images
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - main
+    paths:
+      - "tools/liveblocks-cli/**"
+      - "packages/liveblocks-server/**"
+      - ".github/workflows/publish-docker-images.yml"
+      - ".github/workflows/docker-image.yml"
+  pull_request:
+    paths:
+      - "tools/liveblocks-cli/**"
+      - "packages/liveblocks-server/**"
+      - ".github/workflows/publish-docker-images.yml"
+      - ".github/workflows/docker-image.yml"
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: "CLI package version to build Docker images for (e.g. 1.0.6, without v prefix). Images are tagged as a release with this version."
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      is_release: ${{ steps.v.outputs.is_release }}
+      cli_tag: ${{ steps.v.outputs.cli_tag }}
+      # Non-empty only for workflow_dispatch triggers. Passed to docker-image.yml
+      # so it can apply explicit version tags (type=raw) since there is no git tag
+      # for docker/metadata-action's type=semver to derive versions from.
+      release_version: ${{ steps.v.outputs.release_version }}
+    steps:
+      - name: Extract version
+        id: v
+        run: |
+          if [[ -n "${{ inputs.version }}" ]]; then
+            # External trigger with explicit version (e.g. from liveblocks-backend
+            # publish workflow). There is no git tag, so we pass the version
+            # explicitly for docker-image.yml to use as raw tags.
+            VERSION="${{ inputs.version }}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "release_version=${VERSION}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
+            # Tag push (e.g. v1.0.6). docker/metadata-action derives semver tags
+            # from the git tag automatically, so release_version is left empty.
+            VERSION="${GITHUB_REF_NAME#v}"
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+            echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "release_version=" >> "$GITHUB_OUTPUT"
+          else
+            # Non-release build (branch push, PR). No version tags applied.
+            VERSION=$(npm view liveblocks version)
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            echo "cli_tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+            echo "release_version=" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish-cli-image:
+    needs: version
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      image: liveblocks/cli
+      is_release: ${{ needs.version.outputs.is_release }}
+      release_version: ${{ needs.version.outputs.release_version }}
+      scan: true
+      build-args: |
+        CLI_VERSION=${{ needs.version.outputs.version }}
+        VERSION=${{ needs.version.outputs.version }}
+
+  publish-dev-server-image:
+    needs: [version, publish-cli-image]
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      image: liveblocks/dev-server
+      dockerfile: Dockerfile.dev-server
+      is_release: ${{ needs.version.outputs.is_release }}
+      release_version: ${{ needs.version.outputs.release_version }}
+      scan: true
+      build-args: |
+        CLI_TAG=${{ needs.version.outputs.cli_tag }}

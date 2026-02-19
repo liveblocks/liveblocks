@@ -18,12 +18,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import {
-  makeAccessToken,
-  makeIDToken,
-  makeSecretLegacyToken,
-  serverMessage,
-} from "./_utils";
+import { makeAccessToken, makeIDToken, serverMessage } from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;
@@ -84,7 +79,6 @@ export function defineBehavior(
 export const AUTH_SUCCESS = ROUND_ROBIN(
   ALWAYS_AUTH_WITH_ACCESS_TOKEN,
   ALWAYS_AUTH_WITH_ID_TOKEN,
-  ALWAYS_AUTH_WITH_LEGACY_TOKEN(1),
   ALWAYS_AUTH_WITH_PUBKEY
 );
 
@@ -105,18 +99,6 @@ export function ALWAYS_AUTH_WITH_PUBKEY(): AuthValue {
   return {
     type: "public",
     publicApiKey: "pk_xxx",
-  };
-}
-
-export function ALWAYS_AUTH_WITH_LEGACY_TOKEN(
-  actor: number,
-  scopes: string[] = []
-): () => AuthValue {
-  return () => {
-    return {
-      type: "secret",
-      token: makeParsed(makeSecretLegacyToken(actor, scopes)),
-    };
   };
 }
 

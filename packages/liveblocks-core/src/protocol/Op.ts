@@ -105,13 +105,13 @@ export type DeleteCrdtOp = {
 // way to trigger an acknowledgement for Ops that were seen by the server, but
 // deliberately ignored.
 //
-export type AckOp = {
+export type IgnoredOp = {
   readonly type: OpCode.DELETE_CRDT; // Not a typo!
   readonly id: "ACK"; // (H)ACK
   readonly opId: string;
 };
 
-export function isAckOp(op: ServerWireOp): op is AckOp {
+export function isIgnoredOp(op: ServerWireOp): op is IgnoredOp {
   return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
 }
 
@@ -147,12 +147,12 @@ export type ClientWireCreateOp = CreateOp & HasOpId;
 /**
  * ServerWireOp: Ops sent from server → client. Three variants:
  * 1. ClientWireOp — Full echo back of our own op, confirming it was applied
- * 2. AckOp — Our op was seen but intentionally ignored (still counts as ack)
+ * 2. IgnoredOp — Our op was seen but intentionally ignored (still counts as ack)
  * 3. Op without opId — Another client's op being forwarded to us
  */
 export type ServerWireOp =
   | ClientWireOp // "Our" Op echoed back in full to ACK (V7 response)
-  | AckOp // "Our" Op ignored, but acked with a classic V7 (h)ack response
+  | IgnoredOp // "Our" Op was ignored by the server (not forwarded) in v7
   | TheirOp; // "Their" Op (V7 forward)
 
 type TheirOp = DistributiveOmit<Op, "opId"> & { opId?: undefined };

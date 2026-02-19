@@ -31,6 +31,7 @@ export type {
   RoomPermission,
   RoomsQueryCriteria,
   RoomUser,
+  SetPresenceOptions,
   ThreadParticipants,
   UpdateAgentMessageOptions,
   UpdateAgentSessionOptions,

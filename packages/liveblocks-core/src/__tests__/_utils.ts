@@ -12,35 +12,30 @@ import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
-import type {
-  AccessToken,
-  IDToken,
-  LegacySecretToken,
-} from "../protocol/AuthToken";
+import type { AccessToken, IDToken } from "../protocol/AuthToken";
 import { Permission, TokenKind } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import type { Op, ServerWireOp } from "../protocol/Op";
-import type {
-  IdTuple,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type {
+  ListStorageNode,
+  MapStorageNode,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
+  StorageNode,
+} from "../protocol/StorageNode";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
 import {
-  ALWAYS_AUTH_WITH_LEGACY_TOKEN,
+  ALWAYS_AUTH_WITH_ACCESS_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_behaviors";
@@ -48,26 +43,6 @@ import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
-
-export function makeSecretLegacyToken(
-  actor: number,
-  scopes: string[]
-): LegacySecretToken {
-  // NOTE: This is not the complete JWT token, but one that has enough fields
-  // to we can run the unit tests. The actual full shape of these JWT tokens is
-  // defined in the (private) backend in case you're interested, see
-  // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
-  return {
-    k: TokenKind.SECRET_LEGACY,
-    iat: Date.now() / 1000,
-    exp: Date.now() / 1000 + 60, // Valid for 1 minute
-    appId: "my-app",
-    roomId: "my-room",
-    id: "user1",
-    actor,
-    scopes,
-  };
-}
 
 export function makeAccessToken(): AccessToken {
   return {
@@ -152,26 +127,31 @@ export function prepareRoomWithStorage_loadWithDelay<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 >(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S,
   scopes: string[] = ["room:write"],
   delay = 0
 ) {
   const { wss, delegates } = defineBehavior(
-    ALWAYS_AUTH_WITH_LEGACY_TOKEN(actor, scopes),
+    ALWAYS_AUTH_WITH_ACCESS_TOKEN,
     SOCKET_AUTOCONNECT_AND_ROOM_STATE(actor, scopes)
   );
 
   const clonedItems = deepClone(items);
   wss.onConnection((conn) => {
-    const sendStorageMsg = () =>
+    const sendStorageMsg = () => {
       conn.server.send(
+        // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
         serverMessage({
-          type: ServerMsgCode.STORAGE_STATE,
-          items: clonedItems,
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: Array.from(nodeStreamToCompactNodes(clonedItems)),
         })
       );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+      );
+    };
 
     if (delay) {
       setTimeout(() => sendStorageMsg(), delay);
@@ -205,7 +185,7 @@ export async function prepareRoomWithStorage<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 >(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S,
   scopes: string[] = ["room:write"]
@@ -232,7 +212,7 @@ export async function prepareRoomWithStorage<
  * helpers can be used to make assertions easier to express.
  */
 export async function prepareIsolatedStorageTest<S extends LsonObject>(
-  items: IdTuple<SerializedCrdt>[],
+  items: StorageNode[],
   actor: number = 0,
   defaultStorage?: S
 ) {
@@ -281,11 +261,7 @@ export async function prepareStorageTest<
   E extends Json = never,
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
->(
-  items: IdTuple<SerializedCrdt>[],
-  actor: number = 0,
-  scopes: string[] = ["room:write"]
-) {
+>(items: StorageNode[], actor: number = 0, scopes: string[] = ["room:write"]) {
   let currentActor = actor;
   const operations: Op[] = [];
 
@@ -417,19 +393,23 @@ export async function prepareStorageTest<
 
   function reconnect(
     actor: number,
-    nextStorageItems?: IdTuple<SerializedCrdt>[] | undefined
+    nextStorageItems?: StorageNode[] | undefined
   ) {
     currentActor = actor;
 
-    // Next time a client socket connects, send this STORAGE_STATE
+    // Next time a client socket connects, send this STORAGE_CHUNK
     // message
     subject.wss.onConnection((conn) => {
       if (nextStorageItems) {
         conn.server.send(
+          // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
           serverMessage({
-            type: ServerMsgCode.STORAGE_STATE,
-            items: nextStorageItems,
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       }
 
@@ -490,7 +470,7 @@ export async function prepareStorageUpdateTest<
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
 >(
-  items: IdTuple<SerializedCrdt>[]
+  items: StorageNode[]
 ): Promise<{
   room: Room<P, S, U, E, TM, CM>;
   root: LiveObject<S>;
@@ -557,7 +537,7 @@ export async function prepareDisconnectedStorageUpdateTest<
   E extends Json = never,
   TM extends BaseMetadata = never,
   CM extends BaseMetadata = never,
->(items: IdTuple<SerializedCrdt>[]) {
+>(items: StorageNode[]) {
   const { storage, room } = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
     items,
     -1
@@ -586,18 +566,20 @@ export async function prepareDisconnectedStorageUpdateTest<
 
 export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
-  nextStorageItems: IdTuple<SerializedCrdt>[]
+  nextStorageItems: StorageNode[]
 ) {
-  // Next time a client socket connects, send this STORAGE_STATE
+  // Next time a client socket connects, send this STORAGE_CHUNK
   // message
-  wss.onConnection((conn) =>
+  wss.onConnection((conn) => {
     conn.server.send(
+      // Send STORAGE_CHUNK message as a single message (classic/non-streaming)
       serverMessage({
-        type: ServerMsgCode.STORAGE_STATE,
-        items: nextStorageItems,
+        type: ServerMsgCode.STORAGE_CHUNK,
+        nodes: Array.from(nodeStreamToCompactNodes(nextStorageItems)),
       })
-    )
-  );
+    );
+    conn.server.send(serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END }));
+  });
 
   // Send a close from the WebSocket server, triggering an automatic reconnect
   // by the room.
@@ -614,7 +596,7 @@ export function createSerializedObject(
   data: JsonObject,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedObject> {
+): ObjectStorageNode {
   return [id, { type: CrdtType.OBJECT, data, parentId, parentKey }];
 }
 
@@ -622,9 +604,7 @@ export function createSerializedObject(
  * Creates a serialized root object with the canonical "root" node ID.
  * All Storage trees have their root at this ID.
  */
-export function createSerializedRoot(
-  data: JsonObject = {}
-): IdTuple<SerializedRootObject> {
+export function createSerializedRoot(data: JsonObject = {}): RootStorageNode {
   return ["root", { type: CrdtType.OBJECT, data }];
 }
 
@@ -632,7 +612,7 @@ export function createSerializedList(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedList> {
+): ListStorageNode {
   return [id, { type: CrdtType.LIST, parentId, parentKey }];
 }
 
@@ -640,7 +620,7 @@ export function createSerializedMap(
   id: string,
   parentId: string,
   parentKey: string
-): IdTuple<SerializedMap> {
+): MapStorageNode {
   return [id, { type: CrdtType.MAP, parentId, parentKey }];
 }
 
@@ -649,7 +629,7 @@ export function createSerializedRegister(
   parentId: string,
   parentKey: string,
   data: Json
-): IdTuple<SerializedRegister> {
+): RegisterStorageNode {
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 

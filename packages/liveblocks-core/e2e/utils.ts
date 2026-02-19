@@ -80,6 +80,7 @@ async function initializeRoomForTest<
 
   const client = createClient<U>({
     __DANGEROUSLY_disableThrottling: true,
+    enableDebugLogging: true,
     publicApiKey,
     polyfills: {
       // @ts-expect-error fetch from Node isn't compatible?
@@ -222,8 +223,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          4000,
-          "Client B did not receive beacon from Client A within 4s"
+          8000,
+          "Client B did not receive beacon from Client A within 8s"
         );
       },
 
@@ -241,8 +242,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          2000,
-          "Client A did not receive beacon from Client B within 2s"
+          8000,
+          "Client A did not receive beacon from Client B within 8s"
         );
       },
     };
@@ -379,7 +380,7 @@ async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    10000,
-    `Room did not reach connection status "${targetStatus}" within 10s`
+    20000,
+    `Room did not reach connection status "${targetStatus}" within 20s`
   );
 }

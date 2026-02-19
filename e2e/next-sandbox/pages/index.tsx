@@ -163,11 +163,6 @@ export default function Home() {
               </Link>
             </li>
             <li>
-              <Link href="/auth/secret-legacy?room=e2e-modern-auth">
-                With legacy token
-              </Link>
-            </li>
-            <li>
               <Link href="/auth/id-token?room=e2e-modern-auth">
                 With ID token
               </Link>

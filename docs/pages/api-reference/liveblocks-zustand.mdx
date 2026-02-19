@@ -129,6 +129,12 @@ enterRoom("roomId");
   <PropertiesListItem name="roomId" type="string">
     The ID of the room to enter.
   </PropertiesListItem>
+  <PropertiesListItem name="options" type="object" optional>
+    <PropertiesListItem name="engine" type="1 | 2" optional>
+      Preferred storage engine version to use when creating the room. Only takes
+      effect if the room doesn't exist yet.
+    </PropertiesListItem>
+  </PropertiesListItem>
 </PropertiesList>
 
 If this is the first time you're entering the room, the room is initialized from

@@ -110,9 +110,14 @@ export async function updateGroupAccess({
 
   // If room exists, create groupsAccesses element for new collaborator with passed access level
   const groupAccess = documentAccessToRoomAccesses(access);
+
+  // TODO - Type this better after package fixes
   const groupsAccesses: Record<
     string,
-    ["room:write"] | ["room:read", "room:presence:write"] | null
+    | ["room:write"]
+    | ["room:read", "room:presence:write"]
+    | ["room:read", "room:presence:write", "comments:write"]
+    | null
   > = {
     [groupId]: groupAccess.length === 0 ? null : groupAccess,
   };
@@ -127,7 +132,7 @@ export async function updateGroupAccess({
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      groupsAccesses,
+      groupsAccesses: groupsAccesses as any, // TODO - Type this better after package fixes
     });
   } catch (err) {
     return {
