@@ -1571,7 +1571,7 @@ In addition to all [`Composer`](#Composer-props) props (except `collapsed`,
     The preferred side of the trigger to render the floating composer on.
   </PropertiesListItem>
   <PropertiesListItem name="sideOffset" type="number" defaultValue="6">
-    The distance in pixels from the trigger.
+    The side offset in pixels from the trigger.
   </PropertiesListItem>
   <PropertiesListItem
     name="align"
@@ -1581,7 +1581,7 @@ In addition to all [`Composer`](#Composer-props) props (except `collapsed`,
     How the floating composer is aligned against its trigger.
   </PropertiesListItem>
   <PropertiesListItem name="alignOffset" type="number">
-    Additional offset in pixels for alignment.
+    The alignment offset in pixels.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3491,7 +3491,7 @@ rest as `+N`.
 
 #### Cursor
 
-Displays a single cursor with a color and an optional label.
+Displays a multiplayer cursor with a color and an optional label.
 
 ```tsx
 <Cursor />
@@ -3501,8 +3501,8 @@ Displays a single cursor with a color and an optional label.
 <Cursor label="Chris" className="[--lb-cursor-color:var(--color-rose-500)]" />
 ```
 
-You can either use the `color` prop or override `--lb-cursor-color` with CSS for
-custom styling.
+You can either use the `color` prop or override `--lb-cursor-color` with CSS to
+change the cursor’s color, by default it’s set to `--lb-accent`.
 
 ##### Props [#Cursor-props]
 
