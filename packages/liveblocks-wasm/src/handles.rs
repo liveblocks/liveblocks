@@ -62,6 +62,33 @@ fn mutation_result_to_js(result: &MutationResult) -> JsValue {
     to_js(result).unwrap_or(JsValue::UNDEFINED)
 }
 
+/// Return a serialized no-op MutationResult (empty ops, empty update).
+/// Used when a mutation is a no-op (e.g. move from==to, clear on empty list,
+/// or node not found). The JS side expects a valid MutationResult object
+/// with `ops`, `reverseOps`, and `update` fields — returning JsValue::UNDEFINED
+/// causes "Cannot read properties of undefined" crashes.
+fn noop_mutation_result_js(node_id: &str, update_type: &str) -> JsValue {
+    let update = match update_type {
+        "list" => StorageUpdate::LiveListUpdate {
+            node_id: node_id.to_string(),
+            updates: vec![],
+        },
+        "map" => StorageUpdate::LiveMapUpdate {
+            node_id: node_id.to_string(),
+            updates: HashMap::new(),
+        },
+        _ => StorageUpdate::LiveObjectUpdate {
+            node_id: node_id.to_string(),
+            updates: HashMap::new(),
+        },
+    };
+    mutation_result_to_js(&MutationResult {
+        ops: vec![],
+        reverse_ops: vec![],
+        update,
+    })
+}
+
 // ============================================================
 // LiveObjectHandle
 // ============================================================
@@ -741,7 +768,8 @@ impl LiveListHandle {
                     if let Some(node) = doc.get_node_mut(self.key)
                         && let CrdtData::List { children, .. } = &mut node.data
                     {
-                        children.insert(index, (position, child_key));
+                        let clamped_index = index.min(children.len());
+                        children.insert(clamped_index, (position, child_key));
                     }
                 }
 
@@ -773,29 +801,33 @@ impl LiveListHandle {
     /// Returns a MutationResult with forward/reverse ops and storage update.
     #[wasm_bindgen(js_name = "move")]
     pub fn move_item(&self, from_index: usize, to_index: usize) -> JsValue {
+        // Get list_id early for no-op returns
+        let list_id = {
+            let doc = self.doc.borrow();
+            doc.get_node(self.key)
+                .map(|n| n.id.clone())
+                .unwrap_or_default()
+        };
+
         if from_index == to_index {
-            return JsValue::UNDEFINED;
+            return noop_mutation_result_js(&list_id, "list");
         }
 
         // Capture pre-mutation state
-        let (list_id, child_id, old_position, value) = {
+        let (child_id, old_position, value) = {
             let doc = self.doc.borrow();
-            let list_id = doc
-                .get_node(self.key)
-                .map(|n| n.id.clone())
-                .unwrap_or_default();
             let child_key = match list::get_child_key(&doc, self.key, from_index) {
                 Some(ck) => ck,
-                None => return JsValue::UNDEFINED,
+                None => return noop_mutation_result_js(&list_id, "list"),
             };
             let child = match doc.get_node(child_key) {
                 Some(n) => n,
-                None => return JsValue::UNDEFINED,
+                None => return noop_mutation_result_js(&list_id, "list"),
             };
             let child_id = child.id.clone();
             let old_position = child.parent_key.clone().unwrap_or_default();
             let value = list::get(&doc, self.key, from_index).unwrap_or(Json::Null);
-            (list_id, child_id, old_position, value)
+            (child_id, old_position, value)
         };
 
         // Generate op_id
@@ -810,7 +842,10 @@ impl LiveListHandle {
         // Read new position after move
         let new_position = {
             let doc = self.doc.borrow();
-            let child_node_key = doc.get_key_by_id(&child_id).unwrap();
+            let child_node_key = match doc.get_key_by_id(&child_id) {
+                Some(k) => k,
+                None => return noop_mutation_result_js(&list_id, "list"),
+            };
             doc.get_node(child_node_key)
                 .and_then(|n| n.parent_key.clone())
                 .unwrap_or_default()
@@ -849,7 +884,7 @@ impl LiveListHandle {
                 .unwrap_or_default();
             let child_key = match list::get_child_key(&doc, self.key, index) {
                 Some(ck) => ck,
-                None => return JsValue::UNDEFINED,
+                None => return noop_mutation_result_js(&list_id, "list"),
             };
             let child_id = doc
                 .get_node(child_key)
@@ -909,9 +944,9 @@ impl LiveListHandle {
                     CrdtData::List { children, .. } if index < children.len() => {
                         (children[index].0.clone(), children[index].1)
                     }
-                    _ => return JsValue::UNDEFINED,
+                    _ => return noop_mutation_result_js(&list_id, "list"),
                 },
-                None => return JsValue::UNDEFINED,
+                None => return noop_mutation_result_js(&list_id, "list"),
             };
 
             let old_child_id = doc
@@ -1066,9 +1101,9 @@ impl LiveListHandle {
                             (i, *ck, child_id, value)
                         })
                         .collect(),
-                    _ => return JsValue::UNDEFINED,
+                    _ => return noop_mutation_result_js(&list_id, "list"),
                 },
-                None => return JsValue::UNDEFINED,
+                None => return noop_mutation_result_js(&list_id, "list"),
             };
 
             if children.is_empty() {

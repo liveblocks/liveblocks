@@ -173,7 +173,8 @@ pub fn insert(doc: &mut Document, key: NodeKey, index: usize, value: Json) {
     if let Some(node) = doc.get_node_mut(key)
         && let CrdtData::List { children, .. } = &mut node.data
     {
-        children.insert(index, (new_pos, reg_key));
+        let clamped_index = index.min(children.len());
+        children.insert(clamped_index, (new_pos, reg_key));
     }
 }
 
@@ -202,7 +203,9 @@ pub fn insert_with_id(
     if let Some(node) = doc.get_node_mut(key)
         && let CrdtData::List { children, .. } = &mut node.data
     {
-        children.insert(index, (new_pos.clone(), reg_key));
+        // Clamp index to children.len() to avoid Vec::insert panic on out-of-bounds
+        let clamped_index = index.min(children.len());
+        children.insert(clamped_index, (new_pos.clone(), reg_key));
     }
 
     InsertInfo { position: new_pos }

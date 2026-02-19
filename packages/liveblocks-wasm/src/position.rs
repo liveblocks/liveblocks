@@ -207,14 +207,17 @@ pub fn before(pos: &str) -> String {
 }
 
 /// Compute a position between two positions.
-/// Panics if the positions are equal.
+/// When the two positions are equal (which can occur after concurrent ops),
+/// falls back to computing a position after the given position instead of panicking.
 pub fn between(lo: &str, hi: &str) -> String {
     if lo < hi {
         between_ordered(lo, hi)
     } else if lo > hi {
         between_ordered(hi, lo)
     } else {
-        panic!("Cannot compute value between two equal positions");
+        // Equal positions can arise from concurrent op application.
+        // Fall back to after(lo) which always produces a valid successor.
+        after(lo)
     }
 }
 
