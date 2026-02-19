@@ -92,7 +92,7 @@ later.
 
 ## Workspace permissions [#permissions]
 
-Using [tenants](/docs/authentication/tenants), you can create workspaces in your
+Using [organizations](/docs/authentication/organizations), you can create workspaces in your
 application, compartmentalizing all resources such as inbox notifications and
 rooms. This includes everything associated with rooms such as comment threads,
 realtime data stored, and more. This allows you to add a workspace switcher to
@@ -110,25 +110,25 @@ your application, separating each of your customers/organizations.
 
 ### Set up workspace permissions
 
-To set up workspace permissions, pass a `tenantId` when authenticating a user,
+To set up workspace permissions, pass an `organizationId` when authenticating a user,
 ensuring that the user will only have access to resources within this workspace.
 
 ```ts
 const session = liveblocks.prepareSession("olivier@example.com", {
   // +++
-  tenantId: "acme",
+  organizationId: "acme",
   // +++
 });
 ```
 
-When creating a resource on the server, such as a room, pass the `tenantId` to
+When creating a resource on the server, such as a room, pass the `organizationId` to
 the resource, to allow the user access.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
   // +++
-  tenantId: "acme",
+  organizationId: "acme",
   // +++
 });
 
@@ -146,7 +146,7 @@ group, and you need to permit users entry to each room that’s part of this.
 
 ### Group hierarchy
 
-Let’s picture a tenant in your product, Acme, set up using
+Let's picture an organization in your product, Acme, set up using
 [workspace permissions](#permissions). This customer has a number of group, and
 each group contains a number of documents.
 
@@ -245,7 +245,7 @@ session.allow("design:9Hdu73", session.FULL_ACCESS);
 // Give full access to every room with an ID beginning with "product:"
 session.allow("product:*", session.FULL_ACCESS);
 
-// Give read-only access to every room in the current tenant
+// Give read-only access to every room in the current organization
 session.allow("*", session.READ_ACCESS);
 
 const { body, status } = await session.authorize();
@@ -253,9 +253,9 @@ const { body, status } = await session.authorize();
 
 ### Limitations [#limitations]
 
-There’s a limitation with access tokens related to granting access to individual
-rooms that are part of groups. Let’s say a user has been given access to every
-`product` room in their tenants.
+There's a limitation with access tokens related to granting access to individual
+rooms that are part of groups. Let's say a user has been given access to every
+`product` room in their organizations.
 
 ```tsx
 // Access to every `product` room

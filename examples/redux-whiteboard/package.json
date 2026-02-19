@@ -9,8 +9,8 @@
     "dev": "next dev"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.13.3",
-    "@liveblocks/redux": "^3.13.3",
+    "@liveblocks/client": "^3.14.0",
+    "@liveblocks/redux": "^3.14.0",
     "@reduxjs/toolkit": "^2.8.2",
     "next": "^16.1.6",
     "react": "^18.3.1",

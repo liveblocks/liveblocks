@@ -1,0 +1,3 @@
+" Needed for Vincent to have the Vim coc-tsserver plugin pick up the right
+" TypeScript server in monorepo projects
+let g:coc_user_config['tsserver.tsdk'] = '../../node_modules/typescript/lib'

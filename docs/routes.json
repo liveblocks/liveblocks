@@ -327,8 +327,8 @@
         "path": "/authentication",
         "routes": [
           {
-            "title": "Tenants",
-            "path": "/authentication/tenants"
+            "title": "Organizations",
+            "path": "/authentication/organizations"
           },
           {
             "title": "Access token",
@@ -641,6 +641,10 @@
         "path": "/platform/rest-api"
       },
       {
+        "title": "Management API",
+        "path": "/platform/management-api"
+      },
+      {
         "title": "Account management",
         "path": "/platform/account-management",
         "routes": [
@@ -715,6 +719,10 @@
     "defaultCollapsed": true,
     "routes": [
       {
+        "title": "Dev server",
+        "path": "/tools/dev-server"
+      },
+      {
         "title": "DevTools extension",
         "path": "/tools/devtools"
       },
@@ -729,6 +737,11 @@
       {
         "title": "Frimousse",
         "href": "https://frimousse.liveblocks.io"
+      },
+      {
+        "title": "How to set up CI testing",
+        "path": "/guides/how-to-set-up-continuous-integration-ci-testing",
+        "hidden": true
       }
     ]
   },

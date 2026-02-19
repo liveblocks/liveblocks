@@ -18,14 +18,15 @@ import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCaret, {
-  type CollaborationCaretOptions,
-} from "@tiptap/extension-collaboration-caret";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { AiExtension } from "./ai/AiExtension";
+import { Collaboration } from "./collaboration/collaboration";
+import {
+  CollaborationCaret,
+  type CollaborationCaretOptions,
+} from "./collaboration-caret/collaboration-caret";
 import {
   areSetsEqual,
   CommentsExtension,
