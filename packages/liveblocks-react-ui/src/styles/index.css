@@ -1850,10 +1850,21 @@
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  opacity: 0.95;
-  filter: invert(1) grayscale(1) brightness(1.3) contrast(9000);
-  mix-blend-mode: luminosity;
   will-change: transform;
+
+  /* Use relative color to derive a text color legible against the background. */
+  @supports (color: oklch(from black l c h)) {
+    color: oklch(
+      from var(--lb-cursor-color) clamp(0, (l / 0.623 - 1) * -infinity, 1) 0 h
+    );
+  }
+
+  /* Use a filter trick if relative color is not supported. */
+  @supports not (color: oklch(from black l c h)) {
+    opacity: 0.95;
+    filter: invert(1) grayscale(1) brightness(1.3) contrast(9000);
+    mix-blend-mode: luminosity;
+  }
 }
 
 /*************************************
