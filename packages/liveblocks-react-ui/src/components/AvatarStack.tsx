@@ -61,7 +61,8 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
     }, [selfId, otherIds, additionalUserIds]);
     const maxAvatars = Math.max(1, Math.floor(max));
     const visibleUserIds = userIds.slice(0, maxAvatars);
-    const remainingUsersCount = userIds.length - visibleUserIds.length;
+    const hiddenUserIds = userIds.slice(visibleUserIds.length);
+    const remainingUsersCount = hiddenUserIds.length;
     const visibleItemsCount =
       visibleUserIds.length + Number(remainingUsersCount > 0);
 
@@ -109,7 +110,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
             <Tooltip
               content={
                 <ul className="lb-users-tooltip-list">
-                  {userIds.map((userId) =>
+                  {hiddenUserIds.map((userId) =>
                     userId ? (
                       <li key={userId} className="lb-users-tooltip-list-item">
                         <Avatar userId={userId} />
