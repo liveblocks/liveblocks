@@ -1200,6 +1200,79 @@ icon next to the item’s label.
 
 {/* TODO: Document classes and data attributes */}
 
+#### FloatingThread
+
+Displays a floating thread attached to a trigger element.
+
+```tsx
+<FloatingThread thread={thread}>
+  <button>Open thread</button>
+</FloatingThread>
+```
+
+{/* TODO: Add image */}
+
+`FloatingThread` can be combined with [`CommentPin`](#CommentPin) in canvas-like
+UIs.
+
+```tsx
+<FloatingThread thread={thread}>
+  <CommentPin
+    userId={thread.comments[0]?.userId}
+    style={{
+      position: "absolute",
+      left: thread.metadata.x,
+      top: thread.metadata.y,
+    }}
+  />
+</FloatingThread>
+```
+
+{/* TODO: Add image */}
+
+##### Props [#FloatingThread-props]
+
+In addition to all [`Thread`](#Thread-props) props:
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The element which opens the floating thread.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultOpen" type="boolean">
+    Whether the floating thread is initially open.
+  </PropertiesListItem>
+  <PropertiesListItem name="open" type="boolean">
+    Whether the floating thread is currently open.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onOpenChange"
+    type="function"
+    detailedType="(open: boolean) => void"
+  >
+    The event handler called when the open state changes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="side"
+    type='"top" | "right" | "bottom" | "left"'
+    defaultValue='"right"'
+  >
+    The preferred side of the trigger to render the floating thread on.
+  </PropertiesListItem>
+  <PropertiesListItem name="sideOffset" type="number" defaultValue="6">
+    The side offset in pixels from the trigger.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="align"
+    type='"start" | "center" | "end"'
+    defaultValue='"start"'
+  >
+    How the floating thread is aligned against its trigger.
+  </PropertiesListItem>
+  <PropertiesListItem name="alignOffset" type="number">
+    The alignment offset in pixels.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Composer
 
 Displays a composer for creating threads or comments.
@@ -1441,6 +1514,77 @@ Learn more about mutation hooks under
   </PropertiesListItem>
 </PropertiesList>
 
+#### FloatingComposer
+
+Displays a floating composer attached to a trigger element.
+
+```tsx
+<FloatingComposer>
+  <button>Add comment</button>
+</FloatingComposer>
+```
+
+{/* TODO: Add image */}
+
+Use `metadata` to attach context to the thread when submitting (for example
+canvas coordinates or table cell IDs).
+
+```tsx
+<FloatingComposer metadata={{ x: 120, y: 80 }}>
+  <CommentPin
+    style={{
+      position: "absolute",
+      left: 120,
+      top: 80,
+    }}
+  />
+</FloatingComposer>
+```
+
+##### Props [#FloatingComposer-props]
+
+In addition to all [`Composer`](#Composer-props) props (except `collapsed`,
+`onCollapsedChange`, and `defaultCollapsed`):
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The element which opens the floating composer.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultOpen" type="boolean">
+    Whether the floating composer is initially open.
+  </PropertiesListItem>
+  <PropertiesListItem name="open" type="boolean">
+    Whether the floating composer is currently open.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onOpenChange"
+    type="function"
+    detailedType="(open: boolean) => void"
+  >
+    The event handler called when the open state changes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="side"
+    type='"top" | "right" | "bottom" | "left"'
+    defaultValue='"right"'
+  >
+    The preferred side of the trigger to render the floating composer on.
+  </PropertiesListItem>
+  <PropertiesListItem name="sideOffset" type="number" defaultValue="6">
+    The distance in pixels from the trigger.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="align"
+    type='"start" | "center" | "end"'
+    defaultValue='"start"'
+  >
+    How the floating composer is aligned against its trigger.
+  </PropertiesListItem>
+  <PropertiesListItem name="alignOffset" type="number">
+    Additional offset in pixels for alignment.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Comment
 
 Displays a single comment.
@@ -1594,6 +1738,41 @@ function Component() {
     type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### CommentPin
+
+Displays a comment pin that can be used as a trigger for `FloatingComposer` and
+`FloatingThread`.
+
+```tsx
+<CommentPin />
+
+<CommentPin userId="stacy@example.com" />
+```
+
+{/* TODO: Add image */}
+
+Use `userId` to display an avatar inside the pin, for example to represent the
+thread’s author.
+
+```tsx
+<CommentPin userId={thread.comments[0]?.userId} corner="top-left" />
+```
+
+##### Props [#CommentPin-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="corner"
+    type='"top-left" | "top-right" | "bottom-right" | "bottom-left"'
+    defaultValue='"bottom-left"'
+  >
+    The corner that points to the comment position.
+  </PropertiesListItem>
+  <PropertiesListItem name="userId" type="string">
+    The user ID to optionally display an avatar for.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3276,6 +3455,97 @@ element.
 All hooks for Notifications are in
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Notifications).
 
+## Presence
+
+### Default components [#Presence-Components]
+
+#### AvatarStack
+
+Displays a stack of avatars for users currently present in the room.
+
+```tsx
+<AvatarStack />
+```
+
+You can include additional users (e.g. users who are invited to the room but not
+currently present) and control how many avatars are shown before grouping the
+rest as `+N`.
+
+```tsx
+<AvatarStack userIds={["stacy@example.com", "chris@example.com"]} max={5} />
+```
+
+##### Props [#AvatarStack-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userIds" type="string[]">
+    Optional additional user IDs to include in the stack.
+  </PropertiesListItem>
+  <PropertiesListItem name="max" type="number" defaultValue="3">
+    The maximum number of visible avatars.
+  </PropertiesListItem>
+  <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Cursor
+
+Displays a single cursor with a color and an optional label.
+
+```tsx
+<Cursor />
+
+<Cursor label="Stacy" color="#22c55e" />
+
+<Cursor label="Chris" className="[--lb-cursor-color:var(--color-rose-500)]" />
+```
+
+You can either use the `color` prop or override `--lb-cursor-color` with CSS for
+custom styling.
+
+##### Props [#Cursor-props]
+
+<PropertiesList>
+  <PropertiesListItem name="color" type="string">
+    The color of the cursor.
+  </PropertiesListItem>
+  <PropertiesListItem name="label" type="ReactNode">
+    A floating label to display next to the cursor.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Cursors
+
+Displays multiplayer cursors for other users in the room while tracking your own
+pointer position.
+
+```tsx
+<Cursors className="relative h-80 w-full">
+  <YourCanvas />
+</Cursors>
+```
+
+By default, cursor coordinates are stored in Presence under `"$cursor"`. Use
+`presenceKey` to render multiple `Cursors` areas in a single room.
+
+##### Props [#Cursors-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="presenceKey"
+    type="string"
+    defaultValue={`"$cursor"`}
+  >
+    The key used to store cursor coordinates in users’ Presence.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Hooks [#Presence-hooks]
+
+All hooks for Presence are in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Presence).
+
 ## Version History
 
 Version history enables you to track and restore versions of your
@@ -3286,7 +3556,7 @@ using the
 [REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-version).
 These components aid in displaying a list of those versions.
 
-### Default components
+### Default components [#Version-History-Components]
 
 ### HistoryVersionSummary
 
