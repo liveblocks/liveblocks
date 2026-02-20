@@ -127,10 +127,31 @@ function checkOrganizationAccess({
   accessAllowed,
   organizationId,
 }: UserAllowedInRoomProps) {
-  const roomOrganizationId = room.organizationId;
+  const groupAccess = (room.groupsAccesses?.[organizationId] || []) as string[];
 
-  // TODO a way to check the organizationId of a room then give a user access
-  return organizationId === roomOrganizationId;
+  if (!groupAccess) {
+    return false;
+  }
+
+  // Write access requires "room:write"
+  if (accessAllowed === "write") {
+    if (groupAccess.includes("room:write")) {
+      return true;
+    }
+  }
+
+  // Read access requires "room:write" or "room:read"
+  if (accessAllowed === "read") {
+    if (
+      groupAccess.includes("room:write") ||
+      groupAccess.includes("room:read")
+    ) {
+      return true;
+    }
+  }
+
+  // No access on organization level
+  return false;
 }
 
 function checkUserAccess({
