@@ -1,4 +1,3 @@
-import liveblocks from "@/public/liveblocks.png";
 import { Organization } from "@/types";
 
 /**
@@ -10,6 +9,6 @@ export const organizations: Organization[] = [
   {
     id: "liveblocks",
     name: "Liveblocks",
-    avatar: liveblocks.src,
+    avatar: "/liveblocks.png",
   },
 ];
