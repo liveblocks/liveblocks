@@ -221,7 +221,7 @@ temporary, ephemeral, dev server instance.
 This mode will:
 
 1. Start a fresh, empty, dev server instance.
-2. Run the specified command (e.g. your unit tests).
+2. Run your unit tests.
 3. Stop the dev server.
 
 Example output:
@@ -231,7 +231,7 @@ npx liveblocks dev --cmd 'vitest run'
 Starting the Liveblocks dev server...
 
 Liveblocks dev server running at http://localhost:1153
-Server logs: /var/folders/ph/xtwbrg097hsby4l_v3yzqksh0000gn/T/liveblocks-dev-vbV4Da/server.log
+Server logs: /tmp/liveblocks-dev-XXXXXX/server.log
 
 ✓ src/__tests__/your-unit-test.test.ts (28 tests) 40ms
 
@@ -248,8 +248,8 @@ We recommend:
 1. `npx liveblocks dev` for manual testing and development, which retains data
    between runs in the `.liveblocks/` folder.
 2. `npx liveblocks dev --cmd "vitest run"` for locally running your unit tests
-   against a fresh instance (your local data in `.liveblocks/` is not seen or
-   mutated by your unit tests).
+   against a fresh instance (your local data in `.liveblocks/` won't be affected
+   by your unit tests).
 
 ## Continuous Integration (CI) testing
 
