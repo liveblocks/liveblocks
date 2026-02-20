@@ -92,7 +92,7 @@ or:
 
 ## Contributors
 
-nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju, SugarDarius
+nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
 
 # Week 7 (2026-02-13)
 
