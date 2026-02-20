@@ -105,21 +105,25 @@ export async function updateGeneralAccess({
 
   // Set up room access based on permission group
   let defaultAccesses: RoomPermission = [];
-  let groupsAccesses: Record<string, RoomPermission> = {};
+  const groupsAccesses: Record<string, RoomPermission | null> = {};
 
   if (permissionGroup === "public") {
-    // Public access is defined in defaultAccesses, and no group accesses should be defined
+    // Public access is defined in defaultAccesses
+    // Visible for everyone in workspace too, so set groupAccesses
     defaultAccesses = permissionTypeToRoomAccesses(permissionType);
-    groupsAccesses = {};
+    groupsAccesses[organizationId] =
+      permissionTypeToRoomAccesses(permissionType);
   } else if (permissionGroup === "organization") {
-    // Organization access is defined in groupsAccesses and has no default access
+    // Has no public/default access
+    // Permission defined in groupsAccesses so workspace can see it
     groupsAccesses[organizationId] =
       permissionTypeToRoomAccesses(permissionType);
     defaultAccesses = [];
   } else if (permissionGroup === "private") {
-    // Private access has no group or default accesses
+    // Private access has no default accesses
+    // No group access, so not visible in workspace
+    groupsAccesses[organizationId] = null;
     defaultAccesses = [];
-    groupsAccesses = {};
   }
 
   // Update the room with the new permissions
