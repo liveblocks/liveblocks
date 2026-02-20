@@ -39,8 +39,6 @@ export function DocumentsList({ filter = "all", className, ...props }: Props) {
     const currentDocumentType =
       documentType === "all" ? undefined : documentType;
 
-    // TODO filters
-
     // Get all documents for the current user
     return {
       documentType: currentDocumentType,

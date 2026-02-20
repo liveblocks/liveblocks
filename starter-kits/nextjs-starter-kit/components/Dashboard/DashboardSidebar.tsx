@@ -58,36 +58,12 @@ export function DashboardSidebar({ className, ...props }: Props) {
     <div className={clsx(className, styles.sidebar)} {...props}>
       <nav className={styles.navigation}>
         <div className={styles.category}>
-          <ul className={styles.list}>
-            <li>
-              <SidebarLink
-                href={DASHBOARD_URL}
-                icon={<FileIcon width={ICON_SIZE} height={ICON_SIZE} />}
-              >
-                All
-              </SidebarLink>
-            </li>
-
-            {/* TODO private, public, etc 
-
-
-        <div className={styles.category}>
-          <span className={styles.categoryTitle}>Groups</span>
-          <ul className={styles.list}>
-            {groups.map((group) => {
-              return (
-                <li key={group.id}>
-                  <SidebarLink
-                    href={DASHBOARD_GROUP_URL(group.id)}
-                    icon={<FolderIcon />}
-                  >
-                    {group.name}
-                  </SidebarLink>
-                </li>
-              );
-            
-            */}
-          </ul>
+          <SidebarLink
+            href={DASHBOARD_URL}
+            icon={<FileIcon width={ICON_SIZE} height={ICON_SIZE} />}
+          >
+            All
+          </SidebarLink>
         </div>
         <div className={styles.category}>
           <span className={styles.categoryTitle}>Filter</span>
