@@ -1,20 +1,27 @@
 "use client";
 
+import { useIsInsideRoom } from "@liveblocks/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import { DASHBOARD_URL } from "@/constants";
 import { CheckIcon, SelectIcon, SignOutIcon } from "@/icons";
-import { getUserOrganizations } from "@/lib/actions/getUserOrganizations";
-import { switchOrganization } from "@/lib/actions/switchOrganization";
+import {
+  getOrganizations,
+  getUserOrganizations,
+  switchOrganization,
+} from "@/lib/actions";
+import { useInitialDocument } from "@/lib/hooks";
 import { useDocumentsFunctionSWR } from "@/lib/hooks/useDocumentsFunctionSWR";
 import { Popover } from "@/primitives/Popover";
+import { Organization } from "@/types";
 import styles from "./OrganizationPopover.module.css";
 
 export function OrganizationPopover() {
   const router = useRouter();
   const { data: session } = useSession();
+  const isInsideRoom = useIsInsideRoom();
 
   // Get a list of organizations for the current user
   const {
@@ -146,26 +153,78 @@ export function OrganizationPopover() {
         data-loading={!currentOrganization || undefined}
       >
         {currentOrganization ? (
-          <>
-            <Image
-              width={24}
-              height={24}
-              src={currentOrganization.avatar}
-              alt={currentOrganization.name}
-              className={styles.profileAvatar}
+          isInsideRoom ? (
+            <DocumentOrganizationTrigger
+              currentOrganization={currentOrganization}
             />
-            <span className={styles.profileButtonName}>
-              {currentOrganization.name}
-            </span>
-          </>
+          ) : (
+            <OrganizationTrigger organization={currentOrganization} />
+          )
         ) : (
-          <>
-            <div className={styles.profileButtonPlaceholderAvatar} />
-            <div className={styles.profileButtonPlaceholderName} />
-          </>
+          <OrganizationTriggerPlaceholder />
         )}
         <SelectIcon className={styles.profileButtonIcon} />
       </button>
     </Popover>
+  );
+}
+
+// If inside a document, show this documents organization in the trigger
+function DocumentOrganizationTrigger({
+  currentOrganization,
+}: {
+  currentOrganization: Organization;
+}) {
+  const document = useInitialDocument();
+
+  // Get the current document's organization
+  const { data: documentOrganizations, error: organizationsError } =
+    useDocumentsFunctionSWR(
+      [getOrganizations, { organizationIds: [document.organization] }],
+      {
+        refreshInterval: 0,
+      }
+    );
+
+  // Skip the loading placeholder if in the correct organization already
+  if (currentOrganization.id === document.organization) {
+    return <OrganizationTrigger organization={currentOrganization} />;
+  }
+
+  if (
+    !documentOrganizations ||
+    documentOrganizations.length === 0 ||
+    organizationsError
+  ) {
+    return <OrganizationTriggerPlaceholder />;
+  }
+
+  // Show the current document's organization after fetchingit
+  return (
+    <OrganizationTrigger organization={documentOrganizations?.[0] ?? null} />
+  );
+}
+
+function OrganizationTrigger({ organization }: { organization: Organization }) {
+  return (
+    <>
+      <Image
+        width={24}
+        height={24}
+        src={organization.avatar}
+        alt={organization.name}
+        className={styles.profileAvatar}
+      />
+      <span className={styles.profileButtonName}>{organization.name}</span>
+    </>
+  );
+}
+
+function OrganizationTriggerPlaceholder() {
+  return (
+    <>
+      <div className={styles.profileButtonPlaceholderAvatar} />
+      <div className={styles.profileButtonPlaceholderName} />
+    </>
   );
 }
