@@ -1,0 +1,814 @@
+---
+meta:
+  title: "How to notify users about unread comments outside of your app"
+  description:
+    "Learn how to trigger thread notifications externally, such as in Slack,
+    Microsoft Teams, and more."
+---
+
+Liveblocks [Comments](/docs/ready-made-features/comments) allows you to build a
+commenting experience. With our webhooks and REST API, it’s possible to
+aggregate a list of unread comments, and use them to trigger notifications in
+Slack, Microsoft Teams, or any other external service with an API, using
+webhooks. Notifications can also be displayed in your app using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component.
+
+<Banner title="Want to send email notifications?">
+
+We have a specific guide on
+[how to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments),
+which we recommend reading if you’re building emails.
+
+</Banner>
+
+## What we’re building
+
+In this guide we’ll be learning how to notify users about unread comments
+outside of your app, and more specifically, we’ll be looking at how to:
+
+- Trigger events based on unread comments using the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  event.
+- Fetch unread comments using the
+  [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Comments project set up. If you
+don’t have one yet, you can
+[get started with Comments](/docs/get-started/comments), and come back after
+you’re set up.
+
+</Banner>
+
+## What are inbox notifications?
+
+Liveblocks uses the concept of inbox notifications, which differ to external
+notifications. Inbox notifications are displayed within in-app inboxes, group
+multiple activities together, and can change over time, like when a new comment
+is added to a thread.
+
+External notifications, such as Slack, and Microsoft Teams, are different, and
+Liveblocks is set up to send them in a way that won’t overload your users with
+notifications. This means that Liveblocks will wait to trigger these
+notifications until a certain amount of time has passed, and will only trigger
+them if your users has not read the notification on the front-end, which we
+automatically keep track of. We then aggregate multiple unread comments into a
+single notification, so your users just get a single ping per thread.
+
+Learn more about Notifications for Comments in the
+[overview page](/docs/ready-made-features/comments/email-notifications).
+
+## Using webhooks
+
+Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
+send requests to your API endpoint when certain events occurs. One webhook we
+provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+webhook, which is triggered for each participating user in a thread, and can be
+used to send external notifications to your users.
+
+The information it returns allows you to retrieve comments that have not yet
+been read by the user, making it possible to aggregate multiple unread comments
+into a single external notification. Let’s take a look at how to set this up.
+
+### Notification channels
+
+You can send notifications via different channels, such as email, Slack,
+Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
+certain channels, and in this guide, we’ll be using the Slack channel. You must
+always enable the correct channel to ensure your
+[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
+are triggered, and this guide will take you through setting it up.
+
+<Banner title="Which notification channel?">
+
+All channels currently work the same way, apart from in-app, but we suggest
+selecting the service you’re setting up, such as Slack or Microsoft Teams, so
+it’s easy to tell which you’ve implemented.
+
+</Banner>
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send a POST request to the back end in
+your project. In this guide, we’ll be using a Next.js route handler (API
+endpoint) as an example, but other frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-notifications
+```
+
+Make a note of this endpoint URL, as you’ll be using it later.
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhooks dashboard.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
+
+<Steps>
+  <Step>
+    <StepTitle>Select your project</StepTitle>
+    <StepContent>
+      From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+      like to use with webhooks, or create a new project.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+          alt="Create a Liveblocks project"
+          width={712}
+          height={445}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+<Step>
+  <StepTitle>Go to the notifications dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Notifications”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+        alt="Click notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Enable the thread notification type</StepTitle>
+  <StepContent>
+    Click on **“Edit”** at the top right, enable `thread` notifications on the
+    Slack channel, and publish your changes.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-thread-notification-slack.png"
+        alt="Enable thread notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Add endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Enable notification webhook events</StepTitle>
+  <StepContent>
+    Check the **“notification”** event in the dialog to enable the correct
+    webhooks events.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-notification-webhook.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **“Add endpoint”** at the bottom, then find your **“Secret key”** on
+    the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={710}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Notification webhooks are set up! Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your _webhook_ secret key from earlier—in a real project we’d
+recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Send notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Check the event and notification permissions
+
+After verifying the request, we can then check we’re receiving the correct type
+of event, on the correct channel. There are different `notification` events, and
+in this case we’d like to check for
+[thread notification](/docs/platform/webhooks#Thread-notification), as we’re
+specifically listening for new comments. We can do this using
+[`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent),
+making sure to check for the `slack` channel.
+
+```ts
+import { WebhookHandler, isThreadNotificationEvent } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  // When an inbox notification has been created on the slack channel
+  if (isThreadNotificationEvent(event) && event.data.channel === "slack") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // Send notifications
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Note that we’re also checking if the user should receive a
+notification—Liveblocks doesn’t have knowledge of your permissions system on the
+back end, so it’s your responsibility to check if this user should have access
+to the room.
+
+## Get comment and thread data
+
+<Banner title="Threads vs comments">
+  Note that a thread is different to a comment—a thread is “top-level”, and each
+  thread contains a list of comments. When you create a thread with
+  [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), you
+  also create the first comment in the thread.
+</Banner>
+
+The next step is to use the
+[Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
+`@liveblocks/node` to retrieve the inbox notification, and the corresponding
+thread’s data. To do this we’ll need to add our project’s secret key from
+[the dashboard](/dashboard/api-keys) to the Liveblocks client (_not_ the webhook
+secret key we used earlier), before awaiting the following functions:
+[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
+and [`getThread`](/docs/api-reference/liveblocks-node#get-thread).
+
+```ts
+import {
+  // +++
+  Liveblocks,
+  // +++
+  WebhookHandler,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+// +++
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+// +++
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isThreadNotificationEvent(event) && event.data.channel === "slack") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    try {
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
+      ]);
+
+      // Send external notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Get the unread comments
+
+The next step is to get each unread comment by comparing the `readAt` time in
+the inbox notification with the `createAt` time on each comment. We’re also
+filtering out each comment with no body, which represents a deleted comment.
+
+```ts
+import {
+  Liveblocks,
+  WebhookHandler,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isThreadNotificationEvent(event) && event.data.channel === "slack") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    try {
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
+      ]);
+
+      // Get unread comments (and filter out deleted comments)
+      // +++
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
+
+      // No unread comments, therefore no notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
+      // +++
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+If there are no unread notifications, then we’re choosing not to send an email.
+
+## Generating comment text for the external notification
+
+Now that we have the comment data, we have one more step before sending the
+notifications—formatting each comment’s text, found inside `comment.body`, and
+generating the text for our external notification.
+
+By using
+[`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
+we can convert each comment into plain text, markdown, or HTML. In this code
+snippet, you can see we’re looping through each comment, and replacing
+`comment.body` with a markdown string.
+
+```ts
+import {
+  Liveblocks,
+  WebhookHandler,
+  isThreadNotificationEvent,
+  // +++
+  stringifyCommentBody,
+  // +++
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (event.type === "notification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    try {
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
+      ]);
+
+      // Get unread comments (and filter out deleted comments)
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
+
+      // No unread comments, therefore notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
+
+      // Convert comments to markdown and return { body: "**...**", ...comment } format
+      // +++
+      const textComments = await Promise.all(
+        unreadComments.map(async (comment) => ({
+          body: await stringifyCommentBody(comment.body, {
+            format: "markdown",
+          }),
+          ...comment,
+        }))
+      );
+      // +++
+
+      // Create final markdown for notification
+      // +++
+      let markdown = "# New notifications";
+      for (const comment of textComments) {
+        markdown += `
+          **Comment by ${comment.userId} at ${comment.createdAt}**:
+          ${comment.body}
+        `;
+      }
+      markdown += `
+        [Go to thread](https://my-company.com/room/${roomId}#${threadId})
+      `;
+      // +++
+
+      // Send notifications
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+This snippet outputs simple formatting, for example it renders a user IDs (e.g.
+`@jory.quispe`) instead of a names (e.g. `@Jory Quispe`), but you can create
+more complex formatting easily by using more complex
+[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
+options.
+
+## Send external notifications
+
+Now that the comment’s body has been formatted, we can send the external
+notifications. In this example, we’re sending our markdown to an incoming
+webhook in Slack.
+
+```tsx
+import {
+  Liveblocks,
+  WebhookHandler,
+  isThreadNotificationEvent,
+  stringifyCommentBody,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (event.type === "notification") {
+    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+
+    // Check if user has access to room
+    if (!__hasRoomAccess__(userId, roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    try {
+      // Get thread and notification
+      const [thread, inboxNotification] = await Promise.all([
+        liveblocks.getThread({ roomId, threadId }),
+        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
+      ]);
+
+      // Get unread comments (and filter out deleted comments)
+      const readAt = inboxNotification.readAt;
+      const unreadComments = thread.comments
+        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
+        .filter((comment) => comment.body !== undefined);
+
+      // No unread comments, therefore notification needed
+      if (unreadComments.length === 0) {
+        return new Response(null, { status: 200 });
+      }
+
+      // Convert comments to markdown and return { body: "**...**", ...comment } format
+      const textComments = await Promise.all(
+        unreadComments.map(async (comment) => ({
+          body: await stringifyCommentBody(comment.body, {
+            format: "markdown",
+          }),
+          ...comment,
+        }))
+      );
+
+      // Create final markdown for notification
+      let markdown = "# New notifications";
+      for (const comment of textComments) {
+        markdown += `
+          **Comment by ${comment.userId} at ${comment.createdAt}**:
+          ${comment.body}
+        `;
+      }
+      markdown += `
+        [Go to thread](https://my-company.com/room/${roomId}#${threadId})
+      `;
+
+      // Send your external notifications, e.g. to Slack
+      // +++
+      await fetch(
+        "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: markdown,
+            username: `@${userId}`,
+          }),
+        }
+      );
+      // +++
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We’ve now successfully sent an external notification to a user!
+
+## Allow users to toggle notifications
+
+Using Liveblocks hooks and methods, it’s possible to create a notifications
+settings interface, allowing end users to choose which notifications they’d like
+to receive, and on which channels, saving their preferences.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-settings.jpg"
+    alt="Notification settings"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Learn more in our guide on
+[creating a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+
+## Recap
+
+Great, we’re successfully sending external notifications to users when comments
+are left unread! In this guide we’ve learned:
+
+- How to use [webhooks](/docs/platform/webhooks) and the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+- How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
+  package to fetch and render unread thread data.
+- How to hook it up to an external service, such as Slack.

@@ -4,8 +4,10 @@ import type {
   BaseMetadata,
   CommentAttachment,
   CommentMixedAttachment,
-  DM,
+  DCM,
+  DTM,
   GroupMentionData,
+  Patchable,
 } from "@liveblocks/core";
 import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -97,26 +99,42 @@ interface MarkToggleProps extends ComposerMarkToggleProps {
   shortcut?: string;
 }
 
-type ComposerCreateThreadProps<M extends BaseMetadata> = {
+type ComposerCreateThreadProps<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   threadId?: never;
+
   commentId?: never;
 
   /**
    * The metadata of the thread to create.
    */
-  metadata?: M;
+  metadata?: TM;
+
+  /**
+   * The metadata of the comment to create.
+   */
+  commentMetadata?: CM;
 };
 
-type ComposerCreateCommentProps = {
+type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to reply to.
    */
   threadId: string;
+
   commentId?: never;
+
   metadata?: never;
+
+  /**
+   * The metadata of the comment to create.
+   */
+  commentMetadata?: CM;
 };
 
-type ComposerEditCommentProps = {
+type ComposerEditCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to edit a comment in.
    */
@@ -126,17 +144,23 @@ type ComposerEditCommentProps = {
    * The ID of the comment to edit.
    */
   commentId: string;
+
   metadata?: never;
+
+  /**
+   * The metadata of the comment to edit.
+   */
+  commentMetadata?: Patchable<CM>;
 };
 
-export type ComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComponentPropsWithoutRef<"form">,
-  "defaultValue"
-> &
+export type ComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = Omit<ComponentPropsWithoutRef<"form">, "defaultValue"> &
   (
-    | ComposerCreateThreadProps<M>
-    | ComposerCreateCommentProps
-    | ComposerEditCommentProps
+    | ComposerCreateThreadProps<TM, CM>
+    | ComposerCreateCommentProps<CM>
+    | ComposerEditCommentProps<CM>
   ) & {
     /**
      * The event handler called when the composer is submitted.
@@ -686,11 +710,12 @@ export const ComposerRoomIdContext = createContext<string | null>(null);
  * <Composer />
  */
 export const Composer = forwardRef(
-  <M extends BaseMetadata = DM>(
+  <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
     {
       threadId,
       commentId,
       metadata,
+      commentMetadata,
       defaultValue,
       defaultAttachments,
       onComposerSubmit,
@@ -710,7 +735,7 @@ export const Composer = forwardRef(
       showAttribution,
       roomId: _roomId,
       ...props
-    }: ComposerProps<M>,
+    }: ComposerProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const room = useRoom({ allowOutsideRoom: true });
@@ -826,18 +851,21 @@ export const Composer = forwardRef(
             commentId,
             threadId,
             body: comment.body,
+            metadata: commentMetadata,
             attachments: comment.attachments,
           });
         } else if (threadId) {
           createComment({
             threadId,
             body: comment.body,
+            metadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
         } else {
           createThread({
             body: comment.body,
-            metadata: metadata ?? {},
+            metadata,
+            commentMetadata: commentMetadata as CM | undefined,
             attachments: comment.attachments,
           });
         }
@@ -847,6 +875,7 @@ export const Composer = forwardRef(
         createComment,
         createThread,
         editComment,
+        commentMetadata,
         metadata,
         onComposerSubmit,
         threadId,
@@ -890,6 +919,6 @@ export const Composer = forwardRef(
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = DM>(
-  props: ComposerProps<M> & RefAttributes<HTMLFormElement>
+) as <TM extends BaseMetadata = DTM, CM extends BaseMetadata = DCM>(
+  props: ComposerProps<TM, CM> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;

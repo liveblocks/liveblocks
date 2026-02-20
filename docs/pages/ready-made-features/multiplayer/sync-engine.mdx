@@ -1,0 +1,68 @@
+---
+meta:
+  title: "Sync engines"
+  parentTitle: "Multiplayer"
+  description:
+    "Embed a custom collaborative experience into your application using
+    Liveblocks Storage and Liveblocks Yjs."
+---
+
+Build a custom collaborative experience using Sync Datastore. This can include
+anything from whiteboards, flowcharts, spreadsheets, and more. Liveblocks
+permanently stores all sync engine data in each
+[room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling and
+maintenance for you.
+
+## Overview
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Yjs"
+    href="/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-yjs"
+    description="Sync engine optimized for text editors"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Storage"
+    href="/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-storage"
+    description="Sync engine optimized for creative tools"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Examples using Sync Datastore
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Tldraw whiteboard",
+      slug: "tldraw-whiteboard",
+      image: "/images/examples/thumbnails/tldraw-whiteboard.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Whiteboard",
+      slug: "collaborative-whiteboard-advanced",
+      image:
+        "/images/examples/thumbnails/collaborative-whiteboard-advanced.jpg",
+      advanced: true,
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Collaborative Flowchart",
+      slug: "collaborative-flowchart/zustand-flowchart",
+      image: "/images/examples/thumbnails/collaborative-flowchart.jpg",
+      advanced: true,
+    }}
+    technologies={["zustand"]}
+    openInNewWindow
+  />
+</ListGrid>

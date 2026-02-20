@@ -1,12 +1,12 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, Suspense } from "react";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth" throttle={16}>
-      {children}
+      <Suspense>{children}</Suspense>
     </LiveblocksProvider>
   );
 }

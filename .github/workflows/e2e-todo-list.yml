@@ -1,0 +1,46 @@
+name: E2E Todo List
+
+on:
+  push:
+    branches:
+      - mz2/todo-playwright-tests
+
+jobs:
+  e2e-todo-list:
+    runs-on: ubuntu-latest
+
+    services:
+      liveblocks:
+        image: ghcr.io/liveblocks/dev-server:sha-7fc2281
+        ports:
+          - 1153:1153
+
+    env:
+      NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY: pk_localdev
+      NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: http://localhost:1153
+
+    defaults:
+      run:
+        working-directory: examples/nextjs-todo-list
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: examples/nextjs-todo-list/package-lock.json
+
+      - run: npm install
+      - run: npx playwright install chromium --with-deps
+      - run: npm run build
+      - run: npx playwright test --retries=5
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: todo-list-playwright-report
+          path: examples/nextjs-todo-list/playwright-report
+          retention-days: 14

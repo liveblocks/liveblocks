@@ -29,9 +29,9 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { BaseMetadata } from "../protocol/Comments";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { StorageNode } from "../protocol/StorageNode";
+import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
@@ -75,7 +75,10 @@ const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
   return new WebSocket("");
 };
 
-function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
+function createDefaultRoomConfig<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(): RoomConfig<TM, CM> {
   return {
     enableDebugLogging: false,
     roomId: "room-id",
@@ -102,12 +105,12 @@ function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
   };
 }
 
-function makeRoomConfig<M extends BaseMetadata>(
+function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
   mockedDelegates: RoomDelegates,
-  defaults?: Partial<RoomConfig<M>>
-): RoomConfig<M> {
+  defaults?: Partial<RoomConfig<TM, CM>>
+): RoomConfig<TM, CM> {
   return {
-    ...createDefaultRoomConfig<M>(),
+    ...createDefaultRoomConfig<TM, CM>(),
     ...defaults,
     delegates: mockedDelegates,
   };
@@ -123,18 +126,19 @@ function createTestableRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   initialPresence: P,
   authBehavior = AUTH_SUCCESS,
   socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
-  config?: Partial<RoomConfig<M>>,
+  config?: Partial<RoomConfig<TM, CM>>,
   initialStorage?: S
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
-  const roomConfig = makeRoomConfig(delegates, config);
-  const room = createRoom<P, S, U, E, M>(
+  const roomConfig = makeRoomConfig<TM, CM>(delegates, config);
+  const room = createRoom<P, S, U, E, TM, CM>(
     { initialPresence, initialStorage: initialStorage ?? ({} as S) },
     roomConfig
   );
@@ -648,6 +652,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -692,6 +697,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:read"] },
           },
+          meta: {},
         })
       );
 
@@ -737,6 +743,7 @@ describe("room", () => {
           users: {
             "1": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -817,6 +824,7 @@ describe("room", () => {
             "1": { scopes: ["room:write"] },
             "2": { scopes: ["room:write"] },
           },
+          meta: {},
         })
       );
 
@@ -874,6 +882,7 @@ describe("room", () => {
         users: {
           "1": { scopes: ["room:write"] },
         },
+        meta: {},
       })
     );
 
@@ -978,9 +987,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", {}]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1012,13 +1024,15 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-            //                                              ^^
-            //                                   NOTE: Storage is initially
-            //                                   empty, so initialStorage keys
-            //                                   will get added
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", {}]],
+            //               ^^
+            //       NOTE: Storage is initially empty,
+            //       so initialStorage keys will get added
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       });
       room.connect();
@@ -1047,9 +1061,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1150,9 +1167,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1258,9 +1278,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1296,9 +1319,12 @@ describe("room", () => {
     wss.onConnection((conn) => {
       conn.server.send(
         serverMessage({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+          type: ServerMsgCode.STORAGE_CHUNK,
+          nodes: [["root", { x: 0 }]],
         })
+      );
+      conn.server.send(
+        serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
       );
     });
 
@@ -1380,9 +1406,12 @@ describe("room", () => {
       wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: [["root", { x: 0 }]],
           })
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
         );
       });
 
@@ -1607,11 +1636,14 @@ describe("room", () => {
     test("others", async () => {
       type P = { x?: number };
 
-      const { room, wss } = createTestableRoom<P, never, never, never, never>(
-        {},
-        undefined,
-        SOCKET_AUTOCONNECT_AND_ROOM_STATE()
-      );
+      const { room, wss } = createTestableRoom<
+        P,
+        never,
+        never,
+        never,
+        never,
+        never
+      >({}, undefined, SOCKET_AUTOCONNECT_AND_ROOM_STATE());
       room.connect();
 
       let others: readonly User<P, never>[] | undefined;
@@ -1630,6 +1662,7 @@ describe("room", () => {
           nonce: "nonce-for-actor-2",
           scopes: ["room:write"],
           users: { 1: { scopes: ["room:write"] } },
+          meta: {},
         })
       );
 
@@ -1686,6 +1719,7 @@ describe("room", () => {
                 scopes: ["room:write"],
               },
             },
+            meta: {},
           })
         );
 
@@ -1746,6 +1780,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-2",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
 
@@ -1839,7 +1874,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
@@ -1882,7 +1917,7 @@ describe("room", () => {
 
       expectStorage({ items: ["a"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["2:0", { type: CrdtType.LIST, parentId: "root", parentKey: "items2" }],
         [
@@ -1897,14 +1932,17 @@ describe("room", () => {
       ];
 
       // The next time a connection is made, send the updated storage
-      wss.onConnection((conn) =>
+      wss.onConnection((conn) => {
         conn.server.send(
           serverMessage({
-            type: ServerMsgCode.INITIAL_STORAGE_STATE,
-            items: newInitStorage,
+            type: ServerMsgCode.STORAGE_CHUNK,
+            nodes: Array.from(nodeStreamToCompactNodes(newInitStorage)),
           })
-        )
-      );
+        );
+        conn.server.send(
+          serverMessage({ type: ServerMsgCode.STORAGE_STREAM_END })
+        );
+      });
 
       // Closing the connection from the server will trigger a reconnect, which
       // will in turn load the "B" item
@@ -1989,9 +2027,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ x: 0 });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
-        createSerializedRoot({ x: 0 }),
-      ];
+      const newInitStorage: StorageNode[] = [createSerializedRoot({ x: 0 })];
 
       reconnect(2, newInitStorage);
 
@@ -2441,6 +2477,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
         await waitUntilStatus(room, "connected");
@@ -2462,6 +2499,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-1",
             scopes: ["room:write"],
             users: {},
+            meta: {},
           })
         );
 
@@ -2482,9 +2520,10 @@ describe("room", () => {
       type S = never;
       type U = never;
       type E = never;
-      type M = never;
+      type TM = never;
+      type CM = never;
 
-      const { room, wss } = createTestableRoom<P, S, U, E, M>(
+      const { room, wss } = createTestableRoom<P, S, U, E, TM, CM>(
         {},
         undefined,
         SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
@@ -2498,6 +2537,7 @@ describe("room", () => {
             nonce: "nonce-for-actor-2",
             scopes: ["room:write"],
             users: { "1": { id: undefined, scopes: ["room:write"] } },
+            meta: {},
           })
         );
 

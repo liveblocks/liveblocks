@@ -10,7 +10,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { BaseMetadata } from "@liveblocks/client";
-import type { DM } from "@liveblocks/core";
+import type { DCM, DTM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -18,6 +18,7 @@ import type {
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
 import { Composer as DefaultComposer } from "@liveblocks/react-ui";
+import { Portal } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type {
   ComponentType,
@@ -26,21 +27,31 @@ import type {
   MouseEvent,
 } from "react";
 import { forwardRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 
-import type {
-  ExtendedChainedCommands,
-} from "../types";
+import type { ExtendedChainedCommands } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
 
+type ExcludeProps<T, K extends Record<string, unknown>> = Omit<
+  Exclude<T, T & K>,
+  keyof K
+>;
+
+type ComposerPropsCreateThread<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = ExcludeProps<
+  ComposerProps<TM, CM>,
+  { threadId: string; commentId: string }
+>;
+
 type FloatingComposerComponents = {
-  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+  Composer: ComponentType<ComposerPropsCreateThread<DTM, DCM>>;
 };
 
-export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
-  ComposerProps<M>,
-  "threadId" | "commentId"
-> & {
+export type FloatingComposerProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = ComposerPropsCreateThread<TM, CM> & {
   /**
    * Override the component's components.
    */
@@ -69,12 +80,15 @@ export const FloatingComposer = forwardRef<
       selector: (ctx) => {
         if (!ctx.editor) {
           return undefined;
-        };
+        }
 
-        const hasPendingComment = ctx.editor.storage.liveblocksComments.pendingComment;
+        const hasPendingComment =
+          ctx.editor.storage.liveblocksComments.pendingComment;
         const isEmpty = ctx.editor.state.selection.empty;
 
-        return hasPendingComment && !isEmpty ? ctx.editor.state.selection : undefined;
+        return hasPendingComment && !isEmpty
+          ? ctx.editor.state.selection
+          : undefined;
       },
       equalityFn: compareSelections,
     }) ?? undefined;
@@ -179,27 +193,28 @@ export const FloatingComposer = forwardRef<
     return null;
   }
 
-  return createPortal(
-    <div
-      className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-    >
-      <Composer
-        ref={forwardedRef}
-        autoFocus
-        {...props}
-        onKeyDown={handleKeyDown}
-        onComposerSubmit={handleComposerSubmit}
-        onClick={handleClick}
-      />
-    </div>,
-    document.body
+  return (
+    <Portal asChild>
+      <div
+        className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+      >
+        <Composer
+          ref={forwardedRef}
+          autoFocus
+          {...props}
+          onKeyDown={handleKeyDown}
+          onComposerSubmit={handleComposerSubmit}
+          onClick={handleClick}
+        />
+      </div>
+    </Portal>
   );
 });

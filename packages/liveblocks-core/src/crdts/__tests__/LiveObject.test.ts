@@ -14,8 +14,8 @@ import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
+import type { StorageNode } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -475,7 +475,6 @@ describe("LiveObject", () => {
             type: OpCode.UPDATE_OBJECT,
             data: { a: 2 },
             id: "root",
-            opId: "external",
           },
         ]);
 
@@ -507,7 +506,6 @@ describe("LiveObject", () => {
             id: "2:0",
             parentKey: "a",
             parentId: "root",
-            opId: "external",
           },
         ]);
 
@@ -537,7 +535,6 @@ describe("LiveObject", () => {
             id: "2:0",
             parentKey: "a",
             parentId: "root",
-            opId: "external",
           },
         ]);
 
@@ -782,7 +779,6 @@ describe("LiveObject", () => {
           type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
-          opId: "external",
         },
       ]);
 
@@ -836,13 +832,11 @@ describe("LiveObject", () => {
           type: OpCode.UPDATE_OBJECT,
           data: { a: 1 },
           id: "0:1",
-          opId: "external1",
         },
         {
           type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
-          opId: "external2",
         },
       ]);
 
@@ -878,7 +872,6 @@ describe("LiveObject", () => {
           type: OpCode.DELETE_OBJECT_KEY,
           key: "a",
           id: "0:1",
-          opId: "external",
         },
       ]);
 
@@ -926,7 +919,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
@@ -979,7 +972,7 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
@@ -1078,7 +1071,6 @@ describe("LiveObject", () => {
           {
             data: { subA: 2 },
             id: "0:3",
-            opId: "1:0",
             parentId: "0:1",
             parentKey: "b",
             type: OpCode.CREATE_OBJECT,

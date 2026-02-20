@@ -5,6 +5,7 @@ import { nanoid } from "../lib/nanoid";
 import type { RemoveUndefinedValues } from "../lib/utils";
 import { compactObject, deepClone } from "../lib/utils";
 import type {
+  ClientWireOp,
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
@@ -13,13 +14,13 @@ import type {
 } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
+  NodeStream,
+  ObjectStorageNode,
+  RootStorageNode,
   SerializedObject,
   SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+} from "../protocol/StorageNode";
+import { CrdtType, isRootStorageNode } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -52,10 +53,6 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
-function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
-  return id === "root";
-}
-
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
@@ -63,7 +60,21 @@ function isRootCrdt(id: string, _: SerializedCrdt): _ is SerializedRootObject {
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #map: Map<string, Lson>;
-  #propToLastUpdate: Map<string, string>;
+
+  /**
+   * Tracks unacknowledged local changes per property to preserve optimistic
+   * updates. Maps property keys to their pending operation IDs.
+   *
+   * INVARIANT: Only locally-generated opIds are ever stored here. Remote opIds
+   * are only compared against (to detect ACKs), never stored.
+   *
+   * When a local change is made, the opId is stored here. When a remote op
+   * arrives for the same key:
+   * - If no entry exists → apply remote op
+   * - If opId matches → it's an ACK, clear the entry
+   * - If opId differs → ignore remote op to preserve optimistic update
+   */
+  #unackedOpsByKey: Map<string, string>;
 
   /**
    * Enable or disable detection of too large LiveObjects.
@@ -77,21 +88,21 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
-    items: IdTuple<SerializedCrdt>[]
+    nodes: NodeStream
   ): [root: SerializedRootObject, nodeMap: ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: SerializedRootObject | null = null;
 
-    for (const [id, crdt] of items) {
-      if (isRootCrdt(id, crdt)) {
-        root = crdt;
+    for (const node of nodes) {
+      if (isRootStorageNode(node)) {
+        root = node[1];
       } else {
-        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const crdt = node[1];
         const children = parentToChildren.get(crdt.parentId);
         if (children !== undefined) {
-          children.push(tuple);
+          children.push(node);
         } else {
-          parentToChildren.set(crdt.parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [node]);
         }
       }
     }
@@ -105,11 +116,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @private Do not use this API directly */
   static _fromItems<O extends LsonObject>(
-    items: IdTuple<SerializedCrdt>[],
+    nodes: NodeStream,
     pool: ManagedPool
   ): LiveObject<O> {
     const [root, parentToChildren] =
-      LiveObject.#buildRootAndParentToChildren(items);
+      LiveObject.#buildRootAndParentToChildren(nodes);
     return LiveObject._deserialize(
       ["root", root],
       parentToChildren,
@@ -120,7 +131,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   constructor(obj: O = {} as O) {
     super();
 
-    this.#propToLastUpdate = new Map<string, string>();
+    this.#unackedOpsByKey = new Map();
 
     const o: RemoveUndefinedValues<LsonObject> = compactObject(obj);
     for (const key of Object.keys(o)) {
@@ -134,18 +145,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
+  _toOps(parentId: string, parentKey: string): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
-
-    const opId = pool?.generateOpId();
 
     const ops: CreateOp[] = [];
     const op: CreateObjectOp = {
       type: OpCode.CREATE_OBJECT,
       id: this._id,
-      opId,
       parentId,
       parentKey,
       data: {},
@@ -155,7 +163,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     for (const [key, value] of this.#map) {
       if (isLiveNode(value)) {
-        ops.push(...value._toOps(this._id, key, pool));
+        for (const childOp of value._toOps(this._id, key)) {
+          ops.push(childOp);
+        }
       } else {
         op.data[key] = value;
       }
@@ -166,7 +176,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   static _deserialize(
-    [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
+    [id, item]: RootStorageNode | ObjectStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveObject<LsonObject> {
@@ -186,8 +196,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return liveObj;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserializeToLson([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const child = deserializeToLson(node, parentToChildren, pool);
+      const crdt = node[1];
       if (isLiveStructure(child)) {
         child._setParentLink(liveObj, crdt.parentKey);
       }
@@ -219,21 +230,22 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const child = creationOpToLson(op);
 
     if (this._pool.getNode(id) !== undefined) {
-      if (this.#propToLastUpdate.get(key) === opId) {
+      if (this.#unackedOpsByKey.get(key) === opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
       }
 
       return { modified: false };
     }
 
-    if (source === OpSource.UNDOREDO_RECONNECT) {
-      this.#propToLastUpdate.set(key, nn(opId));
-    } else if (this.#propToLastUpdate.get(key) === undefined) {
+    if (source === OpSource.LOCAL) {
+      // Track locally-generated opId to preserve optimistic update
+      this.#unackedOpsByKey.set(key, nn(opId));
+    } else if (this.#unackedOpsByKey.get(key) === undefined) {
       // Remote operation with no local change => apply operation
-    } else if (this.#propToLastUpdate.get(key) === opId) {
+    } else if (this.#unackedOpsByKey.get(key) === opId) {
       // Acknowlegment from local operation
-      this.#propToLastUpdate.delete(key);
+      this.#unackedOpsByKey.delete(key);
       return { modified: false };
     } else {
       // Conflict, ignore remote operation
@@ -281,7 +293,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     if (child) {
       const id = nn(this._id);
       const parentKey = nn(child._parentKey);
-      const reverse = child._toOps(id, parentKey, this._pool);
+      const reverse = child._toOps(id, parentKey);
 
       for (const [key, value] of this.#map) {
         if (value === child) {
@@ -368,7 +380,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const key in op.data as Partial<O>) {
       const oldValue = this.#map.get(key);
       if (isLiveNode(oldValue)) {
-        reverse.push(...oldValue._toOps(id, key));
+        for (const childOp of oldValue._toOps(id, key)) {
+          reverse.push(childOp);
+        }
         oldValue._detach();
       } else if (oldValue !== undefined) {
         reverseUpdate.data[key] = oldValue;
@@ -385,13 +399,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       if (isLocal) {
-        this.#propToLastUpdate.set(key, nn(op.opId));
-      } else if (this.#propToLastUpdate.get(key) === undefined) {
+        // Track locally-generated opId to preserve optimistic update
+        this.#unackedOpsByKey.set(key, nn(op.opId));
+      } else if (this.#unackedOpsByKey.get(key) === undefined) {
         // Not modified localy so we apply update
         isModified = true;
-      } else if (this.#propToLastUpdate.get(key) === op.opId) {
+      } else if (this.#unackedOpsByKey.get(key) === op.opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this.#unackedOpsByKey.delete(key);
         continue;
       } else {
         // Conflict, ignore remote operation
@@ -437,7 +452,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // If a local operation exists on the same key and we receive a remote
     // one prevent flickering by not applying delete op.
-    if (!isLocal && this.#propToLastUpdate.get(key) !== undefined) {
+    if (!isLocal && this.#unackedOpsByKey.get(key) !== undefined) {
       return { modified: false };
     }
 
@@ -624,7 +639,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
-    const ops: Op[] = [];
+    const ops: ClientWireOp[] = [];
     const reverseOps: Op[] = [];
 
     const opId = this._pool.generateOpId();
@@ -647,7 +662,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       const oldValue = this.#map.get(key);
 
       if (isLiveNode(oldValue)) {
-        reverseOps.push(...oldValue._toOps(this._id, key));
+        for (const childOp of oldValue._toOps(this._id, key)) {
+          reverseOps.push(childOp);
+        }
         oldValue._detach();
       } else if (oldValue === undefined) {
         reverseOps.push({ type: OpCode.DELETE_OBJECT_KEY, id: this._id, key });
@@ -658,19 +675,27 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       if (isLiveNode(newValue)) {
         newValue._setParentLink(this, key);
         newValue._attach(this._pool.generateId(), this._pool);
-        const newAttachChildOps = newValue._toOps(this._id, key, this._pool);
+        const newAttachChildOps = newValue._toOpsWithOpId(
+          this._id,
+          key,
+          this._pool
+        );
 
         const createCrdtOp = newAttachChildOps.find(
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
-          this.#propToLastUpdate.set(key, nn(createCrdtOp.opId));
+          // Track locally-generated opId to preserve optimistic update
+          this.#unackedOpsByKey.set(key, nn(createCrdtOp.opId));
         }
 
-        ops.push(...newAttachChildOps);
+        for (const childOp of newAttachChildOps) {
+          ops.push(childOp);
+        }
       } else {
         updatedProps[key] = newValue;
-        this.#propToLastUpdate.set(key, opId);
+        // Track locally-generated opId to preserve optimistic update
+        this.#unackedOpsByKey.set(key, opId);
       }
 
       this.#map.set(key, newValue);

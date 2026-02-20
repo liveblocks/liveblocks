@@ -6,21 +6,90 @@ meta:
     "Learn how to enable multi-factor authentication on your Liveblocks account."
 ---
 
+_Multi-factor authentication_ (MFA) adds an additional layer of security by
+requiring a code from an authenticator app when signing in. Liveblocks offers
+two ways to use MFA:
+
+- **User-level enrollment**: Individual users voluntarily enable MFA for their
+  own account.
+- **Enterprise enforcement**: Team owners require all team members to have MFA
+  enabled. Only for enterprise customers, does not apply to Single Sign-On
+  members.
+
+## Enroll MFA for your account
+
+Any user can enable MFA on their personal account for extra security. This is
+optional and applies only to your own sign-in.
+
+### How to enroll MFA for your account
+
+1. Go to
+   [**Personal settings**](https://liveblocks.io/dashboard/personal-settings) in
+   the dashboard.
+2. In the **Two-factor authentication** section, click **Enable**.
+
+<Figure>
+  <Image
+    src="/assets/account-management/account-enable-2fa.png"
+    alt="Two-factor authentication section in account settings with Enable button"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+3. In the setup modal, scan the QR code with your authenticator app, or copy the
+   setup key and paste it into your app.
+4. Enter the 6-digit code from your authenticator app and click **Confirm**.
+
+<Figure>
+  <Image
+    src="/assets/account-management/account-enroll-2fa.png"
+    alt="Set up two-factor authentication modal with QR code and code verification"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### How to disable MFA for your account
+
+1. Go to
+   [**Personal settings**](https://liveblocks.io/dashboard/personal-settings) in
+   the dashboard.
+2. In the **Two-factor authentication** section, click **Disable**.
+3. Enter your password and click **Confirm**.
+
+<Figure>
+  <Image
+    src="/assets/account-management/account-disable-2fa.png"
+    alt="Two-factor authentication section in account settings with Disable button"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+An alert will be prompted to confirm the action. In our current set up if you
+are a member of an enterprise team enforcing MFA for all its members, next time
+you sign in you will be prompted to enroll MFA again.
+
+<Figure>
+  <Image
+    src="/assets/account-management/account-disable-alert-2fa.png"
+    alt="Alert to confirm the action of disabling MFA"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+## Enforce MFA for all team members
+
 <Banner>
   This feature is available as an add-on to Enterprise customers. Reach out to
   [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on your
   account.
 </Banner>
 
-_Multi-factor authentication_ (MFA) adds an additional layer of security to
-teams to manage their members by enforcing them to have an authenticator app.
-Does not apply to Single Sign-On members.
-
-## How it works
-
-When MFA is enabled, all team members will be required to have an authenticator
-app installed on their device. They will be prompted to enter a code from the
-app when they log in to the dashboard.
+When MFA is enforced at the team level, all members must have an authenticator
+app. They are prompted to enter a code when signing in to the dashboard.
 
 <Figure>
   <Image
@@ -31,8 +100,8 @@ app when they log in to the dashboard.
   />
 </Figure>
 
-## How to enable MFA
+### How to enable MFA enforcement
 
-MFA is available as an add-on to Enterprise customers, reach out to
+MFA enforcement is available as an add-on to Enterprise customers. Reach out to
 [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on your account.
-After it’s enabled, it will work without configuration.
+After it’s enabled, it works without configuration.

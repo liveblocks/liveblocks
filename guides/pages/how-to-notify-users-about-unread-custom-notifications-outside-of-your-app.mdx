@@ -1,0 +1,621 @@
+---
+meta:
+  title:
+    "How to notify users about unread custom notifications outside of your app"
+  description:
+    "Learn how to trigger custom notifications externally, such as in Slack,
+    Microsoft Teams, and more."
+---
+
+Liveblocks [Notifications](/docs/ready-made-features/notifications) allows you
+to build a notification inbox, and send custom notifications to your users. With
+our webhooks and REST API, it’s possible to fetch unread
+[custom notifications](/docs/ready-made-features/notifications/concepts#Custom-notifications)
+and send external notifications via email, in Slack, in Microsoft Teams, or in
+any other service with an API, using webhooks. Notifications can also be
+displayed in your app using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component.
+
+## What we’re building
+
+In this guide we’ll be learning how to notify users about unread custom
+notifications outside of your app, and more specifically, we’ll be looking at
+how to:
+
+- Trigger events based on unread custom notifications using the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  event.
+- Fetch unread notifications using the
+  [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Notifications project set up.
+If you don’t have one yet, you can
+[get started with Notifications](/docs/get-started/notifications), and come back
+after you’re set up.
+
+</Banner>
+
+## What are inbox notifications?
+
+Liveblocks uses the concept of inbox notifications, which differ to external
+notifications. Inbox notifications are displayed within in-app inboxes, group
+multiple activities together, and can change over time. These activities are
+useful for sending status updates, for example seeing “Pending…” or “Complete…”
+statuses in a file upload notification.
+
+External notifications, such as Slack, and Microsoft Teams, are different, and
+Liveblocks is set up to send them in a way that won’t overload your users with
+notifications. This means that Liveblocks will wait to trigger these
+notifications until a certain amount of time has passed, and will only trigger
+them if your users has not read the notification on the front-end, which we
+automatically keep track of.
+
+Learn more about Notifications in the
+[concepts page](/docs/ready-made-features/notifications/concepts).
+
+## Using webhooks
+
+Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
+send requests to your API endpoint when certain events occurs. One webhook we
+provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+webhook, which is triggered for each participating user in a thread, and can be
+used to send external notifications to your users.
+
+The information it returns allows you to retrieve the data attached to the
+custom notification. Let’s take a look at how to set this up.
+
+### Notification channels
+
+You can send notifications via different channels, such as email, Slack,
+Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
+certain channels, and in this guide, we’ll be enabling a custom `$fileUploaded`
+[notification kind](/docs/ready-made-features/notifications/concepts#Notification-kinds)
+on the Slack channel. You must always enable the correct channel to ensure your
+[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
+are triggered, and this guide will take you through setting it up.
+
+<Banner title="Which notification channel?">
+
+All channels currently work the same way, apart from in-app, but we suggest
+selecting the service you’re setting up, such as Slack or Microsoft Teams, so
+it’s easy to tell which you’ve implemented.
+
+</Banner>
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send a POST request to the back end in
+your project. In this guide, we’ll be using a Next.js route handler (API
+endpoint) as an example, but other frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-notifications
+```
+
+Make a note of this endpoint URL, as you’ll be using it later.
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhooks dashboard.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
+
+<Steps>
+  <Step>
+
+    <StepTitle>Set up sending a custom notification</StepTitle>
+    <StepContent>
+      If your app, make sure you’re sending a custom notification with
+      [`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+      In our example, we’re sending a `$fileUploaded` notification.
+
+      ```ts
+      await liveblocks.triggerInboxNotification({
+        // +++
+        kind: "$fileUploaded",
+        // +++
+        userId: "steven@example.com",
+        subjectId: "my-file",
+
+        activityData: {
+          status: "pending",
+          file: "https://example.com/my-file.zip",
+        },
+      });
+      ```
+
+    </StepContent>
+
+  </Step>
+
+<Step>
+  <StepTitle>Select your project</StepTitle>
+  <StepContent>
+    From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+    like to use with webhooks, or create a new project.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+        alt="Create a Liveblocks project"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Go to the notifications dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Notifications”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+        alt="Click notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Enable your custom notification kind</StepTitle>
+  <StepContent>
+    Click on the **“Edit”** at the top right,, switch to the **“Kinds”** tab,
+    and enable your custom notification kind. In our example we’re adding the
+    `$fileUploaded` kind.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-notification-kind.png"
+        alt="Enable custom notification kind"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Enable the thread notification type</StepTitle>
+  <StepContent>
+    Click on **“Edit”** at the top right, enable `$fileUploaded` notifications
+    on the Slack channel, and publish your changes.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-custom-notification-kind.png"
+        alt="Enable custom notification"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+{" "}
+
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Enable notification webhook events</StepTitle>
+  <StepContent>
+    Check the **“notification”** event in the dialog to enable the correct
+    webhooks events.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-notification-webhook.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **Add endpoint”** at the bottom, then find your **“Secret key”** on
+    the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={710}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Notification webhooks are set up! Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your _webhook_ secret key from earlier—in a real project we’d
+recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Send external notification
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Check the event and notification permissions
+
+After verifying the request, we can then check we’re receiving the correct type
+of event, on the correct channel. There are different `notification` events, and
+in this case we’d like to check for a
+[custom notification](/docs/platform/webhooks#Custom-notification) with the
+`$fileUploaded` kind, as we’re specifically listening for this. We can do this
+with `event.data.kind`, also making sure to check for the `slack` channel.
+
+```ts
+import { WebhookHandler, isCustomNotificationEvent } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  // When a $fileUploaded notification has been created on the slack channel
+  if (event.data.kind === "$fileUploaded" && event.data.channel === "slack") {
+    const { inboxNotificationId, userId } = event.data;
+
+    // Send external notification
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Note that Liveblocks doesn’t have knowledge of your permissions system on the
+back end, so it’s your responsibility to check if this user should have access
+to the notification.
+
+## Get custom notification data
+
+The next step is to use the
+[Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
+`@liveblocks/node` to retrieve the inbox notification, and the corresponding
+data set with
+[`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+To do this we’ll need to add our project’s secret key from
+[the dashboard](/dashboard/api-keys) to the Liveblocks client (_not_ the webhook
+secret key we used earlier), before awaiting the
+[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
+fucntion.
+
+```ts
+import {
+  // +++
+  Liveblocks,
+  // +++
+  WebhookHandler,
+  isCustomNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+// +++
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+// +++
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a $fileUploaded notification has been created on the slack channel
+  if (event.data.kind === "$fileUploaded" && event.data.channel === "slack") {
+    const { inboxNotificationId, userId } = event.data;
+
+    // +++
+    try {
+      // Get thread and notification
+      const inboxNotification = await liveblocks.getInboxNotification({
+        inboxNotificationId,
+        userId,
+      });
+
+      // The custom data we set with `triggerInboxNotification`: `status` and `file`
+      const { status, file } = inboxNotification.activities[0];
+
+      // Send external notification
+      // ...
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+    // +++
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Send external notifications
+
+Now that the custom notification has been retrieved, we can send the external
+notifications. In this example, we’re sending a message to an incoming webhook
+in Slack.
+
+```ts
+import {
+  Liveblocks,
+  WebhookHandler,
+  isCustomNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When a $fileUploaded notification has been created on the slack channel
+  if (event.data.kind === "$fileUploaded" && event.data.channel === "slack") {
+    const { inboxNotificationId, userId } = event.data;
+
+    try {
+      // Get thread and notification
+      const inboxNotification = await liveblocks.getInboxNotification({
+        inboxNotificationId,
+        userId,
+      });
+
+      // The custom data we set with `triggerInboxNotification`: `status` and `file`
+      const { status, file } = inboxNotification.activities[0];
+
+      // Send your external notification, e.g. to Slack
+      // +++
+      await fetch(
+        "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: `A new file has been uploaded by ${userId}: ${file}`,
+            username: `File Upload Bot`,
+          }),
+        }
+      );
+      // +++
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch notification data", { status: 500 });
+    }
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+We’ve now successfully sent an external notification to a user!
+
+## Allow users to toggle notifications
+
+Using Liveblocks hooks and methods, it’s possible to create a notifications
+settings interface, allowing end users to choose which notifications they’d like
+to receive, and on which channels, saving their preferences.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-settings.jpg"
+    alt="Notification settings"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Learn more in our guide on
+[creating a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+
+## Recap
+
+Great, we’re successfully sending external notifications to users when comments
+are left unread! In this guide we’ve learned:
+
+- How to use [webhooks](/docs/platform/webhooks) and the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+- How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
+  package to fetch the custome notification data.
+- How to hook it up to an external service, such as Slack.

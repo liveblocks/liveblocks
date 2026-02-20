@@ -6,7 +6,16 @@ import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import type { DE, DGI, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import type {
+  DCM,
+  DE,
+  DGI,
+  DP,
+  DRI,
+  DS,
+  DTM,
+  DU,
+} from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -20,7 +29,6 @@ import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
 import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
-import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -42,7 +50,6 @@ import type {
   SubscriptionDeleteInfo,
 } from "./protocol/Subscriptions";
 import type {
-  LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -59,6 +66,7 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
+import type { BadgeLocation } from "./types/Others";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -119,6 +127,13 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
+
+    /**
+     * Preferred storage engine version to use when creating the room. Only
+     * takes effect if the room doesn't exist yet. Version 2 can support larger
+     * documents, is more performant, and will become the default in the future.
+     */
+    engine?: 1 | 2;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -167,7 +182,11 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
+export type PrivateClientApi<
+  U extends BaseUserMeta,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   readonly currentUserId: Signal<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, MentionData[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
@@ -175,16 +194,19 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly groupsInfoStore: BatchStore<DGI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly httpClient: LiveblocksHttpApi<M>;
+  readonly httpClient: LiveblocksHttpApi<TM, CM>;
   // Type-level helper
-  as<M2 extends BaseMetadata>(): Client<U, M2>;
+  as<TM2 extends BaseMetadata, CM2 extends BaseMetadata>(): Client<U, TM2, CM2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
   ai: Ai;
 };
 
-export type NotificationsApi<M extends BaseMetadata> = {
+export type NotificationsApi<
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+> = {
   /**
    * Gets a page (or the initial page) for user inbox notifications and their
    * associated threads and thread subscriptions.
@@ -208,7 +230,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
     query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
+    threads: ThreadData<TM, CM>[];
     subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
@@ -247,7 +269,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
       deleted: InboxNotificationDeleteInfo[];
     };
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     subscriptions: {
@@ -338,7 +360,11 @@ export type NotificationsApi<M extends BaseMetadata> = {
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
+export type Client<
+  U extends BaseUserMeta = DU,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -348,10 +374,11 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M2 extends BaseMetadata = M,
+    TM2 extends BaseMetadata = TM,
+    CM2 extends BaseMetadata = CM,
   >(
     roomId: string
-  ): Room<P, S, U, E, M2> | null;
+  ): Room<P, S, U, E, TM2, CM2> | null;
 
   /**
    * Enter a room.
@@ -363,7 +390,8 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M2 extends BaseMetadata = M,
+    TM2 extends BaseMetadata = TM,
+    CM2 extends BaseMetadata = CM,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -371,7 +399,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M2>;
+    room: Room<P, S, U, E, TM2, CM2>;
     leave: () => void;
   };
 
@@ -444,7 +472,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U, M>;
+  readonly [kInternal]: PrivateClientApi<U, TM, CM>;
 
   /**
    * Returns the current global sync status of the Liveblocks client. If any
@@ -470,7 +498,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
   };
-} & NotificationsApi<M>;
+} & NotificationsApi<TM, CM>;
 
 export type AuthEndpoint =
   | string
@@ -485,7 +513,12 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
-  largeMessageStrategy?: LargeMessageStrategy;
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
+   * Storage engine have native support for streaming. This flag will be
+   * removed in a future version, but will continue to work for existing engine
+   * v1 rooms for now.
+   */
   unstable_streamData?: boolean;
   /**
    * A function that returns a list of mention suggestions matching a string.
@@ -526,9 +559,12 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   preventUnsavedChanges?: boolean;
 
   /**
-   * @internal To point the client to a different Liveblocks server. Only
-   * useful for Liveblocks developers. Not for end users.
+   * The location where the brand badge should be displayed when using a free plan.
+   * Default is "bottom-right".
    */
+  badgeLocation?: BadgeLocation;
+
+  /** Point the client to an alternative Liveblocks server. */
   baseUrl?: string;
 
   /** @internal */
@@ -597,8 +633,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const currentUserId = new Signal<string | undefined>(undefined);
 
   const authManager = createAuthManager(options, (token) => {
-    const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
-    currentUserId.set(() => userId);
+    currentUserId.set(() => token.uid);
   });
 
   const fetchPolyfill =
@@ -639,8 +674,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           throw new StopRetrying(
             "Cannot use AI Copilots with a public API key"
           );
-        } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
-          throw new StopRetrying("AI Copilots requires an ID or Access token");
         }
         return resp;
       },
@@ -659,11 +692,12 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
   >(
     details: RoomDetails
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, TM, CM>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -684,7 +718,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
     details.unsubs.add(leave);
     return {
-      room: details.room as Room<P, S, U, E, M>,
+      room: details.room as Room<P, S, U, E, TM, CM>,
       leave,
     };
   }
@@ -694,7 +728,8 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -702,7 +737,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, TM, CM>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -721,7 +756,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
 
-    const newRoom = createRoom<P, S, U, E, M>(
+    const newRoom = createRoom<P, S, U, E, TM, CM>(
       { initialPresence, initialStorage },
       {
         roomId,
@@ -733,17 +768,18 @@ export function createClient<U extends BaseUserMeta = DU>(
           createSocket: makeCreateSocketDelegateForRoom(
             roomId,
             baseUrl,
-            clientOptions.polyfills?.WebSocket
+            clientOptions.polyfills?.WebSocket,
+            options.engine
           ),
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
-        roomHttpClient: httpClient as LiveblocksHttpApi<M>,
+        roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
         createSyncSource,
+        badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
       }
     );
 
@@ -780,10 +816,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     S extends LsonObject,
     U extends BaseUserMeta,
     E extends Json,
-    M extends BaseMetadata,
-  >(roomId: string): Room<P, S, U, E, M> | null {
+    TM extends BaseMetadata,
+    CM extends BaseMetadata,
+  >(roomId: string): Room<P, S, U, E, TM, CM> | null {
     const room = roomsById.get(roomId)?.room;
-    return room ? (room as Room<P, S, U, E, M>) : null;
+    return room ? (room as Room<P, S, U, E, TM, CM>) : null;
   }
 
   function logout() {
@@ -1010,7 +1047,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
         httpClient,
         // Type-level helper only, it's effectively only an identity-function at runtime
-        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
+        as: <TM2 extends BaseMetadata, CM2 extends BaseMetadata>() =>
+          client as Client<U, TM2, CM2>,
         createSyncSource,
         emitError: (context: LiveblocksErrorContext, cause?: Error) => {
           const error = LiveblocksError.from(context, cause);

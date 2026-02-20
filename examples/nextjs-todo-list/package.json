@@ -7,21 +7,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.7.1",
-    "@liveblocks/react": "^3.7.1",
+    "@liveblocks/client": "^3.14.0",
+    "@liveblocks/react": "^3.14.0",
     "@next/font": "^13.1.6",
-    "@types/node": "^18.11.18",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.0.10",
-    "next": "^13.5.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@types/node": "^18.11.19",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.0.11",
+    "next": "^16.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
+    "@playwright/test": "^1.55.0",
+    "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   }
 }

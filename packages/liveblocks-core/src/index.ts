@@ -97,12 +97,13 @@ export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
+  DCM,
   DE,
   DGI,
-  DM,
   DP,
   DRI,
   DS,
+  DTM,
   DU,
   KDAD,
 } from "./globals/augmentation";
@@ -271,7 +272,7 @@ export {
   patchNotificationSettings,
 } from "./protocol/NotificationSettings";
 export type {
-  AckOp,
+  ClientWireOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -279,33 +280,25 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  HasOpId,
+  IgnoredOp,
   Op,
+  ServerWireOp,
   SetParentKeyOp,
   UpdateObjectOp,
 } from "./protocol/Op";
-export { ackOp, OpCode } from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
 export type {
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "./protocol/SerializedCrdt";
-export { CrdtType } from "./protocol/SerializedCrdt";
-export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
+  StorageChunkServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
@@ -313,6 +306,41 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  ChildStorageNode,
+  CompactChildNode,
+  CompactListNode,
+  CompactMapNode,
+  CompactNode,
+  CompactObjectNode,
+  CompactRegisterNode,
+  CompactRootNode,
+  ListStorageNode,
+  MapStorageNode,
+  NodeMap,
+  NodeStream,
+  ObjectStorageNode,
+  RegisterStorageNode,
+  RootStorageNode,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+  StorageNode,
+} from "./protocol/StorageNode";
+export {
+  compactNodesToNodeStream,
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+  isRootStorageNode,
+  nodeStreamToCompactNodes,
+} from "./protocol/StorageNode";
 export type {
   SubscriptionData,
   SubscriptionDataPlain,
@@ -325,12 +353,7 @@ export type {
 export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { UrlMetadata } from "./protocol/UrlMetadata";
 export type { HistoryVersion } from "./protocol/VersionHistory";
-export type {
-  IYjsProvider,
-  LargeMessageStrategy,
-  PrivateRoomApi,
-  YjsSyncStatus,
-} from "./room";
+export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
 export type {
   BroadcastOptions,
   History,
@@ -378,7 +401,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { LiveblocksErrorContext } from "./types/LiveblocksError";
 export { LiveblocksError } from "./types/LiveblocksError";
-export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { ParentToChildNodeMap } from "./types/NodeMap";
 export type { OthersEvent } from "./types/Others";
 export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";

@@ -37,6 +37,9 @@ export default function Home() {
                 LiveObject
               </Link>
             </li>
+            <li>
+              <Link href="/storage/stress/e2e-stress-test">Stress Test</Link>
+            </li>
           </ul>
         </li>
 
@@ -157,11 +160,6 @@ export default function Home() {
             <li>
               <Link href="/auth/pubkey?room=e2e-modern-auth">
                 With public key
-              </Link>
-            </li>
-            <li>
-              <Link href="/auth/secret-legacy?room=e2e-modern-auth">
-                With legacy token
               </Link>
             </li>
             <li>

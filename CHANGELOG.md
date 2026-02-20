@@ -1,3 +1,194 @@
+## vNEXT (not yet released)
+
+## v3.14.0
+
+This release adds support for opting-in to the new storage engine on a per-room
+basis. The new storage engine can support larger documents, is more performant,
+is considered more stable, and will eventually become our default engine for all
+new rooms in the future.
+
+As of this release, the default storage engine still remains engine version 1.
+
+To give it a try, simply pass `engine: 2` when entering a _new_ room. After a
+room is created, you cannot change the engine it was created with anymore.
+
+For example:
+
+```ts
+// Vanilla JS
+client.enterRoom("my-new-room", { engine: 2 });
+```
+
+or:
+
+```ts
+// In React
+<RoomProvider id="my-new-room" engine={2}>
+  ...
+</RoomProvider>
+```
+
+### `@liveblocks/client`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `client.enterRoom("my-new-room", { engine: 2 })`
+- Internal protocol optimizations to support larger storage documents
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Improve `LiveList` performance when processing large batches of operations
+- Improve `LiveList.push()` efficiency to prevent unbounded position string
+  growth over time
+- Fix crash when clearing documents with a large number of keys
+- Remove the `largeMessageStrategy` client option. The WebSocket message limit
+  has been increased from 1 MB to 32 MB, making this setting obsolete.
+
+### `@liveblocks/react`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow
+  connecting to the
+  [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Exclude marking a thread or inbox notification as read from blocking
+  navigation when `preventUnsavedChanges` is enabled.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Portaled elements now respect the `portalContainer` option from
+  `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using
+  `document.body`.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Support for selecting the preferred engine when entering new rooms:
+  `enterRoom("my-new-room", { engine: 2 })`
+
+### `@liveblocks/node`
+
+- Add new `.setPresence()` method to set ephemeral presence for a user in a room
+  via the REST API, without requiring a WebSocket connection
+- Deprecated `tenantId` parameter in client methods, use `organizationId`
+  instead.
+
+## v3.13.5
+
+### `@liveblocks/react-tiptap`
+
+- Replace `y-tiptap` with `y-prosemirror` to prevent plugin key conflict, which
+  was causing change source to be incorrectly set in Blocknote.
+
+## v3.13.4
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue where `FloatingComposer` wouldn’t auto-focus and
+  `FloatingToolbar` would conflict with it.
+
+## v3.13.3
+
+### `@liveblocks/client`
+
+- Bump hardcoded client-side socket connection timeout from 10s to 20s
+- Add more detailed timing info to `enableDebugLogging` to better debug
+  connection issues
+
+### `@liveblocks/react-ui`
+
+- Fix an issue where `Composer` and `AiComposer` would throw an error when
+  mounted/unmounted.
+
+## v3.13.2
+
+### `@liveblocks/node`
+
+- Add a new `alwaysUseKnowledge` option when creating or updating copilots. When
+  this option is enabled, the copilot retrieves and uses the uploaded knowledge
+  sources on each user query. When disabled, the copilot will retrieve the
+  uploaded knowledge sources only when the user query relates to the knowledge
+  prompt set on the copilot.
+
+## v3.13.1
+
+### `@liveblocks/client`
+
+- Fix issue where storage subscriptions wouldn't fire after concurrent move and
+  set operations, causing stale `LiveList` state in UI.
+
+## v3.13.0
+
+This release adds support for comment metadata, allowing you to attach custom
+metadata to individual comments in the same way as thread metadata.
+
+### All packages
+
+- Support typing comment metadata globally via the `Liveblocks` interface.
+- Improve `CommentBody` types.
+- Internal refactorings to prepare for upcoming protocol updates.
+
+### `@liveblocks/client`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+
+### `@liveblocks/react`
+
+- Add new parameters to `useCreateThread`, `useCreateComment`, and
+  `useEditComment` to attach and update comment metadata.
+- Add `useEditCommentMetadata` hook to update only a commentʼs metadata.
+
+### `@liveblocks/react-ui`
+
+- Add `commentMetadata` prop to `Composer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- Add `commentMetadata` prop to `FloatingComposer` to attach and update comment
+  metadata.
+
+### `@liveblocks/react-tiptap`
+
+- Fix `Toolbar` not reflecting the editorʼs current state.
+
+### `@liveblocks/node`
+
+- Add new parameters to `createThread`, `createComment`, and `editComment` to
+  attach and update comment metadata.
+- Add `editCommentMetadata` method to update only a commentʼs metadata.
+- Add `commentMetadataUpdated` webhook event.
+
+## v3.12.1
+
+### `@liveblocks/client`
+
+- Improve an internal type definition.
+
+## v3.12.0
+
+### `@liveblocks/client`
+
+- Liveblocks branding will appear for free plans.
+- Added badgeLocation option for the client library to control the branding
+  location for free plans.
+
+### `@liveblocks/react`
+
+- Added badgeLocation option to LiveblocksProvider to control the branding
+  location for free plans.
+
+## v3.11.1
+
+### `@liveblocks/core`
+
+- Log full error details when WebSocket connections to Liveblocks are getting
+  blocked
+
+### `@liveblocks/yjs`
+
+- Fix an issue where a document incorrectly reported its sync state.
+
 ## v3.11.0
 
 ### `@liveblocks/react`

@@ -1,18 +1,28 @@
 import type { Json, JsonObject } from "../lib/Json";
-import type { Op } from "./Op";
+import type { ClientWireOp } from "./Op";
 
-export enum ClientMsgCode {
+export type ClientMsgCode = (typeof ClientMsgCode)[keyof typeof ClientMsgCode];
+export const ClientMsgCode = Object.freeze({
   // For Presence
-  UPDATE_PRESENCE = 100,
-  BROADCAST_EVENT = 103,
+  UPDATE_PRESENCE: 100,
+  BROADCAST_EVENT: 103,
 
   // For Storage
-  FETCH_STORAGE = 200,
-  UPDATE_STORAGE = 201,
+  FETCH_STORAGE: 200,
+  UPDATE_STORAGE: 201,
 
   // For Yjs support
-  FETCH_YDOC = 300,
-  UPDATE_YDOC = 301,
+  FETCH_YDOC: 300,
+  UPDATE_YDOC: 301,
+});
+
+export namespace ClientMsgCode {
+  export type UPDATE_PRESENCE = typeof ClientMsgCode.UPDATE_PRESENCE;
+  export type BROADCAST_EVENT = typeof ClientMsgCode.BROADCAST_EVENT;
+  export type FETCH_STORAGE = typeof ClientMsgCode.FETCH_STORAGE;
+  export type UPDATE_STORAGE = typeof ClientMsgCode.UPDATE_STORAGE;
+  export type FETCH_YDOC = typeof ClientMsgCode.FETCH_YDOC;
+  export type UPDATE_YDOC = typeof ClientMsgCode.UPDATE_YDOC;
 }
 
 /**
@@ -74,7 +84,7 @@ export type UpdatePresenceClientMsg<P extends JsonObject> =
 
 export type UpdateStorageClientMsg = {
   readonly type: ClientMsgCode.UPDATE_STORAGE;
-  readonly ops: Op[];
+  readonly ops: ClientWireOp[];
 };
 
 export type FetchStorageClientMsg = {

@@ -1,0 +1,114 @@
+---
+meta:
+  title:
+    "Get started with sending collaborative notifications to Slack using
+    Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to send collaborative notifications to Slack using using
+    Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow this guide to send
+[collaboration notifications](/docs/ready-made-features/notifications/concepts#Collaboration-notifications)
+to Slack using methods from
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node).
+
+## Quickstart
+
+<Steps>
+
+  <Step>
+      <StepTitle>Have your Liveblocks app ready</StepTitle>
+      <StepContent>
+
+        To receive collaboration webhook events, they need to be triggered
+        from your front-end application, for example when a new comment is
+        added to a thread in your Liveblocks app. If you haven't set up an
+        app yet, [get started with Comments](/docs/get-started/comments)
+        before continuing.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Install Liveblocks Node</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/node
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Follow our guide</StepTitle>
+    <StepContent>
+
+      Follow our step-by-step guide to learn set up Slack notifications.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-notify-users-about-unread-comments-outside-of-your-app">
+          How to notify users with Slack
+        </a>
+      </Button>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You've set up Slack notifications in your Next.js application.
+
+- [Webhooks API reference](/docs/platform/webhooks)
+- [Node.js API reference](/docs/api-reference/liveblocks-node)
+- [How to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost)
+
+---
+
+## Examples using Notifications
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Comments notifications",
+      slug: "https://liveblocks.io/examples/comments-emails",
+      image: "/images/examples/thumbnails/comments-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Custom notifications",
+      slug: "notifications-custom/nextjs-notifications-custom",
+      image: "/images/examples/thumbnails/custom-notifications.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notification settings",
+      slug: "notification-settings/nextjs-notification-settings",
+      image: "/images/examples/thumbnails/notification-settings.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Notion-like AI Editor",
+      slug: "notion-like-ai-editor/nextjs-notion-like-ai-editor",
+      image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -186,6 +186,22 @@ use them differently. Learn more about notification channels in our
 [email notifications](/docs/ready-made-features/notifications/email-notifications)
 page.
 
+## Data flow
+
+An unread inbox notification will trigger a notification based on the project
+notification settings and the user notification settings. Liveblocks evaluates
+both the project-level configuration and user preferences to determine whether
+to send a channel notification.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-flow.png"
+    alt="Notification flow"
+    width={672}
+    height={990}
+  />
+</Figure>
+
 ## Permissions
 
 ### Access tokens

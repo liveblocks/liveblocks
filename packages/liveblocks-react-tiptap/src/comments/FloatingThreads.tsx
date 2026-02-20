@@ -8,13 +8,13 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, DCM, DTM, ThreadData } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, Portal } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import {
   type ComponentType,
@@ -25,7 +25,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import { THREADS_PLUGIN_KEY } from "../types";
 
@@ -33,12 +32,14 @@ type FloatingThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
-export interface FloatingThreadsProps<M extends BaseMetadata = DM>
-  extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+export interface FloatingThreadsProps<
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   /**
    * The threads to display.
    */
-  threads: ThreadData<M>[];
+  threads: ThreadData<TM, CM>[];
 
   /**
    * Override the component's components.
@@ -106,12 +107,7 @@ export function FloatingThreads({
   if (!activeThread || !editor || activeThread.resolved) return null;
 
   return (
-    <FloatingThreadPortal
-      thread={activeThread}
-      editor={editor}
-      container={document.body}
-      {...props}
-    >
+    <FloatingThreadPortal thread={activeThread} editor={editor} {...props}>
       {activeThread && (
         <ThreadWrapper
           key={activeThread.id}
@@ -129,14 +125,12 @@ interface FloatingThreadPortalProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   thread: ThreadData;
   editor: Editor;
-  container: HTMLElement;
   children: ReactNode;
 }
 
 export const FLOATING_THREAD_COLLISION_PADDING = 10;
 
 function FloatingThreadPortal({
-  container,
   editor,
   thread,
   children,
@@ -200,26 +194,27 @@ function FloatingThreadPortal({
 
   useLayoutEffect(updateRef, [updateRef]);
 
-  return createPortal(
-    <div
-      ref={setFloating}
-      {...props}
-      style={{
-        ...style,
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-      className={cn(
-        "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-threads",
-        className
-      )}
-    >
-      {children}
-    </div>,
-    container
+  return (
+    <Portal asChild>
+      <div
+        ref={setFloating}
+        {...props}
+        style={{
+          ...style,
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+        className={cn(
+          "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-threads",
+          className
+        )}
+      >
+        {children}
+      </div>
+    </Portal>
   );
 }
 

@@ -5,10 +5,12 @@ import { Room } from "./_components/room";
 import { Chat } from "./_components/chat";
 import Link from "next/link";
 import { nanoid } from "@liveblocks/core";
+import { use } from "react";
 
-export default function Page({ params }: { params: { chatId: string } }) {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   return (
-    <Room chatId={params.chatId}>
+    <Room chatId={chatId}>
       <div className="flex justify-center items-center h-full w-full p-2.5 gap-2.5 overflow-hidden">
         <main className="grow flex gap-2.5 min-h-0 max-w-[1100px] max-h-[625px]">
           <div className="relative grow shadow rounded-xl overflow-hidden ring-1 ring-neutral-950/5 bg-white flex flex-col">
@@ -33,7 +35,7 @@ export default function Page({ params }: { params: { chatId: string } }) {
             </div>
           </div>
           <div className="grow-0 w-[340px] shadow rounded-lg overflow-hidden ring-1 ring-neutral-950/5 bg-white shrink-0 max-h-full">
-            <Chat chatId={params.chatId} />
+            <Chat chatId={chatId} />
           </div>
         </main>
       </div>

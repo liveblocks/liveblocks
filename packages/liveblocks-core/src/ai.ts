@@ -18,7 +18,6 @@ import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { TreePool } from "./lib/TreePool";
 import type { Brand, DistributiveOmit, ISODateString } from "./lib/utils";
 import { findLastIndex, raise, tryParseJson } from "./lib/utils";
-import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
   OptionalTupleUnless,
@@ -1060,9 +1059,8 @@ export function createAi(config: AiConfig): Ai {
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
           context.staticSessionInfoSig.set({
-            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-            userInfo:
-              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+            userId: token.uid,
+            userInfo: token.ui,
           });
         } else {
           context.staticSessionInfoSig.set({

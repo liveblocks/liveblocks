@@ -1,5 +1,5 @@
 import { useState, ReactNode } from "react";
-import * as Popover from "@radix-ui/react-popover";
+import { Popover } from "radix-ui";
 import { useAddReaction } from "@liveblocks/react/suspense";
 import { CommentData } from "@liveblocks/client";
 import { EmojiPicker } from "frimousse";
@@ -32,8 +32,8 @@ export function AddReaction({
             columns={10}
             className="isolate flex h-[368px] w-fit flex-col overflow-hidden rounded-xl bg-white shadow-xl"
           >
-            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-gray-100 px-2.5 py-2 text-sm outline-0 ring-blue-500 focus:ring" />
-            <EmojiPicker.Viewport className="outline-hidden relative flex-1">
+            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-gray-100 px-2.5 py-2 text-sm ring-blue-500 outline-0 focus:ring-3" />
+            <EmojiPicker.Viewport className="relative flex-1 outline-hidden">
               <EmojiPicker.Loading className="absolute inset-0 flex items-center justify-center text-sm text-gray-400">
                 Loading…
               </EmojiPicker.Loading>
@@ -41,11 +41,11 @@ export function AddReaction({
                 No emoji found.
               </EmojiPicker.Empty>
               <EmojiPicker.List
-                className="select-none pb-1"
+                className="pb-1 select-none"
                 components={{
                   CategoryHeader: ({ category, ...props }) => (
                     <div
-                      className="bg-white px-3 pb-1.5 pt-3 text-xs font-medium text-gray-600"
+                      className="bg-white px-3 pt-3 pb-1.5 text-xs font-medium text-gray-600"
                       {...props}
                     >
                       {category.label}
@@ -58,7 +58,7 @@ export function AddReaction({
                   ),
                   Emoji: ({ emoji, ...props }) => (
                     <button
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-base data-[active]:bg-gray-100"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-base data-active:bg-gray-100"
                       {...props}
                     >
                       {emoji.emoji}

@@ -4,10 +4,19 @@ declare global {
     UserMeta: {
       id: string;
       info: {
-        // Example properties, for useSelf, useUser, useOthers, etc.
         name?: string;
         avatar?: string;
       };
+    };
+
+    // Custom metadata set on threads
+    ThreadMetadata: {
+      assignee?: string;
+    };
+
+    // Custom metadata set on comments
+    CommentMetadata: {
+      userAgent: string;
     };
   }
 }

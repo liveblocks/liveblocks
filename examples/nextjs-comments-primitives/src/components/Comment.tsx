@@ -13,10 +13,7 @@ import { Button, LinkButton } from "./Button";
 import { AddReaction } from "./AddReaction";
 import { Reactions } from "./Reactions";
 import { Icon } from "@liveblocks/react-ui";
-
-/**
- * Custom comment component.
- */
+import { Tooltip } from "radix-ui";
 
 interface CommentProps extends ComponentProps<"div"> {
   comment: CommentData;
@@ -41,6 +38,9 @@ function OpenAttachmentButton({ attachment }: OpenAttachmentButtonProps) {
   );
 }
 
+/**
+ * Custom comment component.
+ */
 export function Comment({ comment, className, ...props }: CommentProps) {
   if (!comment.body) {
     return null;
@@ -65,16 +65,31 @@ export function Comment({ comment, className, ...props }: CommentProps) {
                   className="truncate font-medium"
                 />
               </Suspense>
-              <Timestamp
-                date={comment.createdAt}
-                className="truncate text-sm text-gray-500"
-              />
+              <div className="flex items-center gap-1.5">
+                <Timestamp
+                  date={comment.createdAt}
+                  className="truncate text-sm text-gray-500"
+                />
+                <Tooltip.Root>
+                  <Tooltip.Trigger className="h-4 w-4 cursor-help">
+                    <Icon.Code className="h-4 w-4 text-gray-500 hover:text-gray-700 focus:text-gray-700" />
+                  </Tooltip.Trigger>
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      sideOffset={8}
+                      className="max-w-[300px] rounded-lg bg-white px-2 py-1.5 text-sm text-gray-600 shadow-xl"
+                    >
+                      {comment.metadata.userAgent}
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                </Tooltip.Root>
+              </div>
             </div>
           </div>
         </div>
         <div>
           <AddReaction comment={comment}>
-            <Button variant="ghost" className="w-9 !p-0">
+            <Button variant="ghost" className="p-0! w-9">
               <Icon.Emoji />
             </Button>
           </AddReaction>

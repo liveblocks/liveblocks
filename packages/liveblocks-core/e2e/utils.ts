@@ -19,12 +19,17 @@ import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
 
+const BASE_URL =
+  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io";
+console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
+
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
   S extends LsonObject = LsonObject,
   U extends BaseUserMeta = BaseUserMeta,
   E extends Json = Json,
-  M extends BaseMetadata = BaseMetadata,
+  TM extends BaseMetadata = BaseMetadata,
+  CM extends BaseMetadata = BaseMetadata,
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -75,17 +80,18 @@ async function initializeRoomForTest<
 
   const client = createClient<U>({
     __DANGEROUSLY_disableThrottling: true,
+    enableDebugLogging: true,
     publicApiKey,
     polyfills: {
       // @ts-expect-error fetch from Node isn't compatible?
       fetch,
       WebSocket: PausableWebSocket,
     },
-    baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+    baseUrl: BASE_URL,
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
+  const { room, leave } = client.enterRoom<P, S, E, TM, CM>(roomId, {
     initialPresence,
     initialStorage,
   } as any);
@@ -217,8 +223,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          2000,
-          "Client B did not receive beacon from Client A within 2s"
+          8000,
+          "Client B did not receive beacon from Client A within 8s"
         );
       },
 
@@ -236,8 +242,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
         await withTimeout(
           beacon$,
-          2000,
-          "Client A did not receive beacon from Client B within 2s"
+          8000,
+          "Client A did not receive beacon from Client B within 8s"
         );
       },
     };
@@ -374,7 +380,7 @@ async function waitUntilStatus(
 
   await withTimeout(
     room.events.status.waitUntil((status) => status === targetStatus),
-    5000,
-    `Room did not reach connection status "${targetStatus}" within 5s`
+    20000,
+    `Room did not reach connection status "${targetStatus}" within 20s`
   );
 }

@@ -267,3 +267,30 @@ export function findLastIndex<T>(
 export function iso(s: string): ISODateString {
   return new Date(s).toISOString() as ISODateString;
 }
+
+export function partition<T, N extends T>(
+  iterable: Iterable<T>,
+  predicate: (item: T, index: number) => item is N
+): [N[], Exclude<T, N>[]];
+export function partition<T>(
+  iterable: Iterable<T>,
+  predicate: (item: T, index: number) => boolean
+): [T[], T[]];
+export function partition<T>(
+  iterable: Iterable<T>,
+  predicate: (item: T, index: number) => boolean
+): [T[], T[]] {
+  const good = [];
+  const bad = [];
+
+  let index = 0;
+  for (const item of iterable) {
+    if (predicate(item, index++)) {
+      good.push(item);
+    } else {
+      bad.push(item);
+    }
+  }
+
+  return [good, bad];
+}

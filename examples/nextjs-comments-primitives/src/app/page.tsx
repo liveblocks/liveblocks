@@ -33,7 +33,11 @@ function Example() {
       ))}
       <Composer
         onComposerSubmit={({ body, attachments }) => {
-          createThread({ body, attachments });
+          createThread({
+            body,
+            attachments,
+            commentMetadata: { userAgent: navigator.userAgent },
+          });
         }}
         className="rounded-xl bg-white shadow-md"
       />

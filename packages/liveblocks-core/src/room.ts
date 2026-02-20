@@ -1,5 +1,6 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
+import { injectBrandBadge } from "./brand";
 import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
@@ -16,7 +17,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
@@ -30,12 +31,13 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
-  raise,
+  partition,
   tryParseJson,
 } from "./lib/utils";
 import type {
@@ -43,13 +45,9 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
+import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type {
-  ClientMsg,
-  UpdateStorageClientMsg,
-  UpdateYDocClientMsg,
-} from "./protocol/ClientMsg";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -67,13 +65,11 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type { MentionData } from "./protocol/MentionData";
-import type { Op } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
+import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
+import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
-  InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -82,6 +78,12 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+} from "./protocol/StorageNode";
+import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -96,8 +98,8 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
 import type {
+  BadgeLocation,
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
@@ -467,12 +469,12 @@ type SubscribeFn<
   (type: "comments", listener: Callback<CommentsEventServerMsg>): () => void;
 };
 
-export type GetThreadsOptions<M extends BaseMetadata> = {
+export type GetThreadsOptions<TM extends BaseMetadata> = {
   cursor?: string;
   query?: {
     resolved?: boolean;
     subscribed?: boolean;
-    metadata?: Partial<QueryMetadata<M>>;
+    metadata?: Partial<QueryMetadata<TM>>;
   };
 };
 
@@ -512,7 +514,8 @@ export type Room<
   S extends LsonObject = DS,
   U extends BaseUserMeta = DU,
   E extends Json = DE,
-  M extends BaseMetadata = DM,
+  TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
 > = {
   /**
    * @private
@@ -764,8 +767,8 @@ export type Room<
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
-    threads: ThreadData<M>[];
+  getThreads(options?: GetThreadsOptions<TM>): Promise<{
+    threads: ThreadData<TM, CM>[];
     inboxNotifications: InboxNotificationData[];
     subscriptions: SubscriptionData[];
     requestedAt: Date;
@@ -783,7 +786,7 @@ export type Room<
    */
   getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
-      updated: ThreadData<M>[];
+      updated: ThreadData<TM, CM>[];
       deleted: ThreadDeleteInfo[];
     };
     inboxNotifications: {
@@ -805,7 +808,7 @@ export type Room<
    * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
-    thread?: ThreadData<M>;
+    thread?: ThreadData<TM, CM>;
     inboxNotification?: InboxNotificationData;
     subscription?: SubscriptionData;
   }>;
@@ -824,10 +827,11 @@ export type Room<
   createThread(options: {
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
     body: CommentBody;
+    commentMetadata?: CM;
     attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
+  }): Promise<ThreadData<TM, CM>>;
 
   /**
    * Deletes a thread.
@@ -845,9 +849,22 @@ export type Room<
    * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
    */
   editThreadMetadata(options: {
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
-  }): Promise<M>;
+  }): Promise<TM>;
+
+  /**
+   * Edits a comment's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editCommentMetadata({ threadId: "th_xxx", commentId: "cm_xxx", metadata: { tag: "important", externalId: 1234 } })
+   */
+  editCommentMetadata(options: {
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }): Promise<CM>;
 
   /**
    * Marks a thread as resolved.
@@ -897,8 +914,9 @@ export type Room<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Edits a comment.
@@ -917,8 +935,9 @@ export type Room<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
-  }): Promise<CommentData>;
+  }): Promise<CommentData<CM>>;
 
   /**
    * Deletes a comment.
@@ -1054,7 +1073,7 @@ export interface SyncSource {
 export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
-  undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
+  undoStack: readonly (readonly Readonly<Stackframe<JsonObject>>[])[];
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
@@ -1102,25 +1121,17 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-//
-// The maximum message size on websockets is 1MB. If a message larger than this
-// threshold is attempted to be sent, the strategy picked via the
-// `largeMessageStrategy` option will be used.
-//
-// In practice, we'll set threshold to slightly less than 1 MB.
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
-
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
 }
 
-type HistoryOp<P extends JsonObject> =
-  | Op
-  | {
-      readonly type: "presence";
-      readonly data: P;
-    };
+type Stackframe<P extends JsonObject> = Op | PresenceStackframe<P>;
+
+type PresenceStackframe<P extends JsonObject> = {
+  readonly type: "presence";
+  readonly data: P;
+};
 
 type IdFactory = () => string;
 
@@ -1133,6 +1144,7 @@ export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
+  readonly meta: JsonObject;
 };
 
 type RoomState<
@@ -1158,7 +1170,7 @@ type RoomState<
       | { type: "full"; data: P }
       | null;
     messages: ClientMsg<P, E>[];
-    storageOperations: Op[];
+    storageOperations: ClientWireOp[];
   };
 
   //
@@ -1182,22 +1194,22 @@ type RoomState<
   pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
-  readonly undoStack: HistoryOp<P>[][];
-  readonly redoStack: HistoryOp<P>[][];
+  readonly undoStack: Stackframe<P>[][];
+  readonly redoStack: Stackframe<P>[][];
 
   /**
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | Deque<HistoryOp<P>>;
+  pausedHistory: null | Deque<Stackframe<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
    * wire after the batch is ended.
    */
   activeBatch: {
-    ops: Op[];
-    reverseOps: Deque<HistoryOp<P>>;
+    ops: ClientWireOp[];
+    reverseOps: Deque<Stackframe<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1207,7 +1219,7 @@ type RoomState<
 
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
-  readonly unacknowledgedOps: Map<string, Op>;
+  readonly unacknowledgedOps: Map<string, ClientWireOp>;
 };
 
 export type Polyfills = {
@@ -1251,29 +1263,31 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
-export type LargeMessageStrategy =
-  | "default"
-  | "split"
-  | "experimental-fallback-to-http";
-
 /** @internal */
-export type RoomConfig<M extends BaseMetadata> = {
+export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   delegates: RoomDelegates;
 
   roomId: string;
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
-  largeMessageStrategy?: LargeMessageStrategy;
 
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
+   * Storage engine have native support for streaming. This flag will be
+   * removed in a future version, but will continue to work for existing engine
+   * v1 rooms for now.
+   */
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
 
-  roomHttpClient: RoomHttpApi<M>;
+  roomHttpClient: RoomHttpApi<TM, CM>;
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  badgeLocation?: BadgeLocation;
 
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
@@ -1332,6 +1346,24 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+function makeNodeMapBuffer() {
+  let map: NodeMap = new Map();
+  return {
+    /** Append a "page" of nodes to the current NodeMap buffer. */
+    append(chunk: NodeStream) {
+      for (const [id, node] of chunk) {
+        map.set(id, node);
+      }
+    },
+    /** Return the contents of the current NodeMap buffer, and create a fresh new one. */
+    take(): NodeMap {
+      const result = map;
+      map = new Map();
+      return result;
+    },
+  };
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1341,11 +1373,12 @@ export function createRoom<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   options: { initialPresence: P; initialStorage: S },
-  config: RoomConfig<M>
-): Room<P, S, U, E, M> {
+  config: RoomConfig<TM, CM>
+): Room<P, S, U, E, TM, CM> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -1422,8 +1455,16 @@ export function createRoom<
     pausedHistory: null,
 
     activeBatch: null,
-    unacknowledgedOps: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
+
+  // Accumulates nodes as initial storage arrives in chunks via
+  // STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // done: true), the complete map is passed to processInitialStorage().
+  const nodeMapBuffer = makeNodeMapBuffer();
+
+  // Tracks timing of storage fetch for debug logging
+  const stopwatch = config.enableDebugLogging ? makeStopWatch() : undefined;
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
@@ -1437,9 +1478,8 @@ export function createRoom<
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
           context.staticSessionInfoSig.set({
-            userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
-            userInfo:
-              token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
+            userId: token.uid,
+            userInfo: token.ui,
           });
         } else {
           context.staticSessionInfoSig.set({
@@ -1535,7 +1575,7 @@ export function createRoom<
   });
 
   function onDispatch(
-    ops: Op[],
+    ops: ClientWireOp[],
     reverse: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ): void {
@@ -1632,135 +1672,8 @@ export function createRoom<
     });
   }
 
-  /**
-   * Split a single large UPDATE_STORAGE message into smaller chunks, by
-   * splitting the ops list recursively in half.
-   */
-  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
-    const { ops, ...rest } = msg;
-    if (ops.length < 2) {
-      throw new Error("Cannot split ops into smaller chunks");
-    }
-
-    const mid = Math.floor(ops.length / 2);
-    const firstHalf = ops.slice(0, mid);
-    const secondHalf = ops.slice(mid);
-
-    for (const halfOps of [firstHalf, secondHalf]) {
-      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = stringify([half]);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkOps(half);
-      }
-    }
-  }
-
-  /**
-   * Split the message array in half (two chunks), and try to send each chunk
-   * separately. If the chunk is still too big, repeat the process. If a chunk
-   * can no longer be split up (i.e. is 1 message), then error.
-   */
-  function* chunkMessages(
-    messages: ClientMsg<P, E>[]
-  ): IterableIterator<string> {
-    if (messages.length < 2) {
-      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
-        yield* chunkOps(messages[0]);
-        return;
-      } else {
-        throw new Error(
-          "Cannot split into chunks smaller than the allowed message size"
-        );
-      }
-    }
-
-    const mid = Math.floor(messages.length / 2);
-    const firstHalf = messages.slice(0, mid);
-    const secondHalf = messages.slice(mid);
-
-    for (const half of [firstHalf, secondHalf]) {
-      const text = stringify(half);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkMessages(half);
-      }
-    }
-  }
-
-  function isTooBigForWebSocket(text: string): boolean {
-    // The theoretical worst case is that each character in the string is
-    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
-    // so we can spare ourselves the TextEncoder() measurement overhead with
-    // this heuristic.
-    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
-      return false;
-    }
-
-    // Otherwise we need to measure to be sure
-    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
-  }
-
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const strategy = config.largeMessageStrategy ?? "default";
-
-    const text = stringify(messages);
-    if (!isTooBigForWebSocket(text)) {
-      return managedSocket.send(text); // Happy path
-    }
-
-    // If message is too big for WebSockets, we need to follow a strategy
-    switch (strategy) {
-      case "default": {
-        const type = "LARGE_MESSAGE_ERROR";
-        const err = new LiveblocksError("Message is too large for websockets", {
-          type,
-        });
-        const didNotify = config.errorEventSource.notify(err);
-        if (!didNotify) {
-          console.error(
-            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
-          );
-        }
-        return;
-      }
-
-      case "split": {
-        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
-        for (const chunk of chunkMessages(messages)) {
-          managedSocket.send(chunk);
-        }
-        return;
-      }
-
-      // NOTE: This strategy is experimental as it will not work in all situations.
-      // It should only be used for broadcasting, presence updates, but isn't suitable
-      // for Storage or Yjs updates yet (because through this channel the server does
-      // not respond with acks or rejections, causing the client's reported status to
-      // be stuck in "synchronizing" forever).
-      case "experimental-fallback-to-http": {
-        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
-        const nonce =
-          context.dynamicSessionInfoSig.get()?.nonce ??
-          raise("Session is not authorized to send message over HTTP");
-
-        void httpClient
-          .sendMessagesOverHTTP<P, E>({ roomId, nonce, messages })
-          .then((resp) => {
-            if (!resp.ok && resp.status === 403) {
-              managedSocket.reconnect();
-            }
-          })
-          .catch((err) => {
-            console.error(
-              `Failed to deliver message over HTTP: ${String(err)}`
-            );
-          });
-        return;
-      }
-    }
+    managedSocket.send(stringify(messages));
   }
 
   const self = DerivedSignal.from(
@@ -1798,17 +1711,27 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
-  ) {
-    if (message.items.length === 0) {
+  function createOrUpdateRootFromMessage(nodes: NodeMap) {
+    if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items);
+      const currentItems: NodeMap = new Map();
+      for (const [id, crdt] of context.pool.nodes) {
+        currentItems.set(id, crdt._serialize());
+      }
+
+      // Get operations that represent the diff between 2 states.
+      const ops = getTreesDiffOperations(currentItems, nodes);
+
+      const result = applyRemoteOps(ops);
+      notify(result.updates);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, context.pool);
+      context.root = LiveObject._fromItems<S>(
+        nodes as NodeStream,
+        context.pool
+      );
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1832,39 +1755,21 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
-    }
-
-    // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
-
-    const result = applyOps(ops, false);
-
-    notify(result.updates);
-  }
-
-  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(frames: Stackframe<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(historyOps);
+    context.undoStack.push(frames);
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOp<P>[]) {
+  function addToUndoStack(frames: Stackframe<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.pushLeft(historyOps);
+      context.pausedHistory.pushLeft(frames);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(frames);
     }
   }
 
@@ -1908,102 +1813,132 @@ export function createRoom<
     );
   }
 
-  function applyOps<O extends HistoryOp<P>>(
-    rawOps: readonly O[],
+  function applyLocalOps(frames: readonly Stackframe<P>[]): {
+    opsToEmit: ClientWireOp[]; // Ops to send over the wire afterwards
+    reverse: Stackframe<P>[]; // Reverse ops to add to the undo stack aftwards
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    const [pframes, ops] = partition(
+      frames,
+      (f): f is PresenceStackframe<P> => f.type === "presence"
+    );
+
+    // Ensure all local ops have opIds assigned before applying them
+    const opsWithOpIds = ops.map((op: Op) =>
+      op.opId === undefined
+        ? { ...op, opId: context.pool.generateOpId() }
+        : (op as ClientWireOp)
+    );
+
+    const { reverse, updates } = applyOps(
+      pframes,
+      opsWithOpIds,
+      /* isLocal */ true
+    );
+    return { opsToEmit: opsWithOpIds, reverse, updates };
+  }
+
+  function applyRemoteOps(ops: readonly ServerWireOp[]): {
+    // Updates to notify about afterwards
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
+  } {
+    return applyOps([], ops, /* isLocal */ false);
+  }
+
+  function applyOps(
+    pframes: readonly PresenceStackframe<P>[],
+    ops: readonly Op[],
     isLocal: boolean
   ): {
-    // Input Ops can get opIds assigned during application.
-    ops: O[];
-    reverse: O[];
+    reverse: Stackframe<P>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const output = {
-      reverse: new Deque<O>(),
+      reverse: new Deque<Stackframe<P>>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
 
-    const createdNodeIds = new Set<string>();
+    for (const pf of pframes) {
+      const reverse = {
+        type: "presence" as const,
+        data: {} as P,
+      };
 
-    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
-    // that right now first.
-    const ops = rawOps.map((op) => {
-      if (op.type !== "presence" && !op.opId) {
-        return { ...op, opId: context.pool.generateOpId() };
-      } else {
-        return op;
+      for (const key in pf.data) {
+        reverse.data[key] = context.myPresence.get()[key];
       }
-    });
 
-    for (const op of ops) {
-      if (op.type === "presence") {
-        const reverse = {
-          type: "presence" as const,
-          data: {} as P,
-        };
+      context.myPresence.patch(pf.data);
 
-        for (const key in op.data) {
-          reverse.data[key] = context.myPresence.get()[key];
-        }
-
-        context.myPresence.patch(op.data);
-
-        if (context.buffer.presenceUpdates === null) {
-          context.buffer.presenceUpdates = { type: "partial", data: op.data };
-        } else {
-          // Merge the new fields with whatever is already queued up (doesn't
-          // matter whether its a partial or full update)
-          for (const key in op.data) {
-            context.buffer.presenceUpdates.data[key] = op.data[key];
-          }
-        }
-
-        output.reverse.pushLeft(reverse as O);
-        output.presence = true;
+      if (context.buffer.presenceUpdates === null) {
+        context.buffer.presenceUpdates = { type: "partial", data: pf.data };
       } else {
-        let source: OpSource;
+        // Merge the new fields with whatever is already queued up (doesn't
+        // matter whether its a partial or full update)
+        for (const key in pf.data) {
+          context.buffer.presenceUpdates.data[key] = pf.data[key];
+        }
+      }
 
-        if (isLocal) {
-          source = OpSource.UNDOREDO_RECONNECT;
-        } else {
-          const opId = nn(op.opId);
-          const deleted = context.unacknowledgedOps.delete(opId);
-          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+      output.reverse.pushLeft(reverse);
+      output.presence = true;
+    }
+
+    const createdNodeIds = new Set<string>();
+    for (const op of ops) {
+      let source: OpSource;
+
+      if (isLocal) {
+        source = OpSource.LOCAL;
+      } else if (op.opId !== undefined) {
+        context.unacknowledgedOps.delete(op.opId);
+        source = OpSource.OURS;
+      } else {
+        // Remotely generated Ops (and fix Ops as a special case of that)
+        // don't have opId anymore.
+        source = OpSource.THEIRS;
+      }
+
+      const applyOpResult = applyOp(op, source);
+      if (applyOpResult.modified) {
+        const nodeId = applyOpResult.modified.node._id;
+
+        // If the modified node was created in the same batch, we don't want
+        // to notify storage updates for it (children of newly created nodes
+        // shouldn't trigger separate updates).
+        if (!(nodeId && createdNodeIds.has(nodeId))) {
+          output.storageUpdates.set(
+            nn(applyOpResult.modified.node._id),
+            mergeStorageUpdates(
+              output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
+              applyOpResult.modified
+            )
+          );
+          output.reverse.pushLeft(applyOpResult.reverse);
         }
 
-        const applyOpResult = applyOp(op, source);
-        if (applyOpResult.modified) {
-          const nodeId = applyOpResult.modified.node._id;
-
-          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
-          // storage updates for the children.
-          if (!(nodeId && createdNodeIds.has(nodeId))) {
-            output.storageUpdates.set(
-              nn(applyOpResult.modified.node._id),
-              mergeStorageUpdates(
-                output.storageUpdates.get(nn(applyOpResult.modified.node._id)),
-                applyOpResult.modified
-              )
-            );
-            output.reverse.pushLeft(applyOpResult.reverse as O[]);
-          }
-
-          if (
-            op.type === OpCode.CREATE_LIST ||
-            op.type === OpCode.CREATE_MAP ||
-            op.type === OpCode.CREATE_OBJECT
-          ) {
-            createdNodeIds.add(nn(op.id));
-          }
+        if (
+          op.type === OpCode.CREATE_LIST ||
+          op.type === OpCode.CREATE_MAP ||
+          op.type === OpCode.CREATE_OBJECT
+        ) {
+          createdNodeIds.add(op.id);
         }
       }
     }
 
     return {
-      ops,
       reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
@@ -2013,9 +1948,8 @@ export function createRoom<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
-    // Explicit case to handle incoming "AckOp"s, which are supposed to be
-    // no-ops.
-    if (isAckOp(op)) {
+    // Explicit case to handle ignored Ops
+    if (isIgnoredOp(op)) {
       return { modified: false };
     }
 
@@ -2028,7 +1962,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.LOCAL);
       }
 
       case OpCode.SET_PARENT_KEY: {
@@ -2164,9 +2098,15 @@ export function createRoom<
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
+      meta: message.meta,
     });
     context.idFactory = makeIdFactory(message.actor);
     notifySelfChanged();
+
+    // Inject brand badge if meta.showBrand is true
+    if (message.meta.showBrand === true) {
+      injectBrandBadge(config.badgeLocation ?? "bottom-right");
+    }
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
@@ -2228,9 +2168,7 @@ export function createRoom<
     if (!isJsonObject(data)) {
       return null;
     }
-
     return data as ServerMsg<P, U, E>;
-    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
@@ -2244,24 +2182,20 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(offlineOps: Map<string, Op>) {
-    if (offlineOps.size === 0) {
+  function applyAndSendOfflineOps(unackedOps: Map<string, ClientWireOp>) {
+    if (unackedOps.size === 0) {
       return;
     }
 
     const messages: ClientMsg<P, E>[] = [];
-
-    const inOps = Array.from(offlineOps.values());
-
-    const result = applyOps(inOps, true);
-
+    const inOps = Array.from(unackedOps.values());
+    const result = applyLocalOps(inOps);
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops: result.ops,
+      ops: result.opsToEmit,
     });
 
     notify(result.updates);
-
     sendMessages(messages);
   }
 
@@ -2336,15 +2270,32 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message);
+        case ServerMsgCode.STORAGE_CHUNK:
+          stopwatch?.lap();
+          nodeMapBuffer.append(compactNodesToNodeStream(message.nodes));
+          break;
+
+        case ServerMsgCode.STORAGE_STREAM_END: {
+          const timing = stopwatch?.stop();
+          if (timing) {
+            const ms = (v: number) => `${v.toFixed(1)}ms`;
+            const rest = timing.laps.slice(1);
+            console.warn(
+              `Storage chunk arrival: ${[
+                `total=${ms(timing.total)}`,
+                `first=${ms(timing.laps[0])}`,
+                `rest.n=${rest.length}`,
+                `rest.avg=${ms(rest.reduce((a, b) => a + b, 0) / rest.length)}`,
+                `rest.max=${ms(rest.reduce((a, b) => Math.max(a, b), 0))}`,
+              ].join(", ")}`
+            );
+          }
+          processInitialStorage(nodeMapBuffer.take());
           break;
         }
-        // Write event
+
         case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = applyOps(message.ops, false);
+          const applyResult = applyRemoteOps(message.ops);
           for (const [key, value] of applyResult.updates.storageUpdates) {
             updates.storageUpdates.set(
               key,
@@ -2381,11 +2332,13 @@ export function createRoom<
         case ServerMsgCode.COMMENT_REACTION_REMOVED:
         case ServerMsgCode.COMMENT_CREATED:
         case ServerMsgCode.COMMENT_EDITED:
-        case ServerMsgCode.COMMENT_DELETED: {
+        case ServerMsgCode.COMMENT_DELETED:
+        case ServerMsgCode.COMMENT_METADATA_UPDATED: {
           eventHub.comments.notify(message);
           break;
         }
 
+        case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
           break;
@@ -2399,7 +2352,7 @@ export function createRoom<
     const storageOps = context.buffer.storageOperations;
     if (storageOps.length > 0) {
       for (const op of storageOps) {
-        context.unacknowledgedOps.set(nn(op.opId), op);
+        context.unacknowledgedOps.set(op.opId, op);
       }
       notifyStorageStatus();
     }
@@ -2504,7 +2457,11 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  function dispatchOps(ops: Op[]) {
+  /**
+   * Schedule Ops to be sent to the server (now or soon). All ops should be
+   * "wire-ready" (have an opId), once dispatched there is no going back.
+   */
+  function dispatchOps(ops: ClientWireOp[]) {
     const { storageOperations } = context.buffer;
     for (const op of ops) {
       storageOperations.push(op);
@@ -2515,10 +2472,10 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: InitialDocumentStateServerMsg) {
+  function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message);
-    applyAndSendOps(unacknowledgedOps);
+    createOrUpdateRootFromMessage(nodes);
+    applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
@@ -2527,8 +2484,10 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
+    const nodes = new Map<string, SerializedCrdt>(
+      await httpClient.streamStorage({ roomId })
+    );
+    processInitialStorage(nodes);
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2542,6 +2501,8 @@ export function createRoom<
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      nodeMapBuffer.take(); // Reset any partial state from previous fetch
+      stopwatch?.start();
     }
 
     if (options.flush) {
@@ -2625,22 +2586,20 @@ export function createRoom<
     if (context.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyOps = context.undoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.undoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2650,22 +2609,20 @@ export function createRoom<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyOps = context.redoStack.pop();
-    if (historyOps === undefined) {
+    const frames = context.redoStack.pop();
+    if (frames === undefined) {
       return;
     }
 
     context.pausedHistory = null;
-    const result = applyOps(historyOps, true);
+    const result = applyLocalOps(frames);
 
     notify(result.updates);
     context.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of result.ops) {
-      if (op.type !== "presence") {
-        context.buffer.storageOperations.push(op);
-      }
+    for (const op of result.opsToEmit) {
+      context.buffer.storageOperations.push(op);
     }
     flushNowOrSoon();
   }
@@ -2730,10 +2687,10 @@ export function createRoom<
   }
 
   function resumeHistory() {
-    const historyOps = context.pausedHistory;
+    const frames = context.pausedHistory;
     context.pausedHistory = null;
-    if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(Array.from(historyOps));
+    if (frames !== null && frames.length > 0) {
+      _addToRealUndoStack(Array.from(frames));
     }
   }
 
@@ -2831,7 +2788,7 @@ export function createRoom<
     });
   }
 
-  async function getThreads(options?: GetThreadsOptions<M>) {
+  async function getThreads(options?: GetThreadsOptions<TM>) {
     return httpClient.getThreads({
       roomId,
       query: options?.query,
@@ -2843,11 +2800,27 @@ export function createRoom<
     return httpClient.getThread({ roomId, threadId });
   }
 
+  // TODO 4.0: Update API to be similar to `@liveblocks/node`'s `createThread` method.
+  // Instead of a flat list of options (`commentId`, `metadata`, `body`, `commentMetadata`, etc.),
+  // we could move to using a nested `comment` object to differentiate between thread and comment properties.
+  //
+  // {
+  //   roomId: string;
+  //   threadId?: string;
+  //   metadata: TM | undefined;
+  //   comment: {
+  //     id?: string;
+  //     metadata: CM | undefined;
+  //     body: CommentBody;
+  //     attachmentIds?: string[];
+  //   };
+  // }
   async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
-    metadata: M | undefined;
+    metadata: TM | undefined;
+    commentMetadata: CM | undefined;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
@@ -2857,6 +2830,7 @@ export function createRoom<
       commentId: options.commentId,
       metadata: options.metadata,
       body: options.body,
+      commentMetadata: options.commentMetadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -2870,10 +2844,28 @@ export function createRoom<
     threadId,
   }: {
     roomId: string;
-    metadata: Patchable<M>;
+    metadata: Patchable<TM>;
     threadId: string;
   }) {
     return httpClient.editThreadMetadata({ roomId, threadId, metadata });
+  }
+
+  async function editCommentMetadata({
+    threadId,
+    commentId,
+    metadata,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+    metadata: Patchable<CM>;
+  }) {
+    return httpClient.editCommentMetadata({
+      roomId,
+      threadId,
+      commentId,
+      metadata,
+    });
   }
 
   async function markThreadAsResolved(threadId: string) {
@@ -2899,6 +2891,7 @@ export function createRoom<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    metadata?: CM;
     attachmentIds?: string[];
   }) {
     return httpClient.createComment({
@@ -2906,6 +2899,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -2914,6 +2908,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    metadata?: Patchable<CM>;
     attachmentIds?: string[];
   }) {
     return httpClient.editComment({
@@ -2921,6 +2916,7 @@ export function createRoom<
       threadId: options.threadId,
       commentId: options.commentId,
       body: options.body,
+      metadata: options.metadata,
       attachmentIds: options.attachmentIds,
     });
   }
@@ -3158,6 +3154,7 @@ export function createRoom<
       unsubscribeFromThread,
       createComment,
       editComment,
+      editCommentMetadata,
       deleteComment,
       addReaction,
       removeReaction,
@@ -3190,10 +3187,11 @@ function makeClassicSubscribeFn<
   S extends LsonObject,
   U extends BaseUserMeta,
   E extends Json,
-  M extends BaseMetadata,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
 >(
   roomId: string,
-  events: Room<P, S, U, E, M>["events"],
+  events: Room<P, S, U, E, TM, CM>["events"],
   errorEvents: EventSource<LiveblocksError>
 ): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
@@ -3355,7 +3353,8 @@ export function makeAuthDelegateForRoom(
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
   baseUrl: string,
-  WebSocketPolyfill?: IWebSocket
+  WebSocketPolyfill?: IWebSocket,
+  engine?: 1 | 2
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
@@ -3370,7 +3369,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
@@ -3380,6 +3379,9 @@ export function makeCreateSocketDelegateForRoom(
       return assertNever(authValue, "Unhandled case");
     }
     url.searchParams.set("version", PKG_VERSION || "dev");
+    if (engine !== undefined) {
+      url.searchParams.set("e", String(engine));
+    }
     return new ws(url.toString());
   };
 }

@@ -68,7 +68,6 @@ import {
   withReact,
 } from "slate-react";
 
-import { useLiveblocksUiConfig } from "../../config";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -246,7 +245,6 @@ function ComposerEditorMentionSuggestionsWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const isOpen =
     isFocused && mentionDraft?.range !== undefined && mentions !== undefined;
@@ -330,7 +328,6 @@ function ComposerEditorMentionSuggestionsWrapper({
         >
           <Portal
             ref={setFloating}
-            container={portalContainer}
             style={{
               position: strategy,
               top: 0,
@@ -364,7 +361,6 @@ function ComposerEditorFloatingToolbarWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
   const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
@@ -439,7 +435,6 @@ function ComposerEditorFloatingToolbarWrapper({
         >
           <Portal
             ref={setFloating}
-            container={portalContainer}
             style={{
               position: strategy,
               top: 0,
@@ -1139,9 +1134,17 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
     // Manually focus the editor when `autoFocus` is true
     useLayoutEffect(() => {
-      if (autoFocus) {
-        focus();
+      if (!autoFocus) {
+        return;
       }
+
+      // `focus` needs to be synchronous to ensure its errors can be caught
+      // but the triggering of `focus` on mount itself can be asynchronous.
+      // This brings back the same timing behavior as Slate's `ReactEditor.focus`
+      // (which uses `setTimeout` internally) while still allowing us to catch errors.
+      const timeout = setTimeout(() => focus(), 0);
+
+      return () => clearTimeout(timeout);
     }, [autoFocus, editor, focus]);
 
     // Manually add a selection in the editor if the selection
@@ -1384,6 +1387,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const focus = useCallback(
       (resetSelection = true) => {
         try {
+          // Slate's `ReactEditor.focus` method can use `setTimeout` internally
+          // which prevents us from catching errors, so this is a reimplementation.
+          // https://github.com/ianstormtaylor/slate/blob/main/packages/slate-dom/src/plugin/dom-editor.ts
           if (!ReactEditor.isFocused(editor)) {
             SlateTransforms.select(
               editor,
@@ -1391,7 +1397,20 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 ? SlateEditor.end(editor, [])
                 : editor.selection
             );
-            ReactEditor.focus(editor);
+
+            const element = ReactEditor.toDOMNode(editor, editor);
+
+            if (editor.selection) {
+              const domSelection = window.getSelection();
+              const domRange = getDOMRange(editor, editor.selection);
+
+              if (domRange) {
+                domSelection?.removeAllRanges();
+                domSelection?.addRange(domRange);
+              }
+            }
+
+            element.focus({ preventScroll: true });
           }
         } catch {
           // Slate's DOM-specific methods will throw if the editor's DOM

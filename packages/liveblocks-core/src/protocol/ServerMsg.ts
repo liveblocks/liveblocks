@@ -1,36 +1,68 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Op } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { ServerWireOp } from "./Op";
+import type { CompactNode, StorageNode } from "./StorageNode";
 
-export enum ServerMsgCode {
+export type ServerMsgCode = (typeof ServerMsgCode)[keyof typeof ServerMsgCode];
+export const ServerMsgCode = Object.freeze({
   // For Presence
-  UPDATE_PRESENCE = 100,
-  USER_JOINED = 101,
-  USER_LEFT = 102,
-  BROADCASTED_EVENT = 103,
-  ROOM_STATE = 104,
+  UPDATE_PRESENCE: 100,
+  USER_JOINED: 101,
+  USER_LEFT: 102,
+  BROADCASTED_EVENT: 103,
+  ROOM_STATE: 104,
 
   // For Storage
-  INITIAL_STORAGE_STATE = 200,
-  UPDATE_STORAGE = 201,
+  STORAGE_STATE_V7: 200, // Only sent in V7
+  STORAGE_CHUNK: 210, // Used in V8+
+  STORAGE_STREAM_END: 211, // Used in V8+
+  UPDATE_STORAGE: 201,
 
   // For Yjs Docs
-  UPDATE_YDOC = 300,
+  UPDATE_YDOC: 300,
 
   // For Comments
-  THREAD_CREATED = 400,
-  THREAD_DELETED = 407,
-  THREAD_METADATA_UPDATED = 401,
-  THREAD_UPDATED = 408,
-  COMMENT_CREATED = 402,
-  COMMENT_EDITED = 403,
-  COMMENT_DELETED = 404,
-  COMMENT_REACTION_ADDED = 405,
-  COMMENT_REACTION_REMOVED = 406,
+  THREAD_CREATED: 400,
+  THREAD_DELETED: 407,
+  THREAD_METADATA_UPDATED: 401,
+  THREAD_UPDATED: 408,
+  COMMENT_CREATED: 402,
+  COMMENT_EDITED: 403,
+  COMMENT_DELETED: 404,
+  COMMENT_REACTION_ADDED: 405,
+  COMMENT_REACTION_REMOVED: 406,
+  COMMENT_METADATA_UPDATED: 409,
 
   // Error codes
-  REJECT_STORAGE_OP = 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
+  REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
+});
+
+export namespace ServerMsgCode {
+  export type UPDATE_PRESENCE = typeof ServerMsgCode.UPDATE_PRESENCE;
+  export type USER_JOINED = typeof ServerMsgCode.USER_JOINED;
+  export type USER_LEFT = typeof ServerMsgCode.USER_LEFT;
+  export type BROADCASTED_EVENT = typeof ServerMsgCode.BROADCASTED_EVENT;
+  export type ROOM_STATE = typeof ServerMsgCode.ROOM_STATE;
+  export type STORAGE_STATE_V7 = typeof ServerMsgCode.STORAGE_STATE_V7;
+  export type STORAGE_CHUNK = typeof ServerMsgCode.STORAGE_CHUNK;
+  export type STORAGE_STREAM_END = typeof ServerMsgCode.STORAGE_STREAM_END;
+  export type UPDATE_STORAGE = typeof ServerMsgCode.UPDATE_STORAGE;
+  export type UPDATE_YDOC = typeof ServerMsgCode.UPDATE_YDOC;
+  export type THREAD_CREATED = typeof ServerMsgCode.THREAD_CREATED;
+  export type THREAD_DELETED = typeof ServerMsgCode.THREAD_DELETED;
+  export type THREAD_METADATA_UPDATED =
+    typeof ServerMsgCode.THREAD_METADATA_UPDATED;
+  export type THREAD_UPDATED = typeof ServerMsgCode.THREAD_UPDATED;
+  export type COMMENT_CREATED = typeof ServerMsgCode.COMMENT_CREATED;
+  export type COMMENT_EDITED = typeof ServerMsgCode.COMMENT_EDITED;
+  export type COMMENT_DELETED = typeof ServerMsgCode.COMMENT_DELETED;
+  export type COMMENT_REACTION_ADDED =
+    typeof ServerMsgCode.COMMENT_REACTION_ADDED;
+  export type COMMENT_REACTION_REMOVED =
+    typeof ServerMsgCode.COMMENT_REACTION_REMOVED;
+  export type COMMENT_METADATA_UPDATED =
+    typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
+  export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
 }
 
 /**
@@ -49,7 +81,9 @@ export type ServerMsg<
   | RoomStateServerMsg<U> // For a single client
 
   // For Storage
-  | InitialDocumentStateServerMsg // For a single client
+  | StorageStateServerMsg_V7 // Only used in protocol v7
+  | StorageChunkServerMsg // Used in protocol v8+
+  | StorageEndServerMsg // Used in protocol v8+
   | UpdateStorageServerMsg // Broadcasted
   | YDocUpdateServerMsg // For receiving doc from backend
   | RejectedStorageOpServerMsg // For a single client
@@ -66,7 +100,8 @@ export type CommentsEventServerMsg =
   | CommentEditedEvent
   | CommentDeletedEvent
   | CommentReactionAdded
-  | CommentReactionRemoved;
+  | CommentReactionRemoved
+  | CommentMetadataUpdatedEvent;
 
 type ThreadCreatedEvent = {
   type: ServerMsgCode.THREAD_CREATED;
@@ -118,6 +153,12 @@ type CommentReactionRemoved = {
   threadId: string;
   commentId: string;
   emoji: string;
+};
+
+type CommentMetadataUpdatedEvent = {
+  type: ServerMsgCode.COMMENT_METADATA_UPDATED;
+  threadId: string;
+  commentId: string;
 };
 
 /**
@@ -253,38 +294,47 @@ export type BroadcastedEventServerMsg<E extends Json> = {
  */
 export type RoomStateServerMsg<U extends BaseUserMeta> = {
   readonly type: ServerMsgCode.ROOM_STATE;
-
-  /**
-   * Informs the client what their actor ID is going to be.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what their actor ID is going to be. */
   readonly actor: number;
-
-  /**
-   * Secure nonce for the current session.
-   * @since v1.2 (WS API v7)
-   */
+  /** Secure nonce for the current session. */
   readonly nonce: string;
-
-  /**
-   * Informs the client what permissions the current User (self) has.
-   * @since v1.2 (WS API v7)
-   */
+  /** Informs the client what permissions the current User (self) has. */
   readonly scopes: string[];
-
   readonly users: {
     readonly [otherActor: number]: U & { scopes: string[] };
   };
+  /** Metadata sent from the server to the client. */
+  readonly meta: JsonObject;
+};
+
+/**
+ * No longer used as of WS API v8.
+ */
+export type StorageStateServerMsg_V7 = {
+  readonly type: ServerMsgCode.STORAGE_STATE_V7;
+  readonly items: StorageNode[];
 };
 
 /**
  * Sent by the WebSocket server to a single client in response to the client
- * joining the Room, to provide the initial Storage state of the Room. The
- * payload includes the entire Storage document.
+ * sending a FetchStorageClientMsg message, to provide one chunk of the initial
+ * Storage state of the Room.
+ *
+ * The server will respond with 1+ STORAGE_CHUNK messages, followed by exactly
+ * one STORAGE_STREAM_END message to mark the end of the transmission.
+ *
+ * If the room is using the new storage engine that supports streaming, then
+ * potentially multiple chunks might get sent. If the room is using the old
+ * storage engine, then all nodes will be sent in a single/large chunk
+ * (non-streaming).
  */
-export type InitialDocumentStateServerMsg = {
-  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  readonly items: IdTuple<SerializedCrdt>[];
+export type StorageChunkServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_CHUNK;
+  readonly nodes: CompactNode[];
+};
+
+export type StorageEndServerMsg = {
+  readonly type: ServerMsgCode.STORAGE_STREAM_END;
 };
 
 /**
@@ -296,7 +346,7 @@ export type InitialDocumentStateServerMsg = {
  */
 export type UpdateStorageServerMsg = {
   readonly type: ServerMsgCode.UPDATE_STORAGE;
-  readonly ops: Op[];
+  readonly ops: ServerWireOp[];
 };
 
 /**

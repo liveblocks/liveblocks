@@ -1,9 +1,14 @@
 "use client";
 
-import { useThreads, ClientSideSuspense } from "@liveblocks/react/suspense";
+import {
+  useThreads,
+  useRoom,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 import { ThreadData } from "@liveblocks/client";
-import { Composer, Thread } from "@liveblocks/react-ui";
+import { Composer, Thread, Comment, Icon } from "@liveblocks/react-ui";
 import { useState } from "react";
+import { getIssueId } from "@/config";
 
 export function Comments() {
   return (
@@ -41,6 +46,8 @@ function ThreadList() {
 
 function CustomThread({ thread }: { thread: ThreadData }) {
   const [open, setOpen] = useState(!thread.resolved);
+  const room = useRoom();
+  const issueId = getIssueId(room.id);
 
   if (!open) {
     return (
@@ -48,7 +55,7 @@ function CustomThread({ thread }: { thread: ThreadData }) {
         onClick={() => setOpen(true)}
         className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white w-full text-sm text-left flex items-center h-10 px-3"
       >
-        ✓ Thread resolved
+        <Icon.Check className="mr-1.5" /> Thread resolved
       </button>
     );
   }
@@ -63,6 +70,22 @@ function CustomThread({ thread }: { thread: ThreadData }) {
           setOpen(false);
         }
       }}
+      // Adding a custom dropdown item to each comment
+      commentDropdownItems={({ children, comment }) => (
+        <>
+          <Comment.DropdownItem
+            onSelect={() => {
+              navigator.clipboard.writeText(
+                `${window.location.origin}/issue/${issueId}#${comment.id}`
+              );
+            }}
+            icon={<Icon.Copy className="m-[0.5px] mt-px mb-0" />}
+          >
+            Copy link
+          </Comment.DropdownItem>
+          {children}
+        </>
+      )}
     />
   );
 }

@@ -3,9 +3,6 @@ import { describe, expect, test } from "vitest";
 import { parseAuthToken } from "../../protocol/AuthToken";
 
 describe("parseRoomAuthToken", () => {
-  const exampleLegacyToken =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg";
-
   const exampleAccessToken =
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzM1MjEsImV4cCI6MTY5MDAzMzUyNiwiayI6ImFjYyIsInBpZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsInVpZCI6InVzZXItMTEiLCJwZXJtcyI6eyJ0ZXN0LXJvb20iOlsicm9vbTp3cml0ZSIsImNvbW1lbnRzOndyaXRlIl19LCJtY3ByIjoyMH0.YanPltrzS9ct5E9w6i14s_JEy9rpm4MNSMGPgN1B26JP0LVaj0ac3kK5m1owjWS_HTANB87KYk0tOHGDjEESIN0Kr-1d6Qv31IX1yUTsRiPyaD4J6co0M9ONDEbhiWc-ScV2UI-fQlY1qvqFAP5VR4CIwCRnA_hwBFzzhAQhb7VWSKASaqL72ySv9f-LU4cekqJ_nWLLpOGnnjiQSqOFqe7PSPjQiawm8R8UU_P5kEtKr53YS0oBhIiH9e3dpP8HPiaP6kCN1ViDo0jHIX3oyNB4IcwNf-VMPCUHi8oXG09Kfa2rdI2MT7E_Tblg78ZPnSCKLjTEHykGZsc4v-kDIg";
 
@@ -14,21 +11,6 @@ describe("parseRoomAuthToken", () => {
 
   const exampleInvalidJwtToken =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-
-  test("should parse a valid (legacy) token", () => {
-    const { parsed } = parseAuthToken(exampleLegacyToken);
-    expect(parsed).toEqual({
-      k: "sec-legacy",
-      actor: 1,
-      appId: "6241cb95ed687d5de5aaa132",
-      exp: 1690033333,
-      iat: 1690033328,
-      id: "user-3",
-      maxConnectionsPerRoom: 20,
-      roomId: "eLPwuOmMuTXCzCGRi5nrn",
-      scopes: ["room:write"],
-    });
-  });
 
   test("should parse a valid (id) token", () => {
     const { parsed } = parseAuthToken(exampleIdToken);

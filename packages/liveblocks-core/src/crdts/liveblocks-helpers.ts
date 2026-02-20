@@ -5,9 +5,15 @@ import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
+import type { NodeMap, StorageNode } from "../protocol/StorageNode";
+import {
+  CrdtType,
+  isListStorageNode,
+  isMapStorageNode,
+  isObjectStorageNode,
+  isRegisterStorageNode,
+} from "../protocol/StorageNode";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
 import { LiveList, type LiveListUpdates } from "./LiveList";
 import { LiveMap, type LiveMapUpdates } from "./LiveMap";
@@ -46,50 +52,38 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
 }
 
 export function deserialize(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  node: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): LiveNode {
-  switch (crdt.type) {
-    case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.REGISTER: {
-      return LiveRegister._deserialize([id, crdt], parentToChildren, pool);
-    }
-    default: {
-      throw new Error("Unexpected CRDT type");
-    }
+  if (isObjectStorageNode(node)) {
+    return LiveObject._deserialize(node, parentToChildren, pool);
+  } else if (isListStorageNode(node)) {
+    return LiveList._deserialize(node, parentToChildren, pool);
+  } else if (isMapStorageNode(node)) {
+    return LiveMap._deserialize(node, parentToChildren, pool);
+  } else if (isRegisterStorageNode(node)) {
+    return LiveRegister._deserialize(node, parentToChildren, pool);
+  } else {
+    throw new Error("Unexpected CRDT type");
   }
 }
 
 export function deserializeToLson(
-  [id, crdt]: IdTuple<SerializedCrdt>,
+  node: StorageNode,
   parentToChildren: ParentToChildNodeMap,
   pool: ManagedPool
 ): Lson {
-  switch (crdt.type) {
-    case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
-    }
-    case CrdtType.REGISTER: {
-      return crdt.data;
-    }
-    default: {
-      throw new Error("Unexpected CRDT type");
-    }
+  if (isObjectStorageNode(node)) {
+    return LiveObject._deserialize(node, parentToChildren, pool);
+  } else if (isListStorageNode(node)) {
+    return LiveList._deserialize(node, parentToChildren, pool);
+  } else if (isMapStorageNode(node)) {
+    return LiveMap._deserialize(node, parentToChildren, pool);
+  } else if (isRegisterStorageNode(node)) {
+    return node[1].data;
+  } else {
+    throw new Error("Unexpected CRDT type");
   }
 }
 
@@ -151,6 +145,29 @@ export function lsonToLiveNode(value: Lson): LiveNode {
   }
 }
 
+/**
+ * Computes the operations needed to transform one NodeMap into another.
+ *
+ * Used when the client receives a fresh storage snapshot from the server
+ * (e.g. after reconnecting). The local state may have diverged, so we diff
+ * the two trees and apply the resulting ops to bring local state in sync
+ * with the server's authoritative version.
+ *
+ * Returns ops for:
+ * - DELETE_CRDT: nodes in current but not in new
+ * - CREATE_*: nodes in new but not in current
+ * - UPDATE_OBJECT: objects whose data changed
+ * - SET_PARENT_KEY: nodes whose position changed
+ *
+ * Example:
+ * - Current: { "root": { a: 1 },  "node1": { b: 2 } }
+ * - New:     { "root": { a: 99 }, "node2": { c: 3 } }
+ *
+ * Returns:
+ *  - DELETE_CRDT for "node1" (removed)
+ *  - UPDATE_OBJECT for "root" (data changed: a: 1 → 99)
+ *  - CREATE_OBJECT for "node2" (added)
+ */
 export function getTreesDiffOperations(
   currentItems: NodeMap,
   newItems: NodeMap
@@ -160,10 +177,7 @@ export function getTreesDiffOperations(
   currentItems.forEach((_, id) => {
     if (!newItems.get(id)) {
       // Delete crdt
-      ops.push({
-        type: OpCode.DELETE_CRDT,
-        id,
-      });
+      ops.push({ type: OpCode.DELETE_CRDT, id });
     }
   });
 
