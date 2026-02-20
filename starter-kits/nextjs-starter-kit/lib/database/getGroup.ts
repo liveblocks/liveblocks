@@ -24,6 +24,4 @@ export async function getGroup(id: string): Promise<Group | null> {
   }
 
   return null;
-
-  // return groups.find((group) => group.id === id) ?? null;
 }

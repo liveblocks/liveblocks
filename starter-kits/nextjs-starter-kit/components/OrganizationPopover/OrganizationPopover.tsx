@@ -94,7 +94,7 @@ export function OrganizationPopover() {
 
           {organizations && organizations.length > 0 && (
             <div className={styles.organizationsSection}>
-              <div className={styles.organizationsLabel}>Workplaces</div>
+              <div className={styles.organizationsLabel}>Workspaces</div>
               {organizations.map((organization) => {
                 const isSelected = organization.id === currentOrganization?.id;
                 const avatar =

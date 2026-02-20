@@ -14,22 +14,20 @@ type Props = {
  * @param userId - The user id to get organizations for
  */
 export async function getUserOrganizations({ userId }: Props) {
-  const userOrganizations: Organization[] = [];
   const user = await getUser(userId);
-
   if (!user) {
     return [];
   }
 
-  // Add user's organizations from your database
-  userOrganizations.push(...organizations);
+  const userOrganizations: Organization[] = [];
 
-  // Each user has a personal organization
-  userOrganizations.push({
-    id: userId,
-    name: "Personal",
-    avatar: user.avatar,
-  });
+  // Add user's organizations from your database
+  for (const organizationId of user.organizationIds) {
+    const organization = organizations.find((org) => org.id === organizationId);
+    if (organization) {
+      userOrganizations.push(organization);
+    }
+  }
 
   return userOrganizations;
 }
