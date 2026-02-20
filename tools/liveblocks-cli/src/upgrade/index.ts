@@ -15,12 +15,12 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { parse } from "@bomb.sh/args";
 import { execFileSync } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 import type { SubCommand } from "~/interfaces/SubCommand";
+import { parseArgs } from "~/lib/args";
 
 type PackageJson = {
   dependencies?: Record<string, string>;
@@ -36,6 +36,62 @@ function findLiveblocksDependencies(
   );
 }
 
+export function cmpSemver(a: string, b: string): number {
+  const [coreA, preA] = a.split("-", 2);
+  const [coreB, preB] = b.split("-", 2);
+  const partsA = coreA.split(".").map(Number);
+  const partsB = coreB.split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (partsA[i] !== partsB[i]) return partsA[i] - partsB[i];
+  }
+  // No prerelease > any prerelease (3.14.0 > 3.14.0-rc1)
+  if (!preA && preB) return 1;
+  if (preA && !preB) return -1;
+  if (preA && preB) return preA < preB ? -1 : preA > preB ? 1 : 0;
+  return 0;
+}
+
+/**
+ * Given the parsed JSON output of `npm view ... version --json`, returns the
+ * highest version. npm returns a single string when one version matches, or
+ * an array when multiple match.
+ */
+export function highestVersion(result: string | string[]): string {
+  if (typeof result === "string") return result;
+  if (Array.isArray(result) && result.length > 0) {
+    return result.reduce((a, b) => (cmpSemver(a, b) >= 0 ? a : b));
+  }
+  throw new Error("No versions found");
+}
+
+/**
+ * Resolves a version string (tag, partial version, or full semver) to
+ * a concrete semver version by querying the npm registry.
+ *
+ * Examples:
+ *   "latest"  → "3.14.0"
+ *   "rc"      → "3.14.0-rc2"
+ *   "3.14"    → "3.14.0"
+ *   "3.14.0"  → "3.14.0"
+ *   "<3.14"   → "3.13.5"
+ *
+ * This ensures `npm install foo@<version>` always receives a full semver
+ * version, so npm writes "^x.y.z" in package.json.
+ */
+function resolveVersion(spec: string): string {
+  try {
+    const output = execFileSync(
+      "npm",
+      ["view", `@liveblocks/core@${spec}`, "version", "--json"],
+      { encoding: "utf-8" }
+    ).trim();
+    return highestVersion(JSON.parse(output) as string | string[]);
+  } catch {
+    console.error(`Could not resolve version "${spec}" from npm registry.`);
+    process.exit(1);
+  }
+}
+
 function detectPackageManager(): "yarn" | "pnpm" | "bun" | "npm" {
   const cwd = process.cwd();
   if (existsSync(resolve(cwd, "yarn.lock"))) return "yarn";
@@ -48,16 +104,21 @@ function detectPackageManager(): "yarn" | "pnpm" | "bun" | "npm" {
   return "npm";
 }
 
+type Options = {
+  help: boolean;
+};
+
 const upgrade: SubCommand = {
   description: "Upgrade all Liveblocks packages",
 
-  run(_argv) {
-    const args = parse(_argv, {
-      boolean: ["help"],
-      alias: { h: "help" },
-    });
+  run(argv) {
+    const { options, args } = parseArgs<Options>(
+      argv,
+      { help: { type: "boolean", short: "h", default: false } },
+      { allowPositionals: true }
+    );
 
-    if (args.help) {
+    if (options.help) {
       console.log("Usage: liveblocks upgrade [version]");
       console.log();
       console.log("Upgrade all @liveblocks/* packages in your project to the same version."); // prettier-ignore
@@ -70,7 +131,7 @@ const upgrade: SubCommand = {
       return;
     }
 
-    const version = String(args._[0] ?? "latest");
+    const version = resolveVersion(String(args[0] ?? "latest"));
 
     // Read package.json
     const pkgPath = resolve(process.cwd(), "package.json");
@@ -124,9 +185,7 @@ const upgrade: SubCommand = {
         break;
     }
 
-    console.log();
-    console.log(`Upgrading all @liveblocks/* packages to ${version}...`);
-    console.log();
+    console.log(`Upgrading all your Liveblocks dependencies to ${version}`);
 
     // Uninstall renamed packages first
     if (depsToUninstall.length > 0) {
