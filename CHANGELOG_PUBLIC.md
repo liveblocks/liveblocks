@@ -22,7 +22,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Open source
 
-This week [we've open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+This week we've [open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
 
 ## v3.14 🥧
 
