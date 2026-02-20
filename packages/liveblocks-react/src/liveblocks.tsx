@@ -139,7 +139,7 @@ function selectorFor_useUnreadInboxNotificationsCount(
   return ASYNC_OK("count", result.count);
 }
 
-function selectorFor_useUser<U extends BaseUserMeta>(
+export function selectorFor_useUser<U extends BaseUserMeta>(
   state: AsyncResult<U["info"] | undefined> | undefined,
   userId: string
 ): UserAsyncResult<U["info"]> {
