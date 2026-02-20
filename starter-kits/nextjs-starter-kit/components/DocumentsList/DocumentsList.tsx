@@ -5,9 +5,9 @@ import { useSession } from "next-auth/react";
 import { ComponentProps, useMemo, useState } from "react";
 import {
   DocumentCreatePopover,
+  DocumentRowGroup,
   DocumentRowSkeleton,
-} from "@/components/Documents";
-import { DocumentRowGroup } from "@/components/Documents/DocumentRowGroup";
+} from "@/components/DocumentsList";
 import { PlusIcon } from "@/icons";
 import { GetDocumentsProps } from "@/lib/actions";
 import { usePaginatedDocumentsSWR } from "@/lib/hooks";

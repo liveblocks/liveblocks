@@ -1,3 +1,5 @@
+"use client";
+
 import { RoomUser } from "@liveblocks/node";
 import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";

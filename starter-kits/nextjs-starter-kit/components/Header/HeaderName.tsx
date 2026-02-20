@@ -15,17 +15,13 @@ import { EditIcon } from "@/icons";
 import { getDocument } from "@/lib/actions";
 import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import { Tooltip } from "@/primitives/Tooltip";
-import styles from "./DocumentHeaderName.module.css";
+import styles from "./HeaderName.module.css";
 
 interface Props extends ComponentProps<"div"> {
   onDocumentRename: (name: string) => Promise<unknown>;
 }
 
-export function DocumentHeaderName({
-  onDocumentRename,
-  className,
-  ...props
-}: Props) {
+export function HeaderName({ onDocumentRename, className, ...props }: Props) {
   const initialDocument = useInitialDocument();
   const broadcastEvent = useBroadcastEvent();
 

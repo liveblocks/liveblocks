@@ -3,28 +3,30 @@
 import {
   ClientSideSuspense,
   useIsInsideRoom,
+  useOthers,
+  useSelf,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
-import { ComponentProps } from "react";
+import { ComponentProps, useMemo } from "react";
 import { InboxPopover } from "@/components/Inbox";
 import { OrganizationPopover } from "@/components/OrganizationPopover";
 import { ShareIcon, SignInIcon } from "@/icons";
 import { renameDocument, signIn } from "@/lib/actions";
+import { AvatarStack } from "@/primitives/AvatarStack";
 import { Button } from "@/primitives/Button";
 import { Skeleton } from "@/primitives/Skeleton";
 import { Document } from "@/types";
 import { ShareDialog } from "../ShareDialog";
-import { DocumentHeaderAvatars } from "./DocumentHeaderAvatars";
-import { DocumentHeaderName } from "./DocumentHeaderName";
-import styles from "./DocumentHeader.module.css";
+import { HeaderName } from "./HeaderName";
+import styles from "./Header.module.css";
 
 interface Props extends ComponentProps<"header"> {
   documentId: Document["id"] | null;
   showTitle?: boolean;
 }
 
-export function DocumentHeader({
+export function Header({
   documentId,
   showTitle = true,
   className,
@@ -52,7 +54,7 @@ export function DocumentHeader({
         {showTitle ? (
           <ClientSideSuspense fallback={null}>
             {isInsideRoom && documentId ? (
-              <DocumentHeaderName
+              <HeaderName
                 onDocumentRename={(name) =>
                   renameDocument({ documentId, name })
                 }
@@ -64,7 +66,7 @@ export function DocumentHeader({
       <div className={styles.collaboration}>
         <div className={styles.presence}>
           <ClientSideSuspense fallback={null}>
-            {isInsideRoom ? <DocumentHeaderAvatars /> : null}
+            {isInsideRoom ? <HeaderAvatars /> : null}
           </ClientSideSuspense>
         </div>
         <ClientSideSuspense fallback={null}>
@@ -90,7 +92,30 @@ export function DocumentHeader({
   );
 }
 
-export function DocumentHeaderSkeleton({
+function HeaderAvatars() {
+  const self = useSelf();
+  const others = useOthers();
+  const users = useMemo(
+    () => (self ? [self, ...others] : others),
+    [self, others]
+  );
+
+  return (
+    <AvatarStack
+      avatars={users.map((user) => ({
+        name: user.info.name,
+        src: user.info.avatar,
+        color: user.info.color,
+      }))}
+      max={5}
+      size={20}
+      tooltip
+      tooltipProps={{ sideOffset: 28 }}
+    />
+  );
+}
+
+export function HeaderSkeleton({
   className,
   ...props
 }: ComponentProps<"header">) {
