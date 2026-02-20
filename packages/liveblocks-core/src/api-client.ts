@@ -18,7 +18,8 @@ import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
-import type { Json, JsonObject } from "./lib/Json";
+import * as console from "./lib/fancy-console";
+import type { JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
@@ -30,7 +31,6 @@ import type {
   ContextualPromptResponse,
 } from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
-import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -60,7 +60,7 @@ import type {
   PartialNotificationSettings,
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type { StorageNode } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDataPlain,
@@ -413,15 +413,7 @@ export interface RoomHttpApi<TM extends BaseMetadata, CM extends BaseMetadata> {
     requestedAt: Date;
   }>;
 
-  streamStorage(options: {
-    roomId: string;
-  }): Promise<IdTuple<SerializedCrdt>[]>;
-
-  sendMessagesOverHTTP<P extends JsonObject, E extends Json>(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }): Promise<Response>;
+  streamStorage(options: { roomId: string }): Promise<StorageNode[]>;
 
   executeContextualPrompt({
     roomId,
@@ -1620,28 +1612,7 @@ export function createApiClient<
         roomId: options.roomId,
       })
     );
-    return (await result.json()) as IdTuple<SerializedCrdt>[];
-  }
-
-  async function sendMessagesOverHTTP<
-    P extends JsonObject,
-    E extends Json,
-  >(options: {
-    roomId: string;
-    nonce: string | undefined;
-    messages: ClientMsg<P, E>[];
-  }) {
-    return httpClient.rawPost(
-      url`/v2/c/rooms/${options.roomId}/send-message`,
-      await authManager.getAuthValue({
-        requestedScope: "room:read",
-        roomId: options.roomId,
-      }),
-      {
-        nonce: options.nonce,
-        messages: options.messages,
-      }
-    );
+    return (await result.json()) as StorageNode[];
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -2021,7 +1992,6 @@ export function createApiClient<
     getChatAttachmentUrl,
     // Room storage
     streamStorage,
-    sendMessagesOverHTTP,
     // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
@@ -2099,7 +2069,7 @@ class HttpClient {
     }
 
     const url = urljoin(this.#baseUrl, endpoint, params);
-    return await this.#fetchPolyfill(url, {
+    const response = await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -2113,6 +2083,20 @@ class HttpClient {
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
+
+    // Surface dev-server warnings to the developer
+    const xwarn = response.headers.get("X-LB-Warn");
+    if (xwarn) {
+      const method = options?.method?.toUpperCase() ?? "GET";
+      const msg = `${xwarn} (${method} ${endpoint})`;
+      if (response.ok) {
+        console.warn(msg);
+      } else {
+        console.error(msg);
+      }
+    }
+
+    return response;
   }
 
   /**

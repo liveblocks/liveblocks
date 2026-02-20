@@ -245,7 +245,6 @@ export default function Page({
   return (
     <LiveblocksProvider
       authEndpoint="/api/auth/liveblocks"
-      // @ts-expect-error
       baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
     >
       <main className="h-screen w-full">

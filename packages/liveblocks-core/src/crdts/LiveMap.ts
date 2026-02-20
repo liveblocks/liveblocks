@@ -3,8 +3,8 @@ import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
 import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
+import type { MapStorageNode, SerializedMap } from "../protocol/StorageNode";
+import { CrdtType } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
@@ -79,7 +79,9 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this.#map) {
-      ops.push(...value._toOps(this._id, key));
+      for (const childOp of value._toOps(this._id, key)) {
+        ops.push(childOp);
+      }
     }
 
     return ops;
@@ -87,7 +89,7 @@ export class LiveMap<
 
   /** @internal */
   static _deserialize(
-    [id, _item]: IdTuple<SerializedMap>,
+    [id, _item]: MapStorageNode,
     parentToChildren: ParentToChildNodeMap,
     pool: ManagedPool
   ): LiveMap<string, Lson> {
@@ -99,8 +101,9 @@ export class LiveMap<
       return map;
     }
 
-    for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, pool);
+    for (const node of children) {
+      const crdt = node[1];
+      const child = deserialize(node, parentToChildren, pool);
       child._setParentLink(map, crdt.parentKey);
       map.#map.set(crdt.parentKey, child);
       map.invalidate();

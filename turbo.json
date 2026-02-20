@@ -23,6 +23,11 @@
       "outputs": ["coverage/**"],
       "inputs": ["jest.*", "vitest.*", "src/**", "test/**"]
     },
+    "test:ci": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["jest.*", "vitest.*", "src/**", "test/**"]
+    },
     "test:types": {
       "dependsOn": ["build"],
       "inputs": ["test-d/**"]

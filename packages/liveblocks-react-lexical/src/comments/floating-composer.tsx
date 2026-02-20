@@ -27,9 +27,9 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
+import { Portal } from "@liveblocks/react-ui/_private";
 import type { ComponentType, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
@@ -256,9 +256,9 @@ const FloatingComposerImpl = forwardRef<
 
   return (
     <>
-      <ActiveSelectionPortal range={range} container={document.body} />
+      <ActiveSelectionPortal range={range} />
 
-      <FloatingComposerPortal range={range} container={document.body}>
+      <FloatingComposerPortal range={range}>
         <Composer
           autoFocus
           {...composerProps}
@@ -271,13 +271,7 @@ const FloatingComposerImpl = forwardRef<
   );
 });
 
-function ActiveSelectionPortal({
-  range,
-  container,
-}: {
-  range: Range;
-  container: HTMLElement;
-}) {
+function ActiveSelectionPortal({ range }: { range: Range }) {
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -301,8 +295,8 @@ function ActiveSelectionPortal({
   const [editor] = useLexicalComposerContext();
   const rects = createRectsFromDOMRange(editor, range);
 
-  return createPortal(
-    <>
+  return (
+    <Portal asChild>
       <span
         ref={setFloating}
         style={{
@@ -333,19 +327,16 @@ function ActiveSelectionPortal({
           />
         ))}
       </span>
-    </>,
-    container
+    </Portal>
   );
 }
 
 export const FLOATING_COMPOSER_COLLISION_PADDING = 10;
 
 function FloatingComposerPortal({
-  container,
   range,
   children,
 }: {
-  container: HTMLElement;
   range: Range;
   children: ReactNode;
 }) {
@@ -379,20 +370,21 @@ function FloatingComposerPortal({
     setReference(range);
   }, [range, setReference]);
 
-  return createPortal(
-    <div
-      ref={setFloating}
-      style={{
-        position: strategy,
-        top: 0,
-        left: 0,
-        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
-        minWidth: "max-content",
-      }}
-      className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
-    >
-      {children}
-    </div>,
-    container
+  return (
+    <Portal asChild>
+      <div
+        ref={setFloating}
+        style={{
+          position: strategy,
+          top: 0,
+          left: 0,
+          transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+          minWidth: "max-content",
+        }}
+        className="lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-composer"
+      >
+        {children}
+      </div>
+    </Portal>
   );
 }
