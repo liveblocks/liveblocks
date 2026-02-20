@@ -13,7 +13,7 @@ import {
   getLiveUsers,
   getSpecificDocuments,
 } from "@/lib/actions";
-import { getGroups, getUsers } from "@/lib/database";
+import { getUsers } from "@/lib/database";
 
 export function Providers({
   children,
@@ -54,30 +54,23 @@ export function Providers({
         }}
         // Resolve group IDs into name/avatar/etc for Comments
         resolveGroupsInfo={async ({ groupIds }) => {
-          const groups = await getGroups({ groupIds });
-          return groups.map((group) => group ?? undefined);
-        }}
-        // Resolve a room ID into room information for Notifications
-        resolveRoomsInfo={async ({ roomIds }) => {
-          const documents = await getSpecificDocuments({
-            documentIds: roomIds,
-          });
-          return documents.map((document) => ({
-            name: document ? document.name : undefined,
-            url: document
-              ? DOCUMENT_URL(document.type, document.id)
-              : undefined,
+          // Not expected in current app, only @here an @everyone added
+          if (!groupIds.includes("everyone") || !groupIds.includes("here")) {
+            return [];
+          }
+
+          return groupIds.map((groupId) => ({
+            id: groupId,
+            name: groupId.charAt(0).toUpperCase() + groupId.slice(1),
           }));
         }}
         // Resolve what mentions are suggested for Comments/Text Editor
         resolveMentionSuggestions={async ({ text, roomId }) => {
-          const [allUsers, liveUsers, matchingGroups, matchingUsers] =
-            await Promise.all([
-              getUsers(), // All users
-              getLiveUsers({ documentIds: [roomId] }), // All users currently online in the document
-              getGroups({ search: text }), // Groups that match the search term
-              getUsers({ search: text }), // Users that match the search term
-            ]);
+          const [allUsers, liveUsers, matchingUsers] = await Promise.all([
+            getUsers(), // All users
+            getLiveUsers({ documentIds: [roomId] }), // All users currently online in the document
+            getUsers({ search: text }), // Users that match the search term
+          ]);
 
           const globalSuggestions: MentionData[] = [];
 
@@ -103,14 +96,6 @@ export function Providers({
             });
           }
 
-          // Create group suggestions, e.g. `@engineering`
-          const groupSuggestions: MentionData[] = matchingGroups
-            .filter((group) => group !== null)
-            .map((group) => ({
-              kind: "group",
-              id: group.id,
-            }));
-
           // Create user suggestions, e.g. `anjali.wanda@example.com`
           const userSuggestions: MentionData[] = matchingUsers
             .filter((user) => user !== null)
@@ -120,11 +105,19 @@ export function Providers({
             }));
 
           // Return combined suggestions
-          return [
-            ...globalSuggestions,
-            ...groupSuggestions,
-            ...userSuggestions,
-          ];
+          return [...globalSuggestions, ...userSuggestions];
+        }}
+        // Resolve a room ID into room information for Notifications
+        resolveRoomsInfo={async ({ roomIds }) => {
+          const documents = await getSpecificDocuments({
+            documentIds: roomIds,
+          });
+          return documents.map((document) => ({
+            name: document ? document.name : undefined,
+            url: document
+              ? DOCUMENT_URL(document.type, document.id)
+              : undefined,
+          }));
         }}
       >
         <TooltipProvider>{children}</TooltipProvider>
