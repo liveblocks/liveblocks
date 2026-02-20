@@ -48,7 +48,7 @@ export async function createDocument(
     };
   }
 
-  const tenantId = session.user.currentOrganizationId;
+  const organizationId = session.user.currentOrganizationId;
 
   // Custom metadata for our document. Documents always start private.
   const metadata: DocumentRoomMetadata = {
@@ -72,7 +72,7 @@ export async function createDocument(
       metadata,
       usersAccesses,
       defaultAccesses: [],
-      tenantId,
+      organizationId,
     });
   } catch (err) {
     return {

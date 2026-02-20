@@ -52,7 +52,7 @@ export async function deleteDocument({ documentId }: Props) {
       accessAllowed: "write",
       userId: session?.user.info.id ?? "",
       room,
-      tenantId: session?.user.currentOrganizationId ?? "default",
+      organizationId: session?.user.currentOrganizationId ?? "default",
     })
   ) {
     return {

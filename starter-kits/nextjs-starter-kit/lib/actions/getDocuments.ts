@@ -46,9 +46,7 @@ export async function getDocuments({
   }
 
   const userId = session.user.info.id;
-  const tenantId = session.user.currentOrganizationId;
-
-  console.log("tenantId", tenantId);
+  const organizationId = session.user.currentOrganizationId;
 
   // Build getRooms arguments
   // Only include query if there are actual filters to apply
@@ -64,9 +62,9 @@ export async function getDocuments({
 
   // Check all types of rooms a user is allowed to access, with query options too
   const getRoomsOptions: Parameters<typeof liveblocks.getRooms>[0] = {
-    tenantId,
+    organizationId,
     userId,
-    groupIds: [tenantId],
+    groupIds: [organizationId],
     limit,
     ...(query && { query }),
   };
@@ -106,7 +104,7 @@ export async function getDocuments({
         accessAllowed: "read",
         userId: session.user.info.id,
         room,
-        tenantId,
+        organizationId,
       })
     ) {
       finalRooms.push(room);

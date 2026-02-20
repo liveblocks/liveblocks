@@ -8,7 +8,7 @@ import { RoomData } from "@liveblocks/node";
 interface UserAccessProps {
   accessAllowed: "write" | "read";
   checkAccessLevel?: "any" | "user" | "organization" | "general";
-  tenantId: string;
+  organizationId: string;
   userId: string;
 }
 
@@ -24,13 +24,14 @@ type UserAllowedInRoomsProps = UserAccessProps & {
  * Returns true if a user has any of the allowed accesses in every room
  * @param accessesAllowed - Each of these permission types is checked
  * @param userId - The user's id to check
+ * @param organizationId - The organization's id to check
  * @param rooms - A list of rooms returned from Liveblocks APIs
  * @param [checkAccessLevels] - Check permission on only these access levels
  */
 export function userAllowedInRooms({
   accessAllowed,
   userId,
-  tenantId,
+  organizationId,
   rooms,
   checkAccessLevel,
 }: UserAllowedInRoomsProps) {
@@ -38,7 +39,7 @@ export function userAllowedInRooms({
     userAllowedInRoom({
       accessAllowed,
       userId,
-      tenantId,
+      organizationId,
       checkAccessLevel,
       room,
     })
@@ -49,6 +50,7 @@ export function userAllowedInRooms({
  * Returns true if a user has one of the allowed accesses in the room
  * @param accessesAllowed - Each of these permission types is checked
  * @param userId - The user's id to check
+ * @param organizationId - The organization's id to check
  * @param room - A room returned from Liveblocks APIs
  * @param [checkAccessLevels] - Check permission on only these access levels
  */
@@ -56,7 +58,7 @@ export function userAllowedInRooms({
 export function userAllowedInRoom({
   accessAllowed,
   userId,
-  tenantId,
+  organizationId,
   room,
   checkAccessLevel = "any",
 }: UserAllowedInRoomProps) {
@@ -64,21 +66,21 @@ export function userAllowedInRoom({
     accessAllowed,
     userId,
     room,
-    tenantId,
+    organizationId,
   });
 
   const organizationAllowed = checkOrganizationAccess({
     accessAllowed,
     userId,
     room,
-    tenantId,
+    organizationId,
   });
 
   const generalAllowed = checkGeneralAccess({
     accessAllowed,
     userId,
     room,
-    tenantId,
+    organizationId,
   });
 
   if (checkAccessLevel === "any") {
@@ -123,13 +125,12 @@ function checkGeneralAccess({ room, accessAllowed }: UserAllowedInRoomProps) {
 function checkOrganizationAccess({
   room,
   accessAllowed,
-  tenantId,
+  organizationId,
 }: UserAllowedInRoomProps) {
-  // TODO
-  const roomTenantId = room.tenantId;
+  const roomOrganizationId = room.organizationId;
 
-  // TODO a way to check the tenantId of a room then give a user access
-  return tenantId === "liveblocks";
+  // TODO a way to check the organizationId of a room then give a user access
+  return organizationId === roomOrganizationId;
 }
 
 function checkUserAccess({

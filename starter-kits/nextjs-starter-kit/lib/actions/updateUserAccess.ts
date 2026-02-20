@@ -31,7 +31,7 @@ type Props = {
 export async function updateUserAccess({ userId, documentId, access }: Props) {
   const session = await auth();
   // Default to personal workspace for authenticated users
-  const tenantId = session?.user.currentOrganizationId ?? "default";
+  const organizationId = session?.user.currentOrganizationId ?? "default";
 
   let room;
   let user;
@@ -71,7 +71,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
       accessAllowed: "write",
       checkAccessLevel: "user",
       userId: session.user.info.id,
-      tenantId,
+      organizationId,
       room,
     })
   ) {
@@ -165,7 +165,7 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
       kind: "$addedToDocument",
       subjectId: document.id,
       roomId: room.id,
-      tenantId,
+      organizationId,
       activityData: {
         documentId: document.id,
       },

@@ -67,7 +67,7 @@ export async function removeUserAccess({ userId, documentId }: Props) {
       checkAccessLevel: "user",
       userId: session.user.info.id,
       room,
-      tenantId: session.user.currentOrganizationId,
+      organizationId: session.user.currentOrganizationId,
     })
   ) {
     return {

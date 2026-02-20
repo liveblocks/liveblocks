@@ -81,7 +81,7 @@ export async function updateGeneralAccess({
       accessAllowed: "write",
       userId: session.user.info.id,
       room,
-      tenantId: session.user.currentOrganizationId,
+      organizationId: session.user.currentOrganizationId,
     })
   ) {
     return {
@@ -94,7 +94,7 @@ export async function updateGeneralAccess({
   }
 
   const metadata = room.metadata as DocumentRoomMetadata;
-  const tenantId = session.user.currentOrganizationId;
+  const organizationId = session.user.currentOrganizationId;
 
   // Update metadata with new permission group and type
   const updatedMetadata = {
@@ -113,7 +113,8 @@ export async function updateGeneralAccess({
     groupsAccesses = {};
   } else if (permissionGroup === "organization") {
     // Organization access is defined in groupsAccesses and has no default access
-    groupsAccesses[tenantId] = permissionTypeToRoomAccesses(permissionType);
+    groupsAccesses[organizationId] =
+      permissionTypeToRoomAccesses(permissionType);
     defaultAccesses = [];
   } else if (permissionGroup === "private") {
     // Private access has no group or default accesses

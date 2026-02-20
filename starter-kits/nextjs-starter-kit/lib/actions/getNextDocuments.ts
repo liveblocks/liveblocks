@@ -32,14 +32,14 @@ export async function getNextDocuments({ nextCursor }: Props) {
     };
   }
 
-  const tenantId = session.user.currentOrganizationId;
+  const organizationId = session.user.currentOrganizationId;
 
   let getRoomsResponse;
   try {
     // Get rooms
     getRoomsResponse = await liveblocks.getRooms({
       startingAfter: nextCursor,
-      tenantId,
+      organizationId,
     });
   } catch (err) {
     console.log(err);
@@ -72,7 +72,7 @@ export async function getNextDocuments({ nextCursor }: Props) {
         accessAllowed: "read",
         userId: session.user.info.id,
         room: room,
-        tenantId,
+        organizationId,
       })
     ) {
       finalRooms.push(room);

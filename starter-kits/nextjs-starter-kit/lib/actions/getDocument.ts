@@ -50,7 +50,7 @@ export async function getDocument({ documentId }: Props) {
       accessAllowed: "read",
       userId: session?.user.info.id ?? "",
       room,
-      tenantId: session?.user.currentOrganizationId ?? "default",
+      organizationId: session?.user.currentOrganizationId ?? "default",
     })
   ) {
     return {

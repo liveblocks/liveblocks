@@ -36,7 +36,7 @@ export async function authorizeLiveblocks() {
     {
       userId: id,
       groupIds: [currentOrganizationId],
-      tenantId: currentOrganizationId,
+      organizationId: currentOrganizationId,
     },
     {
       userInfo: { name, color, avatar },
