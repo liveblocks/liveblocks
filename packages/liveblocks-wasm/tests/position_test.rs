@@ -278,9 +278,11 @@ fn between_is_commutative() {
 }
 
 #[test]
-#[should_panic]
-fn between_equal_values_panics() {
-    between("x", "x");
+fn between_equal_values_falls_back_to_after() {
+    // Equal positions can arise from concurrent ops. between() gracefully
+    // falls back to after(lo) instead of panicking.
+    let result = between("x", "x");
+    assert!(result > "x".to_string(), "between equal values should produce a successor");
 }
 
 #[test]
