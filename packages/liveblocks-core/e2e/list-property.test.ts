@@ -352,6 +352,8 @@ test(
           }
         ),
         { seed: 58478966, endOnFailure: true }
+        // Another case found!
+        // { seed: -1577943954, endOnFailure: true }
       );
     }
   ),
