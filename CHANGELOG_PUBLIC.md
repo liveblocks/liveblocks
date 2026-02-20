@@ -20,6 +20,21 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 8 (2026-02-20)
 
+## General
+
+- We [open sourced](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server) the Liveblocks sync engine and dev server
+- We opened up early opt-in access to the [new v2 Storage engine](https://liveblocks.io/docs/guides/about-the-new-storage-engine)
+
+## Documentation
+
+- Learn more about our new [Dev server](https://liveblocks.io/docs/tools/dev-server)
+- Learn [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing)
+- Learn [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright)
+
+## Dashboard
+
+- New toggle to opt-in to use v2 Storage engine for all new rooms created going forward
+
 ## v3.14 🥧
 
 This release adds support for opting-in to the new storage engine on a per-room basis. The new storage engine can support larger documents, is more performant, is considered more stable, and will eventually become our default engine for all new rooms in the future.
