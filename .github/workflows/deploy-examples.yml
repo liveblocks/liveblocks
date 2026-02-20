@@ -1,8 +1,9 @@
 name: Deploy examples to Vercel
 
 on:
-  schedule:
-    - cron: "0 6 * * 1"
+  push:
+    branches:
+      - examples
 
 jobs:
   deploy-examples:
