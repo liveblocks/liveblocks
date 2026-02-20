@@ -1,47 +1,52 @@
 ---
 meta:
-  title: "Modify storage with JSON Patch"
-  parentTitle: "Platform"
+  title: "Modifying Storage via REST API with JSON Patch"
+  parentTitle: "Guides"
   description:
     "Use the JSON Patch HTTP API to modify Liveblocks Storage from any language."
 ---
 
-The **Storage JSON Patch** endpoint lets you apply partial updates to a room's
-Storage document over HTTP. You send an array of operations (add, remove,
-replace, move, copy, test) and the server applies them in order. This is
-especially useful for languages that don't yet have a native Liveblocks client,
-for example: **Python**, so you can still read and update Storage using the REST
-API.
+The
+[Storage JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+allows you to apply partial updates to a room's
+[Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+document over HTTP. You send an array of operations (add, remove, replace, move,
+copy, test) and the server applies them in order. This is especially useful for
+modifying Storage from languages that don't yet have a native Liveblocks client,
+for example, such as Python, so you can still read and update Storage using the
+REST API.
+
+## Format
 
 The format follows the
 [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) specification (RFC
 6902). Paths use [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 (RFC 6901).
 
-**Endpoint:**
-`PATCH https://api.liveblocks.io/v2/rooms/{roomId}/storage/json-patch`
-
-## Authentication
-
-Authenticate with your project's **secret key** in the `Authorization` header:
-
-```bash
-Authorization: Bearer sk_xxxxxxxxxxxx
+```shell title="Endpoint"
+PATCH https://api.liveblocks.io/v2/rooms/{roomId}/storage/json-patch
 ```
 
-Use the secret key from your
-[Liveblocks dashboard](https://dashboard.liveblocks.io) (Project Settings → API
-keys). Never expose the secret key in client-side code.
+Authenticate with your project's **secret key** in the `Authorization` header.
+
+```shell
+"Authorization: Bearer {{SECRET_KEY}}"
+```
+
+Never expose your secret key in client-side code.
 
 ## Liveblocks data types and paths
 
-Storage is a tree of Liveblocks types: **LiveObject**, **LiveList**, and
-**LiveMap**. When building your patch:
+Storage is a tree of Liveblocks types:
+[LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
+[LiveList](/docs/api-reference/liveblocks-client#LiveList), and
+[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). When building your
+patch:
 
 - **Be as specific as possible** with your target path.
 - **Every parent** in the chain of path segments must be a LiveObject, LiveList,
   or LiveMap. You cannot target or traverse through plain JSON objects that
-  aren’t one of these types.
+  aren't one of these types.
 - **Nested values in `add` and `replace`:** If you pass a complex nested object
   or array as the `value` for an `add` or `replace` operation, it is
   automatically converted into LiveObjects and LiveLists on the server.
@@ -111,9 +116,9 @@ Copies the value at `from` to `path`. The `from` location must exist.
 
 ### test
 
-Checks that the value at `path` equals `value`. If it doesn’t, the whole patch
+Checks that the value at `path` equals `value`. If it doesn't, the whole patch
 fails and no changes are applied. Use `test` to guard against concurrent updates
-(e.g. “only replace if the counter is still 5”).
+(e.g. "only replace if the counter is still 5").
 
 - **Required:** `path`, `value`
 
@@ -167,7 +172,7 @@ from a supported environment.
 
 ```bash
 curl -X PATCH "https://api.liveblocks.io/v2/rooms/my-room-id/storage/json-patch" \
-  -H "Authorization: Bearer sk_xxxxxxxxxxxx" \
+  -H "Authorization: Bearer {{SECRET_KEY}}" \
   -H "Content-Type: application/json" \
   -d '[
     { "op": "test", "path": "/count", "value": 10 },
@@ -177,5 +182,5 @@ curl -X PATCH "https://api.liveblocks.io/v2/rooms/my-room-id/storage/json-patch"
 ```
 
 For the full request/response schema and more examples, see the
-[API reference](api-reference/rest-api-endpoints) for the Storage JSON Patch
-endpoint.
+[API reference](/docs/api-reference/rest-api-endpoints) for the Storage JSON
+Patch endpoint.

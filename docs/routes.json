@@ -641,10 +641,6 @@
         "path": "/platform/rest-api"
       },
       {
-        "title": "Modify storage with JSON Patch",
-        "path": "/platform/storage-json-patch"
-      },
-      {
         "title": "Management API",
         "path": "/platform/management-api"
       },
@@ -687,6 +683,16 @@
             "path": "/platform/limits/fair-use-guidelines"
           }
         ]
+      }
+    ]
+  },
+  {
+    "title": "Guides",
+    "defaultCollapsed": true,
+    "routes": [
+      {
+        "title": "Modifying storage via REST API with JSON Patch",
+        "path": "/guides/modifying-storage-via-rest-api-with-json-patch"
       }
     ]
   },
