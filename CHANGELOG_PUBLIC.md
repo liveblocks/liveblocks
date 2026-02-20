@@ -24,6 +24,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - We [open sourced](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server) the Liveblocks sync engine and dev server
 - We opened up early opt-in access to the [new v2 Storage engine](https://liveblocks.io/docs/guides/about-the-new-storage-engine)
+- The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
 
 ## Documentation
 
@@ -91,7 +92,7 @@ or:
 
 ## Contributors
 
-nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant
+nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju, SugarDarius
 
 # Week 7 (2026-02-13)
 
