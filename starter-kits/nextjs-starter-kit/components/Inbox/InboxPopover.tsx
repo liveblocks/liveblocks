@@ -1,7 +1,7 @@
 import {
   ClientSideSuspense,
   useUnreadInboxNotificationsCount,
-} from "@liveblocks/react";
+} from "@liveblocks/react/suspense";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useEffect, useState } from "react";
 import { InboxIcon } from "@/icons";
