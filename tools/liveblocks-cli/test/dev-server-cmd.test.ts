@@ -102,6 +102,24 @@ describe("liveblocks dev -c", () => {
     expect(stdout).toContain("LIVEBLOCKS_DEV_SERVER_PORT=1153");
   });
 
+  test("respects LIVEBLOCKS_DEVSERVER_HOST env var", async () => {
+    const { stdout, exitCode } = await runDevCommand(
+      ["-c", "env | grep LIVEBLOCKS_DEV_SERVER"],
+      { env: { LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0" } }
+    );
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("LIVEBLOCKS_DEV_SERVER_HOST=0.0.0.0");
+  });
+
+  test("--host flag takes precedence over LIVEBLOCKS_DEVSERVER_HOST env var", async () => {
+    const { stdout, exitCode } = await runDevCommand(
+      ["--host", "127.0.0.1", "-c", "env | grep LIVEBLOCKS_DEV_SERVER"],
+      { env: { LIVEBLOCKS_DEVSERVER_HOST: "0.0.0.0" } }
+    );
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("LIVEBLOCKS_DEV_SERVER_HOST=127.0.0.1");
+  });
+
   test("injects custom port via -p flag", async () => {
     const { stdout, exitCode } = await runDevCommand([
       "-p",

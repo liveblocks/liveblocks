@@ -102,7 +102,7 @@ function shellCmd(cmd: string): string[] {
 
 type Options = {
   port: string;
-  host: string;
+  host?: string;
   cmd?: string;
   help: boolean;
   "no-check": boolean;
@@ -116,7 +116,7 @@ const dev: SubCommand = {
   async run(argv) {
     const { options } = parseArgs<Options>(argv, {
       port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
-      host: { type: "string", default: "localhost" },
+      host: { type: "string" },
       cmd: { type: "string", short: "c" },
       help: { type: "boolean", short: "h", default: false },
       "no-check": { type: "boolean", default: false },
