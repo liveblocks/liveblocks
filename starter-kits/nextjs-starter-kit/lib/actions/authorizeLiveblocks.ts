@@ -5,9 +5,15 @@ import { ANONYMOUS_USER_ID } from "@/constants";
 import { liveblocks } from "@/liveblocks.server.config";
 import { User } from "@/types";
 
-export async function authorizeLiveblocks() {
+export async function authorizeLiveblocks(
+  /* `undefined` means this call is for a project-level feature, e.g. Notifications */
+  roomId: string | undefined
+) {
   // Get current session from NextAuth
-  const session = await auth();
+  const [session, room] = await Promise.all([
+    auth(),
+    roomId ? liveblocks.getRoom(roomId) : null,
+  ]);
 
   // Anonymous user info
   const anonymousUser: User = {
@@ -15,7 +21,6 @@ export async function authorizeLiveblocks() {
     name: "Anonymous",
     color: "#ff0000",
     avatar: "",
-    groupIds: [],
     organizationIds: [],
   };
 
@@ -23,20 +28,21 @@ export async function authorizeLiveblocks() {
   // If no session found, this is a logged out/anonymous user
   const { name, avatar, color, id } = session?.user.info ?? anonymousUser;
 
-  // TODO remove "liveblocks"
   // Get current organization from session
-  const currentOrganizationId =
-    session?.user.currentOrganizationId ?? "liveblocks";
-
-  // TODO insert the room's organization id into the thing above
-  // The correct id needs to be inserted even for anonymous users
+  const currentOrganizationId = session?.user.currentOrganizationId;
 
   // Get Liveblocks ID token
   const { status, body } = await liveblocks.identifyUser(
     {
       userId: id,
-      groupIds: [currentOrganizationId],
-      organizationId: currentOrganizationId,
+
+      // Permissions in this app use groupIds to determine access to rooms
+      // so we pass the current organizationId if it exists
+      groupIds: currentOrganizationId ? [currentOrganizationId] : [],
+
+      // Always pass the organizationId for the current room, otherwise
+      // anonymous users will not be able to join
+      organizationId: room?.organizationId ?? undefined,
     },
     {
       userInfo: { name, color, avatar },

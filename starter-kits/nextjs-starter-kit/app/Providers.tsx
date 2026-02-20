@@ -30,8 +30,8 @@ export function Providers({
         // If any client side data is needed to get user info from your system,
         // (e.g. auth token, user id) send it in the body alongside `room`.
         // This is using a Next.js server action called `authorizeLiveblocks`
-        authEndpoint={async () => {
-          const { data, error } = await authorizeLiveblocks();
+        authEndpoint={async (roomId) => {
+          const { data, error } = await authorizeLiveblocks(roomId);
 
           if (error) {
             Router.push({
