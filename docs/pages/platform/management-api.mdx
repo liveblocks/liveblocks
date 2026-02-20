@@ -119,7 +119,7 @@ tokens list. The token value will be partially obscured for security, showing
 only the first few characters. You can delete any token at any time using the
 delete icon next to it.
 
-## Token expiration
+## Access tokens expiry
 
 All Management API access tokens have an expiration date. When generating a new
 token, you can choose from the following expiration options:
@@ -128,7 +128,8 @@ token, you can choose from the following expiration options:
 - **30 days**: Token expires 30 days from creation
 - **90 days**: Token expires 90 days from creation
 - **1 year**: Token expires 1 year from creation (default)
-- **Custom date**: Choose a specific expiration date
+- **Custom date**: Choose a specific expiration date, up to a maximum of 1 year
+  from today
 
 The expiration date is displayed when you generate a new token, and you can view
 it for existing tokens in the Management API tokens list.
@@ -140,8 +141,8 @@ interruptions in your API access.
 ### Expiration reminders
 
 Liveblocks sends email reminders to team owners before tokens expire. You'll
-receive notifications at 7 days and 1 day before expiration, giving
-you time to generate replacement tokens and update your integrations.
+receive notifications at 7 days and 1 day before expiration, giving you time to
+generate replacement tokens and update your integrations.
 
 ## Revoking an access token
 
