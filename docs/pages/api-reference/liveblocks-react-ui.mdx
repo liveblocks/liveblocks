@@ -1529,6 +1529,9 @@ Displays a floating composer attached to a trigger element.
 Use `metadata` to attach context to the thread when submitting (for example
 canvas coordinates or table cell IDs).
 
+`FloatingComposer` can be combined with [`CommentPin`](#CommentPin) in
+canvas-like UIs.
+
 ```tsx
 <FloatingComposer metadata={{ x: 120, y: 80 }}>
   <CommentPin
@@ -1744,7 +1747,7 @@ function Component() {
 #### CommentPin
 
 Displays a comment pin that can be used as a trigger for `FloatingComposer` and
-`FloatingThread`.
+`FloatingThread`, or anywhere else in your UI.
 
 ```tsx
 <CommentPin />
@@ -1754,11 +1757,25 @@ Displays a comment pin that can be used as a trigger for `FloatingComposer` and
 
 {/* TODO: Add image */}
 
-Use `userId` to display an avatar inside the pin, for example to represent the
-thread’s author.
+Set the `userId` prop to display an avatar inside the pin, for example to
+represent the thread’s author.
 
 ```tsx
-<CommentPin userId={thread.comments[0]?.userId} corner="top-left" />
+<CommentPin userId={thread.comments[0]?.userId} />
+```
+
+Use the `corner` prop to choose which corner the pin points to, it will move
+itself to always point to wherever it is positioned.
+
+```tsx
+<CommentPin
+  corner="top-left"
+  style={{
+    position: "absolute",
+    left: thread.metadata.x,
+    top: thread.metadata.y,
+  }}
+/>
 ```
 
 ##### Props [#CommentPin-props]
@@ -3475,6 +3492,10 @@ rest as `+N`.
 <AvatarStack userIds={["stacy@example.com", "chris@example.com"]} max={5} />
 ```
 
+User IDs (both from Presence and the `userIds` prop) are deduplicated so the
+same user present with multiple tabs for example will only be displayed once in
+the stack.
+
 ##### Props [#AvatarStack-props]
 
 <PropertiesList>
@@ -3486,6 +3507,64 @@ rest as `+N`.
   </PropertiesListItem>
   <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
     Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Cursors
+
+Displays multiplayer cursors for other users in the room while tracking your own
+pointer position.
+
+It works out-of-the-box with best practices built-in:
+
+- Cursors are positioned relatively to adapt to different screen sizes
+- Cursors are interpolated with springs to smooth their movement
+  - Learn more about this in our article about
+    [animating multiplayer cursors](/blog/how-to-animate-multiplayer-cursors)
+- Performance bottlenecks like re-renders or `position: absolute` layout
+  thrashing are avoided
+
+```tsx
+<Cursors className="relative h-80 w-full">
+  <YourCanvas />
+</Cursors>
+```
+
+The cursors use the `name` and `color` properties which can be set via
+`userInfo` [when authenticating users](/docs/authentication).
+
+```tsx
+const { body, status } = await liveblocks.identifyUser(
+  {
+    userId: "stacy@example.com",
+  },
+  {
+    // +++
+    userInfo: {
+      name: "Stacy",
+      color: "#22c55e",
+    },
+    // +++
+  }
+);
+```
+
+By default, cursor coordinates are stored in Presence under `"$cursor"`. Use
+`presenceKey` to render multiple `Cursors` areas in a single room.
+
+If you need more control, you can use the single [`Cursor`](#Cursor) component
+and handle positioning manually with the Presence hooks in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Presence).
+
+##### Props [#Cursors-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="presenceKey"
+    type="string"
+    defaultValue={`"$cursor"`}
+  >
+    The key used to store cursor coordinates in users’ Presence.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3502,7 +3581,11 @@ Displays a multiplayer cursor with a color and an optional label.
 ```
 
 You can either use the `color` prop or override `--lb-cursor-color` with CSS to
-change the cursor’s color, by default it’s set to `--lb-accent`.
+change the cursor’s color, by default it’s set to `--lb-accent`. The label’s
+text color is dynamically set to contrast with the cursor’s color automatically.
+
+It’s sized as 0×0px to make it easy to position it either via `transform` or
+`top`/`left`.
 
 ##### Props [#Cursor-props]
 
@@ -3512,32 +3595,6 @@ change the cursor’s color, by default it’s set to `--lb-accent`.
   </PropertiesListItem>
   <PropertiesListItem name="label" type="ReactNode">
     A floating label to display next to the cursor.
-  </PropertiesListItem>
-</PropertiesList>
-
-#### Cursors
-
-Displays multiplayer cursors for other users in the room while tracking your own
-pointer position.
-
-```tsx
-<Cursors className="relative h-80 w-full">
-  <YourCanvas />
-</Cursors>
-```
-
-By default, cursor coordinates are stored in Presence under `"$cursor"`. Use
-`presenceKey` to render multiple `Cursors` areas in a single room.
-
-##### Props [#Cursors-props]
-
-<PropertiesList>
-  <PropertiesListItem
-    name="presenceKey"
-    type="string"
-    defaultValue={`"$cursor"`}
-  >
-    The key used to store cursor coordinates in users’ Presence.
   </PropertiesListItem>
 </PropertiesList>
 
