@@ -34,6 +34,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Dashboard
 
 - New toggle to opt-in to use v2 Storage engine for all new rooms created going forward
+- We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security
 
 ## v3.14 🥧
 
@@ -90,7 +91,7 @@ or:
 
 ## Contributors
 
-nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas
+nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant
 
 # Week 7 (2026-02-13)
 
