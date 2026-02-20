@@ -85,12 +85,22 @@ or:
 - New guide: [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing).
 - New guide: [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright).
 - New guide: [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+- Updated [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
+- Updated [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
 
 ## Dashboard
 
 - The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
 - We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security.
 - New toggle to opt-in to use v2 Storage engine for all new rooms created going forward.
+
+## Showcase
+
+- New item: [Develop locally with the dev server)[https://liveblocks.io/showcase/dev-server-tldraw].
+
+## Examples
+
+- Add dev server guide to all fully-supported example READMEs.
 
 ## Contributors
 
