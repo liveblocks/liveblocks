@@ -279,9 +279,6 @@ jobs:
 
     timeout-minutes: 60
 
-    env:
-      LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
-
     steps:
       - name: Checkout
         if: needs.check_for_code_changes.outputs.changes == 'true'
@@ -294,6 +291,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: "**/package-lock.json"
+
+      - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
