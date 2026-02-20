@@ -578,12 +578,12 @@ export class LiveMap<
         } else {
           // It's a child CRDT node — find the JS wrapper and delegate
           const childNode = this._pool!.getNode(entry.nodeId);
-          map.set(
-            key as TKey,
-            (childNode
-              ? childNode.toImmutable()
-              : entry.value) as ToImmutable<TValue>
-          );
+          if (childNode) {
+            map.set(
+              key as TKey,
+              childNode.toImmutable() as ToImmutable<TValue>
+            );
+          }
         }
       }
       return freeze(map);

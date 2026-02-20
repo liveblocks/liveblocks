@@ -1522,11 +1522,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           result.push(entry.value);
         } else {
           const childNode = this._pool!.getNode(entry.nodeId);
-          result.push(
-            childNode
-              ? childNode.toImmutable()
-              : entry.value // fallback
-          );
+          if (childNode) {
+            result.push(childNode.toImmutable());
+          }
         }
       }
       return (
