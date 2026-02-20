@@ -151,6 +151,7 @@ export function OrganizationPopover() {
       <button
         className={styles.profileButton}
         data-loading={!currentOrganization || undefined}
+        suppressHydrationWarning={true}
       >
         {currentOrganization ? (
           isInsideRoom ? (
