@@ -20,32 +20,15 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 8 (2026-02-20)
 
-## General
+## Open source
 
-- We [open sourced](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server) the Liveblocks sync engine and dev server
-- We opened up early opt-in access to the [new v2 Storage engine](https://liveblocks.io/docs/guides/about-the-new-storage-engine)
-- The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
-
-## Documentation
-
-- Learn more about our new [Dev server](https://liveblocks.io/docs/tools/dev-server)
-- Learn [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing)
-- Learn [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright)
-
-## Dashboard
-
-- New toggle to opt-in to use v2 Storage engine for all new rooms created going forward
-- We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security
+This week [we've open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
 
 ## v3.14 🥧
 
-This release adds support for opting-in to the new storage engine on a per-room basis. The new storage engine can support larger documents, is more performant, is considered more stable, and will eventually become our default engine for all new rooms in the future.
-
-As of this release, the default storage engine still remains engine version 1.
+This release adds support for opting-in to the new storage engine on a per-room basis. The new storage engine can support larger documents, is more performant, is considered more stable, and will eventually become our default engine for all new rooms in the future. As of this release, the default storage engine still remains engine version 1.
 
 To give it a try, simply pass `engine: 2` when entering a _new_ room. After a room is created, you cannot change the engine it was created with anymore.
-
-For example:
 
 ```ts
 // Vanilla JS
@@ -89,6 +72,25 @@ or:
 
 - Add new `.setPresence()` method to set ephemeral presence for a user in a room via the REST API, without requiring a WebSocket connection
 - Deprecated `tenantId` parameter in client methods, use `organizationId` instead.
+
+## Website
+
+- New blog post: [Open sourcing the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+
+## Documentation
+
+- New page: [Dev server](https://liveblocks.io/docs/tools/dev-server).
+- New page: [Management API](https://liveblocks.io/docs/platform/management-api).
+- New page: [Multi-Factor Authentication](https://liveblocks.io/docs/platform/account-management/mfa).
+- New guide: [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing).
+- New guide: [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright).
+- New guide: [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+
+## Dashboard
+
+- The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
+- We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security.
+- New toggle to opt-in to use v2 Storage engine for all new rooms created going forward.
 
 ## Contributors
 
