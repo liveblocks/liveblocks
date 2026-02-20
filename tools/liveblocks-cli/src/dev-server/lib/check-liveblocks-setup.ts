@@ -116,10 +116,8 @@ export interface ConfigIssue {
  * them are missing a `baseUrl` pointing at the local dev server.
  */
 export async function checkLiveblocksSetup(
-  port: number
+  baseUrl: string
 ): Promise<ConfigIssue[]> {
-  const baseUrl = `http://localhost:${port}`;
-
   // Run both greps in parallel: one for all call-site patterns, one for all
   // baseUrl patterns. This reduces up to 6 sequential git-grep invocations
   // down to 2 parallel ones.

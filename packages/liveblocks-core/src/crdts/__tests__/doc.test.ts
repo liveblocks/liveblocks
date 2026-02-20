@@ -52,13 +52,13 @@ describe("Storage", () => {
       const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, id: "root" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, id: "root" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -83,14 +83,14 @@ describe("Storage", () => {
       const unsubscribe = room.subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "root" },
-        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, id: "root" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "root" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, id: "root" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);

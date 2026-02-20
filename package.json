@@ -16,6 +16,7 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:ci": "turbo run test:ci",
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
