@@ -687,16 +687,6 @@
     ]
   },
   {
-    "title": "Guides",
-    "defaultCollapsed": true,
-    "routes": [
-      {
-        "title": "Modifying storage via REST API with JSON Patch",
-        "path": "/guides/modifying-storage-via-rest-api-with-json-patch"
-      }
-    ]
-  },
-  {
     "title": "Pricing",
     "defaultCollapsed": true,
     "routes": [
