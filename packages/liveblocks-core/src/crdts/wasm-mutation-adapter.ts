@@ -85,7 +85,7 @@ export function translateStorageUpdate(
           // Check the pre-collected deletedNodes map first (node may have been
           // detached from the pool by syncJsTreeFromRustResult).
           const deletedItem =
-            delta.deletedId != null
+            delta.deletedId !== null
               ? deletedNodes?.get(delta.deletedId) ??
                 pool.getNode(delta.deletedId) ??
                 delta.oldValue
@@ -147,7 +147,7 @@ export function translateStorageUpdate(
           updates[key] = { type: "update" };
         } else {
           const deletedItem =
-            delta.deletedId != null
+            delta.deletedId !== null
               ? deletedNodes?.get(delta.deletedId) ??
                 pool.getNode(delta.deletedId) ??
                 delta.oldValue

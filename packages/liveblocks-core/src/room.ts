@@ -25,8 +25,8 @@ import {
   createDocumentShadow,
   getTreesDiffOperations,
 } from "./crdts/wasm-adapter";
-import { translateStorageUpdate as translateWasmStorageUpdate } from "./crdts/wasm-mutation-adapter";
 import type { WasmStorageUpdate } from "./crdts/wasm-mutation-adapter";
+import { translateStorageUpdate as translateWasmStorageUpdate } from "./crdts/wasm-mutation-adapter";
 import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
@@ -2064,7 +2064,7 @@ export function createRoom<
             node._attachDirect(change.nodeId, pool);
             const parent = pool.getNode(change.parentId);
             if (parent) {
-              node._setParentLink(parent as LiveNode, change.parentKey);
+              node._setParentLink(parent, change.parentKey);
               // Keep LiveList's #items in sync
               if (parent instanceof LiveList) {
                 parent._syncAddChild(node);
@@ -2089,7 +2089,7 @@ export function createRoom<
               // their children for iteration after detach).
               if (
                 parent instanceof LiveList &&
-                parent._id != null &&
+                parent._id !== undefined &&
                 !deletedIds.has(parent._id)
               ) {
                 parent._syncRemoveChild(node);

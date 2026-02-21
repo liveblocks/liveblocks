@@ -1371,7 +1371,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const owner = this._pool?.wasmOwner;
     if (owner && this._id) {
       return owner.listEntries(this._id).map(
-        (entry) => resolveEntry(entry, this._pool!) as TItem
+        (entry) => resolveEntry(entry, nn(this._pool)) as TItem
       );
     }
     return Array.from(this.#items, (entry) => liveNodeToLson(entry) as TItem);
@@ -1433,7 +1433,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (owner && this._id) {
       const entry = owner.listGetEntry(this._id, index);
       if (!entry) return undefined;
-      return resolveEntry(entry, this._pool!) as TItem | undefined;
+      return resolveEntry(entry, nn(this._pool)) as TItem | undefined;
     }
 
     if (index < 0 || index >= this.#items.length) {
@@ -1593,7 +1593,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         if (entry.type === "scalar") {
           result.push(entry.value);
         } else {
-          const childNode = this._pool!.getNode(entry.nodeId);
+          const childNode = nn(this._pool).getNode(entry.nodeId);
           if (childNode) {
             result.push(childNode.toImmutable());
           }
