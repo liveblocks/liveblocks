@@ -15,7 +15,8 @@ import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
 
-const BASE_URL = "http://localhost:1154";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL || "http://localhost:1154";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,

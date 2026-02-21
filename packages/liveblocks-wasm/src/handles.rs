@@ -1166,6 +1166,11 @@ impl LiveListHandle {
                 {
                     let mut doc = self.doc.borrow_mut();
                     list::set_with_id(&mut doc, self.key, index, value.clone(), &new_reg_id);
+                    // Track unacked create for ACK conflict resolution
+                    doc.unacked_creates.insert(
+                        (list_id.clone(), position.clone()),
+                        op_id.clone(),
+                    );
                 }
 
                 // Forward op with intent hack
@@ -1220,14 +1225,23 @@ impl LiveListHandle {
                     create_lson_subtree(&mut doc, &mut id_gen, &list_id, &position, &value)
                 };
 
-                // Replace in list children
+                // Replace in list children and track unacked create
                 {
                     let mut doc = self.doc.borrow_mut();
                     if let Some(node) = doc.get_node_mut(self.key)
                         && let CrdtData::List { children, .. } = &mut node.data
                         && index < children.len()
                     {
-                        children[index] = (position, child_key);
+                        children[index] = (position.clone(), child_key);
+                    }
+                    // Track unacked create for ACK conflict resolution
+                    if let Some(first_op) = create_ops.first() {
+                        if let Some(op_id) = &first_op.op_id {
+                            doc.unacked_creates.insert(
+                                (list_id.clone(), position.clone()),
+                                op_id.clone(),
+                            );
+                        }
                     }
                 }
 
@@ -1488,6 +1502,11 @@ impl LiveMapHandle {
                 {
                     let mut doc = self.doc.borrow_mut();
                     map::set_with_id(&mut doc, self.key, key, value.clone(), &reg_id);
+                    // Track unacked create for ACK conflict resolution
+                    doc.unacked_creates.insert(
+                        (map_id.clone(), key.to_string()),
+                        op_id.clone(),
+                    );
                 }
 
                 // Forward op: CREATE_REGISTER for the new value
@@ -1549,13 +1568,22 @@ impl LiveMapHandle {
                     create_lson_subtree(&mut doc, &mut id_gen, &map_id, key, &value)
                 };
 
-                // Attach child to map
+                // Attach child to map and track unacked create
                 {
                     let mut doc = self.doc.borrow_mut();
                     if let Some(node) = doc.get_node_mut(self.key)
                         && let CrdtData::Map { children, .. } = &mut node.data
                     {
                         children.insert(key.to_string(), child_key);
+                    }
+                    // Track unacked create for ACK conflict resolution
+                    if let Some(first_op) = create_ops.first() {
+                        if let Some(op_id) = &first_op.op_id {
+                            doc.unacked_creates.insert(
+                                (map_id.clone(), key.to_string()),
+                                op_id.clone(),
+                            );
+                        }
                     }
                 }
 

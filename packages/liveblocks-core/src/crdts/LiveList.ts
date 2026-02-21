@@ -1009,7 +1009,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     // WASM mutation path: position comes from WASM
     const shadow = this._pool?.wasmShadow;
     if (shadow && this._pool && this._id) {
-      const item = nn(this.#items.at(index));
+      // Look up the item from Rust when #items may be out of sync
+      const owner = this._pool.wasmOwner;
+      let item: LiveNode | undefined;
+      if (owner) {
+        const entry = owner.listGetEntry(this._id, index);
+        if (entry && entry.type === "node") {
+          item = this._pool.getNode(entry.nodeId);
+        }
+      }
+      if (!item) {
+        item = this.#items.at(index); // eslint-disable-line no-restricted-syntax
+      }
 
       const result = shadow.listMove(
         this._id,
@@ -1021,7 +1032,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const setOp = result.ops.find(
         (op) => op.type === OpCode.SET_PARENT_KEY
       );
-      if (setOp && setOp.type === OpCode.SET_PARENT_KEY) {
+      if (setOp && setOp.type === OpCode.SET_PARENT_KEY && item) {
         item._setParentLink(this, setOp.parentKey);
         this.#items.reposition(item);
         this.invalidate();
@@ -1101,19 +1112,36 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
     }
 
-    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
-    item._detach();
-    this.#items.remove(item);
-    this.invalidate();
-
     if (this._pool) {
-      // WASM mutation path
+      // WASM mutation path: delegate to Rust first, then sync JS state
       const shadow = this._pool.wasmShadow;
       if (shadow && this._id) {
+        // Get the node entry at this index from Rust so we know which JS
+        // wrapper to detach, even if #items is out of sync.
+        const owner = this._pool.wasmOwner;
+        let jsItem: LiveNode | undefined;
+        if (owner) {
+          const entry = owner.listGetEntry(this._id, index);
+          if (entry && entry.type === "node") {
+            jsItem = this._pool.getNode(entry.nodeId);
+          }
+        }
+        // Fallback: try #items directly
+        if (!jsItem) {
+          jsItem = this.#items.at(index); // eslint-disable-line no-restricted-syntax
+        }
+
         const result = shadow.listDelete(
           this._id,
           index
         ) as WasmMutationResult;
+
+        // Detach the JS wrapper after the WASM mutation succeeds
+        if (jsItem) {
+          jsItem._detach();
+          this.#items.remove(jsItem);
+        }
+        this.invalidate();
 
         const storageUpdates = translateStorageUpdate(result.update, this._pool);
         this._pool.dispatch(
@@ -1124,7 +1152,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
         return;
       }
+    }
 
+    // JS-only path
+    const item = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
+    item._detach();
+    this.#items.remove(item);
+    this.invalidate();
+
+    if (this._pool) {
       const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
@@ -1223,6 +1259,78 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
     }
 
+    if (this._pool && this._id) {
+      // WASM mutation path: use Rust for item lookups
+      const shadow = this._pool.wasmShadow;
+      if (shadow) {
+        // Look up the existing item from Rust (not #items) so we stay in
+        // sync when ACK processing has created nodes not yet in #items.
+        const owner = this._pool.wasmOwner;
+        let existingItem: LiveNode | undefined;
+        let position: string | undefined;
+        if (owner) {
+          const entry = owner.listGetEntry(this._id, index);
+          if (entry && entry.type === "node") {
+            existingItem = this._pool.getNode(entry.nodeId);
+          }
+        }
+        if (!existingItem) {
+          existingItem = this.#items.at(index); // eslint-disable-line no-restricted-syntax
+        }
+        if (existingItem) {
+          position = existingItem._getParentKeyOrThrow();
+          existingItem._detach();
+          this.#items.remove(existingItem);
+        }
+
+        const wasmValue = isLiveStructure(item)
+          ? (item as LiveNode)._toWasmValue()
+          : item;
+
+        const result = shadow.listSet(
+          this._id,
+          index,
+          wasmValue
+        ) as WasmMutationResult;
+
+        const value = lsonToLiveNode(item);
+        // Get position from the first CREATE op when we couldn't find it above
+        if (!position && result.ops.length > 0) {
+          position = (result.ops[0] as CreateOp).parentKey;
+        }
+        if (position) {
+          value._setParentLink(this, position);
+        }
+        this.#items.add(value);
+        this.invalidate();
+
+        if (position) {
+          attachSubtreeFromOps(
+            result.ops,
+            value,
+            this._pool,
+            this._id,
+            position
+          );
+        }
+
+        const wireOps = result.ops as ClientWireOp[];
+        if (wireOps.length > 0 && position) {
+          this.#unacknowledgedSets.set(position, wireOps[0].opId);
+        }
+
+        const storageUpdates = translateStorageUpdate(
+          result.update,
+          this._pool
+        );
+        this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
+          skipWasmSync: true,
+        });
+        return;
+      }
+    }
+
+    // JS-only path
     const existingItem = this.#items.at(index)!; // eslint-disable-line no-restricted-syntax
     const position = existingItem._getParentKeyOrThrow();
 
@@ -1236,42 +1344,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this.invalidate();
 
     if (this._pool && this._id) {
-      // WASM mutation path
-      const shadow = this._pool.wasmShadow;
-      if (shadow) {
-        const wasmValue = isLiveStructure(item)
-          ? (item as LiveNode)._toWasmValue()
-          : item;
-
-        const result = shadow.listSet(
-          this._id,
-          index,
-          wasmValue
-        ) as WasmMutationResult;
-
-        attachSubtreeFromOps(
-          result.ops,
-          value,
-          this._pool,
-          this._id,
-          position
-        );
-
-        const wireOps = result.ops as ClientWireOp[];
-        if (wireOps.length > 0) {
-          this.#unacknowledgedSets.set(position, wireOps[0].opId);
-        }
-
-        const storageUpdates = translateStorageUpdate(
-          result.update,
-          this._pool
-        );
-        this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
-          skipWasmSync: true,
-        });
-        return;
-      }
-
       const id = this._pool.generateId();
       value._attach(id, this._pool);
 

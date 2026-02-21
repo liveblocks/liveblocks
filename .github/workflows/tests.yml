@@ -129,10 +129,17 @@ jobs:
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
   # WASM tests for @liveblocks/core — builds the Rust WASM package and runs
-  # all unit tests + Rust tests with LIVEBLOCKS_ENGINE=wasm.
+  # all unit tests + Rust tests + e2e devserver tests with LIVEBLOCKS_ENGINE=wasm.
   test-wasm:
     needs: check_for_code_changes
     runs-on: ubuntu-latest
+
+    # Run the Liveblocks dev server for e2e devserver tests
+    services:
+      liveblocks:
+        image: ghcr.io/liveblocks/dev-server:main
+        ports:
+          - 1153:1153
 
     strategy:
       matrix:
@@ -194,6 +201,11 @@ jobs:
       - name: Run WASM equivalence tests
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test -- --filter @liveblocks/core
+
+      - name: Run e2e devserver tests (WASM)
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        run: npm run test:e2e:devserver
+        working-directory: packages/liveblocks-core
 
   # E2E tests defined in e2e/next-sandbox package
   e2e-next-sandbox:

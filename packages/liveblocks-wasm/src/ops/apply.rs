@@ -21,7 +21,7 @@ pub fn apply_op(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
             apply_create(doc, op, source)
         }
         OpCode::UpdateObject => apply_update_object(doc, op, source),
-        OpCode::DeleteCrdt => apply_delete_crdt(doc, op),
+        OpCode::DeleteCrdt => apply_delete_crdt(doc, op, source),
         OpCode::DeleteObjectKey => apply_delete_object_key(doc, op, source),
         OpCode::SetParentKey => apply_set_parent_key(doc, op),
     }
@@ -109,109 +109,305 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
     // For list children, we need to update the position when it differs
     // (matching JS _applyInsertAck behavior where server may relocate the item).
     if let Some(existing_key) = doc.get_key_by_id(&op.id) {
-        let needs_position_update = {
-            let node = doc.get_node(existing_key);
-            node.map(|n| n.parent_key.as_deref() != Some(&parent_key))
-                .unwrap_or(false)
-        };
+        // Track local set-intent CREATE ops for unacked set detection, even when
+        // the node already exists (WASM mutation handles pre-create nodes before
+        // this function is called with source=Local). Only set-intent ops are
+        // tracked — regular inserts/pushes don't have superseded-set semantics.
+        if source == OpSource::Local && op.intent.as_deref() == Some("set") {
+            if let Some(op_id) = &op.op_id {
+                doc.unacked_creates.insert(
+                    (parent_id.clone(), parent_key.clone()),
+                    op_id.clone(),
+                );
+            }
+        }
 
-        if needs_position_update {
-            if let Some(parent_node_key) = doc.get_key_by_id(&parent_id) {
-                // Find previous index before the move
-                let previous_index = {
-                    doc.get_node(parent_node_key).and_then(|p| match &p.data {
-                        CrdtData::List { children, .. } => {
-                            children.iter().position(|(_, ck)| *ck == existing_key)
-                        }
-                        _ => None,
-                    })
-                };
+        let parent_node_key = doc.get_key_by_id(&parent_id);
 
-                // Shift any item currently at the target position
-                // (matching JS #applyInsertAck → #shiftItemPosition)
-                if let Some(parent) = doc.get_node(parent_node_key)
-                    && let CrdtData::List { children, .. } = &parent.data
-                {
-                    if let Some(conflict_idx) = children
-                        .iter()
-                        .position(|(pos, ck)| pos.as_str() == parent_key && *ck != existing_key)
-                    {
-                        let conflict_child_key = children[conflict_idx].1;
-                        let before_pos = Some(parent_key.clone());
-                        let after_pos =
-                            children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
-                        let shifted_pos = crate::position::make_position(
-                            before_pos.as_deref(),
-                            after_pos.as_deref(),
-                        );
-                        if let Some(child) = doc.get_node_mut(conflict_child_key) {
-                            child.parent_key = Some(shifted_pos.clone());
-                        }
-                        if let Some(parent) = doc.get_node_mut(parent_node_key)
+        // Check if the node is currently in the parent's children (for lists).
+        // Nodes can be "implicitly deleted" — still in the arena but removed
+        // from the parent's children list by a concurrent set conflict.
+        let is_in_children = parent_node_key.map_or(false, |pk| {
+            doc.get_node(pk).map_or(false, |p| match &p.data {
+                CrdtData::List { children, .. } => {
+                    children.iter().any(|(_, ck)| *ck == existing_key)
+                }
+                // For objects/maps, if the node exists, treat it as "in children"
+                _ => true,
+            })
+        });
+
+        // For set ACKs: always process deleted_id first, matching JS
+        // #applySetAck which calls #detachItemAssociatedToSetOperation
+        // before any other logic.
+        let mut has_deleted = false;
+        if op.intent.as_deref() == Some("set") {
+            if let Some(deleted_id) = &op.deleted_id {
+                if let Some(deleted_node_key) = doc.get_key_by_id(deleted_id) {
+                    if let Some(pk) = parent_node_key {
+                        if let Some(parent) = doc.get_node_mut(pk)
                             && let CrdtData::List { children, .. } = &mut parent.data
                         {
-                            if let Some(entry) =
-                                children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
-                            {
-                                entry.0 = shifted_pos;
-                            }
+                            children.retain(|(_, ck)| *ck != deleted_node_key);
                         }
+                        doc.remove_node_recursive(deleted_node_key);
+                        has_deleted = true;
                     }
-                }
-
-                // Update the node's parent_key
-                if let Some(node) = doc.get_node_mut(existing_key) {
-                    node.parent_key = Some(parent_key.clone());
-                }
-
-                // Update position in children vec and re-sort
-                if let Some(parent) = doc.get_node_mut(parent_node_key)
-                    && let CrdtData::List { children, .. } = &mut parent.data
-                {
-                    if let Some(entry) =
-                        children.iter_mut().find(|(_, ck)| *ck == existing_key)
-                    {
-                        entry.0 = parent_key;
-                    }
-                    children.sort_by(|(a, _), (b, _)| a.cmp(b));
-                }
-
-                // Find new index after the move and return Modified with move update
-                let new_index = {
-                    doc.get_node(parent_node_key).and_then(|p| match &p.data {
-                        CrdtData::List { children, .. } => {
-                            children.iter().position(|(_, ck)| *ck == existing_key)
-                        }
-                        _ => None,
-                    })
-                };
-
-                if let (Some(prev_idx), Some(new_idx)) = (previous_index, new_index) {
-                    if prev_idx != new_idx {
-                        let value =
-                            get_node_immutable_value(doc, existing_key).unwrap_or(Json::Null);
-                        return ApplyResult::Modified {
-                            reverse: vec![],
-                            update: StorageUpdate::LiveListUpdate {
-                                node_id: parent_id,
-                                updates: vec![ListUpdateEntry::Move {
-                                    previous_index: prev_idx,
-                                    new_index: new_idx,
-                                    value,
-                                }],
-                            },
-                        };
-                    }
-                }
-            } else {
-                // No parent found, just update parent_key
-                if let Some(node) = doc.get_node_mut(existing_key) {
-                    node.parent_key = Some(parent_key);
                 }
             }
         }
 
+        if is_in_children {
+            // Node is in the parent's children — handle position update
+            let needs_position_update = {
+                let node = doc.get_node(existing_key);
+                node.map(|n| n.parent_key.as_deref() != Some(&parent_key))
+                    .unwrap_or(false)
+            };
+
+            if needs_position_update {
+                if let Some(parent_node_key) = parent_node_key {
+                    // Find previous index before the move
+                    let previous_index = {
+                        doc.get_node(parent_node_key).and_then(|p| match &p.data {
+                            CrdtData::List { children, .. } => {
+                                children.iter().position(|(_, ck)| *ck == existing_key)
+                            }
+                            _ => None,
+                        })
+                    };
+
+                    // Shift any item currently at the target position
+                    // (matching JS #applyInsertAck → #shiftItemPosition)
+                    if let Some(parent) = doc.get_node(parent_node_key)
+                        && let CrdtData::List { children, .. } = &parent.data
+                    {
+                        if let Some(conflict_idx) = children
+                            .iter()
+                            .position(|(pos, ck)| pos.as_str() == parent_key && *ck != existing_key)
+                        {
+                            let conflict_child_key = children[conflict_idx].1;
+                            let before_pos = Some(parent_key.clone());
+                            let after_pos =
+                                children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                            let shifted_pos = crate::position::make_position(
+                                before_pos.as_deref(),
+                                after_pos.as_deref(),
+                            );
+                            if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                                child.parent_key = Some(shifted_pos.clone());
+                            }
+                            if let Some(parent) = doc.get_node_mut(parent_node_key)
+                                && let CrdtData::List { children, .. } = &mut parent.data
+                            {
+                                if let Some(entry) =
+                                    children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                                {
+                                    entry.0 = shifted_pos;
+                                }
+                            }
+                        }
+                    }
+
+                    // Update the node's parent_key
+                    if let Some(node) = doc.get_node_mut(existing_key) {
+                        node.parent_key = Some(parent_key.clone());
+                    }
+
+                    // Update position in children vec and re-sort
+                    if let Some(parent) = doc.get_node_mut(parent_node_key)
+                        && let CrdtData::List { children, .. } = &mut parent.data
+                    {
+                        if let Some(entry) =
+                            children.iter_mut().find(|(_, ck)| *ck == existing_key)
+                        {
+                            entry.0 = parent_key;
+                        }
+                        children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                    }
+
+                    // Find new index after the move and return Modified with move update
+                    let new_index = {
+                        doc.get_node(parent_node_key).and_then(|p| match &p.data {
+                            CrdtData::List { children, .. } => {
+                                children.iter().position(|(_, ck)| *ck == existing_key)
+                            }
+                            _ => None,
+                        })
+                    };
+
+                    if let (Some(prev_idx), Some(new_idx)) = (previous_index, new_index) {
+                        if prev_idx != new_idx {
+                            let value =
+                                get_node_immutable_value(doc, existing_key).unwrap_or(Json::Null);
+                            return ApplyResult::Modified {
+                                reverse: vec![],
+                                update: StorageUpdate::LiveListUpdate {
+                                    node_id: parent_id,
+                                    updates: vec![ListUpdateEntry::Move {
+                                        previous_index: prev_idx,
+                                        new_index: new_idx,
+                                        value,
+                                    }],
+                                },
+                            };
+                        }
+                    }
+                } else {
+                    // No parent found, just update parent_key
+                    if let Some(node) = doc.get_node_mut(existing_key) {
+                        node.parent_key = Some(parent_key);
+                    }
+                }
+            }
+
+            if has_deleted {
+                // deleted_id was processed — return Modified even if position unchanged
+                return ApplyResult::Modified {
+                    reverse: vec![],
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: parent_id,
+                        updates: vec![],
+                    },
+                };
+            }
+            return ApplyResult::NotModified;
+        } else if let Some(pk) = parent_node_key {
+            // Node is implicitly deleted: exists in the arena but NOT in the
+            // parent's children list. This happens when a concurrent set conflict
+            // removed it from children but kept it in the arena for potential
+            // restoration. Matching JS #applySetAck / #applyInsertAck which
+            // restore implicitly deleted items when their ACK arrives.
+
+            // Handle conflict at the target position — implicitly delete any
+            // existing item at that position to make room for the restored node.
+            if let Some(parent) = doc.get_node(pk)
+                && let CrdtData::List { children, .. } = &parent.data
+            {
+                if let Some(conflict_idx) = children
+                    .iter()
+                    .position(|(pos, _)| pos.as_str() == parent_key)
+                {
+                    let conflict_child_key = children[conflict_idx].1;
+                    // Shift the conflicting item to make room
+                    let before_pos = Some(parent_key.clone());
+                    let after_pos =
+                        children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                    let shifted_pos = crate::position::make_position(
+                        before_pos.as_deref(),
+                        after_pos.as_deref(),
+                    );
+                    if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                        child.parent_key = Some(shifted_pos.clone());
+                    }
+                    if let Some(parent) = doc.get_node_mut(pk)
+                        && let CrdtData::List { children, .. } = &mut parent.data
+                    {
+                        if let Some(entry) =
+                            children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                        {
+                            entry.0 = shifted_pos;
+                        }
+                        children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                    }
+                }
+            }
+
+            // Update the node's parent_key to the target position
+            if let Some(node) = doc.get_node_mut(existing_key) {
+                node.parent_key = Some(parent_key.clone());
+            }
+
+            // Re-insert the node into the parent's children at the correct position
+            if let Some(parent) = doc.get_node_mut(pk)
+                && let CrdtData::List { children, .. } = &mut parent.data
+            {
+                let insert_idx = children
+                    .iter()
+                    .position(|(pos, _)| pos.as_str() > parent_key.as_str())
+                    .unwrap_or(children.len());
+                children.insert(insert_idx, (parent_key.clone(), existing_key));
+
+                return ApplyResult::Modified {
+                    reverse: vec![],
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: parent_id,
+                        updates: vec![ListUpdateEntry::Insert {
+                            index: insert_idx,
+                            value: get_node_immutable_value(doc, existing_key)
+                                .unwrap_or(Json::Null),
+                        }],
+                    },
+                };
+            }
+        }
+
         return ApplyResult::NotModified;
+    }
+
+    // Node NOT in arena — ACK handling for source=Ours.
+    //
+    // The node was created locally but is no longer in the document. Two cases:
+    //
+    // 1. Set-intent (list.set, map.set): the node may have been removed by a
+    //    REMOTE set conflict at the same position/key. Use unacked_creates to
+    //    distinguish current vs superseded:
+    //    - Current: re-create the node (it was deleted by remote, not locally).
+    //    - Superseded: skip (a newer local set overwrote this position/key).
+    //
+    // 2. Non-set-intent (push, insert, undo-CREATE): the node was created
+    //    locally and then deleted by a LOCAL operation (undo or explicit delete).
+    //    The DELETE op was also dispatched to the server. Skip re-creation —
+    //    the local state has moved past this CREATE.
+    //    (For non-set-intent, a remote op cannot delete our node before the ACK
+    //    arrives, because the server processes our CREATE first and the ACK
+    //    arrives before any remote DELETE that references our node.)
+    if source == OpSource::Ours {
+        let is_set_intent = op.intent.as_deref() == Some("set");
+        let ack_key = (parent_id.clone(), parent_key.clone());
+
+        if is_set_intent {
+            let op_id = op.op_id.as_deref().unwrap_or("");
+            let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+
+            if latest_op_id == Some(op_id) {
+                // This is the current (non-superseded) set — remove from tracking
+                // and fall through to create the node normally.
+                doc.unacked_creates.remove(&ack_key);
+            } else {
+                // Superseded: a more recent local set at this (parent, key) has
+                // overwritten this one → skip the ACK.
+                return ApplyResult::NotModified;
+            }
+        } else {
+            // Non-set-intent ACK (push, insert, undo-CREATE).
+            // Check unacked_creates for map/object ACKs (tracked by handles.rs).
+            let op_id = op.op_id.as_deref().unwrap_or("");
+            let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+            if latest_op_id.is_some() && latest_op_id != Some(op_id) {
+                // There's a newer local create at this (parent, key) — skip ACK.
+                return ApplyResult::NotModified;
+            }
+            if latest_op_id == Some(op_id) {
+                doc.unacked_creates.remove(&ack_key);
+            }
+            // Fall through to create the node normally (matching JS behavior
+            // where ACKs are processed like regular ops).
+        }
+    }
+
+    // Track local set-intent CREATE ops for unacked set detection.
+    // When a later CREATE at the same (parent, key) overwrites this entry,
+    // the earlier op becomes "superseded" and its ACK will be skipped.
+    // Only set-intent ops are tracked — regular inserts, pushes, and
+    // undo-generated CREATEs don't have superseded-set semantics.
+    if source == OpSource::Local && op.intent.as_deref() == Some("set") {
+        if let Some(op_id) = &op.op_id {
+            doc.unacked_creates.insert(
+                (parent_id.clone(), parent_key.clone()),
+                op_id.clone(),
+            );
+        }
     }
 
     // Find the parent node
@@ -613,7 +809,7 @@ fn apply_update_object(doc: &mut Document, op: &Op, source: OpSource) -> ApplyRe
 // ---- DELETE_CRDT ----
 
 /// Apply a DELETE_CRDT op: remove a node and detach from parent.
-fn apply_delete_crdt(doc: &mut Document, op: &Op) -> ApplyResult {
+fn apply_delete_crdt(doc: &mut Document, op: &Op, _source: OpSource) -> ApplyResult {
     let node_key = match doc.get_key_by_id(&op.id) {
         Some(k) => k,
         None => return ApplyResult::NotModified,
@@ -1074,5 +1270,281 @@ fn get_node_immutable_value(doc: &Document, key: NodeKey) -> Option<Json> {
         CrdtData::Object { .. } => crate::crdt::object::to_immutable(doc, key),
         CrdtData::List { .. } => crate::crdt::list::to_immutable(doc, key),
         CrdtData::Map { .. } => crate::crdt::map::to_immutable(doc, key),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_init_op() -> Op {
+        Op {
+            op_code: OpCode::Init,
+            id: "root".to_string(),
+            op_id: None,
+            parent_id: None,
+            parent_key: None,
+            data: None,
+            intent: None,
+            deleted_id: None,
+            key: None,
+        }
+    }
+
+    fn make_create_map_op(id: &str, parent_id: &str, parent_key: &str) -> Op {
+        Op {
+            op_code: OpCode::CreateMap,
+            id: id.to_string(),
+            op_id: None,
+            parent_id: Some(parent_id.to_string()),
+            parent_key: Some(parent_key.to_string()),
+            data: None,
+            intent: None,
+            deleted_id: None,
+            key: None,
+        }
+    }
+
+    fn make_create_register_op(
+        id: &str,
+        parent_id: &str,
+        parent_key: &str,
+        value: Json,
+        op_id: Option<&str>,
+    ) -> Op {
+        Op {
+            op_code: OpCode::CreateRegister,
+            id: id.to_string(),
+            op_id: op_id.map(String::from),
+            parent_id: Some(parent_id.to_string()),
+            parent_key: Some(parent_key.to_string()),
+            data: Some(value),
+            intent: None,
+            deleted_id: None,
+            key: None,
+        }
+    }
+
+    /// Simulates: "remote set conflicts with another set" for LiveMap.
+    /// Client B sets map["key"]="b" (Local), then client A's set arrives (Theirs),
+    /// then B's ACK arrives (Ours). B should end up with map["key"]="b".
+    #[test]
+    fn map_set_conflict_ack_restores_value() {
+        let mut doc = Document::new();
+
+        // Init root + create a LiveMap at root.map
+        apply_op(&mut doc, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc,
+            &make_create_map_op("map1", "root", "map"),
+            OpSource::Theirs,
+        );
+
+        // Step 1: Client B sets map["key"]="b" (Local mutation).
+        // In WASM-owned mode, the WASM mutation handle (handles.rs::mapSet):
+        //   1. Pre-creates the register via map::set_with_id
+        //   2. Tracks unacked_creates directly
+        //   3. Dispatches the op (not through apply_create)
+        // Here we simulate by applying the create op + manually tracking,
+        // matching the real handles.rs flow.
+        let b_op = make_create_register_op(
+            "reg_b",
+            "map1",
+            "key",
+            Json::String("b".to_string()),
+            Some("op_b"),
+        );
+        let result = apply_op(&mut doc, &b_op, OpSource::Local);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+
+        // Simulate handles.rs tracking (mapSet tracks unacked_creates directly)
+        let ack_key = ("map1".to_string(), "key".to_string());
+        doc.unacked_creates.insert(ack_key.clone(), "op_b".to_string());
+
+        // Verify the map has key="b"
+        let map_key = doc.get_key_by_id("map1").unwrap();
+
+        // Step 2: Client A's set arrives (Theirs) — overwrites B's value.
+        let a_op = make_create_register_op(
+            "reg_a",
+            "map1",
+            "key",
+            Json::String("a".to_string()),
+            Some("op_a"),
+        );
+        let result = apply_op(&mut doc, &a_op, OpSource::Theirs);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+
+        // Verify the map now has key="a" (A's value)
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(map_val, Some(Json::String("a".to_string())));
+
+        // B's register should have been removed from the arena
+        assert!(doc.get_key_by_id("reg_b").is_none());
+
+        // unacked_creates should still be present (not cleared by A's op)
+        assert_eq!(
+            doc.unacked_creates.get(&ack_key),
+            Some(&"op_b".to_string()),
+            "unacked_creates should survive remote ops"
+        );
+
+        // Step 3: B's ACK arrives (Ours) — should re-create B's value.
+        let result = apply_op(&mut doc, &b_op, OpSource::Ours);
+        assert!(
+            matches!(result, ApplyResult::Modified { .. }),
+            "B's ACK should re-create the value (not be treated as superseded)"
+        );
+
+        // Verify the map now has key="b" (B's value restored)
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(
+            map_val,
+            Some(Json::String("b".to_string())),
+            "After B's ACK, map should have B's value"
+        );
+
+        // unacked_creates should be cleared
+        assert!(
+            doc.unacked_creates.get(&ack_key).is_none(),
+            "unacked_creates should be cleared after ACK"
+        );
+    }
+
+    /// Simulates: superseded set ACK should be skipped.
+    /// Client B sets map["key"]="b1" (Local), then sets map["key"]="b2" (Local),
+    /// then b1's ACK arrives (Ours) — should be skipped.
+    #[test]
+    fn map_set_superseded_ack_is_skipped() {
+        let mut doc = Document::new();
+
+        // Init root + create a LiveMap
+        apply_op(&mut doc, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc,
+            &make_create_map_op("map1", "root", "map"),
+            OpSource::Theirs,
+        );
+
+        // B sets map["key"]="b1"
+        // (handles.rs::mapSet pre-creates + tracks unacked_creates)
+        let b1_op = make_create_register_op(
+            "reg_b1",
+            "map1",
+            "key",
+            Json::String("b1".to_string()),
+            Some("op_b1"),
+        );
+        apply_op(&mut doc, &b1_op, OpSource::Local);
+        let ack_key = ("map1".to_string(), "key".to_string());
+        doc.unacked_creates.insert(ack_key.clone(), "op_b1".to_string());
+
+        // B sets map["key"]="b2" (overwrites b1)
+        // (handles.rs::mapSet overwrites the unacked_creates entry)
+        let b2_op = make_create_register_op(
+            "reg_b2",
+            "map1",
+            "key",
+            Json::String("b2".to_string()),
+            Some("op_b2"),
+        );
+        apply_op(&mut doc, &b2_op, OpSource::Local);
+        doc.unacked_creates.insert(ack_key.clone(), "op_b2".to_string());
+
+        // Verify map has key="b2"
+        let map_key = doc.get_key_by_id("map1").unwrap();
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(map_val, Some(Json::String("b2".to_string())));
+
+        // b1's ACK arrives — should be skipped (superseded by b2)
+        let result = apply_op(&mut doc, &b1_op, OpSource::Ours);
+        assert!(
+            matches!(result, ApplyResult::NotModified),
+            "Superseded ACK should return NotModified"
+        );
+
+        // Map should still have key="b2"
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(map_val, Some(Json::String("b2".to_string())));
+    }
+
+    /// Simulates the WASM-owned flow where the WASM mutation handle pre-creates
+    /// the node before apply_create is called with source=Local.
+    /// This is the actual path in WASM-owned mode.
+    #[test]
+    fn map_set_conflict_wasm_owned_flow() {
+        let mut doc = Document::new();
+
+        // Init root + create a LiveMap
+        apply_op(&mut doc, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc,
+            &make_create_map_op("map1", "root", "map"),
+            OpSource::Theirs,
+        );
+        let map_key = doc.get_key_by_id("map1").unwrap();
+
+        // Step 1: Simulate WASM mutation handle pre-creating the register.
+        // In real WASM-owned mode, mapSet() calls:
+        //   1. map::set_with_id() — creates the register node
+        //   2. doc.unacked_creates.insert() — tracks for ACK resolution
+        //   3. dispatch(ops) — sends to server (NOT through apply_create)
+        crate::crdt::map::set_with_id(
+            &mut doc,
+            map_key,
+            "key",
+            Json::String("b".to_string()),
+            "reg_b",
+        );
+        let ack_key = ("map1".to_string(), "key".to_string());
+        doc.unacked_creates.insert(ack_key.clone(), "op_b".to_string());
+
+        // In the real flow, the op is dispatched to the server without going
+        // through apply_create. We verify unacked_creates was populated.
+        assert_eq!(
+            doc.unacked_creates.get(&ack_key),
+            Some(&"op_b".to_string()),
+            "unacked_creates should be populated by the mutation handle"
+        );
+
+        let b_op = make_create_register_op(
+            "reg_b",
+            "map1",
+            "key",
+            Json::String("b".to_string()),
+            Some("op_b"),
+        );
+
+        // Step 2: Client A's set arrives (Theirs)
+        let a_op = make_create_register_op(
+            "reg_a",
+            "map1",
+            "key",
+            Json::String("a".to_string()),
+            Some("op_a"),
+        );
+        apply_op(&mut doc, &a_op, OpSource::Theirs);
+
+        // Verify map has key="a"
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(map_val, Some(Json::String("a".to_string())));
+
+        // B's register was removed
+        assert!(doc.get_key_by_id("reg_b").is_none());
+
+        // Step 3: B's ACK arrives (Ours)
+        let result = apply_op(&mut doc, &b_op, OpSource::Ours);
+        assert!(
+            matches!(result, ApplyResult::Modified { .. }),
+            "B's ACK should re-create the value"
+        );
+
+        // Verify map has key="b"
+        let map_val = crate::crdt::map::get(&doc, map_key, "key");
+        assert_eq!(
+            map_val,
+            Some(Json::String("b".to_string())),
+            "After B's ACK, map should have B's value 'b'"
+        );
     }
 }

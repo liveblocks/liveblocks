@@ -9,6 +9,11 @@ pub struct Document {
     pub(crate) arena: Arena<CrdtNode>,
     pub(crate) id_to_key: HashMap<String, NodeKey>,
     pub(crate) root_key: Option<NodeKey>,
+    /// Tracks the latest op_id for each (parent_id, parent_key) pair where
+    /// a local CREATE op has been applied but not yet acknowledged.
+    /// Matches JS LiveList.#unacknowledgedSets / LiveMap unacked tracking.
+    /// Used to detect superseded set ACKs that should be skipped.
+    pub(crate) unacked_creates: HashMap<(String, String), String>,
 }
 
 impl Document {
@@ -17,6 +22,7 @@ impl Document {
             arena: Arena::new(),
             id_to_key: HashMap::new(),
             root_key: None,
+            unacked_creates: HashMap::new(),
         }
     }
 
