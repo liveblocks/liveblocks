@@ -230,13 +230,13 @@ impl RoomStorageEngine {
         self.unacked_ops.insert(op_id, op);
     }
 
-    /// Classify a remote op: if its opId is in our unacked set, it's OURS
-    /// (and we remove it); otherwise it's THEIRS.
+    /// Classify a remote op: any op with an opId is OURS (the server echoes
+    /// back our ops with their original opId). The remove is just cleanup —
+    /// even if the opId was already removed from the map, it's still our op.
     pub fn classify_remote_op(&mut self, op: &Op) -> OpSourceResult {
         if let Some(ref op_id) = op.op_id {
-            if self.unacked_ops.shift_remove(op_id).is_some() {
-                return OpSourceResult::Ours;
-            }
+            self.unacked_ops.shift_remove(op_id);
+            return OpSourceResult::Ours;
         }
         OpSourceResult::Theirs
     }
@@ -728,10 +728,12 @@ mod tests {
     }
 
     #[test]
-    fn test_classify_unknown_op_is_theirs() {
+    fn test_classify_unknown_op_with_opid_is_ours() {
+        // Any op with an opId is ours — the server echoes back our ops
+        // with their original opId.
         let mut engine = RoomStorageEngine::new();
         let op = make_op("node1", OpCode::UpdateObject, Some("op-unknown"));
-        assert_eq!(engine.classify_remote_op(&op), OpSourceResult::Theirs);
+        assert_eq!(engine.classify_remote_op(&op), OpSourceResult::Ours);
     }
 
     #[test]

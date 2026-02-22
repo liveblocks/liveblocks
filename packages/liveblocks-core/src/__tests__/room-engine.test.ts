@@ -313,9 +313,12 @@ for (const variant of variants) {
         expect(engine.hasUnackedOps()).toBe(false);
       });
 
-      test("classify unknown op as THEIRS", () => {
+      test("classify unknown op with opId as OURS", () => {
+        // Any op with an opId is ours — the server echoes back our ops
+        // with their original opId. Even if the opId was already removed
+        // from the unacked map, it's still our op.
         const source = engine.classifyRemoteOp(makeOp("node-1", "op-unknown"));
-        expect(source).toBe(OpSource.THEIRS);
+        expect(source).toBe(OpSource.OURS);
       });
 
       test("classify op without opId as THEIRS", () => {

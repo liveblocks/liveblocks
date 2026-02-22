@@ -239,9 +239,11 @@ export class JSHistoryEngine<P extends JsonObject> implements HistoryEngine<P> {
 
   classifyRemoteOp(op: Op): OpSource {
     if (op.opId !== undefined) {
-      if (this.unacknowledgedOps.delete(op.opId)) {
-        return OpSource.OURS;
-      }
+      // Any op with an opId is ours (the server echoes back our ops with
+      // their original opId). The delete is just cleanup — even if the opId
+      // was already removed from the map, it's still our op.
+      this.unacknowledgedOps.delete(op.opId);
+      return OpSource.OURS;
     }
     return OpSource.THEIRS;
   }
