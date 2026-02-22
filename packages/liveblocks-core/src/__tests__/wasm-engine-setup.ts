@@ -13,7 +13,7 @@
  * and the JS engine is used as normal.
  */
 
-import type { CrdtDocumentOwner, CrdtEntry, CrdtEngine, OwnedApplyResult, RoomStorageEngineJS } from "../crdts/impl-selector";
+import type { CrdtDocumentOwner, CrdtEngine, CrdtEntry, OwnedApplyResult, RoomStorageEngineJS } from "../crdts/impl-selector";
 import { _setEngine } from "../crdts/impl-selector";
 import type { Op } from "../protocol/Op";
 import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";

@@ -258,7 +258,7 @@ export class LiveMap<
     if (owner && this._id) {
       const entry = owner.mapGetEntry(this._id, key);
       if (!entry) return undefined;
-      return resolveEntry(entry, this._pool!) as TValue | undefined;
+      return resolveEntry(entry, nn(this._pool)) as TValue | undefined;
     }
     const value = this.#map.get(key);
     if (value === undefined) {
@@ -440,7 +440,7 @@ export class LiveMap<
     const owner = this._pool?.wasmOwner;
     if (owner && this._id) {
       const rustEntries = owner.mapEntries(this._id);
-      const pool = this._pool!;
+      const pool = nn(this._pool);
       const resolved: [TKey, TValue][] = rustEntries.map(
         ([key, entry]) => [key as TKey, resolveEntry(entry, pool) as TValue]
       );
@@ -502,7 +502,7 @@ export class LiveMap<
     const owner = this._pool?.wasmOwner;
     if (owner && this._id) {
       const rustEntries = owner.mapEntries(this._id);
-      const pool = this._pool!;
+      const pool = nn(this._pool);
       const resolved: TValue[] = rustEntries.map(
         ([, entry]) => resolveEntry(entry, pool) as TValue
       );
@@ -577,7 +577,7 @@ export class LiveMap<
           map.set(key as TKey, entry.value as ToImmutable<TValue>);
         } else {
           // It's a child CRDT node — find the JS wrapper and delegate
-          const childNode = this._pool!.getNode(entry.nodeId);
+          const childNode = nn(this._pool).getNode(entry.nodeId);
           if (childNode) {
             map.set(
               key as TKey,

@@ -509,7 +509,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       const entries = owner.objectEntries(this._id);
       const obj: Record<string, unknown> = {};
       for (const [key, entry] of entries) {
-        obj[key] = resolveEntry(entry, this._pool!);
+        obj[key] = resolveEntry(entry, nn(this._pool));
       }
       return obj as O;
     }
@@ -536,7 +536,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     if (owner && this._id) {
       const entry = owner.objectGetEntry(this._id, key as string);
       if (!entry) return undefined as O[TKey];
-      return resolveEntry(entry, this._pool!) as O[TKey];
+      return resolveEntry(entry, nn(this._pool)) as O[TKey];
     }
     return this.#map.get(key as string) as O[TKey];
   }
@@ -908,7 +908,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           result[key] = entry.value;
         } else {
           // It's a child CRDT node — find the JS wrapper and delegate
-          const childNode = this._pool!.getNode(entry.nodeId);
+          const childNode = nn(this._pool).getNode(entry.nodeId);
           result[key] = childNode
             ? childNode.toImmutable()
             : owner.objectToImmutable(entry.nodeId); // fallback
