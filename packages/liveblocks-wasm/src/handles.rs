@@ -2323,6 +2323,12 @@ impl DocumentHandle {
         let ids_before: std::collections::HashSet<String> =
             doc.all_node_ids().into_iter().collect();
 
+        // Snapshot list children positions before apply to detect shifts.
+        // Position shifts happen when a CREATE or SET_PARENT_KEY op conflicts
+        // with an existing item at the same position, causing it to be moved.
+        // JS needs "moved" structural changes to keep #items in sync.
+        let positions_before = snapshot_list_children_positions(&doc, &op);
+
         let result = apply::apply_op(&mut doc, &op, src);
 
         match &result {
@@ -2352,6 +2358,36 @@ impl DocumentHandle {
                 // Derive structural changes from the op
                 let changes = js_sys::Array::new();
                 derive_structural_changes(&op, &changes);
+
+                // Detect position shifts: compare list children positions
+                // before and after the apply. Emit "moved" for any child
+                // whose parentKey changed (matching JS #shiftItemPosition).
+                if !positions_before.is_empty() {
+                    let positions_after = snapshot_list_children_positions(&doc, &op);
+                    for (child_id, old_pos) in &positions_before {
+                        if let Some(new_pos) = positions_after.get(child_id) {
+                            if old_pos != new_pos {
+                                let mv = js_sys::Object::new();
+                                let _ = js_sys::Reflect::set(
+                                    &mv,
+                                    &"type".into(),
+                                    &"moved".into(),
+                                );
+                                let _ = js_sys::Reflect::set(
+                                    &mv,
+                                    &"nodeId".into(),
+                                    &JsValue::from_str(child_id),
+                                );
+                                let _ = js_sys::Reflect::set(
+                                    &mv,
+                                    &"newParentKey".into(),
+                                    &JsValue::from_str(new_pos),
+                                );
+                                changes.push(&mv);
+                            }
+                        }
+                    }
+                }
 
                 // Detect nodes that were deleted during apply (implicit deletes).
                 // We snapshot which removed IDs had a JS wrapper (non-register, or
@@ -2450,6 +2486,59 @@ impl DocumentHandle {
                 obj.into()
             }
         }
+    }
+}
+
+/// Snapshot the positions (parentKey) of all children of the list parent
+/// referenced by the op. Returns a HashMap<child_id, parentKey>.
+/// Only meaningful for CREATE ops (which can cause position shifts) and
+/// SET_PARENT_KEY ops (moves that can shift other items).
+/// Returns an empty map when the op doesn't target a list parent.
+fn snapshot_list_children_positions(
+    doc: &Document,
+    op: &Op,
+) -> std::collections::HashMap<String, String> {
+    let parent_id = match &op.parent_id {
+        Some(pid) => pid,
+        None => {
+            // For SET_PARENT_KEY / DELETE: look up the node's parent
+            if let Some(nk) = doc.get_key_by_id(&op.id) {
+                if let Some(node) = doc.get_node(nk) {
+                    if let Some(ref pid) = node.parent_id {
+                        pid
+                    } else {
+                        return std::collections::HashMap::new();
+                    }
+                } else {
+                    return std::collections::HashMap::new();
+                }
+            } else {
+                return std::collections::HashMap::new();
+            }
+        }
+    };
+
+    let parent_key = match doc.get_key_by_id(parent_id) {
+        Some(k) => k,
+        None => return std::collections::HashMap::new(),
+    };
+
+    let parent_node = match doc.get_node(parent_key) {
+        Some(n) => n,
+        None => return std::collections::HashMap::new(),
+    };
+
+    match &parent_node.data {
+        CrdtData::List { children, .. } => {
+            let mut positions = std::collections::HashMap::new();
+            for (pos, child_key) in children {
+                if let Some(child) = doc.get_node(*child_key) {
+                    positions.insert(child.id.clone(), pos.clone());
+                }
+            }
+            positions
+        }
+        _ => std::collections::HashMap::new(),
     }
 }
 

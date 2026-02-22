@@ -7,6 +7,7 @@ use crate::document::Document;
 use crate::types::{ApplyResult, Json, Op, OpCode, OpSource, is_ignored_op};
 use crate::updates::{ListUpdateEntry, StorageUpdate, UpdateDelta};
 
+
 /// Apply a single operation to the document.
 /// Routes by OpCode to the correct handler, handles ACK hack.
 pub fn apply_op(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
@@ -122,6 +123,33 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
             }
         }
 
+        // Clean up unacked_creates when a set-intent ACK arrives and the node
+        // already exists. This matches JS _applySetAck which calls
+        // #unacknowledgedSets.delete(op.parentKey) upon processing the ACK.
+        // Without this cleanup, stale entries leak across iterations and cause
+        // subsequent non-set-intent ACKs at the same position to be
+        // incorrectly skipped (the non-set-intent check at line 387 sees
+        // latest_op_id.is_some() && latest_op_id != Some(op_id) → NotModified).
+        //
+        // For superseded set ACKs (a newer local set at the same position),
+        // we skip position updates but still process deleted_id. This matches
+        // JS _applySetAck which returns early when unacknowledgedOpId !== op.opId.
+        let mut set_ack_superseded = false;
+        if source == OpSource::Ours && op.intent.as_deref() == Some("set") {
+            if let Some(op_id) = &op.op_id {
+                let ack_key = (parent_id.clone(), parent_key.clone());
+                let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+                if latest_op_id == Some(op_id.as_str()) {
+                    // Current (non-superseded) set ACK — clean up tracking
+                    doc.unacked_creates.remove(&ack_key);
+                } else if latest_op_id.is_some() {
+                    // Superseded: a newer local set at this (parent, key) — skip
+                    // position updates but still process deleted_id below.
+                    set_ack_superseded = true;
+                }
+            }
+        }
+
         let parent_node_key = doc.get_key_by_id(&parent_id);
 
         // Check if the node is currently in the parent's children (for lists).
@@ -157,6 +185,23 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
             }
         }
 
+        // For superseded set ACKs: only process deleted_id, skip position updates.
+        // Matches JS _applySetAck which returns early when
+        // unacknowledgedOpId !== op.opId (lines 337-340 in LiveList.ts).
+        if set_ack_superseded {
+            return if has_deleted {
+                ApplyResult::Modified {
+                    reverse: vec![],
+                    update: StorageUpdate::LiveListUpdate {
+                        node_id: parent_id,
+                        updates: vec![],
+                    },
+                }
+            } else {
+                ApplyResult::NotModified
+            };
+        }
+
         if is_in_children {
             // Node is in the parent's children — handle position update
             let needs_position_update = {
@@ -164,6 +209,8 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
                 node.map(|n| n.parent_key.as_deref() != Some(&parent_key))
                     .unwrap_or(false)
             };
+
+            let is_set_intent = op.intent.as_deref() == Some("set");
 
             if needs_position_update {
                 if let Some(parent_node_key) = parent_node_key {
@@ -177,8 +224,11 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
                         })
                     };
 
-                    // Shift any item currently at the target position
-                    // (matching JS #applyInsertAck → #shiftItemPosition)
+                    // Handle conflict at the target position.
+                    // Set ACK vs Insert ACK have DIFFERENT conflict resolution:
+                    // - Insert ACK (JS #applyInsertAck): SHIFT the conflict item
+                    // - Set ACK (JS #applySetAck): IMPLICITLY DELETE the conflict item
+                    //   (remove from children, keep in arena for potential restoration)
                     if let Some(parent) = doc.get_node(parent_node_key)
                         && let CrdtData::List { children, .. } = &parent.data
                     {
@@ -187,23 +237,39 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
                             .position(|(pos, ck)| pos.as_str() == parent_key && *ck != existing_key)
                         {
                             let conflict_child_key = children[conflict_idx].1;
-                            let before_pos = Some(parent_key.clone());
-                            let after_pos =
-                                children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
-                            let shifted_pos = crate::position::make_position(
-                                before_pos.as_deref(),
-                                after_pos.as_deref(),
-                            );
-                            if let Some(child) = doc.get_node_mut(conflict_child_key) {
-                                child.parent_key = Some(shifted_pos.clone());
-                            }
-                            if let Some(parent) = doc.get_node_mut(parent_node_key)
-                                && let CrdtData::List { children, .. } = &mut parent.data
-                            {
-                                if let Some(entry) =
-                                    children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+
+                            if is_set_intent {
+                                // Set ACK: implicitly delete the conflict item.
+                                // Matches JS _applySetAck lines 362-368:
+                                //   const itemAtPosition = nn(this.#items.removeAt(...));
+                                //   this.#implicitlyDeletedItems.add(itemAtPosition);
+                                // Remove from children but keep in arena.
+                                if let Some(parent) = doc.get_node_mut(parent_node_key)
+                                    && let CrdtData::List { children, .. } = &mut parent.data
                                 {
-                                    entry.0 = shifted_pos;
+                                    children.retain(|(_, ck)| *ck != conflict_child_key);
+                                }
+                            } else {
+                                // Insert ACK: shift the conflict item.
+                                // Matches JS #applyInsertAck → #shiftItemPosition.
+                                let before_pos = Some(parent_key.clone());
+                                let after_pos =
+                                    children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                                let shifted_pos = crate::position::make_position(
+                                    before_pos.as_deref(),
+                                    after_pos.as_deref(),
+                                );
+                                if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                                    child.parent_key = Some(shifted_pos.clone());
+                                }
+                                if let Some(parent) = doc.get_node_mut(parent_node_key)
+                                    && let CrdtData::List { children, .. } = &mut parent.data
+                                {
+                                    if let Some(entry) =
+                                        children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                                    {
+                                        entry.0 = shifted_pos;
+                                    }
                                 }
                             }
                         }
@@ -1714,5 +1780,202 @@ mod tests {
             0,
             "B should be empty after processing CREATE, DELETE, CREATE, DELETE"
         );
+    }
+
+    /// Regression test: stale unacked_creates from a set ACK should be cleaned
+    /// up so that subsequent non-set-intent ACKs at the same position are not
+    /// incorrectly skipped.
+    #[test]
+    fn set_ack_cleans_up_unacked_creates_when_node_exists() {
+        let mut doc = Document::new();
+        apply_op(&mut doc, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc,
+            &make_create_list_op("list1", "root", "items"),
+            OpSource::Theirs,
+        );
+        let list_key = doc.get_key_by_id("list1").unwrap();
+        let pos1 = crate::position::make_position(None, None);
+
+        // Push item "a" at pos1 (local mutation)
+        let push_a = make_create_register_op(
+            "reg_a",
+            "list1",
+            &pos1,
+            Json::String("a".to_string()),
+            Some("op_push"),
+        );
+        apply_op(&mut doc, &push_a, OpSource::Local);
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 1);
+
+        // Set: replace "a" with "b" at pos1 (set intent, local mutation)
+        let set_b = Op {
+            op_code: OpCode::CreateRegister,
+            id: "reg_b".to_string(),
+            op_id: Some("op_set".to_string()),
+            parent_id: Some("list1".to_string()),
+            parent_key: Some(pos1.clone()),
+            data: Some(Json::String("b".to_string())),
+            intent: Some("set".to_string()),
+            deleted_id: Some("reg_a".to_string()),
+            key: None,
+        };
+        apply_op(&mut doc, &set_b, OpSource::Local);
+        // Simulate handles.rs tracking (set intent tracks unacked_creates)
+        doc.unacked_creates
+            .insert(("list1".to_string(), pos1.clone()), "op_set".to_string());
+
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 1);
+        assert_eq!(
+            crate::crdt::list::get(&doc, list_key, 0),
+            Some(Json::String("b".to_string()))
+        );
+
+        // ACK for set arrives (Ours) — node "reg_b" already exists
+        apply_op(&mut doc, &set_b, OpSource::Ours);
+
+        // CRITICAL: unacked_creates should be cleaned up
+        let ack_key = ("list1".to_string(), pos1.clone());
+        assert!(
+            doc.unacked_creates.get(&ack_key).is_none(),
+            "unacked_creates should be cleaned up after set ACK when node exists"
+        );
+
+        // === Simulate next iteration (after clear + re-push) ===
+
+        // Delete "b" (simulating clear)
+        let delete_b = make_delete_crdt_op("reg_b", Some("op_del_b"));
+        apply_op(&mut doc, &delete_b, OpSource::Local);
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 0);
+
+        // Push "c" at pos1 (new iteration)
+        let push_c = make_create_register_op(
+            "reg_c",
+            "list1",
+            &pos1,
+            Json::String("c".to_string()),
+            Some("op_push_c"),
+        );
+        apply_op(&mut doc, &push_c, OpSource::Local);
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 1);
+
+        // Undo the push → DELETE reg_c
+        let delete_c = make_delete_crdt_op("reg_c", Some("op_del_c"));
+        apply_op(&mut doc, &delete_c, OpSource::Local);
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 0);
+
+        // ACK for push "c" arrives — node not in arena (was undone/deleted)
+        // This should NOT be skipped by a stale unacked_creates entry
+        let ack_push_c = apply_op(&mut doc, &push_c, OpSource::Ours);
+        assert!(
+            matches!(ack_push_c, ApplyResult::Modified { .. }),
+            "Push ACK should re-create the node (not be skipped by stale unacked_creates)"
+        );
+        assert_eq!(
+            crate::crdt::list::length(&doc, list_key),
+            1,
+            "List should have 1 item after push ACK re-creates the node"
+        );
+
+        // ACK for delete "c" arrives — clean up
+        let ack_del_c = apply_op(&mut doc, &delete_c, OpSource::Ours);
+        assert!(matches!(ack_del_c, ApplyResult::Modified { .. }));
+        assert_eq!(crate::crdt::list::length(&doc, list_key), 0);
+    }
+
+    /// Two-client convergence test simulating push/undo/redo/delete/set.
+    #[test]
+    fn two_client_push_undo_redo_set_convergence() {
+        fn setup_doc() -> Document {
+            let mut doc = Document::new();
+            apply_op(&mut doc, &Op {
+                op_code: OpCode::Init,
+                id: "root".to_string(),
+                op_id: None,
+                parent_id: None,
+                parent_key: None,
+                data: None,
+                intent: None,
+                deleted_id: None,
+                key: None,
+            }, OpSource::Theirs);
+            apply_op(&mut doc, &Op {
+                op_code: OpCode::CreateList,
+                id: "list1".to_string(),
+                op_id: None,
+                parent_id: Some("root".to_string()),
+                parent_key: Some("list".to_string()),
+                data: None,
+                intent: None,
+                deleted_id: None,
+                key: None,
+            }, OpSource::Theirs);
+            doc
+        }
+
+        let pos1 = crate::position::make_position(None, None);
+        let pos2 = crate::position::make_position(Some(&pos1), None);
+        let pos3 = crate::position::make_position(Some(&pos2), None);
+
+        let mut doc_a = setup_doc();
+        let mut doc_b = setup_doc();
+
+        // Initial: both have [B:1 "lV", B:2 "Gg"]
+        let create_b1 = make_create_register_op("B:1", "list1", &pos1, Json::String("lV".to_string()), Some("B:op1"));
+        let create_b2 = make_create_register_op("B:2", "list1", &pos2, Json::String("Gg".to_string()), Some("B:op2"));
+        for op in [&create_b1, &create_b2] {
+            apply_op(&mut doc_a, op, OpSource::Theirs);
+            apply_op(&mut doc_b, op, OpSource::Theirs);
+        }
+
+        let list_a = doc_a.get_key_by_id("list1").unwrap();
+        let list_b = doc_b.get_key_by_id("list1").unwrap();
+
+        // B's local ops
+        let create_b3_push = make_create_register_op("B:3", "list1", &pos3, Json::String("cj".to_string()), Some("B:op3"));
+        let delete_b3_undo = make_delete_crdt_op("B:3", Some("B:op4"));
+        let delete_b2_undo = make_delete_crdt_op("B:2", Some("B:op5"));
+        let create_b2_redo = make_create_register_op("B:2", "list1", &pos2, Json::String("Gg".to_string()), Some("B:op6"));
+        let create_b3_redo = make_create_register_op("B:3", "list1", &pos3, Json::String("cj".to_string()), Some("B:op7"));
+        let delete_b1 = make_delete_crdt_op("B:1", Some("B:op8"));
+        let create_b4_set = Op {
+            op_code: OpCode::CreateRegister,
+            id: "B:4".to_string(),
+            op_id: Some("B:op9".to_string()),
+            parent_id: Some("list1".to_string()),
+            parent_key: Some(pos3.clone()),
+            data: Some(Json::String("vk".to_string())),
+            intent: Some("set".to_string()),
+            deleted_id: Some("B:3".to_string()),
+            key: None,
+        };
+
+        for op in [&create_b3_push, &delete_b3_undo, &delete_b2_undo, &create_b2_redo, &create_b3_redo, &delete_b1] {
+            apply_op(&mut doc_b, op, OpSource::Local);
+        }
+        apply_op(&mut doc_b, &create_b4_set, OpSource::Local);
+        doc_b.unacked_creates.insert(("list1".to_string(), pos3.clone()), "B:op9".to_string());
+
+        // A's local op
+        let create_a1 = make_create_register_op("A:1", "list1", &pos3, Json::String("mk".to_string()), Some("A:op1"));
+        apply_op(&mut doc_a, &create_a1, OpSource::Local);
+
+        // Final sync: flushA then flushB
+        apply_op(&mut doc_a, &create_a1, OpSource::Ours);
+        apply_op(&mut doc_b, &Op { op_id: None, ..create_a1.clone() }, OpSource::Theirs);
+
+        for op in [&create_b3_push, &delete_b3_undo, &delete_b2_undo, &create_b2_redo, &create_b3_redo, &delete_b1, &create_b4_set] {
+            apply_op(&mut doc_a, &Op { op_id: None, ..op.clone() }, OpSource::Theirs);
+        }
+        for op in [&create_b3_push, &delete_b3_undo, &delete_b2_undo, &create_b2_redo, &create_b3_redo, &delete_b1, &create_b4_set] {
+            apply_op(&mut doc_b, op, OpSource::Ours);
+        }
+
+        let state_a = crate::crdt::list::to_immutable(&doc_a, list_a);
+        let state_b = crate::crdt::list::to_immutable(&doc_b, list_b);
+        eprintln!("A: {:?}", state_a);
+        eprintln!("B: {:?}", state_b);
+
+        assert_eq!(state_a, state_b, "Both clients should converge");
     }
 }
