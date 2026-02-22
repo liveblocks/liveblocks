@@ -374,6 +374,10 @@ jobs:
           cache: npm
           cache-dependency-path: "**/package-lock.json"
 
+      - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: oven-sh/setup-bun@v1
+
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm install
@@ -434,6 +438,10 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: wasm-pack build --target nodejs -- --features wasm
         working-directory: packages/liveblocks-wasm
+
+      - name: Install Bun
+        if: needs.check_for_code_changes.outputs.changes == 'true'
+        uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies
         if: needs.check_for_code_changes.outputs.changes == 'true'
