@@ -68,12 +68,16 @@ export async function prepareStorageImmutableTest<
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           totalStorageOps += message.ops.length;
+          // Forward to ref WITHOUT opId — matches real server behavior.
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(
+                ({ opId: _, ...rest }) => rest
+              ) as typeof message.ops,
             })
           );
+          // Loopback to subject WITH opId (server echo / ACK).
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,

@@ -286,12 +286,17 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
+          // Forward to ref WITHOUT opId — matches real server behavior
+          // (the server strips opId when forwarding to other clients).
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(
+                ({ opId: _, ...rest }) => rest
+              ) as typeof message.ops,
             })
           );
+          // Loopback to subject WITH opId (server echo / ACK).
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
@@ -484,12 +489,16 @@ export async function prepareStorageUpdateTest<
       const messages = parseAsClientMsgs(data);
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          // Forward to ref WITHOUT opId — matches real server behavior.
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(
+                ({ opId: _, ...rest }) => rest
+              ) as typeof message.ops,
             })
           );
+          // Loopback to subject WITH opId (server echo / ACK).
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
