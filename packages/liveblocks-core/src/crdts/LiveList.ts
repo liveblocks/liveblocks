@@ -1028,6 +1028,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         targetIndex
       ) as WasmMutationResult;
 
+      // No-op: WASM returns empty ops when from_index === to_index.
+      // Skip dispatch to avoid pushing an empty undo frame (which would
+      // consume one undo step) and clearing the redo stack.
+      if (result.ops.length === 0) {
+        return;
+      }
+
       // Extract new position from the SET_PARENT_KEY op
       const setOp = result.ops.find(
         (op) => op.type === OpCode.SET_PARENT_KEY

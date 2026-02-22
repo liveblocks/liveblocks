@@ -1547,4 +1547,172 @@ mod tests {
             "After B's ACK, map should have B's value 'b'"
         );
     }
+
+    // ---- List push/undo/redo ACK tests ----
+
+    fn make_create_list_op(id: &str, parent_id: &str, parent_key: &str) -> Op {
+        Op {
+            op_code: OpCode::CreateList,
+            id: id.to_string(),
+            op_id: None,
+            parent_id: Some(parent_id.to_string()),
+            parent_key: Some(parent_key.to_string()),
+            data: None,
+            intent: None,
+            deleted_id: None,
+            key: None,
+        }
+    }
+
+    fn make_delete_crdt_op(id: &str, op_id: Option<&str>) -> Op {
+        Op {
+            op_code: OpCode::DeleteCrdt,
+            id: id.to_string(),
+            op_id: op_id.map(String::from),
+            parent_id: None,
+            parent_key: None,
+            data: None,
+            intent: None,
+            deleted_id: None,
+            key: None,
+        }
+    }
+
+    /// Reproduces the shrunk counterexample from the property test:
+    /// A.push("PO"), A.undo(), A.redo(), A.move(0,0), B.undo(), B.undo(), A.undo()
+    /// Expected: both clients = [], Actual in WASM: A=[], B=["PO"]
+    ///
+    /// Client A dispatches 4 ops (all buffered until flush):
+    ///   OP1: CREATE_REGISTER R_PO (push)
+    ///   OP2: DELETE_CRDT R_PO (undo)
+    ///   OP3: CREATE_REGISTER R_PO (redo, same node ID, new opId)
+    ///   OP4: DELETE_CRDT R_PO (final undo)
+    ///
+    /// Client A receives these back as ACKs (source=Ours).
+    /// Client B receives them as THEIRS (no opIds).
+    /// Both should end up with an empty list.
+    #[test]
+    fn push_undo_redo_undo_ack_should_not_recreate() {
+        // Simulate Client A
+        let mut doc_a = Document::new();
+        apply_op(&mut doc_a, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc_a,
+            &make_create_list_op("list1", "root", "items"),
+            OpSource::Theirs,
+        );
+        let list_key_a = doc_a.get_key_by_id("list1").unwrap();
+        let pos1 = crate::position::make_position(None, None);
+
+        // Step 1: A.push("PO") — local mutation
+        let create_op = make_create_register_op(
+            "reg_po",
+            "list1",
+            &pos1,
+            Json::String("PO".to_string()),
+            Some("op1"),
+        );
+        let result = apply_op(&mut doc_a, &create_op, OpSource::Local);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+        assert_eq!(crate::crdt::list::length(&doc_a, list_key_a), 1);
+
+        // Step 2: A.undo() — apply DELETE_CRDT locally
+        let delete_op1 = make_delete_crdt_op("reg_po", Some("op2"));
+        let result = apply_op(&mut doc_a, &delete_op1, OpSource::Local);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+        assert_eq!(crate::crdt::list::length(&doc_a, list_key_a), 0);
+
+        // Step 3: A.redo() — apply CREATE_REGISTER locally (same node ID, new opId)
+        let create_op2 = make_create_register_op(
+            "reg_po",
+            "list1",
+            &pos1,
+            Json::String("PO".to_string()),
+            Some("op3"),
+        );
+        let result = apply_op(&mut doc_a, &create_op2, OpSource::Local);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+        assert_eq!(crate::crdt::list::length(&doc_a, list_key_a), 1);
+
+        // Step 4: A.undo() — apply DELETE_CRDT locally
+        let delete_op2 = make_delete_crdt_op("reg_po", Some("op4"));
+        let result = apply_op(&mut doc_a, &delete_op2, OpSource::Local);
+        assert!(matches!(result, ApplyResult::Modified { .. }));
+        assert_eq!(
+            crate::crdt::list::length(&doc_a, list_key_a),
+            0,
+            "A should be empty after final undo"
+        );
+
+        // Now A receives ACKs from the server (source=Ours)
+        let ack_result1 = apply_op(&mut doc_a, &create_op, OpSource::Ours);
+        eprintln!("ACK1 (CREATE op1): {:?}", matches!(&ack_result1, ApplyResult::Modified { .. }));
+
+        let ack_result2 = apply_op(&mut doc_a, &delete_op1, OpSource::Ours);
+        eprintln!("ACK2 (DELETE op2): {:?}", matches!(&ack_result2, ApplyResult::Modified { .. }));
+
+        let ack_result3 = apply_op(&mut doc_a, &create_op2, OpSource::Ours);
+        eprintln!("ACK3 (CREATE op3): {:?}", matches!(&ack_result3, ApplyResult::Modified { .. }));
+
+        let ack_result4 = apply_op(&mut doc_a, &delete_op2, OpSource::Ours);
+        eprintln!("ACK4 (DELETE op4): {:?}", matches!(&ack_result4, ApplyResult::Modified { .. }));
+
+        // After processing all ACKs, A should still be empty
+        assert_eq!(
+            crate::crdt::list::length(&doc_a, list_key_a),
+            0,
+            "A should be empty after processing all ACKs"
+        );
+
+        // Now simulate Client B — receives all 4 ops as THEIRS (no opIds)
+        let mut doc_b = Document::new();
+        apply_op(&mut doc_b, &make_init_op(), OpSource::Theirs);
+        apply_op(
+            &mut doc_b,
+            &make_create_list_op("list1", "root", "items"),
+            OpSource::Theirs,
+        );
+        let list_key_b = doc_b.get_key_by_id("list1").unwrap();
+
+        // Strip opIds for B (server strips them for non-originator)
+        let b_create1 = Op {
+            op_id: None,
+            ..create_op.clone()
+        };
+        let b_delete1 = Op {
+            op_id: None,
+            ..delete_op1.clone()
+        };
+        let b_create2 = Op {
+            op_id: None,
+            ..create_op2.clone()
+        };
+        let b_delete2 = Op {
+            op_id: None,
+            ..delete_op2.clone()
+        };
+
+        let r1 = apply_op(&mut doc_b, &b_create1, OpSource::Theirs);
+        eprintln!("B op1 (CREATE): {:?}", matches!(&r1, ApplyResult::Modified { .. }));
+        eprintln!("  B list length = {}", crate::crdt::list::length(&doc_b, list_key_b));
+
+        let r2 = apply_op(&mut doc_b, &b_delete1, OpSource::Theirs);
+        eprintln!("B op2 (DELETE): {:?}", matches!(&r2, ApplyResult::Modified { .. }));
+        eprintln!("  B list length = {}", crate::crdt::list::length(&doc_b, list_key_b));
+
+        let r3 = apply_op(&mut doc_b, &b_create2, OpSource::Theirs);
+        eprintln!("B op3 (CREATE): {:?}", matches!(&r3, ApplyResult::Modified { .. }));
+        eprintln!("  B list length = {}", crate::crdt::list::length(&doc_b, list_key_b));
+
+        let r4 = apply_op(&mut doc_b, &b_delete2, OpSource::Theirs);
+        eprintln!("B op4 (DELETE): {:?}", matches!(&r4, ApplyResult::Modified { .. }));
+        eprintln!("  B list length = {}", crate::crdt::list::length(&doc_b, list_key_b));
+
+        // After processing all ops, B should be empty
+        assert_eq!(
+            crate::crdt::list::length(&doc_b, list_key_b),
+            0,
+            "B should be empty after processing CREATE, DELETE, CREATE, DELETE"
+        );
+    }
 }

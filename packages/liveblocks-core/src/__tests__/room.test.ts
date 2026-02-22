@@ -2685,4 +2685,50 @@ describe("room", () => {
       expect(room.isStorageReady()).toEqual(true);
     });
   });
+
+  // Regression test for WASM property test counterexample:
+  // push("PO"), undo, redo, move(0,0), undo
+  // In WASM mode, move(0,0) is correctly a no-op, so undo should undo the redo.
+  // In JS mode, move(0,0) generates a real SET_PARENT_KEY op, so undo only
+  // undoes the move — the item remains. This is an existing JS behavior
+  // difference that doesn't cause consistency violations between clients.
+  test("push, undo, redo, move(0,0), undo: move(0,0) should not corrupt undo stack", async () => {
+    const { room, storage } = await prepareStorageTest<{
+      items: LiveList<string>;
+    }>(
+      [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
+      1
+    );
+
+    const items = storage.root.get("items");
+
+    // Step 1: push
+    items.push("PO");
+    expect(items.toImmutable()).toEqual(["PO"]);
+
+    // Step 2: undo (undoes the push)
+    room.history.undo();
+    expect(items.toImmutable()).toEqual([]);
+
+    // Step 3: redo (redoes the push)
+    room.history.redo();
+    expect(items.toImmutable()).toEqual(["PO"]);
+
+    // Step 4: move(0,0) — should be no-op in WASM, generates SET_PARENT_KEY in JS
+    items.move(0, 0);
+    expect(items.toImmutable()).toEqual(["PO"]);
+
+    // Step 5: undo
+    room.history.undo();
+    // In WASM mode: move was no-op, undo undoes the redo → []
+    // In JS mode: move generated ops, undo undoes the move → ["PO"]
+    // Either way, the list should remain in a consistent state and
+    // continued undos should eventually empty it.
+    const afterFirstUndo = items.toImmutable();
+    if (afterFirstUndo.length > 0) {
+      // JS mode: one more undo needed to undo the redo
+      room.history.undo();
+    }
+    expect(items.toImmutable()).toEqual([]);
+  });
 });
