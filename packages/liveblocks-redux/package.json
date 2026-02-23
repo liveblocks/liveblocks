@@ -29,9 +29,9 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "./scripts/run-with-dev-server.sh --port 1154",
-    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
+    "test": "npx liveblocks dev -c 'vitest run'",
+    "test:ci": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@liveblocks/client": "3.14.0",

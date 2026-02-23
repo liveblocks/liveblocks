@@ -17,9 +17,8 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 
-import { parse } from "@bomb.sh/args";
-
 import type { SubCommand } from "~/interfaces/SubCommand";
+import { parseArgs } from "~/lib/args";
 
 function isBunInstalled(): boolean {
   try {
@@ -58,10 +57,18 @@ function reExecWithBun(): never {
 const argv = process.argv.slice(2);
 const subIndex = argv.findIndex((a) => !a.startsWith("-"));
 
-const globalArgs = parse(subIndex >= 0 ? argv.slice(0, subIndex) : argv, {
-  boolean: ["help", "version"],
-  alias: { h: "help", v: "version" },
-});
+type Options = {
+  help: boolean;
+  version: boolean;
+};
+
+const { options } = parseArgs<Options>(
+  subIndex >= 0 ? argv.slice(0, subIndex) : argv,
+  {
+    help: { type: "boolean", short: "h", default: false },
+    version: { type: "boolean", default: false },
+  }
+);
 
 const command = subIndex >= 0 ? argv[subIndex] : undefined;
 const commandArgv = subIndex >= 0 ? argv.slice(subIndex + 1) : [];
@@ -105,17 +112,17 @@ function showHelp(): void {
   }
   console.log();
   console.log("Options:");
-  console.log("  --help, -h      Show this help message");
-  console.log("  --version, -v   Show version number");
+  console.log("  --help, -h   Show this help message");
+  console.log("  --version    Show version number");
 }
 
 async function main(): Promise<void> {
-  if (globalArgs.version) {
+  if (options.version) {
     console.log(__VERSION__);
     process.exit(0);
   }
 
-  if (globalArgs.help || !command) {
+  if (options.help || !command) {
     showHelp();
     process.exit(command ? 0 : 1);
   }

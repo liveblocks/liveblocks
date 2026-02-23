@@ -489,5 +489,12 @@
     "topics": ["tutorials", "testing"],
     "technologies": ["nextjs", "react"],
     "date": "2026-02-17"
+  },
+  {
+    "title": "Modifying Storage via REST API with JSON Patch",
+    "path": "/modifying-storage-via-rest-api-with-json-patch",
+    "topics": ["rest-api", "storage"],
+    "technologies": ["storage"],
+    "date": "2026-02-20"
   }
 ]

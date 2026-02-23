@@ -588,6 +588,14 @@ function getBaseUrl(baseUrl?: string | undefined): string {
   }
 }
 
+function isLocalhost(url: string): boolean {
+  try {
+    return new URL(url).hostname === "localhost";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
@@ -617,8 +625,10 @@ export function createClient<U extends BaseUserMeta = DU>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;
+  const baseUrl = getBaseUrl(clientOptions.baseUrl);
   const throttleDelay =
     process.env.NODE_ENV !== "production" &&
+    isLocalhost(baseUrl) &&
     clientOptions.__DANGEROUSLY_disableThrottling
       ? 0
       : getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
@@ -628,7 +638,6 @@ export function createClient<U extends BaseUserMeta = DU>(
   const backgroundKeepAliveTimeout = getBackgroundKeepAliveTimeout(
     clientOptions.backgroundKeepAliveTimeout
   );
-  const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
   const currentUserId = new Signal<string | undefined>(undefined);
 

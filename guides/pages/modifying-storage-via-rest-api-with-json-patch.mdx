@@ -1,0 +1,186 @@
+---
+meta:
+  title: "Modifying Storage via REST API with JSON Patch"
+  parentTitle: "Guides"
+  description:
+    "Use the JSON Patch HTTP API to modify Liveblocks Storage from any language."
+---
+
+The
+[Storage JSON Patch endpoint](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+allows you to apply partial updates to a room's
+[Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+document over HTTP. You send an array of operations (add, remove, replace, move,
+copy, test) and the server applies them in order. This is especially useful for
+modifying Storage from languages that don't yet have a native Liveblocks client,
+for example, such as Python, so you can still read and update Storage using the
+REST API.
+
+## Format
+
+The format follows the
+[JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) specification (RFC
+6902). Paths use [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
+(RFC 6901).
+
+```shell title="Endpoint"
+PATCH https://api.liveblocks.io/v2/rooms/{roomId}/storage/json-patch
+```
+
+Authenticate with your project's **secret key** in the `Authorization` header.
+
+```shell
+"Authorization: Bearer {{SECRET_KEY}}"
+```
+
+Never expose your secret key in client-side code.
+
+## Liveblocks data types and paths
+
+Storage is a tree of Liveblocks types:
+[LiveObject](/docs/api-reference/liveblocks-client#LiveObject),
+[LiveList](/docs/api-reference/liveblocks-client#LiveList), and
+[LiveMap](/docs/api-reference/liveblocks-client#LiveMap). When building your
+patch:
+
+- **Be as specific as possible** with your target path.
+- **Every parent** in the chain of path segments must be a LiveObject, LiveList,
+  or LiveMap. You cannot target or traverse through plain JSON objects that
+  aren't one of these types.
+- **Nested values in `add` and `replace`:** If you pass a complex nested object
+  or array as the `value` for an `add` or `replace` operation, it is
+  automatically converted into LiveObjects and LiveLists on the server.
+
+## Operations and examples
+
+The request body is a JSON array of operation objects. Each object has an `op`
+field and a `path` field; some operations also require `value` or `from`.
+
+### add
+
+Adds a value at the given path. For an object/key, creates or replaces the
+member. For a list, inserts at the given index.
+
+- **Required:** `path`, `value`
+- Use **`-`** as the last path segment to **append to the end of a LiveList**
+  (e.g. `"/layers/-"`). This is defined in RFC 6902.
+
+```json
+[
+  { "op": "add", "path": "/score", "value": 42 },
+  { "op": "add", "path": "/layers/-", "value": "newLayer" }
+]
+```
+
+### remove
+
+Removes the value at the given path.
+
+- **Required:** `path`
+
+```json
+[{ "op": "remove", "path": "/oldKey" }]
+```
+
+### replace
+
+Replaces the value at the given path. The target must exist.
+
+- **Required:** `path`, `value`
+
+```json
+[{ "op": "replace", "path": "/score", "value": 100 }]
+```
+
+### move
+
+Removes the value at `from` and adds it at `path`. The `from` location must
+exist. Per RFC 6902, `from` must not be a prefix of `path` (you cannot move a
+node into one of its children).
+
+- **Required:** `from`, `path`
+
+```json
+[{ "op": "move", "from": "/name", "path": "/username" }]
+```
+
+### copy
+
+Copies the value at `from` to `path`. The `from` location must exist.
+
+- **Required:** `from`, `path`
+
+```json
+[{ "op": "copy", "from": "/template", "path": "/current" }]
+```
+
+### test
+
+Checks that the value at `path` equals `value`. If it doesn't, the whole patch
+fails and no changes are applied. Use `test` to guard against concurrent updates
+(e.g. "only replace if the counter is still 5").
+
+- **Required:** `path`, `value`
+
+```json
+[
+  { "op": "test", "path": "/version", "value": 1 },
+  { "op": "replace", "path": "/version", "value": 2 }
+]
+```
+
+## The test operation
+
+The **test** operation is a guard: it succeeds only when the value at the given
+path is equal to the provided value (same type and value). If the test fails,
+the server returns 422 and **does not apply any part of the patch**. This lets
+you implement optimistic checks, for example, only increment a counter if it
+still has the value you read earlier.
+
+_note:_ test order matters. A test after a change will take into the account the
+changes made by prior operations.
+
+## Atomicity
+
+**If any operation in the patch fails, the entire document is left unchanged.**
+Operations are applied in order; as soon as one fails (e.g. invalid path, test
+failure, index out of bounds), the server stops and returns an error. No partial
+updates are applied.
+
+## Error handling
+
+When a patch fails, the server responds with **422 Unprocessable Entity**. The
+response body follows the standard API error shape and includes:
+
+- **error**: Error code (e.g. `INVALID_STORAGE_MUTATION_REQUEST`,
+  `UNPROCESSABLE_ENTITY`)
+- **message**: Human-readable description of what went wrong
+- **suggestion**: Optional hint on how to fix the request
+- **docs**: Optional link to documentation
+
+Use these fields to show helpful feedback and retry or correct the request.
+
+## Performance and document size
+
+To apply a patch, the server must **reconstruct the full Storage state** for the
+room. For large Storage documents, this can be expensive in time and resources.
+The JSON Patch endpoint may not be suitable for very large documents; prefer the
+native client SDKs when you need to update large or frequently changing Storage
+from a supported environment.
+
+## Example: cURL
+
+```bash
+curl -X PATCH "https://api.liveblocks.io/v2/rooms/my-room-id/storage/json-patch" \
+  -H "Authorization: Bearer {{SECRET_KEY}}" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "op": "test", "path": "/count", "value": 10 },
+    { "op": "replace", "path": "/count", "value": 11 },
+    { "op": "add", "path": "/log/-", "value": "updated" }
+  ]'
+```
+
+For the full request/response schema and more examples, see the
+[API reference](/docs/api-reference/rest-api-endpoints) for the Storage JSON
+Patch endpoint.

@@ -1124,6 +1124,122 @@
         "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n"
       }
     },
+    "/rooms/{roomId}/storage/json-patch": {
+      "patch": {
+        "summary": "Apply JSON Patch to Storage",
+        "description": "Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the room's Storage document, useful for modifying Storage. Operations are applied in order; if any operation fails, the document is not changed and a 422 response with a helpful message is returned.\n\n**Paths and data types:** Be as specific as possible with your target path. Every parent in the chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.\n\n**Performance:** For large Storage documents, applying a patch can be expensive because the full state is reconstructed on the server to apply the operations. Very large documents may not be suitable for this endpoint.\n\nFor a **full guide with examples**, see [Modifying storage via REST API with JSON Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).",
+        "tags": ["Storage"],
+        "operationId": "patch-rooms-roomId-storage-json-patch",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["op", "path"],
+                  "properties": {
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "remove",
+                        "replace",
+                        "move",
+                        "copy",
+                        "test"
+                      ],
+                      "description": "The operation to perform (RFC 6902)."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "A JSON Pointer to the target location (RFC 6901). Must start with \"/\"."
+                    },
+                    "from": {
+                      "type": "string",
+                      "description": "Required for \"move\" and \"copy\". A JSON Pointer to the source location."
+                    },
+                    "value": {
+                      "description": "Required for \"add\", \"replace\", and \"test\". The value to add, the replacement value, or the value to test against."
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "examples": {
+                "addAndRemove": {
+                  "summary": "Add and remove",
+                  "value": [
+                    { "op": "add", "path": "/score", "value": 42 },
+                    { "op": "remove", "path": "/oldKey" }
+                  ]
+                },
+                "appendToList": {
+                  "summary": "Append to LiveList",
+                  "value": [
+                    { "op": "add", "path": "/layers/-", "value": "newLayer" }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. All operations were applied; the Storage document was updated."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "description": "Patch failed. The document was not changed. The response body includes an error code and a helpful message (e.g. invalid path, test failed, index out of bounds).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_STORAGE_MUTATION_REQUEST": {
+                    "value": {
+                      "error": "INVALID_STORAGE_MUTATION_REQUEST",
+                      "message": "Test failed: value at path \"/name\" does not match.",
+                      "suggestion": "Ensure the test value matches the current document value.",
+                      "docs": ""
+                    }
+                  },
+                  "UNPROCESSABLE_ENTITY": {
+                    "value": {
+                      "error": "UNPROCESSABLE_ENTITY",
+                      "message": "Invalid JSON pointer: path must start with \"/\".",
+                      "suggestion": "Please ensure the data follows the correct format.",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/ydoc": {
       "get": {
         "summary": "Get Yjs document",
