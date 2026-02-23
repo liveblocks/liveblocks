@@ -13,10 +13,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: var(--space-1);
 }
 
 .rowAvatar {
-  margin-right: var(--space-4);
+  margin-right: var(--space-7);
 }
 
 .rowName {
@@ -41,7 +42,7 @@
 }
 
 .rowDescription {
-  color: var(--color-text-lighter);
+  color: var(--color-text-lightest);
 }
 
 .rowAccessSelect {

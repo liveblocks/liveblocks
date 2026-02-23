@@ -54,6 +54,13 @@
   font-weight: 500;
 }
 
+.titleButtons {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  gap: var(--space-0);
+}
+
 .closeButton {
   margin-right: calc(-1 * var(--space-3));
 }

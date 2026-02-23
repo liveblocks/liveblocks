@@ -1,5 +1,7 @@
 import { Group } from "@/types";
 
+// TODO remove this?
+
 /**
  * This array simulates a database consisting of a list of groups.
  * Assign users to groups in /data/users.ts
