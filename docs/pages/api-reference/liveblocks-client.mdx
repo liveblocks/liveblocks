@@ -1343,7 +1343,7 @@ Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 ### Room.getPresence
 
 Return the current user’s Presence.
-[Presence](/docs/ready-made-features/presence) is used to store custom
+[Presence](/docs/ready-made-features/multiplayer) is used to store custom
 properties on each user that exist until the user disconnects. An example use
 would be storing a user’s cursor coordinates.
 
@@ -1381,7 +1381,7 @@ declare global {
 
 ### Room.updatePresence
 
-Updates the current user’s [Presence](/docs/ready-made-features/presence). Only
+Updates the current user’s [Presence](/docs/ready-made-features/multiplayer). Only
 pass the properties you wish to update—any changes will be merged into the
 current presence. The entire presence object will not be replaced.
 
@@ -4154,7 +4154,7 @@ whiteboard, or cells in a spreadsheet.
 
 Storage provides three different conflict-free data structures, which you can
 use to build your application. All structures are permanent and persist when all
-users have left the room, unlike [Presence](/docs/ready-made-features/presence)
+users have left the room, unlike [Presence](/docs/ready-made-features/multiplayer)
 which is temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
