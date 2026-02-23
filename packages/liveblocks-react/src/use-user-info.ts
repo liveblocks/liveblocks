@@ -16,30 +16,6 @@ function throwIfAborted(signal: AbortSignal): void {
   }
 }
 
-function waitUntilConnected(room: Room, signal: AbortSignal): Promise<void> {
-  if (room.getSelf() !== null || signal.aborted) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve) => {
-    const unsubscribe = room.events.self.subscribe(() => {
-      if (room.getSelf() !== null || signal.aborted) {
-        unsubscribe();
-        resolve();
-      }
-    });
-
-    signal.addEventListener(
-      "abort",
-      () => {
-        unsubscribe();
-        resolve();
-      },
-      { once: true }
-    );
-  });
-}
-
 function getPresenceUserInfo<U extends BaseUserMeta>(
   room: Room<any, any, U>,
   userId: string
@@ -54,11 +30,13 @@ function getPresenceUserInfo<U extends BaseUserMeta>(
 }
 
 /**
+ * @private This is a private API. Do not rely on it.
+ *
  * A hook that returns user info either from Presence or using `resolveUsers`.
  * It can be used like `useUser` but for scenarios where `resolveUsers` might
  * not be used (e.g. for Presence-based components like avatars or cursors).
  */
-export function useAnyUserInfo<U extends BaseUserMeta = DU>(
+export function useUserInfo<U extends BaseUserMeta = DU>(
   userId: string
 ): UserAsyncResult<U["info"]> {
   const client = useClient();
@@ -69,16 +47,15 @@ export function useAnyUserInfo<U extends BaseUserMeta = DU>(
 
   useEffect(() => {
     const usersStore = client[kInternal].usersStore;
-    const controller = new AbortController();
-    const { signal } = controller;
+    const abortController = new AbortController();
 
     void (async () => {
       try {
         setResult({ isLoading: true });
 
         if (room) {
-          await waitUntilConnected(room, signal);
-          throwIfAborted(signal);
+          await room.waitUntilPresenceReady();
+          throwIfAborted(abortController.signal);
 
           const presenceUserInfo = getPresenceUserInfo(room, userId);
           if (presenceUserInfo !== undefined) {
@@ -88,13 +65,12 @@ export function useAnyUserInfo<U extends BaseUserMeta = DU>(
         }
 
         await usersStore.enqueue(userId);
-        throwIfAborted(signal);
+        throwIfAborted(abortController.signal);
 
         setResult(
           selectorFor_useUser<U>(usersStore.getItemState(userId), userId)
         );
       } catch (err) {
-        // Ignore `AbortSignal` errors
         if ((err as Error).name === "AbortError") {
           return;
         }
@@ -104,7 +80,7 @@ export function useAnyUserInfo<U extends BaseUserMeta = DU>(
     })();
 
     return () => {
-      controller.abort();
+      abortController.abort();
     };
   }, [client, room, userId]);
 

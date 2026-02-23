@@ -1,12 +1,7 @@
 import type { EventSource } from "@liveblocks/core";
-import { isPlainObject, makeEventSource } from "@liveblocks/core";
-import {
-  useOther,
-  useOthersConnectionIds,
-  useRoom,
-  useUpdateMyPresence,
-} from "@liveblocks/react";
-import { useLayoutEffect } from "@liveblocks/react/_private";
+import { isPlainObject, makeEventSource, shallow } from "@liveblocks/core";
+import { useOthers, useRoom, useUpdateMyPresence } from "@liveblocks/react";
+import { useLayoutEffect, useUserInfo } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
   MutableRefObject,
@@ -17,6 +12,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -161,20 +157,21 @@ function makeCoordinatesSpring() {
 }
 
 function PresenceCursor({
-  connectionId,
+  userId,
   presenceKey,
   sizeRef,
   sizeEvents,
 }: {
-  connectionId: number;
+  userId: string;
   presenceKey: string;
   sizeRef: MutableRefObject<Size | null>;
   sizeEvents: EventSource<void>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
-  const color = useOther(connectionId, (other) => $string(other.info?.color));
-  const name = useOther(connectionId, (other) => $string(other.info?.name));
+  const { user } = useUserInfo(userId);
+  const color = $string(user?.color);
+  const name = $string(user?.name);
 
   useLayoutEffect(() => {
     const spring = makeCoordinatesSpring();
@@ -204,7 +201,7 @@ function PresenceCursor({
     const unsubscribeSize = sizeEvents.subscribe(render);
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
-      const other = others.find((other) => other.connectionId === connectionId);
+      const other = others.find((other) => other.id === userId);
       const cursor = $coordinates(other?.presence[presenceKey]);
 
       spring.set(cursor ?? null);
@@ -216,7 +213,7 @@ function PresenceCursor({
       unsubscribeSize();
       unsubscribeOther();
     };
-  }, [room, connectionId, presenceKey, sizeRef, sizeEvents]);
+  }, [room, userId, presenceKey, sizeRef, sizeEvents]);
 
   return (
     <Cursor
@@ -238,7 +235,13 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
   ) => {
     const ref = useRef<HTMLDivElement>(null);
     const updateMyPresence = useUpdateMyPresence();
-    const othersConnectionIds = useOthersConnectionIds();
+    const othersUserIds = useOthers(
+      (others) => others.map((user) => user.id),
+      shallow
+    );
+    const uniqueOthersUserIds = useMemo(() => {
+      return [...new Set(othersUserIds)];
+    }, [othersUserIds]);
     const sizeRef = useRef<Size | null>(null);
     const [sizeEvents] = useState(() => makeEventSource<void>());
     const isWindowFocused = useWindowFocus();
@@ -331,15 +334,17 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
         ref={ref}
       >
         <div className="lb-cursors-container">
-          {othersConnectionIds.map((connectionId) => (
-            <PresenceCursor
-              key={connectionId}
-              connectionId={connectionId}
-              presenceKey={presenceKey}
-              sizeRef={sizeRef}
-              sizeEvents={sizeEvents}
-            />
-          ))}
+          {uniqueOthersUserIds.map((userId) =>
+            userId ? (
+              <PresenceCursor
+                key={userId}
+                userId={userId}
+                presenceKey={presenceKey}
+                sizeRef={sizeRef}
+                sizeEvents={sizeEvents}
+              />
+            ) : null
+          )}
         </div>
 
         {children}
