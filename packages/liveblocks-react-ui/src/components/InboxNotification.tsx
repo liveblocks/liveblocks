@@ -21,7 +21,7 @@ import {
   useRoomInfo,
 } from "@liveblocks/react";
 import { useRoomThreadSubscription } from "@liveblocks/react/_private";
-import { Slot } from "radix-ui";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type {
   ComponentProps,
   ComponentPropsWithoutRef,
@@ -277,7 +277,7 @@ const InboxNotificationLayout = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const { Anchor } = useComponents(components);
-    const Component = asChild ? Slot.Slot : Anchor;
+    const Component = asChild ? SlotPrimitive.Slot : Anchor;
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const markInboxNotificationAsRead = useMarkInboxNotificationAsRead();
     const deleteInboxNotification = useDeleteInboxNotification();

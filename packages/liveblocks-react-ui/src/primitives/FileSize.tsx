@@ -1,6 +1,6 @@
 "use client";
 
-import { Slot } from "radix-ui";
+import { Slot as SlotPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
@@ -44,7 +44,7 @@ export const FileSize = forwardRef<HTMLSpanElement, FileSizeProps>(
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot.Slot : "span";
+    const Component = asChild ? SlotPrimitive.Slot : "span";
     const children = useMemo(
       () =>
         typeof renderChildren === "function"
