@@ -14,3 +14,5 @@ export const DASHBOARD_ORGANIZATION_URL = "/dashboard/organization";
 export const DASHBOARD_PUBLIC_URL = "/dashboard/public";
 
 export const ANONYMOUS_USER_ID = "anonymous";
+
+export const DEFAULT_ORGANIZATION_ID = "default";

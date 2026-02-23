@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { DEFAULT_ORGANIZATION_ID } from "@/constants";
 import { getUser } from "@/lib/database/getUser";
 import {
   buildDocument,
@@ -31,7 +32,8 @@ type Props = {
 export async function updateUserAccess({ userId, documentId, access }: Props) {
   const session = await auth();
   // Default to personal workspace for authenticated users
-  const organizationId = session?.user.currentOrganizationId ?? "default";
+  const organizationId =
+    session?.user.currentOrganizationId ?? DEFAULT_ORGANIZATION_ID;
 
   let room;
   let user;

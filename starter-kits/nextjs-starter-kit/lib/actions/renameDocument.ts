@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { DEFAULT_ORGANIZATION_ID } from "@/constants";
 import { userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
@@ -54,7 +55,8 @@ export async function renameDocument({ documentId, name }: Props) {
       accessAllowed: "write",
       userId: session?.user.info.id ?? "",
       room,
-      organizationId: session?.user.currentOrganizationId ?? "default",
+      organizationId:
+        session?.user.currentOrganizationId ?? DEFAULT_ORGANIZATION_ID,
     })
   ) {
     return {
