@@ -468,5 +468,33 @@
     "topics": ["notifications", "tutorials", "webhooks"],
     "technologies": ["react-ui", "nodejs"],
     "date": "2026-01-29"
+  },
+  {
+    "title": "The new Storage engine and its benefits",
+    "path": "/about-the-new-storage-engine",
+    "topics": [],
+    "technologies": ["storage"],
+    "date": "2026-02-10"
+  },
+  {
+    "title": "How to set up Continuous Integration (CI) testing",
+    "path": "/how-to-set-up-continuous-integration-ci-testing",
+    "topics": ["tutorials", "testing"],
+    "technologies": ["nodejs"],
+    "date": "2026-02-06"
+  },
+  {
+    "title": "How to set up End-to-End (E2E) testing with Playwright",
+    "path": "/how-to-set-up-end-to-end-e2e-testing-with-playwright",
+    "topics": ["tutorials", "testing"],
+    "technologies": ["nextjs", "react"],
+    "date": "2026-02-17"
+  },
+  {
+    "title": "Modifying Storage via REST API with JSON Patch",
+    "path": "/modifying-storage-via-rest-api-with-json-patch",
+    "topics": ["rest-api", "storage"],
+    "technologies": ["storage"],
+    "date": "2026-02-20"
   }
 ]

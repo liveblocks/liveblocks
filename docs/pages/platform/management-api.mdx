@@ -1,0 +1,216 @@
+---
+meta:
+  title: "Management API"
+  parentTitle: "Platform"
+  description: "Learn how to use the Liveblocks Management API."
+---
+
+<Banner>
+  The Management API is currently in private beta for Enterprise customers.
+  Reach out to [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on
+  your team.
+</Banner>
+
+The Liveblocks Management API allows you to interact programmatically with your
+Liveblocks projects and webhooks. With the API, you can create, update, and
+delete projects, webhooks, and more.
+
+The Liveblocks Management API is organized around REST. The API has predictable
+resource-oriented URLs, accepts form-encoded request bodies, returns
+JSON-encoded responses, and uses standard HTTP response codes, authentication,
+and verbs. See the [API reference](api-reference/rest-api-endpoints#Management)
+for more information.
+
+```
+https://api.liveblocks.io/v2/management
+```
+
+## How it works
+
+When Management API is enabled, you'll need to authenticate your requests using
+an access token. This access token is generated from your Liveblocks team and
+can be found in the [dashboard](/dashboard/team-settings) teams settings page
+under the **Management API** section.
+
+<Figure>
+  <Image
+    src="/assets/management-api/access-tokens.png"
+    alt="Liveblocks management API access tokens"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+<Banner title="Requires a team owner">
+  Management API access tokens are team-linked and can only be created by team
+  owners. If you don't have team owner permissions, contact your team owner to
+  generate a token for you.
+</Banner>
+
+## Generating an access token
+
+To generate a new Management API access token click the “**Generate new
+token…**” button to open the token generation dialog.
+
+<Figure>
+  <Image
+    src="/assets/management-api/generate-access-token-dialog.png"
+    alt="Generate new access token dialog"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+In the dialog, some options are available.
+
+### Token name
+
+A name for your token, which is used to help you identify and manage your
+tokens.
+
+```text title="Token name"
+LB-MANAGEMENT-API-ACCESS-TOKEN
+```
+
+### Scopes
+
+Scopes that define your token's permissions. You can select one or both scopes
+depending on your needs.
+
+- **Read**: Allows viewing data but not modifying it. Grants read access to all
+  resources.
+- **Write**: Allows creating, modifying, and deleting data. Grants write access
+  to all resources.
+
+```text title="Scopes"
+✔︎ Read
+✔︎ Write
+```
+
+<Banner title="Coming soon">
+  More granular scopes will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
+</Banner>
+
+### Generate new token
+
+Once you've configured your token name and scopes, click **Generate new token**
+to create it. After generation, a dialog will appear displaying your new
+Management API token. This is the **only time** you'll be able to view and copy
+the full token value.
+
+<Figure>
+  <Image
+    src="/assets/management-api/new-access-token-dialog.png"
+    alt="New access token dialog"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+**Save and store this token in a secure place**, such as a password manager or
+secret store. You won't be able to see it again after closing this dialog. Use
+the copy icon in the dialog to copy the token to your clipboard before clicking
+“**Done**”.
+
+After you close the dialog, your new token will appear in the Management API
+tokens list. The token value will be partially obscured for security, showing
+only the first few characters. You can delete any token at any time using the
+delete icon next to it.
+
+## Access tokens expiry
+
+All Management API access tokens expire after one year from the date of
+generation. The expiration date is displayed when you generate a new token, and
+you can view it for existing tokens in the Management API tokens list.
+
+When a token expires, you'll need to generate a new token to continue using the
+Management API. Make sure to rotate your tokens before they expire to avoid
+interruptions in your API access.
+
+<Banner title="Coming soon">
+  Custom expiration dates will be available in a future update. If you'd like to
+  provide feedback or have specific scope requirements, please contact
+  [sales@liveblocks.io](mailto:sales@liveblocks.io).
+</Banner>
+
+## Revoking an access token
+
+If you need to revoke a Management API access token, click the delete icon next
+to the token in the Management API tokens list. A confirmation dialog will
+appear asking you to confirm the revocation.
+
+<Figure>
+  <Image
+    src="/assets/management-api/revoke-access-token-dialog.png"
+    alt="Revoke access token confirmation dialog"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+<Banner title="This action cannot be undone" type="warning">
+  Revoking a token will immediately block Management API access for any
+  application or script using it. This may break integrations that depend on the
+  token. Once revoked, you cannot restore the token and will need to generate a
+  new one if you need to restore access.
+</Banner>
+
+Before revoking a token, make sure to:
+
+- Verify that no active integrations or scripts are using the token
+- Generate a replacement token if needed, and update your integrations to use
+  the new token
+- Confirm that revoking the token won't disrupt critical operations
+
+If you're certain you want to proceed, click “**Yes I understand, revoke
+token**” in the confirmation dialog. The token will be immediately revoked and
+removed from your tokens list.
+
+## Usage
+
+The Management API can be called from any terminals or in CI/CI pipelines using
+the `curl` command. Pass your management token, e.g. `lbs_sd7H24...`, in the
+`Authorization` header.
+
+```bash highlight="2-3"
+# >_ terminal
+curl -X GET "https://api.liveblocks.io/v2/management/projects" \
+  -H "Authorization: Bearer lbs_*******************" \
+  -H "Content-Type: application/json"
+```
+
+```yaml highlight="9-10"
+# >_ CI/CD workflow
+name: Liveblocks Management API
+jobs:
+  projects:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List all projects with the Management API
+        run: |
+          curl -X GET "https://api.liveblocks.io/v2/management/projects" \
+            -H "Authorization: Bearer lbs_*******************" \
+            -H "Content-Type: application/json"
+```
+
+## Rate limiting
+
+The Management API enforces rate limits to ensure fair usage and system
+stability. By default, each Management API access token (MAAT) is limited to
+**1,000 requests per 60 seconds**.
+
+This limit applies cumulatively across all requests made with a single access
+token. If you exceed this limit, all API calls using that token will be blocked
+for the next minute, and the API will return a `429 Too Many Requests` HTTP
+status response.
+
+Rate limits are subject to our fair use policy. If you need higher rate limits
+for your use case, please contact
+[sales@liveblocks.io](mailto:sales@liveblocks.io) to discuss your requirements.
+
+## API reference
+
+See the [API reference](api-reference/rest-api-endpoints#Management) for more
+information.

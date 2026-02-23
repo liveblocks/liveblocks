@@ -28,8 +28,8 @@ import {
 import { kInternal } from "../../internal";
 import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
+import type { StorageNode } from "../../protocol/StorageNode";
+import { CrdtType } from "../../protocol/StorageNode";
 import { WebsocketCloseCodes } from "../../types/IWebSocket";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
@@ -1258,7 +1258,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
@@ -1341,7 +1341,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [
@@ -1412,7 +1412,7 @@ describe("LiveList", () => {
 
       expectStorage({ items: ["a", "b"] });
 
-      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+      const newInitStorage: StorageNode[] = [
         ["root", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "root", parentKey: "items" }],
         [

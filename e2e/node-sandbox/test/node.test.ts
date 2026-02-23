@@ -13,7 +13,6 @@ console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
 
 const client = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // @ts-expect-error hidden config
   baseUrl: BASE_URL,
 });
 
