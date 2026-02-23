@@ -2120,6 +2120,40 @@ impl DocumentHandle {
         }
     }
 
+    /// Debug: return array of {value, position, id} for each list entry.
+    #[wasm_bindgen(js_name = "listDebugPositions")]
+    pub fn list_debug_positions(&self, list_id: &str) -> JsValue {
+        let doc = self.doc.borrow();
+        let key = match doc.get_key_by_id(list_id) {
+            Some(k) => k,
+            None => return JsValue::UNDEFINED,
+        };
+        let node = match doc.get_node(key) {
+            Some(n) => n,
+            None => return JsValue::UNDEFINED,
+        };
+        match &node.data {
+            CrdtData::List { children, .. } => {
+                let arr = js_sys::Array::new();
+                for (pos, child_key) in children {
+                    let obj = js_sys::Object::new();
+                    let child = doc.get_node(*child_key);
+                    let val = child.map(|n| match &n.data {
+                        CrdtData::Register { data } => json_to_js(data),
+                        _ => JsValue::from_str(&n.id),
+                    }).unwrap_or(JsValue::UNDEFINED);
+                    let id = child.map(|n| JsValue::from_str(&n.id)).unwrap_or(JsValue::UNDEFINED);
+                    js_sys::Reflect::set(&obj, &"value".into(), &val).ok();
+                    js_sys::Reflect::set(&obj, &"position".into(), &JsValue::from_str(pos)).ok();
+                    js_sys::Reflect::set(&obj, &"id".into(), &id).ok();
+                    arr.push(&obj);
+                }
+                arr.into()
+            }
+            _ => JsValue::UNDEFINED,
+        }
+    }
+
     /// Convert a LiveList to its immutable JSON representation.
     #[wasm_bindgen(js_name = "listToImmutable")]
     pub fn list_to_immutable(&self, list_id: &str) -> JsValue {

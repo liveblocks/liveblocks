@@ -16,7 +16,7 @@ pub fn apply_op(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
         return ApplyResult::NotModified;
     }
 
-    match op.op_code {
+    let result = match op.op_code {
         OpCode::Init => apply_init(doc, op),
         OpCode::CreateObject | OpCode::CreateList | OpCode::CreateMap | OpCode::CreateRegister => {
             apply_create(doc, op, source)
@@ -24,8 +24,10 @@ pub fn apply_op(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
         OpCode::UpdateObject => apply_update_object(doc, op, source),
         OpCode::DeleteCrdt => apply_delete_crdt(doc, op, source),
         OpCode::DeleteObjectKey => apply_delete_object_key(doc, op, source),
-        OpCode::SetParentKey => apply_set_parent_key(doc, op),
-    }
+        OpCode::SetParentKey => apply_set_parent_key(doc, op, source),
+    };
+
+    result
 }
 
 /// Apply a batch of operations to the document.
@@ -209,7 +211,6 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
                 node.map(|n| n.parent_key.as_deref() != Some(&parent_key))
                     .unwrap_or(false)
             };
-
             let is_set_intent = op.intent.as_deref() == Some("set");
 
             if needs_position_update {
@@ -413,52 +414,89 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
 
     // Node NOT in arena — ACK handling for source=Ours.
     //
-    // The node was created locally but is no longer in the document. Two cases:
+    // The node was created locally but is no longer in the document. This
+    // happens when the node was deleted after creation (by set, undo, etc.)
+    // and then a preceding DELETE ACK removed it from the arena.
     //
-    // 1. Set-intent (list.set, map.set): the node may have been removed by a
-    //    REMOTE set conflict at the same position/key. Use unacked_creates to
-    //    distinguish current vs superseded:
-    //    - Current: re-create the node (it was deleted by remote, not locally).
-    //    - Superseded: skip (a newer local set overwrote this position/key).
+    // For both set and non-set ACKs, we fall through to create the node
+    // fresh — matching JS behavior where _applyInsertAck and _applySetAck
+    // both call #createAttachItemAndSort when the item doesn't exist.
     //
-    // 2. Non-set-intent (push, insert, undo-CREATE): the node was created
-    //    locally and then deleted by a LOCAL operation (undo or explicit delete).
-    //    The DELETE op was also dispatched to the server. Skip re-creation —
-    //    the local state has moved past this CREATE.
-    //    (For non-set-intent, a remote op cannot delete our node before the ACK
-    //    arrives, because the server processes our CREATE first and the ACK
-    //    arrives before any remote DELETE that references our node.)
+    // For set-intent ACKs, we ALWAYS process deleted_id first (matching JS
+    // _applySetAck which calls #detachItemAssociatedToSetOperation BEFORE
+    // any other logic, including the superseded check). For superseded set
+    // ACKs, we process deleted_id then skip creation.
     if source == OpSource::Ours {
         let is_set_intent = op.intent.as_deref() == Some("set");
         let ack_key = (parent_id.clone(), parent_key.clone());
 
         if is_set_intent {
             let op_id = op.op_id.as_deref().unwrap_or("");
-            let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+            // Resolve the borrow before mutable operations below
+            let is_current = doc.unacked_creates.get(&ack_key).map(|s| s.as_str()) == Some(op_id);
+            let is_superseded = !is_current && doc.unacked_creates.contains_key(&ack_key);
 
-            if latest_op_id == Some(op_id) {
+            // Process deleted_id FIRST — always, even for superseded ACKs.
+            // Matches JS _applySetAck line 329: #detachItemAssociatedToSetOperation.
+            let mut has_deleted = false;
+            if let Some(deleted_id) = &op.deleted_id {
+                if let Some(deleted_key) = doc.get_key_by_id(deleted_id) {
+                    if let Some(pnk) = doc.get_key_by_id(&parent_id) {
+                        if let Some(parent) = doc.get_node_mut(pnk)
+                            && let CrdtData::List { children, .. } = &mut parent.data
+                        {
+                            children.retain(|(_, ck)| *ck != deleted_key);
+                        }
+                        doc.remove_node_recursive(deleted_key);
+                        has_deleted = true;
+                    }
+                }
+            }
+
+            if is_current {
                 // This is the current (non-superseded) set — remove from tracking
                 // and fall through to create the node normally.
                 doc.unacked_creates.remove(&ack_key);
-            } else {
+            } else if is_superseded {
                 // Superseded: a more recent local set at this (parent, key) has
-                // overwritten this one → skip the ACK.
-                return ApplyResult::NotModified;
+                // overwritten this one → skip creation, but deleted_id was processed.
+                return if has_deleted {
+                    ApplyResult::Modified {
+                        reverse: vec![],
+                        update: StorageUpdate::LiveListUpdate {
+                            node_id: parent_id,
+                            updates: vec![],
+                        },
+                    }
+                } else {
+                    ApplyResult::NotModified
+                };
             }
+            // else: no tracking entry — fall through to create normally
         } else {
             // Non-set-intent ACK (push, insert, undo-CREATE).
-            // Check unacked_creates for map/object ACKs (tracked by handles.rs).
-            let op_id = op.op_id.as_deref().unwrap_or("");
-            let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
-            if latest_op_id.is_some() && latest_op_id != Some(op_id) {
-                // There's a newer local create at this (parent, key) — skip ACK.
-                return ApplyResult::NotModified;
-            }
-            if latest_op_id == Some(op_id) {
-                doc.unacked_creates.remove(&ack_key);
+            // For maps/objects, check unacked_creates (tracked by handles.rs)
+            // to skip ACKs superseded by a newer local create at the same key.
+            // For lists, skip this check — JS #applyInsertAck does NOT consult
+            // #unacknowledgedSets, and list positions don't have superseded
+            // semantics (multiple items can coexist near the same position).
+            let parent_is_list = doc.get_key_by_id(&parent_id)
+                .and_then(|pk| doc.get_node(pk))
+                .map_or(false, |n| matches!(&n.data, CrdtData::List { .. }));
+
+            if !parent_is_list {
+                let op_id = op.op_id.as_deref().unwrap_or("");
+                let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+                if latest_op_id.is_some() && latest_op_id != Some(op_id) {
+                    // There's a newer local create at this (parent, key) — skip ACK.
+                    return ApplyResult::NotModified;
+                }
+                if latest_op_id == Some(op_id) {
+                    doc.unacked_creates.remove(&ack_key);
+                }
             }
             // Fall through to create the node normally (matching JS behavior
-            // where ACKs are processed like regular ops).
+            // where _applyInsertAck creates the item when it doesn't exist).
         }
     }
 
@@ -690,9 +728,13 @@ fn attach_child_to_list(
         {
             if let Some(conflict_idx) = children.iter().position(|(pos, _)| pos.as_str() == position) {
                 match source {
-                    OpSource::Theirs => {
-                        // Remote insert: shift the EXISTING item to make room.
-                        // Matches JS LiveList.#applyRemoteInsert → #shiftItemPosition.
+                    OpSource::Theirs | OpSource::Ours => {
+                        // Remote insert or ACK: shift the EXISTING item to make room.
+                        // Matches JS LiveList.#applyRemoteInsert → #shiftItemPosition
+                        // and JS LiveList.#applyInsertAck → #shiftItemPosition.
+                        // Both Theirs and Ours shift the EXISTING item at the
+                        // conflict position, placing the incoming item at the
+                        // server-assigned position.
                         let conflict_child_key = children[conflict_idx].1;
                         let before_pos = Some(position.to_string());
                         let after_pos = children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
@@ -712,7 +754,7 @@ fn attach_child_to_list(
                             children.sort_by(|(a, _), (b, _)| a.cmp(b));
                         }
                     }
-                    _ => {
+                    OpSource::Local => {
                         // Local/undo-redo insert: shift the NEW item to AFTER the conflict.
                         // Matches JS LiveList.#applyInsertUndoRedo behavior.
                         let before_pos = Some(position.to_string());
@@ -987,7 +1029,7 @@ fn apply_delete_object_key(doc: &mut Document, op: &Op, source: OpSource) -> App
 // ---- SET_PARENT_KEY ----
 
 /// Apply a SET_PARENT_KEY op: update a node's parent_key (used for LiveList moves).
-fn apply_set_parent_key(doc: &mut Document, op: &Op) -> ApplyResult {
+fn apply_set_parent_key(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
     let node_key = match doc.get_key_by_id(&op.id) {
         Some(k) => k,
         None => return ApplyResult::NotModified,
@@ -1016,7 +1058,9 @@ fn apply_set_parent_key(doc: &mut Document, op: &Op) -> ApplyResult {
         return ApplyResult::NotModified;
     }
 
-    // Update the node's parent_key
+    // Set node's parent_key to the requested position. For list items in
+    // the "normal case" with a conflict, this may be overridden below when
+    // the actual position differs (e.g., Local source shifts the moved item).
     if let Some(node) = doc.get_node_mut(node_key) {
         node.parent_key = Some(new_parent_key.clone());
     }
@@ -1050,23 +1094,102 @@ fn apply_set_parent_key(doc: &mut Document, op: &Op) -> ApplyResult {
 
         if is_list {
             if let Some(_prev_idx) = previous_index {
-                // Normal case: node is in the list, update position
+                // Normal case: node is in the list, update position.
+                //
+                // Match JS behavior which handles conflicts differently by source:
+                //
+                // Theirs/Ours (#applySetChildKeyRemote, #applySetChildKeyAck):
+                //   If an existing item occupies the target position, SHIFT IT
+                //   to makePosition(newKey, nextPos) and give the moved item
+                //   the exact target position. The moved item ends up BEFORE
+                //   the shifted item.
+                //
+                // Local (#applySetChildKeyUndoRedo):
+                //   If an existing item occupies the target position, SHIFT THE
+                //   MOVED ITEM to makePosition(newKey, nextPos). The existing
+                //   item keeps its position; the moved item goes AFTER it.
+
+                // First, handle any conflict at the target position
+                let conflict_info = {
+                    let parent = doc.get_node(parent_node_key);
+                    parent.and_then(|p| match &p.data {
+                        CrdtData::List { children, .. } => {
+                            children.iter().enumerate().find_map(|(idx, (pos, ck))| {
+                                if pos.as_str() == new_parent_key.as_str() && *ck != node_key {
+                                    // Find the next item AFTER the conflict, skipping the
+                                    // moved item itself (it will be removed)
+                                    let after_pos = children[(idx + 1)..]
+                                        .iter()
+                                        .find(|(_, k)| *k != node_key)
+                                        .map(|(p, _)| p.clone());
+                                    Some((*ck, after_pos))
+                                } else {
+                                    None
+                                }
+                            })
+                        }
+                        _ => None,
+                    })
+                };
+
+                // The actual position the moved item will get
+                let mut actual_new_key = new_parent_key.clone();
+
+                if let Some((conflict_child_key, after_pos)) = conflict_info {
+                    let shifted_pos = crate::position::make_position(
+                        Some(new_parent_key.as_str()),
+                        after_pos.as_deref(),
+                    );
+
+                    match source {
+                        OpSource::Theirs | OpSource::Ours => {
+                            // Shift the EXISTING item, moved item takes target position
+                            if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                                child.parent_key = Some(shifted_pos.clone());
+                            }
+                            if let Some(parent) = doc.get_node_mut(parent_node_key)
+                                && let CrdtData::List { children, .. } = &mut parent.data
+                            {
+                                if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == conflict_child_key) {
+                                    entry.0 = shifted_pos;
+                                }
+                            }
+                            // actual_new_key stays as new_parent_key
+                        }
+                        OpSource::Local => {
+                            // Shift the MOVED item, existing keeps its position
+                            actual_new_key = shifted_pos;
+                        }
+                    }
+                }
+
+                // Update the moved node's parent_key to the actual position
+                if let Some(node) = doc.get_node_mut(node_key) {
+                    node.parent_key = Some(actual_new_key.clone());
+                }
+
+                // Remove and re-insert the moved item at the correct position
                 if let Some(parent) = doc.get_node_mut(parent_node_key)
                     && let CrdtData::List { children, .. } = &mut parent.data
                 {
-                    if let Some(entry) = children.iter_mut().find(|(_, ck)| *ck == node_key) {
-                        entry.0 = new_parent_key.clone();
-                    }
+                    children.retain(|(_, ck)| *ck != node_key);
+                    // Re-sort the remaining children (in case the conflict
+                    // shift moved an entry)
                     children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                    // Insert the moved item: use bisect-right (>) so that
+                    // among items with the same position string, the newly
+                    // moved item goes after them.
+                    let insert_idx = children
+                        .iter()
+                        .position(|(pos, _)| pos.as_str() > actual_new_key.as_str())
+                        .unwrap_or(children.len());
+                    children.insert(insert_idx, (actual_new_key, node_key));
 
-                    let new_index = children.iter().position(|(_, ck)| *ck == node_key);
-                    if let Some(new_idx) = new_index {
-                        if _prev_idx != new_idx {
-                            list_change = ListChangeKind::Move {
-                                previous_index: _prev_idx,
-                                new_index: new_idx,
-                            };
-                        }
+                    if _prev_idx != insert_idx {
+                        list_change = ListChangeKind::Move {
+                            previous_index: _prev_idx,
+                            new_index: insert_idx,
+                        };
                     }
                 }
             } else {

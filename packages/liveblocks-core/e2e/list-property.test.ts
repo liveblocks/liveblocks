@@ -332,6 +332,25 @@ test(
             );
 
             if (JSON.stringify(list1) !== JSON.stringify(list2)) {
+              // Dump WASM positions for debugging
+              try {
+                const pool1 = (root1.get("list") as any)._pool;
+                const pool2 = (root2.get("list") as any)._pool;
+                const id1 = (root1.get("list") as any)._id;
+                const id2 = (root2.get("list") as any)._id;
+                const owner1 = pool1?.wasmOwner;
+                const owner2 = pool2?.wasmOwner;
+                if (owner1?.listDebugPositions) {
+                  const p1 = owner1.listDebugPositions(id1);
+                  ctx.log(`A positions: ${JSON.stringify(p1)}`);
+                }
+                if (owner2?.listDebugPositions) {
+                  const p2 = owner2.listDebugPositions(id2);
+                  ctx.log(`B positions: ${JSON.stringify(p2)}`);
+                }
+              } catch (e) {
+                ctx.log(`Failed to dump positions: ${e}`);
+              }
               throw new Error(
                 "Consistency violation! Clients disagree on final state of LiveList."
               );

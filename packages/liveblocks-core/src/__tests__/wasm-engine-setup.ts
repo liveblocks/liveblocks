@@ -151,6 +151,7 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
             return (handle.listEntries(nodeId) ?? []) as CrdtEntry[];
           },
           listToImmutable(nodeId: string) { return handle.listToImmutable(nodeId); },
+          listDebugPositions(nodeId: string) { return handle.listDebugPositions(nodeId); },
           objectGetEntry(nodeId: string, key: string) {
             return handle.objectGetEntry(nodeId, key) as CrdtEntry | undefined;
           },
@@ -240,6 +241,7 @@ interface WasmDocumentHandle {
   listGetEntry(listId: string, index: number): unknown;
   listEntries(listId: string): unknown;
   listToImmutable(listId: string): unknown;
+  listDebugPositions(listId: string): unknown;
   objectGetEntry(objId: string, key: string): unknown;
   objectKeys(objId: string): unknown;
   objectEntries(objId: string): unknown;
