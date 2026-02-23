@@ -3812,7 +3812,7 @@ export function createRoomContext<
       // prettier-ignore
       useStorage: useStorageSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useStorage"],
       // prettier-ignore
-      useMutation: useMutation as TRoomBundle["suspense"]["useMutation"],
+      useMutation: useMutation_withBoundRoomContext as TRoomBundle["suspense"]["useMutation"],
 
       // prettier-ignore
       useSelf: useSelfSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useSelf"],
