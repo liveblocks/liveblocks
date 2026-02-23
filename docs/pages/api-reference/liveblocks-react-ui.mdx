@@ -3484,6 +3484,8 @@ Displays a stack of avatars for users currently present in the room.
 <AvatarStack />
 ```
 
+{/* TODO: Add image */}
+
 You can include additional users (e.g. users who are invited to the room but not
 currently present) and control how many avatars are shown before grouping the
 rest as `+N`.
@@ -3525,10 +3527,12 @@ It works out-of-the-box with best practices built-in:
   thrashing are avoided
 
 ```tsx
-<Cursors className="relative h-80 w-full">
+<Cursors className="relative h-full w-full">
   <YourCanvas />
 </Cursors>
 ```
+
+{/* TODO: Add image */}
 
 The cursors use the `name` and `color` properties which can be set via
 `userInfo` [when authenticating users](/docs/authentication).
@@ -3574,15 +3578,20 @@ Displays a multiplayer cursor with a color and an optional label.
 
 ```tsx
 <Cursor />
+```
+
+{/* TODO: Add image */}
+
+You can either use the `color` prop or override `--lb-cursor-color` with CSS to
+change the cursor’s color, by default it’s set to `--lb-accent`. The label’s
+text color is dynamically set to contrast with the cursor’s color automatically.
+
+```tsx
 
 <Cursor label="Stacy" color="#22c55e" />
 
 <Cursor label="Chris" className="[--lb-cursor-color:var(--color-rose-500)]" />
 ```
-
-You can either use the `color` prop or override `--lb-cursor-color` with CSS to
-change the cursor’s color, by default it’s set to `--lb-accent`. The label’s
-text color is dynamically set to contrast with the cursor’s color automatically.
 
 It’s sized as 0×0px to make it easy to position it either via `transform` or
 `top`/`left`.
