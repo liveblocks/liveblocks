@@ -379,6 +379,8 @@ zen.route("GET /v2/rooms/<roomId>/ydoc-binary", async ({ url, p }) => {
 
 // prettier-ignore
 {
+  zen.route("PATCH /v2/rooms/<roomId>/storage/json-patch", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/rooms/<roomId>/presence", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/threads", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/upsert", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/update-room-id", () => NOT_IMPLEMENTED());
@@ -437,4 +439,37 @@ zen.route("GET /v2/rooms/<roomId>/ydoc-binary", async ({ url, p }) => {
   zen.route("DELETE /v2/groups/<groupId>", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/groups", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/users/<userId>/groups", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots/<copilotId>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots/<copilotId>/knowledge", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots/<copilotId>/knowledge/<knowledgeSourceId>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots/<copilotId>/knowledge/file/<knowledgeSourceId>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/ai/copilots/<copilotId>/knowledge/web/<knowledgeSourceId>/links", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/ai/copilots", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/ai/copilots/<copilotId>", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/ai/copilots/<copilotId>/knowledge/web", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/ai/copilots/<copilotId>", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/ai/copilots/<copilotId>/knowledge/file/<knowledgeSourceId>", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/ai/copilots/<copilotId>/knowledge/web/<knowledgeSourceId>", () => NOT_IMPLEMENTED());
+  zen.route("PUT /v2/ai/copilots/<copilotId>/knowledge/file/<fileName>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/management/projects", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/management/projects/<projectId>", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/management/projects/<projectId>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/management/projects/<projectId>/webhooks", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/management/projects/<projectId>/webhooks/<webhookId>", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/management/projects/<projectId>/webhooks/<webhookId>/additional-headers", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>/additional-headers", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>/delete-additional-headers", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>/recover-failed-messages", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>/secret/roll", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/webhooks/<webhookId>/test", () => NOT_IMPLEMENTED());
+  zen.route("DELETE /v2/management/projects/<projectId>/webhooks/<webhookId>", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/api-keys/public/activate", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/api-keys/public/deactivate", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/api-keys/public/roll", () => NOT_IMPLEMENTED());
+  zen.route("POST /v2/management/projects/<projectId>/api-keys/secret/roll", () => NOT_IMPLEMENTED());
 }

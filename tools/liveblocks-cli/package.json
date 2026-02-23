@@ -1,6 +1,6 @@
 {
   "name": "liveblocks",
-  "version": "1.0.7",
+  "version": "1.0.11",
   "description": "Liveblocks command line interface",
   "type": "module",
   "bin": {
@@ -38,10 +38,9 @@
     "eslint-plugin-license-header": "^0.8.0"
   },
   "dependencies": {
-    "@bomb.sh/args": "^0.3.1",
-    "@liveblocks/core": "3.14.0-rc1",
-    "@liveblocks/server": "1.0.7",
-    "@liveblocks/zenrouter": "1.0.7",
+    "@liveblocks/core": "3.14.0",
+    "@liveblocks/server": "1.0.11",
+    "@liveblocks/zenrouter": "1.0.11",
     "decoders": "^2.8.0-1",
     "js-base64": "^3.7.5",
     "yjs": "^13.6.10"

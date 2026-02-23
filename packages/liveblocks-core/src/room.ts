@@ -31,13 +31,13 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { makeStopWatch } from "./lib/stopwatch";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
   partition,
-  raise,
   tryParseJson,
 } from "./lib/utils";
 import type {
@@ -47,11 +47,7 @@ import type {
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type {
-  ClientMsg,
-  UpdateStorageClientMsg,
-  UpdateYDocClientMsg,
-} from "./protocol/ClientMsg";
+import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -72,18 +68,22 @@ import type { MentionData } from "./protocol/MentionData";
 import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
   RoomStateServerMsg,
   ServerMsg,
-  StorageStateServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  NodeMap,
+  NodeStream,
+  SerializedCrdt,
+} from "./protocol/StorageNode";
+import { compactNodesToNodeStream } from "./protocol/StorageNode";
 import type {
   SubscriptionData,
   SubscriptionDeleteInfo,
@@ -98,7 +98,6 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
 import type {
   BadgeLocation,
   InternalOthersEvent,
@@ -1122,14 +1121,6 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-//
-// The maximum message size on websockets is 1MB. If a message larger than this
-// threshold is attempted to be sent, the strategy picked via the
-// `largeMessageStrategy` option will be used.
-//
-// In practice, we'll set threshold to slightly less than 1 MB.
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
-
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
@@ -1272,11 +1263,6 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
-export type LargeMessageStrategy =
-  | "default"
-  | "split"
-  | "experimental-fallback-to-http";
-
 /** @internal */
 export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   delegates: RoomDelegates;
@@ -1285,8 +1271,13 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
-  largeMessageStrategy?: LargeMessageStrategy;
 
+  /**
+   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
+   * Storage engine have native support for streaming. This flag will be
+   * removed in a future version, but will continue to work for existing engine
+   * v1 rooms for now.
+   */
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
@@ -1353,6 +1344,24 @@ function installBackgroundTabSpy(): [
   };
 
   return [inBackgroundSince, unsub];
+}
+
+function makeNodeMapBuffer() {
+  let map: NodeMap = new Map();
+  return {
+    /** Append a "page" of nodes to the current NodeMap buffer. */
+    append(chunk: NodeStream) {
+      for (const [id, node] of chunk) {
+        map.set(id, node);
+      }
+    },
+    /** Return the contents of the current NodeMap buffer, and create a fresh new one. */
+    take(): NodeMap {
+      const result = map;
+      map = new Map();
+      return result;
+    },
+  };
 }
 
 /**
@@ -1448,6 +1457,14 @@ export function createRoom<
     activeBatch: null,
     unacknowledgedOps: new Map<string, ClientWireOp>(),
   };
+
+  // Accumulates nodes as initial storage arrives in chunks via
+  // STORAGE_CHUNK messages. Once the final chunk arrives (with
+  // done: true), the complete map is passed to processInitialStorage().
+  const nodeMapBuffer = makeNodeMapBuffer();
+
+  // Tracks timing of storage fetch for debug logging
+  const stopwatch = config.enableDebugLogging ? makeStopWatch() : undefined;
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
@@ -1655,135 +1672,8 @@ export function createRoom<
     });
   }
 
-  /**
-   * Split a single large UPDATE_STORAGE message into smaller chunks, by
-   * splitting the ops list recursively in half.
-   */
-  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
-    const { ops, ...rest } = msg;
-    if (ops.length < 2) {
-      throw new Error("Cannot split ops into smaller chunks");
-    }
-
-    const mid = Math.floor(ops.length / 2);
-    const firstHalf = ops.slice(0, mid);
-    const secondHalf = ops.slice(mid);
-
-    for (const halfOps of [firstHalf, secondHalf]) {
-      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = stringify([half]);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkOps(half);
-      }
-    }
-  }
-
-  /**
-   * Split the message array in half (two chunks), and try to send each chunk
-   * separately. If the chunk is still too big, repeat the process. If a chunk
-   * can no longer be split up (i.e. is 1 message), then error.
-   */
-  function* chunkMessages(
-    messages: ClientMsg<P, E>[]
-  ): IterableIterator<string> {
-    if (messages.length < 2) {
-      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
-        yield* chunkOps(messages[0]);
-        return;
-      } else {
-        throw new Error(
-          "Cannot split into chunks smaller than the allowed message size"
-        );
-      }
-    }
-
-    const mid = Math.floor(messages.length / 2);
-    const firstHalf = messages.slice(0, mid);
-    const secondHalf = messages.slice(mid);
-
-    for (const half of [firstHalf, secondHalf]) {
-      const text = stringify(half);
-      if (!isTooBigForWebSocket(text)) {
-        yield text;
-      } else {
-        yield* chunkMessages(half);
-      }
-    }
-  }
-
-  function isTooBigForWebSocket(text: string): boolean {
-    // The theoretical worst case is that each character in the string is
-    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
-    // so we can spare ourselves the TextEncoder() measurement overhead with
-    // this heuristic.
-    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
-      return false;
-    }
-
-    // Otherwise we need to measure to be sure
-    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
-  }
-
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const strategy = config.largeMessageStrategy ?? "default";
-
-    const text = stringify(messages);
-    if (!isTooBigForWebSocket(text)) {
-      return managedSocket.send(text); // Happy path
-    }
-
-    // If message is too big for WebSockets, we need to follow a strategy
-    switch (strategy) {
-      case "default": {
-        const type = "LARGE_MESSAGE_ERROR";
-        const err = new LiveblocksError("Message is too large for websockets", {
-          type,
-        });
-        const didNotify = config.errorEventSource.notify(err);
-        if (!didNotify) {
-          console.error(
-            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
-          );
-        }
-        return;
-      }
-
-      case "split": {
-        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
-        for (const chunk of chunkMessages(messages)) {
-          managedSocket.send(chunk);
-        }
-        return;
-      }
-
-      // NOTE: This strategy is experimental as it will not work in all situations.
-      // It should only be used for broadcasting, presence updates, but isn't suitable
-      // for Storage or Yjs updates yet (because through this channel the server does
-      // not respond with acks or rejections, causing the client's reported status to
-      // be stuck in "synchronizing" forever).
-      case "experimental-fallback-to-http": {
-        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
-        const nonce =
-          context.dynamicSessionInfoSig.get()?.nonce ??
-          raise("Session is not authorized to send message over HTTP");
-
-        void httpClient
-          .sendMessagesOverHTTP<P, E>({ roomId, nonce, messages })
-          .then((resp) => {
-            if (!resp.ok && resp.status === 403) {
-              managedSocket.reconnect();
-            }
-          })
-          .catch((err) => {
-            console.error(
-              `Failed to deliver message over HTTP: ${String(err)}`
-            );
-          });
-        return;
-      }
-    }
+    managedSocket.send(stringify(messages));
   }
 
   const self = DerivedSignal.from(
@@ -1821,15 +1711,27 @@ export function createRoom<
     me !== null ? userToTreeNode("Me", me) : null
   );
 
-  function createOrUpdateRootFromMessage(message: StorageStateServerMsg) {
-    if (message.items.length === 0) {
+  function createOrUpdateRootFromMessage(nodes: NodeMap) {
+    if (nodes.size === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items);
+      const currentItems: NodeMap = new Map();
+      for (const [id, crdt] of context.pool.nodes) {
+        currentItems.set(id, crdt._serialize());
+      }
+
+      // Get operations that represent the diff between 2 states.
+      const ops = getTreesDiffOperations(currentItems, nodes);
+
+      const result = applyRemoteOps(ops);
+      notify(result.updates);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, context.pool);
+      context.root = LiveObject._fromItems<S>(
+        nodes as NodeStream,
+        context.pool
+      );
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1851,23 +1753,6 @@ export function createRoom<
     // Initial storage is populated using normal "set" operations in the loop
     // above, those updates can end up in the undo stack, so let's prune it.
     context.undoStack.length = stackSizeBefore;
-  }
-
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
-    if (context.root === undefined) {
-      return;
-    }
-
-    const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.pool.nodes) {
-      currentItems.set(id, node._serialize());
-    }
-
-    // Get operations that represent the diff between 2 states.
-    const ops = getTreesDiffOperations(currentItems, new Map(items));
-
-    const result = applyRemoteOps(ops);
-    notify(result.updates);
   }
 
   function _addToRealUndoStack(frames: Stackframe<P>[]) {
@@ -2283,9 +2168,7 @@ export function createRoom<
     if (!isJsonObject(data)) {
       return null;
     }
-
     return data as ServerMsg<P, U, E>;
-    //             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(text: string): ServerMsg<P, U, E>[] | null {
@@ -2387,10 +2270,27 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          processInitialStorage(message);
+        case ServerMsgCode.STORAGE_CHUNK:
+          stopwatch?.lap();
+          nodeMapBuffer.append(compactNodesToNodeStream(message.nodes));
+          break;
+
+        case ServerMsgCode.STORAGE_STREAM_END: {
+          const timing = stopwatch?.stop();
+          if (timing) {
+            const ms = (v: number) => `${v.toFixed(1)}ms`;
+            const rest = timing.laps.slice(1);
+            console.warn(
+              `Storage chunk arrival: ${[
+                `total=${ms(timing.total)}`,
+                `first=${ms(timing.laps[0])}`,
+                `rest.n=${rest.length}`,
+                `rest.avg=${ms(rest.reduce((a, b) => a + b, 0) / rest.length)}`,
+                `rest.max=${ms(rest.reduce((a, b) => Math.max(a, b), 0))}`,
+              ].join(", ")}`
+            );
+          }
+          processInitialStorage(nodeMapBuffer.take());
           break;
         }
 
@@ -2438,6 +2338,7 @@ export function createRoom<
           break;
         }
 
+        case ServerMsgCode.STORAGE_STATE_V7: // No longer used in V8
         default:
           // Ignore unknown server messages
           break;
@@ -2571,9 +2472,9 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  function processInitialStorage(message: StorageStateServerMsg) {
+  function processInitialStorage(nodes: NodeMap) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message);
+    createOrUpdateRootFromMessage(nodes);
     applyAndSendOfflineOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
@@ -2583,8 +2484,10 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId });
-    processInitialStorage({ type: ServerMsgCode.STORAGE_STATE, items });
+    const nodes = new Map<string, SerializedCrdt>(
+      await httpClient.streamStorage({ roomId })
+    );
+    processInitialStorage(nodes);
   }
 
   function refreshStorage(options: { flush: boolean }) {
@@ -2598,6 +2501,8 @@ export function createRoom<
       // Only add the fetch message to the outgoing message queue if it isn't
       // already there
       messages.push({ type: ClientMsgCode.FETCH_STORAGE });
+      nodeMapBuffer.take(); // Reset any partial state from previous fetch
+      stopwatch?.start();
     }
 
     if (options.flush) {
@@ -3464,7 +3369,7 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7";
+    url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

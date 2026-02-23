@@ -7,7 +7,7 @@ import type {
   Status,
   User,
 } from "@liveblocks/client";
-import type { OpaqueClient, OpaqueRoom } from "@liveblocks/core";
+import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
@@ -181,7 +181,10 @@ const internalEnhancer = <TState>(options: {
 
       const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(newRoomId: string): void {
+      function enterRoom(
+        newRoomId: string,
+        options?: Pick<EnterOptions, "engine">
+      ): void {
         if (lastRoomId === newRoomId) {
           return;
         }
@@ -198,6 +201,7 @@ const internalEnhancer = <TState>(options: {
         ) as any;
 
         const { room, leave } = client.enterRoom(newRoomId, {
+          engine: options?.engine,
           initialPresence,
         });
         maybeRoom = room as OpaqueRoom;
@@ -299,7 +303,7 @@ const internalEnhancer = <TState>(options: {
 
       function newDispatch(action: any) {
         if (action.type === ACTION_TYPES.ENTER) {
-          enterRoom(action.roomId);
+          enterRoom(action.roomId, action.options);
         } else if (action.type === ACTION_TYPES.LEAVE) {
           leaveRoom();
         } else {
@@ -322,6 +326,7 @@ export const actions = {
   /**
    * Enters a room and starts sync it with Redux state
    * @param roomId The id of the room
+   * @param options Optional. Options to pass to the underlying client.enterRoom call (e.g. `engine`).
    */
   enterRoom,
   /**
@@ -330,13 +335,18 @@ export const actions = {
   leaveRoom,
 };
 
-function enterRoom(roomId: string): {
+function enterRoom(
+  roomId: string,
+  options?: Pick<EnterOptions, "engine">
+): {
   type: string;
   roomId: string;
+  options?: Pick<EnterOptions, "engine">;
 } {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
+    options,
   };
 }
 

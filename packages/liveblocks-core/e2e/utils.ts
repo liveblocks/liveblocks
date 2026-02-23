@@ -1,7 +1,3 @@
-import "dotenv/config";
-
-import fetch from "node-fetch";
-import type { URL } from "url";
 import { expect, onTestFinished } from "vitest";
 import WebSocket from "ws";
 
@@ -19,9 +15,7 @@ import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io";
-console.log(`Running against Liveblocks base URL: ${BASE_URL}`);
+const BASE_URL = "http://localhost:1154";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -31,12 +25,6 @@ async function initializeRoomForTest<
   TM extends BaseMetadata = BaseMetadata,
   CM extends BaseMetadata = BaseMetadata,
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
-  const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
-
-  if (!publicApiKey) {
-    throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
-  }
-
   let ws: PausableWebSocket | null = null;
 
   class PausableWebSocket extends WebSocket {
@@ -80,11 +68,8 @@ async function initializeRoomForTest<
 
   const client = createClient<U>({
     __DANGEROUSLY_disableThrottling: true,
-    enableDebugLogging: true,
-    publicApiKey,
+    publicApiKey: "pk_localdev",
     polyfills: {
-      // @ts-expect-error fetch from Node isn't compatible?
-      fetch,
       WebSocket: PausableWebSocket,
     },
     baseUrl: BASE_URL,
@@ -193,7 +178,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
           // Unfortunately there is no public API to know this has happened. It
           // typically happens within ~5 ms, so we'll wait a multitude of that
           // here, just to be sure.
-          setTimeout(resolve, 150);
+          setTimeout(resolve, 50);
         }
         beacons.delete(event.beacon);
       }
@@ -338,7 +323,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(600);
+    await wait(200);
 
     actor.ws.pause();
 
@@ -354,7 +339,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resume();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(600);
+          await wait(200);
         },
       });
       actor.leave();

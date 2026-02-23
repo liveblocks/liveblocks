@@ -18,6 +18,94 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 8 (2026-02-20)
+
+## Open source
+
+This week we've [open-sourced the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+
+## v3.14 🥧
+
+This release adds support for opting-in to the new storage engine on a per-room basis. The new storage engine can support larger documents, is more performant, is considered more stable, and will eventually become our default engine for all new rooms in the future. As of this release, the default storage engine still remains engine version 1.
+
+To give it a try, simply pass `engine: 2` when entering a _new_ room. After a room is created, you cannot change the engine it was created with anymore.
+
+```ts
+// Vanilla JS
+client.enterRoom("my-new-room", { engine: 2 });
+```
+
+or:
+
+```ts
+// In React
+<RoomProvider id="my-new-room" engine={2}>
+  ...
+</RoomProvider>
+```
+
+### `@liveblocks/client`
+
+- Support for selecting the preferred engine when entering new rooms: `client.enterRoom("my-new-room", { engine: 2 })`
+- Internal protocol optimizations to support larger storage documents
+- Add new config option `createClient({ baseUrl: "https://..." })` to allow connecting to the [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Improve `LiveList` performance when processing large batches of operations
+- Improve `LiveList.push()` efficiency to prevent unbounded position string growth over time
+- Fix crash when clearing documents with a large number of keys
+- Remove the `largeMessageStrategy` client option. The WebSocket message limit has been increased from 1 MB to 32 MB, making this setting obsolete.
+
+### `@liveblocks/react`
+
+- Support for selecting the preferred engine when entering new rooms: `<RoomProvider id="my-new-room" engine={2}>...</RoomProvider>`
+- Add new config option `<LiveblocksProvider baseUrl="https://..." />` to allow connecting to the [Liveblocks dev server](https://liveblocks.io/docs/tools/dev-server)
+- Exclude marking a thread or inbox notification as read from blocking navigation when `preventUnsavedChanges` is enabled.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Portaled elements now respect the `portalContainer` option from `@liveblocks/react-ui`’s `LiveblocksUiConfig` instead of always using `document.body`.
+
+### `@liveblocks/zustand` and `@liveblocks/redux`
+
+- Support for selecting the preferred engine when entering new rooms: `enterRoom("my-new-room", { engine: 2 })`
+
+### `@liveblocks/node`
+
+- Add new `.setPresence()` method to set ephemeral presence for a user in a room via the REST API, without requiring a WebSocket connection
+- Deprecated `tenantId` parameter in client methods, use `organizationId` instead.
+
+## Website
+
+- New blog post: [Open sourcing the Liveblocks sync engine and dev server](https://liveblocks.io/blog/open-sourcing-the-liveblocks-sync-engine-and-dev-server).
+
+## Documentation
+
+- New page: [Dev server](https://liveblocks.io/docs/tools/dev-server).
+- New page: [Management API](https://liveblocks.io/docs/platform/management-api).
+- New page: [Multi-Factor Authentication](https://liveblocks.io/docs/platform/account-management/mfa).
+- New guide: [How to set up Continuous Integration (CI) testing](https://liveblocks.io/docs/guides/how-to-set-up-continuous-integration-ci-testing).
+- New guide: [How to set up End-to-End (E2E) testing with Playwright](https://liveblocks.io/docs/guides/how-to-set-up-end-to-end-e2e-testing-with-playwright).
+- New guide: [The new Storage engine and its benefits](https://liveblocks.io/docs/guides/about-the-new-storage-engine).
+- Updated [overview information on Storage](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage).
+- Updated [overview inforamtion on Yjs](https://liveblocks.io/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs).
+
+## Dashboard
+
+- The [Management API](https://liveblocks.io/docs/platform/management-api) is now available in private beta for Enterprise customers. 
+- We added [Multi-Factor Authentication (MFA)](https://liveblocks.io/docs/platform/management-api) support. Users can now enable MFA in their account pesonal settings for enhanced security.
+- New toggle to opt-in to use v2 Storage engine for all new rooms created going forward.
+
+## Showcase
+
+- New item: [Develop locally with the dev server)[https://liveblocks.io/showcase/dev-server-tldraw].
+
+## Examples
+
+- Add dev server guide to all fully-supported example READMEs.
+
+## Contributors
+
+nvie, marcbouchenoire, flowflorent, jrowny, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
+
 # Week 7 (2026-02-13)
 
 ## v3.13.5

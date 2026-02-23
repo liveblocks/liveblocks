@@ -29,6 +29,7 @@ export type {
   RoomPermission,
   RoomsQueryCriteria,
   RoomUser,
+  SetPresenceOptions,
   ThreadParticipants,
   UpdateAiCopilotOptions,
   UpdateRoomOptions,
