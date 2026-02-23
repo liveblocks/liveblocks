@@ -33,31 +33,4 @@ shift $(($OPTIND - 1))
 
 VERSION="${1:-latest}"
 
-list_all_projects () {
-    find examples e2e starter-kits \
-        -type d '(' -name node_modules -o -name .next ')' -prune \
-        -o \
-        -name package.json \
-        | grep -Ee package.json \
-        | xargs -n1 dirname
-}
-
-list_liveblocks_deps () {
-    for dep in $(jq -r '(.dependencies // {})|keys[]' package.json | grep -Ee '^@liveblocks/'); do
-        # Skip dependencies that are explicitly pinned to "*"
-        if [ "$(jq -r ".dependencies.\"$dep\"" package.json)" != "*" ]; then
-            echo "$dep"
-        fi
-    done
-}
-
-list_install_args () {
-    for dep in $(list_liveblocks_deps); do
-        echo "$dep@$VERSION"
-    done
-}
-
-for proj in $(list_all_projects); do
-    echo "==> Upgrade $proj to $VERSION"
-    ( cd "$proj" && npm install $(list_install_args ) )
-done
+scripts/for-all-examples.sh -c "npx -y liveblocks@latest upgrade $VERSION" -f

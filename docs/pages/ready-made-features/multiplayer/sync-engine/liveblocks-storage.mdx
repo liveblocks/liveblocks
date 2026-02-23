@@ -244,6 +244,72 @@ function StorageStatusBadge() {
 A number of other hooks are available to help you with different aspects of
 multiplayer development, check our API reference for more information.
 
+## Server-side modifications
+
+Storage’s presence and conflict-free data structures can be modified through our
+[Node.js package](/docs/api-reference/liveblocks-node) or via
+[REST API](/docs/api-reference/rest-api-endpoints).
+
+### Presence [#server-side-modifications-presence]
+
+Presence can be modified with
+[`liveblocks.setPresence`](/docs/api-reference/liveblocks-node#set-rooms-roomId-presence),
+allowing you set an ephemeral value that will expire after a certain amount of
+time.
+
+```ts
+await liveblocks.setPresence("my-room-id", {
+  userId: "agent-123",
+  data: {
+    status: "active",
+    cursor: { x: 100, y: 200 },
+  },
+  userInfo: {
+    name: "AI Assistant",
+    avatar: "https://example.com/avatar.png",
+  },
+  ttl: 60,
+});
+```
+
+The same operation can be performed in other languages with the
+[Set ephemeral presence REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence).\
+
+### Conflict-free data structures [#server-side-modifications-conflict-free-data-structures]
+
+Conflict-free data structures can be modified with
+[`liveblocks.mutateStorage`](/docs/api-reference/liveblocks-node#mutate-storage),
+allowing you to modify the data structures similarly to on the client-side.
+
+```ts
+await liveblocks.mutateStorage(
+  "my-room-id",
+
+  ({ root }) => {
+    root.get("list").push("item3");
+  }
+);
+```
+
+The same operation can be performed using the
+[Apply JSON Patch to Storage REST API](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch).
+We have a guide on
+[Modifying Storage via REST API with JSON Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch)
+that covers this in more detail.
+
+### Broadcast [#server-side-modifications-broadcast]
+
+Broadcast can be performed with
+[`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event),
+allowing you to send events to all connected clients.
+
+```ts
+await liveblocks.broadcastEvent("my-room-id", { type: "PLAY_VIDEO" });
+```
+
+The same operation can be performed using the
+[Broadcast event to a room REST API](/docs/api-reference/rest-api-endpoints#post-broadcast-event).
+
 ## API Reference
 
 ### Presence
