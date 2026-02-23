@@ -105,11 +105,6 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return this.#data;
   }
 
-  /** @internal */
-  _toWasmValue(): unknown {
-    return this.#data;
-  }
-
   clone(): TValue {
     return deepClone(this.data);
   }

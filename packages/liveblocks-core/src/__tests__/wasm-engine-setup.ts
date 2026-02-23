@@ -151,7 +151,6 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
             return (handle.listEntries(nodeId) ?? []) as CrdtEntry[];
           },
           listToImmutable(nodeId: string) { return handle.listToImmutable(nodeId); },
-          listDebugPositions(nodeId: string) { return handle.listDebugPositions(nodeId); },
           objectGetEntry(nodeId: string, key: string) {
             return handle.objectGetEntry(nodeId, key) as CrdtEntry | undefined;
           },

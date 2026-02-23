@@ -6,10 +6,8 @@
  * Map<string, StorageUpdate>).
  */
 
-import type { ClientWireOp, CreateOp, Op } from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
+import type { ClientWireOp, Op } from "../protocol/Op";
 import type { ManagedPool } from "./AbstractCrdt";
-import { LiveRegister } from "./LiveRegister";
 import type { LiveNode } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
 
@@ -85,7 +83,7 @@ export function translateStorageUpdate(
           // Check the pre-collected deletedNodes map first (node may have been
           // detached from the pool by syncJsTreeFromRustResult).
           const deletedItem =
-            delta.deletedId !== null
+            delta.deletedId != null
               ? deletedNodes?.get(delta.deletedId) ??
                 pool.getNode(delta.deletedId) ??
                 delta.oldValue
@@ -147,7 +145,7 @@ export function translateStorageUpdate(
           updates[key] = { type: "update" };
         } else {
           const deletedItem =
-            delta.deletedId !== null
+            delta.deletedId != null
               ? deletedNodes?.get(delta.deletedId) ??
                 pool.getNode(delta.deletedId) ??
                 delta.oldValue
@@ -167,87 +165,6 @@ export function translateStorageUpdate(
 }
 
 /**
- * After WASM generates CREATE ops for a nested CRDT subtree, attach the
- * user-provided LiveNode instances to the pool using the IDs from those ops.
- *
- * The ops are in pre-order DFS order. We walk the user's LiveNode tree in
- * the same order, matching each op by parentId + parentKey.
- *
- * For the root of the subtree, the first op with
- * `parentId === expectedParentId && parentKey === expectedParentKey`
- * is used. Children are matched recursively.
- */
-export function attachSubtreeFromOps(
-  ops: Op[],
-  rootNode: LiveNode,
-  pool: ManagedPool,
-  expectedParentId: string,
-  expectedParentKey: string
-): void {
-  // Build a map from parentId+parentKey → op for quick lookup
-  const createOps = ops.filter(
-    (op): op is CreateOp =>
-      op.type === OpCode.CREATE_OBJECT ||
-      op.type === OpCode.CREATE_LIST ||
-      op.type === OpCode.CREATE_MAP ||
-      op.type === OpCode.CREATE_REGISTER
-  );
-
-  // Find the root op
-  const rootOp = createOps.find(
-    (op) => op.parentId === expectedParentId && op.parentKey === expectedParentKey
-  );
-  if (!rootOp) return;
-
-  // Attach root
-  rootNode._attachDirect(rootOp.id, pool);
-
-  // Recursively attach children
-  attachChildrenFromOps(createOps, rootNode, rootOp.id, pool);
-}
-
-function attachChildrenFromOps(
-  ops: CreateOp[],
-  parentNode: LiveNode,
-  parentId: string,
-  pool: ManagedPool
-): void {
-  // Find all ops whose parentId matches
-  const childOps = ops.filter((op) => op.parentId === parentId);
-
-  // Get the children of the parent LiveNode by iterating its internal structure
-  const children = getLiveNodeChildren(parentNode);
-
-  // For LiveList, keys from _getInternalChildren are indices ("0","1",...) while
-  // WASM ops use fractional positions as parentKey.  Match by order instead.
-  const isListParent =
-    "length" in parentNode &&
-    typeof (parentNode as { get?(i: number): unknown }).get === "function";
-
-  if (isListParent) {
-    // Match LiveList children in order: i-th child op → i-th child node
-    for (let i = 0; i < childOps.length && i < children.length; i++) {
-      const childOp = childOps[i];
-      const [, childNode] = children[i];
-
-      childNode._attachDirect(childOp.id, pool);
-      attachChildrenFromOps(ops, childNode, childOp.id, pool);
-    }
-  } else {
-    // Match by parentKey (works for LiveObject and LiveMap)
-    for (const childOp of childOps) {
-      const childEntry = children.find(([key]) => key === childOp.parentKey);
-      if (!childEntry) continue;
-
-      const [, childNode] = childEntry;
-
-      childNode._attachDirect(childOp.id, pool);
-      attachChildrenFromOps(ops, childNode, childOp.id, pool);
-    }
-  }
-}
-
-/**
  * Get the list item at a given index as a LiveNode reference or scalar.
  * Returns the item directly (not its immutable snapshot) so that subscribers
  * who call toImmutable() later see the final state after all ops in a batch
@@ -260,16 +177,4 @@ function getListItem(node: LiveNode, index: number): unknown {
     return list.get(index);
   }
   return null;
-}
-
-/**
- * Extract the children of a LiveNode as [key, LiveNode] pairs.
- * Uses the `_getInternalChildren()` method to access raw LiveNode values
- * including LiveRegister wrappers (which are invisible through public APIs).
- */
-function getLiveNodeChildren(node: LiveNode): [string, LiveNode][] {
-  if (node instanceof LiveRegister) {
-    return [];
-  }
-  return (node as LiveNode)._getInternalChildren();
 }

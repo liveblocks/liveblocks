@@ -25,7 +25,6 @@ import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
-import type { CrdtEntry } from "./impl-selector";
 import {
   creationOpToLson,
   deserializeToLson,
@@ -34,20 +33,6 @@ import {
 } from "./liveblocks-helpers";
 import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
-import type { WasmMutationResult } from "./wasm-mutation-adapter";
-import {
-  attachSubtreeFromOps,
-  translateStorageUpdate,
-} from "./wasm-mutation-adapter";
-
-/**
- * Resolve a CrdtEntry from Rust into a Lson value.
- * Scalar entries are returned as-is; node entries are looked up in the pool.
- */
-function resolveEntry(entry: CrdtEntry, pool: ManagedPool): Lson {
-  if (entry.type === "scalar") return entry.value as Lson;
-  return pool.getNode(entry.nodeId) as unknown as Lson;
-}
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
@@ -504,15 +489,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    const owner = this._pool?.wasmOwner;
-    if (owner && this._id) {
-      const entries = owner.objectEntries(this._id);
-      const obj: Record<string, unknown> = {};
-      for (const [key, entry] of entries) {
-        obj[key] = resolveEntry(entry, nn(this._pool));
-      }
-      return obj as O;
-    }
     return Object.fromEntries(this.#map) as O;
   }
 
@@ -532,12 +508,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
-    const owner = this._pool?.wasmOwner;
-    if (owner && this._id) {
-      const entry = owner.objectGetEntry(this._id, key as string);
-      if (!entry) return undefined as O[TKey];
-      return resolveEntry(entry, nn(this._pool)) as O[TKey];
-    }
     return this.#map.get(key as string) as O[TKey];
   }
 
@@ -560,29 +530,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
       this.#map.delete(keyAsString);
       this.invalidate();
-      return;
-    }
-
-    // WASM mutation path: delegate to WASM handle
-    const shadow = this._pool.wasmShadow;
-    if (shadow) {
-      if (isLiveNode(oldValue)) {
-        oldValue._detach();
-      }
-      this.#map.delete(keyAsString);
-      this.invalidate();
-
-      const result = shadow.objectDelete(
-        this._id,
-        keyAsString
-      ) as WasmMutationResult;
-      const storageUpdates = translateStorageUpdate(result.update, this._pool);
-      this._pool.dispatch(
-        result.ops as ClientWireOp[],
-        result.reverseOps,
-        storageUpdates,
-        { skipWasmSync: true }
-      );
       return;
     }
 
@@ -692,95 +639,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
-    // WASM mutation path: delegate to WASM handle for op generation
-    const shadow = this._pool.wasmShadow;
-    if (shadow) {
-      const wasmPatch: Record<string, unknown> = {};
-      const liveNodeEntries: [string, LiveNode][] = [];
-
-      for (const key in patch) {
-        const value: Lson | undefined = patch[key];
-        if (value === undefined) continue;
-
-        // Skip non-serializable values (e.g. functions) — same behavior as
-        // JSON.stringify, which the JS path relies on to silently strip them.
-        if (typeof value === "function" || typeof value === "symbol") continue;
-
-        if (isLiveStructure(value)) {
-          wasmPatch[key] = (value as LiveNode)._toWasmValue();
-          liveNodeEntries.push([key, value]);
-        } else {
-          wasmPatch[key] = value;
-        }
-      }
-
-      // If all values were filtered out (e.g. all functions), nothing to do
-      if (
-        Object.keys(wasmPatch).length === 0 &&
-        liveNodeEntries.length === 0
-      ) {
-        return;
-      }
-
-      const result = shadow.objectUpdate(
-        this._id,
-        wasmPatch
-      ) as WasmMutationResult;
-
-      // Detach old values and update JS map
-      for (const key in patch) {
-        const value = patch[key];
-        if (value === undefined) continue;
-
-        const oldValue = this.#map.get(key);
-        if (isLiveNode(oldValue)) {
-          oldValue._detach();
-        }
-
-        if (isLiveStructure(value)) {
-          value._setParentLink(this, key);
-        }
-
-        this.#map.set(key, value);
-        this.invalidate();
-      }
-
-      // Attach LiveNode children using WASM-generated IDs
-      for (const [key, node] of liveNodeEntries) {
-        attachSubtreeFromOps(result.ops, node, this._pool, this._id, key);
-      }
-
-      // Track unacked ops for conflict resolution
-      const wireOps = result.ops as ClientWireOp[];
-      const updateWireOp = wireOps.find(
-        (op) => op.type === OpCode.UPDATE_OBJECT
-      );
-      for (const key in patch) {
-        if (patch[key] === undefined) continue;
-        if (liveNodeEntries.some(([k]) => k === key)) {
-          const createOp = wireOps.find(
-            (op: ClientWireOp & { parentId?: string; parentKey?: string }) =>
-              op.parentId === this._id && op.parentKey === key
-          );
-          if (createOp) {
-            this.#unackedOpsByKey.set(key, createOp.opId);
-          }
-        } else if (updateWireOp) {
-          this.#unackedOpsByKey.set(key, updateWireOp.opId);
-        }
-      }
-
-      // Dispatch with skipWasmSync since WASM document is already updated
-      const storageUpdates = translateStorageUpdate(result.update, this._pool);
-      this._pool.dispatch(wireOps, result.reverseOps, storageUpdates, {
-        skipWasmSync: true,
-      });
-      return;
-    }
-
     const ops: ClientWireOp[] = [];
     const reverseOps: Op[] = [];
 
+    const opId = this._pool.generateOpId();
     const updatedProps: JsonObject = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
@@ -832,6 +694,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         }
       } else {
         updatedProps[key] = newValue;
+        // Track locally-generated opId to preserve optimistic update
+        this.#unackedOpsByKey.set(key, opId);
       }
 
       this.#map.set(key, newValue);
@@ -844,10 +708,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     if (Object.keys(updatedProps).length !== 0) {
-      const opId = this._pool.generateOpId();
-      for (const key of Object.keys(updatedProps)) {
-        this.#unackedOpsByKey.set(key, opId);
-      }
       ops.unshift({
         opId,
         id: this._id,
@@ -897,27 +757,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   _toImmutable(): ToImmutable<O> {
-    const owner = this._pool?.wasmOwner;
-    if (owner && this._id) {
-      // Iterate entries from Rust and delegate child toImmutable to
-      // preserve correct types (LiveMap → Map, LiveList → Array, etc.)
-      const entries = owner.objectEntries(this._id);
-      const result: { [key: string]: unknown } = {};
-      for (const [key, entry] of entries) {
-        if (entry.type === "scalar") {
-          result[key] = entry.value;
-        } else {
-          // It's a child CRDT node — find the JS wrapper and delegate
-          const childNode = nn(this._pool).getNode(entry.nodeId);
-          result[key] = childNode
-            ? childNode.toImmutable()
-            : owner.objectToImmutable(entry.nodeId); // fallback
-        }
-      }
-      return (
-        process.env.NODE_ENV === "production" ? result : Object.freeze(result)
-      ) as ToImmutable<O>;
-    }
     const result: { [key: string]: unknown } = {};
     for (const [key, val] of this.#map) {
       result[key] = isLiveStructure(val) ? val.toImmutable() : val;
@@ -925,30 +764,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)
     ) as ToImmutable<O>;
-  }
-
-  /** @internal */
-  override _getInternalChildren(): [string, LiveNode][] {
-    const result: [string, LiveNode][] = [];
-    for (const [key, value] of this.#map) {
-      if (isLiveNode(value)) {
-        result.push([key, value]);
-      }
-    }
-    return result;
-  }
-
-  /** @internal */
-  _toWasmValue(): unknown {
-    const data: Record<string, unknown> = {};
-    for (const [key, value] of this.#map) {
-      if (isLiveNode(value)) {
-        data[key] = (value as LiveNode)._toWasmValue();
-      } else {
-        data[key] = value;
-      }
-    }
-    return { __lb_type: "LiveObject", __lb_data: data };
   }
 
   clone(): LiveObject<O> {

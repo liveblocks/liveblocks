@@ -18,6 +18,28 @@ import type { BaseMetadata } from "./protocol/Comments";
 import type { Room, RoomConfig, StorageStatus } from "./room";
 import type { User } from "./types/User";
 
+// ---- RoomHandle class registration ----
+
+/** Constructor type for the WASM RoomHandle class. */
+export type RoomHandleConstructor = new (config: WasmRoomConfig) => RoomHandle;
+
+let _wasmRoomHandleClass: RoomHandleConstructor | null = null;
+
+/**
+ * Register the WASM RoomHandle class.
+ * Called at startup when LIVEBLOCKS_ENGINE=wasm.
+ */
+export function _setWasmRoomHandleClass(cls: RoomHandleConstructor): void {
+  _wasmRoomHandleClass = cls;
+}
+
+/**
+ * Get the registered WASM RoomHandle class, or null if not registered.
+ */
+export function getWasmRoomHandleClass(): RoomHandleConstructor | null {
+  return _wasmRoomHandleClass;
+}
+
 /** Shape of the WASM RoomHandle exposed via wasm-bindgen */
 interface RoomHandle {
   subscribe(eventType: string, callback: (data: unknown) => void): void;
@@ -157,7 +179,11 @@ export function createWasmRoom<
 
   eventSources.storageDidLoad.subscribe(() => {
     if (storageResolve) {
-      // TODO: return actual LiveObject root from WASM handles
+      // TODO: Wire up WasmLiveObject root once RoomHandle exposes
+      // CrdtDocumentOwner-like read/write methods. Then:
+      //   const owner = createDocumentOwnerFromRoomHandle(handle);
+      //   const root = new WasmLiveObject(owner, "root");
+      //   storageResolve({ root });
       storageResolve({ root: null });
       storageResolve = null;
     }

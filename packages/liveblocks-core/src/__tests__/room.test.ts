@@ -2612,7 +2612,7 @@ describe("room", () => {
               {
                 type: OpCode.CREATE_LIST,
                 id: "1:0",
-                opId: "1:0",
+                opId: "1:1",
                 parentId: "root",
                 parentKey: "items",
               },

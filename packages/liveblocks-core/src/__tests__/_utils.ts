@@ -9,7 +9,7 @@ import type { ToImmutable } from "../crdts/utils";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
-import { makePosition } from "../lib/position";
+import { makePosition } from "../crdts/wasm-adapter";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
 import type { AccessToken, IDToken } from "../protocol/AuthToken";
