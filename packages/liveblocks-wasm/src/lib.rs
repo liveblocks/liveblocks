@@ -20,6 +20,10 @@ pub mod platform;
 pub mod room;
 pub mod http;
 
+// Native-only modules
+#[cfg(feature = "native")]
+pub mod native_api;
+
 // WASM-only modules
 #[cfg(feature = "wasm")]
 pub mod handles;

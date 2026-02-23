@@ -156,7 +156,18 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
         &self.events
     }
 
+    /// Drain all pending events from the event hub.
+    pub fn take_events(&mut self) -> Vec<events::RoomEvent> {
+        self.events.take_events()
+    }
+
     // -- Connection --
+
+    /// Poll for the next incoming WebSocket event and feed it to the
+    /// connection FSM. Returns `true` if an event was processed.
+    pub async fn poll_ws_event(&mut self) -> bool {
+        self.managed_socket.poll_ws_event().await
+    }
 
     /// Connect to the room.
     pub async fn connect(&mut self) {
