@@ -1960,7 +1960,7 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { room, refRoom, reconnect, refWss, wss } = await prepareStorageTest<
+      const { room, refRoom, reconnect, refWss } = await prepareStorageTest<
         never,
         { x: number }
       >([createSerializedRoot()], 1);

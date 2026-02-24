@@ -12,7 +12,7 @@ import { LiveMap as JsLiveMap } from "./LiveMap";
 import { LiveObject as JsLiveObject } from "./LiveObject";
 import type { Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
-import { resolveEntry, toPlain, makeParentInfo } from "./wasm-live-helpers";
+import { makeParentInfo,resolveEntry, toPlain } from "./wasm-live-helpers";
 
 export class WasmLiveList<TItem extends Lson = Lson> {
   /** @internal */
@@ -182,6 +182,7 @@ function cloneItem(item: unknown): unknown {
   if (item instanceof WasmLiveMap || item instanceof JsLiveMap) {
     return (item as { clone(): unknown }).clone();
   }
-  // Plain object — deep clone
-  return JSON.parse(JSON.stringify(item));
+  // Plain object — deep clone via round-trip serialization
+  // eslint-disable-next-line no-restricted-syntax -- structuredClone not available, JSON round-trip is intentional for deep clone
+  return JSON.parse(JSON.stringify(item)) as unknown;
 }

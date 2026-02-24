@@ -18,6 +18,7 @@ import { WasmLiveObject } from "./crdts/WasmLiveObject";
 _registerWasmLiveTypes(WasmLiveObject, WasmLiveList, WasmLiveMap);
 import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
+import { nn } from "./lib/assert";
 import type { Callback } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import type { Json, JsonObject } from "./lib/Json";
@@ -310,12 +311,12 @@ export function createWasmRoom<
     }
     // Check if storage status changed (e.g. ACK processed → synchronized)
     // Defer to microtask to avoid re-entrant borrow (this callback runs during fire_pending_events)
-    Promise.resolve().then(() => checkStorageStatusTransition());
+    void Promise.resolve().then(() => checkStorageStatusTransition());
   });
   handle.subscribe("storage-loaded", () =>
     eventSources.storageDidLoad.notify(),
   );
-  handle.subscribe("storage-status", (data) => {
+  handle.subscribe("storage-status", (_data) => {
     // Use the computed status (which checks unacked ops) instead of the
     // raw Rust status. This ensures that "loaded" is reported as
     // "synchronizing" when there are still unacked local ops pending.
@@ -406,13 +407,13 @@ export function createWasmRoom<
   } {
     switch (entry.type) {
       case "set":
-        return { type: "set", index: entry.index!, item: entry.newValue };
+        return { type: "set", index: nn(entry.index), item: entry.newValue };
       case "delete":
-        return { type: "delete", index: entry.index!, deletedItem: entry.oldValue };
+        return { type: "delete", index: nn(entry.index), deletedItem: entry.oldValue };
       case "move":
-        return { type: "move", index: entry.newIndex!, previousIndex: entry.previousIndex, item: entry.value };
+        return { type: "move", index: nn(entry.newIndex), previousIndex: entry.previousIndex, item: entry.value };
       case "insert":
-        return { type: "insert", index: entry.index!, item: entry.value };
+        return { type: "insert", index: nn(entry.index), item: entry.value };
       default:
         return { type: entry.type, index: entry.index ?? 0 };
     }
@@ -454,7 +455,7 @@ export function createWasmRoom<
           // Refresh insert/set items with live node wrappers so downstream
           // serialization reads current state (not stale intermediate values).
           for (const entry of entries) {
-            if ((entry.type === "insert" || entry.type === "set") && entry.item != null) {
+            if ((entry.type === "insert" || entry.type === "set") && entry.item !== null) {
               const liveEntry = handle.listGetEntry(nodeId, entry.index) as Record<string, unknown> | undefined;
               if (liveEntry?.type === "node") {
                 entry.item = resolveEntry(ownerAdapter, liveEntry as CrdtEntry);
@@ -534,8 +535,6 @@ export function createWasmRoom<
   const pendingUpdatesByNode = new Map<string, StorageUpdate>();
   // Ordered list of nodeIds to preserve insertion order for the final array
   const pendingUpdateOrder: string[] = [];
-  // Flag: true when we're firing a local mutation notification
-  let isLocalMutation = false;
 
   function createLiveNode(nodeId: string): unknown {
     const nodeType = handle.getNodeType(nodeId);
@@ -639,12 +638,7 @@ export function createWasmRoom<
     pendingUpdatesByNode.clear();
     pendingUpdateOrder.length = 0;
 
-    isLocalMutation = true;
-    try {
-      eventSources.storageBatch.notify(updates);
-    } finally {
-      isLocalMutation = false;
-    }
+    eventSources.storageBatch.notify(updates);
   }
 
   /**
@@ -751,7 +745,7 @@ export function createWasmRoom<
           checkStorageStatusTransition();
         }
         const delta: { type: string; deletedItem?: Lson } = oldValue !== undefined
-          ? { type: "delete", deletedItem: oldValue as Lson }
+          ? { type: "delete", deletedItem: oldValue }
           : { type: "delete" };
         addObjectUpdate(nodeId, { [key]: delta });
         if (!batchDepth) flushUpdates();
@@ -950,7 +944,7 @@ export function createWasmRoom<
         if (options.initialStorage && Object.keys(options.initialStorage).length > 0) {
           const resolve = storageResolve;
           storageResolve = null;
-          Promise.resolve().then(() => {
+          void Promise.resolve().then(() => {
             const canWrite = handle.canWriteStorage();
             for (const key in options.initialStorage) {
               if (root.get(key) === undefined && canWrite) {
@@ -1004,7 +998,7 @@ export function createWasmRoom<
     if (typeof firstArg === "function") {
       // Generic storage subscribe — callback receives StorageUpdate[]
       return eventSources.storageBatch.subscribe(
-        (updates) => (firstArg as (updates: unknown[]) => void)(updates as unknown[]),
+        (updates) => (firstArg as (updates: unknown[]) => void)(updates),
       );
     }
 

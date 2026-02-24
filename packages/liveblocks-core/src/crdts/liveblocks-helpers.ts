@@ -118,8 +118,8 @@ export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
 /** Check if a value looks like a WasmLive* node (has _nodeId and _owner). */
 function isWasmLiveNode(value: unknown): boolean {
   return value !== null && typeof value === "object"
-    && "_nodeId" in (value as object)
-    && "_owner" in (value as object);
+    && "_nodeId" in (value)
+    && "_owner" in (value);
 }
 
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {

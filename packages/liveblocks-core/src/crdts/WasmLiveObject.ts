@@ -10,7 +10,7 @@ import type { CrdtDocumentOwner } from "./impl-selector";
 import { LiveObject as JsLiveObject } from "./LiveObject";
 import type { Lson, LsonObject } from "./Lson";
 import type { ToImmutable } from "./utils";
-import { resolveEntry, toPlain, toPlainObject, makeParentInfo } from "./wasm-live-helpers";
+import { makeParentInfo, resolveEntry, toPlain } from "./wasm-live-helpers";
 
 export class WasmLiveObject<O extends LsonObject = LsonObject> {
   /** @internal */
