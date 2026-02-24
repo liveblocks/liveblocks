@@ -694,7 +694,8 @@ describe("LiveMap", () => {
   });
 
   describe("internal methods", () => {
-    test("_detachChild", async () => {
+    // _detachChild is an internal JS CRDT method not exposed on WasmLive* types
+    test.skipIf(process.env.LIVEBLOCKS_ENGINE === "wasm")("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(

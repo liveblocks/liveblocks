@@ -5,6 +5,7 @@
 //! WASM: JS callbacks).
 
 use crate::connection::fsm::Status;
+use crate::updates::StorageUpdate;
 use serde_json::Value as JsonValue;
 
 /// An event emitted by the Room.
@@ -17,7 +18,8 @@ pub enum RoomEvent {
     /// Others list changed.
     OthersChanged(JsonValue),
     /// Storage changed (batch of ops applied).
-    StorageChanged,
+    /// Contains detailed updates describing what changed (may be empty for local mutations).
+    StorageChanged(Vec<StorageUpdate>),
     /// Storage loaded for the first time.
     StorageLoaded,
     /// Storage status changed.
@@ -80,9 +82,14 @@ impl EventHub {
             .push(RoomEvent::OthersChanged(JsonValue::Array(others.to_vec())));
     }
 
-    /// Notify: storage changed.
+    /// Notify: storage changed with detailed updates.
+    pub fn notify_storage_change_with_updates(&mut self, updates: Vec<StorageUpdate>) {
+        self.pending.push(RoomEvent::StorageChanged(updates));
+    }
+
+    /// Notify: storage changed (no detailed updates).
     pub fn notify_storage_change(&mut self) {
-        self.pending.push(RoomEvent::StorageChanged);
+        self.pending.push(RoomEvent::StorageChanged(Vec::new()));
     }
 
     /// Notify: storage loaded.

@@ -17,6 +17,7 @@ import type { CrdtDocumentOwner, CrdtEngine, CrdtEntry, OwnedApplyResult, RoomSt
 import { _setEngine } from "../crdts/impl-selector";
 import type { Op } from "../protocol/Op";
 import type { IdTuple, NodeMap, SerializedCrdt } from "../protocol/StorageNode";
+import { _setWasmRoomHandleClass } from "../room-wasm";
 
 if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
   try {
@@ -39,12 +40,19 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
       RoomStorageEngineHandle: {
         new (): RoomStorageEngineJS;
       };
+      RoomHandle: new (config: unknown) => unknown;
     };
 
     if (typeof wasmPkg.RoomStorageEngineHandle !== "function") {
       throw new Error(
         "WASM module loaded but RoomStorageEngineHandle not found"
       );
+    }
+
+    // Register the RoomHandle class so createWasmRoom can use it
+    if (typeof wasmPkg.RoomHandle === "function") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      _setWasmRoomHandleClass(wasmPkg.RoomHandle as any);
     }
 
     const wasmEngine: CrdtEngine = {
@@ -206,7 +214,8 @@ if (process.env.LIVEBLOCKS_ENGINE === "wasm") {
 
     _setEngine(wasmEngine);
     console.log(
-      "[wasm-engine-setup] WASM engine loaded and set as active engine"
+      "[wasm-engine-setup] WASM engine loaded and set as active engine" +
+        (typeof wasmPkg.RoomHandle === "function" ? " (with RoomHandle)" : "")
     );
   } catch (e) {
     console.error(

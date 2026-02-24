@@ -321,6 +321,14 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   _setParentLink(newParentNode: LiveNode, newParentKey: string): void {
+    // Check if this node was consumed by the WASM path (attached to Rust document)
+    if (
+      (this as unknown as Record<symbol, unknown>)[
+        Symbol.for("__wasmAttached")
+      ]
+    ) {
+      throw new Error("Cannot set parent: node already attached");
+    }
     switch (this.parent.type) {
       case "HasParent":
         if (this.parent.node !== newParentNode) {

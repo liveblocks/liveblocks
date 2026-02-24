@@ -4,6 +4,9 @@
 //! wraps it with actual I/O by interpreting `Effect`s and feeding
 //! `ConnEvent`s back into the machine.
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::auth::{AuthManager, AuthValue};
 use crate::auth::token::parse_auth_token;
 use crate::connection::fsm::{ConnEvent, ConnFsm, Effect, Status};
@@ -59,6 +62,12 @@ pub struct ManagedSocket<C: WebSocketConnector, H: HttpClient> {
     room_id: String,
     base_url: String,
     pending_events: Vec<ManagedSocketEvent>,
+    /// Deferred ConnEvents from timer fires that should be processed on next tick.
+    pub(crate) deferred_events: Rc<RefCell<Vec<ConnEvent>>>,
+    /// Optional JS callback invoked when a deferred event is pushed.
+    /// The RoomHandle sets this so the timer can trigger processing.
+    #[cfg(feature = "wasm")]
+    pub(crate) on_deferred_event: Option<js_sys::Function>,
 }
 
 impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
@@ -77,6 +86,9 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
             room_id,
             base_url,
             pending_events: Vec::new(),
+            deferred_events: Rc::new(RefCell::new(Vec::new())),
+            #[cfg(feature = "wasm")]
+            on_deferred_event: None,
         }
     }
 
@@ -124,6 +136,144 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
     /// Take any pending events that should be delivered to the Room.
     pub fn take_events(&mut self) -> Vec<ManagedSocketEvent> {
         std::mem::take(&mut self.pending_events)
+    }
+
+    /// Process any deferred events (e.g. from timer fires).
+    /// These were spawned as separate tasks and need to be fed back
+    /// into the FSM. This should be called from tick().
+    pub async fn process_deferred_events(&mut self) {
+        loop {
+            let events: Vec<ConnEvent> = self.deferred_events.borrow_mut().drain(..).collect();
+            if events.is_empty() {
+                break;
+            }
+            for event in events {
+                self.send_event(event).await;
+            }
+        }
+    }
+
+    /// Synchronously drain any pending WS events from the channel.
+    /// Does not block — only processes messages already buffered.
+    /// Close events are fed through the FSM so reconnect logic is triggered.
+    pub fn drain_pending_ws_events(&mut self) {
+        // First pass: drain channel into a local buffer to release the borrow.
+        let mut ws_events = Vec::new();
+        if let Some(receiver) = &mut self.receiver {
+            loop {
+                match receiver.try_recv() {
+                    Ok(Some(event)) => ws_events.push(event),
+                    Ok(None) => break, // Channel closed
+                    Err(()) => break,  // No more buffered events
+                }
+            }
+        }
+
+        // Second pass: process events (now we can mutably borrow self freely).
+        for event in ws_events {
+            match event {
+                WsEvent::Message(text) if text != "pong" => {
+                    self.pending_events.push(ManagedSocketEvent::Message(text));
+                }
+                WsEvent::Close { code, reason } => {
+                    // Feed close through the FSM so it can schedule reconnection.
+                    self.send_event_sync(ConnEvent::SocketClose { code, reason });
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Synchronously send an event to the FSM and process effects that don't
+    /// require async I/O. Effects like StartAuth / StartSocketConnect are
+    /// deferred to the async path (they'll be picked up when TimerFired fires).
+    pub fn send_event_sync(&mut self, event: ConnEvent) {
+        let effects = self.fsm.handle_event(event);
+        self.process_effects_sync(effects);
+    }
+
+    /// Process FSM effects synchronously. Only handles effects that don't
+    /// require async I/O. StartAuth/StartSocketConnect are ignored here —
+    /// they'll be triggered by the normal timer→TimerFired→async flow.
+    fn process_effects_sync(&mut self, effects: Vec<Effect>) {
+        for effect in effects {
+            match effect {
+                Effect::StartAuth | Effect::StartSocketConnect => {
+                    // Requires async I/O. These shouldn't appear on a close-event
+                    // path (close → ConnectingBackoff → ScheduleTimer), but if
+                    // they do, they'll be picked up when the next timer fires.
+                }
+                Effect::ScheduleTimer(delay_ms) => {
+                    #[cfg(feature = "wasm")]
+                    {
+                        use wasm_bindgen::JsCast;
+                        let deferred = Rc::clone(&self.deferred_events);
+                        let wake_cb = self.on_deferred_event.clone();
+                        wasm_bindgen_futures::spawn_local(async move {
+                            let promise = js_sys::Promise::new(&mut |resolve, _reject| {
+                                let set_timeout = js_sys::Reflect::get(
+                                    &js_sys::global(),
+                                    &wasm_bindgen::JsValue::from_str("setTimeout"),
+                                )
+                                .expect("setTimeout not found");
+                                let set_timeout: js_sys::Function =
+                                    set_timeout.unchecked_into();
+                                let _ = set_timeout.call2(
+                                    &wasm_bindgen::JsValue::NULL,
+                                    &resolve,
+                                    &wasm_bindgen::JsValue::from_f64(delay_ms as f64),
+                                );
+                            });
+                            let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
+                            deferred.borrow_mut().push(ConnEvent::TimerFired);
+                            // Wake the RoomHandle so it processes the deferred event.
+                            if let Some(cb) = &wake_cb {
+                                let _ = cb.call0(&wasm_bindgen::JsValue::NULL);
+                            }
+                        });
+                    }
+                    #[cfg(not(feature = "wasm"))]
+                    {
+                        let _ = delay_ms;
+                        self.deferred_events.borrow_mut().push(ConnEvent::TimerFired);
+                    }
+                }
+                Effect::CancelTimer => {
+                    self.deferred_events.borrow_mut().clear();
+                }
+                Effect::SendPing => {
+                    if let Some(socket) = &mut self.socket {
+                        let _ = socket.send_text("ping");
+                    }
+                }
+                Effect::TeardownSocket => {
+                    if let Some(mut socket) = self.socket.take() {
+                        let _ = socket.close();
+                    }
+                    self.receiver = None;
+                }
+                Effect::NotifyStatusChange(status) => {
+                    self.pending_events
+                        .push(ManagedSocketEvent::StatusDidChange(status));
+                    match status {
+                        Status::Connected => {
+                            self.pending_events.push(ManagedSocketEvent::Connected);
+                        }
+                        Status::Disconnected => {
+                            self.pending_events.push(ManagedSocketEvent::Disconnected);
+                        }
+                        _ => {}
+                    }
+                }
+                Effect::NotifyError { message, code } => {
+                    self.pending_events
+                        .push(ManagedSocketEvent::ConnectionError { message, code });
+                }
+                Effect::PauseMessageDelivery | Effect::UnpauseMessageDelivery => {}
+                Effect::IncrementSuccessCount => {}
+                Effect::Log { .. } => {}
+            }
+        }
     }
 
     /// Poll for the next incoming WebSocket event and feed it to the FSM.
@@ -177,11 +327,46 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
                     follow_ups.push(self.do_socket_connect().await);
                 }
                 Effect::ScheduleTimer(delay_ms) => {
-                    self.do_schedule_timer(delay_ms).await;
-                    follow_ups.push(ConnEvent::TimerFired);
+                    // Spawn the timer as a separate task so that
+                    // send_event() can return after the initial connection.
+                    // When the timer fires, it pushes TimerFired into
+                    // deferred_events, which are drained on the next tick().
+                    #[cfg(feature = "wasm")]
+                    {
+                        use wasm_bindgen::JsCast;
+                        let deferred = Rc::clone(&self.deferred_events);
+                        wasm_bindgen_futures::spawn_local(async move {
+                            // Use global setTimeout directly (works in both
+                            // browser and Node.js) to avoid borrowing self.
+                            let promise = js_sys::Promise::new(&mut |resolve, _reject| {
+                                let set_timeout = js_sys::Reflect::get(
+                                    &js_sys::global(),
+                                    &wasm_bindgen::JsValue::from_str("setTimeout"),
+                                )
+                                .expect("setTimeout not found");
+                                let set_timeout: js_sys::Function =
+                                    set_timeout.unchecked_into();
+                                let _ = set_timeout.call2(
+                                    &wasm_bindgen::JsValue::NULL,
+                                    &resolve,
+                                    &wasm_bindgen::JsValue::from_f64(delay_ms as f64),
+                                );
+                            });
+                            let _ = wasm_bindgen_futures::JsFuture::from(promise).await;
+                            deferred.borrow_mut().push(ConnEvent::TimerFired);
+                        });
+                    }
+                    #[cfg(not(feature = "wasm"))]
+                    {
+                        // For native: await inline (native tests use
+                        // tokio which handles this correctly).
+                        self.do_schedule_timer(delay_ms).await;
+                        follow_ups.push(ConnEvent::TimerFired);
+                    }
                 }
                 Effect::CancelTimer => {
-                    // Timer cancellation is handled by the run loop
+                    // Clear any pending deferred timer events
+                    self.deferred_events.borrow_mut().clear();
                 }
                 Effect::SendPing => {
                     if let Some(socket) = &mut self.socket {

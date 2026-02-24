@@ -13,9 +13,11 @@ use serde_json::Value as JsonValue;
 
 use crate::connection::fsm::Status;
 use crate::connection::managed_socket::{ManagedSocket, ManagedSocketEvent};
+use crate::types::SerializedCrdt;
 use crate::document::Document;
 use crate::id_gen::IdGenerator;
 use crate::ops::apply::apply_op;
+use crate::ops::reverse::compute_reverse_ops;
 use crate::platform::{HttpClient, WebSocketConnector};
 use crate::protocol::client_msg::{ClientMsg, serialize_client_msgs};
 use crate::protocol::server_msg::parse_server_messages;
@@ -70,6 +72,10 @@ pub struct Room<C: WebSocketConnector, H: HttpClient> {
     // Configuration
     pub(crate) throttle_delay: u64,
     pub(crate) lost_connection_timeout: u64,
+
+    // V8+ streaming storage: accumulate chunks before processing
+    pub(crate) pending_storage_chunks: Vec<(String, SerializedCrdt)>,
+
 }
 
 impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
@@ -93,6 +99,7 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             room_id,
             throttle_delay,
             lost_connection_timeout,
+            pending_storage_chunks: Vec::new(),
         }
     }
 
@@ -114,6 +121,14 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     /// Get the actor ID, if connected.
     pub fn actor_id(&self) -> Option<i32> {
         self.session.as_ref().map(|s| s.actor)
+    }
+
+    /// Check if the current session has storage write permissions.
+    pub fn can_write_storage(&self) -> bool {
+        match &self.session {
+            Some(info) => info.scopes.iter().any(|s| s == "room:write"),
+            None => true, // Before session, assume writable (will be checked after connect)
+        }
     }
 
     /// Get a reference to the document.
@@ -236,7 +251,10 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             return;
         }
 
-        let msgs = self.buffer.drain();
+        let raw_msgs = self.buffer.drain();
+        // Merge consecutive UpdateStorage messages into one (so a batch
+        // sends a single UPDATE_STORAGE with all ops combined).
+        let msgs = coalesce_update_storage_msgs(raw_msgs);
         if let Ok(serialized) = serialize_client_msgs(&msgs) {
             let _ = self.managed_socket.send(&serialized);
         }
@@ -245,24 +263,33 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     // -- Server message dispatch --
 
     /// Process incoming managed socket events.
+    /// Loops until no new events are generated (e.g. RoomState handling may
+    /// push additional StatusDidChange/Connected events via the FSM).
     pub fn process_socket_events(&mut self) {
-        let events = self.managed_socket.take_events();
-        for event in events {
-            match event {
-                ManagedSocketEvent::StatusDidChange(status) => {
-                    self.events.notify_status(status);
-                }
-                ManagedSocketEvent::Message(text) => {
-                    self.handle_server_messages(&text);
-                }
-                ManagedSocketEvent::Connected => {
-                    self.on_connected();
-                }
-                ManagedSocketEvent::Disconnected => {
-                    self.on_disconnected();
-                }
-                ManagedSocketEvent::ConnectionError { message, code } => {
-                    self.events.notify_error(&message, code);
+        loop {
+            // Synchronously drain any buffered WS events into pending_events
+            self.managed_socket.drain_pending_ws_events();
+            let events = self.managed_socket.take_events();
+            if events.is_empty() {
+                break;
+            }
+            for event in events {
+                match event {
+                    ManagedSocketEvent::StatusDidChange(status) => {
+                        self.events.notify_status(status);
+                    }
+                    ManagedSocketEvent::Message(text) => {
+                        self.handle_server_messages(&text);
+                    }
+                    ManagedSocketEvent::Connected => {
+                        self.on_connected();
+                    }
+                    ManagedSocketEvent::Disconnected => {
+                        self.on_disconnected();
+                    }
+                    ManagedSocketEvent::ConnectionError { message, code } => {
+                        self.events.notify_error(&message, code);
+                    }
                 }
             }
         }
@@ -285,13 +312,8 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
 
     /// Called when the socket connects.
     fn on_connected(&mut self) {
-        // Send full presence on connect
-        if self.session.is_some() {
-            self.buffer.push(ClientMsg::UpdatePresence {
-                target_actor: Some(-1), // broadcast to all
-                data: self.presence.my_presence().clone(),
-            });
-        }
+        // Presence is already sent by handle_room_state() via push_front.
+        // No additional presence push needed here.
     }
 
     /// Called when the socket disconnects.
@@ -306,9 +328,12 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     /// Undo the last local operation.
     pub fn undo(&mut self) {
         if let Some(frames) = self.storage_engine.undo() {
-            // Extract ops from stackframes and apply them
             let ops = Self::extract_ops_from_frames(&frames);
-            self.apply_local_ops(ops);
+            // Compute reverse ops BEFORE applying (so we can redo later)
+            let reverse = self.compute_and_apply_with_reverse(ops);
+            if !reverse.is_empty() {
+                self.storage_engine.push_to_redo(reverse);
+            }
         }
     }
 
@@ -316,7 +341,11 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     pub fn redo(&mut self) {
         if let Some(frames) = self.storage_engine.redo() {
             let ops = Self::extract_ops_from_frames(&frames);
-            self.apply_local_ops(ops);
+            // Compute reverse ops BEFORE applying (so we can undo again)
+            let reverse = self.compute_and_apply_with_reverse(ops);
+            if !reverse.is_empty() {
+                self.storage_engine.push_to_undo_after_redo(reverse);
+            }
         }
     }
 
@@ -340,6 +369,11 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
         self.storage_engine.resume_history();
     }
 
+    /// Clear undo and redo stacks.
+    pub fn clear_history(&mut self) {
+        self.storage_engine.clear_history();
+    }
+
     // -- Batch --
 
     /// Execute a batch of mutations.
@@ -349,8 +383,12 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     {
         self.storage_engine.start_batch();
         f(self);
-        if let Some((_ops, _reverse)) = self.storage_engine.end_batch() {
-            // Ops were already applied during the batch via individual mutations
+        if let Some((_ops, reverse)) = self.storage_engine.end_batch() {
+            // Ops were already applied during the batch via individual mutations.
+            // Push the accumulated reverse frames to the undo stack.
+            if !reverse.is_empty() {
+                self.storage_engine.add_to_undo_stack(reverse);
+            }
         }
         self.events
             .notify_history_change(self.can_undo(), self.can_redo());
@@ -374,10 +412,62 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             .collect()
     }
 
-    /// Apply local ops to the document and queue them for sending.
-    fn apply_local_ops(&mut self, ops: Vec<Op>) {
+    /// Compute reverse ops for each op, apply the ops, queue for sending,
+    /// and return the collected reverse stackframes (prepended like JS pushLeft).
+    fn compute_and_apply_with_reverse(
+        &mut self,
+        ops: Vec<Op>,
+    ) -> Vec<crate::room_engine::Stackframe> {
+        use crate::types::ApplyResult;
+        use crate::updates::StorageUpdate;
+        use std::collections::VecDeque;
+        let mut reverse_deque = VecDeque::new();
+        let mut all_updates: Vec<StorageUpdate> = Vec::new();
+
         for op in &ops {
-            apply_op(&mut self.document, op, OpSource::Local);
+            // Compute reverse BEFORE applying
+            let rev_ops = compute_reverse_ops(&self.document, op);
+            // Apply
+            let result = apply_op(&mut self.document, op, OpSource::Local);
+            if let ApplyResult::Modified { update, .. } = result {
+                dispatch::merge_storage_update_pub(&mut all_updates, update);
+            }
+            // pushLeft semantics: newest reverse goes to front
+            for rev in rev_ops.into_iter().rev() {
+                reverse_deque.push_front(crate::room_engine::Stackframe::StorageOp(rev));
+            }
+        }
+
+        if !ops.is_empty() {
+            self.buffer.push(ClientMsg::UpdateStorage { ops: ops.clone() });
+
+            for op in &ops {
+                if let Some(op_id) = &op.op_id {
+                    self.storage_engine
+                        .track_unacked_op(op_id.clone(), op.clone());
+                }
+            }
+        }
+
+        self.events.notify_storage_change_with_updates(all_updates);
+        self.events
+            .notify_history_change(self.can_undo(), self.can_redo());
+
+        reverse_deque.into_iter().collect()
+    }
+
+    /// Apply local ops to the document and queue them for sending.
+    /// Collects StorageUpdate results from apply_op and fires them.
+    pub(crate) fn apply_local_ops(&mut self, ops: Vec<Op>) {
+        use crate::types::ApplyResult;
+        use crate::updates::StorageUpdate;
+        let mut all_updates: Vec<StorageUpdate> = Vec::new();
+
+        for op in &ops {
+            let result = apply_op(&mut self.document, op, OpSource::Local);
+            if let ApplyResult::Modified { update, .. } = result {
+                dispatch::merge_storage_update_pub(&mut all_updates, update);
+            }
         }
 
         if !ops.is_empty() {
@@ -392,8 +482,28 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             }
         }
 
-        self.events.notify_storage_change();
+        self.events.notify_storage_change_with_updates(all_updates);
         self.events
             .notify_history_change(self.can_undo(), self.can_redo());
     }
+}
+
+/// Merge consecutive `UpdateStorage` messages into one, combining their ops.
+/// Other message types pass through unchanged.
+fn coalesce_update_storage_msgs(msgs: Vec<ClientMsg>) -> Vec<ClientMsg> {
+    let mut result: Vec<ClientMsg> = Vec::with_capacity(msgs.len());
+    for msg in msgs {
+        match msg {
+            ClientMsg::UpdateStorage { ops } => {
+                // Try to merge with the previous UpdateStorage
+                if let Some(ClientMsg::UpdateStorage { ops: prev_ops }) = result.last_mut() {
+                    prev_ops.extend(ops);
+                } else {
+                    result.push(ClientMsg::UpdateStorage { ops });
+                }
+            }
+            other => result.push(other),
+        }
+    }
+    result
 }

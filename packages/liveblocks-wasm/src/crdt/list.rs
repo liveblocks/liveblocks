@@ -59,6 +59,15 @@ pub fn get_child_key(doc: &Document, key: NodeKey, index: usize) -> Option<NodeK
     }
 }
 
+/// Get the position string of an item at a given index.
+pub fn get_position(doc: &Document, key: NodeKey, index: usize) -> Option<String> {
+    let node = doc.get_node(key)?;
+    match &node.data {
+        CrdtData::List { children, .. } => children.get(index).map(|(pos, _)| pos.clone()),
+        _ => None,
+    }
+}
+
 /// Push a plain JSON value to the end of a LiveList.
 pub fn push(doc: &mut Document, key: NodeKey, value: Json) {
     let Some(node) = doc.get_node(key) else {
@@ -360,6 +369,36 @@ pub fn move_item(doc: &mut Document, key: NodeKey, from_index: usize, to_index: 
     }
 }
 
+/// Compute the new position for a list move without mutating the document.
+/// Returns the position string that the moved item should have.
+pub fn compute_move_position(doc: &Document, key: NodeKey, from_index: usize, to_index: usize) -> Option<String> {
+    let node = doc.get_node(key)?;
+    let children = match &node.data {
+        CrdtData::List { children, .. } => children,
+        _ => return None,
+    };
+    if from_index >= children.len() || to_index > children.len() {
+        return None;
+    }
+
+    // Build a temporary list of positions with the moved item removed
+    let mut remaining_positions: Vec<&str> = Vec::new();
+    for (i, (pos, _)) in children.iter().enumerate() {
+        if i != from_index {
+            remaining_positions.push(pos.as_str());
+        }
+    }
+
+    let before = if to_index > 0 {
+        remaining_positions.get(to_index - 1).copied()
+    } else {
+        None
+    };
+    let after = remaining_positions.get(to_index).copied();
+
+    Some(position::make_position(before, after))
+}
+
 /// Replace the value at a given index (set operation).
 pub fn set(doc: &mut Document, key: NodeKey, index: usize, value: Json) {
     let pos_and_old_key = {
@@ -523,11 +562,12 @@ pub fn to_ops(doc: &Document, key: NodeKey, parent_id: &str, parent_key: &str) -
                             crate::crdt::map::to_ops(doc, *child_key, &node.id, pos)
                         }
                     };
-                    // Match the JS HACK_addIntentAndDeletedIdToOperation:
-                    // each child's first op gets intent: "set".
-                    if let Some(first) = child_ops.first_mut() {
-                        first.intent = Some("set".to_string());
-                    }
+                    // Note: we do NOT add intent: "set" here. The JS
+                    // HACK_addIntentAndDeletedIdToOperation is only needed
+                    // for wire-protocol set operations, not for undo stack
+                    // capture. Adding intent here causes undo stack instability
+                    // because after undo-redo, individual child ops are
+                    // regenerated without going through list::to_ops.
                     ops.extend(child_ops);
                 }
             }

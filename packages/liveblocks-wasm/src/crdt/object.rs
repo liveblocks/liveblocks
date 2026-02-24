@@ -118,6 +118,11 @@ pub fn delete_key(doc: &mut Document, key: NodeKey, prop: &str) {
     }
 }
 
+/// Public wrapper for `remove_child_at_key` for use from room_handle.
+pub fn remove_child_at_key_pub(doc: &mut Document, key: NodeKey, prop: &str) {
+    remove_child_at_key(doc, key, prop);
+}
+
 /// Remove the child node at a given property, if any.
 /// Recursively removes the entire subtree for non-register children.
 fn remove_child_at_key(doc: &mut Document, key: NodeKey, prop: &str) {

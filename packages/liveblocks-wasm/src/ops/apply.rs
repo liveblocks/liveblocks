@@ -790,16 +790,18 @@ fn attach_child_to_list(
         children.insert(insert_idx, (actual_position.clone(), child_key));
 
         // Determine update type based on whether this was a set or insert
+        let child_value = get_node_immutable_value(doc, child_key)
+            .unwrap_or(Json::Null);
         let updates = if is_set_intent && !conflict_reverse_ops.is_empty() {
             vec![ListUpdateEntry::Set {
                 index: insert_idx,
                 old_value: Some(Json::Null),
-                new_value: Json::Null,
+                new_value: child_value,
             }]
         } else {
             vec![ListUpdateEntry::Insert {
                 index: insert_idx,
-                value: Json::Null, // Placeholder
+                value: child_value,
             }]
         };
 

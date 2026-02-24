@@ -21,6 +21,11 @@ impl OutboundBuffer {
         self.messages.push(msg);
     }
 
+    /// Push a message to the front of the buffer.
+    pub fn push_front(&mut self, msg: ClientMsg) {
+        self.messages.insert(0, msg);
+    }
+
     /// Is the buffer empty?
     pub fn is_empty(&self) -> bool {
         self.messages.is_empty()

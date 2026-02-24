@@ -49,6 +49,13 @@ pub trait WebSocket: Send {
 pub trait WsEventReceiver: Send {
     /// Wait for the next event. Returns `None` when the channel is closed.
     fn recv(&mut self) -> Pin<Box<dyn Future<Output = Option<WsEvent>> + '_>>;
+
+    /// Non-blocking attempt to receive the next event.
+    /// Returns `Ok(Some(event))` if one is available, `Ok(None)` if channel closed,
+    /// `Err(())` if no events are currently buffered.
+    fn try_recv(&mut self) -> Result<Option<WsEvent>, ()> {
+        Err(()) // Default: not supported
+    }
 }
 
 /// Factory for creating WebSocket connections.

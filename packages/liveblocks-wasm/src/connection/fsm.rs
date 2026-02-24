@@ -285,14 +285,17 @@ impl ConnFsm {
     fn handle_connecting_busy(&mut self, event: ConnEvent) -> Vec<Effect> {
         match event {
             ConnEvent::SocketConnected => {
+                // Socket opened, but don't declare "connected" yet.
+                // Wait for RoomStateReceived which confirms we have the
+                // actor ID and the server is ready. This also ensures the
+                // MockWebSocket's initFn (which fires accept + ROOM_STATE
+                // in setTimeout(0)) has finished before status changes.
                 self.backoff_delay = RESET_DELAY;
-                self.enter_ok()
+                vec![]
             }
             ConnEvent::RoomStateReceived => {
-                // In protocol V7, we wait for ROOM_STATE before declaring connected.
-                // The SocketConnected event just opens the socket; RoomStateReceived
-                // confirms we have the actor ID. However, if SocketConnected already
-                // transitioned us, this becomes a no-op.
+                // ROOM_STATE received — now we have the actor ID and can
+                // declare the connection established.
                 if self.state == ConnState::ConnectingBusy {
                     self.backoff_delay = RESET_DELAY;
                     self.enter_ok()
@@ -346,6 +349,23 @@ impl ConnFsm {
                 self.increase_backoff_delay();
                 self.transition(ConnState::AuthBackoff);
                 effects.push(Effect::ScheduleTimer(self.backoff_delay));
+                effects
+            }
+            ConnEvent::SocketClose { code, reason } => {
+                // Socket opened but closed before ROOM_STATE arrived.
+                // Treat like a close in OK state — reconnect with backoff.
+                let mut effects = vec![Effect::TeardownSocket];
+                if close_codes::should_disconnect(code) {
+                    self.transition(ConnState::IdleFailed);
+                    effects.push(Effect::NotifyError {
+                        message: reason,
+                        code: code as i32,
+                    });
+                } else {
+                    self.increase_backoff_delay();
+                    self.transition(ConnState::ConnectingBackoff);
+                    effects.push(Effect::ScheduleTimer(self.backoff_delay));
+                }
                 effects
             }
             _ => vec![], // Ignore
@@ -613,12 +633,32 @@ mod tests {
         assert!(effects.contains(&Effect::StartAuth));
     }
 
+    /// Helper: bring FSM to OkConnected via Connect → SocketConnected → RoomStateReceived.
+    fn connect_fsm(fsm: &mut ConnFsm) {
+        fsm.set_has_auth_value(true);
+        fsm.handle_event(ConnEvent::Connect);
+        fsm.handle_event(ConnEvent::SocketConnected);
+        fsm.handle_event(ConnEvent::RoomStateReceived);
+    }
+
     #[test]
-    fn test_socket_connected_enters_ok() {
+    fn test_socket_connected_stays_connecting_busy() {
         let mut fsm = ConnFsm::new();
         fsm.set_has_auth_value(true);
         fsm.handle_event(ConnEvent::Connect);
         let effects = fsm.handle_event(ConnEvent::SocketConnected);
+        // SocketConnected resets backoff but does NOT enter OK yet
+        assert_eq!(fsm.state(), ConnState::ConnectingBusy);
+        assert!(!effects.contains(&Effect::UnpauseMessageDelivery));
+    }
+
+    #[test]
+    fn test_room_state_received_enters_ok() {
+        let mut fsm = ConnFsm::new();
+        fsm.set_has_auth_value(true);
+        fsm.handle_event(ConnEvent::Connect);
+        fsm.handle_event(ConnEvent::SocketConnected);
+        let effects = fsm.handle_event(ConnEvent::RoomStateReceived);
         assert_eq!(fsm.state(), ConnState::OkConnected);
         assert_eq!(fsm.status(), Status::Connected);
         assert!(effects.contains(&Effect::UnpauseMessageDelivery));
@@ -628,9 +668,7 @@ mod tests {
     #[test]
     fn test_heartbeat_cycle() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         // Timer fires -> send ping
         let effects = fsm.handle_event(ConnEvent::TimerFired);
@@ -646,9 +684,7 @@ mod tests {
     #[test]
     fn test_pong_timeout_reconnects() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
         fsm.handle_event(ConnEvent::TimerFired); // -> OkAwaitingPong
 
         let effects = fsm.handle_event(ConnEvent::PongTimeout);
@@ -660,9 +696,7 @@ mod tests {
     #[test]
     fn test_disconnect_from_connected() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::Disconnect);
         assert_eq!(fsm.state(), ConnState::IdleInitial);
@@ -673,9 +707,7 @@ mod tests {
     #[test]
     fn test_reconnect_from_connected() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::Reconnect);
         assert_eq!(fsm.state(), ConnState::AuthBackoff);
@@ -686,9 +718,7 @@ mod tests {
     #[test]
     fn test_close_should_disconnect() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketClose {
             code: 4001, // NOT_ALLOWED
@@ -702,9 +732,7 @@ mod tests {
     #[test]
     fn test_close_should_reauth() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketClose {
             code: 4100, // KICKED
@@ -717,9 +745,7 @@ mod tests {
     #[test]
     fn test_close_token_expired_immediate_reauth() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketClose {
             code: 4109, // TOKEN_EXPIRED
@@ -732,9 +758,7 @@ mod tests {
     #[test]
     fn test_close_retry_without_reauth() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketClose {
             code: 1013, // TRY_AGAIN_LATER
@@ -749,9 +773,7 @@ mod tests {
     #[test]
     fn test_socket_error_with_open_socket_ignored() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketError {
             socket_is_open: true,
@@ -764,9 +786,7 @@ mod tests {
     #[test]
     fn test_socket_error_with_closed_socket() {
         let mut fsm = ConnFsm::new();
-        fsm.set_has_auth_value(true);
-        fsm.handle_event(ConnEvent::Connect);
-        fsm.handle_event(ConnEvent::SocketConnected);
+        connect_fsm(&mut fsm);
 
         let effects = fsm.handle_event(ConnEvent::SocketError {
             socket_is_open: false,

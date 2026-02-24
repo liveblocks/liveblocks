@@ -1,3 +1,4 @@
+pub mod deep;
 pub mod list;
 pub mod map;
 pub mod node;

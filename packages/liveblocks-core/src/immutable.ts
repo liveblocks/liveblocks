@@ -64,6 +64,17 @@ export function lsonToJson(value: Lson): Json {
     return value.data as Json;
   }
 
+  // Check for WasmLive* types (duck-type: they have _nodeId + toImmutable)
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    "_nodeId" in value &&
+    "toImmutable" in value &&
+    typeof (value as Record<string, unknown>).toImmutable === "function"
+  ) {
+    return (value as unknown as { toImmutable(): Json }).toImmutable();
+  }
+
   // Then for composite Lson values
   if (Array.isArray(value)) {
     return lsonListToJson(value);

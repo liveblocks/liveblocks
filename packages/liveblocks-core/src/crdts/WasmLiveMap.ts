@@ -7,9 +7,10 @@
  */
 
 import type { CrdtDocumentOwner } from "./impl-selector";
+import { LiveMap as JsLiveMap } from "./LiveMap";
 import type { Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
-import { resolveEntry } from "./wasm-live-helpers";
+import { resolveEntry, toPlain, makeParentInfo } from "./wasm-live-helpers";
 
 export class WasmLiveMap<
   TKey extends string = string,
@@ -23,6 +24,18 @@ export class WasmLiveMap<
   constructor(owner: CrdtDocumentOwner, nodeId: string) {
     this._owner = owner;
     this._nodeId = nodeId;
+  }
+
+  /** @internal */
+  get parent(): { type: "HasParent"; node: unknown; key: string; pos: string } | { type: "NoParent" } {
+    return makeParentInfo(this._owner, this._nodeId);
+  }
+
+  /** @internal */
+  _getParentKeyOrThrow(): string {
+    const info = this._owner.getParentInfo(this._nodeId);
+    if (!info) throw new Error("Node has no parent");
+    return info.parentKey;
   }
 
   // -- Read delegation --
@@ -75,10 +88,20 @@ export class WasmLiveMap<
   }
 
   toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
-    return this._owner.mapToImmutable(this._nodeId) as ReadonlyMap<
-      TKey,
-      ToImmutable<TValue>
-    >;
+    const rawEntries = this._owner.mapEntries(this._nodeId);
+    const map = new Map<TKey, ToImmutable<TValue>>();
+    for (const [key, entry] of rawEntries) {
+      const child = resolveEntry(this._owner, entry);
+      const immutable =
+        child !== null &&
+        typeof child === "object" &&
+        "toImmutable" in child &&
+        typeof (child as Record<string, unknown>).toImmutable === "function"
+          ? (child as { toImmutable(): unknown }).toImmutable()
+          : child;
+      map.set(key as TKey, immutable as ToImmutable<TValue>);
+    }
+    return map;
   }
 
   [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
@@ -88,11 +111,27 @@ export class WasmLiveMap<
   // -- Write delegation --
 
   set(key: TKey, value: TValue): void {
-    this._owner.mapSet(this._nodeId, key, value);
+    this._owner.mapSet(this._nodeId, key, toPlain(value));
   }
 
   delete(key: TKey): boolean {
     this._owner.mapDelete(this._nodeId, key);
     return true;
+  }
+
+  clone(): JsLiveMap<TKey, TValue> {
+    const rawEntries = this._owner.mapEntries(this._nodeId);
+    const entries: [TKey, TValue][] = rawEntries.map(([key, entry]) => {
+      const value = resolveEntry(this._owner, entry);
+      const cloned =
+        value !== null &&
+        typeof value === "object" &&
+        "clone" in value &&
+        typeof (value as Record<string, unknown>).clone === "function"
+          ? (value as { clone(): unknown }).clone()
+          : value;
+      return [key as TKey, cloned as TValue];
+    });
+    return new JsLiveMap(entries);
   }
 }

@@ -7,9 +7,12 @@
  */
 
 import type { CrdtDocumentOwner } from "./impl-selector";
+import { LiveList as JsLiveList } from "./LiveList";
+import { LiveMap as JsLiveMap } from "./LiveMap";
+import { LiveObject as JsLiveObject } from "./LiveObject";
 import type { Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
-import { resolveEntry } from "./wasm-live-helpers";
+import { resolveEntry, toPlain, makeParentInfo } from "./wasm-live-helpers";
 
 export class WasmLiveList<TItem extends Lson = Lson> {
   /** @internal */
@@ -20,6 +23,39 @@ export class WasmLiveList<TItem extends Lson = Lson> {
   constructor(owner: CrdtDocumentOwner, nodeId: string) {
     this._owner = owner;
     this._nodeId = nodeId;
+  }
+
+  /** @internal */
+  get parent(): { type: "HasParent"; node: unknown; key: string; pos: string } | { type: "NoParent" } {
+    return makeParentInfo(this._owner, this._nodeId);
+  }
+
+  /** @internal */
+  _getParentKeyOrThrow(): string {
+    const info = this._owner.getParentInfo(this._nodeId);
+    if (!info) throw new Error("Node has no parent");
+    return info.parentKey;
+  }
+
+  /** @internal */
+  _indexOfPosition(position: string): number {
+    // Walk through all list entries and find the child whose parentKey matches
+    const entries = this._owner.listEntries(this._nodeId) as Array<{
+      type: string;
+      nodeId?: string;
+      nodeType?: string;
+      value?: unknown;
+    }>;
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      if (entry.type === "node" && entry.nodeId) {
+        const info = this._owner.getParentInfo(entry.nodeId);
+        if (info && info.parentKey === position) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 
   // -- Read delegation --
@@ -42,7 +78,19 @@ export class WasmLiveList<TItem extends Lson = Lson> {
   }
 
   toImmutable(): readonly ToImmutable<TItem>[] {
-    return this._owner.listToImmutable(this._nodeId) as readonly ToImmutable<TItem>[];
+    const entries = this._owner.listEntries(this._nodeId);
+    return entries.map((entry) => {
+      const child = resolveEntry(this._owner, entry);
+      if (
+        child !== null &&
+        typeof child === "object" &&
+        "toImmutable" in child &&
+        typeof (child as Record<string, unknown>).toImmutable === "function"
+      ) {
+        return (child as { toImmutable(): unknown }).toImmutable();
+      }
+      return child;
+    }) as readonly ToImmutable<TItem>[];
   }
 
   [Symbol.iterator](): IterableIterator<TItem> {
@@ -92,11 +140,11 @@ export class WasmLiveList<TItem extends Lson = Lson> {
   // -- Write delegation --
 
   push(element: TItem): void {
-    this._owner.listPush(this._nodeId, element);
+    this._owner.listPush(this._nodeId, toPlain(element));
   }
 
   insert(element: TItem, index: number): void {
-    this._owner.listInsert(this._nodeId, element, index);
+    this._owner.listInsert(this._nodeId, toPlain(element), index);
   }
 
   move(index: number, targetIndex: number): void {
@@ -108,10 +156,32 @@ export class WasmLiveList<TItem extends Lson = Lson> {
   }
 
   set(index: number, item: TItem): void {
-    this._owner.listSet(this._nodeId, index, item);
+    this._owner.listSet(this._nodeId, index, toPlain(item));
   }
 
   clear(): void {
     this._owner.listClear(this._nodeId);
   }
+
+  clone(): JsLiveList<TItem> {
+    const items = this.toArray().map((item) => cloneItem(item));
+    return new JsLiveList(items as TItem[]);
+  }
+}
+
+function cloneItem(item: unknown): unknown {
+  if (item === null || item === undefined || typeof item !== "object") {
+    return item;
+  }
+  if (item instanceof WasmLiveObject || item instanceof JsLiveObject) {
+    return (item as { clone(): unknown }).clone();
+  }
+  if (item instanceof WasmLiveList || item instanceof JsLiveList) {
+    return (item as { clone(): unknown }).clone();
+  }
+  if (item instanceof WasmLiveMap || item instanceof JsLiveMap) {
+    return (item as { clone(): unknown }).clone();
+  }
+  // Plain object — deep clone
+  return JSON.parse(JSON.stringify(item));
 }

@@ -87,6 +87,8 @@ impl<'de> Deserialize<'de> for Stackframe {
 struct BatchState {
     ops: Vec<Op>,
     reverse_ops: VecDeque<Stackframe>,
+    /// Nesting depth — only the outermost batch creates the undo frame.
+    depth: usize,
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +204,11 @@ impl RoomStorageEngine {
         self.undo_stack.len()
     }
 
+    /// Get a reference to the undo stack for serialization.
+    pub fn get_undo_stack(&self) -> &Vec<Vec<Stackframe>> {
+        &self.undo_stack
+    }
+
     pub fn redo_stack_length(&self) -> usize {
         self.redo_stack.len()
     }
@@ -260,10 +267,16 @@ impl RoomStorageEngine {
     }
 
     pub fn start_batch(&mut self) {
-        self.active_batch = Some(BatchState {
-            ops: Vec::new(),
-            reverse_ops: VecDeque::new(),
-        });
+        if let Some(ref mut batch) = self.active_batch {
+            // Nested batch — just increment depth, don't create a new state.
+            batch.depth += 1;
+        } else {
+            self.active_batch = Some(BatchState {
+                ops: Vec::new(),
+                reverse_ops: VecDeque::new(),
+                depth: 1,
+            });
+        }
     }
 
     pub fn batch_add_ops(&mut self, ops: Vec<Op>) {
@@ -285,6 +298,13 @@ impl RoomStorageEngine {
     /// had any content, or `None` if there was no active batch.
     /// Clears the redo stack if any ops were produced.
     pub fn end_batch(&mut self) -> Option<(Vec<Op>, Vec<Stackframe>)> {
+        if let Some(ref mut batch) = self.active_batch {
+            if batch.depth > 1 {
+                // Nested batch — just decrement depth, don't finalize.
+                batch.depth -= 1;
+                return None;
+            }
+        }
         let batch = self.active_batch.take()?;
         if !batch.ops.is_empty() {
             self.redo_stack.clear();
@@ -324,6 +344,16 @@ impl RoomStorageEngine {
     pub fn batch_accumulate(&mut self, ops: Vec<Op>, reverse: Vec<Stackframe>) {
         self.batch_add_ops(ops);
         self.batch_add_reverse(reverse);
+    }
+
+    /// Dispatch reverse ops for a mutation: if batching, accumulate in the
+    /// active batch; otherwise, push to undo stack and clear redo stack.
+    pub fn dispatch_mutation(&mut self, fwd_ops: Vec<Op>, reverse: Vec<Stackframe>) {
+        if self.is_batching() {
+            self.batch_accumulate(fwd_ops, reverse);
+        } else {
+            self.on_dispatch_outside_batch(reverse);
+        }
     }
 }
 

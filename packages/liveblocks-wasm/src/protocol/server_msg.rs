@@ -7,7 +7,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 
-use crate::types::{Op, SerializedCrdt};
+use crate::types::{CrdtType, Json, Op, SerializedCrdt};
 
 /// Server message codes matching the TypeScript ServerMsgCode enum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -31,6 +31,8 @@ pub enum ServerMsgCode {
     ThreadDeleted,
     ThreadUpdated,
     CommentMetadataUpdated,
+    StorageChunk,
+    StorageStreamEnd,
 }
 
 impl ServerMsgCode {
@@ -55,6 +57,8 @@ impl ServerMsgCode {
             407 => Some(Self::ThreadDeleted),
             408 => Some(Self::ThreadUpdated),
             409 => Some(Self::CommentMetadataUpdated),
+            210 => Some(Self::StorageChunk),
+            211 => Some(Self::StorageStreamEnd),
             _ => None,
         }
     }
@@ -80,6 +84,8 @@ impl ServerMsgCode {
             Self::ThreadDeleted => 407,
             Self::ThreadUpdated => 408,
             Self::CommentMetadataUpdated => 409,
+            Self::StorageChunk => 210,
+            Self::StorageStreamEnd => 211,
         }
     }
 }
@@ -138,6 +144,12 @@ pub enum ServerMsg {
         v2: Option<bool>,
         remote_snapshot_hash: String,
     },
+
+    // -- Storage V8+ streaming --
+    StorageChunk {
+        nodes: Vec<JsonValue>,
+    },
+    StorageStreamEnd,
 
     // -- Comments --
     ThreadCreated { thread_id: String },
@@ -227,6 +239,17 @@ impl Serialize for ServerMsg {
                 if let Some(g) = guid { map.serialize_entry("guid", g)?; }
                 if let Some(v) = v2 { map.serialize_entry("v2", v)?; }
                 map.serialize_entry("remoteSnapshotHash", remote_snapshot_hash)?;
+                map.end()
+            }
+            ServerMsg::StorageChunk { nodes } => {
+                let mut map = serializer.serialize_map(None)?;
+                map.serialize_entry("type", &ServerMsgCode::StorageChunk.to_u16())?;
+                map.serialize_entry("nodes", nodes)?;
+                map.end()
+            }
+            ServerMsg::StorageStreamEnd => {
+                let mut map = serializer.serialize_map(None)?;
+                map.serialize_entry("type", &ServerMsgCode::StorageStreamEnd.to_u16())?;
                 map.end()
             }
             ServerMsg::ThreadCreated { thread_id } => {
@@ -390,6 +413,17 @@ impl<'de> Deserialize<'de> for ServerMsg {
                     remote_snapshot_hash: get_str(obj, "remoteSnapshotHash")?,
                 })
             }
+            ServerMsgCode::StorageChunk => {
+                Ok(ServerMsg::StorageChunk {
+                    nodes: obj.get("nodes")
+                        .and_then(|v| v.as_array())
+                        .cloned()
+                        .unwrap_or_default(),
+                })
+            }
+            ServerMsgCode::StorageStreamEnd => {
+                Ok(ServerMsg::StorageStreamEnd)
+            }
             ServerMsgCode::ThreadCreated => {
                 Ok(ServerMsg::ThreadCreated { thread_id: get_str(obj, "threadId")? })
             }
@@ -470,6 +504,102 @@ pub fn parse_server_messages(data: &str) -> Result<Vec<ServerMsg>, serde_json::E
         let msg: ServerMsg = serde_json::from_str(trimmed)?;
         Ok(vec![msg])
     }
+}
+
+/// Convert a JsonValue into our internal Json type.
+fn json_value_to_json(v: &JsonValue) -> Json {
+    match v {
+        JsonValue::Null => Json::Null,
+        JsonValue::Bool(b) => Json::Bool(*b),
+        JsonValue::Number(n) => Json::Number(n.as_f64().unwrap_or(0.0)),
+        JsonValue::String(s) => Json::String(s.clone()),
+        JsonValue::Array(arr) => Json::Array(arr.iter().map(json_value_to_json).collect()),
+        JsonValue::Object(obj) => {
+            let map = obj.iter().map(|(k, v)| (k.clone(), json_value_to_json(v))).collect();
+            Json::Object(map)
+        }
+    }
+}
+
+/// Convert a JsonValue object into a Json::Object suitable for SerializedCrdt data.
+fn json_value_to_data(v: &JsonValue) -> Option<Json> {
+    match v {
+        JsonValue::Object(obj) => {
+            let map = obj.iter().map(|(k, v)| (k.clone(), json_value_to_json(v))).collect();
+            Some(Json::Object(map))
+        }
+        _ => Some(json_value_to_json(v)),
+    }
+}
+
+/// Convert compact node arrays (from STORAGE_CHUNK) to IdTuple items.
+///
+/// Compact format:
+/// - Root: `["root", {data}]`
+/// - Child Object: `[id, 0, parentId, parentKey, {data}]`
+/// - Child List: `[id, 1, parentId, parentKey]`
+/// - Child Map: `[id, 2, parentId, parentKey]`
+/// - Child Register: `[id, 3, parentId, parentKey, data]`
+pub fn compact_nodes_to_id_tuples(nodes: &[JsonValue]) -> Vec<(String, SerializedCrdt)> {
+    let mut items = Vec::new();
+    for node in nodes {
+        let arr = match node.as_array() {
+            Some(a) => a,
+            None => continue,
+        };
+        if arr.is_empty() {
+            continue;
+        }
+
+        let id = match arr[0].as_str() {
+            Some(s) => s.to_string(),
+            None => continue,
+        };
+
+        // Root node: ["root", {data}]
+        if id == "root" && arr.len() == 2 {
+            items.push((id, SerializedCrdt {
+                crdt_type: CrdtType::Object,
+                parent_id: None,
+                parent_key: None,
+                data: json_value_to_data(&arr[1]),
+            }));
+            continue;
+        }
+
+        // Child node: [id, type, parentId, parentKey, ...data]
+        if arr.len() < 4 {
+            continue;
+        }
+        let crdt_type_code = match arr[1].as_u64() {
+            Some(n) => n as u8,
+            None => continue,
+        };
+        let parent_id = arr[2].as_str().map(|s| s.to_string());
+        let parent_key = arr[3].as_str().map(|s| s.to_string());
+
+        let (crdt_type, data) = match crdt_type_code {
+            0 => { // Object
+                let data = if arr.len() > 4 { json_value_to_data(&arr[4]) } else { None };
+                (CrdtType::Object, data)
+            }
+            1 => (CrdtType::List, None),    // List
+            2 => (CrdtType::Map, None),     // Map
+            3 => { // Register
+                let data = if arr.len() > 4 { json_value_to_data(&arr[4]) } else { None };
+                (CrdtType::Register, data)
+            }
+            _ => continue,
+        };
+
+        items.push((id, SerializedCrdt {
+            crdt_type,
+            parent_id,
+            parent_key,
+            data,
+        }));
+    }
+    items
 }
 
 #[cfg(test)]
