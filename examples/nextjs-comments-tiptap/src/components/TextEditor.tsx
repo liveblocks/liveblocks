@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { ClientSideSuspense, useOthers, useSelf } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react";
 import {
   AnchoredThreads,
   FloatingComposer,
@@ -19,7 +19,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useThreads } from "@liveblocks/react/suspense";
 import { CommentIcon } from "@/icons";
 import styles from "./TextEditor.module.css";
-import { Comment, Thread, ThreadProps } from "@liveblocks/react-ui";
 
 export function TextEditor() {
   return (
@@ -124,44 +123,6 @@ const starterKitOptions: Partial<StarterKitOptions> = {
   },
 };
 
-function useUserIdPresence(userId: string) {
-  const isSelfPresent = useSelf((self) => self.id === userId) ?? false;
-  const isOtherPresent =
-    useOthers((others) => others.some((other) => other.id === userId)) ?? false;
-
-  return isSelfPresent || isOtherPresent;
-}
-
-function CommentAvatarWithPresence({ userId }: { userId: string }) {
-  const isPresent = useUserIdPresence(userId);
-
-  return (
-    <div className={styles.commentAvatar}>
-      <Comment.Avatar userId={userId} />
-      {isPresent ? (
-        <div className={styles.commentAvatarPresenceIndicator} />
-      ) : null}
-    </div>
-  );
-}
-
-function ThreadWithPresence(props: ThreadProps) {
-  return (
-    <Thread
-      {...props}
-      components={{
-        Comment: ({ comment, ...props }) => (
-          <Comment
-            {...props}
-            comment={comment}
-            avatar={<CommentAvatarWithPresence userId={comment.userId} />}
-          />
-        ),
-      }}
-    />
-  );
-}
-
 function Threads({ editor }: { editor: TEditor | null }) {
   const { threads } = useThreads();
   const isMobile = useIsMobile();
@@ -183,18 +144,9 @@ function Threads({ editor }: { editor: TEditor | null }) {
   }
 
   return isMobile ? (
-    <FloatingThreads
-      threads={threads}
-      editor={editor}
-      components={{ Thread: ThreadWithPresence }}
-    />
+    <FloatingThreads threads={threads} editor={editor} />
   ) : (
-    <AnchoredThreads
-      threads={threads}
-      editor={editor}
-      style={{ width: 350 }}
-      components={{ Thread: ThreadWithPresence }}
-    />
+    <AnchoredThreads threads={threads} editor={editor} style={{ width: 350 }} />
   );
 }
 

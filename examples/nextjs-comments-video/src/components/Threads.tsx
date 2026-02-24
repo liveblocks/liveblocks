@@ -1,12 +1,8 @@
 "use client";
 
-import {
-  useThreads,
-  useSelf,
-  useEditCommentMetadata,
-} from "@liveblocks/react/suspense";
+import { useThreads } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { Thread, Comment } from "@liveblocks/react-ui";
+import { Thread } from "@liveblocks/react-ui";
 import { FormEvent, useCallback, useRef, useState } from "react";
 import styles from "./Threads.module.css";
 import {
@@ -18,7 +14,6 @@ import {
 import { ThreadData } from "@liveblocks/core";
 import { formatTime } from "@/components/Duration";
 import { TimeIcon } from "@/icons/Time";
-import { EyeIcon } from "@/icons/Eye";
 
 export function Threads() {
   return (
@@ -29,7 +24,6 @@ export function Threads() {
 }
 
 function ThreadList() {
-  const { id: currentUserId } = useSelf();
   const { threads } = useThreads();
 
   if (threads.length === 0) {
@@ -39,28 +33,17 @@ function ThreadList() {
   return (
     <>
       {threads.sort(sortThreads).map((thread) => (
-        <CustomThread
-          key={thread.id}
-          thread={thread}
-          currentUserId={currentUserId}
-        />
+        <CustomThread key={thread.id} thread={thread} />
       ))}
     </>
   );
 }
 
-function CustomThread({
-  thread,
-  currentUserId,
-}: {
-  thread: ThreadData;
-  currentUserId: string;
-}) {
+function CustomThread({ thread }: { thread: ThreadData }) {
   const ref = useRef<HTMLDivElement>(null);
   const threadHasTime = thread.metadata.timePercentage !== -1;
   const skipTo = useSkipTo();
   const highlightPin = useHighlightPin(thread.id);
-  const editCommentMetadata = useEditCommentMetadata();
 
   const [highlightedThread, setHighlightedThread] = useState(false);
 
@@ -113,59 +96,6 @@ function CustomThread({
         thread={thread}
         indentCommentContent={true}
         onKeyDown={handleKeyDown}
-        components={{
-          Comment: ({ comment, ...props }) => {
-            return (
-              <Comment
-                {...props}
-                comment={comment}
-                dropdownItems={({ children }) => {
-                  // Add "Mark as spoiler" action for users' own comments
-                  if (comment.userId === currentUserId) {
-                    return (
-                      <>
-                        {children}
-                        <Comment.DropdownItem
-                          icon={<EyeIcon />}
-                          onSelect={() => {
-                            editCommentMetadata({
-                              threadId: thread.id,
-                              commentId: comment.id,
-                              metadata: {
-                                spoiler: !comment.metadata.spoiler,
-                              },
-                            });
-                          }}
-                        >
-                          {comment.metadata.spoiler
-                            ? "Unmark comment as spoiler"
-                            : "Mark comment as spoiler"}
-                        </Comment.DropdownItem>
-                      </>
-                    );
-                  }
-
-                  // For other comments, only show the default dropdown items
-                  return children;
-                }}
-              >
-                {({ children }) => {
-                  return (
-                    // Use a custom wrapper to blur spoilers
-                    <div
-                      className={styles.commentContentWrapper}
-                      data-spoiler={
-                        comment.metadata.spoiler === true ? "" : undefined
-                      }
-                    >
-                      {children}
-                    </div>
-                  );
-                }}
-              </Comment>
-            );
-          },
-        }}
       />
     </div>
   );

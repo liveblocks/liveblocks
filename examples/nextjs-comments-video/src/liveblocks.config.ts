@@ -21,9 +21,5 @@ declare global {
       time: number | -1;
       timePercentage: number | -1;
     };
-    // Custom metadata set on comments, for useCreateComment, useEditCommentMetadata, etc.
-    CommentMetadata: {
-      spoiler?: boolean;
-    };
   }
 }

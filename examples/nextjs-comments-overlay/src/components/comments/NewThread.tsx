@@ -8,12 +8,13 @@ import {
   useRef,
   useState,
 } from "react";
+import * as Portal from "@radix-ui/react-portal";
 import { useCreateThread, useSelf, useUser } from "@liveblocks/react/suspense";
 import { ComposerSubmitComment } from "@liveblocks/react-ui/primitives";
 import styles from "./NewThread.module.css";
 import { NewThreadCursor } from "@/components/comments/NewThreadCursor";
 import { getCoordsFromPointerEvent } from "@/lib/coords";
-import { Portal as PortalPrimitive, Slot as SlotPrimitive } from "radix-ui";
+import { Slot } from "@radix-ui/react-slot";
 import { PinnedComposer } from "@/components/comments/PinnedComposer";
 import { useMaxZIndex } from "@/lib/useMaxZIndex";
 
@@ -221,9 +222,6 @@ export function NewThread({ children }: Props) {
           cursorY,
           zIndex: maxZIndex + 1,
         },
-        commentMetadata: {
-          userAgent: navigator.userAgent,
-        },
       });
 
       setComposerCoords(null);
@@ -241,7 +239,7 @@ export function NewThread({ children }: Props) {
 
   return (
     <>
-      <SlotPrimitive.Root
+      <Slot
         onClick={() =>
           setCreatingCommentState(
             creatingCommentState !== "complete" ? "complete" : "placing"
@@ -250,9 +248,9 @@ export function NewThread({ children }: Props) {
         style={{ opacity: creatingCommentState !== "complete" ? 0.7 : 1 }}
       >
         {children}
-      </SlotPrimitive.Root>
+      </Slot>
       {composerCoords && creatingCommentState === "placed" ? (
-        <PortalPrimitive.Root
+        <Portal.Root
           className={styles.composerWrapper}
           style={{
             pointerEvents: allowUseComposer && !moving ? "initial" : "none",
@@ -268,7 +266,7 @@ export function NewThread({ children }: Props) {
             onPointerUp={() => {}}
             onPointerMove={() => {}}
           />
-        </PortalPrimitive.Root>
+        </Portal.Root>
       ) : null}
       <NewThreadCursor display={creatingCommentState === "placing"} />
     </>

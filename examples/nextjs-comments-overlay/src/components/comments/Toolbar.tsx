@@ -2,7 +2,7 @@
 
 import { Button } from "./Button";
 import { useState } from "react";
-import { Collapsible as CollapsiblePrimitive } from "radix-ui";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import { NewThread } from "@/components/comments/NewThread";
 import { Sidebar } from "@/components/comments/Sidebar";
 import { ToolbarAvatars } from "@/components/comments/ToolbarAvatars";
@@ -15,7 +15,7 @@ export function Toolbar({ ...props }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
       {...props}
@@ -34,7 +34,7 @@ export function Toolbar({ ...props }) {
         <ToolbarAvatars />
         <div className={styles.toolbarSeparator} />
         <div className={styles.toolbarActions}>
-          <CollapsiblePrimitive.Trigger asChild>
+          <Collapsible.Trigger asChild>
             <Button variant="ghost" square>
               <SidebarIcon
                 style={{ opacity: open ? "0.7" : "1" }}
@@ -42,12 +42,12 @@ export function Toolbar({ ...props }) {
                 height={12}
               />
             </Button>
-          </CollapsiblePrimitive.Trigger>
+          </Collapsible.Trigger>
         </div>
       </div>
-      <CollapsiblePrimitive.Content className={sidebarStyles.sidebar}>
+      <Collapsible.Content className={sidebarStyles.sidebar}>
         <Sidebar onClose={() => setOpen(false)} />
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
