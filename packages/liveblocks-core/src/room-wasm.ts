@@ -238,10 +238,13 @@ export function createWasmRoom<
     roomId: config.roomId,
     baseUrl: config.baseUrl,
     createSocket: createSocketForWasm,
-    // Auth: use a public API key so the Rust auth flow succeeds immediately
-    // (the PublicKey variant emits AuthSuccess without any HTTP request)
-    publicApiKey: "pk_wasm",
-    authEndpoint: null,
+    // Pass through auth config from the client. When a publicApiKey is
+    // provided, the Rust auth flow succeeds immediately (PublicKey variant
+    // emits AuthSuccess without any HTTP request). Falls back to "pk_wasm"
+    // only when no auth info is available (e.g. unit tests with mocked
+    // delegates that handle auth externally).
+    publicApiKey: config.publicApiKey ?? "pk_wasm",
+    authEndpoint: config.authEndpoint ?? null,
     initialPresence: options.initialPresence,
     throttleDelay: config.throttleDelay,
     lostConnectionTimeout: config.lostConnectionTimeout,

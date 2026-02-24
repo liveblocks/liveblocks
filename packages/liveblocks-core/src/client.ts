@@ -788,6 +788,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
       createSyncSource,
       badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
+      publicApiKey: "publicApiKey" in clientOptions ? (clientOptions.publicApiKey as string | undefined) : undefined,
+      authEndpoint: "authEndpoint" in clientOptions && typeof clientOptions.authEndpoint === "string" ? clientOptions.authEndpoint : undefined,
     };
 
     const wasmRoomHandleClass = getWasmRoomHandleClass();
