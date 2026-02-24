@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { DEFAULT_ORGANIZATION_ID } from "@/constants";
 import { buildDocument, userAllowedInRoom } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
 import { Document } from "@/types";
@@ -49,8 +50,9 @@ export async function getDocument({ documentId }: Props) {
     !userAllowedInRoom({
       accessAllowed: "read",
       userId: session?.user.info.id ?? "",
-      groupIds: session?.user.info.groupIds ?? [],
       room,
+      organizationId:
+        session?.user.currentOrganizationId ?? DEFAULT_ORGANIZATION_ID,
     })
   ) {
     return {

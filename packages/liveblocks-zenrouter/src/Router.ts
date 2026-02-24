@@ -2,18 +2,17 @@
 
 // TODO: Make this a local definition?
 import type { Json, JsonObject } from "@liveblocks/core";
-import { context, trace } from "@opentelemetry/api";
-import type { Decoder } from "decoders";
-import { formatShort } from "decoders";
 
 import type {
   ExtractParams,
   HttpVerb,
-  MapDecoderTypes,
+  MapSchemaOutput,
   Pattern,
   RouteMatcher,
 } from "~/lib/matchers.js";
 import { routeMatcher, sortHttpVerbsInPlace } from "~/lib/matchers.js";
+import type { OtelConfig } from "~/lib/otel.js";
+import type { StandardSchemaV1 } from "~/lib/standard-schema.js";
 import { mapv, raise } from "~/lib/utils.js";
 import type { HttpError } from "~/responses/index.js";
 import { abort, json, ValidationError } from "~/responses/index.js";
@@ -104,11 +103,11 @@ type RouteTuple<RC, AC> = readonly [
   pattern: Pattern,
   matcher: RouteMatcher,
   auth: AuthFn<RC, AC>,
-  bodyDecoder: Decoder<unknown> | null,
+  bodySchema: StandardSchemaV1 | null,
   handler: OpaqueRouteHandler<RC, AC>,
 ];
 
-type RouterOptions<RC, AC, TParams extends Record<string, Decoder<unknown>>> = {
+type RouterOptions<RC, AC, TParams extends Record<string, StandardSchemaV1>> = {
   errorHandler?: ErrorHandler;
 
   // Mandatory config
@@ -129,6 +128,12 @@ type RouterOptions<RC, AC, TParams extends Record<string, Decoder<unknown>>> = {
   // Register any param decoders
   params?: TParams;
 
+  /**
+   * Optional OpenTelemetry integration. When provided, matched route patterns
+   * and decoded params will be set as span attributes.
+   */
+  otel?: OtelConfig;
+
   // Optional config
   debug?: boolean;
 };
@@ -146,7 +151,7 @@ type OpaqueParams = Record<string, unknown>;
 export class ZenRouter<
   RC,
   AC,
-  TParams extends Record<string, Decoder<unknown>> = {},
+  TParams extends Record<string, StandardSchemaV1> = {},
 > {
   #_debug: boolean;
   #_contextFn: (req: Request, ...args: readonly any[]) => RC;
@@ -155,6 +160,7 @@ export class ZenRouter<
   #_paramDecoders: TParams;
   #_errorHandler: ErrorHandler;
   #_cors: Partial<CorsOptions> | null;
+  #_otel: OtelConfig | undefined;
 
   constructor(options?: RouterOptions<RC, AC, TParams>) {
     this.#_errorHandler = options?.errorHandler ?? new ErrorHandler();
@@ -170,6 +176,7 @@ export class ZenRouter<
     this.#_routes = [];
     this.#_paramDecoders = options?.params ?? ({} as TParams);
     this.#_cors = (options?.cors === true ? {} : options?.cors) || null;
+    this.#_otel = options?.otel;
   }
 
   // --- PUBLIC APIs -----------------------------------------------------------------
@@ -193,17 +200,17 @@ export class ZenRouter<
     handler: RouteHandler<
       RC,
       AC,
-      ExtractParams<P, MapDecoderTypes<TParams>>,
+      ExtractParams<P, MapSchemaOutput<TParams>>,
       never
     >
   ): void;
   public route<P extends Pattern, TBody>(
     pattern: P,
-    bodyDecoder: Decoder<TBody>,
+    bodySchema: StandardSchemaV1<unknown, TBody>,
     handler: RouteHandler<
       RC,
       AC,
-      ExtractParams<P, MapDecoderTypes<TParams>>,
+      ExtractParams<P, MapSchemaOutput<TParams>>,
       TBody
     >
   ): void;
@@ -212,12 +219,12 @@ export class ZenRouter<
   public route(first: any, second: any, third?: any): void {
     /* eslint-enable @typescript-eslint/explicit-module-boundary-types */
     const pattern = first;
-    const bodyDecoder = arguments.length >= 3 ? second : null;
+    const bodySchema = arguments.length >= 3 ? second : null;
     const handler = arguments.length >= 3 ? third : second;
     /* eslint-enable @typescript-eslint/no-unsafe-assignment */
     this.#_register(
       pattern,
-      bodyDecoder,
+      bodySchema,
       handler as RouteHandler<RC, AC, OpaqueParams, unknown>
     );
   }
@@ -255,7 +262,7 @@ export class ZenRouter<
 
   #_register<P extends Pattern>(
     pattern: P,
-    bodyDecoder: Decoder<unknown> | null,
+    bodySchema: StandardSchemaV1 | null,
     handler: RouteHandler<RC, AC, OpaqueParams, unknown>
     // authFn?: OpaqueAuthFn<RC>
   ): void {
@@ -265,7 +272,7 @@ export class ZenRouter<
       pattern,
       matcher,
       /* authFn ?? */ this.#_defaultAuthFn,
-      bodyDecoder,
+      bodySchema,
       wrap(handler),
     ]);
   }
@@ -343,7 +350,7 @@ export class ZenRouter<
     // Match routes in the given order
     let pathDidMatch = false;
     for (const tup of this.#_routes) {
-      const [pattern, matcher, authorize, bodyDecoder, handler] = tup;
+      const [pattern, matcher, authorize, bodySchema, handler] = tup;
 
       const match = matcher.matchURL(url);
       if (match === null) {
@@ -362,7 +369,7 @@ export class ZenRouter<
 
         // Add route pattern as span attribute
         // This is done early so the route is recorded even for auth/validation errors
-        const span = trace.getSpan(context.active());
+        const span = this.#_otel?.getActiveSpan();
         span?.setAttribute("zen.route", pattern);
 
         const base = {
@@ -382,8 +389,11 @@ export class ZenRouter<
         try {
           p = mapv(match, decodeURIComponent);
           p = mapv(p, (value, key) => {
-            const decoder = this.#_paramDecoders[key];
-            return decoder === undefined ? value : decoder.verify(value);
+            const schema = this.#_paramDecoders[key];
+            if (!schema) return value;
+            const result = validateSync(schema, value);
+            if (result.issues) throw result.issues;
+            return result.value;
           });
         } catch (err) {
           // A malformed URI that cannot be decoded properly or a param that
@@ -396,14 +406,14 @@ export class ZenRouter<
           span?.setAttribute(`zen.param.${key}`, String(value));
         }
 
-        const decodeResult = bodyDecoder
+        const bodyResult = bodySchema
           ? // TODO: This can throw if the body does not contain a valid JSON
             // request. If so, we should return a 400.
-            bodyDecoder.decode(await tryReadBodyAsJson(req))
+            validateSync(bodySchema, await tryReadBodyAsJson(req))
           : null;
 
-        if (decodeResult && !decodeResult.ok) {
-          const errmsg = formatShort(decodeResult.error);
+        if (bodyResult?.issues) {
+          const errmsg = bodyResult.issues.map(formatIssue).join("\n");
           throw new ValidationError(errmsg);
         }
 
@@ -414,10 +424,10 @@ export class ZenRouter<
           p,
           q: Object.fromEntries(url.searchParams),
           get body() {
-            if (decodeResult === null) {
-              raise("Cannot access body: this endpoint did not define a body decoder"); // prettier-ignore
+            if (bodyResult === null) {
+              raise("Cannot access body: this endpoint did not define a body schema"); // prettier-ignore
             }
-            return decodeResult.value;
+            return bodyResult.value;
           },
         };
 
@@ -482,6 +492,40 @@ export class ZenRouter<
     const { status, body } = resp;
     return new Response(body, { status, headers });
   }
+}
+
+function formatIssue(issue: StandardSchemaV1.Issue): string {
+  if (!issue.path?.length) return issue.message;
+  const keys = issue.path.map((p) => (typeof p === "object" ? p.key : p));
+  let prefix: string;
+  if (keys.length === 1) {
+    prefix =
+      typeof keys[0] === "number"
+        ? `Value at index ${keys[0]}`
+        : `Value at key '${String(keys[0])}'`;
+  } else {
+    prefix = `Value at keypath '${keys.join(".")}'`;
+  }
+  return `${prefix}: ${issue.message}`;
+}
+
+function isPromiseLike(value: any): value is Promise<unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  return typeof value?.then === "function";
+}
+
+/**
+ * Synchronously validates a value against a Standard Schema. Throws if the
+ * schema returns a Promise (async validation is not supported).
+ */
+function validateSync<T>(
+  schema: StandardSchemaV1<unknown, T>,
+  value: unknown
+): StandardSchemaV1.Result<T> {
+  const result = schema["~standard"].validate(value);
+  if (isPromiseLike(result))
+    throw new Error("Async validation is not supported");
+  return result;
 }
 
 /**

@@ -1,5 +1,9 @@
 ## vNEXT (not yet released)
 
+## v3.15.0
+
+...
+
 ## v3.14.0
 
 This release adds support for opting-in to the new storage engine on a per-room

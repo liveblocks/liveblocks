@@ -1,3 +1,5 @@
+export * from "~/lib/otel.js";
+
 // Simple response generators: json(), empty(), abort(), etc.
 export * from "~/responses/index.js";
 

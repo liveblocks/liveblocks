@@ -1,11 +1,21 @@
 .dialog {
-  width: 420px;
+  width: 520px;
   max-width: 100%;
 }
 
 .dialogSection {
   padding: 0 var(--space-8);
   margin: var(--space-8) 0;
+}
+
+.dialogDivider {
+  display: flex;
+  color: var(--color-text-lighter);
+  font-size: var(--size-sm);
+  place-items: center;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-6) var(--space-8) 0;
+  margin-bottom: calc(-1 * var(--space-5));
 }
 
 .dialogTabs {
