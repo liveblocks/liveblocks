@@ -19,7 +19,6 @@ import { useState } from "react";
 
 export function ThreadsTimeline() {
   return (
-    // @ts-ignore
     <ErrorBoundary fallback={<div>Error</div>}>
       <ClientSideSuspense fallback={null}>
         <PinnedThreads />
@@ -83,21 +82,25 @@ function PinnedThread({ thread }: { thread: ThreadData }) {
           </div>
           <div className={styles.tooltipBody}>
             <span>{formatTime(thread.metadata.time) + " "}</span>
-            <Comment.Body
-              body={thread.comments[0].body}
-              components={{
-                Mention: (props) => (
-                  <Comment.Mention asChild>
-                    <Mention {...props} />
-                  </Comment.Mention>
-                ),
-                Link: (props) => (
-                  <Comment.Link asChild>
-                    <Link {...props}>{props.children}</Link>
-                  </Comment.Link>
-                ),
-              }}
-            />
+            {thread.comments[0].metadata.spoiler ? (
+              <span className={styles.tooltipSpoiler}>Spoiler</span>
+            ) : (
+              <Comment.Body
+                body={thread.comments[0].body}
+                components={{
+                  Mention: (props) => (
+                    <Comment.Mention asChild>
+                      <Mention {...props} />
+                    </Comment.Mention>
+                  ),
+                  Link: (props) => (
+                    <Comment.Link asChild>
+                      <Link {...props}>{props.children}</Link>
+                    </Comment.Link>
+                  ),
+                }}
+              />
+            )}
           </div>
         </Tooltip.Content>
       </Tooltip.Root>

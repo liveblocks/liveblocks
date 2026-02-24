@@ -1,0 +1,37 @@
+.commentAuthor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.userAgentTooltipTrigger {
+  all: unset;
+  height: var(--size);
+  width: var(--size);
+  cursor: help;
+  color: rgb(var(--color-gray-500));
+}
+
+.userAgentTooltipTrigger svg {
+  height: var(--size);
+  width: var(--size);
+}
+
+.userAgentTooltipTrigger:hover,
+.userAgentTooltipTrigger:focus {
+  color: rgb(var(--color-gray-700));
+}
+
+.userAgentTooltipContent {
+  z-index: var(--z-above-comments-sidemenu);
+  max-width: 400px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-elevated);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--size-xs);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  color: rgb(var(--color-gray-600));
+  box-shadow: var(--shadow-xl);
+}

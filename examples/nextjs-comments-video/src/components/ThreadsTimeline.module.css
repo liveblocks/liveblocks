@@ -69,3 +69,8 @@
   text-overflow: ellipsis;
   margin: 0;
 }
+
+.tooltipSpoiler {
+  font-style: italic;
+  opacity: 0.5;
+}
