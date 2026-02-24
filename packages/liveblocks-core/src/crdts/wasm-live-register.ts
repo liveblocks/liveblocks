@@ -6,9 +6,9 @@
  * Import this module once at WASM initialization time.
  */
 
+import { _registerWasmLiveTypes } from "./wasm-live-helpers";
 import { WasmLiveList } from "./WasmLiveList";
 import { WasmLiveMap } from "./WasmLiveMap";
 import { WasmLiveObject } from "./WasmLiveObject";
-import { _registerWasmLiveTypes } from "./wasm-live-helpers";
 
 _registerWasmLiveTypes(WasmLiveObject, WasmLiveList, WasmLiveMap);

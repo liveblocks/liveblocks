@@ -95,6 +95,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export { makePosition } from "./crdts/wasm-adapter";
 export type {
   DAD,
   DCM,
@@ -159,7 +160,6 @@ export { objectToQuery } from "./lib/objectToQuery";
 export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos } from "./lib/position";
-export { makePosition } from "./crdts/wasm-adapter";
 export type { Relax } from "./lib/Relax";
 export type { Resolve } from "./lib/Resolve";
 export { shallow, shallow2 } from "./lib/shallow";

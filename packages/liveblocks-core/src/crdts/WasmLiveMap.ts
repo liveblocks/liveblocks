@@ -10,7 +10,7 @@ import type { CrdtDocumentOwner } from "./impl-selector";
 import { LiveMap as JsLiveMap } from "./LiveMap";
 import type { Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
-import { resolveEntry, toPlain, makeParentInfo } from "./wasm-live-helpers";
+import { makeParentInfo,resolveEntry, toPlain } from "./wasm-live-helpers";
 
 export class WasmLiveMap<
   TKey extends string = string,

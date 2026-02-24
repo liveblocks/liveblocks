@@ -2,7 +2,6 @@ import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import type { Pos } from "../lib/position";
 import { asPos } from "../lib/position";
-import { makePosition } from "./wasm-adapter";
 import { SortedList } from "../lib/SortedList";
 import type { ClientWireOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
@@ -21,6 +20,7 @@ import {
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson } from "./Lson";
 import type { ToImmutable } from "./utils";
+import { makePosition } from "./wasm-adapter";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
