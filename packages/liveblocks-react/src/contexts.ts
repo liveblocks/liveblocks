@@ -41,6 +41,9 @@ export function useClient<U extends BaseUserMeta>() {
  * room. Exposed for advanced use cases only.
  *
  * @private This is a private/advanced API. Do not rely on it.
+ *
+ * This context is exported publicly as `import { RoomContext } from "@liveblocks/react"`,
+ * not `GlobalRoomContext`.
  */
 export const GlobalRoomContext = createContext<OpaqueRoom | null>(null);
 
