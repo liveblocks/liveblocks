@@ -423,7 +423,7 @@ describe("Router body validation", () => {
 
     expect(konsole.error).toHaveBeenCalledWith(
       expect.stringMatching(
-        /^Uncaught error: Error: Cannot access body: this endpoint did not define a body decoder/
+        /^Uncaught error: Error: Cannot access body: this endpoint did not define a body schema/
       )
     );
   });

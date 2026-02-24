@@ -3,7 +3,8 @@ import { CSSProperties, ReactNode } from "react";
 import styles from "./Popover.module.css";
 
 interface Props
-  extends RadixPopover.PopoverProps,
+  extends
+    RadixPopover.PopoverProps,
     Pick<
       RadixPopover.PopoverContentProps,
       "side" | "sideOffset" | "align" | "alignOffset"

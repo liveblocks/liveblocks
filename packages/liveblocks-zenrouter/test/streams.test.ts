@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  html,
   jsonArrayStream,
   ndjsonStream,
   textStream,
@@ -18,6 +19,27 @@ async function readStream(response: Response): Promise<string> {
   return result;
 }
 
+describe("html", () => {
+  test("returns html response with correct content-type", async () => {
+    const response = html("<h1>Hello</h1>");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe(
+      "text/html; charset=utf-8"
+    );
+    expect(await response.text()).toBe("<h1>Hello</h1>");
+  });
+
+  test("accepts custom status and headers", async () => {
+    const response = html("<p>Not Found</p>", 404, { "X-Custom": "value" });
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Content-Type")).toBe(
+      "text/html; charset=utf-8"
+    );
+    expect(response.headers.get("X-Custom")).toBe("value");
+    expect(await response.text()).toBe("<p>Not Found</p>");
+  });
+});
+
 describe("textStream", () => {
   test("streams from iterable", async () => {
     function* chunks() {
@@ -34,6 +56,17 @@ describe("textStream", () => {
   test("respects custom headers", () => {
     const response = textStream(["ok"], { "X-Custom": "value" });
     expect(response.headers.get("X-Custom")).toBe("value");
+  });
+
+  test("flushes buffer when it exceeds bufSize", async () => {
+    // With bufSize=5, "hello" (5 chars) triggers a flush, then " world" (6 chars) triggers another
+    function* chunks() {
+      yield "hello";
+      yield " world";
+    }
+
+    const response = textStream(chunks(), undefined, { bufSize: 5 });
+    expect(await response.text()).toBe("hello world");
   });
 
   test("handles empty iterable", async () => {
