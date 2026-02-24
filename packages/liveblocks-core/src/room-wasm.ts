@@ -1176,7 +1176,10 @@ export function createWasmRoom<
     broadcastEvent: (
       event: E,
       _options?: { shouldQueueEventIfNotReady?: boolean },
-    ) => handle.broadcastEvent(event),
+    ) => {
+      handle.broadcastEvent(event);
+      handle.flush();
+    },
 
     // Storage
     getStorage: () => {
