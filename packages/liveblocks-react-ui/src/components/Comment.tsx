@@ -111,6 +111,13 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   author?: ReactNode;
 
   /**
+   * The comment's date and edited status.
+   * Can be combined with `Comment.Date` to easily follow default styles,
+   * or the `Timestamp` primitive for more control.
+   */
+  date?: ReactNode;
+
+  /**
    * How to show or hide the actions.
    */
   showActions?: boolean | "hover";
@@ -216,18 +223,33 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   internalDropdownItems?: ReactNode;
 }
 
-export interface CommentAvatarProps extends ComponentProps<"div"> {
+export interface CommentAvatarProps
+  extends Omit<ComponentProps<"div">, "children"> {
   /**
    * The user ID to display the avatar for.
    */
   userId: string;
 }
 
-export interface CommentAuthorProps extends ComponentProps<"span"> {
+export interface CommentAuthorProps
+  extends Omit<ComponentProps<"span">, "children"> {
   /**
    * The user ID to display the author for.
    */
   userId: string;
+}
+
+export interface CommentDateProps
+  extends Omit<ComponentProps<"span">, "children"> {
+  /**
+   * The date to display.
+   */
+  date: Date | string | number;
+
+  /**
+   * The locale used when formatting the date.
+   */
+  locale?: string;
 }
 
 function CommentAvatar(props: CommentAvatarProps) {
@@ -236,6 +258,17 @@ function CommentAvatar(props: CommentAvatarProps) {
 
 function CommentAuthor(props: CommentAuthorProps) {
   return <User {...props} />;
+}
+
+function CommentDate({ locale, date, className, ...props }: CommentDateProps) {
+  return (
+    <Timestamp
+      locale={locale}
+      date={date}
+      className={cn("lb-date", className)}
+      {...(props as Omit<ComponentProps<"time">, "children" | "title">)}
+    />
+  );
 }
 
 export interface CommentDropdownItemProps
@@ -656,6 +689,7 @@ export const Comment = Object.assign(
         additionalContent,
         avatar,
         author,
+        date,
         className,
         actions,
         actionsClassName,
@@ -1017,21 +1051,25 @@ export const Comment = Object.assign(
                         onClick={handleAuthorClick}
                       />
                     )}
-                    <span className="lb-comment-date">
-                      <Timestamp
-                        locale={$.locale}
-                        date={comment.createdAt}
-                        className="lb-date lb-comment-date-created"
-                      />
-                      {comment.editedAt && comment.body && (
-                        <>
-                          {" "}
-                          <span className="lb-comment-date-edited">
-                            {$.COMMENT_EDITED}
-                          </span>
-                        </>
-                      )}
-                    </span>
+                    {date ? (
+                      <span className="lb-comment-date">{date}</span>
+                    ) : (
+                      <>
+                        <CommentDate
+                          locale={$.locale}
+                          date={comment.createdAt}
+                          className="lb-comment-date-created"
+                        />
+                        {comment.editedAt && comment.body && (
+                          <>
+                            {" "}
+                            <span className="lb-comment-date-edited">
+                              {$.COMMENT_EDITED}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    )}
                   </span>
                 </div>
                 {showActions && !isEditing && (
@@ -1099,5 +1137,10 @@ export const Comment = Object.assign(
      * Displays a comment's author.
      */
     Author: CommentAuthor,
+
+    /**
+     * Displays a comment's date.
+     */
+    Date: CommentDate,
   }
 );

@@ -16,6 +16,7 @@ export { AiTool } from "./components/AiTool";
 export type {
   CommentAuthorProps,
   CommentAvatarProps,
+  CommentDateProps,
   CommentDropdownItemProps,
   CommentProps,
 } from "./components/Comment";
