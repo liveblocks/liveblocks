@@ -21,7 +21,6 @@ import type {
   RoomStorageEngineJS,
 } from "./impl-selector";
 import {
-  _setEngine,
   getEngine,
 } from "./impl-selector";
 import { getTreesDiffOperations as jsGetTreesDiffOperations } from "./liveblocks-helpers";
@@ -100,6 +99,4 @@ export function createStorageEngine(): RoomStorageEngineJS | null {
   return engine.createStorageEngine?.() ?? null;
 }
 
-// Re-export for test setup
-export { _setEngine };
 export type { CrdtDocumentShadow, CrdtEngine, RoomStorageEngineJS };

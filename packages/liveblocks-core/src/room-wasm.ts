@@ -9,12 +9,13 @@
 import type { Status } from "./connection";
 import type { CrdtDocumentOwner, CrdtEntry } from "./crdts/impl-selector";
 import type { Lson, LsonObject } from "./crdts/Lson";
-import { resolveEntry } from "./crdts/wasm-live-helpers";
+import { _registerWasmLiveTypes, resolveEntry } from "./crdts/wasm-live-helpers";
 import { WasmLiveList } from "./crdts/WasmLiveList";
 import { WasmLiveMap } from "./crdts/WasmLiveMap";
 import { WasmLiveObject } from "./crdts/WasmLiveObject";
-// Side-effect import: registers WasmLive* constructors with resolveEntry()
-import "./crdts/wasm-live-register";
+
+// Register WasmLive* constructors so resolveEntry() can wrap child nodes.
+_registerWasmLiveTypes(WasmLiveObject, WasmLiveList, WasmLiveMap);
 import type { DCM, DE, DP, DS, DTM, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { Callback } from "./lib/EventSource";
