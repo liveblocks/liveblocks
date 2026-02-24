@@ -154,9 +154,9 @@ export function createWasmRoom<
 ): Room<P, S, U, E, TM, CM> {
   // The Rust RoomHandle expects createSocket(url) -> IWebSocketInstance.
   // The JS delegates use createSocket(authValue) -> IWebSocketInstance.
-  // We wrap the JS delegate to accept a URL. The Rust side builds the
-  // WebSocket URL from the auth token. The wrapper passes the URL through
-  // as a fake auth value that the JS MockWebSocket ignores anyway.
+  // We bridge by parsing the Rust URL to extract auth params (tok/pubkey)
+  // and passing the correct AuthValue to the JS delegate, which constructs
+  // its own URL from baseUrl/roomId using the right protocol version (/v8).
   //
   // Auto-tick: When a message arrives on the WebSocket, we need to process
   // it synchronously (like the JS room does). The Rust connector pushes
@@ -195,8 +195,26 @@ export function createWasmRoom<
   }
 
   const createSocketForWasm = (url: string) => {
-    const authValue = { type: "secret" as const, token: { raw: url } };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- intentional fake auth value for WASM socket bridge
+    // The Rust side constructs a full WebSocket URL including auth params.
+    // However, the JS delegate (createSocket) expects an AuthValue and
+    // constructs its own URL from baseUrl/roomId. We parse the Rust URL
+    // to extract auth params (tok or pubkey) and pass the correct AuthValue.
+    let authValue: { type: "secret"; token: { raw: string } } | { type: "public"; publicApiKey: string };
+    try {
+      const parsed = new URL(url);
+      const tok = parsed.searchParams.get("tok");
+      const pubkey = parsed.searchParams.get("pubkey");
+      if (tok) {
+        authValue = { type: "secret", token: { raw: tok } };
+      } else if (pubkey) {
+        authValue = { type: "public", publicApiKey: pubkey };
+      } else {
+        authValue = { type: "secret", token: { raw: url } };
+      }
+    } catch {
+      authValue = { type: "secret", token: { raw: url } };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- bridge between Rust URL and JS AuthValue
     const socket = config.delegates.createSocket(authValue as never);
 
     // Intercept addEventListener to wrap "message" callbacks with auto-tick
