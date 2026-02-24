@@ -11,10 +11,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.14.0",
-    "@liveblocks/node": "^3.14.0",
-    "@liveblocks/react": "^3.14.0",
-    "@liveblocks/react-ui": "^3.14.0",
+    "@liveblocks/client": "3.15.0-thread1",
+    "@liveblocks/node": "3.15.0-thread1",
+    "@liveblocks/react": "3.15.0-thread1",
+    "@liveblocks/react-ui": "3.15.0-thread1",
     "@types/node": "20.4.5",
     "@types/react-dom": "18.2.7",
     "clsx": "^2.0.0",
