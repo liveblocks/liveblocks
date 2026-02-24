@@ -36,6 +36,7 @@
     "test:types": "tsd"
   },
   "license": "Apache-2.0",
+  "author": "Liveblocks Inc",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "decoders": "^2.8.0",
