@@ -111,7 +111,7 @@ export interface CommentProps<CM extends BaseMetadata = DCM>
   author?: ReactNode;
 
   /**
-   * The comment's date and edited status.
+   * The comment's date.
    * Can be combined with `Comment.Date` to easily follow default styles,
    * or the `Timestamp` primitive for more control.
    */

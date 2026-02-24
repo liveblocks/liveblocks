@@ -986,10 +986,10 @@ The `children` prop on `Comment` allows overriding or wrapping the comments’
 content, while the `additionalContent` prop can be useful to render custom
 content integrated into the comments’ content, just below the comment body.
 
-`Comment` also offers `avatar` and `author` props to allow overriding or
-customizing the comment’s displayed avatar and author respectively.
-`Comment.Avatar` and `Comment.Author` can be used to retain the default behavior
-and styles but with more control over them.
+`Comment` also offers `avatar`, `author`, and `date` props to allow overriding
+or customizing the comment’s displayed avatar, author, and date respectively.
+`Comment.Avatar`, `Comment.Author`, and `Comment.Date` can be used to retain the
+default behavior and styles but with more control over them.
 
 ```tsx
 import { Comment, Thread } from "@liveblocks/react-ui";
@@ -1010,6 +1010,14 @@ import { Comment, Thread } from "@liveblocks/react-ui";
           <span className="custom-author">
             <Comment.Author userId={props.comment.userId} />
             <span>Custom label</span>
+          </span>
+        }
+        date={
+          <span className="custom-date">
+            <Comment.Date date={props.comment.createdAt} />
+            {props.comment.editedAt && (
+              <span className="custom-edited-label">Edited</span>
+            )}
           </span>
         }
         additionalContent={
@@ -1186,6 +1194,9 @@ icon next to the item’s label.
     defaultValue="false"
   >
     Whether to show deleted comments.
+  </PropertiesListItem>
+  <PropertiesListItem name="additionalContent" type="ReactNode">
+    Additional content to display below the thread’s comments.
   </PropertiesListItem>
   <PropertiesListItem
     name="commentDropdownItems"
@@ -1605,6 +1616,10 @@ function Component() {
   <PropertiesListItem name="author" type="ReactNode">
     The comment’s author. Can be combined with `Comment.Author` to easily follow
     default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="date" type="ReactNode">
+    The comment’s date. Can be combined with `Comment.Date` to easily follow
+    default styles, or the `Timestamp` primitive for more control.
   </PropertiesListItem>
   <PropertiesListItem
     name="showActions"
