@@ -7,6 +7,11 @@
 - Each `createRoomContext()` invocation now creates its own isolated context to
   allow nesting independent room contexts and their `RoomProvider` components.
 
+### `@liveblocks/react-blocknote`
+
+- Support newer BlockNote versions and bump the minimum required version to
+  v0.43.0. (Thanks @nperez0111 for the contribution!)
+
 ## v3.14.0
 
 This release adds support for opting-in to the new storage engine on a per-room
