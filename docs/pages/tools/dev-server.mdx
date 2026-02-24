@@ -212,6 +212,45 @@ curl http://localhost:1153/v2/* \
   -H 'Authorization: Bearer sk_localdev'
 ```
 
+## Quick local testing
+
+When your unit tests need the Liveblocks dev server to be running, you can use
+`--cmd "vitest run"` (or whichever test command you use) to run your tests in a
+temporary, ephemeral, dev server instance.
+
+This mode will:
+
+1. Start a fresh, empty, dev server instance.
+2. Run your unit tests.
+3. Stop the dev server.
+
+Example output:
+
+```bash
+npx liveblocks dev --cmd 'vitest run'
+Starting the Liveblocks dev server...
+
+Liveblocks dev server running at http://localhost:1153
+Server logs: /tmp/liveblocks-dev-XXXXXX/server.log
+
+✓ src/__tests__/your-unit-test.test.ts (28 tests) 40ms
+
+Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  11:24:51
+   Duration  0.5s
+
+Liveblocks dev server shut down
+```
+
+We recommend:
+
+1. `npx liveblocks dev` for manual testing and development, which retains data
+   between runs in the `.liveblocks/` folder.
+2. `npx liveblocks dev --cmd "vitest run"` for locally running your unit tests
+   against a fresh instance (your local data in `.liveblocks/` won't be affected
+   by your unit tests).
+
 ## Continuous Integration (CI) testing
 
 You can use the dev server in CI environments by setting up a test environment

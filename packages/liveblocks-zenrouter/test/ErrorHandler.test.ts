@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import type { ErrorContext } from "~/ErrorHandler.js";
 import { ErrorHandler } from "~/ErrorHandler.js";
-import { HttpError } from "~/index.js";
+import { abort, HttpError } from "~/index.js";
 
 import {
   captureConsole,
@@ -137,6 +137,23 @@ describe("ErrorHandler", () => {
       2,
       "...but no uncaught error handler was set up for this router."
     );
+  });
+
+  test("handles generic abort with status code unsupported by HttpError", async () => {
+    const eh = new ErrorHandler();
+
+    // abort(500) creates a generic abort Response. When the handler tries to
+    // convert it to an HttpError, the constructor throws because 5xx is not
+    // allowed. The catch fallback returns a generic error response.
+    let abortResponse: Response;
+    try {
+      abort(500);
+    } catch (e) {
+      abortResponse = e as Response;
+    }
+
+    const res = await eh.handle(abortResponse!, unused);
+    await expectResponse(res, { error: "Unknown" }, 500);
   });
 
   test("handles bugs in error handler itself", async () => {

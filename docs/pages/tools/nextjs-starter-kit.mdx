@@ -11,7 +11,7 @@ The Next.js Starter Kit is an open-source template that showcases all aspects of
 Liveblocks in a single, modern application.
 
 <Figure>
-  <video autoPlay loop muted playsInline>
+  <video height={1080} width={1592} autoPlay loop muted playsInline>
     <source src="/assets/nextjs-starter-kit/starter-kit.mp4" type="video/mp4" />
   </video>
 </Figure>
@@ -28,10 +28,21 @@ YouTube, or [try the project online](https://nextjs-starter-kit.liveblocks.app).
 
 The Next.js Starter Kit includes the following
 
-- Documents dashboard with pagination, drafts, groups, auto-revalidation
-- Collaborative whiteboard app with a fully-featured share menu
-- Authentication compatible with GitHub, Google, Auth0, and more
-- Document permissions can be scoped to users, groups, and the public
+- Documents dashboard with pagination, organizations, auto-revalidation.
+- Collaborative apps including a whiteboard, text documents, note editor,
+  drawing canvas.
+- Realtime presence with avatars, cursors, carets.
+- Fully-featured share menu with users, organizations, public permissions.
+- Authentication compatible with GitHub, Google, Auth0, and more.
+
+<Figure>
+  <video height={1080} width={1592} autoPlay loop muted playsInline>
+    <source
+      src="/assets/nextjs-starter-kit/starter-kit-apps.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
 
 ## Set up the Next.js Starter Kit
 
@@ -86,7 +97,7 @@ Vercel.
 #### Connect to Liveblocks and retrieve your secret key
 
 If you prefer to work locally, you can tell the installer you would not like to
-"deploy to Vercel." After declining the deployment option, the installer will
+"deploy to Vercel". After declining the deployment option, the installer will
 prompt adding your Liveblocks Key to the application automatically. If you
 forwent deployment or indicated that you would like to get your Liveblocks
 secret key automatically, the Liveblocks integration page will open in a new
@@ -149,7 +160,7 @@ up your GitHub secret key and client id.
 
 Almost there! `.env.local` should now contain lines similar to this:
 
-```dotenv file=".env.local"
+```env file=".env.local"
 GITHUB_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_CLIENT_ID=XXXXXXXXXXXXXXXXXXXX
 ```
@@ -191,7 +202,7 @@ up your Auth0 secret key and client information.
 `.env.local` should now contain these three lines, along with anything
 previously there:
 
-```dotenv file=".env.local"
+```env file=".env.local"
 AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
@@ -224,10 +235,10 @@ Navigate there and add your details, for example, if you’re signing in with
 
 ```ts file="data/users.ts"
 {
-  id: "yourname@example.com",
+  id: "your.name@example.com",
   name: "Your Name",
   avatar: "https://liveblocks.io/avatars/avatar-0.png",
-  groupIds: ["product", "engineering", "design"],
+  organizationIds: ["liveblocks", "your.name@example.com"],
 },
 ```
 
@@ -266,8 +277,10 @@ lib
 primitives
 styles
 types
+utils
 auth.ts
 auth.config.ts
+constants.ts
 liveblocks.config.ts
 liveblocks.server.config.ts
 package.json
@@ -314,6 +327,8 @@ logic to create and modify documents.
     <dd>File that links NextAuth to your database.</dd>
     <dt>`/auth.config.ts`</dt>
     <dt>File where NextAuth providers are set up.</dt>
+    <dt>`/constants.ts`</dt>
+    <dd>Constant strings used in the app, such as URLs and global IDs.</dd>
     <dt>`/liveblocks.config.ts`</dt>
     <dd>Liveblocks config file.</dd>
     <dt>`/liveblocks.server.config.ts`</dt>
@@ -632,6 +647,7 @@ correct properties:
 
 - [`/lib/database/getGroup.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getGroup.ts)
 - [`/lib/database/getGroups.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getGroups.ts)
+- [`/lib/database/getOrganization.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getOrganization.ts)
 - [`/lib/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/database/getUser.ts)
 
 You can then remove the `/data` folder. Everything else should work as expected.

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zenrouter",
-  "version": "1.0.8",
+  "version": "1.0.12",
   "description": "An opinionated router library for building APIs following best practices.",
   "type": "module",
   "main": "./dist/index.js",
@@ -38,12 +38,10 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
+    "decoders": "^2.8.0",
     "hotscript": "^1.0.13",
-    "nanoid": "^3"
-  },
-  "peerDependencies": {
-    "@opentelemetry/api": "^1.9.0",
-    "decoders": "^2.8.0-1"
+    "nanoid": "^3",
+    "zod": "^4.1.8"
   },
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-import type { JSONObject, JSONValue } from "decoders";
+import type { Json, JsonObject } from "@liveblocks/core";
 
 import type { HeadersInit } from "./compat.js";
 import { HttpError, ValidationError } from "./HttpError.js";
@@ -20,6 +20,7 @@ const KB = 1024;
  * But not supported yet in:
  * - Bun - see https://github.com/oven-sh/bun/issues/3700
  */
+/* istanbul ignore next -- @preserve polyfill only used in environments without ReadableStream.from (e.g. Bun) */
 function ReadableStream_from_shim<T>(iterable: Iterable<T>): ReadableStream<T> {
   const iterator = iterable[Symbol.iterator]();
   return new ReadableStream<T>({
@@ -38,6 +39,7 @@ function ReadableStream_from_shim<T>(iterable: Iterable<T>): ReadableStream<T> {
 }
 
 /* eslint-disable */
+/* istanbul ignore next -- @preserve only one branch reachable per environment */
 const ReadableStream_from =
   typeof (ReadableStream as any).from === "function"
     ? ((ReadableStream as any).from.bind(ReadableStream) as <T>(
@@ -77,7 +79,7 @@ export function empty(): Response {
  * Return a JSON response.
  */
 export function json(
-  value: JSONObject,
+  value: JsonObject,
   status = 200,
   headers?: HeadersInit
 ): Response {
@@ -165,7 +167,7 @@ export function textStream(
  * that yields JSON values. Each value will be serialized as a single line.
  */
 export function ndjsonStream(
-  iterable: Iterable<JSONValue>,
+  iterable: Iterable<Json>,
   headers?: HeadersInit
 ): Response {
   const lines = imap(iterable, (value) => `${JSON.stringify(value)}\n`);
@@ -180,7 +182,7 @@ export function ndjsonStream(
  * values. The output will be a valid JSON array: [value1,value2,...]\n
  */
 export function jsonArrayStream(
-  iterable: Iterable<JSONValue>,
+  iterable: Iterable<Json>,
   headers?: HeadersInit
 ): Response {
   function* chunks() {

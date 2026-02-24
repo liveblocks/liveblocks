@@ -1,5 +1,4 @@
 import type { Resolve } from "@liveblocks/core";
-import type { Decoder } from "decoders";
 import type {
   ComposeLeft,
   Objects,
@@ -9,6 +8,7 @@ import type {
   Unions,
 } from "hotscript";
 
+import type { StandardSchemaV1 } from "./standard-schema.js";
 import { raise } from "./utils.js";
 
 const cleanSegmentRe = /^[\w-]+$/;
@@ -80,9 +80,9 @@ type ExtractParamsBasic<P extends Pattern> = Pipe<
  * For:
  *
  *   {
- *     a: Decoder<number>,
- *     b: Decoder<'hi'>,
- *     c: Decoder<boolean>,
+ *     a: StandardSchemaV1<unknown, number>,
+ *     b: StandardSchemaV1<unknown, 'hi'>,
+ *     c: StandardSchemaV1<unknown, boolean>,
  *   }
  *
  * Will return:
@@ -94,8 +94,10 @@ type ExtractParamsBasic<P extends Pattern> = Pipe<
  *   }
  *
  */
-export type MapDecoderTypes<T> = {
-  [K in keyof T]: T[K] extends Decoder<infer V> ? V : never;
+export type MapSchemaOutput<T> = {
+  [K in keyof T]: T[K] extends StandardSchemaV1
+    ? StandardSchemaV1.InferOutput<T[K]>
+    : never;
 };
 
 // export type WithDefaults<A, B> = Pipe<>;
