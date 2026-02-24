@@ -2,7 +2,20 @@
 
 ## v3.15.0
 
-...
+### `@liveblocks/react-ui`
+
+- Add various new ways to customize `Thread` and `Comment`:
+  - Comments in `Thread` can now be overridden or customized via the
+    `components` prop.
+  - New parts of `Comment` (content, avatar, author, and date) can now be
+    overridden or customized via the `children`, `additionalContent`, `avatar`,
+    `author`, and `date` props.
+- Fix `commentDropdownItems` prop on `Thread` not working as expected in some
+  cases.
+
+### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
+
+- Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
 
 ## v3.14.0
 
