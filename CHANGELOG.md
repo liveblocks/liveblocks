@@ -2,7 +2,10 @@
 
 ## v3.15.0
 
-...
+### `@liveblocks/react`
+
+- Each `createRoomContext()` invocation now creates its own isolated context to
+  allow nesting independent room contexts and their `RoomProvider` components.
 
 ## v3.14.0
 
