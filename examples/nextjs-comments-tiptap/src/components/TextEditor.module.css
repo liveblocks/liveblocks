@@ -64,7 +64,6 @@
   background: var(--color-surface-elevated);
 }
 
-
 .threads {
   position: absolute;
   top: 0;
@@ -82,7 +81,7 @@
   user-select: none;
   margin-left: var(--space-4);
   font-size: var(--size-sm);
-  max-width: 260px
+  max-width: 260px;
 }
 
 .noCommentsHeader {
@@ -98,6 +97,23 @@
 
 .noCommentsButton svg {
   opacity: 0.8;
+}
+
+.commentAvatar {
+  position: relative;
+  isolation: isolate;
+}
+
+.commentAvatarPresenceIndicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  z-index: 10;
+  background-color: rgb(var(--color-green));
+  box-shadow: 0 0 0 3px var(--lb-background);
 }
 
 @media (max-width: 1279px) {
