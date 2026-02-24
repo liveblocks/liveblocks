@@ -8,7 +8,7 @@
 <p>
   <a href="https://npmjs.org/package/@liveblocks/zenrouter"><img src="https://img.shields.io/npm/v/@liveblocks/zenrouter?style=flat&label=npm&color=c33" alt="NPM" /></a>
   <a href="https://bundlephobia.com/package/@liveblocks/zenrouter"><img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/zenrouter?style=flat&label=size&color=09f" alt="Size" /></a>
-  <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-APACHE-2.0"><img src="https://img.shields.io/badge/licenses-Apache--2.0-green" alt="License" /></a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-APACHE-2.0"><img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License" /></a>
 </p>
 
 Zen Router is an opinionated API router with batteries included, encouraging
