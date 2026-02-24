@@ -51,7 +51,7 @@ import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Comment as DefaultComment, type CommentProps } from "./Comment";
-import { Composer, type ComposerProps } from "./Composer";
+import { Composer as DefaultComposer, type ComposerProps } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
@@ -86,15 +86,18 @@ function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
 }
 
 export interface ThreadComponents<
-  // Future components might reference thread metadata so we declare it
-  // already to respect the `TM` → `CM` order used everywhere else.
-  _TM extends BaseMetadata = DTM,
+  TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
 > {
   /**
    * The component used to display comments.
    */
   Comment: ComponentType<CommentProps<CM>>;
+
+  /**
+   * The component used to display the composer to reply to the thread.
+   */
+  Composer: ComponentType<ComposerProps<TM, CM>>;
 }
 
 export interface ThreadProps<
@@ -275,6 +278,7 @@ export const Thread = forwardRef(
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
     const Comment = components?.Comment ?? DefaultComment;
+    const Composer = components?.Composer ?? DefaultComposer;
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
