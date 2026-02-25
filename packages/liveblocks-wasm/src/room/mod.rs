@@ -424,6 +424,16 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
         let mut reverse_deque = VecDeque::new();
         let mut all_updates: Vec<StorageUpdate> = Vec::new();
 
+        // Stamp fresh opIds on ops that lack them (undo/redo reverse ops
+        // are stored without opIds — matching JS applyLocalOps which
+        // assigns pool.generateOpId() before sending to server).
+        let mut ops = ops;
+        for op in &mut ops {
+            if op.op_id.is_none() {
+                op.op_id = Some(self.id_gen.generate_op_id());
+            }
+        }
+
         for op in &ops {
             // Compute reverse BEFORE applying
             let rev_ops = compute_reverse_ops(&self.document, op);

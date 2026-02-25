@@ -333,12 +333,33 @@ fn handle_update_storage<C: WebSocketConnector, H: HttpClient>(
                 }
             }
             OpSourceResult::Ours => {
-                // Already applied locally. Only re-apply if the ACK carries
-                // a different parentKey (position) — this triggers conflict
-                // resolution (e.g. shifting list items). Skip otherwise to
-                // avoid firing spurious StorageChanged events.
-                let position_differs = ack_position_differs(&room.document, op);
-                if position_differs {
+                // Already applied locally. Re-apply selectively to handle
+                // conflict resolution and server-side reordering:
+                //
+                // CREATE ACKs: Always re-apply. apply_create handles:
+                //   - Position unchanged, node in children → NotModified
+                //   - Position changed → conflict resolution
+                //   - Orphaned node (implicitly deleted) → re-inserts
+                //   - Set ACK with deleted_id → processes deletion
+                //   - Node not in arena → re-creates (JS does same in
+                //     _applyInsertAck → #createAttachItemAndSort)
+                //
+                // DELETE ACKs: Always re-apply. Normally a no-op (node
+                //   already deleted locally → returns NotModified). But when
+                //   a preceding CREATE ACK in the same batch re-created the
+                //   node, the DELETE ACK must clean it up. Matches JS which
+                //   applies all ops in an UpdateStorage batch sequentially.
+                //
+                // UPDATE/MOVE ACKs: Only re-apply when position differs
+                //   (optimization — these were already applied locally).
+                let is_delete = matches!(
+                    op.op_code,
+                    OpCode::DeleteCrdt | OpCode::DeleteObjectKey
+                );
+                let should_reapply = is_create
+                    || is_delete
+                    || ack_position_differs(&room.document, op);
+                if should_reapply {
                     let result = apply_op(&mut room.document, op, OpSource::Ours);
                     if let ApplyResult::Modified { update, .. } = result {
                         merge_storage_update(&mut all_updates, update);
@@ -411,10 +432,14 @@ fn conflicts_with_unacked_op<C: WebSocketConnector, H: HttpClient>(
         None => return false,
     };
 
-    // Check parent type — only conflict-filter for Object/Map, not List
+    // Check parent type — only conflict-filter for Object, not List or Map.
+    // For LiveList: items coexist at the same position, no conflict.
+    // For LiveMap: remote ops should be applied immediately (last-writer-wins);
+    // the local value is restored when the local ACK arrives and re-creates
+    // the node via apply_create's "Node NOT in arena" path.
     if let Some(parent_node) = room.document.get_node_by_id(remote_parent_id) {
-        if parent_node.node_type == CrdtType::List {
-            return false; // List items coexist, no conflict
+        if parent_node.node_type == CrdtType::List || parent_node.node_type == CrdtType::Map {
+            return false;
         }
     }
 

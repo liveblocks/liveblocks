@@ -185,7 +185,7 @@ export function createWasmRoom<
       handleRef.tick();
       handleRef.flush();
     } catch {
-      // Handle may be freed
+      // Handle may be freed during teardown — ignore
     } finally {
       tickInProgress = false;
     }
@@ -344,7 +344,9 @@ export function createWasmRoom<
       eventSources.storageStatus.notify(computed);
     }
   });
-  handle.subscribe("event", (data) => eventSources.customEvent.notify(data));
+  handle.subscribe("event", (data) => {
+    eventSources.customEvent.notify(data);
+  });
   handle.subscribe("history", (data) =>
     eventSources.history.notify(
       data as { canUndo: boolean; canRedo: boolean },
@@ -1149,6 +1151,7 @@ export function createWasmRoom<
     destroy: () => {
       stopTickLoop();
       isDestroyed = true;
+      handleRef = null; // Prevent autoTick from calling freed handle
       eventSources.roomWillDestroy.notify();
       handle.disconnect();
       handle.free();

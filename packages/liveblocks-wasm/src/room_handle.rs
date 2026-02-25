@@ -1806,8 +1806,9 @@ impl RoomHandle {
                     obj.insert("event".to_string(), event.clone());
                     (
                         "event",
-                        serde_wasm_bindgen::to_value(&JsonValue::Object(obj))
-                            .unwrap_or(JsValue::UNDEFINED),
+                        JsonValue::Object(obj).serialize(
+                            &serde_wasm_bindgen::Serializer::json_compatible()
+                        ).unwrap_or(JsValue::UNDEFINED),
                     )
                 }
                 RoomEvent::HistoryChanged {
@@ -1819,8 +1820,9 @@ impl RoomHandle {
                     obj.insert("canRedo".to_string(), JsonValue::from(*can_redo));
                     (
                         "history",
-                        serde_wasm_bindgen::to_value(&JsonValue::Object(obj))
-                            .unwrap_or(JsValue::UNDEFINED),
+                        JsonValue::Object(obj).serialize(
+                            &serde_wasm_bindgen::Serializer::json_compatible()
+                        ).unwrap_or(JsValue::UNDEFINED),
                     )
                 }
                 RoomEvent::Error { message, code } => {
@@ -1829,8 +1831,9 @@ impl RoomHandle {
                     obj.insert("code".to_string(), JsonValue::from(*code));
                     (
                         "error",
-                        serde_wasm_bindgen::to_value(&JsonValue::Object(obj))
-                            .unwrap_or(JsValue::UNDEFINED),
+                        JsonValue::Object(obj).serialize(
+                            &serde_wasm_bindgen::Serializer::json_compatible()
+                        ).unwrap_or(JsValue::UNDEFINED),
                     )
                 }
                 RoomEvent::LostConnection(detail) => {

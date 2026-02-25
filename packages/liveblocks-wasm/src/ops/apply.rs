@@ -112,42 +112,51 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
     // For list children, we need to update the position when it differs
     // (matching JS _applyInsertAck behavior where server may relocate the item).
     if let Some(existing_key) = doc.get_key_by_id(&op.id) {
-        // Track local set-intent CREATE ops for unacked set detection, even when
+        // Track local CREATE ops for unacked set detection, even when
         // the node already exists (WASM mutation handles pre-create nodes before
-        // this function is called with source=Local). Only set-intent ops are
-        // tracked — regular inserts/pushes don't have superseded-set semantics.
-        if source == OpSource::Local && op.intent.as_deref() == Some("set") {
-            if let Some(op_id) = &op.op_id {
-                doc.unacked_creates.insert(
-                    (parent_id.clone(), parent_key.clone()),
-                    op_id.clone(),
-                );
+        // this function is called with source=Local). Tracked for set-intent
+        // ops and Map parent creates (same as the tracking at "Node NOT in arena").
+        if source == OpSource::Local {
+            let is_set_intent = op.intent.as_deref() == Some("set");
+            let parent_is_map = doc.get_key_by_id(&parent_id)
+                .and_then(|pk| doc.get_node(pk))
+                .map_or(false, |n| matches!(&n.data, CrdtData::Map { .. }));
+            if is_set_intent || parent_is_map {
+                if let Some(op_id) = &op.op_id {
+                    doc.unacked_creates.insert(
+                        (parent_id.clone(), parent_key.clone()),
+                        op_id.clone(),
+                    );
+                }
             }
         }
 
-        // Clean up unacked_creates when a set-intent ACK arrives and the node
-        // already exists. This matches JS _applySetAck which calls
-        // #unacknowledgedSets.delete(op.parentKey) upon processing the ACK.
-        // Without this cleanup, stale entries leak across iterations and cause
-        // subsequent non-set-intent ACKs at the same position to be
-        // incorrectly skipped (the non-set-intent check at line 387 sees
-        // latest_op_id.is_some() && latest_op_id != Some(op_id) → NotModified).
+        // Clean up unacked_creates when an ACK arrives and the node already
+        // exists. For set-intent ACKs: matches JS _applySetAck which calls
+        // #unacknowledgedSets.delete(op.parentKey). For map ACKs: clean up
+        // tracking to prevent stale entries.
         //
-        // For superseded set ACKs (a newer local set at the same position),
-        // we skip position updates but still process deleted_id. This matches
-        // JS _applySetAck which returns early when unacknowledgedOpId !== op.opId.
+        // For superseded ACKs (a newer local create at the same key),
+        // we skip position updates but still process deleted_id (set-intent).
         let mut set_ack_superseded = false;
-        if source == OpSource::Ours && op.intent.as_deref() == Some("set") {
-            if let Some(op_id) = &op.op_id {
-                let ack_key = (parent_id.clone(), parent_key.clone());
-                let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
-                if latest_op_id == Some(op_id.as_str()) {
-                    // Current (non-superseded) set ACK — clean up tracking
-                    doc.unacked_creates.remove(&ack_key);
-                } else if latest_op_id.is_some() {
-                    // Superseded: a newer local set at this (parent, key) — skip
-                    // position updates but still process deleted_id below.
-                    set_ack_superseded = true;
+        if source == OpSource::Ours {
+            let is_set_intent = op.intent.as_deref() == Some("set");
+            let parent_is_map = doc.get_key_by_id(&parent_id)
+                .and_then(|pk| doc.get_node(pk))
+                .map_or(false, |n| matches!(&n.data, CrdtData::Map { .. }));
+
+            if is_set_intent || parent_is_map {
+                if let Some(op_id) = &op.op_id {
+                    let ack_key = (parent_id.clone(), parent_key.clone());
+                    let latest_op_id = doc.unacked_creates.get(&ack_key).map(|s| s.as_str());
+                    if latest_op_id == Some(op_id.as_str()) {
+                        // Current (non-superseded) ACK — clean up tracking
+                        doc.unacked_creates.remove(&ack_key);
+                    } else if latest_op_id.is_some() {
+                        // Superseded: a newer local create at this (parent, key)
+                        // — skip position updates but still process deleted_id.
+                        set_ack_superseded = true;
+                    }
                 }
             }
         }
@@ -346,8 +355,13 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
             // restoration. Matching JS #applySetAck / #applyInsertAck which
             // restore implicitly deleted items when their ACK arrives.
 
-            // Handle conflict at the target position — implicitly delete any
-            // existing item at that position to make room for the restored node.
+            let is_set_intent = op.intent.as_deref() == Some("set");
+
+            // Handle conflict at the target position.
+            // Set ACK vs Insert ACK have DIFFERENT conflict resolution:
+            // - Insert ACK: SHIFT the conflict item to make room
+            // - Set ACK: IMPLICITLY DELETE the conflict item (remove from
+            //   children, keep in arena for potential restoration)
             if let Some(parent) = doc.get_node(pk)
                 && let CrdtData::List { children, .. } = &parent.data
             {
@@ -356,26 +370,37 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
                     .position(|(pos, _)| pos.as_str() == parent_key)
                 {
                     let conflict_child_key = children[conflict_idx].1;
-                    // Shift the conflicting item to make room
-                    let before_pos = Some(parent_key.clone());
-                    let after_pos =
-                        children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
-                    let shifted_pos = crate::position::make_position(
-                        before_pos.as_deref(),
-                        after_pos.as_deref(),
-                    );
-                    if let Some(child) = doc.get_node_mut(conflict_child_key) {
-                        child.parent_key = Some(shifted_pos.clone());
-                    }
-                    if let Some(parent) = doc.get_node_mut(pk)
-                        && let CrdtData::List { children, .. } = &mut parent.data
-                    {
-                        if let Some(entry) =
-                            children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+
+                    if is_set_intent {
+                        // Set ACK: implicitly delete the conflict item.
+                        // Remove from children but keep in arena.
+                        if let Some(parent) = doc.get_node_mut(pk)
+                            && let CrdtData::List { children, .. } = &mut parent.data
                         {
-                            entry.0 = shifted_pos;
+                            children.retain(|(_, ck)| *ck != conflict_child_key);
                         }
-                        children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                    } else {
+                        // Insert ACK: shift the conflicting item to make room
+                        let before_pos = Some(parent_key.clone());
+                        let after_pos =
+                            children.get(conflict_idx + 1).map(|(pos, _)| pos.clone());
+                        let shifted_pos = crate::position::make_position(
+                            before_pos.as_deref(),
+                            after_pos.as_deref(),
+                        );
+                        if let Some(child) = doc.get_node_mut(conflict_child_key) {
+                            child.parent_key = Some(shifted_pos.clone());
+                        }
+                        if let Some(parent) = doc.get_node_mut(pk)
+                            && let CrdtData::List { children, .. } = &mut parent.data
+                        {
+                            if let Some(entry) =
+                                children.iter_mut().find(|(_, ck)| *ck == conflict_child_key)
+                            {
+                                entry.0 = shifted_pos;
+                            }
+                            children.sort_by(|(a, _), (b, _)| a.cmp(b));
+                        }
                     }
                 }
             }
@@ -500,17 +525,32 @@ fn apply_create(doc: &mut Document, op: &Op, source: OpSource) -> ApplyResult {
         }
     }
 
-    // Track local set-intent CREATE ops for unacked set detection.
+    // Track local CREATE ops for unacked set detection.
     // When a later CREATE at the same (parent, key) overwrites this entry,
     // the earlier op becomes "superseded" and its ACK will be skipped.
-    // Only set-intent ops are tracked — regular inserts, pushes, and
-    // undo-generated CREATEs don't have superseded-set semantics.
-    if source == OpSource::Local && op.intent.as_deref() == Some("set") {
-        if let Some(op_id) = &op.op_id {
-            doc.unacked_creates.insert(
-                (parent_id.clone(), parent_key.clone()),
-                op_id.clone(),
-            );
+    //
+    // Tracked for:
+    //   - set-intent ops (list set): superseded-set semantics
+    //   - Map parent creates: every map set at the same key supersedes the
+    //     previous one (last-writer-wins), so ACKs for superseded values
+    //     must be skipped to avoid state flip-flops.
+    //
+    // NOT tracked for:
+    //   - List inserts/pushes (no superseding — items coexist)
+    //   - Undo-generated CREATEs without set intent
+    if source == OpSource::Local {
+        let is_set_intent = op.intent.as_deref() == Some("set");
+        let parent_is_map = doc.get_key_by_id(&parent_id)
+            .and_then(|pk| doc.get_node(pk))
+            .map_or(false, |n| matches!(&n.data, CrdtData::Map { .. }));
+
+        if is_set_intent || parent_is_map {
+            if let Some(op_id) = &op.op_id {
+                doc.unacked_creates.insert(
+                    (parent_id.clone(), parent_key.clone()),
+                    op_id.clone(),
+                );
+            }
         }
     }
 

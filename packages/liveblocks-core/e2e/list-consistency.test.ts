@@ -3,6 +3,8 @@ import { expect, test } from "vitest";
 import { LiveList } from "../src/crdts/LiveList";
 import { prepareTestsConflicts } from "./utils";
 
+const isWasm = process.env.LIVEBLOCKS_ENGINE === "wasm";
+
 test(
   "move/insert/undo should result in consistent state across clients",
   prepareTestsConflicts(
@@ -346,7 +348,9 @@ test(
 // Regression test: property test counterexample (shrunk).
 // B.insert("eg") disappears from client A after final sync.
 // Reproduces a consistency violation found by the list-property property test.
-test.fails(
+// Note: WASM engine handles this case correctly (no consistency violation),
+// so we only mark it as expected-to-fail for the JS engine.
+(isWasm ? test : test.fails)(
   "insert/set/undo/move/undo consistency with missing item after sync",
   prepareTestsConflicts(
     { list: new LiveList<string>([]) },
