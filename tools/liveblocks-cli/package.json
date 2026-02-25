@@ -22,7 +22,6 @@
     "test:typescript": "tsc --noEmit"
   },
   "license": "AGPL-3.0-or-later",
-  "author": "Liveblocks Inc",
   "keywords": [
     "Liveblocks",
     "CLI",
