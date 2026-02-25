@@ -1,24 +1,12 @@
 <p align="center">
-  <a href="https://liveblocks.io#gh-light-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-light.svg" alt="Liveblocks"   />
-  </a>
-  <a href="https://liveblocks.io#gh-dark-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-dark.svg" alt="Liveblocks"   />
-  </a>
+  <a href="https://liveblocks.io#gh-light-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-light.svg" alt="Liveblocks"   /></a>
+  <a href="https://liveblocks.io#gh-dark-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-dark.svg" alt="Liveblocks"   /></a>
 </p>
 <p align="center">
-  <a href="https://twitter.com/liveblocks">
-    <img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=x&color=555&logoColor=fff" alt="X" />
-  </a>
-  <a href="https://liveblocks.io/discord">
-    <img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" />
-  </a>
-    <a href="https://www.youtube.com/channel/UCDXT5skWxzOorIQrWG5OT2w">
-    <img src="https://img.shields.io/youtube/channel/subscribers/UCDXT5skWxzOorIQrWG5OT2w?style=flat&label=youtube&logo=youtube&color=e14&logoColor=fff" alt="YouTube" />
-  </a>
-  <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&logo=github&color=f80&logoColor=fff" alt="License" />
-  </a>
+  <a href="https://twitter.com/liveblocks"><img src="https://img.shields.io/badge/liveblocks-message?style=flat&logo=x&color=555&logoColor=fff" alt="X" /></a>
+  <a href="https://liveblocks.io/discord"><img src="https://img.shields.io/discord/913109211746009108?style=flat&label=discord&logo=discord&color=85f&logoColor=fff" alt="Discord" /></a>
+  <a href="https://www.youtube.com/channel/UCDXT5skWxzOorIQrWG5OT2w"><img src="https://img.shields.io/youtube/channel/subscribers/UCDXT5skWxzOorIQrWG5OT2w?style=flat&label=youtube&logo=youtube&color=e14&logoColor=fff" alt="YouTube" /></a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE"><img src="https://img.shields.io/badge/licenses-Apache--2.0%2C%20AGPL--3.0-green" alt="License" /></a>
 </p>
 
 **[Liveblocks](https://liveblocks.io) gives you the building blocks and
@@ -90,8 +78,8 @@ notifications, and more.
 
 ## License
 
-Most of this repository is licensed under the Apache License 2.0, Copyright
-© 2021-present [Liveblocks](https://liveblocks.io). Some components are
-licensed under AGPL-3.0-or-later.
+Most of this repository is licensed under the Apache License 2.0, Copyright ©
+2021-present [Liveblocks](https://liveblocks.io). Some components are licensed
+under AGPL-3.0-or-later.
 
 See [LICENSE](./LICENSE) for details.

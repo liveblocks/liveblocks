@@ -3,6 +3,7 @@
   "version": "3.14.0",
   "description": "A server-side utility that lets you set up a Liveblocks authentication endpoint. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
   "type": "module",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",

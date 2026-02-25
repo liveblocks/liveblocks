@@ -1,71 +1,27 @@
 <p align="center">
-  <a href="https://liveblocks.io#gh-light-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
-  </a>
-  <a href="https://liveblocks.io#gh-dark-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
-  </a>
+  <a href="https://liveblocks.io#gh-light-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" /></a>
+  <a href="https://liveblocks.io#gh-dark-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" /></a>
 </p>
 
 # `@liveblocks/server`
 
 <p>
-  <a href="https://npmjs.org/package/@liveblocks/server">
-    <img src="https://img.shields.io/npm/v/@liveblocks/server?style=flat&label=npm&color=c33" alt="NPM" />
-  </a>
-  <a href="https://bundlephobia.com/package/@liveblocks/server">
-    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/server?style=flat&label=size&color=09f" alt="Size" />
-  </a>
-  <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&color=f80" alt="License" />
-  </a>
+  <a href="https://npmjs.org/package/@liveblocks/server"><img src="https://img.shields.io/npm/v/@liveblocks/server?style=flat&label=npm&color=c33" alt="NPM" /></a>
+  <a href="https://bundlephobia.com/package/@liveblocks/server"><img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/server?style=flat&label=size&color=09f" alt="Size" /></a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-AGPL-3.0"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License" /></a>
 </p>
 
-`@liveblocks/server` provides the APIs to run a Liveblocks server yourself.
+`@liveblocks/server` provides the core Liveblocks server functionality. It
+powers both the Liveblocks production environment, and
+[our dev server](https://liveblocks.io/docs/tools/dev-server), so the behavior
+is identical. You typically don't need to install or use this package directly.
 
-## Installation
-
-```
-bun install @liveblocks/server
-```
-
-## Architecture
-
-```mermaid
-classDiagram
-  Room --> Store : store
-  Room --> "0+" Session : sessions
-  Session --> WebSocket
-
-  class Room {
-    +roomId
-    +load()
-    +createTicket(version) Ticket
-    +startBrowserSession(Ticket ticket, WebSocket socket)
-    +handleRaw(Ticket ticket, data)
-    +endBrowserSession(Ticket ticket, code, reason)
-  }
-
-  class Store {
-    +getString(key)
-    +getNumber(key)
-    +put(key, value)
-  }
-
-  class Session{
-    +version
-    +actor
-    +nonce
-    +createdAt
-    +lastPong
-    +sendPong()
-    +sendServerMsg()
-  }
-
-  class WebSocket {
-    +...
-  }
-```
+While `@liveblocks/server` contains the same core technology that powers
+Liveblocks, we do not yet offer or recommend self-hosting or on-premises
+deployment. The purpose of open sourcing the server package is to provide
+transparency, and offer a great local development and testing experience. A
+production-ready self-hosted deployment requires additional infrastructure and
+expertise that are not yet easy to package.
 
 ## License
 

@@ -15,30 +15,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+const enabled = process.stdout.isTTY;
+const RESET = "\x1b[0m";
+
 export function yellow(text: string): string {
-  return `\x1b[33m${text}\x1b[0m`;
+  return enabled ? `\x1b[33m${text}${RESET}` : text;
 }
 
 export function blue(text: string): string {
-  return `\x1b[34m${text}\x1b[0m`;
+  return enabled ? `\x1b[34m${text}${RESET}` : text;
 }
 
 export function magenta(text: string): string {
-  return `\x1b[35m${text}\x1b[0m`;
+  return enabled ? `\x1b[35m${text}${RESET}` : text;
 }
 
 export function green(text: string): string {
-  return `\x1b[32m${text}\x1b[0m`;
+  return enabled ? `\x1b[32m${text}${RESET}` : text;
 }
 
 export function red(text: string): string {
-  return `\x1b[31m${text}\x1b[0m`;
+  return enabled ? `\x1b[31m${text}${RESET}` : text;
 }
 
 export function bold(text: string): string {
-  return `\x1b[1m${text}\x1b[0m`;
+  return enabled ? `\x1b[1m${text}${RESET}` : text;
 }
 
 export function dim(text: string): string {
-  return `\x1b[2m${text}\x1b[0m`;
+  return enabled ? `\x1b[2m${text}${RESET}` : text;
 }

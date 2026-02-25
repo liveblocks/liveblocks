@@ -1,9 +1,9 @@
 import clsx from "clsx";
-import { ComponentProps } from "react";
+import { ComponentProps, useState } from "react";
 import { removeUserAccess, updateUserAccess } from "@/lib/actions";
 import { Avatar } from "@/primitives/Avatar";
 import { Select } from "@/primitives/Select";
-import { Document, DocumentAccess, DocumentUser } from "@/types";
+import { Document, DocumentPermissionType, DocumentUser } from "@/types";
 import styles from "./ShareDialogRows.module.css";
 
 interface Props extends ComponentProps<"div"> {
@@ -23,6 +23,8 @@ export function ShareDialogUsers({
   className,
   ...props
 }: Props) {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+
   // Remove a collaborator from the room
   async function handleRemoveDocumentUser(id: DocumentUser["id"]) {
     const { data, error } = await removeUserAccess({
@@ -40,13 +42,17 @@ export function ShareDialogUsers({
   // Update a collaborator in the room using email as user id
   async function handleUpdateDocumentUser(
     id: DocumentUser["id"],
-    access: DocumentAccess
+    access: DocumentPermissionType
   ) {
+    setIsLoading(id);
+
     const { data, error } = await updateUserAccess({
       userId: id,
       documentId: documentId,
       access: access,
     });
+
+    setIsLoading(null);
 
     if (error || !data) {
       return;
@@ -70,7 +76,7 @@ export function ShareDialogUsers({
             />
             <div className={styles.rowInfo}>
               <span className={styles.rowName}>{name}</span>
-              {!isCurrentUser && fullAccess ? (
+              {fullAccess ? (
                 <>
                   {id !== documentOwner ? (
                     <button
@@ -80,35 +86,45 @@ export function ShareDialogUsers({
                       Remove
                     </button>
                   ) : (
-                    <span className={styles.rowDescription}>Owner</span>
+                    <span className={styles.rowDescription}>
+                      {isCurrentUser ? "You are owner" : "Owner"}
+                    </span>
                   )}
                 </>
-              ) : null}
-              {isCurrentUser ? (
-                <span className={styles.rowDescription}>This is you</span>
-              ) : null}
+              ) : (
+                <>
+                  {isCurrentUser ? (
+                    <span className={styles.rowDescription}>This is you</span>
+                  ) : (
+                    <span className={styles.rowDescription}>
+                      {id === documentOwner ? "Owner" : "Member"}
+                    </span>
+                  )}
+                </>
+              )}
             </div>
-            {!isCurrentUser && id !== documentOwner ? (
+            {id !== documentOwner ? (
               <div className={styles.rowAccessSelect}>
                 <Select
+                  loading={isLoading === id}
                   aboveOverlay
                   disabled={!fullAccess}
                   initialValue={access}
                   items={[
                     {
                       title: "Can edit",
-                      value: DocumentAccess.FULL,
+                      value: "write",
                       description:
                         "User can read, edit, and share the document",
                     },
                     {
                       title: "Can read",
-                      value: DocumentAccess.READONLY,
+                      value: "read",
                       description: "User can only read the document",
                     },
                   ]}
-                  onChange={(value) => {
-                    handleUpdateDocumentUser(id, value as DocumentAccess);
+                  onChange={(value: DocumentPermissionType) => {
+                    handleUpdateDocumentUser(id, value);
                   }}
                   value={access}
                 />

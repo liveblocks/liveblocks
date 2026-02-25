@@ -3,6 +3,7 @@
   "version": "3.14.0",
   "description": "An integration of TipTap + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
   "type": "module",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",

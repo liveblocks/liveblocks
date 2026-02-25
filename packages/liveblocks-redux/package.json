@@ -3,6 +3,7 @@
   "version": "3.14.0",
   "description": "A store enhancer to integrate Liveblocks into Redux stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
   "type": "module",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
@@ -29,9 +30,9 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "./scripts/run-with-dev-server.sh --port 1154",
-    "test:ci": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
-    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
+    "test": "npx liveblocks dev -c 'vitest run'",
+    "test:ci": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@liveblocks/client": "3.14.0",
