@@ -10,10 +10,10 @@ meta:
 AI agents can participate as first-class collaborators inside Liveblocks rooms.
 Two REST API capabilities make this possible:
 
-- **Ephemeral Presence** (`POST /v2/rooms/{roomId}/presence`) — lets an agent
+- **Ephemeral Presence** (`POST /v2/rooms/{roomId}/presence`): Lets an agent
   appear in a room with a name, avatar, and custom presence data, with an
   auto-expiring TTL.
-- **JSON Patch** (`PATCH /v2/rooms/{roomId}/storage/json-patch`) — lets an agent
+- **JSON Patch** (`PATCH /v2/rooms/{roomId}/storage/json-patch`): Lets an agent
   modify
   [Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
   using the RFC 6902 standard, which is well understood by LLMs, making it
@@ -44,11 +44,11 @@ Authenticate with your project's **secret key** in the `Authorization` header.
 
 The request body accepts:
 
-- `userId` — the agent's stable identifier
-- `data` — any presence object you want connected clients to see
-- `userInfo` — optional name, avatar URL, and color for the agent
-- `ttl` — how long (in seconds) the presence should live (minimum: 2,
-  maximum: 3599)
+- `userId`: The agent's stable identifier.
+- `data`: Any presence object you want connected clients to see.
+- `userInfo`: Optional name, avatar URL, and color for the agent.
+- `ttl`: How long (in seconds) the presence should live (minimum: 2, maximum:
+  3599).
 
 ```bash
 curl -X POST "https://api.liveblocks.io/v2/rooms/my-room/presence" \
@@ -72,8 +72,8 @@ A `204` response means the presence was set successfully.
 
 Because the agent's presence is set server-side, it flows to all connected
 clients through the normal Liveblocks presence system. The agent appears in
-`useOthers` alongside real users, so existing avatar stack components work
-without any changes.
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) alongside real
+users, so existing avatar stack components work without any changes.
 
 ```tsx
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
@@ -249,97 +249,109 @@ in real time, no extra wiring required.
 There are several natural places to start an agent workflow. Choose the one that
 fits your product best, or combine multiple triggers.
 
-### Comments webhooks — mentioning an AI agent [#comments-webhook]
+### Comments webhooks—mentioning an AI agent [#comments-webhook]
 
 Users can invoke an agent by mentioning it in a comment (e.g.
-`@AI Agent, please review this form`). The `commentCreated` webhook fires for
-every new comment, giving you a place to detect the mention and dispatch the
+`@AI Agent, please review this form`). The
+[`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent) webhook fires
+for every new comment, giving you a place to detect the mention and dispatch the
 agent.
 
-#### Step 1 — Register the agent as a mentionable user
+<Steps>
+  <Step>
+    <StepTitle>Register the agent as a mentionable user</StepTitle>
+    <StepContent>
+      Add the agent's ID to [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+      and [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+      in your [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider) 
+      so it appears in the `@` mention picker alongside real users.
 
-Add the agent's ID to `resolveUsers` and `resolveMentionSuggestions` in your
-`LiveblocksProvider` so it appears in the `@` mention picker alongside real
-users.
+      ```tsx
+      <LiveblocksProvider
+        authEndpoint="/api/liveblocks-auth"
+        resolveUsers={async ({ userIds }) => {
+          const users = await fetchUsersFromDB(userIds);
+          return userIds.map((id) => {
+            if (id === "ai-agent") {
+              return { name: "AI Agent", avatar: "/ai-agent-avatar.png" };
+            }
+            return users.find((u) => u.id === id);
+          });
+        }}
+        resolveMentionSuggestions={async ({ text }) => {
+          const userIds = await searchUsers(text);
+          // Include the AI agent whenever "ai agent" matches the search text
+          if ("ai agent".includes(text.toLowerCase())) {
+            userIds.unshift("ai-agent");
+          }
+          return userIds;
+        }}
+      >
+        {/* ... */}
+      </LiveblocksProvider>
+      ```
 
-```tsx
-<LiveblocksProvider
-  authEndpoint="/api/liveblocks-auth"
-  resolveUsers={async ({ userIds }) => {
-    const users = await fetchUsersFromDB(userIds);
-    return userIds.map((id) => {
-      if (id === "ai-agent") {
-        return { name: "AI Agent", avatar: "/ai-agent-avatar.png" };
+      For more information on `resolveUsers` and `resolveMentionSuggestions`, see
+      [Users and mentions](/docs/ready-made-features/comments/users-and-mentions).
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Handle the `commentCreated` webhook</StepTitle>
+    <StepContent>
+      When a comment is created, the webhook payload contains `roomId`, `threadId`,
+      and `commentId`. Fetch the full comment using the Liveblocks Node SDK, then use
+      [`getMentionsFromCommentBody`](/docs/api-reference/liveblocks-node#getMentionsFromCommentBody)
+      to extract all mentions and check whether the agent's ID is among them.
+
+      ```ts file="app/api/liveblocks-webhook/route.ts"
+      import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({ secret: process.env.SECRET_KEY! });
+
+      export async function POST(req: Request) {
+        const event = await req.json();
+
+        if (event.type === "commentCreated") {
+          const { roomId, threadId, commentId } = event.data;
+
+          // Fetch the full comment to inspect its body
+          const comment = await liveblocks.getComment({
+            roomId,
+            threadId,
+            commentId,
+          });
+
+          // Extract all mentions from the comment body
+          const mentions = getMentionsFromCommentBody(comment.body);
+          const mentionsAgent = mentions.some(
+            (mention) => mention.kind === "user" && mention.id === "ai-agent"
+          );
+
+          if (mentionsAgent) {
+            // Trigger your agent workflow with the relevant context
+            await triggerAgentWorkflow({ roomId, threadId, commentId });
+          }
+        }
+
+        return new Response(null, { status: 200 });
       }
-      return users.find((u) => u.id === id);
-    });
-  }}
-  resolveMentionSuggestions={async ({ text }) => {
-    const userIds = await searchUsers(text);
-    // Include the AI agent whenever "ai agent" matches the search text
-    if ("ai agent".includes(text.toLowerCase())) {
-      userIds.unshift("ai-agent");
-    }
-    return userIds;
-  }}
->
-  {/* ... */}
-</LiveblocksProvider>
-```
+      ```
 
-For more information on `resolveUsers` and `resolveMentionSuggestions`, see
-[Users and mentions](/docs/ready-made-features/comments/users-and-mentions).
+      `triggerAgentWorkflow` is where you kick off your agent — call an n8n webhook,
+      invoke a CrewAI crew, hit an LLM API, or run any other pipeline you've built.
 
-#### Step 2 — Handle the `commentCreated` webhook
+      <Banner title="Securing webhooks">
 
-When a comment is created, the webhook payload contains `roomId`, `threadId`,
-and `commentId`. Fetch the full comment using the Liveblocks Node SDK, then use
-`getMentionsFromCommentBody` to extract all mentions and check whether the
-agent's ID is among them.
+      Always verify the webhook signature before processing events. See the
+      [Webhooks documentation](/docs/platform/webhooks) for verification examples.
 
-```ts file="app/api/liveblocks-webhook/route.ts"
-import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
+      </Banner>
+    </StepContent>
 
-const liveblocks = new Liveblocks({ secret: process.env.SECRET_KEY! });
-
-export async function POST(req: Request) {
-  const event = await req.json();
-
-  if (event.type === "commentCreated") {
-    const { roomId, threadId, commentId } = event.data;
-
-    // Fetch the full comment to inspect its body
-    const comment = await liveblocks.getComment({
-      roomId,
-      threadId,
-      commentId,
-    });
-
-    // Extract all mentions from the comment body
-    const mentions = getMentionsFromCommentBody(comment.body);
-    const mentionsAgent = mentions.some(
-      (mention) => mention.kind === "user" && mention.id === "ai-agent"
-    );
-
-    if (mentionsAgent) {
-      // Trigger your agent workflow with the relevant context
-      await triggerAgentWorkflow({ roomId, threadId, commentId });
-    }
-  }
-
-  return new Response(null, { status: 200 });
-}
-```
-
-`triggerAgentWorkflow` is where you kick off your agent — call an n8n webhook,
-invoke a CrewAI crew, hit an LLM API, or run any other pipeline you've built.
-
-<Banner title="Securing webhooks">
-
-Always verify the webhook signature before processing events. See the
-[Webhooks documentation](/docs/platform/webhooks) for verification examples.
-
-</Banner>
+  </Step>
+</Steps>
 
 ### Storage webhooks [#storage-webhook]
 
@@ -380,12 +392,11 @@ to batch process rooms or perform maintenance tasks.
 
 ### Other triggers
 
-- **Notification webhooks** — fire when a user receives an inbox notification,
+- **Notification webhooks**: Fire when a user receives an inbox notification,
   which can be a signal to summarize unread activity or draft a reply.
-- **External events** — Slack messages, GitHub PR events, email, Zapier
-  triggers, or any inbound webhook that carries a `roomId` can start an agent
-  run.
-- **Scheduled / CRON jobs** — poll rooms on a fixed schedule to run quality
+- **External events**: Slack messages, GitHub PR events, email, Zapier triggers,
+  or any inbound webhook that carries a `roomId` can start an agent run.
+- **Scheduled / CRON jobs**: Poll rooms on a fixed schedule to run quality
   checks, generate reports, or clean up stale data.
 
 ## Integrating with agentic frameworks [#frameworks]
@@ -393,27 +404,26 @@ to batch process rooms or perform maintenance tasks.
 Because both APIs are plain HTTP endpoints, Liveblocks works with any agent
 framework that can make HTTP requests.
 
-- **n8n** — Add an HTTP Request node to call the presence and JSON Patch
+- **n8n**: Add an HTTP Request node to call the presence and JSON Patch
   endpoints. Use a Liveblocks webhook as the workflow trigger so agents fire
   automatically on comment or storage events.
-- **CrewAI** — Wrap the REST calls in a custom `Tool` and pass it to your
-  agents. Agents can then set presence or patch storage as part of a multi-step
-  task.
-- **LangChain / LangGraph** — Define Liveblocks tools for function-calling
+- **CrewAI** :Wrap the REST calls in a custom `Tool` and pass it to your agents.
+  Agents can then set presence or patch storage as part of a multi-step task.
+- **LangChain / LangGraph**: Define Liveblocks tools for function-calling
   models. The LLM can generate JSON Patch operations directly — the RFC 6902
   format is part of many models' training data, so no custom schema or special
   prompting is needed.
-- **Any HTTP-capable framework** — fetch, axios, Python `requests`, Go
-  `net/http`, cURL — if it can make a `POST` or `PATCH` request it can drive
+- **Any HTTP-capable framework**: fetch, axios, Python `requests`, Go
+  `net/http`, cURL—if it can make a `POST` or `PATCH` request it can drive
   Liveblocks.
 
 ## Next steps
 
-- [Modifying Storage via REST API with JSON Patch](/guides/modifying-storage-via-rest-api-with-json-patch)
-  — full reference for all JSON Patch operations
-- [Webhooks](/docs/platform/webhooks) — all available webhook events and
-  signature verification
-- [REST API reference](/docs/api-reference/rest-api-endpoints) — complete
-  request and response schemas for all endpoints
-- [Users and mentions](/docs/ready-made-features/comments/users-and-mentions) —
-  setting up `resolveUsers` and `resolveMentionSuggestions`
+- [Modifying Storage via REST API with JSON Patch](/guides/modifying-storage-via-rest-api-with-json-patch):
+  Full reference for all JSON Patch operations.
+- [Webhooks](/docs/platform/webhooks): All available webhook events and
+  signature verification.
+- [REST API reference](/docs/api-reference/rest-api-endpoints): Complete request
+  and response schemas for all endpoints.
+- [Users and mentions](/docs/ready-made-features/comments/users-and-mentions):
+  Setting up `resolveUsers` and `resolveMentionSuggestions`.
