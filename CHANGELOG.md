@@ -13,6 +13,16 @@
 - Fix `commentDropdownItems` prop on `Thread` not working as expected in some
   cases.
 
+### `@liveblocks/react`
+
+- Each `createRoomContext()` invocation now creates its own isolated context to
+  allow nesting independent room contexts and their `RoomProvider` components.
+
+### `@liveblocks/react-blocknote`
+
+- Support newer BlockNote versions and bump the minimum required version to
+  v0.43.0. (Thanks @nperez0111 for the contribution!)
+
 ### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
 
 - Move `@radix-ui/*` dependencies to the `radix-ui` mono package.

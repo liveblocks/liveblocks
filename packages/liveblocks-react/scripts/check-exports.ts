@@ -376,6 +376,49 @@ for (const name of intersection(suspenseNames, classicNames)) {
   }
 }
 
+// Ensure the bundle object in createRoomContext() always wires
+// _withBoundRoomContext versions (not the global hooks).
+{
+  const roomProject = new Project({ tsConfigFilePath: "tsconfig.json" });
+  const roomSource = roomProject.addSourceFileAtPath("src/room.tsx");
+  const fn = roomSource.getFunctionOrThrow("createRoomContext");
+  let hasIssue = false;
+
+  for (const prop of fn.getDescendantsOfKind(SyntaxKind.PropertyAssignment)) {
+    const key = prop.getName();
+    if (!key.startsWith("use")) continue;
+
+    const isSuspense = prop
+      .getAncestors()
+      .some((a) => Node.isPropertyAssignment(a) && a.getName() === "suspense");
+    const variant = isSuspense ? "suspense" : "classic";
+
+    let initializer = prop.getInitializerOrThrow();
+    if (Node.isAsExpression(initializer)) {
+      initializer = initializer.getExpression();
+    }
+
+    const value = initializer.getText();
+    if (!value.endsWith("_withBoundRoomContext")) {
+      hasIssue = true;
+      warn(
+        blue(key),
+        magenta(`[${variant}]`),
+        "is not using a",
+        yellow("_withBoundRoomContext"),
+        "version",
+        "⚠️"
+      );
+    }
+  }
+
+  if (hasIssue) {
+    console.warn(
+      `Hooks returned from ${blue("createRoomContext()")} should always use their bound room context.`
+    );
+  }
+}
+
 if (numIssues > 0) {
   console.log(`Found ${numIssues} issue${numIssues !== 1 ? "s" : ""}`);
   process.exit(2);
