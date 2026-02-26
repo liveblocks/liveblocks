@@ -58,5 +58,4 @@ ease of changes. If you have access to the Liveblocks backend repo, avoid making
 changes to them directly here — prefer editing the source in the backend repo.
 
 - `packages/liveblocks-server`
-- `packages/liveblocks-zenrouter`
 - `tools/liveblocks-cli`

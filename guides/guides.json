@@ -496,5 +496,13 @@
     "topics": ["rest-api", "storage"],
     "technologies": ["storage"],
     "date": "2026-02-20"
+  },
+  {
+    "title": "Enabling Agentic Workflows with Liveblocks",
+    "path": "/enabling-agentic-workflows-with-liveblocks",
+    "topics": ["rest-api", "ai-copilots", "webhooks"],
+    "technologies": ["react", "nodejs"],
+    "date": "2026-02-20",
+    "featured": true
   }
 ]

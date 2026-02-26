@@ -1,24 +1,14 @@
-<p align="center">
-  <a href="https://liveblocks.io#gh-light-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
-  </a>
-  <a href="https://liveblocks.io#gh-dark-mode-only">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
-  </a>
+<p>
+  <a href="https://liveblocks.io#gh-light-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" /></a>
+  <a href="https://liveblocks.io#gh-dark-mode-only"><img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" /></a>
 </p>
-  
+
 # `@liveblocks/react-lexical`
 
 <p>
-  <a href="https://npmjs.org/package/@liveblocks/react-lexical">
-    <img src="https://img.shields.io/npm/v/@liveblocks/react-lexical?style=flat&label=npm&color=c33" alt="NPM" />
-  </a>
-  <a href="https://bundlephobia.com/package/@liveblocks/react-lexical">
-    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react-lexical?style=flat&label=size&color=09f" alt="Size" />
-  </a>
-  <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&color=f80" alt="License" />
-  </a>
+  <a href="https://npmjs.org/package/@liveblocks/react-lexical"><img src="https://img.shields.io/npm/v/@liveblocks/react-lexical?style=flat&label=npm&color=c33" alt="NPM" /></a>
+  <a href="https://bundlephobia.com/package/@liveblocks/react-lexical"><img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react-lexical?style=flat&label=size&color=09f" alt="Size" /></a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-APACHE-2.0"><img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License" /></a>
 </p>
 
 `@liveblocks/react-lexical` provides [React](https://reactjs.org/) APIs to
