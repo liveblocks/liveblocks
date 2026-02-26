@@ -171,11 +171,6 @@ export interface ThreadProps<
   indentCommentContent?: CommentProps["indentContent"];
 
   /**
-   * Additional content to display below the thread's comments.
-   */
-  additionalContent?: ReactNode;
-
-  /**
    * Whether to show deleted comments.
    */
   showDeletedComments?: CommentProps["showDeleted"];
@@ -264,7 +259,6 @@ export const Thread = forwardRef(
       showComposerFormattingControls = true,
       maxVisibleComments,
       commentDropdownItems,
-      additionalContent,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -635,7 +629,6 @@ export const Thread = forwardRef(
           {unreadIndex !== undefined && (
             <MarkThreadAsReadMarker thread={thread} />
           )}
-          {additionalContent}
           {showComposer && (
             <Composer
               className="lb-thread-composer"
