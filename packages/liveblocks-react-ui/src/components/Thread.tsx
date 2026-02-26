@@ -48,6 +48,7 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
+import { useStableComponent } from "../utils/use-stable-component";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Comment as DefaultComment, type CommentProps } from "./Comment";
@@ -280,7 +281,7 @@ export const Thread = forwardRef(
     }: ThreadProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const Comment = components?.Comment ?? DefaultComment;
+    const Comment = useStableComponent(components?.Comment, DefaultComment);
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
