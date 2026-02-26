@@ -855,12 +855,12 @@ export const Comment = Object.assign(
       const dropdownContent =
         typeof dropdownItems === "function" ? (
           dropdownItems({ children: defaultDropdownItems, comment })
-        ) : (
+        ) : defaultDropdownItems || dropdownItems ? (
           <>
             {defaultDropdownItems}
             {dropdownItems}
           </>
-        );
+        ) : null;
 
       let content: ReactNode;
 
