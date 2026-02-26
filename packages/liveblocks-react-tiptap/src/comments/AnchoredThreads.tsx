@@ -4,7 +4,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, useStableComponent } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,7 +51,7 @@ export function AnchoredThreads({
   editor,
   ...props
 }: AnchoredThreadsProps) {
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
   const containerRef = useRef<HTMLDivElement>(null);
   const [orderedThreads, setOrderedThreads] = useState<
     { position: { from: number; to: number }; thread: ThreadData }[]

@@ -18,19 +18,20 @@ function isClassComponent<P>(
  * Stabilizes a component by creating a stable wrapper that will not be remounted
  * when the component changes.
  */
-export function useStableComponent<P extends object>(
-  Component: ComponentType<P> | undefined,
-  DefaultComponent: ComponentType<P>
-): ComponentType<P> {
+export function useStableComponent<
+  P extends object,
+  D extends ComponentType<P>,
+>(Component: ComponentType<P> | undefined, DefaultComponent: D): D {
+  const Default: ComponentType<P> = DefaultComponent;
   const ref = useRef(Component);
   ref.current = Component;
 
-  const StableComponent = useMemo<FunctionComponent<P>>(
+  const Stable = useMemo<FunctionComponent<P>>(
     () => (props) => {
       const Component = ref.current;
 
       if (!Component) {
-        return <DefaultComponent {...props} />;
+        return <Default {...props} />;
       }
 
       if (isClassComponent(Component)) {
@@ -39,8 +40,8 @@ export function useStableComponent<P extends object>(
 
       return Component(props);
     },
-    [DefaultComponent]
+    [Default]
   );
 
-  return StableComponent;
+  return Stable as D;
 }
