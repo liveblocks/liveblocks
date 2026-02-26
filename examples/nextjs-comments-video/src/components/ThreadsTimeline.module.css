@@ -56,7 +56,7 @@
   margin-top: 8px;
 }
 
-.tooltipBody > span {
+.tooltipTime {
   color: var(--accent);
 }
 

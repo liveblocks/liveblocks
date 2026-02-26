@@ -33,5 +33,7 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   color: rgb(var(--color-gray-600));
-  box-shadow: var(--shadow-xl);
+  box-shadow:
+    0 0 0 1px rgb(var(--color-black) / 10%),
+    var(--shadow-xl);
 }

@@ -81,7 +81,9 @@ function PinnedThread({ thread }: { thread: ThreadData }) {
             {user.name}
           </div>
           <div className={styles.tooltipBody}>
-            <span>{formatTime(thread.metadata.time) + " "}</span>
+            <span className={styles.tooltipTime}>
+              {formatTime(thread.metadata.time) + " "}
+            </span>
             {thread.comments[0].metadata.spoiler ? (
               <span className={styles.tooltipSpoiler}>Spoiler</span>
             ) : (
