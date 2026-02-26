@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/server",
-  "version": "1.0.12",
+  "version": "1.0.14",
   "description": "Liveblocks backend server foundation.",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,6 +43,7 @@
     "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.js"
   },
   "license": "AGPL-3.0-or-later",
+  "author": "Liveblocks Inc.",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",

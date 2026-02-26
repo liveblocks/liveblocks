@@ -1,0 +1,429 @@
+---
+meta:
+  title: "Enabling Agentic Workflows with Liveblocks"
+  parentTitle: "Guides"
+  description:
+    "Use Liveblocks REST APIs to let AI agents show presence, modify storage,
+    and participate as collaborators in your rooms."
+---
+
+AI agents can participate as first-class collaborators inside Liveblocks rooms.
+Two REST API capabilities make this possible:
+
+- **Ephemeral Presence** (`POST /v2/rooms/{roomId}/presence`): Lets an agent
+  appear in a room with a name, avatar, and custom presence data, with an
+  auto-expiring TTL.
+- **JSON Patch** (`PATCH /v2/rooms/{roomId}/storage/json-patch`): Lets an agent
+  modify
+  [Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+  using the RFC 6902 standard, which is well understood by LLMs, making it
+  straightforward for AI models to generate patch operations directly from
+  natural language instructions.
+
+Both are language-agnostic HTTP endpoints, so agents built in Python,
+TypeScript, or any other language can use them without a native Liveblocks
+client.
+
+## Making your agent visible with ephemeral presence [#ephemeral-presence]
+
+The
+[`POST /v2/rooms/{roomId}/presence`](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence)
+endpoint lets your agent set presence in a room just like a connected user
+would. The presence expires automatically once the TTL elapses, so the agent
+never lingers after it's done.
+
+```shell title="Endpoint"
+POST https://api.liveblocks.io/v2/rooms/{roomId}/presence
+```
+
+Authenticate with your project's **secret key** in the `Authorization` header.
+
+```shell
+"Authorization: Bearer {{SECRET_KEY}}"
+```
+
+The request body accepts:
+
+- `userId`: The agent's stable identifier.
+- `data`: Any presence object you want connected clients to see.
+- `userInfo`: Optional name, avatar URL, and color for the agent.
+- `ttl`: How long (in seconds) the presence should live (minimum: 2, maximum:
+  3599).
+
+```bash
+curl -X POST "https://api.liveblocks.io/v2/rooms/my-room/presence" \
+  -H "Authorization: Bearer {{SECRET_KEY}}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "ai-agent",
+    "data": { "status": "thinking", "focusedField": "email" },
+    "userInfo": {
+      "name": "AI Agent",
+      "avatar": "https://example.com/ai-agent-avatar.png",
+      "color": "#6366f1"
+    },
+    "ttl": 60
+  }'
+```
+
+A `204` response means the presence was set successfully.
+
+### Rendering the agent as an avatar [#agent-avatar]
+
+Because the agent's presence is set server-side, it flows to all connected
+clients through the normal Liveblocks presence system. The agent appears in
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) alongside real
+users, so existing avatar stack components work without any changes.
+
+```tsx
+import { useOthers, useSelf } from "@liveblocks/react/suspense";
+
+function AvatarStack() {
+  const others = useOthers();
+  const self = useSelf();
+
+  return (
+    <div className="avatar-stack">
+      {others.map(({ connectionId, info }) => (
+        <img key={connectionId} src={info.avatar} alt={info.name} />
+      ))}
+      {self && <img src={self.info.avatar} alt={self.info.name} />}
+    </div>
+  );
+}
+```
+
+The `userInfo.avatar` you pass to the presence endpoint populates `info.avatar`
+here, so the agent shows up with its own avatar.
+
+### Highlighting form fields [#highlight-fields]
+
+Presence `data` can carry any shape you choose. A `focusedField` property, for
+example, lets the frontend highlight which input the agent is currently working
+on, giving users real-time insight into what the agent is doing.
+
+```tsx
+import { useOthers } from "@liveblocks/react/suspense";
+
+function FormField({ name, label }: { name: string; label: string }) {
+  const agentFocus = useOthers((others) =>
+    others.find((o) => o.presence.focusedField === name)
+  );
+
+  return (
+    <div className={agentFocus ? "ring-2 ring-indigo-500" : ""}>
+      <label htmlFor={name}>{label}</label>
+      <input id={name} name={name} />
+      {agentFocus && (
+        <span className="text-sm text-indigo-600">
+          {agentFocus.info.name} is reviewing…
+        </span>
+      )}
+    </div>
+  );
+}
+```
+
+As the agent moves between fields, call the presence endpoint again with an
+updated `focusedField` value. Each call resets the TTL, so the presence stays
+alive as long as the agent keeps working.
+
+## Modifying storage with JSON Patch [#json-patch]
+
+The
+[`PATCH /v2/rooms/{roomId}/storage/json-patch`](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
+endpoint lets an agent write directly to a room's Storage document over HTTP.
+The body is a JSON array of operations following the
+[RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) specification.
+
+```shell title="Endpoint"
+PATCH https://api.liveblocks.io/v2/rooms/{roomId}/storage/json-patch
+```
+
+JSON Patch is a well-established standard that LLMs already understand, which
+means you can ask a model to produce the patch operations directly from a
+natural language instruction without writing custom tooling or prompt
+engineering.
+
+Supported operations are `add`, `remove`, `replace`, `move`, `copy`, and `test`.
+If any operation fails, the whole patch is rejected and the document is left
+unchanged.
+
+For a full reference of all operations and error handling, see the
+[Modifying Storage via REST API with JSON Patch](/guides/modifying-storage-via-rest-api-with-json-patch)
+guide.
+
+The example below uses Python, which is common in agentic pipelines:
+
+```python
+import requests
+
+ROOM_ID = "my-room"
+SECRET_KEY = "sk_prod_..."
+
+operations = [
+    {"op": "replace", "path": "/formData/email", "value": "verified@example.com"},
+    {"op": "add",     "path": "/formData/status", "value": "reviewed"},
+]
+
+response = requests.patch(
+    f"https://api.liveblocks.io/v2/rooms/{ROOM_ID}/storage/json-patch",
+    json=operations,
+    headers={"Authorization": f"Bearer {SECRET_KEY}"},
+)
+
+response.raise_for_status()  # raises on 4xx / 5xx
+```
+
+A `200` response means all operations were applied. A `422` response means the
+patch failed; the response body includes an `error` code, a human-readable
+`message`, and an optional `suggestion`.
+
+## End-to-end example: agent reviews a form [#end-to-end]
+
+The following example walks through an agent that reviews a multi-field form. It
+uses ephemeral presence to show users what it's doing in real time, and JSON
+Patch to commit its changes to Storage.
+
+```python
+import requests
+
+BASE = "https://api.liveblocks.io/v2"
+ROOM  = "my-room"
+AGENT_ID = "ai-agent"
+HEADERS  = {"Authorization": "Bearer sk_prod_...", "Content-Type": "application/json"}
+
+def set_presence(focused_field: str, status: str, ttl: int = 30):
+    requests.post(
+        f"{BASE}/rooms/{ROOM}/presence",
+        json={
+            "userId": AGENT_ID,
+            "data": {"focusedField": focused_field, "status": status},
+            "userInfo": {
+                "name": "AI Agent",
+                "avatar": "https://example.com/ai-agent-avatar.png",
+            },
+            "ttl": ttl,
+        },
+        headers=HEADERS,
+    )
+
+def patch_storage(ops: list):
+    requests.patch(
+        f"{BASE}/rooms/{ROOM}/storage/json-patch",
+        json=ops,
+        headers=HEADERS,
+    ).raise_for_status()
+
+# Step 1 — signal intent on the "email" field
+set_presence("email", "reviewing")
+
+# Step 2 — validate and update email in Storage
+patch_storage([
+    {"op": "replace", "path": "/formData/email", "value": "verified@example.com"},
+])
+
+# Step 3 — move to the "name" field
+set_presence("name", "reviewing")
+
+patch_storage([
+    {"op": "replace", "path": "/formData/name", "value": "Jane Doe"},
+])
+
+# Step 4 — mark the review as complete
+# Set a short TTL so presence expires soon after we're done
+set_presence("", "done", ttl=5)
+patch_storage([
+    {"op": "add", "path": "/formData/reviewedAt", "value": "2026-02-20T12:00:00Z"},
+    {"op": "add", "path": "/formData/reviewedBy", "value": AGENT_ID},
+])
+```
+
+On the frontend, the `FormField` component from the
+[section above](#highlight-fields) will highlight each field as the agent
+focuses on it, and `useStorage` will reflect the patched values as they arrive
+in real time, no extra wiring required.
+
+## Triggering agentic workflows [#triggers]
+
+There are several natural places to start an agent workflow. Choose the one that
+fits your product best, or combine multiple triggers.
+
+### Comments webhooks—mentioning an AI agent [#comments-webhook]
+
+Users can invoke an agent by mentioning it in a comment (e.g.
+`@AI Agent, please review this form`). The
+[`commentCreated`](/docs/platform/webhooks#CommentCreatedEvent) webhook fires
+for every new comment, giving you a place to detect the mention and dispatch the
+agent.
+
+<Steps>
+  <Step>
+    <StepTitle>Register the agent as a mentionable user</StepTitle>
+    <StepContent>
+      Add the agent's ID to [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+      and [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
+      in your [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider) 
+      so it appears in the `@` mention picker alongside real users.
+
+      ```tsx
+      <LiveblocksProvider
+        authEndpoint="/api/liveblocks-auth"
+        resolveUsers={async ({ userIds }) => {
+          const users = await fetchUsersFromDB(userIds);
+          return userIds.map((id) => {
+            if (id === "ai-agent") {
+              return { name: "AI Agent", avatar: "/ai-agent-avatar.png" };
+            }
+            return users.find((u) => u.id === id);
+          });
+        }}
+        resolveMentionSuggestions={async ({ text }) => {
+          const userIds = await searchUsers(text);
+          // Include the AI agent whenever "ai agent" matches the search text
+          if ("ai agent".includes(text.toLowerCase())) {
+            userIds.unshift("ai-agent");
+          }
+          return userIds;
+        }}
+      >
+        {/* ... */}
+      </LiveblocksProvider>
+      ```
+
+      For more information on `resolveUsers` and `resolveMentionSuggestions`, see
+      [Users and mentions](/docs/ready-made-features/comments/users-and-mentions).
+    </StepContent>
+
+  </Step>
+
+  <Step lastStep>
+    <StepTitle>Handle the `commentCreated` webhook</StepTitle>
+    <StepContent>
+      When a comment is created, the webhook payload contains `roomId`, `threadId`,
+      and `commentId`. Fetch the full comment using the Liveblocks Node SDK, then use
+      [`getMentionsFromCommentBody`](/docs/api-reference/liveblocks-node#getMentionsFromCommentBody)
+      to extract all mentions and check whether the agent's ID is among them.
+
+      ```ts file="app/api/liveblocks-webhook/route.ts"
+      import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
+
+      const liveblocks = new Liveblocks({ secret: process.env.SECRET_KEY! });
+
+      export async function POST(req: Request) {
+        const event = await req.json();
+
+        if (event.type === "commentCreated") {
+          const { roomId, threadId, commentId } = event.data;
+
+          // Fetch the full comment to inspect its body
+          const comment = await liveblocks.getComment({
+            roomId,
+            threadId,
+            commentId,
+          });
+
+          // Extract all mentions from the comment body
+          const mentions = getMentionsFromCommentBody(comment.body);
+          const mentionsAgent = mentions.some(
+            (mention) => mention.kind === "user" && mention.id === "ai-agent"
+          );
+
+          if (mentionsAgent) {
+            // Trigger your agent workflow with the relevant context
+            await triggerAgentWorkflow({ roomId, threadId, commentId });
+          }
+        }
+
+        return new Response(null, { status: 200 });
+      }
+      ```
+
+      `triggerAgentWorkflow` is where you kick off your agent — call an n8n webhook,
+      invoke a CrewAI crew, hit an LLM API, or run any other pipeline you've built.
+
+      <Banner title="Securing webhooks">
+
+      Always verify the webhook signature before processing events. See the
+      [Webhooks documentation](/docs/platform/webhooks) for verification examples.
+
+      </Banner>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+### Storage webhooks [#storage-webhook]
+
+The `storageUpdated` event fires whenever Storage is written to. This is useful
+for agents that react to user edits, for example auto-validation,
+auto-summarization, or data enrichment.
+
+```ts file="app/api/liveblocks-webhook/route.ts"
+export async function POST(req: Request) {
+  const event = await req.json();
+
+  if (event.type === "storageUpdated") {
+    const { roomId } = event.data;
+    await triggerAgentWorkflow({ roomId });
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+### Direct API call or button [#direct-trigger]
+
+The simplest trigger of all: a user clicks a button in your UI, which calls your
+backend endpoint, which runs the agent. This gives you full control over when
+and how the agent is invoked.
+
+```tsx
+async function handleReviewClick() {
+  await fetch("/api/run-agent", {
+    method: "POST",
+    body: JSON.stringify({ roomId: "my-room" }),
+  });
+}
+```
+
+A scheduled job (CRON) is another variant which can run the agent periodically
+to batch process rooms or perform maintenance tasks.
+
+### Other triggers
+
+- **Notification webhooks**: Fire when a user receives an inbox notification,
+  which can be a signal to summarize unread activity or draft a reply.
+- **External events**: Slack messages, GitHub PR events, email, Zapier triggers,
+  or any inbound webhook that carries a `roomId` can start an agent run.
+- **Scheduled / CRON jobs**: Poll rooms on a fixed schedule to run quality
+  checks, generate reports, or clean up stale data.
+
+## Integrating with agentic frameworks [#frameworks]
+
+Because both APIs are plain HTTP endpoints, Liveblocks works with any agent
+framework that can make HTTP requests.
+
+- **n8n**: Add an HTTP Request node to call the presence and JSON Patch
+  endpoints. Use a Liveblocks webhook as the workflow trigger so agents fire
+  automatically on comment or storage events.
+- **CrewAI** :Wrap the REST calls in a custom `Tool` and pass it to your agents.
+  Agents can then set presence or patch storage as part of a multi-step task.
+- **LangChain / LangGraph**: Define Liveblocks tools for function-calling
+  models. The LLM can generate JSON Patch operations directly — the RFC 6902
+  format is part of many models' training data, so no custom schema or special
+  prompting is needed.
+- **Any HTTP-capable framework**: fetch, axios, Python `requests`, Go
+  `net/http`, cURL—if it can make a `POST` or `PATCH` request it can drive
+  Liveblocks.
+
+## Next steps
+
+- [Modifying Storage via REST API with JSON Patch](/guides/modifying-storage-via-rest-api-with-json-patch):
+  Full reference for all JSON Patch operations.
+- [Webhooks](/docs/platform/webhooks): All available webhook events and
+  signature verification.
+- [REST API reference](/docs/api-reference/rest-api-endpoints): Complete request
+  and response schemas for all endpoints.
+- [Users and mentions](/docs/ready-made-features/comments/users-and-mentions):
+  Setting up `resolveUsers` and `resolveMentionSuggestions`.

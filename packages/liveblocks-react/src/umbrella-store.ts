@@ -430,6 +430,16 @@ export class PaginatedResource {
     this.#patch({ isFetchingMore: true });
     try {
       const nextCursor = await this.#fetchPage(state.data.cursor);
+
+      // Clear #pendingFetchMore BEFORE #patch, so that when the signal
+      // notification triggers a synchronous React re-render (via
+      // useSyncExternalStore), any useEffect calling fetchMore() will see
+      // #pendingFetchMore as null and be able to start a new fetch.
+      // Previously, this was done in a .finally() on the promise chain, but
+      // that always runs in a later microtask — after React's flush microtask
+      // — causing the next fetchMore() call to be silently skipped.
+      this.#pendingFetchMore = null;
+
       this.#patch({
         cursor: nextCursor,
         hasFetchedAll: nextCursor === null,
@@ -437,6 +447,8 @@ export class PaginatedResource {
         isFetchingMore: false,
       });
     } catch (err) {
+      this.#pendingFetchMore = null;
+
       this.#patch({
         isFetchingMore: false,
         fetchMoreError: err as Error,
@@ -454,9 +466,7 @@ export class PaginatedResource {
 
     // Case (3)
     if (!this.#pendingFetchMore) {
-      this.#pendingFetchMore = this.#fetchMore().finally(() => {
-        this.#pendingFetchMore = null;
-      });
+      this.#pendingFetchMore = this.#fetchMore();
     }
     return this.#pendingFetchMore;
   }

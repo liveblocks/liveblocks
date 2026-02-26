@@ -24,7 +24,12 @@ export function InboxPopover(
       content={<Inbox className={styles.inboxPopover} />}
       {...props}
     >
-      <Button variant="secondary" icon={<InboxIcon />} iconButton>
+      <Button
+        variant="secondary"
+        icon={<InboxIcon />}
+        iconButton
+        suppressHydrationWarning={true}
+      >
         <span className="sr-only">Notification inbox</span>
         <InboxPopoverUnreadCount />
       </Button>
