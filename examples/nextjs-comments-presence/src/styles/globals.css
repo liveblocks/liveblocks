@@ -78,7 +78,7 @@ main {
   border-radius: 50%;
   z-index: 10;
   background-color: var(--lb-accent);
-  box-shadow: 0 0 0 3px var(--lb-background);
+  box-shadow: 0 0 0 3px var(--lb-dynamic-background);
 }
 
 @media (prefers-color-scheme: dark) {
