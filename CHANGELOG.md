@@ -25,6 +25,8 @@
 
 ### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
 
+- Improve how inline components passed to `components={{ ... }}` props are
+  handled by keeping them stable instead of re-mounting them on every render.
 - Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
 
 ## v3.14.0
