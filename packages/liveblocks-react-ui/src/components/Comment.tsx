@@ -1054,7 +1054,7 @@ export const Comment = Object.assign(
                     {date ? (
                       <span className="lb-comment-date">{date}</span>
                     ) : (
-                      <>
+                      <span className="lb-comment-date">
                         <CommentDate
                           locale={$.locale}
                           date={comment.createdAt}
@@ -1068,7 +1068,7 @@ export const Comment = Object.assign(
                             </span>
                           </>
                         )}
-                      </>
+                      </span>
                     )}
                   </span>
                 </div>
