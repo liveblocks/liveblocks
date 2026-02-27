@@ -976,11 +976,9 @@ setting `maxVisibleComments` to an object.
 ##### Customize comments
 
 You can provide a custom `Comment` component via the `components` prop to fully
-customize how comments are rendered within a thread. You can render a fully
-custom component in the provided `Comment` slot but you can also keep most of
-the defaults by using the default
-[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) component, but now
-you gain access to more customization options.
+customize how comments are rendered within a thread. This allows you to render 
+a fully custom React component in the provided `Comment` slot, however it's often 
+preferable to insert the default [`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) component, and use its customization options instead.
 
 The `children` prop on `Comment` allows overriding or wrapping the comments’
 content, while the `additionalContent` prop can be useful to render custom
