@@ -23,6 +23,7 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
 
   /**
    * The maximum number of visible avatars.
+   * Defaults to 3, set to `undefined` to show all avatars.
    */
   max?: number;
 

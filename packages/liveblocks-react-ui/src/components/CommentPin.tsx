@@ -9,6 +9,7 @@ import { Avatar } from "./internal/Avatar";
 export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
   /**
    * The corner that points to the comment position.
+   * Defaults to the bottom left corner.
    */
   corner?: "top-left" | "top-right" | "bottom-right" | "bottom-left";
 
