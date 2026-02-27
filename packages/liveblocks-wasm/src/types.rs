@@ -54,6 +54,62 @@ pub enum Json {
     Object(BTreeMap<String, Json>),
 }
 
+// -- From impls for Json ergonomics --
+
+impl From<&str> for Json {
+    fn from(s: &str) -> Self {
+        Json::String(s.to_string())
+    }
+}
+
+impl From<String> for Json {
+    fn from(s: String) -> Self {
+        Json::String(s)
+    }
+}
+
+impl From<f64> for Json {
+    fn from(n: f64) -> Self {
+        Json::Number(n)
+    }
+}
+
+impl From<i32> for Json {
+    fn from(n: i32) -> Self {
+        Json::Number(n as f64)
+    }
+}
+
+impl From<i64> for Json {
+    fn from(n: i64) -> Self {
+        Json::Number(n as f64)
+    }
+}
+
+impl From<u32> for Json {
+    fn from(n: u32) -> Self {
+        Json::Number(n as f64)
+    }
+}
+
+impl From<bool> for Json {
+    fn from(b: bool) -> Self {
+        Json::Bool(b)
+    }
+}
+
+impl From<Vec<Json>> for Json {
+    fn from(v: Vec<Json>) -> Self {
+        Json::Array(v)
+    }
+}
+
+impl From<BTreeMap<String, Json>> for Json {
+    fn from(m: BTreeMap<String, Json>) -> Self {
+        Json::Object(m)
+    }
+}
+
 /// An operation to be applied to a CRDT node.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

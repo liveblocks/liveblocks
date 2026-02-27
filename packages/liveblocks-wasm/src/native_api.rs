@@ -30,7 +30,11 @@ pub use crate::connection::managed_socket::AuthEndpoint as Auth;
 pub use crate::document::Document;
 pub use crate::room::events::RoomEvent;
 pub use crate::room::{DynamicSessionInfo, StorageStatus};
-pub use crate::types::{Op, OpSource};
+pub use crate::types::{CrdtType, Json, MutationResult, Op, OpSource};
+pub use crate::updates::StorageUpdate;
+
+// Handle-based API
+pub use crate::native_handles::{LiveList, LiveMap, LiveObject, LiveRoom};
 
 /// A `Room` wired to the native (tokio) platform adapters.
 pub type NativeRoom = Room<NativeWebSocketConnector, NativeHttpClient>;

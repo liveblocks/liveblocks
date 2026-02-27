@@ -23,6 +23,8 @@ pub mod http;
 // Native-only modules
 #[cfg(feature = "native")]
 pub mod native_api;
+#[cfg(feature = "native")]
+pub mod native_handles;
 
 // WASM-only modules
 #[cfg(feature = "wasm")]
