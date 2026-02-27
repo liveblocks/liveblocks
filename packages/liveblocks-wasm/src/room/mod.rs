@@ -360,16 +360,22 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     ///
     /// If storage was previously requested via `get_storage()`, automatically
     /// re-requests it on reconnection (mirrors JS SDK `onDidConnect` behavior).
+    /// We push `FetchStorage` directly onto the buffer WITHOUT resetting
+    /// `storage_status`, so that `handle_storage_state` takes the reconnect
+    /// diff path (which fires subscription callbacks for remote changes).
     fn on_connected(&mut self) {
         // Presence is already sent by handle_room_state() via push_front.
         // No additional presence push needed here.
 
-        // Auto-refetch storage on reconnection if previously requested
+        // Re-request storage on reconnection so the server sends a fresh
+        // STORAGE_STATE. Keep the current storage_status (Loaded/Synchronized)
+        // so the dispatch layer recognises this as a reconnect and diffs
+        // instead of doing a full hydrate.
         if self.storage_requested
-            && self.storage_status != StorageStatus::Loading
+            && (self.storage_status == StorageStatus::Loaded
+                || self.storage_status == StorageStatus::Synchronized)
         {
-            self.storage_status = StorageStatus::NotLoaded;
-            self.fetch_storage();
+            self.buffer.push(ClientMsg::FetchStorage {});
         }
     }
 
