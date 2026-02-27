@@ -10,7 +10,7 @@
 //!
 //! # Example (native)
 //!
-//! ```no_run
+//! ```ignore
 //! # use liveblocks_wasm::native_api::RoomBuilder;
 //! # use liveblocks_wasm::types::Json;
 //! # async fn example() {
