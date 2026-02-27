@@ -20,7 +20,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 9 (2026-02-27)
 
+## v3.14.1
+
+### `@liveblocks/react`
+
+- Fix paginated hooks (`useThreads`, `useInboxNotifications`, and `useAiChats`)
+  stopping pagination after the first `fetchMore()` call when auto-paginating in
+  a `useEffect`.
+
 ## Contributors
+
+flowflorent
 
 # Week 8 (2026-02-20)
 
