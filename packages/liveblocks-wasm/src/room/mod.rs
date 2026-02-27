@@ -78,6 +78,8 @@ pub struct Room<C: WebSocketConnector, H: HttpClient> {
     // V8+ streaming storage: accumulate chunks before processing
     pub(crate) pending_storage_chunks: Vec<(String, SerializedCrdt)>,
 
+    // Whether storage has ever been requested (for auto-refetch on reconnect)
+    storage_requested: bool,
 }
 
 impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
@@ -102,6 +104,7 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             throttle_delay,
             lost_connection_timeout,
             pending_storage_chunks: Vec::new(),
+            storage_requested: false,
         }
     }
 
@@ -203,13 +206,54 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
 
     // -- Storage --
 
-    /// Request storage from the server (sends FETCH_STORAGE).
-    pub fn fetch_storage(&mut self) {
+    /// Internal: send a FETCH_STORAGE request to the server.
+    pub(crate) fn fetch_storage(&mut self) {
         if self.storage_status != StorageStatus::NotLoaded {
             return;
         }
         self.storage_status = StorageStatus::Loading;
+        self.storage_requested = true;
         self.buffer.push(ClientMsg::FetchStorage {});
+    }
+
+    /// Request and wait for the room's storage to be loaded.
+    ///
+    /// Mirrors the JS SDK's `room.getStorage()`: sends a `FETCH_STORAGE`
+    /// request if storage hasn't been loaded yet, then drives the event
+    /// loop until the server responds with the full document.
+    ///
+    /// Returns immediately if storage is already loaded.
+    ///
+    /// On reconnection, storage is automatically re-fetched if it was
+    /// previously requested via this method.
+    pub async fn get_storage(&mut self) {
+        if self.storage_status == StorageStatus::Loaded
+            || self.storage_status == StorageStatus::Synchronized
+        {
+            return;
+        }
+
+        self.fetch_storage();
+        self.flush();
+
+        loop {
+            let got = self.poll_ws_event().await;
+            if !got {
+                continue;
+            }
+            self.process_socket_events();
+            self.flush();
+
+            // Check if StorageLoaded appeared in the events
+            if self.events.has_pending(|e| matches!(e, events::RoomEvent::StorageLoaded)) {
+                return;
+            }
+
+            // Check for fatal errors (auth failure, permanent disconnect)
+            if self.events.has_pending(|e| matches!(e, events::RoomEvent::Error { .. })) {
+                return;
+            }
+        }
     }
 
     // -- Outbound --
@@ -313,9 +357,20 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
     }
 
     /// Called when the socket connects.
+    ///
+    /// If storage was previously requested via `get_storage()`, automatically
+    /// re-requests it on reconnection (mirrors JS SDK `onDidConnect` behavior).
     fn on_connected(&mut self) {
         // Presence is already sent by handle_room_state() via push_front.
         // No additional presence push needed here.
+
+        // Auto-refetch storage on reconnection if previously requested
+        if self.storage_requested
+            && self.storage_status != StorageStatus::Loading
+        {
+            self.storage_status = StorageStatus::NotLoaded;
+            self.fetch_storage();
+        }
     }
 
     /// Called when the socket disconnects.

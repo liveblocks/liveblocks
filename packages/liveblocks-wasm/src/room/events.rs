@@ -65,6 +65,11 @@ impl EventHub {
         std::mem::take(&mut self.pending)
     }
 
+    /// Check whether any pending event matches a predicate (without consuming).
+    pub fn has_pending<F: Fn(&RoomEvent) -> bool>(&self, predicate: F) -> bool {
+        self.pending.iter().any(predicate)
+    }
+
     /// Notify: connection status changed.
     pub fn notify_status(&mut self, status: Status) {
         self.pending.push(RoomEvent::StatusChanged(status));
