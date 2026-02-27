@@ -498,7 +498,7 @@
     "date": "2026-02-20"
   },
   {
-    "title": "Enabling Agentic Workflows with Liveblocks",
+    "title": "Enabling agentic workflows with Liveblocks",
     "path": "/enabling-agentic-workflows-with-liveblocks",
     "topics": ["rest-api", "ai-copilots", "webhooks"],
     "technologies": ["react", "nodejs"],
