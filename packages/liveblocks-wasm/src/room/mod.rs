@@ -6,6 +6,7 @@
 pub mod buffer;
 pub mod dispatch;
 pub mod events;
+pub mod mutations;
 pub mod presence;
 pub mod storage;
 
@@ -22,7 +23,8 @@ use crate::platform::{HttpClient, WebSocketConnector};
 use crate::protocol::client_msg::{ClientMsg, serialize_client_msgs};
 use crate::protocol::server_msg::parse_server_messages;
 use crate::room_engine::RoomStorageEngine;
-use crate::types::{Op, OpSource};
+use crate::arena::NodeKey;
+use crate::types::{Json, Op, OpSource};
 
 use buffer::OutboundBuffer;
 use events::EventHub;
@@ -464,6 +466,37 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             .notify_history_change(self.can_undo(), self.can_redo());
 
         reverse_deque.into_iter().collect()
+    }
+
+    /// Update scalar properties on a LiveObject node (identified by `NodeKey`).
+    ///
+    /// This mirrors the JS `LiveObject.update(data)` API: it generates an
+    /// `UpdateObject` op, applies it to the local document, queues it for
+    /// sending to the server, and fires a storage-change notification.
+    pub fn update_object(
+        &mut self,
+        node_key: NodeKey,
+        data: std::collections::BTreeMap<String, Json>,
+    ) {
+        use crate::crdt::object;
+        use crate::ops::serialize::update_object_op;
+
+        let Some(node) = self.document.get_node(node_key) else {
+            return;
+        };
+        let nid = node.id.clone();
+        let op_id = self.id_gen.generate_op_id();
+
+        let mut op = update_object_op(&nid, data.clone());
+        op.op_id = Some(op_id.clone());
+
+        // Apply locally: update register children in the document
+        for (key, value) in &data {
+            object::set_plain(&mut self.document, node_key, key, value.clone());
+            object::set_unacked_op(&mut self.document, node_key, key, op_id.clone());
+        }
+
+        self.apply_local_ops(vec![op]);
     }
 
     /// Apply local ops to the document and queue them for sending.
