@@ -81,7 +81,14 @@ export function AnchoredThreads({
   // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
     const container = containerRef.current;
-    if (container === null || !editor || !editor.view) return;
+    if (
+      container === null ||
+      !editor ||
+      !editor.view ||
+      editor.view.isDestroyed
+    ) {
+      return;
+    }
 
     const activeIndex = orderedThreads.findIndex(
       ({ thread }) => thread.id === pluginState?.selectedThreadId
