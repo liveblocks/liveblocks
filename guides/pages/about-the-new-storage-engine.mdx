@@ -1,15 +1,19 @@
 ---
 meta:
-  title: "The new Storage engine and its benefits"
-  description: "Learn about our improved v2 Storage engine and how to enable it"
+  title: "The new realtime data storage engine and its benefits"
+  description:
+    "Learn about our improved v2 realtime data storage engine and how to enable
+    it"
 ---
 
-Since v3.14, rooms can be powered by our new v2 Storage engine—a ground-up
-rearchitecture that removes server-side memory limits, enabling faster initial
-loads and support for much larger documents. Switching is **seamless and
-requires no code changes**. Rooms on v1 or v2 behave identically from your app's
-perspective—Presence, Broadcasts, Liveblocks Storage, and Yjs Storage all work
-the same way.
+Since v3.14, rooms can be powered by our new v2 realtime data storage engine—a
+ground-up rearchitecture that removes server-side memory limits, enabling faster
+initial loads and support for much larger documents. Switching is **seamless and
+requires no code changes**. Rooms on v1 or v2 behave identically from your app’s
+perspective—the two sync engines we
+support—[Liveblocks Storage](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-storage)
+and [Yjs](/docs/ready-made-features/multiplayer/sync-engine/liveblocks-yjs) all
+work the same way.
 
 You can now opt in to v2 to try it out and give us feedback. Soon it will become
 the default for everyone.
@@ -22,9 +26,9 @@ pressure on our edge workers, which are limited in capacity. A 50 MiB document,
 including its overhead, could easily cause an OOM crash in an edge worker on the
 v1 engine, in turn causing the room to become inaccessible.
 
-Rooms on the v2 Storage engine now stream their document data directly from our
-persisted storage layer, keeping only minimal data in memory. Conflict
-resolution and mutations happen directly in the storage layer too.
+Rooms on the v2 realtime data storage engine now stream their document data
+directly from our persisted storage layer, keeping only minimal data in memory.
+Conflict resolution and mutations happen directly in the storage layer too.
 
 This enables arbitrarily large documents—server memory is no longer the
 bottleneck (browser memory, network speed, or your app’s rendering performance
