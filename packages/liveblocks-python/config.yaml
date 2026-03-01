@@ -1,0 +1,4 @@
+project_name_override: liveblocks-api-client
+package_name_override: liveblocks_api_client
+
+package_version_override: 0.1.0
