@@ -1,0 +1,214 @@
+{% from "property_templates/helpers.jinja" import guarded_statement %}
+{% from "helpers.jinja" import safe_docstring %}
+
+{% macro header_params(endpoint) %}
+{% if endpoint.header_parameters or endpoint.bodies | length > 0 %}
+headers: dict[str, Any] = {}
+{% if endpoint.header_parameters %}
+    {% for parameter in endpoint.header_parameters %}
+        {% import "property_templates/" + parameter.template as param_template %}
+        {% if param_template.transform_header %}
+            {% set expression = param_template.transform_header(parameter.python_name) %}
+        {% else %}
+            {% set expression = parameter.python_name %}
+        {% endif %}
+        {% set statement = 'headers["' +  parameter.name + '"]' + " = " + expression %}
+{{ guarded_statement(parameter, parameter.python_name, statement) }}
+    {% endfor %}
+{% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro cookie_params(endpoint) %}
+{% if endpoint.cookie_parameters %}
+cookies = {}
+    {% for parameter in endpoint.cookie_parameters %}
+        {% if parameter.required %}
+cookies["{{ parameter.name}}"] = {{ parameter.python_name }}
+        {% else %}
+if {{ parameter.python_name }} is not UNSET:
+    cookies["{{ parameter.name}}"] = {{ parameter.python_name }}
+        {% endif %}
+
+    {% endfor %}
+{% endif %}
+{% endmacro %}
+
+
+{% macro query_params(endpoint) %}
+{% if endpoint.query_parameters %}
+params: dict[str, Any] = {}
+
+{% for property in endpoint.query_parameters %}
+    {% set destination = property.python_name %}
+    {% import "property_templates/" + property.template as prop_template %}
+    {% if prop_template.transform %}
+        {% set destination = "json_" + property.python_name %}
+{{ prop_template.transform(property, property.python_name, destination) }}
+    {% endif %}
+    {%- if not property.json_is_dict %}
+params["{{ property.name }}"] = {{ destination }}
+    {% else %}
+{{ guarded_statement(property, destination, "params.update(" + destination + ")") }}
+    {% endif %}
+
+{% endfor %}
+
+params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+{% endif %}
+{% endmacro %}
+
+{% macro body_to_kwarg(body) %}
+{% if body.body_type == "data" %}
+  {% if body.prop.required %}
+_kwargs["data"] = body.to_dict()
+  {% else %}
+if not isinstance(body, Unset):
+    _kwargs["data"] = body.to_dict()
+  {% endif %}
+{% elif body.body_type == "files"%}
+{{ multipart_body(body) }}
+{% elif body.body_type == "json" %}
+{{ json_body(body) }}
+{% elif body.body_type == "content" %}
+    {% if body.prop.required %}
+_kwargs["content"] = body.payload
+    {% else %}
+if not isinstance(body, Unset):
+    _kwargs["content"] = body.payload
+    {% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro json_body(body) %}
+{% set property = body.prop %}
+{% import "property_templates/" + property.template as prop_template %}
+{% if prop_template.transform %}
+{{ prop_template.transform(property, property.python_name, "_kwargs[\"json\"]", skip_unset=True, declare_type=False) }}
+{% elif property.required %}
+_kwargs["json"] = {{ property.python_name }}
+{% else %}
+if not isinstance({{property.python_name}}, Unset):
+    _kwargs["json"] = {{ property.python_name }}
+{% endif %}
+{% endmacro %}
+
+{% macro multipart_body(body) %}
+{% set property = body.prop %}
+{% import "property_templates/" + property.template as prop_template %}
+{% if prop_template.transform_multipart_body %}
+{{ prop_template.transform_multipart_body(property) }}
+{% endif %}
+{% endmacro %}
+
+{# The all the kwargs passed into an endpoint (and variants thereof)) #}
+{% macro arguments(endpoint, include_client=True) %}
+{# path parameters #}
+{% for parameter in endpoint.path_parameters %}
+{{ parameter.to_string() }},
+{% endfor %}
+{% if include_client or ((endpoint.list_all_parameters() | length) > (endpoint.path_parameters | length)) %}
+*,
+{% endif %}
+{# Proper client based on whether or not the endpoint requires authentication #}
+{% if include_client %}
+{% if endpoint.requires_security %}
+client: AuthenticatedClient,
+{% else %}
+client: AuthenticatedClient | Client,
+{% endif %}
+{% endif %}
+{# Any allowed bodies #}
+{% if endpoint.bodies | length == 1 %}
+body: {{ endpoint.bodies[0].prop.get_type_string() }}{% if not endpoint.bodies[0].prop.required %} = UNSET{% endif %},
+{% elif endpoint.bodies | length > 1 %}
+body:
+    {%- for body in endpoint.bodies -%}{% set body_required = body_required and body.prop.required %}
+    {{ body.prop.get_type_string(no_optional=True) }} {% if not loop.last %} | {% endif %}
+    {%- endfor -%}{% if not body_required %} | Unset = UNSET{% endif %}
+,
+{% endif %}
+{# query parameters #}
+{% for parameter in endpoint.query_parameters %}
+{{ parameter.to_string() }},
+{% endfor %}
+{% for parameter in endpoint.header_parameters %}
+{{ parameter.to_string() }},
+{% endfor %}
+{# cookie parameters #}
+{% for parameter in endpoint.cookie_parameters %}
+{{ parameter.to_string() }},
+{% endfor %}
+{% endmacro %}
+
+{# Just lists all kwargs to endpoints as name=name for passing to other functions #}
+{% macro kwargs(endpoint, include_client=True) %}
+{% for parameter in endpoint.path_parameters %}
+{{ parameter.python_name }}={{ parameter.python_name }},
+{% endfor %}
+{% if include_client %}
+client=client,
+{% endif %}
+{% if endpoint.bodies | length > 0 %}
+body=body,
+{% endif %}
+{% for parameter in endpoint.query_parameters %}
+{{ parameter.python_name }}={{ parameter.python_name }},
+{% endfor %}
+{% for parameter in endpoint.header_parameters %}
+{{ parameter.python_name }}={{ parameter.python_name }},
+{% endfor %}
+{% for parameter in endpoint.cookie_parameters %}
+{{ parameter.python_name }}={{ parameter.python_name }},
+{% endfor %}
+{% endmacro %}
+
+{% macro docstring_content(endpoint, return_string, is_detailed) %}
+{% if endpoint.summary %}{{ endpoint.summary | wordwrap(100)}}
+
+{% endif -%}
+{%- if endpoint.description %} {{ endpoint.description | wordwrap(100) }}
+
+{% endif %}
+{% if not endpoint.summary and not endpoint.description %}
+{# Leave extra space so that Args or Returns isn't at the top #}
+
+{% endif %}
+{% set all_parameters = endpoint.list_all_parameters() %}
+{% if all_parameters %}
+Args:
+    {% for parameter in all_parameters %}
+    {{ parameter.to_docstring() | wordwrap(90) | indent(8) }}
+    {% endfor %}
+
+{% endif %}
+Raises:
+    errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+    httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+Returns:
+{% if is_detailed %}
+    Response[{{ return_string }}]
+{% else %}
+    {{ return_string }}
+{% endif %}
+{% endmacro %}
+
+{% macro docstring(endpoint, return_string, is_detailed) %}
+{{ safe_docstring(docstring_content(endpoint, return_string, is_detailed)) }}
+{% endmacro %}
+
+{% macro parse_response(parsed_responses, response) %}
+{% if parsed_responses %}{% import "property_templates/" + response.prop.template as prop_template %}
+{% if prop_template.construct %}
+{{ prop_template.construct(response.prop, response.source.attribute) }}
+{% elif response.source.return_type == response.prop.get_type_string()  %}
+{{ response.prop.python_name }} = {{ response.source.attribute }}
+{% else %}
+{{ response.prop.python_name }} = cast({{ response.prop.get_type_string() }}, {{ response.source.attribute }})
+{% endif %}
+return {{ response.prop.python_name }}
+{% else %}
+return None
+{% endif %}
+{% endmacro %}

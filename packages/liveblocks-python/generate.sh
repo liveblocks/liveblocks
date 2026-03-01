@@ -11,5 +11,6 @@ uvx "openapi-python-client@${GENERATOR_VERSION}" generate \
   --path "$SPEC_PATH" \
   --config config.yaml \
   --output-path . \
+  --custom-template-path templates \
   --meta uv \
   --overwrite
