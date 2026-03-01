@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 {% endfor %}
 {% endfor %}
 
+    from session import AsyncSession, Session
+
 _DEFAULT_BASE_URL = "https://api.liveblocks.io"
 _VALID_KEY_CHARS_REGEX = re.compile(r"^[\w-]+$")
 
@@ -69,6 +71,17 @@ class Liveblocks:
 
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         self._client.__exit__(*args, **kwargs)
+
+    def prepare_session(
+        self,
+        user_id: str,
+    ) -> Session:
+        from session import Session
+
+        return Session(
+            client=self,
+            user_id=user_id
+        )
 
     {% for tag, collection in endpoint_collections_by_tag.items() %}
     {% for endpoint in collection.endpoints %}
@@ -121,6 +134,17 @@ class AsyncLiveblocks:
 
     async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
         await self._client.__aexit__(*args, **kwargs)
+
+    def prepare_session(
+        self,
+        user_id: str
+    ) -> AsyncSession:
+        from session import AsyncSession
+
+        return AsyncSession(
+            client=self,
+            user_id=user_id
+        )
 
     {% for tag, collection in endpoint_collections_by_tag.items() %}
     {% for endpoint in collection.endpoints %}
