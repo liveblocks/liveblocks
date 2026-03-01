@@ -110,13 +110,8 @@ if not isinstance({{property.python_name}}, Unset):
 {% if include_client or ((endpoint.list_all_parameters() | length) > (endpoint.path_parameters | length)) %}
 *,
 {% endif %}
-{# Proper client based on whether or not the endpoint requires authentication #}
 {% if include_client %}
-{% if endpoint.requires_security %}
-client: AuthenticatedClient,
-{% else %}
-client: AuthenticatedClient | Client,
-{% endif %}
+client: Client,
 {% endif %}
 {# Any allowed bodies #}
 {% if endpoint.bodies | length == 1 %}
@@ -163,7 +158,7 @@ body=body,
 {% endfor %}
 {% endmacro %}
 
-{% macro docstring_content(endpoint, return_string, is_detailed) %}
+{% macro docstring_content(endpoint, return_string) %}
 {% if endpoint.summary %}{{ endpoint.summary | wordwrap(100)}}
 
 {% endif -%}
@@ -183,19 +178,15 @@ Args:
 
 {% endif %}
 Raises:
-    errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+    errors.LiveblocksError: If the server returns a response with non-2xx status code.
     httpx.TimeoutException: If the request takes longer than Client.timeout.
 
 Returns:
-{% if is_detailed %}
-    Response[{{ return_string }}]
-{% else %}
     {{ return_string }}
-{% endif %}
 {% endmacro %}
 
-{% macro docstring(endpoint, return_string, is_detailed) %}
-{{ safe_docstring(docstring_content(endpoint, return_string, is_detailed)) }}
+{% macro docstring(endpoint, return_string) %}
+{{ safe_docstring(docstring_content(endpoint, return_string)) }}
 {% endmacro %}
 
 {% macro parse_response(parsed_responses, response) %}
@@ -212,3 +203,19 @@ return {{ response.prop.python_name }}
 return None
 {% endif %}
 {% endmacro %}
+
+{% macro return_type(responses) %}
+{% set ns = namespace(return_types=[]) %}
+{% for response in responses %}
+  {% if response.prop.get_type_string() not in ns.return_types %}
+    {% set ns.return_types = ns.return_types + [response.prop.get_type_string()] %}
+  {% endif %}
+{% endfor %}
+{%- if ns.return_types | length == 0 -%}
+None
+{%- elif ns.return_types | length == 1 -%}
+{{ ns.return_types[0] }}
+{%- else -%}
+{{ ns.return_types | sort | join(' | ') }}
+{%- endif -%}
+{%- endmacro %}

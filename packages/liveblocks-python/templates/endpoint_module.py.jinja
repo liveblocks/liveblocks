@@ -4,7 +4,7 @@ from urllib.parse import quote
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
+from ...client import Client
 from ...types import Response, UNSET
 from ... import errors
 
@@ -13,10 +13,17 @@ from ... import errors
 {% endfor %}
 
 {% from "endpoint_macros.py.jinja" import header_params, cookie_params, query_params,
-    arguments, client, kwargs, parse_response, docstring, body_to_kwarg %}
+    arguments, client, kwargs, parse_response, docstring, body_to_kwarg, return_type %}
 
-{% set return_string = endpoint.response_type() %}
-{% set parsed_responses = (endpoint.responses | length > 0) and return_string != "Any" %}
+{% set ns = namespace(success_responses=[]) %}
+{% for response in endpoint.responses.patterns %}
+  {% set code_range = response.status_code.range %}
+  {% if code_range[0] >= 200 and code_range[1] <= 299 %}
+    {% set ns.success_responses = ns.success_responses + [response] %}
+  {% endif %}
+{% endfor %}
+
+{%- set return_string = return_type(ns.success_responses) -%}
 
 def _get_kwargs(
     {{ arguments(endpoint, include_client=False) | indent(4) }}
@@ -65,46 +72,23 @@ def _get_kwargs(
 {% endif %}
     return _kwargs
 
-{% if endpoint.responses.default %}
-    {% set return_type = return_string %}
-{% else %}
-    {% set return_type = return_string + " | None" %}
-{% endif %}
-
-
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> {{return_type}}:
-    {% for response in endpoint.responses.patterns %}
+def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
+    {% for response in ns.success_responses %}
     {% set code_range = response.status_code.range %}
     {% if code_range[0] == code_range[1] %}
     if response.status_code == {{ code_range[0] }}:
     {% else %}
     if {{ code_range[0] }} <= response.status_code <= {{ code_range[1] }}:
     {% endif %}
-        {{ parse_response(parsed_responses, response) | indent(8) }}
+        {{ parse_response(return_string not in ["None", "Any"], response) | indent(8) }}
     {% endfor %}
-    {% if endpoint.responses.default %}
-    {{ parse_response(parsed_responses, endpoint.responses.default) | indent(4) }}
-    {% else %}
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
-    {% endif %}
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[{{ return_string }}]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     {{ arguments(endpoint) | indent(4) }}
-) -> Response[{{ return_string }}]:
-    {{ docstring(endpoint, return_string, is_detailed=true) | indent(4) }}
+) -> {{ return_string }}:
+    {{ docstring(endpoint, return_string) | indent(4) }}
 
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
@@ -114,23 +98,16 @@ def sync_detailed(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    {% if return_string in ["None", "Any"] %}
+    return None
+    {% else %}
+    return _parse_response(response=response)
+    {% endif %}
 
-{% if parsed_responses %}
-def sync(
+async def _asyncio(
     {{ arguments(endpoint) | indent(4) }}
-) -> {{ return_string }} | None:
-    {{ docstring(endpoint, return_string, is_detailed=false) | indent(4) }}
-
-    return sync_detailed(
-        {{ kwargs(endpoint) }}
-    ).parsed
-{% endif %}
-
-async def asyncio_detailed(
-    {{ arguments(endpoint) | indent(4) }}
-) -> Response[{{ return_string }}]:
-    {{ docstring(endpoint, return_string, is_detailed=true) | indent(4) }}
+) -> {{ return_string }}:
+    {{ docstring(endpoint, return_string) | indent(4) }}
 
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
@@ -140,15 +117,8 @@ async def asyncio_detailed(
         **kwargs
     )
 
-    return _build_response(client=client, response=response)
-
-{% if parsed_responses %}
-async def asyncio(
-    {{ arguments(endpoint) | indent(4) }}
-) -> {{ return_string }} | None:
-    {{ docstring(endpoint, return_string, is_detailed=false) | indent(4) }}
-
-    return (await asyncio_detailed(
-        {{ kwargs(endpoint) }}
-    )).parsed
-{% endif %}
+    {% if return_string in ["None", "Any"] %}
+    return None
+    {% else %}
+    return _parse_response(response=response)
+    {% endif %}
