@@ -4,7 +4,6 @@ from urllib.parse import quote
 
 import httpx
 
-from ...client import Client
 from ...types import Response, UNSET
 from ... import errors
 
@@ -86,7 +85,7 @@ def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
 
 
 def _sync(
-    {{ arguments(endpoint) | indent(4) }}
+    {{ arguments(endpoint, client_type="httpx.Client") | indent(4) }}
 ) -> {{ return_string }}:
     {{ docstring(endpoint, return_string) | indent(4) }}
 
@@ -94,7 +93,7 @@ def _sync(
         {{ kwargs(endpoint, include_client=False) }}
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
@@ -105,7 +104,7 @@ def _sync(
     {% endif %}
 
 async def _asyncio(
-    {{ arguments(endpoint) | indent(4) }}
+    {{ arguments(endpoint, client_type="httpx.AsyncClient") | indent(4) }}
 ) -> {{ return_string }}:
     {{ docstring(endpoint, return_string) | indent(4) }}
 
@@ -113,8 +112,8 @@ async def _asyncio(
         {{ kwargs(endpoint, include_client=False) }}
     )
 
-    response = await client.get_async_httpx_client().request(
-        **kwargs
+    response = await client.request(
+        **kwargs,
     )
 
     {% if return_string in ["None", "Any"] %}
