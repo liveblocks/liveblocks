@@ -1,0 +1,32 @@
+name: Publish Python package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: "Version to publish (e.g. 0.1.0)"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set version
+        working-directory: packages/liveblocks-python
+        run:
+          sed -i "s/^version = .*/version = \"${{ inputs.version }}\"/"
+          pyproject.toml
+
+      - name: Build and publish
+        working-directory: packages/liveblocks-python
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          uv build
+          uv publish
