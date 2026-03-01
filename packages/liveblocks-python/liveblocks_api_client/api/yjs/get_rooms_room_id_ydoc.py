@@ -1,15 +1,12 @@
-from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
-from ...models.error import Error
 from ...models.get_rooms_room_id_ydoc_response_200 import GetRoomsRoomIdYdocResponse200
 from ...models.get_rooms_room_id_ydoc_type import GetRoomsRoomIdYdocType
-from ...types import UNSET, Response, Unset
+from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -45,54 +42,23 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Error | GetRoomsRoomIdYdocResponse200 | None:
+def _parse_response(*, response: httpx.Response) -> GetRoomsRoomIdYdocResponse200:
     if response.status_code == 200:
         response_200 = GetRoomsRoomIdYdocResponse200.from_dict(response.json())
 
         return response_200
 
-    if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
-
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
-
-        return response_403
-
-    if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
-
-        return response_404
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Error | GetRoomsRoomIdYdocResponse200]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.Client,
     formatting: bool | Unset = UNSET,
     key: str | Unset = UNSET,
     type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-) -> Response[Error | GetRoomsRoomIdYdocResponse200]:
+) -> GetRoomsRoomIdYdocResponse200:
     """Get Yjs document
 
      This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
@@ -105,11 +71,11 @@ def sync_detailed(
         type_ (GetRoomsRoomIdYdocType | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | GetRoomsRoomIdYdocResponse200]
+        GetRoomsRoomIdYdocResponse200
     """
 
     kwargs = _get_kwargs(
@@ -119,21 +85,21 @@ def sync_detailed(
         type_=type_,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return _parse_response(response=response)
 
 
-def sync(
+async def _asyncio(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.AsyncClient,
     formatting: bool | Unset = UNSET,
     key: str | Unset = UNSET,
     type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-) -> Error | GetRoomsRoomIdYdocResponse200 | None:
+) -> GetRoomsRoomIdYdocResponse200:
     """Get Yjs document
 
      This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
@@ -146,47 +112,11 @@ def sync(
         type_ (GetRoomsRoomIdYdocType | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | GetRoomsRoomIdYdocResponse200
-    """
-
-    return sync_detailed(
-        room_id=room_id,
-        client=client,
-        formatting=formatting,
-        key=key,
-        type_=type_,
-    ).parsed
-
-
-async def asyncio_detailed(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    formatting: bool | Unset = UNSET,
-    key: str | Unset = UNSET,
-    type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-) -> Response[Error | GetRoomsRoomIdYdocResponse200]:
-    """Get Yjs document
-
-     This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-    [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
-
-    Args:
-        room_id (str):
-        formatting (bool | Unset):
-        key (str | Unset):
-        type_ (GetRoomsRoomIdYdocType | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Error | GetRoomsRoomIdYdocResponse200]
+        GetRoomsRoomIdYdocResponse200
     """
 
     kwargs = _get_kwargs(
@@ -196,44 +126,8 @@ async def asyncio_detailed(
         type_=type_,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    formatting: bool | Unset = UNSET,
-    key: str | Unset = UNSET,
-    type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-) -> Error | GetRoomsRoomIdYdocResponse200 | None:
-    """Get Yjs document
-
-     This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-    [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
-
-    Args:
-        room_id (str):
-        formatting (bool | Unset):
-        key (str | Unset):
-        type_ (GetRoomsRoomIdYdocType | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Error | GetRoomsRoomIdYdocResponse200
-    """
-
-    return (
-        await asyncio_detailed(
-            room_id=room_id,
-            client=client,
-            formatting=formatting,
-            key=key,
-            type_=type_,
-        )
-    ).parsed
+    return _parse_response(response=response)

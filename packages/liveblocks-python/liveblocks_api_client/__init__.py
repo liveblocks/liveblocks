@@ -1,8 +1,8 @@
 """A client library for accessing API v2"""
 
-from .client import AuthenticatedClient, Client
+from .client import AsyncLiveblocks, Liveblocks
 
 __all__ = (
-    "AuthenticatedClient",
-    "Client",
+    "AsyncLiveblocks",
+    "Liveblocks",
 )

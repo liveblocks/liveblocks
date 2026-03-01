@@ -11,6 +11,11 @@ dependencies = [
     "python-dateutil>=2.8.0,<3",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0"
+]
+
 [tool.uv.build-backend]
 module-name = "liveblocks_api_client"
 module-root = ""

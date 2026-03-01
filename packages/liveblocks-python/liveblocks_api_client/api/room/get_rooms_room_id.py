@@ -1,14 +1,10 @@
-from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
-from ...models.error import Error
 from ...models.room import Room
-from ...types import Response
 
 
 def _get_kwargs(
@@ -25,47 +21,20 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Error | Room | None:
+def _parse_response(*, response: httpx.Response) -> Room:
     if response.status_code == 200:
         response_200 = Room.from_dict(response.json())
 
         return response_200
 
-    if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
-
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
-
-        return response_403
-
-    if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
-
-        return response_404
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Error | Room]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
-) -> Response[Error | Room]:
+    client: httpx.Client,
+) -> Room:
     """Get room
 
      This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
@@ -75,29 +44,29 @@ def sync_detailed(
         room_id (str):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | Room]
+        Room
     """
 
     kwargs = _get_kwargs(
         room_id=room_id,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return _parse_response(response=response)
 
 
-def sync(
+async def _asyncio(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
-) -> Error | Room | None:
+    client: httpx.AsyncClient,
+) -> Room:
     """Get room
 
      This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
@@ -107,73 +76,19 @@ def sync(
         room_id (str):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | Room
-    """
-
-    return sync_detailed(
-        room_id=room_id,
-        client=client,
-    ).parsed
-
-
-async def asyncio_detailed(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-) -> Response[Error | Room]:
-    """Get room
-
-     This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomid).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Error | Room]
+        Room
     """
 
     kwargs = _get_kwargs(
         room_id=room_id,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-) -> Error | Room | None:
-    """Get room
-
-     This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomid).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Error | Room
-    """
-
-    return (
-        await asyncio_detailed(
-            room_id=room_id,
-            client=client,
-        )
-    ).parsed
+    return _parse_response(response=response)

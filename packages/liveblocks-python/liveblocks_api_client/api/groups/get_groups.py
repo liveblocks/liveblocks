@@ -1,12 +1,10 @@
-from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
 from ...models.get_groups import GetGroups
-from ...types import UNSET, Response, Unset
+from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -32,41 +30,21 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | GetGroups | None:
+def _parse_response(*, response: httpx.Response) -> GetGroups:
     if response.status_code == 200:
         response_200 = GetGroups.from_dict(response.json())
 
         return response_200
 
-    if response.status_code == 401:
-        response_401 = cast(Any, None)
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = cast(Any, None)
-        return response_403
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | GetGroups]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> Response[Any | GetGroups]:
+) -> GetGroups:
     """Get groups
 
      This endpoint returns a list of all groups in your project. Corresponds to
@@ -77,11 +55,11 @@ def sync_detailed(
         starting_after (str | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | GetGroups]
+        GetGroups
     """
 
     kwargs = _get_kwargs(
@@ -89,19 +67,19 @@ def sync_detailed(
         starting_after=starting_after,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return _parse_response(response=response)
 
 
-def sync(
+async def _asyncio(
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> Any | GetGroups | None:
+) -> GetGroups:
     """Get groups
 
      This endpoint returns a list of all groups in your project. Corresponds to
@@ -112,41 +90,11 @@ def sync(
         starting_after (str | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | GetGroups
-    """
-
-    return sync_detailed(
-        client=client,
-        limit=limit,
-        starting_after=starting_after,
-    ).parsed
-
-
-async def asyncio_detailed(
-    *,
-    client: AuthenticatedClient | Client,
-    limit: float | Unset = 20.0,
-    starting_after: str | Unset = UNSET,
-) -> Response[Any | GetGroups]:
-    """Get groups
-
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
-
-    Args:
-        limit (float | Unset):  Default: 20.0.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Any | GetGroups]
+        GetGroups
     """
 
     kwargs = _get_kwargs(
@@ -154,38 +102,8 @@ async def asyncio_detailed(
         starting_after=starting_after,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    *,
-    client: AuthenticatedClient | Client,
-    limit: float | Unset = 20.0,
-    starting_after: str | Unset = UNSET,
-) -> Any | GetGroups | None:
-    """Get groups
-
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
-
-    Args:
-        limit (float | Unset):  Default: 20.0.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Any | GetGroups
-    """
-
-    return (
-        await asyncio_detailed(
-            client=client,
-            limit=limit,
-            starting_after=starting_after,
-        )
-    ).parsed
+    return _parse_response(response=response)

@@ -1,13 +1,11 @@
-from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
 from ...models.get_users_user_id_subscription_settings_response_200 import GetUsersUserIdSubscriptionSettingsResponse200
-from ...types import UNSET, Response, Unset
+from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -36,50 +34,22 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Any | GetUsersUserIdSubscriptionSettingsResponse200 | None:
+def _parse_response(*, response: httpx.Response) -> GetUsersUserIdSubscriptionSettingsResponse200:
     if response.status_code == 200:
         response_200 = GetUsersUserIdSubscriptionSettingsResponse200.from_dict(response.json())
 
         return response_200
 
-    if response.status_code == 401:
-        response_401 = cast(Any, None)
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = cast(Any, None)
-        return response_403
-
-    if response.status_code == 404:
-        response_404 = cast(Any, None)
-        return response_404
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Any | GetUsersUserIdSubscriptionSettingsResponse200]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     user_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.Client,
     starting_after: str | Unset = UNSET,
     limit: float | Unset = 50.0,
-) -> Response[Any | GetUsersUserIdSubscriptionSettingsResponse200]:
+) -> GetUsersUserIdSubscriptionSettingsResponse200:
     """Get user room subscription settings
 
      This endpoint returns the list of a user's room subscription settings. Corresponds to
@@ -92,11 +62,11 @@ def sync_detailed(
         limit (float | Unset):  Default: 50.0.
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | GetUsersUserIdSubscriptionSettingsResponse200]
+        GetUsersUserIdSubscriptionSettingsResponse200
     """
 
     kwargs = _get_kwargs(
@@ -105,20 +75,20 @@ def sync_detailed(
         limit=limit,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return _parse_response(response=response)
 
 
-def sync(
+async def _asyncio(
     user_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.AsyncClient,
     starting_after: str | Unset = UNSET,
     limit: float | Unset = 50.0,
-) -> Any | GetUsersUserIdSubscriptionSettingsResponse200 | None:
+) -> GetUsersUserIdSubscriptionSettingsResponse200:
     """Get user room subscription settings
 
      This endpoint returns the list of a user's room subscription settings. Corresponds to
@@ -131,45 +101,11 @@ def sync(
         limit (float | Unset):  Default: 50.0.
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | GetUsersUserIdSubscriptionSettingsResponse200
-    """
-
-    return sync_detailed(
-        user_id=user_id,
-        client=client,
-        starting_after=starting_after,
-        limit=limit,
-    ).parsed
-
-
-async def asyncio_detailed(
-    user_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    starting_after: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
-) -> Response[Any | GetUsersUserIdSubscriptionSettingsResponse200]:
-    """Get user room subscription settings
-
-     This endpoint returns the list of a user's room subscription settings. Corresponds to
-    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-    room-subscription-settings).
-
-    Args:
-        user_id (str):
-        starting_after (str | Unset):
-        limit (float | Unset):  Default: 50.0.
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Any | GetUsersUserIdSubscriptionSettingsResponse200]
+        GetUsersUserIdSubscriptionSettingsResponse200
     """
 
     kwargs = _get_kwargs(
@@ -178,42 +114,8 @@ async def asyncio_detailed(
         limit=limit,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    user_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    starting_after: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
-) -> Any | GetUsersUserIdSubscriptionSettingsResponse200 | None:
-    """Get user room subscription settings
-
-     This endpoint returns the list of a user's room subscription settings. Corresponds to
-    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-    room-subscription-settings).
-
-    Args:
-        user_id (str):
-        starting_after (str | Unset):
-        limit (float | Unset):  Default: 50.0.
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Any | GetUsersUserIdSubscriptionSettingsResponse200
-    """
-
-    return (
-        await asyncio_detailed(
-            user_id=user_id,
-            client=client,
-            starting_after=starting_after,
-            limit=limit,
-        )
-    ).parsed
+    return _parse_response(response=response)

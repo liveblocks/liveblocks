@@ -1,14 +1,10 @@
-from http import HTTPStatus
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
-from ...models.error import Error
 from ...models.patch_rooms_room_id_storage_json_patch_body_item import PatchRoomsRoomIdStorageJsonPatchBodyItem
-from ...types import Response
 
 
 def _get_kwargs(
@@ -36,52 +32,19 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | Error | None:
+def _parse_response(*, response: httpx.Response) -> Any:
     if response.status_code == 200:
-        response_200 = cast(Any, None)
-        return response_200
-
-    if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
-
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
-
-        return response_403
-
-    if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
-
-        return response_404
-
-    if response.status_code == 422:
-        response_422 = Error.from_dict(response.json())
-
-        return response_422
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
         return None
 
-
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[Any | Error]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
+    raise errors.LiveblocksError.from_response(response)
 
 
-def sync_detailed(
+def _sync(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.Client,
     body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-) -> Response[Any | Error]:
+) -> Any:
     """Apply JSON Patch to Storage
 
      Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
@@ -104,11 +67,11 @@ def sync_detailed(
         body (list[PatchRoomsRoomIdStorageJsonPatchBodyItem]):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any | Error]
+        Any
     """
 
     kwargs = _get_kwargs(
@@ -116,19 +79,19 @@ def sync_detailed(
         body=body,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return None
 
 
-def sync(
+async def _asyncio(
     room_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.AsyncClient,
     body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-) -> Any | Error | None:
+) -> Any:
     """Apply JSON Patch to Storage
 
      Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
@@ -151,53 +114,11 @@ def sync(
         body (list[PatchRoomsRoomIdStorageJsonPatchBodyItem]):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any | Error
-    """
-
-    return sync_detailed(
-        room_id=room_id,
-        client=client,
-        body=body,
-    ).parsed
-
-
-async def asyncio_detailed(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-) -> Response[Any | Error]:
-    """Apply JSON Patch to Storage
-
-     Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
-    room's Storage document, useful for modifying Storage. Operations are applied in order; if any
-    operation fails, the document is not changed and a 422 response with a helpful message is returned.
-
-    **Paths and data types:** Be as specific as possible with your target path. Every parent in the
-    chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-    `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
-
-    **Performance:** For large Storage documents, applying a patch can be expensive because the full
-    state is reconstructed on the server to apply the operations. Very large documents may not be
-    suitable for this endpoint.
-
-    For a **full guide with examples**, see [Modifying storage via REST API with JSON
-    Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
-
-    Args:
-        room_id (str):
-        body (list[PatchRoomsRoomIdStorageJsonPatchBodyItem]):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Any | Error]
+        Any
     """
 
     kwargs = _get_kwargs(
@@ -205,50 +126,8 @@ async def asyncio_detailed(
         body=body,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    room_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-) -> Any | Error | None:
-    """Apply JSON Patch to Storage
-
-     Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
-    room's Storage document, useful for modifying Storage. Operations are applied in order; if any
-    operation fails, the document is not changed and a 422 response with a helpful message is returned.
-
-    **Paths and data types:** Be as specific as possible with your target path. Every parent in the
-    chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-    `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
-
-    **Performance:** For large Storage documents, applying a patch can be expensive because the full
-    state is reconstructed on the server to apply the operations. Very large documents may not be
-    suitable for this endpoint.
-
-    For a **full guide with examples**, see [Modifying storage via REST API with JSON
-    Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
-
-    Args:
-        room_id (str):
-        body (list[PatchRoomsRoomIdStorageJsonPatchBodyItem]):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Any | Error
-    """
-
-    return (
-        await asyncio_detailed(
-            room_id=room_id,
-            client=client,
-            body=body,
-        )
-    ).parsed
+    return None

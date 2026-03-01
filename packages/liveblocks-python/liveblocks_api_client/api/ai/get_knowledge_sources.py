@@ -1,14 +1,11 @@
-from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
-from ...models.error import Error
 from ...models.get_knowledge_sources import GetKnowledgeSources
-from ...types import UNSET, Response, Unset
+from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -37,53 +34,22 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Error | GetKnowledgeSources | None:
+def _parse_response(*, response: httpx.Response) -> GetKnowledgeSources:
     if response.status_code == 200:
         response_200 = GetKnowledgeSources.from_dict(response.json())
 
         return response_200
 
-    if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
-
-        return response_401
-
-    if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
-
-        return response_403
-
-    if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
-
-        return response_404
-
-    if client.raise_on_unexpected_status:
-        raise errors.UnexpectedStatus(response.status_code, response.content)
-    else:
-        return None
+    raise errors.LiveblocksError.from_response(response)
 
 
-def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[Error | GetKnowledgeSources]:
-    return Response(
-        status_code=HTTPStatus(response.status_code),
-        content=response.content,
-        headers=response.headers,
-        parsed=_parse_response(client=client, response=response),
-    )
-
-
-def sync_detailed(
+def _sync(
     copilot_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> Response[Error | GetKnowledgeSources]:
+) -> GetKnowledgeSources:
     """Get knowledge sources
 
      This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
@@ -95,11 +61,11 @@ def sync_detailed(
         starting_after (str | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Error | GetKnowledgeSources]
+        GetKnowledgeSources
     """
 
     kwargs = _get_kwargs(
@@ -108,20 +74,20 @@ def sync_detailed(
         starting_after=starting_after,
     )
 
-    response = client.get_httpx_client().request(
+    response = client.request(
         **kwargs,
     )
 
-    return _build_response(client=client, response=response)
+    return _parse_response(response=response)
 
 
-def sync(
+async def _asyncio(
     copilot_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> Error | GetKnowledgeSources | None:
+) -> GetKnowledgeSources:
     """Get knowledge sources
 
      This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
@@ -133,44 +99,11 @@ def sync(
         starting_after (str | Unset):
 
     Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Error | GetKnowledgeSources
-    """
-
-    return sync_detailed(
-        copilot_id=copilot_id,
-        client=client,
-        limit=limit,
-        starting_after=starting_after,
-    ).parsed
-
-
-async def asyncio_detailed(
-    copilot_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    limit: float | Unset = 20.0,
-    starting_after: str | Unset = UNSET,
-) -> Response[Error | GetKnowledgeSources]:
-    """Get knowledge sources
-
-     This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-    to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
-
-    Args:
-        copilot_id (str):
-        limit (float | Unset):  Default: 20.0.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Response[Error | GetKnowledgeSources]
+        GetKnowledgeSources
     """
 
     kwargs = _get_kwargs(
@@ -179,41 +112,8 @@ async def asyncio_detailed(
         starting_after=starting_after,
     )
 
-    response = await client.get_async_httpx_client().request(**kwargs)
+    response = await client.request(
+        **kwargs,
+    )
 
-    return _build_response(client=client, response=response)
-
-
-async def asyncio(
-    copilot_id: str,
-    *,
-    client: AuthenticatedClient | Client,
-    limit: float | Unset = 20.0,
-    starting_after: str | Unset = UNSET,
-) -> Error | GetKnowledgeSources | None:
-    """Get knowledge sources
-
-     This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-    to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
-
-    Args:
-        copilot_id (str):
-        limit (float | Unset):  Default: 20.0.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Error | GetKnowledgeSources
-    """
-
-    return (
-        await asyncio_detailed(
-            copilot_id=copilot_id,
-            client=client,
-            limit=limit,
-            starting_after=starting_after,
-        )
-    ).parsed
+    return _parse_response(response=response)
