@@ -16,7 +16,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn, Portal } from "@liveblocks/react-ui/_private";
+import { cn, Portal, useStableComponent } from "@liveblocks/react-ui/_private";
 import {
   $getSelection,
   COMMAND_PRIORITY_HIGH,
@@ -67,7 +67,7 @@ export function FloatingThreads({
 }: FloatingThreadsProps) {
   const activeThreads = useActiveThreads();
 
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
 
   const [editor] = useLexicalComposerContext();
   const nodes = useThreadToNodes(); // A map of thread ids to a set of thread mark nodes associated with the thread

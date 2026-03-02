@@ -18,6 +18,47 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 9 (2026-02-27)
+
+## v3.14.1
+
+### `@liveblocks/react`
+
+- Fix paginated hooks (`useThreads`, `useInboxNotifications`, and `useAiChats`)
+  stopping pagination after the first `fetchMore()` call when auto-paginating in
+  a `useEffect`.
+
+## Zen Router
+
+- Zen Router was released, our open-source HTTP router.
+- [Documentation website for Zen Router](https://zenrouter.liveblocks.io) was published.
+- [Repo for Zen Router](https://github.com/liveblocks/zenrouter) was published.
+
+## Website
+
+- New blog post: [Introducing Zen Router: our open-source type-safe router compatible with Cloudflare Workers](https://liveblocks.io/blog/introducing-zen-router-our-open-source-type-safe-router-compatible-with-cloudflare-workers).
+
+## Examples
+
+- [Next.js Starter Kit](https://liveblocks.io/nextjs/starter-kit) was updated to support [new features](https://github.com/liveblocks/liveblocks/pull/3109).
+  - Organization switcher powered by tenants/organizations, with separate inboxes in each.
+  - New universal header built with `useIsInsideRoom`.
+  - New share menu with private/org/public permissions.
+  - Filters for private/org/public documents on dashboard.
+  - New Document shape with new permissions added.
+  - Better UX in various places and tidied project structure.
+- Fix text size in Next.js Starter Kit on mobile devices. Thank you [@chrrrs](https://github.com/chrrrs)!
+
+## Showcase
+
+- New item: [Next.js Starter Kit for realtime collaboration](https://liveblocks.io/showcase/nextjs-starter-kit-for-realtime-collaboration).
+- New item: [An inbox for each workspace](https://liveblocks.io/showcase/an-inbox-for-each-workspace).
+- New item: [Share menu with live permissions](https://liveblocks.io/showcase/share-menu-with-live-permissions).
+
+## Contributors
+
+flowflorent, chrrrs, nvie, ctnicholas
+
 # Week 8 (2026-02-20)
 
 ## Open source

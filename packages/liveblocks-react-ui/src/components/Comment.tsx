@@ -2,9 +2,11 @@
 
 import {
   assertNever,
+  type BaseMetadata,
   type CommentAttachment,
   type CommentData,
   type CommentReaction as CommentReactionData,
+  type DCM,
   type GroupMentionData,
   MENTION_CHARACTER,
   type MentionData,
@@ -14,7 +16,6 @@ import {
   useAddRoomCommentReaction,
   useDeleteRoomComment,
   useEditRoomComment,
-  useMarkRoomThreadAsRead,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
   useRoomPermissions,
@@ -27,7 +28,6 @@ import type {
   MouseEvent,
   PropsWithChildren,
   ReactNode,
-  RefObject,
   SyntheticEvent,
 } from "react";
 import {
@@ -72,8 +72,6 @@ import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
-import { useIntersectionCallback } from "../utils/use-visible";
-import { useWindowFocus } from "../utils/use-window-focus";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import {
@@ -93,11 +91,31 @@ import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
 
-export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
+export interface CommentProps<CM extends BaseMetadata = DCM>
+  extends Omit<ComponentPropsWithoutRef<"div">, "children"> {
   /**
    * The comment to display.
    */
-  comment: CommentData;
+  comment: CommentData<CM>;
+
+  /**
+   * The comment's avatar.
+   * Can be combined with `Comment.Avatar` to easily follow default styles.
+   */
+  avatar?: ReactNode;
+
+  /**
+   * The comment's author.
+   * Can be combined with `Comment.Author` to easily follow default styles.
+   */
+  author?: ReactNode;
+
+  /**
+   * The comment's date.
+   * Can be combined with `Comment.Date` to easily follow default styles,
+   * or the `Timestamp` primitive for more control.
+   */
+  date?: ReactNode;
 
   /**
    * How to show or hide the actions.
@@ -128,6 +146,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * Whether to indent the comment's content.
    */
   indentContent?: boolean;
+
+  /**
+   * Additional content to display below the comment's body.
+   */
+  additionalContent?: ReactNode;
 
   /**
    * The event handler called when the comment is edited.
@@ -165,7 +188,14 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    */
   dropdownItems?:
     | ReactNode
-    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
+
+  /**
+   * Override the comment's content.
+   */
+  children?:
+    | ReactNode
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * Override the component's strings.
@@ -180,17 +210,65 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
-  autoMarkReadThreadId?: string;
-
-  /**
-   * @internal
-   */
   actions?: ReactNode;
 
   /**
    * @internal
    */
   actionsClassName?: string;
+
+  /**
+   * @internal
+   */
+  internalDropdownItems?: ReactNode;
+}
+
+export interface CommentAvatarProps
+  extends Omit<ComponentProps<"div">, "children"> {
+  /**
+   * The user ID to display the avatar for.
+   */
+  userId: string;
+}
+
+export interface CommentAuthorProps
+  extends Omit<ComponentProps<"span">, "children"> {
+  /**
+   * The user ID to display the author for.
+   */
+  userId: string;
+}
+
+export interface CommentDateProps
+  extends Omit<ComponentProps<"span">, "children"> {
+  /**
+   * The date to display.
+   */
+  date: Date | string | number;
+
+  /**
+   * The locale used when formatting the date.
+   */
+  locale?: string;
+}
+
+function CommentAvatar(props: CommentAvatarProps) {
+  return <Avatar {...props} />;
+}
+
+function CommentAuthor(props: CommentAuthorProps) {
+  return <User {...props} />;
+}
+
+function CommentDate({ locale, date, className, ...props }: CommentDateProps) {
+  return (
+    <Timestamp
+      locale={locale}
+      date={date}
+      className={cn("lb-date", className)}
+      {...(props as Omit<ComponentProps<"time">, "children" | "title">)}
+    />
+  );
 }
 
 export interface CommentDropdownItemProps
@@ -551,38 +629,6 @@ export function CommentNonInteractiveFileAttachment({
   );
 }
 
-// A void component (which doesn't render anything) responsible for marking a thread
-// as read when the comment it's used in becomes visible.
-// Moving this logic into a separate component allows us to use the visibility
-// and focus hooks "conditionally" by conditionally rendering this component.
-function AutoMarkReadThreadIdHandler({
-  threadId,
-  roomId,
-  commentRef,
-}: {
-  threadId: string;
-  roomId: string;
-  commentRef: RefObject<HTMLElement>;
-}) {
-  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
-  const isWindowFocused = useWindowFocus();
-
-  useIntersectionCallback(
-    commentRef,
-    (isIntersecting) => {
-      if (isIntersecting) {
-        markThreadAsRead(threadId);
-      }
-    },
-    {
-      // The underlying IntersectionObserver is only enabled when the window is focused
-      enabled: isWindowFocused,
-    }
-  );
-
-  return null;
-}
-
 const CommentDropdownItem = forwardRef<
   HTMLDivElement,
   CommentDropdownItemProps
@@ -640,10 +686,15 @@ export const Comment = Object.assign(
         dropdownItems,
         overrides,
         components,
+        additionalContent,
+        avatar,
+        author,
+        date,
         className,
         actions,
         actionsClassName,
-        autoMarkReadThreadId,
+        internalDropdownItems,
+        children,
         ...props
       },
       forwardedRef
@@ -783,7 +834,7 @@ export const Comment = Object.assign(
         return null;
       }
 
-      const defaultDropdownItems =
+      const commentDropdownItems =
         comment.userId === currentUserId ? (
           <>
             <CommentDropdownItem onSelect={handleEdit} icon={<EditIcon />}>
@@ -794,27 +845,165 @@ export const Comment = Object.assign(
             </CommentDropdownItem>
           </>
         ) : null;
+      const defaultDropdownItems =
+        internalDropdownItems || commentDropdownItems ? (
+          <>
+            {internalDropdownItems}
+            {commentDropdownItems}
+          </>
+        ) : null;
 
       const dropdownContent =
         typeof dropdownItems === "function" ? (
           dropdownItems({ children: defaultDropdownItems, comment })
-        ) : (
+        ) : defaultDropdownItems || dropdownItems ? (
           <>
             {defaultDropdownItems}
             {dropdownItems}
           </>
+        ) : null;
+
+      let content: ReactNode;
+
+      if (isEditing) {
+        content = (
+          <Composer
+            className="lb-comment-composer"
+            onComposerSubmit={handleEditSubmit}
+            defaultValue={comment.body}
+            defaultAttachments={comment.attachments}
+            autoFocus
+            showAttribution={false}
+            showAttachments={showAttachments}
+            showFormattingControls={showComposerFormattingControls}
+            actions={
+              <>
+                <Tooltip
+                  content={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                  aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
+                >
+                  <Button
+                    className="lb-composer-action"
+                    onClick={handleEditCancel}
+                    icon={<CrossIcon />}
+                  />
+                </Tooltip>
+                <ShortcutTooltip
+                  content={$.COMMENT_EDIT_COMPOSER_SAVE}
+                  shortcut="Enter"
+                >
+                  <ComposerPrimitive.Submit asChild>
+                    <Button
+                      variant="primary"
+                      className="lb-composer-action"
+                      onClick={stopPropagation}
+                      aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
+                      icon={<CheckIcon />}
+                    />
+                  </ComposerPrimitive.Submit>
+                </ShortcutTooltip>
+              </>
+            }
+            overrides={{
+              COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
+            }}
+            roomId={comment.roomId}
+          />
         );
+      } else {
+        content = comment.body ? (
+          <>
+            <CommentPrimitive.Body
+              className="lb-comment-body"
+              id={bodyId}
+              body={comment.body}
+              components={{
+                Mention: ({ mention }) => (
+                  <CommentMention
+                    mention={mention}
+                    onClick={(event) => onMentionClick?.(mention, event)}
+                    overrides={overrides}
+                  />
+                ),
+                Link: CommentLink,
+              }}
+            />
+            {additionalContent}
+            {showAttachments &&
+            (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (
+              <div className="lb-comment-attachments">
+                {mediaAttachments.length > 0 ? (
+                  <div className="lb-attachments">
+                    {mediaAttachments.map((attachment) => (
+                      <CommentMediaAttachment
+                        key={attachment.id}
+                        attachment={attachment}
+                        overrides={overrides}
+                        onAttachmentClick={onAttachmentClick}
+                        roomId={comment.roomId}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {fileAttachments.length > 0 ? (
+                  <div className="lb-attachments">
+                    {fileAttachments.map((attachment) => (
+                      <CommentFileAttachment
+                        key={attachment.id}
+                        attachment={attachment}
+                        overrides={overrides}
+                        onAttachmentClick={onAttachmentClick}
+                        roomId={comment.roomId}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {showReactions && comment.reactions.length > 0 && (
+              <div className="lb-comment-reactions">
+                {comment.reactions.map((reaction) => (
+                  <CommentReaction
+                    key={reaction.emoji}
+                    comment={comment}
+                    reaction={reaction}
+                    overrides={overrides}
+                    disabled={!canComment}
+                  />
+                ))}
+                {canComment ? (
+                  <EmojiPicker onEmojiSelect={handleReactionSelect}>
+                    <Tooltip content={$.COMMENT_ADD_REACTION}>
+                      <EmojiPickerTrigger asChild>
+                        <Button
+                          className="lb-comment-reaction lb-comment-reaction-add"
+                          variant="outline"
+                          onClick={stopPropagation}
+                          aria-label={$.COMMENT_ADD_REACTION}
+                          icon={<EmojiPlusIcon />}
+                        />
+                      </EmojiPickerTrigger>
+                    </Tooltip>
+                  </EmojiPicker>
+                ) : null}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="lb-comment-body">
+            <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
+          </div>
+        );
+
+        content =
+          typeof children === "function"
+            ? children({ comment, children: content })
+            : (children ?? content);
+      }
 
       return (
         <TooltipProvider>
           <ComponentsProvider components={components}>
-            {autoMarkReadThreadId && (
-              <AutoMarkReadThreadIdHandler
-                commentRef={ref}
-                threadId={autoMarkReadThreadId}
-                roomId={comment.roomId}
-              />
-            )}
             <div
               role="article"
               id={comment.id}
@@ -837,32 +1026,54 @@ export const Comment = Object.assign(
             >
               <div className="lb-comment-header">
                 <div className="lb-comment-details">
-                  <Avatar
-                    className="lb-comment-avatar"
-                    userId={comment.userId}
-                    onClick={handleAuthorClick}
-                  />
-                  <span className="lb-comment-details-labels">
-                    <User
-                      className="lb-comment-author"
+                  {avatar ? (
+                    <div
+                      className="lb-comment-avatar"
+                      onClick={handleAuthorClick}
+                    >
+                      {avatar}
+                    </div>
+                  ) : (
+                    <Avatar
+                      className="lb-comment-avatar"
                       userId={comment.userId}
                       onClick={handleAuthorClick}
                     />
-                    <span className="lb-comment-date">
-                      <Timestamp
-                        locale={$.locale}
-                        date={comment.createdAt}
-                        className="lb-date lb-comment-date-created"
+                  )}
+                  <span className="lb-comment-details-labels">
+                    {author ? (
+                      <span
+                        className="lb-comment-author"
+                        onClick={handleAuthorClick}
+                      >
+                        {author}
+                      </span>
+                    ) : (
+                      <User
+                        className="lb-comment-author"
+                        userId={comment.userId}
+                        onClick={handleAuthorClick}
                       />
-                      {comment.editedAt && comment.body && (
-                        <>
-                          {" "}
-                          <span className="lb-comment-date-edited">
-                            {$.COMMENT_EDITED}
-                          </span>
-                        </>
-                      )}
-                    </span>
+                    )}
+                    {date ? (
+                      <span className="lb-comment-date">{date}</span>
+                    ) : (
+                      <span className="lb-comment-date">
+                        <CommentDate
+                          locale={$.locale}
+                          date={comment.createdAt}
+                          className="lb-comment-date-created"
+                        />
+                        {comment.editedAt && comment.body && (
+                          <>
+                            {" "}
+                            <span className="lb-comment-date-edited">
+                              {$.COMMENT_EDITED}
+                            </span>
+                          </>
+                        )}
+                      </span>
+                    )}
                   </span>
                 </div>
                 {showActions && !isEditing && (
@@ -908,136 +1119,7 @@ export const Comment = Object.assign(
                   </div>
                 )}
               </div>
-              <div className="lb-comment-content">
-                {isEditing ? (
-                  <Composer
-                    className="lb-comment-composer"
-                    onComposerSubmit={handleEditSubmit}
-                    defaultValue={comment.body}
-                    defaultAttachments={comment.attachments}
-                    autoFocus
-                    showAttribution={false}
-                    showAttachments={showAttachments}
-                    showFormattingControls={showComposerFormattingControls}
-                    actions={
-                      <>
-                        <Tooltip
-                          content={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                          aria-label={$.COMMENT_EDIT_COMPOSER_CANCEL}
-                        >
-                          <Button
-                            className="lb-composer-action"
-                            onClick={handleEditCancel}
-                            icon={<CrossIcon />}
-                          />
-                        </Tooltip>
-                        <ShortcutTooltip
-                          content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                          shortcut="Enter"
-                        >
-                          <ComposerPrimitive.Submit asChild>
-                            <Button
-                              variant="primary"
-                              className="lb-composer-action"
-                              onClick={stopPropagation}
-                              aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
-                              icon={<CheckIcon />}
-                            />
-                          </ComposerPrimitive.Submit>
-                        </ShortcutTooltip>
-                      </>
-                    }
-                    overrides={{
-                      COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
-                    }}
-                    roomId={comment.roomId}
-                  />
-                ) : comment.body ? (
-                  <>
-                    <CommentPrimitive.Body
-                      className="lb-comment-body"
-                      id={bodyId}
-                      body={comment.body}
-                      components={{
-                        Mention: ({ mention }) => (
-                          <CommentMention
-                            mention={mention}
-                            onClick={(event) =>
-                              onMentionClick?.(mention, event)
-                            }
-                            overrides={overrides}
-                          />
-                        ),
-                        Link: CommentLink,
-                      }}
-                    />
-                    {showAttachments &&
-                    (mediaAttachments.length > 0 ||
-                      fileAttachments.length > 0) ? (
-                      <div className="lb-comment-attachments">
-                        {mediaAttachments.length > 0 ? (
-                          <div className="lb-attachments">
-                            {mediaAttachments.map((attachment) => (
-                              <CommentMediaAttachment
-                                key={attachment.id}
-                                attachment={attachment}
-                                overrides={overrides}
-                                onAttachmentClick={onAttachmentClick}
-                                roomId={comment.roomId}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                        {fileAttachments.length > 0 ? (
-                          <div className="lb-attachments">
-                            {fileAttachments.map((attachment) => (
-                              <CommentFileAttachment
-                                key={attachment.id}
-                                attachment={attachment}
-                                overrides={overrides}
-                                onAttachmentClick={onAttachmentClick}
-                                roomId={comment.roomId}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {showReactions && comment.reactions.length > 0 && (
-                      <div className="lb-comment-reactions">
-                        {comment.reactions.map((reaction) => (
-                          <CommentReaction
-                            key={reaction.emoji}
-                            comment={comment}
-                            reaction={reaction}
-                            overrides={overrides}
-                            disabled={!canComment}
-                          />
-                        ))}
-                        {canComment ? (
-                          <EmojiPicker onEmojiSelect={handleReactionSelect}>
-                            <Tooltip content={$.COMMENT_ADD_REACTION}>
-                              <EmojiPickerTrigger asChild>
-                                <Button
-                                  className="lb-comment-reaction lb-comment-reaction-add"
-                                  variant="outline"
-                                  onClick={stopPropagation}
-                                  aria-label={$.COMMENT_ADD_REACTION}
-                                  icon={<EmojiPlusIcon />}
-                                />
-                              </EmojiPickerTrigger>
-                            </Tooltip>
-                          </EmojiPicker>
-                        ) : null}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="lb-comment-body">
-                    <p className="lb-comment-deleted">{$.COMMENT_DELETED}</p>
-                  </div>
-                )}
-              </div>
+              <div className="lb-comment-content">{content}</div>
             </div>
           </ComponentsProvider>
         </TooltipProvider>
@@ -1049,5 +1131,20 @@ export const Comment = Object.assign(
      * Displays a dropdown item in the comment's dropdown.
      */
     DropdownItem: CommentDropdownItem,
+
+    /**
+     * Displays a comment's avatar.
+     */
+    Avatar: CommentAvatar,
+
+    /**
+     * Displays a comment's author.
+     */
+    Author: CommentAuthor,
+
+    /**
+     * Displays a comment's date.
+     */
+    Date: CommentDate,
   }
 );

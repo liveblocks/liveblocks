@@ -5,31 +5,32 @@ import {
   type CommentData,
   type DCM,
   type DTM,
+  findLastIndex,
   Permission,
   type ThreadData,
 } from "@liveblocks/core";
-import { findLastIndex } from "@liveblocks/core";
 import {
+  useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
   useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import { Toggle as TogglePrimitive } from "radix-ui";
-import type {
-  ComponentPropsWithoutRef,
-  ForwardedRef,
-  PropsWithChildren,
-  ReactNode,
-  RefAttributes,
-  SyntheticEvent,
-} from "react";
 import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  type ForwardedRef,
   forwardRef,
   Fragment,
+  type PropsWithChildren,
+  type ReactNode,
+  type RefAttributes,
+  type SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -47,12 +48,55 @@ import type {
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
-import type { CommentProps } from "./Comment";
-import { Comment } from "./Comment";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+import { useStableComponent } from "../utils/use-stable-component";
+import { useIntersectionCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
+import { Comment as DefaultComment, type CommentProps } from "./Comment";
+import { Composer, type ComposerProps } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
+
+// An invisible marker used to mark a thread as read only when it becomes visible.
+function MarkThreadAsReadMarker({ thread }: { thread: ThreadData }) {
+  const { id: threadId, roomId } = thread;
+  const ref = useRef<HTMLDivElement>(null);
+  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
+  const isWindowFocused = useWindowFocus();
+
+  useIntersectionCallback(
+    ref,
+    (isIntersecting) => {
+      if (isIntersecting) {
+        markThreadAsRead(threadId);
+      }
+    },
+    {
+      // The underlying IntersectionObserver is only enabled when the window is focused
+      enabled: isWindowFocused,
+    }
+  );
+
+  return (
+    <div
+      ref={ref}
+      style={{ height: 0 }}
+      aria-hidden
+      data-mark-as-read-marker=""
+    />
+  );
+}
+
+export interface ThreadComponents<
+  // Future components might reference thread metadata so we declare it
+  // already to respect the `TM` → `CM` order used everywhere else.
+  _TM extends BaseMetadata = DTM,
+  CM extends BaseMetadata = DCM,
+> {
+  /**
+   * The component used to display comments.
+   */
+  Comment: ComponentType<CommentProps<CM>>;
+}
 
 export interface ThreadProps<
   TM extends BaseMetadata = DTM,
@@ -93,7 +137,7 @@ export interface ThreadProps<
    */
   commentDropdownItems?:
     | ReactNode
-    | ((props: PropsWithChildren<{ comment: CommentData }>) => ReactNode);
+    | ((props: PropsWithChildren<{ comment: CommentData<CM> }>) => ReactNode);
 
   /**
    * The maximum number of comments to show.
@@ -192,7 +236,7 @@ export interface ThreadProps<
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents>;
+  components?: Partial<GlobalComponents & ThreadComponents>;
 }
 
 /**
@@ -237,6 +281,7 @@ export const Thread = forwardRef(
     }: ThreadProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
+    const Comment = useStableComponent(components?.Comment, DefaultComment);
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
@@ -466,6 +511,8 @@ export const Thread = forwardRef(
                 hiddenComments &&
                 index >= hiddenComments.firstIndex &&
                 index <= hiddenComments.lastIndex;
+              const isHiddenBecauseDeleted =
+                !showDeletedComments && !comment.body;
               const isFirstHiddenComment =
                 isHidden && index === hiddenComments.firstIndex;
 
@@ -486,12 +533,12 @@ export const Thread = forwardRef(
                 );
               }
 
-              if (isNonDeletedComment) {
-                currentCommentIndex++;
+              if (isHidden || isHiddenBecauseDeleted) {
+                return null;
               }
 
-              if (isHidden) {
-                return null;
+              if (isNonDeletedComment) {
+                currentCommentIndex++;
               }
 
               const children = (
@@ -518,11 +565,6 @@ export const Thread = forwardRef(
                   onMentionClick={onMentionClick}
                   onAttachmentClick={onAttachmentClick}
                   components={components}
-                  autoMarkReadThreadId={
-                    index === lastCommentIndex && isUnread
-                      ? thread.id
-                      : undefined
-                  }
                   actionsClassName={
                     isFirstComment ? "lb-thread-actions" : undefined
                   }
@@ -561,48 +603,27 @@ export const Thread = forwardRef(
                       </Tooltip>
                     ) : null
                   }
-                  dropdownItems={({ children }) => {
-                    const threadDropdownItems = isFirstComment ? (
-                      <>
-                        <Comment.DropdownItem
-                          onSelect={handleSubscribeChange}
-                          icon={
-                            subscriptionStatus === "subscribed" ? (
-                              <BellCrossedIcon />
-                            ) : (
-                              <BellIcon />
-                            )
-                          }
-                        >
-                          {subscriptionStatus === "subscribed"
-                            ? $.THREAD_UNSUBSCRIBE
-                            : $.THREAD_SUBSCRIBE}
-                        </Comment.DropdownItem>
-                      </>
-                    ) : null;
-
-                    if (typeof commentDropdownItems === "function") {
-                      return commentDropdownItems({
-                        children: (
-                          <>
-                            {threadDropdownItems}
-                            {children}
-                          </>
-                        ),
-                        comment,
-                      });
-                    }
-
-                    return threadDropdownItems ||
-                      commentDropdownItems ||
-                      children ? (
-                      <>
-                        {threadDropdownItems}
-                        {children}
-                        {commentDropdownItems}
-                      </>
-                    ) : null;
-                  }}
+                  internalDropdownItems={
+                    isFirstComment ? (
+                      <DefaultComment.DropdownItem
+                        onSelect={handleSubscribeChange}
+                        icon={
+                          subscriptionStatus === "subscribed" ? (
+                            <BellCrossedIcon />
+                          ) : (
+                            <BellIcon />
+                          )
+                        }
+                      >
+                        {subscriptionStatus === "subscribed"
+                          ? $.THREAD_UNSUBSCRIBE
+                          : $.THREAD_SUBSCRIBE}
+                      </DefaultComment.DropdownItem>
+                    ) : undefined
+                  }
+                  dropdownItems={
+                    commentDropdownItems as CommentProps["dropdownItems"]
+                  }
                 />
               );
 
@@ -626,6 +647,9 @@ export const Thread = forwardRef(
               );
             })}
           </div>
+          {unreadIndex !== undefined && (
+            <MarkThreadAsReadMarker thread={thread} />
+          )}
           {showComposer && (
             <Composer
               className="lb-thread-composer"

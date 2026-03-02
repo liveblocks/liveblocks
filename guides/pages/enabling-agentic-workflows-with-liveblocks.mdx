@@ -1,11 +1,20 @@
 ---
 meta:
-  title: "Enabling Agentic Workflows with Liveblocks"
+  title: "Enabling agentic workflows with Liveblocks"
   parentTitle: "Guides"
   description:
     "Use Liveblocks REST APIs to let AI agents show presence, modify storage,
     and participate as collaborators in your rooms."
 ---
+
+<Figure>
+  <Image
+    src="/assets/agentic/agentic-workflows.png"
+    alt="Liveblocks agentic workflows"
+    width={1344}
+    height={660}
+  />
+</Figure>
 
 AI agents can participate as first-class collaborators inside Liveblocks rooms.
 Two REST API capabilities make this possible:
@@ -30,13 +39,13 @@ The
 [`POST /v2/rooms/{roomId}/presence`](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-presence)
 endpoint lets your agent set presence in a room just like a connected user
 would. The presence expires automatically once the TTL elapses, so the agent
-never lingers after it's done.
+never lingers after it’s done.
 
 ```shell title="Endpoint"
 POST https://api.liveblocks.io/v2/rooms/{roomId}/presence
 ```
 
-Authenticate with your project's **secret key** in the `Authorization` header.
+Authenticate with your project’s **secret key** in the `Authorization` header.
 
 ```shell
 "Authorization: Bearer {{SECRET_KEY}}"
@@ -44,7 +53,7 @@ Authenticate with your project's **secret key** in the `Authorization` header.
 
 The request body accepts:
 
-- `userId`: The agent's stable identifier.
+- `userId`: The agent’s stable identifier.
 - `data`: Any presence object you want connected clients to see.
 - `userInfo`: Optional name, avatar URL, and color for the agent.
 - `ttl`: How long (in seconds) the presence should live (minimum: 2, maximum:
@@ -68,9 +77,18 @@ curl -X POST "https://api.liveblocks.io/v2/rooms/my-room/presence" \
 
 A `204` response means the presence was set successfully.
 
+<Figure>
+  <Image
+    src="/assets/agentic/avatar-stack-with-ai.png"
+    alt="Avatar stack with AI agent"
+    width={1344}
+    height={640}
+  />
+</Figure>
+
 ### Rendering the agent as an avatar [#agent-avatar]
 
-Because the agent's presence is set server-side, it flows to all connected
+Because the agent’s presence is set server-side, it flows to all connected
 clients through the normal Liveblocks presence system. The agent appears in
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) alongside real
 users, so existing avatar stack components work without any changes.
@@ -95,6 +113,15 @@ function AvatarStack() {
 
 The `userInfo.avatar` you pass to the presence endpoint populates `info.avatar`
 here, so the agent shows up with its own avatar.
+
+<Figure>
+  <Image
+    src="/assets/agentic/input-presence-ai.png"
+    alt="AI agent input presence"
+    width={1344}
+    height={640}
+  />
+</Figure>
 
 ### Highlighting form fields [#highlight-fields]
 
@@ -128,11 +155,11 @@ As the agent moves between fields, call the presence endpoint again with an
 updated `focusedField` value. Each call resets the TTL, so the presence stays
 alive as long as the agent keeps working.
 
-## Modifying storage with JSON Patch [#json-patch]
+## Modifying Storage with JSON Patch [#json-patch]
 
 The
 [`PATCH /v2/rooms/{roomId}/storage/json-patch`](/docs/api-reference/rest-api-endpoints#patch-rooms-roomId-storage-json-patch)
-endpoint lets an agent write directly to a room's Storage document over HTTP.
+endpoint lets an agent write directly to a room’s Storage document over HTTP.
 The body is a JSON array of operations following the
 [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) specification.
 
@@ -182,7 +209,7 @@ patch failed; the response body includes an `error` code, a human-readable
 ## End-to-end example: agent reviews a form [#end-to-end]
 
 The following example walks through an agent that reviews a multi-field form. It
-uses ephemeral presence to show users what it's doing in real time, and JSON
+uses ephemeral presence to show users what it’s doing in real time, and JSON
 Patch to commit its changes to Storage.
 
 ```python
@@ -249,6 +276,15 @@ in real time, no extra wiring required.
 There are several natural places to start an agent workflow. Choose the one that
 fits your product best, or combine multiple triggers.
 
+<Figure>
+  <Image
+    src="/assets/agentic/mention-ai.png"
+    alt="AI agent mentioned in a comment"
+    width={1344}
+    height={640}
+  />
+</Figure>
+
 ### Comments webhooks—mentioning an AI agent [#comments-webhook]
 
 Users can invoke an agent by mentioning it in a comment (e.g.
@@ -261,7 +297,7 @@ agent.
   <Step>
     <StepTitle>Register the agent as a mentionable user</StepTitle>
     <StepContent>
-      Add the agent's ID to [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+      Add the agent’s ID to [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
       and [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveMentionSuggestions)
       in your [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider) 
       so it appears in the `@` mention picker alongside real users.
@@ -303,7 +339,7 @@ agent.
       When a comment is created, the webhook payload contains `roomId`, `threadId`,
       and `commentId`. Fetch the full comment using the Liveblocks Node SDK, then use
       [`getMentionsFromCommentBody`](/docs/api-reference/liveblocks-node#getMentionsFromCommentBody)
-      to extract all mentions and check whether the agent's ID is among them.
+      to extract all mentions and check whether the agent’s ID is among them.
 
       ```ts file="app/api/liveblocks-webhook/route.ts"
       import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";

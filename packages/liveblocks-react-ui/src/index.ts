@@ -16,6 +16,9 @@ export { AiTool } from "./components/AiTool";
 export type { AvatarStackProps } from "./components/AvatarStack";
 export { AvatarStack } from "./components/AvatarStack";
 export type {
+  CommentAuthorProps,
+  CommentAvatarProps,
+  CommentDateProps,
   CommentDropdownItemProps,
   CommentProps,
 } from "./components/Comment";
