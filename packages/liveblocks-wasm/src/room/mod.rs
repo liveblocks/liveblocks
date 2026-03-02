@@ -204,6 +204,13 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
         self.managed_socket.reconnect().await;
     }
 
+    /// Process deferred events from timer fires (heartbeats, reconnect
+    /// backoff, etc.). Must be called regularly from the event loop to
+    /// keep the connection alive.
+    pub async fn process_deferred_events(&mut self) {
+        self.managed_socket.process_deferred_events().await;
+    }
+
     // -- Storage --
 
     /// Internal: send a FETCH_STORAGE request to the server.
