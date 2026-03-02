@@ -1,4 +1,4 @@
-import { test } from "vitest";
+import { expect, test } from "vitest";
 
 import { LiveList } from "../src/crdts/LiveList";
 import { prepareTestsConflicts } from "./utils";
@@ -163,6 +163,64 @@ test(
 
       // Both clients should converge to the same state
       assert({ list: ["🟢", "x", "🌕", "z"] });
+    }
+  )
+);
+
+// Regression test: property test counterexample (shrunk).
+// B.insert("eg") disappears from client A after final sync.
+// Reproduces a consistency violation found by the list-property property test.
+test.fails(
+  "insert/set/undo/move/undo consistency with missing item after sync",
+  prepareTestsConflicts(
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, room1, room2, control }) => {
+      const listA = root1.get("list");
+      const listB = root2.get("list");
+
+      listA.insert("og", 0);
+      listA.set(0, "bI");
+      listA.push("Eq");
+      room1.history.undo();
+      listB.push("XS");
+      await control.flushA();
+      await control.flushB();
+
+      room1.history.undo();
+      listB.push("tq");
+      listB.insert("eg", 2 % (listB.length + 1));
+      if (listA.length > 0) listA.set(2 % listA.length, "sT");
+      listB.push("KK");
+      await control.flushB();
+
+      room1.history.undo();
+      if (listA.length > 0) listA.move(0 % listA.length, 4 % listA.length);
+      listA.push("Tn");
+      if (listA.length > 0) listA.move(1 % listA.length, 0 % listA.length);
+      if (listA.length > 0) listA.set(1 % listA.length, "EN");
+      listA.push("KP");
+      listA.insert("eQ", 0);
+      room2.history.undo();
+      listA.push("bF");
+      listA.push("lM");
+      room2.history.redo();
+      listA.push("gS");
+      listB.insert("Cc", 3 % (listB.length + 1));
+      room1.history.undo();
+      listA.insert("ui", 4 % (listA.length + 1));
+      if (listA.length > 0) listA.delete(2 % listA.length);
+      room1.history.undo();
+      listB.insert("en", 5 % (listB.length + 1));
+      listA.push("Az");
+
+      // Final sync
+      await control.flushA();
+      await control.flushB();
+
+      const finalA = listA.toImmutable();
+      const finalB = listB.toImmutable();
+      expect(finalA).toEqual(finalB);
     }
   )
 );
