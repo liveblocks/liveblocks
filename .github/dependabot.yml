@@ -8,6 +8,9 @@ updates:
       - "/tutorial/**"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
     # Security updates ignore this limit: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference#open-pull-requests-limit-
     open-pull-requests-limit: 0 
     ignore:

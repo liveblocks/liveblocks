@@ -94,11 +94,12 @@ console.log(body);
 
 ## Workspace permissions [#permissions]
 
-Using [organizations](/docs/authentication/organizations), you can create workspaces in your
-application, compartmentalizing all resources such as inbox notifications and
-rooms. This includes everything associated with rooms such as comment threads,
-realtime data stored, and more. This allows you to add a workspace switcher to
-your application, separating each of your customers/organizations.
+Using [organizations](/docs/authentication/organizations), you can create
+workspaces in your application, compartmentalizing all resources such as inbox
+notifications and rooms. This includes everything associated with rooms such as
+comment threads, realtime data stored, and more. This allows you to add a
+workspace switcher to your application, separating each of your
+customers/organizations.
 
 <Figure>
   <Image
@@ -112,8 +113,9 @@ your application, separating each of your customers/organizations.
 
 ### Set up workspace permissions
 
-To set up workspace permissions, pass an `organizationId` when authenticating a user,
-ensuring that the user will only have access to resources within this workspace.
+To set up workspace permissions, pass an `organizationId` when authenticating a
+user, ensuring that the user will only have access to resources within this
+workspace.
 
 ```ts
 const { body, status } = await liveblocks.identifyUser({
@@ -127,8 +129,8 @@ const { body, status } = await liveblocks.identifyUser({
 console.log(body);
 ```
 
-When creating a resource on the server, such as a room, pass the `organizationId` to
-the resource, to allow the user access.
+When creating a resource on the server, such as a room, pass the
+`organizationId` to the resource, to allow the user access.
 
 ```ts
 const room = await liveblocks.createRoom("my-room-id", {
@@ -180,14 +182,24 @@ There are three permission values that you can set on rooms.
 <dl>
   <dt>`["room:write"]`</dt>
   <dd>
-    Full access. Enables people to view and edit the room. On the client,
+    Full access. Enables people to view and edit the room, and create comments.
+    On the client,
     [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
     is `true`.
+  </dd>
+  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
+  <dd>
+    Read access with comment creation and presence. Enables people to create
+    comments and edit their presence, but only view the room&rsquo;s storage. On
+    the client,
+    [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
+    is `false`.
   </dd>
   <dt>`["room:read", "room:presence:write"]`</dt>
   <dd>
     Read access with presence. Enables people to edit their presence, but only
-    view the room&rsquo;s storage. On the client,
+    view the room&rsquo;s storage. Users can view comments, but not interact
+    with them. On the client,
     [`canWrite`](/docs/api-reference/liveblocks-react#Checking-user-permissions)
     is `false`.
   </dd>
