@@ -184,31 +184,39 @@ components from
                       openCell.columnId === column.id;
 
                     return (
-                      <td key={column.id}>
-                        {/* Cell contents */}
-                        {row[column.id as keyof typeof row]}
+                      <td key={column.id} style={{ padding: 12 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          {/* Cell contents */}
+                          {row[column.id as keyof typeof row]}
 
-                        {/* Comment button */}
-                        {thread ? (
-                          <FloatingThread
-                            thread={thread}
-                            defaultOpen={defaultOpen}
-                            onOpenChange={(isOpen) => {
-                              if (!isOpen && defaultOpen) {
-                                setOpenCell(null);
-                              }
-                            }}
-                          >
-                            <button>💬 View comments</button>
-                          </FloatingThread>
-                        ) : (
-                          <FloatingComposer
-                            metadata={metadata}
-                            onComposerSubmit={() => setOpenCell(metadata)}
-                          >
-                            <button>➕ Create comment</button>
-                          </FloatingComposer>
-                        )}
+                          {/* Comment button */}
+                          {thread ? (
+                            <FloatingThread
+                              thread={thread}
+                              defaultOpen={defaultOpen}
+                              onOpenChange={(isOpen) => {
+                                if (!isOpen && defaultOpen) {
+                                  setOpenCell(null);
+                                }
+                              }}
+                            >
+                              <button style={{ marginLeft: 16 }}>💬</button>
+                            </FloatingThread>
+                          ) : (
+                            <FloatingComposer
+                              metadata={metadata}
+                              onComposerSubmit={() => setOpenCell(metadata)}
+                            >
+                              <button style={{ marginLeft: 16 }}>➕</button>
+                            </FloatingComposer>
+                          )}
+                        </div>
                       </td>
                     );
                   })}
