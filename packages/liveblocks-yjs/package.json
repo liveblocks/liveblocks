@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/yjs",
-  "version": "3.14.0",
+  "version": "3.14.1",
   "description": "Integrate your existing or new Yjs documents with Liveblocks.",
   "license": "Apache-2.0",
   "author": "Liveblocks Inc.",
@@ -35,8 +35,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.14.0",
-    "@liveblocks/core": "3.14.0",
+    "@liveblocks/client": "3.14.1",
+    "@liveblocks/core": "3.14.1",
     "@noble/hashes": "^1.8.0",
     "js-base64": "^3.7.7",
     "y-indexeddb": "^9.0.12"

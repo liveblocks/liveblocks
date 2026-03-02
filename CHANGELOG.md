@@ -1,5 +1,13 @@
 ## vNEXT (not yet released)
 
+## v3.14.1
+
+### `@liveblocks/react`
+
+- Fix paginated hooks (`useThreads`, `useInboxNotifications`, and `useAiChats`)
+  stopping pagination after the first `fetchMore()` call when auto-paginating in
+  a `useEffect`.
+
 ## v3.14.0
 
 This release adds support for opting-in to the new storage engine on a per-room

@@ -739,9 +739,8 @@
         "href": "https://frimousse.liveblocks.io"
       },
       {
-        "title": "How to set up CI testing",
-        "path": "/guides/how-to-set-up-continuous-integration-ci-testing",
-        "hidden": true
+        "title": "Zen Router",
+        "href": "https://zenrouter.liveblocks.io"
       }
     ]
   },
