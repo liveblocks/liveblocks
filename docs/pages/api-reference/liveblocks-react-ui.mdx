@@ -3693,6 +3693,36 @@ User IDs (both from Presence and the `userIds` prop) are deduplicated so the
 same user present with multiple tabs for example will only be displayed once in
 the stack.
 
+##### User information
+
+`AvatarStack` uses
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to resolve each user’s information and then uses the `name` and `avatar`
+properties.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // ["stacy@example.com", ...]
+    console.log(userIds);
+
+    // Get users from your back-end
+    const users = await __fetchUsers__(userIds);
+
+    // [{ name: "Stacy", avatar: "https://example.com/stacy.png" }, ...]
+    console.log(users);
+
+    // Return a list of users
+    return users;
+  }}
+  // +++
+>
+  <RoomProvider id="my-room-id">{/* ... */}</RoomProvider>
+</LiveblocksProvider>
+```
+
 ##### Props [#AvatarStack-props]
 
 <PropertiesList>
@@ -3729,31 +3759,42 @@ It works out-of-the-box with best practices built-in:
 
 {/* TODO: Add image */}
 
-The cursors use the `name` and `color` properties which can be set via
-`userInfo` [when authenticating users](/docs/authentication).
-
-```tsx
-const { body, status } = await liveblocks.identifyUser(
-  {
-    userId: "stacy@example.com",
-  },
-  {
-    // +++
-    userInfo: {
-      name: "Stacy",
-      color: "#22c55e",
-    },
-    // +++
-  }
-);
-```
-
 By default, cursor coordinates are stored in Presence under `"cursor"`. Use
 `presenceKey` to render multiple `Cursors` areas in a single room.
 
 If you need more control, you can use the single [`Cursor`](#Cursor) component
 and handle positioning manually with the Presence hooks in
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Presence).
+
+##### User information
+
+`Cursors` uses
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to resolve each user’s information and then uses the `name` and `color`
+properties.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // ["stacy@example.com", ...]
+    console.log(userIds);
+
+    // Get users from your back-end
+    const users = await __fetchUsers__(userIds);
+
+    // [{ name: "Stacy", color: "#22c55e", ...]
+    console.log(users);
+
+    // Return a list of users
+    return users;
+  }}
+  // +++
+>
+  <RoomProvider id="my-room-id">{/* ... */}</RoomProvider>
+</LiveblocksProvider>
+```
 
 ##### Props [#Cursors-props]
 

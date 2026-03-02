@@ -5,6 +5,7 @@ import {
   useOthersConnectionIds,
   useRoom,
   useUpdateMyPresence,
+  useUser,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
@@ -173,13 +174,16 @@ function PresenceCursor({
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
-  const color = useOther(connectionId, (other) => $string(other.info?.color));
-  const name = useOther(connectionId, (other) => $string(other.info?.name));
+  const userId = useOther(connectionId, (other) => $string(other.id));
+  const { user, isLoading } = useUser(userId ?? "");
+  const hasUserInfo = userId !== undefined && !isLoading;
+  const color = $string(user?.color);
+  const name = $string(user?.name);
 
   useLayoutEffect(() => {
     const spring = makeCoordinatesSpring();
 
-    function render() {
+    function update() {
       const element = cursorRef.current;
       const coordinates = spring.get();
 
@@ -187,7 +191,7 @@ function PresenceCursor({
         return;
       }
 
-      if (coordinates === null) {
+      if (!hasUserInfo || coordinates === null) {
         element.style.transform = "translate3d(0, 0, 0)";
         element.style.display = "none";
         return;
@@ -200,8 +204,9 @@ function PresenceCursor({
       element.style.display = "";
     }
 
-    const unsubscribeSpring = spring.subscribe(render);
-    const unsubscribeSize = sizeEvents.subscribe(render);
+    const unsubscribeSpring = spring.subscribe(update);
+    const unsubscribeSize = sizeEvents.subscribe(update);
+    update();
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
       const other = others.find((other) => other.connectionId === connectionId);
@@ -216,7 +221,7 @@ function PresenceCursor({
       unsubscribeSize();
       unsubscribeOther();
     };
-  }, [room, connectionId, presenceKey, sizeRef, sizeEvents]);
+  }, [room, connectionId, presenceKey, sizeRef, sizeEvents, hasUserInfo]);
 
   return (
     <Cursor
