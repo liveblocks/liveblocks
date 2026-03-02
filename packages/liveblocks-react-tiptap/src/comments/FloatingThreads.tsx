@@ -14,7 +14,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn, Portal } from "@liveblocks/react-ui/_private";
+import { cn, Portal, useStableComponent } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import {
   type ComponentType,
@@ -58,7 +58,7 @@ export function FloatingThreads({
   editor,
   ...props
 }: FloatingThreadsProps) {
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
 
   const { pluginState } = useEditorState({
     editor,
