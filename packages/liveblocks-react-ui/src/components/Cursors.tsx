@@ -30,7 +30,7 @@ const STIFFNESS = 320;
 const DAMPING = 32;
 const EPSILON = 0.01;
 
-const DEFAULT_PRESENCE_KEY = "$cursor";
+const DEFAULT_PRESENCE_KEY = "cursor";
 
 export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
   /**

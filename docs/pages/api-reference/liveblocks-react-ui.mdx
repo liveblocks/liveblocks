@@ -3748,7 +3748,7 @@ const { body, status } = await liveblocks.identifyUser(
 );
 ```
 
-By default, cursor coordinates are stored in Presence under `"$cursor"`. Use
+By default, cursor coordinates are stored in Presence under `"cursor"`. Use
 `presenceKey` to render multiple `Cursors` areas in a single room.
 
 If you need more control, you can use the single [`Cursor`](#Cursor) component
@@ -3761,7 +3761,7 @@ and handle positioning manually with the Presence hooks in
   <PropertiesListItem
     name="presenceKey"
     type="string"
-    defaultValue={`"$cursor"`}
+    defaultValue={`"cursor"`}
   >
     The key used to store cursor coordinates in users’ Presence.
   </PropertiesListItem>
