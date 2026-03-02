@@ -47,16 +47,18 @@ components from
     <StepTitle>Define thread metadata</StepTitle>
     <StepContent>
 
-      Inside the new `liveblocks.config.ts`, define the metadata shape for threads.
+      Inside the new `liveblocks.config.ts` file, define the metadata shape for threads.
       Metadata is used to attach comment threads to table cells.
 
       ```tsx file="liveblocks.config.ts"
       declare global {
         interface Liveblocks {
+          // +++
           ThreadMetadata: {
             rowId: string;
             columnId: string;
           };
+          // +++
         }
       }
 
@@ -109,10 +111,223 @@ components from
 
   </Step>
   <Step>
+    <StepTitle>Create thread context for your table</StepTitle>
+    <StepContent>
+
+      Use React context to set up cells and thread state for your table with
+      [`useThreads`](/docs/api-reference/liveblocks-react#useThreads),
+      allowing cells to retrieve their comments.
+
+      ```tsx file="app/CellThreadContext.tsx"
+      "use client";
+
+      import { useState, createContext, useContext } from "react";
+      import { useThreads } from "@liveblocks/react/suspense";
+      import { ThreadData } from "@liveblocks/client";
+
+      export type OpenCell = { rowId: string; columnId: string } | null;
+
+      type CellThreadContextValue = {
+        threads: ThreadData[];
+        openCell: OpenCell;
+        setOpenCell: (openCell: OpenCell) => void;
+      };
+
+      const CellThreadContext = createContext<CellThreadContextValue | null>(null);
+
+      export function CellThreadProvider({
+        children,
+      }: {
+        children: React.ReactNode;
+      }) {
+        // +++
+        const { threads } = useThreads();
+        const [openCell, setOpenCell] = useState<OpenCell>(null);
+        // +++
+
+        return (
+          <CellThreadContext.Provider value={{ threads, openCell, setOpenCell }}>
+            {children}
+          </CellThreadContext.Provider>
+        );
+      }
+
+      export function useCellThread(): CellThreadContextValue {
+        const context = useContext(CellThreadContext);
+        if (!context) {
+          throw new Error("useCellThread must be used within CellThreadProvider");
+        }
+        return context;
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a custom comment cell</StepTitle>
+    <StepContent>
+
+      Create a custom cell renderer for your table that displays comment buttons alongside cell values using
+      [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer),
+      [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread), and the context we created.
+      Clicking the buttns opens popovers for creating or viewing comment threads.
+
+      ```tsx file="app/CommentCell.tsx"
+      "use client";
+
+      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+      import { CustomCellRendererProps } from "ag-grid-react";
+      import { useCellThread } from "./CellThreadContext";
+
+      export function CommentCell(params: CustomCellRendererProps) {
+        // +++
+        const { threads, openCell, setOpenCell } = useCellThread();
+        // +++
+
+        const rowId = params.data?.id;
+        const columnId = params.colDef?.field;
+
+        if (!rowId || !columnId) {
+          return null;
+        }
+
+        // Check if there's already a thread for this cell
+        // +++
+        const thread = threads.find(
+          ({ metadata }) =>
+            metadata.rowId === rowId && metadata.columnId === columnId,
+        );
+        // +++
+
+        // When a thread is created, open it by default
+        const defaultOpen =
+          openCell !== null &&
+          openCell.rowId === rowId &&
+          openCell.columnId === columnId;
+
+        const metadata = { rowId, columnId };
+
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 16,
+            }}
+          >
+            {/* Cell contents */}
+            // +++
+            {params.value}
+            // +++
+
+            {/* Show thread if it exists, otherwise show thread composer */}
+            {!thread ? (
+              // +++
+              <FloatingComposer
+                metadata={metadata}
+                onComposerSubmit={() => setOpenCell(metadata)}
+                style={{ zIndex: 10 }}
+              >
+                <button>➕</button>
+              </FloatingComposer>
+              // +++
+            ) : (
+              // +++
+              <FloatingThread
+                thread={thread}
+                defaultOpen={defaultOpen}
+                onOpenChange={(isOpen) => {
+                  if (!isOpen && defaultOpen) {
+                    setOpenCell(null);
+                  }
+                }}
+                onComposerSubmit={() => setOpenCell(metadata)}
+                style={{ zIndex: 10 }}
+                autoFocus
+              >
+                <button>💬</button>
+              </FloatingThread>
+              // +++
+            )}
+          </div>
+        );
+      }
+      ```
+    </StepContent>
+    </Step>
+
+  <Step>
+    <StepTitle>Use Liveblocks hooks and components with AG Grid</StepTitle>
+    <StepContent>
+
+      Set up AG Grid with `AgGridProvider`, and add your custom `CellThreadProvider` context.
+      Import your `CommentCell` component into `defaultColRef`, and replace the table data with your own.
+      Learn more on the [AG Grid website](https://www.ag-grid.com/react-data-grid/getting-started/).
+
+      ```tsx file="app/CollaborativeApp.tsx"
+      "use client";
+
+      import { useState, useMemo } from "react";
+      import { AllCommunityModule } from "ag-grid-community";
+      import { AgGridProvider, AgGridReact } from "ag-grid-react";
+      // +++
+      import { CellThreadProvider } from "./CellThreadContext";
+      import { CommentCell } from "./CommentCell";
+      // +++
+
+      const modules = [AllCommunityModule];
+
+      type RowData = { id: string; name: string; price: number };
+
+      export function CollaborativeApp() {
+        const [rowData] = useState<RowData[]>([
+          { id: "1", name: "Laptop", price: 1000 },
+          { id: "2", name: "Phone", price: 500 },
+          { id: "3", name: "Tablet", price: 300 },
+        ]);
+
+        const [colDefs] = useState<{ field: keyof RowData }[]>([
+          { field: "name" },
+          { field: "price" },
+        ]);
+
+        const defaultColDef = useMemo(
+          () => ({
+            // +++
+            cellRenderer: CommentCell,
+            // +++
+          }),
+          [],
+        );
+
+        return (
+          // +++
+          <AgGridProvider modules={modules}>
+            <CellThreadProvider>
+              <div style={{ height: 500 }}>
+                <AgGridReact
+                  rowData={rowData}
+                  columnDefs={colDefs}
+                  defaultColDef={defaultColDef}
+                  getRowId={(params) => params.data.id}
+                />
+              </div>
+            </CellThreadProvider>
+          </AgGridProvider>
+          // +++
+        );
+      }
+      ```
+
+    </StepContent>
+
+    </Step>
+    <Step>
     <StepTitle>Add the Liveblocks room to your page</StepTitle>
     <StepContent>
 
-      After creating your room file, it’s time to join it. Import
+      Import
       your room into your `page.tsx` file, and place
       your collaborative app components inside it.
 
@@ -125,151 +340,6 @@ components from
           <Room>
             <CollaborativeApp />
           </Room>
-        );
-      }
-      ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Use the Liveblocks hooks and components</StepTitle>
-    <StepContent>
-
-      Now that we’re connected to a room, we can [set up AG grid](https://www.ag-grid.com/react-data-grid/getting-started/)
-      andstart using the Liveblocks hooks and components.
-      Add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room,
-      and insert them into the table cells using [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread)
-      and [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer). Replace the table data with your own.
-
-      ```tsx file="app/CollaborativeApp.tsx"
-      "use client";
-
-      import { useState } from "react";
-      import { useThreads } from "@liveblocks/react/suspense";
-      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
-      import { AllCommunityModule } from "ag-grid-community";
-      import {
-        AgGridProvider,
-        AgGridReact,
-        CustomCellRendererProps,
-      } from "ag-grid-react";
-      import { ThreadData } from "@liveblocks/client";
-
-      const modules = [AllCommunityModule];
-      type RowData = { name: string; price: number };
-
-      export function CollaborativeApp() {
-        const { threads } = useThreads();
-
-        const [openCell, setOpenCell] = useState<{
-          rowId: string;
-          columnId: string;
-        } | null>(null);
-
-        const [rowData, setRowData] = useState<RowData[]>([
-          { name: "Laptop", price: 1000 },
-          { name: "Phone", price: 500 },
-          { name: "Tablet", price: 300 },
-        ]);
-
-        const [colDefs, setColDefs] = useState<{ field: keyof RowData }[]>([
-          { field: "name" },
-          { field: "price" },
-        ]);
-
-        const defaultColDef = {
-          cellRenderer: (params: CustomCellRendererProps) => {
-            const rowId = params.node.id;
-            const columnId = params.colDef?.field;
-
-            if (!rowId || !columnId) {
-              return null;
-            }
-
-            return (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                {params.value}
-                <CellCommentButton
-                  threads={threads}
-                  rowId={rowId}
-                  columnId={columnId}
-                  openCell={openCell}
-                  setOpenCell={setOpenCell}
-                />
-              </div>
-            );
-          },
-        };
-
-        return (
-          <AgGridProvider modules={modules}>
-            <div style={{ height: 500 }}>
-              <AgGridReact
-                rowData={rowData}
-                columnDefs={colDefs}
-                defaultColDef={defaultColDef}
-              />
-            </div>
-          </AgGridProvider>
-        );
-      }
-
-      function CellCommentButton({
-        threads,
-        rowId,
-        columnId,
-        openCell,
-        setOpenCell,
-      }: {
-        threads: ThreadData[];
-        rowId: string;
-        columnId: string;
-        openCell: { rowId: string; columnId: string } | null;
-        setOpenCell: (openCell: { rowId: string; columnId: string } | null) => void;
-      }) {
-        const thread = threads.find(
-          ({ metadata }) =>
-            metadata.rowId === rowId && metadata.columnId === columnId,
-        );
-
-        const defaultOpen =
-          openCell !== null &&
-          openCell.rowId === rowId &&
-          openCell.columnId === columnId;
-
-        const metadata = { rowId, columnId };
-
-        if (!thread) {
-          return (
-            <FloatingComposer
-              metadata={metadata}
-              onComposerSubmit={() => setOpenCell(metadata)}
-            >
-              <button style={{ marginLeft: 16 }}>➕</button>
-            </FloatingComposer>
-          );
-        }
-
-        return (
-          <FloatingThread
-            thread={thread}
-            defaultOpen={defaultOpen}
-            onOpenChange={(isOpen) => {
-              if (!isOpen && defaultOpen) {
-                setOpenCell(null);
-              }
-            }}
-            autoFocus
-          >
-            <button style={{ marginLeft: 16 }}>💬</button>
-          </FloatingThread>
         );
       }
       ```
@@ -295,7 +365,7 @@ components from
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
 
-      Comments is set up and working now, but each user is anonymous—the next step is to
+      Comments is set up and working now inside AG Grid, but each user is anonymous—the next step is to
       authenticate each user as they connect, and attach their name and avatar to their comments.
 
       <Button asChild  className="not-markdown">
