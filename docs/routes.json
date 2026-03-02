@@ -42,8 +42,13 @@
             "hidden": true
           },
           {
-            "title": "Comments table",
+            "title": "Comments / Table",
             "path": "/get-started/nextjs-comments-table",
+            "hidden": true
+          },
+          {
+            "title": "Comments / AG Grid",
+            "path": "/get-started/nextjs-comments-ag-grid",
             "hidden": true
           },
           {

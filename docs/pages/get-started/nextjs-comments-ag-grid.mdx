@@ -23,7 +23,7 @@ components from
       Every package should use the same version.
 
       ```bash trackEvent="install_liveblocks"
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui ag-grid-react
       ```
 
     </StepContent>
@@ -136,7 +136,8 @@ components from
     <StepTitle>Use the Liveblocks hooks and components</StepTitle>
     <StepContent>
 
-      Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
+      Now that we’re connected to a room, we can [set up AG grid](https://www.ag-grid.com/react-data-grid/getting-started/)
+      andstart using the Liveblocks hooks and components.
       Add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room,
       and insert them into the table cells using [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread)
       and [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer). Replace the table data with your own.
@@ -147,84 +148,128 @@ components from
       import { useState } from "react";
       import { useThreads } from "@liveblocks/react/suspense";
       import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+      import { AllCommunityModule } from "ag-grid-community";
+      import {
+        AgGridProvider,
+        AgGridReact,
+        CustomCellRendererProps,
+      } from "ag-grid-react";
+      import { ThreadData } from "@liveblocks/client";
 
-      const TABLE_DATA = [
-        { id: "1", name: "Laptop", price: 1000 },
-        { id: "2", name: "Phone", price: 500 },
-        { id: "3", name: "Tablet", price: 300 },
-      ];
-
-      const COLUMNS = [
-        { id: "name", label: "Name" },
-        { id: "price", label: "Price" },
-      ];
+      const modules = [AllCommunityModule];
+      type RowData = { name: string; price: number };
 
       export function CollaborativeApp() {
         const { threads } = useThreads();
+
         const [openCell, setOpenCell] = useState<{
           rowId: string;
           columnId: string;
         } | null>(null);
 
+        const [rowData, setRowData] = useState<RowData[]>([
+          { name: "Laptop", price: 1000 },
+          { name: "Phone", price: 500 },
+          { name: "Tablet", price: 300 },
+        ]);
+
+        const [colDefs, setColDefs] = useState<{ field: keyof RowData }[]>([
+          { field: "name" },
+          { field: "price" },
+        ]);
+
+        const defaultColDef = {
+          cellRenderer: (params: CustomCellRendererProps) => {
+            const rowId = params.node.id;
+            const columnId = params.colDef?.field;
+
+            if (!rowId || !columnId) {
+              return null;
+            }
+
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                {params.value}
+                <CellCommentButton
+                  threads={threads}
+                  rowId={rowId}
+                  columnId={columnId}
+                  openCell={openCell}
+                  setOpenCell={setOpenCell}
+                />
+              </div>
+            );
+          },
+        };
+
         return (
-          <table>
-            <tbody>
-              {TABLE_DATA.map((row) => (
-                <tr key={row.id}>
-                  {COLUMNS.map((column) => {
-                    const thread = threads.find(
-                      ({ metadata }) =>
-                        metadata.rowId === row.id && metadata.columnId === column.id,
-                    );
+          <AgGridProvider modules={modules}>
+            <div style={{ height: 500 }}>
+              <AgGridReact
+                rowData={rowData}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+              />
+            </div>
+          </AgGridProvider>
+        );
+      }
 
-                    const metadata = { rowId: row.id, columnId: column.id };
-                    const defaultOpen =
-                      openCell !== null &&
-                      openCell.rowId === row.id &&
-                      openCell.columnId === column.id;
+      function CellCommentButton({
+        threads,
+        rowId,
+        columnId,
+        openCell,
+        setOpenCell,
+      }: {
+        threads: ThreadData[];
+        rowId: string;
+        columnId: string;
+        openCell: { rowId: string; columnId: string } | null;
+        setOpenCell: (openCell: { rowId: string; columnId: string } | null) => void;
+      }) {
+        const thread = threads.find(
+          ({ metadata }) =>
+            metadata.rowId === rowId && metadata.columnId === columnId,
+        );
 
-                    return (
-                      <td key={column.id} style={{ padding: 12 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          {/* Cell contents */}
-                          {row[column.id as keyof typeof row]}
+        const defaultOpen =
+          openCell !== null &&
+          openCell.rowId === rowId &&
+          openCell.columnId === columnId;
 
-                          {/* Comment button */}
-                          {thread ? (
-                            <FloatingThread
-                              thread={thread}
-                              defaultOpen={defaultOpen}
-                              onOpenChange={(isOpen) => {
-                                if (!isOpen && defaultOpen) {
-                                  setOpenCell(null);
-                                }
-                              }}
-                              autoFocus
-                            >
-                              <button style={{ marginLeft: 16 }}>💬</button>
-                            </FloatingThread>
-                          ) : (
-                            <FloatingComposer
-                              metadata={metadata}
-                              onComposerSubmit={() => setOpenCell(metadata)}
-                            >
-                              <button style={{ marginLeft: 16 }}>➕</button>
-                            </FloatingComposer>
-                          )}
-                        </div>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        const metadata = { rowId, columnId };
+
+        if (!thread) {
+          return (
+            <FloatingComposer
+              metadata={metadata}
+              onComposerSubmit={() => setOpenCell(metadata)}
+            >
+              <button style={{ marginLeft: 16 }}>➕</button>
+            </FloatingComposer>
+          );
+        }
+
+        return (
+          <FloatingThread
+            thread={thread}
+            defaultOpen={defaultOpen}
+            onOpenChange={(isOpen) => {
+              if (!isOpen && defaultOpen) {
+                setOpenCell(null);
+              }
+            }}
+            autoFocus
+          >
+            <button style={{ marginLeft: 16 }}>💬</button>
+          </FloatingThread>
         );
       }
       ```
