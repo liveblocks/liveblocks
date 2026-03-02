@@ -42,6 +42,11 @@
             "hidden": true
           },
           {
+            "title": "Comments table",
+            "path": "/get-started/nextjs-comments-table",
+            "hidden": true
+          },
+          {
             "title": "Notifications / In-app",
             "path": "/get-started/react-notifications-in-app",
             "hidden": true

@@ -1,6 +1,6 @@
 ---
 meta:
-  title: "Get started with commenting using Liveblocks and Next.js"
+  title: "Get started with commenting in a table using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
     "Learn how to get started with commenting using Liveblocks and Next.js"
@@ -37,6 +37,30 @@ components from
 
       ```bash
       npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+
+    <StepTitle>Define thread metadata</StepTitle>
+    <StepContent>
+
+      Inside the new `liveblocks.config.ts`, define the metadata shape for threads.
+      Metadata is used to attach comment threads to table cells.
+
+      ```tsx file="liveblocks.config.ts"
+      declare global {
+        interface Liveblocks {
+          ThreadMetadata: {
+            rowId: string;
+            columnId: string;
+          };
+        }
+      }
+
+      export
       ```
 
     </StepContent>
@@ -113,25 +137,85 @@ components from
     <StepContent>
 
       Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room, then we’ll use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component
-      to render them. Finally, we’ll add a way to create threads by adding a [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
+      Add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room,
+      and insert them into the table cells using [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread)
+      and [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer). Replace the table data with your own.
 
-      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
+      ```tsx file="app/CollaborativeApp.tsx"
       "use client";
 
+      import { useState } from "react";
       import { useThreads } from "@liveblocks/react/suspense";
-      import { Composer, Thread } from "@liveblocks/react-ui";
+      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+
+      const TABLE_DATA = [
+        { id: "1", name: "Laptop", price: 1000 },
+        { id: "2", name: "Phone", price: 500 },
+        { id: "3", name: "Tablet", price: 300 },
+      ];
+
+      const COLUMNS = [
+        { id: "name", label: "Name" },
+        { id: "price", label: "Price" },
+      ];
 
       export function CollaborativeApp() {
         const { threads } = useThreads();
+        const [openCell, setOpenCell] = useState<{
+          rowId: string;
+          columnId: string;
+        } | null>(null);
 
         return (
-          <div>
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} />
-            ))}
-            <Composer />
-          </div>
+          <table>
+            <tbody>
+              {TABLE_DATA.map((row) => (
+                <tr key={row.id}>
+                  {COLUMNS.map((column) => {
+                    const thread = threads.find(
+                      ({ metadata }) =>
+                        metadata.rowId === row.id && metadata.columnId === column.id,
+                    );
+
+                    const metadata = { rowId: row.id, columnId: column.id };
+                    const defaultOpen =
+                      openCell !== null &&
+                      openCell.rowId === row.id &&
+                      openCell.columnId === column.id;
+
+                    return (
+                      <td key={column.id}>
+                        {/* Cell contents */}
+                        {row[column.id as keyof typeof row]}
+
+                        {/* Comment button */}
+                        {thread ? (
+                          <FloatingThread
+                            thread={thread}
+                            defaultOpen={defaultOpen}
+                            onOpenChange={(isOpen) => {
+                              if (!isOpen && defaultOpen) {
+                                setOpenCell(null);
+                              }
+                            }}
+                          >
+                            <button>💬 View comments</button>
+                          </FloatingThread>
+                        ) : (
+                          <FloatingComposer
+                            metadata={metadata}
+                            onComposerSubmit={() => setOpenCell(metadata)}
+                          >
+                            <button>➕ Create comment</button>
+                          </FloatingComposer>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         );
       }
       ```
