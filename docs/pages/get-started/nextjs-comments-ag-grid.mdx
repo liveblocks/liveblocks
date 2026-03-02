@@ -170,7 +170,7 @@ components from
       Create a custom cell renderer for your table that displays comment buttons alongside cell values using
       [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer),
       [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread), and the context we created.
-      Clicking the buttns opens popovers for creating or viewing comment threads.
+      Clicking the buttons opens popovers for creating or viewing comment threads.
 
       ```tsx file="app/CommentCell.tsx"
       "use client";
@@ -262,7 +262,7 @@ components from
     <StepContent>
 
       Set up AG Grid with `AgGridProvider`, and add your custom `CellThreadProvider` context.
-      Import your `CommentCell` component into `defaultColRef`, and replace the table data with your own.
+      Import your `CommentCell` component into `defaultColDef`, and replace the table data with your own.
       Learn more on the [AG Grid website](https://www.ag-grid.com/react-data-grid/getting-started/).
 
       ```tsx file="app/CollaborativeApp.tsx"
