@@ -52,7 +52,7 @@
     "@liveblocks/yjs": "3.14.1",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-toggle": "^1.1.0",
-    "@tiptap/core": "^3.19.0",
+    "@tiptap/core": "^3.20.0",
     "@tiptap/react": "^3.19.0",
     "@tiptap/suggestion": "^3.19.0",
     "cmdk": "^1.0.4",
