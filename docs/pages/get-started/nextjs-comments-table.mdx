@@ -60,7 +60,7 @@ components from
         }
       }
 
-      export
+      export {};
       ```
 
     </StepContent>
@@ -174,9 +174,7 @@ components from
       ];
 
       export function CollaborativeApp() {
-        // +++
         const { threads } = useThreads();
-        // +++
 
         const [openCell, setOpenCell] = useState<{
           rowId: string;
@@ -190,12 +188,10 @@ components from
                 <tr key={row.id}>
                   {COLUMNS.map((column) => {
                     // Check if there's already a thread for this cell
-                    // +++
                     const thread = threads.find(
                       ({ metadata }) =>
                         metadata.rowId === row.id && metadata.columnId === column.id,
                     );
-                    // +++
 
                     // When a thread is created, open it by default
                     const defaultOpen =
@@ -215,13 +211,10 @@ components from
                           }}
                         >
                           {/* Cell contents */}
-                          // +++
                           {row[column.id as keyof typeof row]}
-                          // +++
 
                           {/* Show thread if it exists, otherwise show thread composer */}
                           {thread ? (
-                            // +++
                             <FloatingThread
                               thread={thread}
                               defaultOpen={defaultOpen}
@@ -234,9 +227,7 @@ components from
                             >
                               <button style={{ marginLeft: 16 }}>💬</button>
                             </FloatingThread>
-                            // +++
                           ) : (
-                            // +++
                             <FloatingComposer
                               metadata={metadata}
                               onComposerSubmit={() => setOpenCell(metadata)}
@@ -244,7 +235,6 @@ components from
                               <button style={{ marginLeft: 16 }}>➕</button>
                             </FloatingComposer>
                           )}
-                          // +++
                         </div>
                       </td>
                     );

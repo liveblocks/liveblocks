@@ -62,7 +62,7 @@ components from
         }
       }
 
-      export
+      export {};
       ```
 
     </StepContent>
@@ -154,10 +154,8 @@ components from
       }: {
         children: React.ReactNode;
       }) {
-        // +++
         const { threads } = useThreads();
         const [openCell, setOpenCell] = useState<OpenCell>(null);
-        // +++
 
         return (
           <CellThreadContext.Provider value={{ threads, openCell, setOpenCell }}>
@@ -194,9 +192,7 @@ components from
       import { useCellThread } from "./CellThreadContext";
 
       export function CommentCell(params: CustomCellRendererProps) {
-        // +++
         const { threads, openCell, setOpenCell } = useCellThread();
-        // +++
 
         const rowId = params.data?.id;
         const columnId = params.colDef?.field;
@@ -206,12 +202,10 @@ components from
         }
 
         // Check if there's already a thread for this cell
-        // +++
         const thread = threads.find(
           ({ metadata }) =>
             metadata.rowId === rowId && metadata.columnId === columnId,
         );
-        // +++
 
         // When a thread is created, open it by default
         const defaultOpen =
@@ -231,13 +225,10 @@ components from
             }}
           >
             {/* Cell contents */}
-            // +++
             {params.value}
-            // +++
 
             {/* Show thread if it exists, otherwise show thread composer */}
             {!thread ? (
-              // +++
               <FloatingComposer
                 metadata={metadata}
                 onComposerSubmit={() => setOpenCell(metadata)}
@@ -245,9 +236,7 @@ components from
               >
                 <button>➕</button>
               </FloatingComposer>
-              // +++
             ) : (
-              // +++
               <FloatingThread
                 thread={thread}
                 defaultOpen={defaultOpen}
@@ -262,7 +251,6 @@ components from
               >
                 <button>💬</button>
               </FloatingThread>
-              // +++
             )}
           </div>
         );
@@ -285,10 +273,8 @@ components from
       import { useState, useMemo } from "react";
       import { AllCommunityModule } from "ag-grid-community";
       import { AgGridProvider, AgGridReact } from "ag-grid-react";
-      // +++
       import { CellThreadProvider } from "./CellThreadContext";
       import { CommentCell } from "./CommentCell";
-      // +++
 
       const modules = [AllCommunityModule];
 
@@ -308,15 +294,12 @@ components from
 
         const defaultColDef = useMemo(
           () => ({
-            // +++
             cellRenderer: CommentCell,
-            // +++
           }),
           [],
         );
 
         return (
-          // +++
           <AgGridProvider modules={modules}>
             <CellThreadProvider>
               <div style={{ height: 500 }}>
@@ -329,7 +312,6 @@ components from
               </div>
             </CellThreadProvider>
           </AgGridProvider>
-          // +++
         );
       }
       ```
