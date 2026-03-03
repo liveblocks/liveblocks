@@ -1,12 +1,14 @@
-import { AppProps } from "next/app";
-import Head from "next/head";
 import "../styles/globals.css";
-import { LiveblocksProvider } from "@liveblocks/react";
+import { Providers } from "./Providers";
 
-function App({ Component, pageProps }: AppProps) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <Head>
+    <html lang="en">
+      <head>
         <title>Liveblocks</title>
         <meta name="robots" content="noindex" />
         <meta name="viewport" content="width=device-width, user-scalable=no" />
@@ -22,9 +24,10 @@ function App({ Component, pageProps }: AppProps) {
           sizes="16x16"
           type="image/png"
         />
-      </Head>
-      <Component {...pageProps} />
-    </LiveblocksProvider>
+      </head>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
   );
 }
-export default App;

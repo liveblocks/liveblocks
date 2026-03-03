@@ -9,9 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.14.0",
-    "@liveblocks/node": "^3.14.0",
-    "@liveblocks/react": "^3.14.0",
+    "@liveblocks/client": "^3.15.0-components1",
+    "@liveblocks/node": "^3.15.0-components1",
+    "@liveblocks/react": "^3.15.0-components1",
+    "@liveblocks/react-ui": "^3.15.0-components1",
     "next": "^16.1.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
