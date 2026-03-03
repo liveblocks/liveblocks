@@ -67,6 +67,20 @@ components from
 
   </Step>
   <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
     <StepTitle>Create a Liveblocks room</StepTitle>
     <StepContent>
 
@@ -242,20 +256,6 @@ components from
         );
       }
       ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Import default styles</StepTitle>
-    <StepContent>
-
-    The default components come with default styles, you can import them into the
-    root layout of your app or directly into a CSS file with `@import`.
-
-    ```tsx file="app/layout.tsx"
-    import "@liveblocks/react-ui/styles.css";
-    ```
 
     </StepContent>
 
