@@ -1,0 +1,575 @@
+---
+meta:
+  title: "Get started with draggable comment pins using Liveblocks and Next.js"
+  parentTitle: "Quickstart"
+  description:
+    "Learn how to get started with commenting using Liveblocks and Next.js"
+---
+
+Liveblocks is a realtime collaboration infrastructure for building performant
+collaborative experiences. Follow the following steps to start adding a
+commenting experience to your Next.js `/app` directory application using the
+hooks from [`@liveblocks/react`](/docs/api-reference/liveblocks-react) and the
+components from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui).
+
+## Quickstart
+
+<Steps>
+  <Step>
+    <StepTitle>Install Liveblocks and dnd-kit</StepTitle>
+    <StepContent>
+
+      Every Liveblocks package should use the same version.
+
+      ```bash trackEvent="install_liveblocks"
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @dnd-kit/core
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Initialize the `liveblocks.config.ts` file</StepTitle>
+    <StepContent>
+
+      We can use this file later to [define types for our application](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+      ```bash
+      npx create-liveblocks-app@latest --init --framework react
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+
+    <StepTitle>Define thread metadata</StepTitle>
+    <StepContent>
+
+      Inside the new `liveblocks.config.ts` file, define the metadata shape for threads.
+      Metadata is used to attach comment threads to X/Y coordinates on the canvas. In this
+      guide, we’ll use simple X/Y pixel coordinates, measured from the top left of the page.
+
+      ```tsx file="liveblocks.config.ts"
+      declare global {
+        interface Liveblocks {
+          ThreadMetadata: {
+            x: number;
+            y: number;
+            zIndex: number;
+          };
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a Liveblocks room</StepTitle>
+    <StepContent>
+
+      Liveblocks uses the concept of rooms, separate virtual spaces where people
+      collaborate, and to create a realtime experience, multiple users must
+      be connected to the same room. When using Next.js’ `/app` router,
+      we recommend creating your room in a `Room.tsx` file in the same directory
+      as your current route.
+
+      Set up a Liveblocks client with
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+      join a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider),
+      and use [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#ClientSideSuspense)
+      to add a loading spinner to your app.
+
+      ```tsx file="app/Room.tsx" highlight="12-18"
+      "use client";
+
+      import { ReactNode } from "react";
+      import {
+        LiveblocksProvider,
+        RoomProvider,
+        ClientSideSuspense,
+      } from "@liveblocks/react/suspense";
+
+      export function Room({ children }: { children: ReactNode }) {
+        return (
+          <LiveblocksProvider publicApiKey={"{{PUBLIC_KEY}}"}>
+            <RoomProvider id="my-room">
+              <ClientSideSuspense fallback={<div>Loading…</div>}>
+                {children}
+              </ClientSideSuspense>
+            </RoomProvider>
+          </LiveblocksProvider>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a hook for the canvas</StepTitle>
+    <StepContent>
+
+      Create a `hooks.ts` file containing a `useMaxZIndex` hook we'll use in the canvas component,
+      helpful for setting the `z-index` of comment pins, and preventing overlapping threads.
+
+      ```tsx file="app/hooks.ts"
+      import { useMemo } from "react";
+      import { useThreads } from "@liveblocks/react/suspense";
+
+      // Returns the highest z-index of all threads
+      export function useMaxZIndex() {
+        const { threads } = useThreads();
+
+        return useMemo(() => {
+          let max = 0;
+          for (const thread of threads) {
+            if (thread.metadata.zIndex > max) {
+              max = thread.metadata.zIndex;
+            }
+          }
+          return max;
+        }, [threads]);
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a draggable thread component</StepTitle>
+    <StepContent>
+
+      Create a `DraggableThread.tsx` file that displays a thread with draggable pin,
+      using [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread)
+      and [`CommentPin`](/docs/api-reference/liveblocks-react-ui#CommentPin). Threads can
+      be toggled open by clicking on the pin.
+
+      ```tsx file="app/DraggableThread.tsx"
+      import { useMemo } from "react";
+      import { useEditThreadMetadata } from "@liveblocks/react/suspense";
+      import { FloatingThread, CommentPin } from "@liveblocks/react-ui";
+      import { ThreadData } from "@liveblocks/client";
+      import { useDraggable } from "@dnd-kit/core";
+      import { useMaxZIndex } from "./hooks";
+
+      // A draggable thread
+      export function DraggableThread({ thread }: { thread: ThreadData }) {
+        // Open threads that have just been created
+        const defaultOpen = useMemo(() => {
+          return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
+        }, [thread]);
+
+        // Enable drag
+        const { attributes, listeners, setNodeRef, transform } = useDraggable({
+          id: thread.id,
+          data: { thread }, // Pass thread to DndContext drag end event
+        });
+
+        // If currently dragging, add drag values to current metadata
+        const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
+        const y = transform ? transform.y + thread.metadata.y : thread.metadata.y;
+
+        // Used to set z-index higher than other threads when dragging
+        const editThreadMetadata = useEditThreadMetadata();
+        const maxZIndex = useMaxZIndex();
+
+        return (
+          <FloatingThread thread={thread} defaultOpen={defaultOpen} side="right">
+            <div
+              ref={setNodeRef}
+              onPointerDown={() =>
+                editThreadMetadata({
+                  threadId: thread.id,
+                  metadata: { zIndex: maxZIndex + 1 },
+                })
+              }
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                transform: `translate3d(${x}px, ${y}px, 0)`,
+                zIndex: thread.metadata?.zIndex || 0,
+              }}
+            >
+              <CommentPin
+                userId={thread.comments[0]?.userId}
+                corner="top-left"
+                {...listeners}
+                {...attributes}
+              />
+            </div>
+          </FloatingThread>
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create a button for placing threads</StepTitle>
+    <StepContent>
+
+      Create a `PlaceThreadButton.tsx` file that allows users to place a thread on the 2D canvas.
+      Clicking the button changes the user’s cursor into a comment pin that can be placed down.
+
+      ```tsx file="app/PlaceThreadButton.tsx"
+      import { useCallback, useEffect, useState } from "react";
+      import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
+      import { useSelf } from "@liveblocks/react";
+      import { useMaxZIndex } from "./hooks";
+
+      export function PlaceThreadButton() {
+        const [state, setState] = useState<"initial" | "placing" | "placed">(
+          "initial",
+        );
+        const [coords, setCoords] = useState({ x: 0, y: 0 });
+
+        const reset = useCallback(() => {
+          setState("initial");
+          setCoords({ x: 0, y: 0 });
+        }, []);
+
+        return (
+          <>
+            {/* Allows you to place floating composers */}
+            <div style={{ position: "absolute", top: 24, right: 24 }}>
+              <button
+                onClick={() => setState("placing")}
+                style={{ cursor: state === "placing" ? "none" : undefined }}
+              >
+                ➕
+              </button>
+            </div>
+
+            {/* Overlay that lets you click and cancel placing */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                background: "rgba(0, 0, 0, 0.2)",
+                pointerEvents: state === "initial" ? "none" : undefined,
+                opacity: state !== "initial" ? 1 : 0,
+              }}
+              onClick={reset}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                reset();
+              }}
+            />
+
+            {/* The visible cursor when you're placing */}
+            {state === "placing" ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  cursor: "none",
+                }}
+                onClick={(e) => {
+                  // On click, get coords and place down composer
+                  setCoords({ x: e.clientX, y: e.clientY });
+                  setState("placed");
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  reset();
+                }}
+              >
+                <NewThreadCursor />
+              </div>
+            ) : null}
+
+            {/* When cursor placed, show a composer on the canvas */}
+            {state === "placed" ? (
+              <ThreadComposer coords={coords} onSubmit={() => setState("initial")} />
+            ) : null}
+          </>
+        );
+      }
+
+      function ThreadComposer({
+        coords,
+        onSubmit,
+      }: {
+        coords: { x: number; y: number };
+        onSubmit: () => void;
+      }) {
+        // Get create thread function and the current user
+        const creatorId = useSelf((me) => me.id);
+
+        // Create thread above other threads
+        const maxZIndex = useMaxZIndex();
+
+        return (
+          <FloatingComposer
+            defaultOpen={true}
+            metadata={{
+              x: coords.x,
+              y: coords.y,
+              zIndex: maxZIndex + 1,
+            }}
+            onComposerSubmit={onSubmit}
+          >
+            <CommentPin
+              userId={creatorId ?? undefined}
+              corner="top-left"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                transform: `translate(${coords.x}px, ${coords.y}px)`,
+              }}
+            />
+          </FloatingComposer>
+        );
+      }
+
+      // Render the new thread component over the current user's cursor
+      function NewThreadCursor() {
+        const [coords, setCoords] = useState({
+          x: -10000,
+          y: -10000,
+        });
+
+        useEffect(() => {
+          const updatePosition = (e: MouseEvent) => {
+            setCoords({
+              x: e.clientX,
+              y: e.clientY,
+            });
+          };
+
+          document.addEventListener("mousemove", updatePosition, false);
+          document.addEventListener("mouseenter", updatePosition, false);
+
+          return () => {
+            document.removeEventListener("mousemove", updatePosition);
+            document.removeEventListener("mouseenter", updatePosition);
+          };
+        }, []);
+
+        return (
+          <CommentPin
+            corner="top-left"
+            style={{
+              cursor: "none",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              transform: `translate(${coords.x}px, ${coords.y}px)`,
+              zIndex: 99999999999,
+            }}
+          />
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Create the canvas</StepTitle>
+    <StepContent>
+
+      Now that the other components are built, we can create the component that displays the threads.
+      Add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room,
+      and place down a `DraggableThread` for each inside [`DndContext`](https://dndkit.com/legacy/api-documentation/context-provider/dnd-context).
+      When a thread is dropped, use
+      [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata) to update
+      the thread’s metadata with the new X/Y coordinates.
+
+      ```tsx file="app/CollaborativeCanvas.tsx"
+      import { ThreadData } from "@liveblocks/client";
+      import { useThreads, useEditThreadMetadata } from "@liveblocks/react/suspense";
+      import {
+        DataRef,
+        DndContext,
+        DragEndEvent,
+        PointerSensor,
+        TouchSensor,
+        useSensor,
+        useSensors,
+      } from "@dnd-kit/core";
+      import { useCallback } from "react";
+      import { PlaceThreadButton } from "./PlaceThreadButton";
+      import { DraggableThread } from "./DraggableThread";
+
+      export function CollaborativeCanvas() {
+        const { threads } = useThreads();
+        const editThreadMetadata = useEditThreadMetadata();
+
+        // Allow click event on avatar if thread moved less than 3px
+        const sensors = useSensors(
+          useSensor(PointerSensor, {
+            activationConstraint: {
+              distance: 3,
+            },
+          }),
+          useSensor(TouchSensor, {
+            activationConstraint: {
+              distance: 3,
+            },
+          }),
+        );
+
+        // On drag end, update thread metadata with new coords
+        const handleDragEnd = useCallback(
+          ({ active, delta }: DragEndEvent) => {
+            const thread = (active.data as DataRef<{ thread: ThreadData }>).current
+              ?.thread;
+
+            if (!thread) {
+              return;
+            }
+
+            editThreadMetadata({
+              threadId: thread.id,
+              metadata: {
+                x: thread.metadata.x + delta.x,
+                y: thread.metadata.y + delta.y,
+              },
+            });
+          },
+          [editThreadMetadata],
+        );
+
+        return (
+          <div
+            className="lb-root"
+            style={{
+              position: "relative",
+              width: "100vw",
+              height: "100vh",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ isolation: "isolate" }}>
+              <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+                {threads.map((thread) => (
+                  <DraggableThread key={thread.id} thread={thread} />
+                ))}
+              </DndContext>
+            </div>
+            <PlaceThreadButton />
+          </div>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Add the Liveblocks room to your page</StepTitle>
+    <StepContent>
+
+      To finish off, import your room into your `page.tsx` file, and place
+      your collaborative app components inside it.
+
+      ```tsx file="app/page.tsx" highlight="6-8"
+      import { Room } from "./Room";
+      import { CollaborativeCanvas } from "./CollaborativeCanvas";
+
+      export default function Page() {
+        return (
+          <Room>
+            <CollaborativeCanvas />
+          </Room>
+        );
+      }
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Next: authenticate and add your users</StepTitle>
+    <StepContent>
+
+      Comments is set up and working now on your canvas, but each user is anonymous—the next step is to
+      authenticate each user as they connect, and attach their name and avatar to their comments.
+
+      <Button asChild className="not-markdown">
+        <a href="/docs/guides/how-to-add-users-to-liveblocks-comments">
+          Add your users to Comments
+        </a>
+      </Button>
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## What to read next
+
+Congratulations! You’ve set up the foundation to start building a commenting
+experience for your Next.js application.
+
+- [API Reference](/docs/api-reference/liveblocks-react-ui)
+- [Overview](/docs/ready-made-features/comments)
+- [How to send email notifications when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
+
+---
+
+## Examples using Next.js
+
+<ListGrid columns={2}>
+  <ExampleCard
+    example={{
+      title: "Canvas Comments",
+      slug: "canvas-comments/nextjs-comments-canvas",
+      image: "/images/examples/thumbnails/comments-canvas.png",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Overlay Comments",
+      slug: "overlay-comments/nextjs-comments-overlay",
+      image: "/images/examples/thumbnails/comments-overlay.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Comments",
+      slug: "comments/nextjs-comments",
+      image: "/images/examples/thumbnails/comments.jpg",
+    }}
+    technologies={["nextjs", "react"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Text Editor Comments",
+      slug: "text-editor-comments/nextjs-comments-tiptap",
+      image: "/images/examples/thumbnails/comments-text-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+</ListGrid>

@@ -42,6 +42,11 @@
             "hidden": true
           },
           {
+            "title": "Comments / Canvas",
+            "path": "/get-started/nextjs-comments-canvas",
+            "hidden": true
+          },
+          {
             "title": "Comments / Table",
             "path": "/get-started/nextjs-comments-table",
             "hidden": true
