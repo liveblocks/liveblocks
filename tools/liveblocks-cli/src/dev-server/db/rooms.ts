@@ -148,6 +148,17 @@ export async function remove(roomId: string): Promise<void> {
 }
 
 /**
+ * Unload all room instances and clear the instances map, but keep SQLite
+ * files on disk so storage survives a reboot.
+ */
+export function unloadAll(): void {
+  for (const room of instances.values()) {
+    room.unload();
+  }
+  instances.clear();
+}
+
+/**
  * Unload all room instances and, if in ephemeral mode, remove the temp
  * directory.
  */
