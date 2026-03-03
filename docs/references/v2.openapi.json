@@ -1349,7 +1349,7 @@
         "summary": "Get Yjs version history",
         "description": "This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.",
         "tags": ["Yjs"],
-        "operationId": "get-rooms-roomId-versions",
+        "operationId": "get-yjs-versions",
         "parameters": [
           {
             "name": "roomId",
@@ -1386,7 +1386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetYjsVersions"
+                  "$ref": "#/components/schemas/GetYjsVersionsResponse"
                 },
                 "examples": {
                   "example": {
@@ -1431,7 +1431,7 @@
         "summary": "Get Yjs document version",
         "description": "This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.",
         "tags": ["Yjs"],
-        "operationId": "get-rooms-roomId-version-versionId",
+        "operationId": "get-yjs-version",
         "parameters": [
           {
             "name": "roomId",
@@ -1481,7 +1481,7 @@
         "summary": "Create Yjs version snapshot",
         "description": "This endpoint creates a new version history snapshot for the room's Yjs document.",
         "tags": ["Yjs"],
-        "operationId": "post-rooms-roomId-version",
+        "operationId": "create-yjs-version",
         "parameters": [
           {
             "name": "roomId",
@@ -1499,7 +1499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateYjsVersion"
+                  "$ref": "#/components/schemas/CreateYjsVersionResponse"
                 },
                 "examples": {
                   "example": {
@@ -1549,22 +1549,14 @@
             "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
-        "operationId": "get-rooms-roomId-threads",
+        "operationId": "get-threads",
         "responses": {
           "200": {
             "description": "Success. Returns list of threads in a room.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Thread"
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/GetThreadsResponse"
                 },
                 "examples": {
                   "Success": {
@@ -1616,7 +1608,7 @@
         "summary": "Create thread",
         "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
         "tags": ["Comments"],
-        "operationId": "post-rooms-roomId-threads",
+        "operationId": "create-thread",
         "parameters": [
           {
             "name": "roomId",
@@ -1680,7 +1672,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateThread"
+                "$ref": "#/components/schemas/CreateThreadBody"
               },
               "examples": {
                 "example": {
@@ -1713,7 +1705,7 @@
         "summary": "Get thread",
         "tags": ["Comments"],
         "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
-        "operationId": "get-rooms-roomId-threads-threadId",
+        "operationId": "get-thread",
         "parameters": [
           {
             "name": "roomId",
@@ -1788,7 +1780,7 @@
         "summary": "Delete thread",
         "tags": ["Comments"],
         "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
-        "operationId": "delete-rooms-roomId-threads-threadId",
+        "operationId": "delete-thread",
         "parameters": [
           {
             "name": "roomId",
@@ -1831,7 +1823,7 @@
         "x-badge": "Deprecated",
         "tags": ["Deprecated"],
         "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
-        "operationId": "get-rooms-roomId-threads-threadId-participants",
+        "operationId": "get-thread-participants",
         "parameters": [
           {
             "name": "roomId",
@@ -1858,15 +1850,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "participantIds": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/GetThreadParticipantsResponse"
                 },
                 "examples": {
                   "Success": {
@@ -1895,7 +1879,7 @@
         "summary": "Edit thread metadata",
         "tags": ["Comments"],
         "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
-        "operationId": "post-rooms-roomId-threads-threadId-metadata",
+        "operationId": "edit-thread-metadata",
         "parameters": [
           {
             "name": "roomId",
@@ -1945,7 +1929,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateThreadMetadata"
+                "$ref": "#/components/schemas/UpdateThreadMetadataBody"
               },
               "examples": {
                 "example": {
@@ -1968,7 +1952,7 @@
         "summary": "Mark thread as resolved",
         "tags": ["Comments"],
         "description": "This endpoint marks a thread as resolved.",
-        "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
+        "operationId": "mark-thread-as-resolved",
         "parameters": [
           {
             "name": "roomId",
@@ -2014,7 +1998,7 @@
         "summary": "Mark thread as unresolved",
         "tags": ["Comments"],
         "description": "This endpoint marks a thread as unresolved.",
-        "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
+        "operationId": "mark-thread-as-unresolved",
         "parameters": [
           {
             "name": "roomId",
@@ -2060,7 +2044,7 @@
         "summary": "Subscribe to thread",
         "tags": ["Comments"],
         "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
-        "operationId": "post-rooms-roomId-threads-threadId-subscribe",
+        "operationId": "subscribe-to-thread",
         "parameters": [
           {
             "name": "roomId",
@@ -2086,13 +2070,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["userId"],
-                "properties": {
-                  "userId": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/SubscribeToThreadBody"
               }
             }
           }
@@ -2140,7 +2118,7 @@
         "summary": "Unsubscribe from thread",
         "tags": ["Comments"],
         "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
-        "operationId": "post-rooms-roomId-threads-threadId-unsubscribe",
+        "operationId": "unsubscribe-from-thread",
         "parameters": [
           {
             "name": "roomId",
@@ -2166,28 +2144,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": ["userId"],
-                "properties": {
-                  "userId": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/components/schemas/UnsubscribeFromThreadBody"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Success.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {}
-                }
-              }
-            }
+            "description": "Success."
           },
           "403": {
             "$ref": "#/components/responses/403"
@@ -2221,7 +2185,7 @@
         "summary": "Get thread subscriptions",
         "tags": ["Comments"],
         "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
-        "operationId": "get-rooms-roomId-threads-threadId-subscriptions",
+        "operationId": "get-thread-subscriptions",
         "parameters": [
           {
             "name": "roomId",
@@ -2248,15 +2212,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserSubscription"
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/GetThreadSubscriptionsResponse"
                 }
               }
             }
@@ -6590,60 +6546,70 @@
           }
         }
       },
-      "GetYjsVersions": {
-        "title": "GetYjsVersions",
+      "YjsVersion": {
+        "title": "YjsVersion",
         "type": "object",
         "properties": {
-          "nextCursor": {
+          "id": {
             "type": "string",
-            "description": "Cursor for pagination to get the next page of results"
+            "description": "Unique identifier for the version"
           },
-          "data": {
+          "type": {
+            "type": "string",
+            "const": "historyVersion"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when the version was created"
+          },
+          "authors": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": ["historyVersion"],
-                  "description": "Type identifier for the version history object"
-                },
                 "id": {
                   "type": "string",
-                  "description": "Unique identifier for the version"
-                },
-                "createdAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "description": "ISO 8601 timestamp of when the version was created"
-                },
-                "authors": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "description": "User ID of the author"
-                      }
-                    }
-                  },
-                  "description": "List of users who contributed to this version"
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": ["yjs"],
-                  "description": "Type of document (yjs for Yjs documents)"
+                  "description": "User ID of the author"
                 }
+              }
+            },
+            "description": "List of users who contributed to this version"
+          },
+          "kind": {
+            "type": "string",
+            "const": "yjs"
+          }
+        },
+        "required": ["id", "type", "createdAt", "kind"]
+      },
+      "GetYjsVersionsResponse": {
+        "title": "GetYjsVersionsResponse",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "description": "Cursor for pagination to get the next page of results",
+            "oneOf": [
+              {
+                "type": "string"
               },
-              "required": ["type", "id", "createdAt", "authors", "kind"]
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/YjsVersion"
             }
           }
         },
-        "required": ["data"]
+        "required": ["data", "nextCursor"],
+        "additionalProperties": false
       },
-      "CreateYjsVersion": {
-        "title": "CreateYjsVersion",
+      "CreateYjsVersionResponse": {
+        "title": "CreateYjsVersionResponse",
         "type": "object",
         "properties": {
           "data": {
@@ -6654,10 +6620,12 @@
                 "description": "Unique identifier for the created version"
               }
             },
-            "required": ["id"]
+            "required": ["id"],
+            "additionalProperties": false
           }
         },
-        "required": ["data"]
+        "required": ["data"],
+        "additionalProperties": false
       },
       "PublicAuthorizeBodyRequest": {
         "title": "PublicAuthorizeBodyRequest",
@@ -6715,6 +6683,20 @@
           }
         }
       },
+      "GetThreadsResponse": {
+        "title": "GetThreadsResponse",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Thread"
+            }
+          }
+        },
+        "required": ["data"],
+        "additionalProperties": false
+      },
       "Thread": {
         "type": "object",
         "title": "Thread",
@@ -6739,7 +6721,7 @@
             "format": "date-time"
           },
           "metadata": {
-            "type": "object"
+            "$ref": "#/components/schemas/ThreadMetadata"
           },
           "resolved": {
             "type": "boolean"
@@ -6755,38 +6737,13 @@
           "roomId",
           "comments",
           "createdAt",
-          "metadata"
-        ],
-        "examples": [
-          {
-            "type": "thread",
-            "id": "thread-id",
-            "roomId": "room-id",
-            "comments": [
-              {
-                "type": "comment",
-                "threadId": "thread-id",
-                "roomId": "room-id",
-                "id": "comment-id",
-                "userId": "string",
-                "createdAt": "2019-08-24T14:15:22Z",
-                "editedAt": "2019-08-24T14:15:22Z",
-                "deletedAt": "2019-08-24T14:15:22Z",
-                "body": {},
-                "metadata": {},
-                "reactions": [],
-                "attachments": []
-              }
-            ],
-            "createdAt": "2019-08-24T14:15:22Z",
-            "metadata": {},
-            "updatedAt": "2019-08-24T14:15:22Z"
-          }
-        ],
-        "description": ""
+          "updatedAt",
+          "metadata",
+          "resolved"
+        ]
       },
-      "CreateThread": {
-        "title": "CreateThread",
+      "CreateThreadBody": {
+        "title": "CreateThreadBody",
         "type": "object",
         "properties": {
           "comment": {
@@ -6800,27 +6757,17 @@
                 "format": "date-time"
               },
               "body": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number"
-                  },
-                  "content": {
-                    "type": "array",
-                    "items": {
-                      "type": "object"
-                    }
-                  }
-                }
+                "$ref": "#/components/schemas/CommentBody"
               },
               "metadata": {
                 "$ref": "#/components/schemas/CommentMetadata"
               }
             },
-            "required": ["userId", "body"]
+            "required": ["userId", "body"],
+            "additionalProperties": false
           },
           "metadata": {
-            "type": "object"
+            "$ref": "#/components/schemas/ThreadMetadata"
           }
         },
         "required": ["comment"],
@@ -6845,12 +6792,27 @@
         ],
         "description": ""
       },
-      "UpdateThreadMetadata": {
-        "title": "UpdateThreadMetadata",
+      "GetThreadParticipantsResponse": {
+        "title": "GetThreadParticipantsResponse",
+        "type": "object",
+        "properties": {
+          "participantIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["participantIds"],
+        "additionalProperties": false
+      },
+      "UpdateThreadMetadataBody": {
+        "title": "UpdateThreadMetadataBody",
         "type": "object",
         "properties": {
           "metadata": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           },
           "userId": {
             "type": "string"
@@ -6869,8 +6831,7 @@
             "userId": "alice",
             "createdAt": "2023-07-13T14:32:50.697Z"
           }
-        ],
-        "description": ""
+        ]
       },
       "ThreadMetadata": {
         "type": "object",
@@ -6895,10 +6856,13 @@
           "content": {
             "type": "array",
             "items": {
-              "type": "object"
+              "type": "object",
+              "additionalProperties": true
             }
           }
-        }
+        },
+        "required": ["version", "content"],
+        "additionalProperties": false
       },
       "CommentMetadata": {
         "type": "object",
@@ -6910,8 +6874,7 @@
             "tag": "important",
             "spam": false
           }
-        ],
-        "description": ""
+        ]
       },
       "UpdateCommentMetadata": {
         "title": "UpdateCommentMetadata",
@@ -6945,10 +6908,7 @@
         "title": "Comment",
         "properties": {
           "type": {
-            "const": "comment",
-            "readOnly": true,
-            "default": "comment",
-            "examples": ["comment"]
+            "const": "comment"
           },
           "threadId": {
             "type": "string"
@@ -6981,7 +6941,15 @@
             "$ref": "#/components/schemas/CommentMetadata"
           }
         },
-        "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
+        "required": [
+          "type",
+          "threadId",
+          "roomId",
+          "id",
+          "userId",
+          "createdAt",
+          "metadata"
+        ],
         "examples": [
           {
             "type": "comment",
@@ -7064,6 +7032,42 @@
           }
         ],
         "description": ""
+      },
+      "SubscribeToThreadBody": {
+        "type": "object",
+        "title": "SubscribeToThreadBody",
+        "required": ["userId"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnsubscribeFromThreadBody": {
+        "type": "object",
+        "title": "UnsubscribeFromThreadBody",
+        "required": ["userId"],
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetThreadSubscriptionsResponse": {
+        "type": "object",
+        "title": "GetThreadSubscriptionsResponse",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSubscription"
+            }
+          }
+        },
+        "required": ["data"],
+        "additionalProperties": false
       },
       "CommentReaction": {
         "type": "object",
@@ -7316,7 +7320,9 @@
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "required": ["kind", "subjectId", "createdAt"],
+        "additionalProperties": false
       },
       "UserSubscription": {
         "title": "UserSubscription",
