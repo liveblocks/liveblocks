@@ -311,7 +311,7 @@ function ChatRoom() {
   const createChatroom = () => {
     const feedId = nanoid();
     createFeedFn(feedId, {
-      metadata: { name: "New Chat", channel: true, created: new Date().toISOString() },
+      metadata: { name: "New Channel", channel: true, created: new Date().toISOString() },
     });
     setSelectedFeedId(feedId);
   };
@@ -376,7 +376,7 @@ function ChatRoom() {
             onClick={createChatroom}
             className="mt-2 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
           >
-            New Chat
+            New Channel
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -384,16 +384,15 @@ function ChatRoom() {
             <p className="p-4 text-gray-500 text-sm">Loading...</p>
           ) : !channels.length ? (
             <p className="p-4 text-gray-500 text-sm">
-              No chatrooms. Create one to get started!
+              No channels. Create one to get started!
             </p>
           ) : (
             channels.map((feed) => (
               <div
                 key={feed.feedId}
                 onClick={() => !editingFeedId && setSelectedFeedId(feed.feedId)}
-                className={`flex items-center gap-2 w-full text-left px-4 py-3 border-b hover:bg-gray-100 cursor-pointer group ${
-                  selectedFeedId === feed.feedId ? "bg-white border-l-4 border-l-blue-500" : ""
-                }`}
+                className={`flex items-center gap-2 w-full text-left px-4 py-3 border-b hover:bg-gray-100 cursor-pointer group ${selectedFeedId === feed.feedId ? "bg-white border-l-4 border-l-blue-500" : ""
+                  }`}
               >
                 {editingFeedId === feed.feedId ? (
                   <input
@@ -414,7 +413,7 @@ function ChatRoom() {
                   />
                 ) : (
                   <span className="font-medium text-sm truncate flex-1 min-w-0">
-                    {feedName(feed)}
+                    #{feedName(feed)}
                   </span>
                 )}
                 <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
