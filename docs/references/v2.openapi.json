@@ -2922,6 +2922,478 @@
         }
       }
     },
+    "/rooms/{roomId}/feeds": {
+      "get": {
+        "summary": "Get room feeds",
+        "description": "This endpoint returns the feeds in the requested room. Corresponds to [`liveblocks.getFeeds`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds).",
+        "tags": ["Feeds"],
+        "operationId": "get-rooms-roomId-feeds",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of feeds in a room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Feed"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feed": {
+      "post": {
+        "summary": "Create feed",
+        "description": "This endpoint creates a new feed in a room. Corresponds to [`liveblocks.createFeed`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feed).",
+        "tags": ["Feeds"],
+        "operationId": "post-rooms-roomId-feed",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Feed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}": {
+      "get": {
+        "summary": "Get feed",
+        "description": "This endpoint returns a feed by its ID. Corresponds to [`liveblocks.getFeed`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "get-rooms-roomId-feeds-feedId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Feed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update feed",
+        "description": "This endpoint updates the metadata of a feed. Corresponds to [`liveblocks.updateFeed`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "patch-rooms-roomId-feeds-feedId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete feed",
+        "description": "This endpoint deletes a feed. Corresponds to [`liveblocks.deleteFeed`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId).",
+        "tags": ["Feeds"],
+        "operationId": "delete-rooms-roomId-feeds-feedId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}/messages": {
+      "get": {
+        "summary": "Get feed messages",
+        "description": "This endpoint returns the messages in a feed. Corresponds to [`liveblocks.getFeedMessages`](/docs/api-reference/liveblocks-node#get-rooms-roomId-feeds-feedId-messages).",
+        "tags": ["Feeds"],
+        "operationId": "get-rooms-roomId-feeds-feedId-messages",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns list of messages in a feed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FeedMessage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create feed message",
+        "description": "This endpoint creates a new message in a feed. Corresponds to [`liveblocks.createFeedMessage`](/docs/api-reference/liveblocks-node#post-rooms-roomId-feeds-feedId-messages).",
+        "tags": ["Feeds"],
+        "operationId": "post-rooms-roomId-feeds-feedId-messages",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created feed message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/FeedMessage"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/feeds/{feedId}/messages/{messageId}": {
+      "patch": {
+        "summary": "Update feed message",
+        "description": "This endpoint updates a feed message. Corresponds to [`liveblocks.updateFeedMessage`](/docs/api-reference/liveblocks-node#patch-rooms-roomId-feeds-feedId-messages-messageId).",
+        "tags": ["Feeds"],
+        "operationId": "patch-rooms-roomId-feeds-feedId-messages-messageId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the message"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeedMessage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete feed message",
+        "description": "This endpoint deletes a feed message. Corresponds to [`liveblocks.deleteFeedMessage`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-feeds-feedId-messages-messageId).",
+        "tags": ["Feeds"],
+        "operationId": "delete-rooms-roomId-feeds-feedId-messages-messageId",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the feed"
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the message"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
@@ -6651,6 +7123,90 @@
         ],
         "description": ""
       },
+      "Feed": {
+        "type": "object",
+        "title": "Feed",
+        "properties": {
+          "feedId": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "number"
+          }
+        },
+        "required": ["feedId", "metadata", "timestamp"]
+      },
+      "FeedMessage": {
+        "type": "object",
+        "title": "FeedMessage",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": ["id", "timestamp", "data"]
+      },
+      "CreateFeed": {
+        "type": "object",
+        "title": "CreateFeed",
+        "properties": {
+          "feedId": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "number"
+          }
+        },
+        "required": ["feedId"]
+      },
+      "UpdateFeed": {
+        "type": "object",
+        "title": "UpdateFeed",
+        "properties": {
+          "metadata": {
+            "type": "object"
+          }
+        },
+        "required": ["metadata"]
+      },
+      "CreateFeedMessage": {
+        "type": "object",
+        "title": "CreateFeedMessage",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number"
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": ["data"]
+      },
+      "UpdateFeedMessage": {
+        "type": "object",
+        "title": "UpdateFeedMessage",
+        "properties": {
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": ["data"]
+      },
       "CreateThread": {
         "title": "CreateThread",
         "type": "object",
@@ -9108,6 +9664,9 @@
     },
     {
       "name": "Comments"
+    },
+    {
+      "name": "Feeds"
     },
     {
       "name": "Notifications"
