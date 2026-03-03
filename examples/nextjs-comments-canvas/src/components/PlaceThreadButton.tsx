@@ -17,12 +17,20 @@ export function PlaceThreadButton() {
   return (
     <>
       {/* Allows you to place floating composers */}
-      <div style={{ position: "absolute", top: 24, right: 24 }}>
+      <div style={{ position: "absolute", top: 12, right: 12 }}>
         <button
           onClick={() => setState("placing")}
-          style={{ cursor: state === "placing" ? "none" : undefined }}
+          style={{
+            cursor: state === "placing" ? "none" : undefined,
+            background: "#ffffff",
+            border: "1px solid #00000030",
+            borderRadius: 8,
+            width: 36,
+            height: 36,
+            fontSize: 24,
+          }}
         >
-          ➕
+          +
         </button>
       </div>
 
