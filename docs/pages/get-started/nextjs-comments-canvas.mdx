@@ -178,10 +178,11 @@ components from
         }, [thread]);
 
         // Enable drag
-        const { attributes, listeners, setNodeRef, transform } = useDraggable({
-          id: thread.id,
-          data: { thread }, // Pass thread to DndContext drag end event
-        });
+        const { isDragging, attributes, listeners, setNodeRef, transform } =
+          useDraggable({
+            id: thread.id,
+            data: { thread }, // Pass thread to DndContext drag end event
+          });
 
         // If currently dragging, add drag values to current metadata
         const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
@@ -192,7 +193,12 @@ components from
         const maxZIndex = useMaxZIndex();
 
         return (
-          <FloatingThread thread={thread} defaultOpen={defaultOpen} side="right">
+          <FloatingThread
+            thread={thread}
+            defaultOpen={defaultOpen}
+            side="right"
+            style={{ pointerEvents: isDragging ? "none" : "auto" }}
+          >
             <div
               ref={setNodeRef}
               onPointerDown={() =>
