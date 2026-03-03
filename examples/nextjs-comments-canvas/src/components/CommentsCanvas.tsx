@@ -52,7 +52,6 @@ export function CommentsCanvas() {
 
   return (
     <div
-      className="lb-root"
       style={{
         position: "relative",
         width: "100vw",
