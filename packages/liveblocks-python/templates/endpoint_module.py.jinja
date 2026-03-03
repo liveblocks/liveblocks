@@ -79,7 +79,7 @@ def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
     {% else %}
     if {{ code_range[0] }} <= response.status_code <= {{ code_range[1] }}:
     {% endif %}
-        {{ parse_response(return_string not in ["None", "Any"], response) | indent(8) }}
+        {{ parse_response(return_string != "None", response) | indent(8) }}
     {% endfor %}
     raise errors.LiveblocksError.from_response(response)
 
@@ -96,12 +96,7 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    {% if return_string in ["None", "Any"] %}
-    return None
-    {% else %}
     return _parse_response(response=response)
-    {% endif %}
 
 async def _asyncio(
     {{ arguments(endpoint, client_type="httpx.AsyncClient") | indent(4) }}
@@ -116,8 +111,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    {% if return_string in ["None", "Any"] %}
-    return None
-    {% else %}
     return _parse_response(response=response)
-    {% endif %}

@@ -214,7 +214,11 @@ return None
 {%- if ns.return_types | length == 0 -%}
 None
 {%- elif ns.return_types | length == 1 -%}
+  {%- if ns.return_types[0] == 'Any' -%}
+None
+  {%- else -%}
 {{ ns.return_types[0] }}
+  {%- endif -%}
 {%- else -%}
 {{ ns.return_types | sort | join(' | ') }}
 {%- endif -%}
