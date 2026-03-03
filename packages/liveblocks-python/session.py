@@ -3,13 +3,12 @@ from __future__ import annotations
 import re
 import warnings
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    import liveblocks_api_client.models.authorize_user_response as AuthorizeUserResponse
     from liveblocks_api_client.client import AsyncLiveblocks, Liveblocks
-    from liveblocks_api_client.models.an_http_response_body_containing_a_token import (
-        AnHTTPResponseBodyContainingAToken,
-    )
+    from liveblocks_api_client.models.authorize_user_request_body import AuthorizeUserRequestBody
 
 Permission = Literal[
     "room:write",
@@ -76,10 +75,10 @@ class _BaseSession:
                 existing.append(perm)
         return self
 
-    def _build_request_body(self) -> Any:
-        from liveblocks_api_client.models.authorize_user_request import AuthorizeUserRequest
-        from liveblocks_api_client.models.authorize_user_request_permissions import (
-            AuthorizeUserRequestPermissions,
+    def _build_request_body(self) -> AuthorizeUserRequestBody:
+        from liveblocks_api_client.models.authorize_user_request_body import AuthorizeUserRequestBody
+        from liveblocks_api_client.models.authorize_user_request_body_permissions import (
+            AuthorizeUserRequestBodyPermissions,
         )
 
         self.seal()
@@ -92,10 +91,10 @@ class _BaseSession:
                 stacklevel=3,
             )
 
-        perms_model = AuthorizeUserRequestPermissions()
+        perms_model = AuthorizeUserRequestBodyPermissions()
         perms_model.additional_properties = {pat: list(perms) for pat, perms in self._permissions.items()}
 
-        return AuthorizeUserRequest(
+        return AuthorizeUserRequestBody(
             user_id=self._user_id,
             permissions=perms_model,
         )
@@ -123,9 +122,9 @@ class Session(_BaseSession):
         super().allow(room_id_or_pattern, permissions)
         return self
 
-    def authorize(self) -> AnHTTPResponseBodyContainingAToken:
+    def authorize(self) -> AuthorizeUserResponse:
         body = self._build_request_body()
-        return self._client.post_authorize_user(body=body)
+        return self._client.authorize_user(body=body)
 
 
 class AsyncSession(_BaseSession):
@@ -150,6 +149,6 @@ class AsyncSession(_BaseSession):
         super().allow(room_id_or_pattern, permissions)
         return self
 
-    async def authorize(self) -> AnHTTPResponseBodyContainingAToken:
+    async def authorize(self) -> AuthorizeUserResponse:
         body = self._build_request_body()
-        return await self._client.post_authorize_user(body=body)
+        return await self._client.authorize_user(body=body)

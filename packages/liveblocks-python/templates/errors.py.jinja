@@ -13,7 +13,7 @@ class LiveblocksError(Exception):
 
     @classmethod
     def from_response(cls, response: httpx.Response) -> "LiveblocksError":
-        FALLBACK = "An error happended without an error message"
+        FALLBACK = "An error happened without an error message"
         try:
             response.read()
             text = response.text
