@@ -9,12 +9,13 @@ const liveblocks = new Liveblocks({
 // GET /api/feeds/[feedId]?roomId=xxx - Get a specific feed
 export async function GET(
   request: NextRequest,
-  { params }: { params: { feedId: string } }
+  { params }: { params: Promise<{ feedId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
+  const { feedId } = await params;
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get("roomId");
 
@@ -25,7 +26,7 @@ export async function GET(
   try {
     const feed = await liveblocks.getFeed({
       roomId,
-      feedId: params.feedId,
+      feedId,
     });
     return NextResponse.json(feed);
   } catch (error) {
@@ -40,13 +41,14 @@ export async function GET(
 // PATCH /api/feeds/[feedId] - Update feed metadata
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { feedId: string } }
+  { params }: { params: Promise<{ feedId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { feedId } = await params;
     const body = await request.json();
     const { roomId, metadata } = body;
 
@@ -60,7 +62,7 @@ export async function PATCH(
 
     await liveblocks.updateFeed({
       roomId,
-      feedId: params.feedId,
+      feedId,
       metadata,
     });
 
@@ -77,12 +79,13 @@ export async function PATCH(
 // DELETE /api/feeds/[feedId]?roomId=xxx - Delete a feed
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ feedId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
+  const { feedId } = await params;
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get("roomId");
 
@@ -93,7 +96,7 @@ export async function DELETE(
   try {
     await liveblocks.deleteFeed({
       roomId,
-      feedId: params.sessionId,
+      feedId,
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {

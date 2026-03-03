@@ -9,13 +9,14 @@ const liveblocks = new Liveblocks({
 // PATCH /api/feeds/[feedId]/messages/[messageId] - Update a feed message
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { feedId: string; messageId: string } }
+  { params }: { params: Promise<{ feedId: string; messageId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { feedId, messageId } = await params;
     const body = await request.json();
     const { roomId, data } = body;
 
@@ -29,8 +30,8 @@ export async function PATCH(
 
     await liveblocks.updateFeedMessage({
       roomId,
-      feedId: params.feedId,
-      messageId: params.messageId,
+      feedId,
+      messageId,
       data,
     });
 
@@ -47,12 +48,13 @@ export async function PATCH(
 // DELETE /api/feeds/[feedId]/messages/[messageId]?roomId=xxx - Delete a feed message
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { feedId: string; messageId: string } }
+  { params }: { params: Promise<{ feedId: string; messageId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
+  const { feedId, messageId } = await params;
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get("roomId");
 
@@ -63,8 +65,8 @@ export async function DELETE(
   try {
     await liveblocks.deleteFeedMessage({
       roomId,
-      feedId: params.feedId,
-      messageId: params.messageId,
+      feedId,
+      messageId,
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {

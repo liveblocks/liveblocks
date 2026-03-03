@@ -9,12 +9,13 @@ const liveblocks = new Liveblocks({
 // GET /api/feeds/[feedId]/messages?roomId=xxx - List feed messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { feedId: string } }
+  { params }: { params: Promise<{ feedId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
+  const { feedId } = await params;
   const { searchParams } = new URL(request.url);
   const roomId = searchParams.get("roomId");
 
@@ -25,7 +26,7 @@ export async function GET(
   try {
     const result = await liveblocks.getFeedMessages({
       roomId,
-      feedId: params.feedId,
+      feedId,
     });
     return NextResponse.json(result);
   } catch (error) {
@@ -40,13 +41,14 @@ export async function GET(
 // POST /api/feeds/[feedId]/messages - Create a new feed message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { feedId: string } }
+  { params }: { params: Promise<{ feedId: string }> }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
+    const { feedId } = await params;
     const body = await request.json();
     const { roomId, id, timestamp, data } = body;
 
@@ -60,7 +62,7 @@ export async function POST(
 
     const message = await liveblocks.createFeedMessage({
       roomId,
-      feedId: params.feedId,
+      feedId,
       id,
       timestamp,
       data,
