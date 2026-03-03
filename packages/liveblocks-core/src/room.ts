@@ -645,7 +645,7 @@ export type Room<
     cursor?: string;
     since?: number;
     limit?: number;
-    metadata?: Record<string, string>;
+    metadata?: Record<string, Json>;
   }): Promise<{
     feeds: Feed<SM>[];
     nextCursor?: string;
@@ -2786,7 +2786,7 @@ export function createRoom<
     cursor?: string;
     since?: number;
     limit?: number;
-    metadata?: Record<string, string>;
+    metadata?: Record<string, Json>;
   }): Promise<{ feeds: Feed<SM>[]; nextCursor?: string }> {
     const requestId = nanoid();
 

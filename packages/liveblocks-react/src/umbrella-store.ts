@@ -15,6 +15,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  Json,
   MessageId,
   NotificationSettings,
   OpaqueClient,
@@ -291,7 +292,7 @@ export function makeInboxNotificationsQueryKey(
 
 export function makeFeedsQueryKey(
   roomId: string,
-  options?: { since?: number; metadata?: Record<string, string> }
+  options?: { since?: number; metadata?: Record<string, Json> }
 ) {
   return stableStringify([roomId, options ?? {}]);
 }
@@ -1696,7 +1697,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       (queryKey: string): LoadableResource<FeedsAsyncResult> => {
         const [roomId, options] = JSON.parse(queryKey) as [
           roomId: RoomId,
-          options?: { since?: number; metadata?: Record<string, string> },
+          options?: { since?: number; metadata?: Record<string, Json> },
         ];
 
         const resource = new PaginatedResource(async (cursor?: string) => {

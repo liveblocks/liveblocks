@@ -139,7 +139,7 @@ export type FetchFeedsClientMsg = {
   readonly cursor?: string;
   readonly since?: number;
   readonly limit?: number;
-  readonly metadata?: Record<string, string>;
+  readonly metadata?: Record<string, Json>;
 };
 
 export type FetchFeedMessagesClientMsg = {

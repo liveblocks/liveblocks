@@ -220,7 +220,7 @@ export type UseFeedsOptions = {
   /**
    * Optional metadata filter. Only feeds with matching metadata will be returned.
    */
-  metadata?: Record<string, string>;
+  metadata?: Record<string, Json>;
 };
 
 export type UseFeedMessagesOptions = {

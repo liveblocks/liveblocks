@@ -282,7 +282,7 @@ function MessagesPanel({
 }
 
 function ChatRoom() {
-  const { feeds, isLoading } = useFeeds();
+  const { feeds, isLoading } = useFeeds({ metadata: { channel: true } });
   const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null);
   const createFeedFn = useCreateFeed();
   const deleteFeedFn = useDeleteFeed();
@@ -293,7 +293,7 @@ function ChatRoom() {
   const [editingFeedId, setEditingFeedId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
 
-  const channels = feeds?.filter((f) => f.metadata?.channel !== false) ?? [];
+  const channels = feeds ?? [];
 
   useEffect(() => {
     if (channels.length && !selectedFeedId) {
