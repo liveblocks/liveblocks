@@ -1841,16 +1841,16 @@
   inset-inline-start: calc(0.8125 * var(--lb-cursor-pointer-size));
   inset-block-start: calc(0.8125 * var(--lb-cursor-pointer-size));
   padding: calc(0.375 * var(--lb-spacing)) calc(0.6875 * var(--lb-spacing));
-  border-radius: calc(0.5 * (1lh + 2 * 0.3125 * var(--lb-spacing)));
+  border-radius: $lb-radius-full;
   background: currentcolor;
   font-size: 0.8125rem;
+  will-change: transform;
 }
 
 .lb-cursor-bubble-label {
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
-  will-change: transform;
 
   /* Use relative color to derive a text color legible against the background. */
   @supports (color: oklch(from black l c h)) {
