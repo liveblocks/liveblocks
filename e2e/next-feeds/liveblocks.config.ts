@@ -7,6 +7,8 @@ declare global {
       temperature?: number;
       created?: string;
       updated?: string;
+      name?: string;
+      channel?: boolean;
     };
 
     // Feed message data (used for FeedMessage.data from useFeedMessages)
@@ -14,6 +16,7 @@ declare global {
       role: "user" | "assistant" | "system";
       content: string;
       tokens?: number;
+      feedThreadId?: string;
     };
   }
 }
