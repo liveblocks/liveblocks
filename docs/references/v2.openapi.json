@@ -75,7 +75,9 @@
             "description": "Success. Returns the list of rooms, the next page cursor, and the next page URL.",
             "content": {
               "application/json": {
-                "$ref": "#/components/schemas/GetRoomsResponse",
+                "schema": {
+                  "$ref": "#/components/schemas/GetRoomsResponse"
+                },
                 "examples": {
                   "example": {
                     "value": {
@@ -171,7 +173,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateRoomBody"
+                "$ref": "#/components/schemas/CreateRoomRequestBody"
               },
               "examples": {
                 "example": {
@@ -324,7 +326,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoomBody"
+                "$ref": "#/components/schemas/UpdateRoomRequestBody"
               },
               "examples": {
                 "example": {
@@ -552,7 +554,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpsertRoomBody"
+                "$ref": "#/components/schemas/UpsertRoomRequestBody"
               },
               "examples": {
                 "example": {
@@ -648,7 +650,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoomIdBody"
+                "$ref": "#/components/schemas/UpdateRoomIdRequestBody"
               },
               "examples": {
                 "example": {
@@ -684,7 +686,9 @@
             "description": "Success. Returns the list of active users for the specified room.",
             "content": {
               "application/json": {
-                "$ref": "#/components/schemas/ActiveUsersResponse",
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveUsersResponse"
+                },
                 "examples": {
                   "example": {
                     "value": {
@@ -742,7 +746,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetPresenceBody"
+                "$ref": "#/components/schemas/SetPresenceRequestBody"
               },
               "examples": {
                 "example": {
@@ -915,7 +919,7 @@
       "post": {
         "summary": "Initialize Storage document",
         "tags": ["Storage"],
-        "operationId": "post-rooms-roomId-storage",
+        "operationId": "initialize-storage-document",
         "parameters": [
           {
             "schema": {
@@ -933,15 +937,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "liveblocksType": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": ["string", "object"]
-                    }
-                  }
+                  "$ref": "#/components/schemas/InitializeStorageDocumentResponse"
                 },
                 "examples": {
                   "example": {
@@ -1010,10 +1006,12 @@
                 "type": "object",
                 "properties": {
                   "liveblocksType": {
-                    "type": "string"
+                    "type": "string",
+                    "const": "LiveObject"
                   },
                   "data": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true
                   }
                 }
               },
@@ -1101,7 +1099,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PatchStorageDocumentBody"
+                "$ref": "#/components/schemas/PatchStorageDocumentRequestBody"
               },
               "examples": {
                 "addAndRemove": {
@@ -1215,10 +1213,8 @@
             "description": "Success. Returns the room’s Yjs document as JSON.",
             "content": {
               "application/json": {
-                "title": "GetYjsDocumentResponse",
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/GetYjsDocumentResponse"
                 },
                 "examples": {
                   "example": {
@@ -1323,7 +1319,6 @@
             "description": "Success. Returns the room's Yjs document encoded as a binary Yjs update.",
             "content": {
               "application/octet-stream": {
-                "title": "GetYjsDocumentAsBinaryUpdateResponse",
                 "schema": {
                   "type": "string",
                   "format": "binary"
@@ -1672,7 +1667,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateThreadBody"
+                "$ref": "#/components/schemas/CreateThreadRequestBody"
               },
               "examples": {
                 "example": {
@@ -1929,7 +1924,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateThreadMetadataBody"
+                "$ref": "#/components/schemas/UpdateThreadMetadataReqeuestBody"
               },
               "examples": {
                 "example": {
@@ -2070,7 +2065,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubscribeToThreadBody"
+                "$ref": "#/components/schemas/SubscribeToThreadRequestBody"
               }
             }
           }
@@ -2144,7 +2139,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UnsubscribeFromThreadBody"
+                "$ref": "#/components/schemas/UnsubscribeFromThreadRequestBody"
               }
             }
           }
@@ -2250,7 +2245,7 @@
         "summary": "Create comment",
         "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
-        "operationId": "post-rooms-roomId-threads-threadId-comments",
+        "operationId": "create-comment",
         "parameters": [
           {
             "name": "roomId",
@@ -2315,7 +2310,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateComment"
+                "$ref": "#/components/schemas/CreateCommentRequestBody"
               },
               "examples": {
                 "example": {
@@ -2343,7 +2338,7 @@
         "summary": "Get comment",
         "tags": ["Comments"],
         "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
-        "operationId": "get-rooms-roomId-threads-threadId-comments-commentId",
+        "operationId": "get-comment",
         "parameters": [
           {
             "name": "roomId",
@@ -2417,7 +2412,7 @@
         "summary": "Edit comment",
         "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
-        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId",
+        "operationId": "edit-comment",
         "parameters": [
           {
             "name": "roomId",
@@ -2453,7 +2448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdateComment"
+                  "$ref": "#/components/schemas/Comment"
                 },
                 "examples": {
                   "example": {
@@ -2491,7 +2486,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateComment"
+                "$ref": "#/components/schemas/EditCommentRequestBody"
               },
               "examples": {
                 "example": {
@@ -2554,7 +2549,7 @@
             "$ref": "#/components/responses/404-comment"
           }
         },
-        "operationId": "delete-rooms-roomId-threads-threadId-comments-commentId",
+        "operationId": "delete-comment",
         "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)."
       }
     },
@@ -2563,7 +2558,7 @@
         "summary": "Add comment reaction",
         "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
-        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-add-reaction",
+        "operationId": "add-comment-reaction",
         "parameters": [
           {
             "name": "roomId",
@@ -2630,7 +2625,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddCommentReaction"
+                "$ref": "#/components/schemas/AddCommentReactionRequestBody"
               },
               "examples": {
                 "example": {
@@ -2651,7 +2646,7 @@
         "summary": "Remove comment reaction",
         "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
-        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
+        "operationId": "remove-comment-reaction",
         "parameters": [
           {
             "name": "roomId",
@@ -2699,7 +2694,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RemoveCommentReaction"
+                "$ref": "#/components/schemas/RemoveCommentReactionRequestBody"
               },
               "examples": {
                 "example": {
@@ -2720,7 +2715,7 @@
         "summary": "Edit comment metadata",
         "tags": ["Comments"],
         "description": "This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).",
-        "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-metadata",
+        "operationId": "edit-comment-metadata",
         "parameters": [
           {
             "name": "roomId",
@@ -2780,7 +2775,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateCommentMetadata"
+                "$ref": "#/components/schemas/EditCommentMetadataRequestBody"
               },
               "examples": {
                 "example": {
@@ -2803,14 +2798,14 @@
       "post": {
         "summary": "Get access token with secret key",
         "tags": ["Authentication"],
-        "operationId": "post-authorize-user",
+        "operationId": "authorize-user",
         "responses": {
           "200": {
             "description": "Success. Returns an access token that can be used to enter one or more rooms.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/AuthorizeUserResponse"
                 },
                 "examples": {
                   "example": {
@@ -2830,7 +2825,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AuthorizeUserRequest"
+                "$ref": "#/components/schemas/AuthorizeUserRequestBody"
               },
               "examples": {
                 "example": {
@@ -2859,14 +2854,14 @@
       "post": {
         "summary": "Get ID token with secret key",
         "tags": ["Authentication"],
-        "operationId": "post-identify-user",
+        "operationId": "identify-user",
         "responses": {
           "200": {
             "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/IdentifyUserResponse"
                 },
                 "examples": {
                   "example": {
@@ -2886,7 +2881,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/IdentifyUserRequest"
+                "$ref": "#/components/schemas/IdentifyUserRequestBody"
               },
               "examples": {
                 "example": {
@@ -4141,7 +4136,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetAiCopilots"
+                  "$ref": "#/components/schemas/GetAiCopilotsResponse"
                 }
               }
             }
@@ -4185,7 +4180,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAiCopilot"
+                "$ref": "#/components/schemas/CreateAiCopilotRequestBody"
               }
             }
           }
@@ -4275,7 +4270,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateAiCopilot"
+                "$ref": "#/components/schemas/UpdateAiCopilotRequestBody"
               }
             }
           }
@@ -4354,7 +4349,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetKnowledgeSources"
+                  "$ref": "#/components/schemas/GetKnowledgeSourcesResponse"
                 }
               }
             }
@@ -4443,12 +4438,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateWebKnowledgeSourceResponse"
                 }
               }
             }
@@ -4468,7 +4458,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateWebKnowledgeSource"
+                "$ref": "#/components/schemas/CreateWebKnowledgeSourceRequestBody"
               }
             }
           }
@@ -4542,7 +4532,7 @@
     "/ai/copilots/{copilotId}/knowledge/file/{knowledgeSourceId}": {
       "get": {
         "summary": "Get file knowledge source content",
-        "description": "This endpoint returns the content of a file knowledge source as Markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
+        "description": "This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4566,19 +4556,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the content of the file knowledge source.",
+            "description": "Success. Returns the content of the file knowledge source as markdown.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "content": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/GetFileKnowledgeSourceMarkdownResponse"
                 }
               }
             }
@@ -4593,7 +4575,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "get-file-knowledge-source-content"
+        "operationId": "get-file-knowledge-source-markdown"
       },
       "delete": {
         "summary": "Delete file knowledge source",
@@ -4728,7 +4710,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetWebKnowledgeSourceLinks"
+                  "$ref": "#/components/schemas/GetWebKnowledgeSourceLinksResponse"
                 }
               }
             }
@@ -5990,8 +5972,8 @@
           }
         }
       },
-      "CreateRoomBody": {
-        "title": "CreateRoomBody",
+      "CreateRoomRequestBody": {
+        "title": "CreateRoomRequestBody",
         "type": "object",
         "properties": {
           "id": {
@@ -6018,9 +6000,9 @@
         "required": ["id", "defaultAccesses"],
         "additionalProperties": false
       },
-      "UpdateRoomBody": {
+      "UpdateRoomRequestBody": {
         "type": "object",
-        "title": "UpdateRoomBody",
+        "title": "UpdateRoomRequestBody",
         "additionalProperties": false,
         "properties": {
           "defaultAccesses": {
@@ -6083,23 +6065,23 @@
           }
         }
       },
-      "UpsertRoomBody": {
+      "UpsertRoomRequestBody": {
         "type": "object",
-        "title": "UpsertRoomBody",
+        "title": "UpsertRoomRequestBody",
         "properties": {
           "update": {
-            "$ref": "#/components/schemas/UpdateRoomBody"
+            "$ref": "#/components/schemas/UpdateRoomRequestBody"
           },
           "create": {
-            "$ref": "#/components/schemas/CreateRoomBody"
+            "$ref": "#/components/schemas/CreateRoomRequestBody"
           }
         },
         "required": ["update"],
         "additionalProperties": false
       },
-      "UpdateRoomIdBody": {
+      "UpdateRoomIdRequestBody": {
         "type": "object",
-        "title": "UpdateRoomIdBody",
+        "title": "UpdateRoomIdRequestBody",
         "additionalProperties": false,
         "properties": {
           "newRoomId": {
@@ -6146,8 +6128,8 @@
         },
         "required": ["data"]
       },
-      "SetPresenceBody": {
-        "title": "SetPresenceBody",
+      "SetPresenceRequestBody": {
+        "title": "SetPresenceRequestBody",
         "type": "object",
         "properties": {
           "userId": {
@@ -6194,8 +6176,22 @@
         "type": "object",
         "additionalProperties": true
       },
-      "PatchStorageDocumentBody": {
-        "title": "PatchStorageDocumentBody",
+      "InitializeStorageDocumentResponse": {
+        "title": "InitializeStorageDocumentResponse",
+        "type": "object",
+        "properties": {
+          "liveblocksType": {
+            "type": "string",
+            "const": "LiveObject"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "PatchStorageDocumentRequestBody": {
+        "title": "PatchStorageDocumentRequestBody",
         "type": "array",
         "items": {
           "oneOf": [
@@ -6307,6 +6303,11 @@
           ]
         }
       },
+      "GetYjsDocumentResponse": {
+        "title": "GetYjsDocumentResponse",
+        "type": "object",
+        "additionalProperties": true
+      },
       "Error": {
         "title": "Error",
         "type": "object",
@@ -6338,17 +6339,30 @@
           }
         }
       },
-      "TokenResponse": {
-        "title": "An HTTP response body containing a token.",
+      "AuthorizeUserResponse": {
+        "title": "AuthorizeUserResponse",
         "type": "object",
         "properties": {
           "token": {
             "type": "string"
           }
-        }
+        },
+        "required": ["token"],
+        "additionalProperties": false
       },
-      "AuthorizeUserRequest": {
-        "title": "AuthorizeUserRequest",
+      "IdentifyUserResponse": {
+        "title": "IdentifyUserResponse",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": ["token"],
+        "additionalProperties": false
+      },
+      "AuthorizeUserRequestBody": {
+        "title": "AuthorizeUserRequestBody",
         "type": "object",
         "properties": {
           "userId": {
@@ -6369,10 +6383,12 @@
               }
             }
           }
-        }
+        },
+        "required": ["userId", "permissions"],
+        "additionalProperties": false
       },
-      "IdentifyUserRequest": {
-        "title": "IdentifyUserRequest",
+      "IdentifyUserRequestBody": {
+        "title": "IdentifyUserRequestBody",
         "type": "object",
         "properties": {
           "userId": {
@@ -6390,25 +6406,9 @@
           "userInfo": {
             "type": "object"
           }
-        }
-      },
-      "CreateAuthorization": {
-        "title": "CreateAuthorization",
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "userInfo": {
-            "type": "object"
-          },
-          "groupIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
+        },
+        "required": ["userId"],
+        "additionalProperties": false
       },
       "YjsVersion": {
         "title": "YjsVersion",
@@ -6491,62 +6491,6 @@
         "required": ["data"],
         "additionalProperties": false
       },
-      "PublicAuthorizeBodyRequest": {
-        "title": "PublicAuthorizeBodyRequest",
-        "type": "object",
-        "properties": {
-          "publicApiKey": {
-            "type": "string"
-          }
-        }
-      },
-      "SchemaResponse": {
-        "title": "Schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "body": {
-            "type": "string"
-          }
-        }
-      },
-      "SchemaRequest": {
-        "title": "SchemaRequest",
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateSchema": {
-        "title": "UpdateSchema",
-        "type": "object",
-        "properties": {
-          "body": {
-            "type": "string"
-          }
-        }
-      },
       "GetThreadsResponse": {
         "title": "GetThreadsResponse",
         "type": "object",
@@ -6606,8 +6550,8 @@
           "resolved"
         ]
       },
-      "CreateThreadBody": {
-        "title": "CreateThreadBody",
+      "CreateThreadRequestBody": {
+        "title": "CreateThreadRequestBody",
         "type": "object",
         "properties": {
           "comment": {
@@ -6670,8 +6614,8 @@
         "required": ["participantIds"],
         "additionalProperties": false
       },
-      "UpdateThreadMetadataBody": {
-        "title": "UpdateThreadMetadataBody",
+      "UpdateThreadMetadataReqeuestBody": {
+        "title": "UpdateThreadMetadataReqeuestBody",
         "type": "object",
         "properties": {
           "metadata": {
@@ -6740,12 +6684,13 @@
           }
         ]
       },
-      "UpdateCommentMetadata": {
-        "title": "UpdateCommentMetadata",
+      "EditCommentMetadataRequestBody": {
+        "title": "EditCommentMetadataRequestBody",
         "type": "object",
         "properties": {
           "metadata": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           },
           "userId": {
             "type": "string"
@@ -6756,6 +6701,7 @@
           }
         },
         "required": ["metadata", "userId"],
+        "additionalProperties": false,
         "examples": [
           {
             "metadata": {
@@ -6831,8 +6777,8 @@
           }
         ]
       },
-      "CreateComment": {
-        "title": "CreateComment",
+      "CreateCommentRequestBody": {
+        "title": "CreateCommentRequestBody",
         "type": "object",
         "properties": {
           "userId": {
@@ -6849,6 +6795,7 @@
             "$ref": "#/components/schemas/CommentMetadata"
           }
         },
+        "additionalProperties": false,
         "required": ["userId", "body"],
         "examples": [
           {
@@ -6866,8 +6813,8 @@
         ],
         "description": ""
       },
-      "UpdateComment": {
-        "title": "UpdateComment",
+      "EditCommentRequestBody": {
+        "title": "EditCommentRequestBody",
         "type": "object",
         "properties": {
           "editedAt": {
@@ -6882,6 +6829,7 @@
           }
         },
         "required": ["body"],
+        "additionalProperties": false,
         "examples": [
           {
             "editedAt": "2022-07-13T14:32:50.697Z",
@@ -6897,9 +6845,9 @@
         ],
         "description": ""
       },
-      "SubscribeToThreadBody": {
+      "SubscribeToThreadRequestBody": {
         "type": "object",
-        "title": "SubscribeToThreadBody",
+        "title": "SubscribeToThreadRequestBody",
         "required": ["userId"],
         "properties": {
           "userId": {
@@ -6908,9 +6856,9 @@
         },
         "additionalProperties": false
       },
-      "UnsubscribeFromThreadBody": {
+      "UnsubscribeFromThreadRequestBody": {
         "type": "object",
-        "title": "UnsubscribeFromThreadBody",
+        "title": "UnsubscribeFromThreadRequestBody",
         "required": ["userId"],
         "properties": {
           "userId": {
@@ -6948,7 +6896,8 @@
             "type": "string"
           }
         },
-        "required": ["userId", "emoji"],
+        "required": ["userId", "emoji", "createdAt"],
+        "additionalProperties": false,
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -6957,9 +6906,9 @@
           }
         ]
       },
-      "AddCommentReaction": {
+      "AddCommentReactionRequestBody": {
         "type": "object",
-        "title": "AddCommentReaction",
+        "title": "AddCommentReactionRequestBody",
         "properties": {
           "userId": {
             "type": "string"
@@ -6973,6 +6922,7 @@
           }
         },
         "required": ["userId", "emoji"],
+        "additionalProperties": false,
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -6981,9 +6931,9 @@
           }
         ]
       },
-      "RemoveCommentReaction": {
+      "RemoveCommentReactionRequestBody": {
         "type": "object",
-        "title": "RemoveCommentReaction",
+        "title": "RemoveCommentReactionRequestBody",
         "properties": {
           "userId": {
             "type": "string"
@@ -6997,6 +6947,7 @@
           }
         },
         "required": ["userId", "emoji"],
+        "additionalProperties": false,
         "examples": [
           {
             "emoji": "👨‍👩‍👧",
@@ -7204,504 +7155,305 @@
           }
         ]
       },
+      "AiCopilotBase": {
+        "type": "object",
+        "required": [
+          "type",
+          "id",
+          "name",
+          "systemPrompt",
+          "alwaysUseKnowledge",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "type": { "type": "string", "const": "copilot" },
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "systemPrompt": { "type": "string" },
+          "knowledgePrompt": { "type": "string" },
+          "alwaysUseKnowledge": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "lastUsedAt": { "type": "string", "format": "date-time" },
+          "settings": {
+            "$ref": "#/components/schemas/AiCopilotProviderSettings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AiCopilotOpenAi": {
+        "title": "AiCopilotOpenAi",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AiCopilotBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "openai"
+              },
+              "providerModel": {
+                "$ref": "#/components/schemas/OpenAiModel"
+              }
+            },
+            "required": ["provider", "providerModel"]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "AiCopilotAnthropic": {
+        "title": "AiCopilotAnthropic",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AiCopilotBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "anthropic"
+              },
+              "providerModel": {
+                "$ref": "#/components/schemas/AnthropicModel"
+              },
+              "providerOptions": {
+                "$ref": "#/components/schemas/AnthropicProviderOptions"
+              }
+            },
+            "required": ["provider", "providerModel"]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "AiCopilotGoogle": {
+        "title": "AiCopilotGoogle",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AiCopilotBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "google"
+              },
+              "providerModel": {
+                "$ref": "#/components/schemas/GoogleModel"
+              },
+              "providerOptions": {
+                "$ref": "#/components/schemas/GoogleProviderOptions"
+              }
+            },
+            "required": ["provider", "providerModel"]
+          }
+        ],
+        "additionalProperties": false
+      },
+      "AiCopilotOpenAiCompatible": {
+        "title": "AiCopilotOpenAiCompatible",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/AiCopilotBase"
+          },
+          {
+            "type": "object",
+            "required": [
+              "provider",
+              "providerModel",
+              "compatibleProviderName",
+              "providerBaseUrl"
+            ],
+            "properties": {
+              "provider": { "type": "string", "const": "openai-compatible" },
+              "providerModel": { "type": "string" },
+              "compatibleProviderName": { "type": "string" },
+              "providerBaseUrl": { "type": "string" }
+            }
+          }
+        ],
+        "additionalProperties": false
+      },
       "AiCopilot": {
         "title": "AiCopilot",
         "oneOf": [
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "copilot"
-              },
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "systemPrompt": {
-                "type": "string"
-              },
-              "knowledgePrompt": {
-                "type": "string"
-              },
-              "alwaysUseKnowledge": {
-                "type": "boolean"
-              },
-              "provider": {
-                "const": "openai"
-              },
-              "providerModel": {
-                "type": "string",
-                "enum": [
-                  "o1",
-                  "o1-mini",
-                  "o3",
-                  "o3-mini",
-                  "o4-mini",
-                  "gpt-4.1",
-                  "gpt-4.1-mini",
-                  "gpt-4.1-nano",
-                  "gpt-4o",
-                  "gpt-4o-mini",
-                  "gpt-4-turbo",
-                  "gpt-4",
-                  "gpt-5",
-                  "gpt-5-mini",
-                  "gpt-5-nano",
-                  "gpt-5-chat-latest",
-                  "gpt-5.1",
-                  "gpt-5.1-mini",
-                  "gpt-5.1-chat-latest"
-                ]
-              },
-              "providerOptions": {
-                "type": "object",
-                "properties": {
-                  "openai": {
-                    "type": "object",
-                    "properties": {
-                      "reasoningEffort": {
-                        "type": "string",
-                        "enum": ["low", "medium", "high"]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastUsedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "settings": {
-                "$ref": "#/components/schemas/CopilotSettings"
-              }
-            },
-            "required": [
-              "type",
-              "id",
-              "name",
-              "systemPrompt",
-              "provider",
-              "providerModel",
-              "createdAt",
-              "updatedAt"
-            ]
+            "$ref": "#/components/schemas/AiCopilotOpenAi"
           },
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "copilot"
-              },
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "systemPrompt": {
-                "type": "string"
-              },
-              "knowledgePrompt": {
-                "type": "string"
-              },
-              "alwaysUseKnowledge": {
-                "type": "boolean"
-              },
-              "provider": {
-                "const": "anthropic"
-              },
-              "providerModel": {
-                "type": "string",
-                "enum": [
-                  "claude-sonnet-4-5-20250929",
-                  "claude-haiku-4-5-20251001",
-                  "claude-opus-4-1-20250805",
-                  "claude-4-opus-20250514",
-                  "claude-4-sonnet-20250514",
-                  "claude-3-7-sonnet-20250219",
-                  "claude-3-5-sonnet-latest",
-                  "claude-3-5-haiku-latest",
-                  "claude-3-opus-latest"
-                ]
-              },
-              "providerOptions": {
-                "type": "object",
-                "properties": {
-                  "anthropic": {
-                    "type": "object",
-                    "properties": {
-                      "thinking": {
-                        "oneOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "enabled"
-                              },
-                              "budgetTokens": {
-                                "type": "number",
-                                "minimum": 0
-                              }
-                            },
-                            "required": ["type", "s"]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "disabled"
-                              }
-                            },
-                            "required": ["type"]
-                          }
-                        ]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastUsedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "settings": {
-                "$ref": "#/components/schemas/CopilotSettings"
-              }
-            },
-            "required": [
-              "type",
-              "id",
-              "name",
-              "systemPrompt",
-              "provider",
-              "providerModel",
-              "createdAt",
-              "updatedAt"
-            ]
+            "$ref": "#/components/schemas/AiCopilotAnthropic"
           },
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "copilot"
-              },
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "systemPrompt": {
-                "type": "string"
-              },
-              "knowledgePrompt": {
-                "type": "string"
-              },
-              "alwaysUseKnowledge": {
-                "type": "boolean"
-              },
-              "provider": {
-                "const": "google"
-              },
-              "providerModel": {
-                "type": "string",
-                "enum": [
-                  "gemini-2.5-flash",
-                  "gemini-2.5-pro",
-                  "gemini-2.0-flash-001",
-                  "gemini-1.5-flash",
-                  "gemini-1.5-pro"
-                ]
-              },
-              "providerOptions": {
-                "type": "object",
-                "properties": {
-                  "google": {
-                    "type": "object",
-                    "properties": {
-                      "thinkingConfig": {
-                        "type": "object",
-                        "properties": {
-                          "thinkingBudget": {
-                            "type": "number",
-                            "minimum": 0
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastUsedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "settings": {
-                "$ref": "#/components/schemas/CopilotSettings"
-              }
-            },
-            "required": [
-              "type",
-              "id",
-              "name",
-              "systemPrompt",
-              "provider",
-              "providerModel",
-              "createdAt",
-              "updatedAt"
-            ]
+            "$ref": "#/components/schemas/AiCopilotGoogle"
           },
           {
-            "type": "object",
-            "properties": {
-              "type": {
-                "const": "copilot"
-              },
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "systemPrompt": {
-                "type": "string"
-              },
-              "knowledgePrompt": {
-                "type": "string"
-              },
-              "alwaysUseKnowledge": {
-                "type": "boolean"
-              },
-              "provider": {
-                "const": "openai-compatible"
-              },
-              "providerModel": {
-                "type": "string"
-              },
-              "compatibleProviderName": {
-                "type": "string"
-              },
-              "providerBaseUrl": {
-                "type": "string",
-                "format": "uri"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastUsedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "settings": {
-                "$ref": "#/components/schemas/CopilotSettings"
-              }
-            },
-            "required": [
-              "type",
-              "id",
-              "name",
-              "systemPrompt",
-              "provider",
-              "providerModel",
-              "compatibleProviderName",
-              "providerBaseUrl",
-              "createdAt",
-              "updatedAt"
-            ]
+            "$ref": "#/components/schemas/AiCopilotOpenAiCompatible"
           }
         ],
         "discriminator": {
-          "propertyName": "provider"
+          "propertyName": "provider",
+          "mapping": {
+            "openai": "#/components/schemas/AiCopilotOpenAi",
+            "anthropic": "#/components/schemas/AiCopilotAnthropic"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateAiCopilotOptionsBase": {
+        "type": "object",
+        "required": ["name", "systemPrompt", "providerApiKey"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "systemPrompt": { "type": "string" },
+          "knowledgePrompt": { "type": "string" },
+          "alwaysUseKnowledge": { "type": "boolean" },
+          "settings": {
+            "$ref": "#/components/schemas/AiCopilotProviderSettings"
+          },
+          "providerApiKey": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "CreateAiCopilotOptionsOpenAi": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "type": "object",
+            "required": ["provider", "providerModel"],
+            "properties": {
+              "provider": { "type": "string", "const": "openai" },
+              "providerModel": { "$ref": "#/components/schemas/OpenAiModel" },
+              "providerOptions": {
+                "$ref": "#/components/schemas/OpenAiProviderOptions"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "additionalProperties": false
+      },
+      "CreateAiCopilotOptionsAnthropic": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "type": "object",
+            "required": ["provider", "providerModel"],
+            "properties": {
+              "provider": { "type": "string", "const": "anthropic" },
+              "providerModel": {
+                "$ref": "#/components/schemas/AnthropicModel"
+              },
+              "providerOptions": {
+                "$ref": "#/components/schemas/AnthropicProviderOptions"
+              }
+            }
+          }
+        ]
+      },
+
+      "CreateAiCopilotOptionsGoogle": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "type": "object",
+            "required": ["provider", "providerModel"],
+            "properties": {
+              "provider": { "type": "string", "const": "google" },
+              "providerModel": { "$ref": "#/components/schemas/GoogleModel" },
+              "providerOptions": {
+                "$ref": "#/components/schemas/GoogleProviderOptions"
+              }
+            }
+          }
+        ]
+      },
+      "CreateAiCopilotOptionsOpenAiCompatible": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "type": "object",
+            "required": [
+              "provider",
+              "providerModel",
+              "compatibleProviderName",
+              "providerBaseUrl"
+            ],
+            "properties": {
+              "provider": { "type": "string", "const": "openai-compatible" },
+              "providerModel": { "type": "string" },
+              "compatibleProviderName": { "type": "string" },
+              "providerBaseUrl": { "type": "string" }
+            }
+          }
+        ]
+      },
+      "CreateAiCopilotRequestBody": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsOpenAi" },
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsAnthropic" },
+          { "$ref": "#/components/schemas/CreateAiCopilotOptionsGoogle" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsOpenAiCompatible"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "provider",
+          "mapping": {
+            "openai": "#/components/schemas/CreateAiCopilotOptionsOpenAi",
+            "anthropic": "#/components/schemas/CreateAiCopilotOptionsAnthropic",
+            "google": "#/components/schemas/CreateAiCopilotOptionsGoogle",
+            "openai-compatible": "#/components/schemas/CreateAiCopilotOptionsOpenAiCompatible"
+          }
         }
       },
-      "CreateAiCopilot": {
-        "title": "CreateAiCopilot",
+      "UpdateAiCopilotRequestBody": {
+        "title": "UpdateAiCopilotRequestBody",
         "type": "object",
         "properties": {
           "name": {
             "type": "string"
           },
           "description": {
-            "type": "string",
-            "nullable": true
+            "type": ["string", "null"]
           },
           "systemPrompt": {
             "type": "string"
           },
           "knowledgePrompt": {
-            "type": "string",
-            "nullable": true
+            "type": ["string", "null"]
           },
           "alwaysUseKnowledge": {
-            "type": "boolean",
-            "nullable": true
+            "type": "boolean"
+          },
+          "settings": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/CopilotSettings" },
+              { "type": "null" }
+            ]
           },
           "providerApiKey": {
             "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
           },
           "providerModel": {
             "type": "string"
           },
           "providerOptions": {
             "oneOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "openai": {
-                    "type": "object",
-                    "properties": {
-                      "reasoningEffort": {
-                        "type": "string",
-                        "enum": ["low", "medium", "high"]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "anthropic": {
-                    "type": "object",
-                    "properties": {
-                      "thinking": {
-                        "oneOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "enabled"
-                              },
-                              "budgetTokens": {
-                                "type": "number",
-                                "minimum": 0
-                              }
-                            },
-                            "required": ["type", "budgetTokens"]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "disabled"
-                              }
-                            },
-                            "required": ["type"]
-                          }
-                        ]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "google": {
-                    "type": "object",
-                    "properties": {
-                      "thinkingConfig": {
-                        "type": "object",
-                        "properties": {
-                          "thinkingBudget": {
-                            "type": "number",
-                            "minimum": 0
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ],
-            "nullable": true
-          },
-          "settings": {
-            "$ref": "#/components/schemas/CopilotSettings",
-            "nullable": true
-          },
-          "provider": {
-            "type": "string",
-            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+              { "$ref": "#/components/schemas/OpenAiProviderOptions" },
+              { "$ref": "#/components/schemas/AnthropicProviderOptions" },
+              { "$ref": "#/components/schemas/GoogleProviderOptions" },
+              { "type": "null" }
+            ]
           },
           "compatibleProviderName": {
             "type": "string"
@@ -7711,150 +7463,7 @@
             "format": "uri"
           }
         },
-        "required": [
-          "name",
-          "systemPrompt",
-          "provider",
-          "providerApiKey",
-          "providerModel"
-        ]
-      },
-      "UpdateAiCopilot": {
-        "title": "UpdateAiCopilot",
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "systemPrompt": {
-            "type": "string"
-          },
-          "knowledgePrompt": {
-            "type": "string",
-            "nullable": true
-          },
-          "alwaysUseKnowledge": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "providerApiKey": {
-            "type": "string"
-          },
-          "providerModel": {
-            "type": "string"
-          },
-          "providerOptions": {
-            "oneOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "openai": {
-                    "type": "object",
-                    "properties": {
-                      "reasoningEffort": {
-                        "type": "string",
-                        "enum": ["low", "medium", "high"]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "anthropic": {
-                    "type": "object",
-                    "properties": {
-                      "thinking": {
-                        "oneOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "enabled"
-                              },
-                              "budgetTokens": {
-                                "type": "number",
-                                "minimum": 0
-                              }
-                            },
-                            "required": ["type", "budgetTokens"]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "const": "disabled"
-                              }
-                            },
-                            "required": ["type"]
-                          }
-                        ]
-                      },
-                      "webSearch": {
-                        "type": "object",
-                        "properties": {
-                          "allowedDomains": {
-                            "type": "array",
-                            "items": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "google": {
-                    "type": "object",
-                    "properties": {
-                      "thinkingConfig": {
-                        "type": "object",
-                        "properties": {
-                          "thinkingBudget": {
-                            "type": "number",
-                            "minimum": 0
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ],
-            "nullable": true
-          },
-          "settings": {
-            "$ref": "#/components/schemas/CopilotSettings",
-            "nullable": true
-          },
-          "provider": {
-            "type": "string",
-            "enum": ["openai", "anthropic", "google", "openai-compatible"]
-          },
-          "compatibleProviderName": {
-            "type": "string"
-          },
-          "providerBaseUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        }
+        "additionalProperties": false
       },
       "CopilotSettings": {
         "title": "CopilotSettings",
@@ -7892,8 +7501,170 @@
           }
         }
       },
-      "GetAiCopilots": {
-        "title": "GetAiCopilots",
+      "AiCopilotProviderSettings": {
+        "title": "AiCopilotProviderSettings",
+        "type": "object",
+        "properties": {
+          "maxTokens": { "type": "integer" },
+          "temperature": { "type": "number" },
+          "topP": { "type": "number" },
+          "topK": { "type": "number" },
+          "frequencyPenalty": { "type": "number" },
+          "presencePenalty": { "type": "number" },
+          "stopSequences": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "seed": { "type": "integer" },
+          "maxRetries": { "type": "integer" }
+        },
+        "additionalProperties": false
+      },
+      "OpenAiModel": {
+        "title": "OpenAiModel",
+        "type": "string",
+        "enum": [
+          "o1",
+          "o1-mini",
+          "o3",
+          "o3-mini",
+          "o4-mini",
+          "gpt-4.1",
+          "gpt-4.1-mini",
+          "gpt-4.1-nano",
+          "gpt-4o",
+          "gpt-4o-mini",
+          "gpt-4-turbo",
+          "gpt-4",
+          "gpt-5",
+          "gpt-5-mini",
+          "gpt-5-nano",
+          "gpt-5-chat-latest",
+          "gpt-5.1",
+          "gpt-5.1-mini",
+          "gpt-5.1-chat-latest"
+        ]
+      },
+      "AnthropicModel": {
+        "title": "AnthropicModel",
+        "type": "string",
+        "enum": [
+          "claude-sonnet-4-5-20250929",
+          "claude-haiku-4-5-20251001",
+          "claude-opus-4-1-20250805",
+          "claude-4-opus-20250514",
+          "claude-4-sonnet-20250514",
+          "claude-3-7-sonnet-20250219",
+          "claude-3-5-sonnet-latest",
+          "claude-3-5-haiku-latest",
+          "claude-3-opus-latest"
+        ]
+      },
+      "GoogleModel": {
+        "title": "GoogleModel",
+        "type": "string",
+        "enum": [
+          "gemini-2.5-flash",
+          "gemini-2.5-pro",
+          "gemini-2.0-flash-001",
+          "gemini-1.5-flash",
+          "gemini-1.5-pro"
+        ]
+      },
+      "OpenAiProviderOptions": {
+        "type": "object",
+        "required": ["openai"],
+        "properties": {
+          "openai": {
+            "type": "object",
+            "properties": {
+              "reasoningEffort": {
+                "type": "string",
+                "enum": ["low", "medium", "high"]
+              },
+              "webSearch": {
+                "type": "object",
+                "properties": {
+                  "allowedDomains": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "AnthropicProviderOptions": {
+        "type": "object",
+        "required": ["anthropic"],
+        "properties": {
+          "anthropic": {
+            "type": "object",
+            "properties": {
+              "thinking": {
+                "oneOf": [
+                  {
+                    "title": "AnthropicThinkingEnabled",
+                    "type": "object",
+                    "required": ["type", "budgetTokens"],
+                    "properties": {
+                      "type": { "type": "string", "const": "enabled" },
+                      "budgetTokens": { "type": "integer" }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "title": "AnthropicThinkingDisabled",
+                    "type": "object",
+                    "required": ["type"],
+                    "properties": {
+                      "type": { "type": "string", "const": "disabled" }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "webSearch": {
+                "title": "AnthropicWebSearch",
+                "type": "object",
+                "properties": {
+                  "allowedDomains": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "GoogleProviderOptions": {
+        "title": "GoogleProviderOptions",
+        "type": "object",
+        "required": ["google"],
+        "properties": {
+          "google": {
+            "type": "object",
+            "properties": {
+              "thinkingConfig": {
+                "type": "object",
+                "properties": {
+                  "thinkingBudget": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAiCopilotsResponse": {
+        "title": "GetAiCopilotsResponse",
         "type": "object",
         "properties": {
           "nextCursor": {
@@ -7905,46 +7676,39 @@
               "$ref": "#/components/schemas/AiCopilot"
             }
           }
-        }
+        },
+        "required": ["nextCursor", "data"],
+        "additionalProperties": false
       },
-      "KnowledgeSource": {
-        "title": "KnowledgeSource",
+      "KnowledgeSourceBase": {
         "type": "object",
-        "oneOf": [
+        "required": ["id", "createdAt", "updatedAt", "lastIndexedAt", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "lastIndexedAt": { "type": "string", "format": "date-time" },
+          "status": {
+            "type": "string",
+            "enum": ["ingesting", "ready", "error"]
+          },
+          "errorMessage": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "KnowledgeSourceWebSource": {
+        "allOf": [
+          { "$ref": "#/components/schemas/KnowledgeSourceBase" },
           {
-            "title": "WebKnowledgeSource",
+            "type": "object",
+            "required": ["type", "link", "status"],
             "properties": {
-              "type": {
-                "const": "ai-knowledge-web-source"
-              },
-              "id": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastIndexedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "status": {
-                "type": "string",
-                "enum": ["ingesting", "ready", "error"]
-              },
-              "errorMessage": {
-                "type": "string"
-              },
+              "type": { "type": "string", "const": "ai-knowledge-web-source" },
               "link": {
                 "type": "object",
+                "required": ["url", "type"],
                 "properties": {
-                  "url": {
-                    "type": "string"
-                  },
+                  "url": { "type": "string" },
                   "type": {
                     "type": "string",
                     "enum": ["individual_link", "crawl", "sitemap"]
@@ -7952,52 +7716,61 @@
                 }
               }
             }
-          },
+          }
+        ],
+        "additionalProperties": false
+      },
+      "KnowledgeSourceFileSource": {
+        "allOf": [
+          { "$ref": "#/components/schemas/KnowledgeSourceBase" },
           {
-            "title": "FileKnowledgeSource",
+            "type": "object",
+            "required": ["type", "file"],
             "properties": {
-              "type": {
-                "const": "ai-knowledge-file-source"
-              },
-              "id": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "updatedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastIndexedAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "status": {
-                "type": "string",
-                "enum": ["ingesting", "ready", "error"]
-              },
-              "errorMessage": {
-                "type": "string"
-              },
+              "type": { "type": "string", "const": "ai-knowledge-file-source" },
               "file": {
                 "type": "object",
+                "required": ["name", "mimeType"],
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "mimeType": {
-                    "type": "string"
-                  }
+                  "name": { "type": "string" },
+                  "mimeType": { "type": "string" }
                 }
               }
             }
           }
         ]
       },
-      "CreateWebKnowledgeSource": {
-        "title": "CreateWebKnowledgeSource",
+      "KnowledgeSource": {
+        "type": "object",
+        "title": "KnowledgeSource",
+        "oneOf": [
+          { "$ref": "#/components/schemas/KnowledgeSourceWebSource" },
+          { "$ref": "#/components/schemas/KnowledgeSourceFileSource" }
+        ],
+        "discriminator": {
+          "propertyName": "type"
+        },
+        "additionalProperties": false
+      },
+      "GetKnowledgeSourcesResponse": {
+        "title": "GetKnowledgeSourcesResponse",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeSource"
+            }
+          }
+        },
+        "required": ["nextCursor", "data"],
+        "additionalProperties": false
+      },
+      "CreateWebKnowledgeSourceRequestBody": {
+        "title": "CreateWebKnowledgeSourceRequestBody",
         "type": "object",
         "properties": {
           "copilotId": {
@@ -8013,20 +7786,24 @@
         },
         "required": ["copilotId", "url", "type"]
       },
-      "GetKnowledgeSources": {
-        "title": "GetKnowledgeSources",
+      "CreateWebKnowledgeSourceResponse": {
+        "title": "CreateWebKnowledgeSourceResponse",
         "type": "object",
         "properties": {
-          "nextCursor": {
-            "type": "string"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/KnowledgeSource"
-            }
-          }
-        }
+          "id": { "type": "string" }
+        },
+        "required": ["id"],
+        "additionalProperties": false
+      },
+      "GetFileKnowledgeSourceMarkdownResponse": {
+        "title": "GetFileKnowledgeSourceMarkdownResponse",
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["id", "content"],
+        "additionalProperties": false
       },
       "WebKnowledgeSourceLink": {
         "title": "WebKnowledgeSourceLink",
@@ -8051,10 +7828,11 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "url", "status", "createdAt", "lastIndexedAt"]
+        "required": ["id", "url", "status", "createdAt", "lastIndexedAt"],
+        "additionalProperties": false
       },
-      "GetWebKnowledgeSourceLinks": {
-        "title": "GetWebKnowledgeSourceLinks",
+      "GetWebKnowledgeSourceLinksResponse": {
+        "title": "GetWebKnowledgeSourceLinksResponse",
         "type": "object",
         "properties": {
           "nextCursor": {
@@ -8066,7 +7844,9 @@
               "$ref": "#/components/schemas/WebKnowledgeSourceLink"
             }
           }
-        }
+        },
+        "required": ["nextCursor", "data"],
+        "additionalProperties": false
       },
       "Group": {
         "title": "Group",
