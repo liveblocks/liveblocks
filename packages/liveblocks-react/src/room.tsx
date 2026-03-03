@@ -18,8 +18,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  AgentMessagesServerMsg,
-  AgentSessionsServerMsg,
   AsyncResult,
   CommentsEventServerMsg,
   DCM,
@@ -31,6 +29,7 @@ import type {
   DTM,
   DU,
   EnterOptions,
+  FeedsEventServerMsg,
   IYjsProvider,
   LiveblocksErrorContext,
   MentionData,
@@ -84,10 +83,6 @@ import {
   LiveblocksProviderWithClient,
 } from "./liveblocks";
 import type {
-  AgentSessionAsyncResult,
-  AgentSessionAsyncSuccess,
-  AgentSessionsAsyncResult,
-  AgentSessionsAsyncSuccess,
   AttachmentUrlAsyncResult,
   CommentReactionOptions,
   CreateCommentOptions,
@@ -96,6 +91,10 @@ import type {
   EditCommentMetadataOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  FeedMessagesAsyncResult,
+  FeedMessagesAsyncSuccess,
+  FeedsAsyncResult,
+  FeedsAsyncSuccess,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -109,15 +108,15 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
-  UseAgentSessionOptions,
-  UseAgentSessionsOptions,
+  UseFeedMessagesOptions,
+  UseFeedsOptions,
   UseSearchCommentsOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
 import {
-  makeAgentMessagesQueryKey,
-  makeAgentSessionsQueryKey,
+  makeFeedMessagesQueryKey,
+  makeFeedsQueryKey,
   makeRoomThreadsQueryKey,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -429,13 +428,19 @@ function makeRoomContextBundle<
     useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["useMutation"],
 
     useThreads,
-    useAgentSessions: useAgentSessions as (
-      options?: UseAgentSessionsOptions
-    ) => AgentSessionsAsyncResult<SM>,
-    useAgentSession: useAgentSession as (
-      sessionId: string,
-      options?: UseAgentSessionOptions
-    ) => AgentSessionAsyncResult<MD>,
+    useFeeds: useFeeds as (
+      options?: UseFeedsOptions
+    ) => FeedsAsyncResult<SM>,
+    useFeedMessages: useFeedMessages as (
+      feedId: string,
+      options?: UseFeedMessagesOptions
+    ) => FeedMessagesAsyncResult<MD>,
+    useCreateFeed,
+    useDeleteFeed,
+    useUpdateFeedMetadata,
+    useCreateFeedMessage,
+    useDeleteFeedMessage,
+    useUpdateFeedMessage,
     useSearchComments,
 
     // prettier-ignore
@@ -498,13 +503,19 @@ function makeRoomContextBundle<
       useMutation: useMutation as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["suspense"]["useMutation"],
 
       useThreads: useThreadsSuspense,
-      useAgentSessions: useAgentSessionsSuspense as (
-        options?: UseAgentSessionsOptions
-      ) => AgentSessionsAsyncSuccess<SM>,
-      useAgentSession: useAgentSessionSuspense as (
-        sessionId: string,
-        options?: UseAgentSessionOptions
-      ) => AgentSessionAsyncSuccess<MD>,
+      useFeeds: useFeedsSuspense as (
+        options?: UseFeedsOptions
+      ) => FeedsAsyncSuccess<SM>,
+      useFeedMessages: useFeedMessagesSuspense as (
+        feedId: string,
+        options?: UseFeedMessagesOptions
+      ) => FeedMessagesAsyncSuccess<MD>,
+      useCreateFeed,
+      useDeleteFeed,
+      useUpdateFeedMetadata,
+      useCreateFeedMessage,
+      useDeleteFeedMessage,
+      useUpdateFeedMessage,
 
       // prettier-ignore
       useCreateThread: useCreateThread as RoomContextBundle<P, S, U, E, TM, CM, SM, MD>["suspense"]["useCreateThread"],
@@ -745,36 +756,30 @@ function RoomProviderInner<
   useEffect(() => {
     const { store } = getRoomExtrasForClient(client);
 
-    function handleAgentSessionEvent(
-      message: AgentSessionsServerMsg | AgentMessagesServerMsg
-    ): void {
-      if (message.type === ServerMsgCode.AGENT_SESSIONS) {
-        const agentSessionsMsg: AgentSessionsServerMsg = message;
-        // Only handle real-time updates, not "list" operations (those are handled by fetch promises)
-        if (agentSessionsMsg.operation !== "list") {
-          store.updateAgentSessions(
-            room.id,
-            agentSessionsMsg.sessions,
-            agentSessionsMsg.operation
-          );
-        }
-      } else if (message.type === ServerMsgCode.AGENT_MESSAGES) {
-        const agentMessagesMsg: AgentMessagesServerMsg = message;
-        // Only handle real-time updates, not "list" operations (those are handled by fetch promises)
-        if (agentMessagesMsg.operation !== "list") {
-          store.updateAgentMessages(
-            room.id,
-            agentMessagesMsg.sessionId,
-            agentMessagesMsg.messages,
-            agentMessagesMsg.operation
-          );
-        }
+    function handleFeedEvent(message: FeedsEventServerMsg): void {
+      switch (message.type) {
+        case ServerMsgCode.FEEDS_ADDED:
+        case ServerMsgCode.FEEDS_UPDATED:
+          store.upsertFeeds(room.id, message.feeds);
+          break;
+        case ServerMsgCode.FEEDS_DELETED:
+          store.deleteFeeds(room.id, message.feeds);
+          break;
+        case ServerMsgCode.FEED_MESSAGES_ADDED:
+        case ServerMsgCode.FEED_MESSAGES_UPDATED:
+          store.upsertFeedMessages(room.id, message.feedId, message.messages);
+          break;
+        case ServerMsgCode.FEED_MESSAGES_DELETED:
+          store.deleteFeedMessages(room.id, message.feedId, message.messages);
+          break;
+        // FEEDS_LIST and FEED_MESSAGES_LIST are handled by fetch promise resolution in room.ts
+        default:
+          break;
       }
     }
 
-    return room.events.agentSessions.subscribe(
-      (message: AgentSessionsServerMsg | AgentMessagesServerMsg) =>
-        void handleAgentSessionEvent(message)
+    return room.events.feeds.subscribe(
+      (message: FeedsEventServerMsg) => void handleFeedEvent(message)
     );
   }, [client, room]);
 
@@ -1363,16 +1368,13 @@ function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
   return result;
 }
 
-function useAgentSessions(
-  options?: UseAgentSessionsOptions
-): AgentSessionsAsyncResult {
+function useFeeds(options?: UseFeedsOptions): FeedsAsyncResult {
   const room = useRoom();
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
-  const queryKey = makeAgentSessionsQueryKey(room.id, options);
+  const queryKey = makeFeedsQueryKey(room.id, options);
 
-  // Eagerly start loading before the useEffect runs
-  const loadableResource = store.outputs.loadingAgentSessions.getOrCreate(queryKey);
+  const loadableResource = store.outputs.loadingFeeds.getOrCreate(queryKey);
 
   useEffect(() => {
     void loadableResource.waitUntilLoaded();
@@ -1381,77 +1383,123 @@ function useAgentSessions(
   return useSignal(loadableResource.signal);
 }
 
-function useAgentSession(
-  sessionId: string,
-  options?: UseAgentSessionOptions
-): AgentSessionAsyncResult {
+function useFeedMessages(
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncResult {
   const room = useRoom();
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const queryKey = makeAgentMessagesQueryKey(room.id, sessionId, options);
+  const queryKey = makeFeedMessagesQueryKey(room.id, feedId, options);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    void store.outputs.loadingAgentMessages
+    void store.outputs.loadingFeedMessages
       .getOrCreate(queryKey)
       .waitUntilLoaded();
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call
   return useSignal(
-    store.outputs.loadingAgentMessages.getOrCreate(queryKey).signal
+    store.outputs.loadingFeedMessages.getOrCreate(queryKey).signal
   );
 }
 
-function useAgentSessionsSuspense(
-  options?: UseAgentSessionsOptions
-): AgentSessionsAsyncSuccess {
-  // Throw error if we're calling this hook server side
+function useFeedsSuspense(options?: UseFeedsOptions): FeedsAsyncSuccess {
   ensureNotServerSide();
-
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient(client);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const queryKey = makeAgentSessionsQueryKey(room.id, options);
+  const queryKey = makeFeedsQueryKey(room.id, options);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
-  use(store.outputs.loadingAgentSessions.getOrCreate(queryKey).waitUntilLoaded());
+  use(store.outputs.loadingFeeds.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useAgentSessions(options);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  const result = useFeeds(options);
   assert(!result.error, "Did not expect error");
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
   assert(!result.isLoading, "Did not expect loading");
-  return result as AgentSessionsAsyncSuccess;
+  return result as FeedsAsyncSuccess;
 }
 
-function useAgentSessionSuspense(
-  sessionId: string,
-  options?: UseAgentSessionOptions
-): AgentSessionAsyncSuccess {
-  // Throw error if we're calling this hook server side
+function useFeedMessagesSuspense(
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncSuccess {
   ensureNotServerSide();
 
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient(client);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-  const queryKey = makeAgentMessagesQueryKey(room.id, sessionId, options);
+  const queryKey = makeFeedMessagesQueryKey(room.id, feedId, options);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
-  use(store.outputs.loadingAgentMessages.getOrCreate(queryKey).waitUntilLoaded());
+  use(store.outputs.loadingFeedMessages.getOrCreate(queryKey).waitUntilLoaded());
 
-  const result = useAgentSession(sessionId, options);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const result = useFeedMessages(feedId, options);
   assert(!result.error, "Did not expect error");
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   assert(!result.isLoading, "Did not expect loading");
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  return result as AgentSessionAsyncSuccess;
+  return result as FeedMessagesAsyncSuccess;
+}
+
+function useCreateFeed(): (
+  feedId: string,
+  options?: { metadata?: JsonObject; timestamp?: number }
+) => void {
+  const room = useRoom();
+  return useCallback(
+    (feedId, options) => room.addFeed(feedId, options),
+    [room]
+  );
+}
+
+function useDeleteFeed(): (feedId: string) => void {
+  const room = useRoom();
+  return useCallback((feedId) => room.deleteFeed(feedId), [room]);
+}
+
+function useUpdateFeedMetadata(): (
+  feedId: string,
+  metadata: JsonObject
+) => void {
+  const room = useRoom();
+  return useCallback(
+    (feedId, metadata) => room.updateFeed(feedId, metadata),
+    [room]
+  );
+}
+
+function useCreateFeedMessage(): (
+  feedId: string,
+  data: JsonObject,
+  options?: { id?: string; timestamp?: number }
+) => void {
+  const room = useRoom();
+  return useCallback(
+    (feedId, data, options) => room.addFeedMessage(feedId, data, options),
+    [room]
+  );
+}
+
+function useDeleteFeedMessage(): (
+  feedId: string,
+  messageId: string
+) => void {
+  const room = useRoom();
+  return useCallback(
+    (feedId, messageId) => room.deleteFeedMessage(feedId, messageId),
+    [room]
+  );
+}
+
+function useUpdateFeedMessage(): (
+  feedId: string,
+  messageId: string,
+  data: JsonObject
+) => void {
+  const room = useRoom();
+  return useCallback(
+    (feedId, messageId, data) =>
+      room.updateFeedMessage(feedId, messageId, data),
+    [room]
+  );
 }
 
 function useSearchComments<TM extends BaseMetadata>(
@@ -3214,20 +3262,26 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
 const _useThreads: TypedBundle["useThreads"] = useThreads;
 
 /**
- * Returns agent sessions for the current room.
+ * Returns feeds for the current room.
  *
  * @example
- * const { sessions, error, isLoading } = useAgentSessions();
+ * const { feeds, error, isLoading } = useFeeds();
  */
-const _useAgentSessions: TypedBundle["useAgentSessions"] = useAgentSessions;
+const _useFeeds: TypedBundle["useFeeds"] = useFeeds;
 
 /**
- * Returns agent messages for a specific session in the current room.
+ * Returns messages for a specific feed in the current room.
  *
  * @example
- * const { messages, error, isLoading } = useAgentSession("session-id");
+ * const { messages, error, isLoading } = useFeedMessages("feed-id");
  */
-const _useAgentSession: TypedBundle["useAgentSession"] = useAgentSession;
+const _useFeedMessages: TypedBundle["useFeedMessages"] = useFeedMessages;
+
+const _useFeedsSuspense: TypedBundle["suspense"]["useFeeds"] =
+  useFeedsSuspense;
+
+const _useFeedMessagesSuspense: TypedBundle["suspense"]["useFeedMessages"] =
+  useFeedMessagesSuspense;
 
 /**
  * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
@@ -3550,19 +3604,21 @@ export {
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
   useAddRoomCommentReaction,
-  _useAgentSession as useAgentSession,
-  _useAgentSessions as useAgentSessions,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,
+  useCreateFeed,
+  useCreateFeedMessage,
   useCreateRoomComment,
   useCreateRoomThread,
   useCreateTextMention,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  useDeleteFeed,
+  useDeleteFeedMessage,
   useDeleteRoomComment,
   useDeleteRoomThread,
   useDeleteTextMention,
@@ -3574,6 +3630,10 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
+  _useFeedMessages as useFeedMessages,
+  _useFeedMessagesSuspense as useFeedMessagesSuspense,
+  _useFeeds as useFeeds,
+  _useFeedsSuspense as useFeedsSuspense,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
@@ -3624,6 +3684,8 @@ export {
   useUndo,
   useUnsubscribeFromRoomThread,
   useUnsubscribeFromThread,
+  useUpdateFeedMessage,
+  useUpdateFeedMetadata,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useYjsProvider,

@@ -191,7 +191,6 @@ export {
   withTimeout,
 } from "./lib/utils";
 export { warnOnce, warnOnceIf } from "./lib/warnings";
-export type { AgentMessage, AgentSession } from "./protocol/AgentSession";
 export type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -243,6 +242,7 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type { Feed, FeedMessage } from "./protocol/Feeds";
 export type {
   GroupData,
   GroupDataPlain,
@@ -296,10 +296,17 @@ export type {
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
 export type {
-  AgentMessagesServerMsg,
-  AgentSessionsServerMsg,
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesDeletedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsDeletedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,

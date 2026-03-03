@@ -6,8 +6,11 @@ const liveblocks = new Liveblocks({
   baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
-// GET /api/agent-sessions?roomId=xxx - List all agent sessions
-export async function GET(request: NextRequest) {
+// GET /api/feeds/[feedId]/messages?roomId=xxx - List feed messages
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { feedId: string } }
+) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
@@ -20,10 +23,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await liveblocks.getAgentSessions({ roomId });
+    const result = await liveblocks.getFeedMessages({
+      roomId,
+      feedId: params.feedId,
+    });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching agent sessions:", error);
+    console.error("Error fetching feed messages:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
@@ -31,34 +37,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/agent-sessions - Create a new agent session
-export async function POST(request: NextRequest) {
+// POST /api/feeds/[feedId]/messages - Create a new feed message
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { feedId: string } }
+) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
   try {
     const body = await request.json();
-    const { roomId, sessionId, metadata, timestamp } = body;
+    const { roomId, id, timestamp, data } = body;
 
     if (!roomId) {
       return new NextResponse("Missing roomId in body", { status: 400 });
     }
 
-    if (!sessionId) {
-      return new NextResponse("Missing sessionId in body", { status: 400 });
+    if (!data) {
+      return new NextResponse("Missing data in body", { status: 400 });
     }
 
-    const session = await liveblocks.createAgentSession({
+    const message = await liveblocks.createFeedMessage({
       roomId,
-      sessionId,
-      metadata,
+      feedId: params.feedId,
+      id,
       timestamp,
+      data,
     });
 
-    return NextResponse.json(session);
+    return NextResponse.json(message);
   } catch (error) {
-    console.error("Error creating agent session:", error);
+    console.error("Error creating feed message:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

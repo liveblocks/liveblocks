@@ -1,6 +1,4 @@
 import type {
-  AgentMessage,
-  AgentSession,
   AiChatsQuery,
   AsyncResult,
   BaseMetadata,
@@ -11,6 +9,8 @@ import type {
   CommentUserReaction,
   Cursor,
   DistributiveOmit,
+  Feed,
+  FeedMessage,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -59,11 +59,11 @@ import { makeInboxNotificationsFilter } from "./lib/querying";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
-  AgentSessionAsyncResult,
-  AgentSessionsAsyncResult,
   AiChatAsyncResult,
   AiChatMessagesAsyncResult,
   AiChatsAsyncResult,
+  FeedMessagesAsyncResult,
+  FeedsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   InboxNotificationsQuery,
@@ -289,19 +289,19 @@ export function makeInboxNotificationsQueryKey(
   return stableStringify(query ?? {});
 }
 
-export function makeAgentSessionsQueryKey(
+export function makeFeedsQueryKey(
   roomId: string,
   options?: { since?: number; metadata?: Record<string, string> }
 ) {
   return stableStringify([roomId, options ?? {}]);
 }
 
-export function makeAgentMessagesQueryKey(
+export function makeFeedMessagesQueryKey(
   roomId: string,
-  sessionId: string,
+  feedId: string,
   options?: { cursor?: string; limit?: number }
 ) {
-  return stableStringify([roomId, sessionId, options ?? {}]);
+  return stableStringify([roomId, feedId, options ?? {}]);
 }
 
 /**
@@ -1167,13 +1167,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       string,
       LoadableResource<UrlMetadataAsyncResult>
     >;
-    readonly loadingAgentSessions: DefaultMap<
+    readonly loadingFeeds: DefaultMap<
       string,
-      LoadableResource<AgentSessionsAsyncResult>
+      LoadableResource<FeedsAsyncResult>
     >;
-    readonly loadingAgentMessages: DefaultMap<
+    readonly loadingFeedMessages: DefaultMap<
       string,
-      LoadableResource<AgentSessionAsyncResult>
+      LoadableResource<FeedMessagesAsyncResult>
     >;
   };
 
@@ -1192,16 +1192,15 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   // Notification Settings
   #notificationSettings: SinglePageResource;
 
-  // Agent Sessions
-  #agentSessionsByRoomId = new Map<RoomId, Map<string, AgentSession>>();
-  #agentMessagesBySessionId = new Map<string, Map<string, AgentMessage>>();
+  // Feeds
+  #feedsByRoomId = new Map<RoomId, Map<string, Feed>>();
+  #feedMessagesByFeedId = new Map<string, Map<string, FeedMessage>>();
 
-  // Signals for agent sessions and messages to trigger reactivity
-  // We use a version counter to track changes
-  readonly #agentSessionsSignal = new MutableSignal<{ version: number }>({
+  // Signals for feeds and feed messages to trigger reactivity
+  readonly #feedsSignal = new MutableSignal<{ version: number }>({
     version: 0,
   });
-  readonly #agentMessagesSignal = new MutableSignal<{ version: number }>({
+  readonly #feedMessagesSignal = new MutableSignal<{ version: number }>({
     version: 0,
   });
 
@@ -1693,8 +1692,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       }
     );
 
-    const loadingAgentSessions = new DefaultMap(
-      (queryKey: string): LoadableResource<AgentSessionsAsyncResult> => {
+    const loadingFeeds = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedsAsyncResult> => {
         const [roomId, options] = JSON.parse(queryKey) as [
           roomId: RoomId,
           options?: { since?: number; metadata?: Record<string, string> },
@@ -1704,39 +1703,36 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           const room = this.#client.getRoom(roomId);
           if (room === null) {
             throw new Error(
-              `Room '${roomId}' is not available on client. Make sure you're calling useAgentSessions inside a RoomProvider.`
+              `Room '${roomId}' is not available on client. Make sure you're calling useFeeds inside a RoomProvider.`
             );
           }
 
-          const result = await room.fetchAgentSessions({
+          const result = await room.fetchFeeds({
             cursor,
             since: options?.since,
             metadata: options?.metadata,
           });
 
-          // Update cache
-          this.updateAgentSessions(roomId, result.sessions, "list");
+          this.upsertFeeds(roomId, result.feeds);
 
           return result.nextCursor ?? null;
         });
 
         const signal = DerivedSignal.from(
           resource.signal,
-          this.#agentSessionsSignal,
-          (resourceResult, _signalState): AgentSessionsAsyncResult => {
+          this.#feedsSignal,
+          (resourceResult, _signalState): FeedsAsyncResult => {
             if (resourceResult.isLoading || resourceResult.error) {
               return resourceResult;
             }
 
-            const sessionsMap = this.#agentSessionsByRoomId.get(roomId);
-            const sessions: AgentSession[] = sessionsMap
-              ? Array.from(sessionsMap.values())
-              : [];
+            const feedsMap = this.#feedsByRoomId.get(roomId);
+            const feeds: Feed[] = feedsMap ? Array.from(feedsMap.values()) : [];
 
             const page = resourceResult.data;
             return {
               isLoading: false,
-              sessions,
+              feeds,
               hasFetchedAll: page.hasFetchedAll,
               isFetchingMore: page.isFetchingMore,
               fetchMoreError: page.fetchMoreError,
@@ -1750,11 +1746,11 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       }
     );
 
-    const loadingAgentMessages = new DefaultMap(
-      (queryKey: string): LoadableResource<AgentSessionAsyncResult> => {
-        const [roomId, sessionId, options] = JSON.parse(queryKey) as [
+    const loadingFeedMessages = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedMessagesAsyncResult> => {
+        const [roomId, feedId, options] = JSON.parse(queryKey) as [
           roomId: RoomId,
-          sessionId: string,
+          feedId: string,
           options?: { cursor?: string; limit?: number },
         ];
 
@@ -1762,33 +1758,31 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           const room = this.#client.getRoom(roomId);
           if (room === null) {
             throw new Error(
-              `Room '${roomId}' is not available on client. Make sure you're calling useAgentSession inside a RoomProvider.`
+              `Room '${roomId}' is not available on client. Make sure you're calling useFeedMessages inside a RoomProvider.`
             );
           }
 
-          const result = await room.fetchAgentMessages(sessionId, {
+          const result = await room.fetchFeedMessages(feedId, {
             cursor,
             limit: options?.limit,
           });
 
-          // Update cache
-          this.updateAgentMessages(roomId, sessionId, result.messages, "list");
+          this.upsertFeedMessages(roomId, feedId, result.messages);
 
           return result.nextCursor ?? null;
         });
 
         const signal = DerivedSignal.from(
           resource.signal,
-          this.#agentMessagesSignal,
-          (resourceResult, _signalState): AgentSessionAsyncResult => {
+          this.#feedMessagesSignal,
+          (resourceResult, _signalState): FeedMessagesAsyncResult => {
             if (resourceResult.isLoading || resourceResult.error) {
               return resourceResult;
             }
 
-            const messagesMap = this.#agentMessagesBySessionId.get(sessionId);
-            const messages: AgentMessage[] = messagesMap
+            const messagesMap = this.#feedMessagesByFeedId.get(feedId);
+            const messages: FeedMessage[] = messagesMap
               ? Array.from(messagesMap.values()).sort(
-                  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                   (a, b) => a.timestamp - b.timestamp
                 )
               : [];
@@ -1826,8 +1820,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       messagesByChatId,
       aiChatById,
       urlMetadataByUrl,
-      loadingAgentSessions,
-      loadingAgentMessages,
+      loadingFeeds,
+      loadingFeedMessages,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
@@ -2161,61 +2155,79 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   /**
-   * Updates the agent sessions cache based on WebSocket events.
+   * Upserts feeds in the cache (for list/added/updated operations).
    */
-  public updateAgentSessions(
-    roomId: RoomId,
-    sessions: readonly AgentSession[],
-    operation: "list" | "added" | "updated" | "deleted"
-  ): void {
-    let sessionsMap = this.#agentSessionsByRoomId.get(roomId);
-    if (!sessionsMap) {
-      sessionsMap = new Map();
-      this.#agentSessionsByRoomId.set(roomId, sessionsMap);
+  public upsertFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
+    let feedsMap = this.#feedsByRoomId.get(roomId);
+    if (!feedsMap) {
+      feedsMap = new Map();
+      this.#feedsByRoomId.set(roomId, feedsMap);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-    for (const session of sessions) {
-      if (operation === "deleted") {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-        sessionsMap.delete(session.sessionId);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-        sessionsMap.set(session.sessionId, session);
-      }
+    for (const feed of feeds) {
+      feedsMap.set(feed.feedId, feed);
     }
 
-    // Increment version to trigger signal notification
-    this.#agentSessionsSignal.mutate((state) => {
+    this.#feedsSignal.mutate((state) => {
       state.version++;
     });
   }
 
   /**
-   * Updates the agent messages cache based on WebSocket events.
+   * Removes feeds from the cache (for deleted operations).
    */
-  public updateAgentMessages(
+  public deleteFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
+    const feedsMap = this.#feedsByRoomId.get(roomId);
+    if (!feedsMap) return;
+
+    for (const feed of feeds) {
+      feedsMap.delete(feed.feedId);
+    }
+
+    this.#feedsSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Upserts feed messages in the cache (for list/added/updated operations).
+   */
+  public upsertFeedMessages(
     _roomId: RoomId,
-    sessionId: string,
-    messages: readonly AgentMessage[],
-    operation: "list" | "added" | "updated" | "deleted"
+    feedId: string,
+    messages: readonly FeedMessage[]
   ): void {
-    let messagesMap = this.#agentMessagesBySessionId.get(sessionId);
+    let messagesMap = this.#feedMessagesByFeedId.get(feedId);
     if (!messagesMap) {
       messagesMap = new Map();
-      this.#agentMessagesBySessionId.set(sessionId, messagesMap);
+      this.#feedMessagesByFeedId.set(feedId, messagesMap);
     }
 
     for (const message of messages) {
-      if (operation === "deleted") {
-        messagesMap.delete(message.id);
-      } else {
-        messagesMap.set(message.id, message);
-      }
+      messagesMap.set(message.id, message);
     }
 
-    // Increment version to trigger signal notification
-    this.#agentMessagesSignal.mutate((state) => {
+    this.#feedMessagesSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Removes feed messages from the cache (for deleted operations).
+   */
+  public deleteFeedMessages(
+    _roomId: RoomId,
+    feedId: string,
+    messages: readonly FeedMessage[]
+  ): void {
+    const messagesMap = this.#feedMessagesByFeedId.get(feedId);
+    if (!messagesMap) return;
+
+    for (const message of messages) {
+      messagesMap.delete(message.id);
+    }
+
+    this.#feedMessagesSignal.mutate((state) => {
       state.version++;
     });
   }

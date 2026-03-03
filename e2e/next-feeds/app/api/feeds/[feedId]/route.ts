@@ -3,14 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // @ts-expect-error
   baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
-// GET /api/agent-sessions/[sessionId]?roomId=xxx - Get a specific agent session
+// GET /api/feeds/[feedId]?roomId=xxx - Get a specific feed
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { feedId: string } }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -24,13 +23,13 @@ export async function GET(
   }
 
   try {
-    const session = await liveblocks.getAgentSession({
+    const feed = await liveblocks.getFeed({
       roomId,
-      agentSessionId: params.sessionId,
+      feedId: params.feedId,
     });
-    return NextResponse.json(session);
+    return NextResponse.json(feed);
   } catch (error) {
-    console.error("Error fetching agent session:", error);
+    console.error("Error fetching feed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
@@ -38,10 +37,10 @@ export async function GET(
   }
 }
 
-// POST /api/agent-sessions/[sessionId] - Update agent session metadata
-export async function POST(
+// PATCH /api/feeds/[feedId] - Update feed metadata
+export async function PATCH(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: { feedId: string } }
 ) {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
@@ -59,15 +58,15 @@ export async function POST(
       return new NextResponse("Missing metadata in body", { status: 400 });
     }
 
-    const session = await liveblocks.updateAgentSessionMetadata({
+    await liveblocks.updateFeed({
       roomId,
-      agentSessionId: params.sessionId,
+      feedId: params.feedId,
       metadata,
     });
 
-    return NextResponse.json(session);
+    return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Error updating agent session:", error);
+    console.error("Error updating feed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
@@ -75,7 +74,7 @@ export async function POST(
   }
 }
 
-// DELETE /api/agent-sessions/[sessionId]?roomId=xxx - Delete an agent session
+// DELETE /api/feeds/[feedId]?roomId=xxx - Delete a feed
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { sessionId: string } }
@@ -92,13 +91,13 @@ export async function DELETE(
   }
 
   try {
-    await liveblocks.deleteAgentSession({
+    await liveblocks.deleteFeed({
       roomId,
-      agentSessionId: params.sessionId,
+      feedId: params.sessionId,
     });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error deleting agent session:", error);
+    console.error("Error deleting feed:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

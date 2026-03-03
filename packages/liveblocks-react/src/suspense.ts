@@ -45,8 +45,12 @@ export {
   useCanRedo,
   useCanUndo,
   useCreateComment,
+  useCreateFeed,
+  useCreateFeedMessage,
   useCreateThread,
   useDeleteComment,
+  useDeleteFeed,
+  useDeleteFeedMessage,
   useDeleteThread,
   useEditComment,
   useEditThreadMetadata,
@@ -70,6 +74,8 @@ export {
   useStorageRoot,
   useThreadSubscription,
   useUndo,
+  useUpdateFeedMetadata,
+  useUpdateFeedMessage,
   useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
 } from "./room";
@@ -87,6 +93,8 @@ export {
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
   useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettings,
+  useFeedsSuspense as useFeeds,
+  useFeedMessagesSuspense as useFeedMessages,
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,

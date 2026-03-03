@@ -24,8 +24,8 @@ type ExtendableTypes =
   | "RoomEvent"
   | "ThreadMetadata"
   | "CommentMetadata"
-  | "SessionMetadata"
-  | "MessageData"
+  | "FeedMetadata"
+  | "FeedMessageData"
   | "RoomInfo"
   | "GroupInfo"
   | "ActivitiesData";
@@ -82,9 +82,9 @@ export type DTM = GetOverride<"ThreadMetadata", BaseMetadata>;
 
 export type DCM = GetOverride<"CommentMetadata", BaseMetadata>;
 
-export type DSM = GetOverride<"SessionMetadata", Json, "is not a valid JSON value">;
+export type DSM = GetOverride<"FeedMetadata", Json, "is not a valid JSON value">;
 
-export type DMD = GetOverride<"MessageData", Json, "is not a valid JSON value">;
+export type DMD = GetOverride<"FeedMessageData", Json, "is not a valid JSON value">;
 
 export type DRI = GetOverride<"RoomInfo", BaseRoomInfo>;
 

@@ -1,8 +1,8 @@
 import type {
-  AgentMessage,
-  AgentSession,
   CommentData,
   CommentUserReaction,
+  Feed,
+  FeedMessage,
   NotificationSettingsPlain,
   RoomSubscriptionSettings,
   StorageNode,
@@ -722,7 +722,7 @@ describe("client", () => {
             avatar: "https://example.com/avatar.png",
           },
           ttl: 60,
-        }),
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -734,7 +734,7 @@ describe("client", () => {
           userId: "agent-ai",
           data: { status: "active" },
           userInfo: { name: "AI Assistant" },
-        }),
+        })
       ).resolves.toBeUndefined();
     });
 
@@ -743,9 +743,9 @@ describe("client", () => {
         http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/presence`, () => {
           return HttpResponse.json(
             { error: "INVALID_REQUEST", message: "Invalid presence data" },
-            { status: 422 },
+            { status: 422 }
           );
-        }),
+        })
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
@@ -4745,55 +4745,46 @@ describe("client", () => {
       });
     });
 
-    describe("agent sessions", () => {
-      const agentSession: AgentSession = {
-        sessionId: "session_123",
+    describe("feeds", () => {
+      const feed: Feed = {
+        feedId: "feed_123",
         metadata: { key: "value" },
         timestamp: 1234567890,
       };
 
-      const agentMessage: AgentMessage = {
+      const feedMessage: FeedMessage = {
         id: "msg_123",
         timestamp: 1234567890,
         data: { content: "Hello" },
       };
 
-      describe("getAgentSessions", () => {
-        test("should return a list of agent sessions", async () => {
+      describe("getFeeds", () => {
+        test("should return a list of feeds", async () => {
           server.use(
-            http.get(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
-              () => {
-                return HttpResponse.json(
-                  { data: [agentSession] },
-                  { status: 200 }
-                );
-              }
-            )
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json({ data: [feed] }, { status: 200 });
+            })
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.getAgentSessions({ roomId: "room_123" })
-          ).resolves.toEqual({ data: [agentSession] });
+            client.getFeeds({ roomId: "room_123" })
+          ).resolves.toEqual({ data: [feed] });
         });
 
         test("should throw a LiveblocksError on error response", async () => {
           server.use(
-            http.get(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
-              () => {
-                return HttpResponse.json(
-                  { message: "Room not found" },
-                  { status: 404 }
-                );
-              }
-            )
+            http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds`, () => {
+              return HttpResponse.json(
+                { message: "Room not found" },
+                { status: 404 }
+              );
+            })
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           try {
-            await client.getAgentSessions({ roomId: "nonexistent" });
+            await client.getFeeds({ roomId: "nonexistent" });
             expect(true).toBe(false);
           } catch (err) {
             expect(err instanceof LiveblocksError).toBe(true);
@@ -4804,99 +4795,89 @@ describe("client", () => {
         });
       });
 
-      describe("createAgentSession", () => {
-        test("should create an agent session", async () => {
+      describe("createFeed", () => {
+        test("should create a feed", async () => {
           server.use(
-            http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
-              () => {
-                return HttpResponse.json(agentSession, { status: 200 });
-              }
-            )
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`, () => {
+              return HttpResponse.json({ data: feed }, { status: 200 });
+            })
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.createAgentSession({
+            client.createFeed({
               roomId: "room_123",
-              sessionId: "session_123",
+              feedId: "feed_123",
               metadata: { key: "value" },
             })
-          ).resolves.toEqual(agentSession);
+          ).resolves.toEqual(feed);
         });
 
-        test("should create an agent session without metadata", async () => {
+        test("should create a feed without metadata", async () => {
           server.use(
-            http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions`,
-              () => {
-                return HttpResponse.json(agentSession, { status: 200 });
-              }
-            )
+            http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/feed`, () => {
+              return HttpResponse.json({ data: feed }, { status: 200 });
+            })
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.createAgentSession({
+            client.createFeed({
               roomId: "room_123",
-              sessionId: "session_123",
+              feedId: "feed_123",
             })
-          ).resolves.toEqual(agentSession);
+          ).resolves.toEqual(feed);
         });
       });
 
-      describe("getAgentSession", () => {
-        test("should return an agent session", async () => {
+      describe("getFeed", () => {
+        test("should return a feed", async () => {
           server.use(
             http.get(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
               () => {
-                return HttpResponse.json(agentSession, { status: 200 });
+                return HttpResponse.json({ data: feed }, { status: 200 });
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.getAgentSession({
+            client.getFeed({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
             })
-          ).resolves.toEqual(agentSession);
+          ).resolves.toEqual(feed);
         });
       });
 
-      describe("updateAgentSessionMetadata", () => {
-        test("should update agent session metadata", async () => {
-          const updatedSession = {
-            ...agentSession,
-            metadata: { updated: "metadata" },
-          };
+      describe("updateFeed", () => {
+        test("should update feed metadata", async () => {
           server.use(
-            http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
               () => {
-                return HttpResponse.json(updatedSession, { status: 200 });
+                return HttpResponse.json({ ok: true }, { status: 200 });
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.updateAgentSessionMetadata({
+            client.updateFeed({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
               metadata: { updated: "metadata" },
             })
-          ).resolves.toEqual(updatedSession);
+          ).resolves.toBeUndefined();
         });
       });
 
-      describe("deleteAgentSession", () => {
-        test("should delete an agent session", async () => {
+      describe("deleteFeed", () => {
+        test("should delete a feed", async () => {
           server.use(
             http.delete(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId`,
               () => {
                 return new HttpResponse(null, { status: 204 });
               }
@@ -4905,22 +4886,22 @@ describe("client", () => {
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.deleteAgentSession({
+            client.deleteFeed({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
             })
           ).resolves.toBeUndefined();
         });
       });
 
-      describe("getAgentMessages", () => {
-        test("should return a list of agent messages", async () => {
+      describe("getFeedMessages", () => {
+        test("should return a list of feed messages", async () => {
           server.use(
             http.get(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
               () => {
                 return HttpResponse.json(
-                  { data: [agentMessage] },
+                  { data: [feedMessage] },
                   { status: 200 }
                 );
               }
@@ -4929,90 +4910,92 @@ describe("client", () => {
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.getAgentMessages({
+            client.getFeedMessages({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
             })
-          ).resolves.toEqual({ data: [agentMessage] });
+          ).resolves.toEqual({ data: [feedMessage] });
         });
       });
 
-      describe("createAgentMessage", () => {
-        test("should create an agent message", async () => {
+      describe("createFeedMessage", () => {
+        test("should create a feed message", async () => {
           server.use(
             http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
               () => {
-                return HttpResponse.json(agentMessage, { status: 200 });
+                return HttpResponse.json(
+                  { data: feedMessage },
+                  { status: 200 }
+                );
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.createAgentMessage({
+            client.createFeedMessage({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
               data: { content: "Hello" },
             })
-          ).resolves.toEqual(agentMessage);
+          ).resolves.toEqual(feedMessage);
         });
 
-        test("should create an agent message with id and timestamp", async () => {
+        test("should create a feed message with id and timestamp", async () => {
           server.use(
             http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
               () => {
-                return HttpResponse.json(agentMessage, { status: 200 });
+                return HttpResponse.json(
+                  { data: feedMessage },
+                  { status: 200 }
+                );
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.createAgentMessage({
+            client.createFeedMessage({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
               id: "msg_123",
               timestamp: 1234567890,
               data: { content: "Hello" },
             })
-          ).resolves.toEqual(agentMessage);
+          ).resolves.toEqual(feedMessage);
         });
       });
 
-      describe("updateAgentMessage", () => {
-        test("should update an agent message", async () => {
-          const updatedMessage = {
-            ...agentMessage,
-            data: { content: "Updated" },
-          };
+      describe("updateFeedMessage", () => {
+        test("should update a feed message", async () => {
           server.use(
-            http.post(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages/:messageId`,
+            http.patch(
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
               () => {
-                return HttpResponse.json(updatedMessage, { status: 200 });
+                return HttpResponse.json({ ok: true }, { status: 200 });
               }
             )
           );
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.updateAgentMessage({
+            client.updateFeedMessage({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
               messageId: "msg_123",
               data: { content: "Updated" },
             })
-          ).resolves.toEqual(updatedMessage);
+          ).resolves.toBeUndefined();
         });
       });
 
-      describe("deleteAgentMessage", () => {
-        test("should delete an agent message", async () => {
+      describe("deleteFeedMessage", () => {
+        test("should delete a feed message", async () => {
           server.use(
             http.delete(
-              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/agent-sessions/:agentSessionId/messages/:messageId`,
+              `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages/:messageId`,
               () => {
                 return new HttpResponse(null, { status: 204 });
               }
@@ -5021,9 +5004,9 @@ describe("client", () => {
 
           const client = new Liveblocks({ secret: "sk_xxx" });
           await expect(
-            client.deleteAgentMessage({
+            client.deleteFeedMessage({
               roomId: "room_123",
-              agentSessionId: "session_123",
+              feedId: "feed_123",
               messageId: "msg_123",
             })
           ).resolves.toBeUndefined();

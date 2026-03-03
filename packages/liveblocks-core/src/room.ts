@@ -38,6 +38,7 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
+import { nanoid } from "./lib/nanoid";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import { makeStopWatch } from "./lib/stopwatch";
@@ -49,7 +50,6 @@ import {
   partition,
   tryParseJson,
 } from "./lib/utils";
-import type { AgentMessage, AgentSession } from "./protocol/AgentSession";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -58,9 +58,15 @@ import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
   ClientMsg,
-  FetchAgentMessagesClientMsg,
-  FetchAgentSessionsClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
   UpdateYDocClientMsg,
 } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -75,6 +81,7 @@ import type {
   ThreadData,
   ThreadDeleteInfo,
 } from "./protocol/Comments";
+import type { Feed, FeedMessage } from "./protocol/Feeds";
 import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -84,9 +91,16 @@ import type { ClientWireOp, Op, ServerWireOp } from "./protocol/Op";
 import { isIgnoredOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type {
-  AgentMessagesServerMsg,
-  AgentSessionsServerMsg,
   CommentsEventServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesDeletedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsDeletedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,
@@ -625,32 +639,75 @@ export type Room<
   fetchYDoc(stateVector: string, guid?: string, isV2?: boolean): void;
 
   /**
-   * Fetches agent sessions for the room.
+   * Fetches feeds for the room.
    */
-  fetchAgentSessions(options?: {
+  fetchFeeds(options?: {
     cursor?: string;
     since?: number;
     limit?: number;
     metadata?: Record<string, string>;
   }): Promise<{
-    sessions: AgentSession<SM>[];
+    feeds: Feed<SM>[];
     nextCursor?: string;
   }>;
 
   /**
-   * Fetches agent messages for a specific session.
+   * Fetches messages for a specific feed.
    */
-  fetchAgentMessages(
-    sessionId: string,
+  fetchFeedMessages(
+    feedId: string,
     options?: {
       cursor?: string;
       since?: number;
       limit?: number;
     }
   ): Promise<{
-    messages: AgentMessage<MD>[];
+    messages: FeedMessage<MD>[];
     nextCursor?: string;
   }>;
+
+  /**
+   * Adds a new feed to the room via WebSocket.
+   */
+  addFeed(
+    feedId: string,
+    options?: {
+      metadata?: JsonObject;
+      timestamp?: number;
+    }
+  ): void;
+
+  /**
+   * Updates metadata for an existing feed via WebSocket.
+   */
+  updateFeed(feedId: string, metadata: JsonObject): void;
+
+  /**
+   * Deletes a feed via WebSocket.
+   */
+  deleteFeed(feedId: string): void;
+
+  /**
+   * Adds a new message to a feed via WebSocket.
+   */
+  addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: {
+      id?: string;
+      timestamp?: number;
+    }
+  ): void;
+
+  /**
+   * Updates an existing feed message via WebSocket.
+   */
+  updateFeedMessage(feedId: string, messageId: string, data: JsonObject): void;
+
+  /**
+   * Deletes a feed message via WebSocket.
+   */
+  deleteFeedMessage(feedId: string, messageId: string): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -716,9 +773,7 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
-    readonly agentSessions: Observable<
-      AgentSessionsServerMsg<SM> | AgentMessagesServerMsg<MD>
-    >;
+    readonly feeds: Observable<FeedsEventServerMsg<SM, MD>>;
 
     /**
      * Called right before the room is destroyed. The event cannot be used to
@@ -1677,9 +1732,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
-    agentSessions: makeEventSource<
-      AgentSessionsServerMsg<SM> | AgentMessagesServerMsg<MD>
-    >(),
+    feeds: makeEventSource<FeedsEventServerMsg<SM, MD>>(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
@@ -2396,58 +2449,71 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.AGENT_SESSIONS: {
-          const agentSessionsMsg = message as AgentSessionsServerMsg<SM>;
-          // If this is a response to a fetch request (operation: "list"), resolve the pending promise
-          if (agentSessionsMsg.operation === "list") {
-            // Find and resolve the matching pending request
-            // We need to match based on the request parameters
-            // Since we don't have the exact request params in the response, we'll resolve the first pending request
-            // TODO: - ideally the backend would include a request ID, like in Aicopilots
-            for (const [
-              requestId,
-              { resolve },
-            ] of pendingAgentSessionsRequests) {
-              resolve({
-                sessions: agentSessionsMsg.sessions,
-                nextCursor: agentSessionsMsg.nextCursor,
-              });
-              pendingAgentSessionsRequests.delete(requestId);
-              break; // Only resolve one request
-            }
+        case ServerMsgCode.FEEDS_LIST: {
+          const feedsListMsg = message as FeedsListServerMsg<SM>;
+          const pending = pendingFeedsRequests.get(feedsListMsg.requestId);
+          if (pending) {
+            pending.resolve({
+              feeds: feedsListMsg.feeds,
+              nextCursor: feedsListMsg.nextCursor,
+            });
+            pendingFeedsRequests.delete(feedsListMsg.requestId);
           }
-          // Always notify the event hub for real-time updates
-          eventHub.agentSessions.notify(agentSessionsMsg);
+          eventHub.feeds.notify(feedsListMsg);
           break;
         }
 
-        case ServerMsgCode.AGENT_MESSAGES: {
-          const agentMessagesMsg = message as AgentMessagesServerMsg<MD>;
-          // If this is a response to a fetch request (operation: "list"), resolve the pending promise
-          if (agentMessagesMsg.operation === "list") {
-            // Find and resolve the matching pending request based on sessionId
-            for (const [
-              requestId,
-              { resolve },
-            ] of pendingAgentMessagesRequests) {
-              const parsedRequestId = tryParseJson(requestId) as {
-                sessionId: string;
-                cursor?: string;
-                since?: number;
-                limit?: number;
-              } | null;
-              if (parsedRequestId?.sessionId === agentMessagesMsg.sessionId) {
-                resolve({
-                  messages: agentMessagesMsg.messages,
-                  nextCursor: agentMessagesMsg.nextCursor,
-                });
-                pendingAgentMessagesRequests.delete(requestId);
-                break; // Only resolve one request
-              }
-            }
+        case ServerMsgCode.FEEDS_ADDED: {
+          const feedsAddedMsg = message as FeedsAddedServerMsg<SM>;
+          eventHub.feeds.notify(feedsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_UPDATED: {
+          const feedsUpdatedMsg = message as FeedsUpdatedServerMsg<SM>;
+          eventHub.feeds.notify(feedsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEEDS_DELETED: {
+          const feedsDeletedMsg = message as FeedsDeletedServerMsg<SM>;
+          eventHub.feeds.notify(feedsDeletedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_LIST: {
+          const feedMsgsListMsg = message as FeedMessagesListServerMsg<MD>;
+          const pending = pendingFeedMessagesRequests.get(
+            feedMsgsListMsg.requestId
+          );
+          if (pending) {
+            pending.resolve({
+              messages: feedMsgsListMsg.messages,
+              nextCursor: feedMsgsListMsg.nextCursor,
+            });
+            pendingFeedMessagesRequests.delete(feedMsgsListMsg.requestId);
           }
-          // Always notify the event hub for real-time updates
-          eventHub.agentSessions.notify(agentMessagesMsg);
+          eventHub.feeds.notify(feedMsgsListMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_ADDED: {
+          const feedMsgsAddedMsg = message as FeedMessagesAddedServerMsg<MD>;
+          eventHub.feeds.notify(feedMsgsAddedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_UPDATED: {
+          const feedMsgsUpdatedMsg =
+            message as FeedMessagesUpdatedServerMsg<MD>;
+          eventHub.feeds.notify(feedMsgsUpdatedMsg);
+          break;
+        }
+
+        case ServerMsgCode.FEED_MESSAGES_DELETED: {
+          const feedMsgsDeletedMsg =
+            message as FeedMessagesDeletedServerMsg<MD>;
+          eventHub.feeds.notify(feedMsgsDeletedMsg);
           break;
         }
 
@@ -2585,24 +2651,21 @@ export function createRoom<
   let _getStorage$: Promise<void> | null = null;
   let _resolveStoragePromise: (() => void) | null = null;
 
-  // Pending agent session fetch requests
-  const pendingAgentSessionsRequests = new Map<
+  // Pending feeds fetch requests (keyed by requestId)
+  const pendingFeedsRequests = new Map<
     string,
     {
-      resolve: (value: {
-        sessions: AgentSession<SM>[];
-        nextCursor?: string;
-      }) => void;
+      resolve: (value: { feeds: Feed<SM>[]; nextCursor?: string }) => void;
       reject: (error: Error) => void;
     }
   >();
 
-  // Pending agent messages fetch requests
-  const pendingAgentMessagesRequests = new Map<
+  // Pending feed messages fetch requests (keyed by requestId)
+  const pendingFeedMessagesRequests = new Map<
     string,
     {
       resolve: (value: {
-        messages: AgentMessage<MD>[];
+        messages: FeedMessage<MD>[];
         nextCursor?: string;
       }) => void;
       reject: (error: Error) => void;
@@ -2719,35 +2782,24 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  async function fetchAgentSessions(options?: {
+  async function fetchFeeds(options?: {
     cursor?: string;
     since?: number;
     limit?: number;
     metadata?: Record<string, string>;
-  }): Promise<{ sessions: AgentSession<SM>[]; nextCursor?: string }> {
-    // Create a unique request ID based on the options
-    const requestId = JSON.stringify({
-      cursor: options?.cursor,
-      since: options?.since,
-      limit: options?.limit,
-      metadata: options?.metadata,
-    });
+  }): Promise<{ feeds: Feed<SM>[]; nextCursor?: string }> {
+    const requestId = nanoid();
 
-    // Check if there's already a pending request with the same parameters
-    // For now, we'll create a new request each time
-    // TODO: Consider deduplicating requests with the same parameters
-
-    // Create a new promise for this request
     const { promise, resolve, reject } = Promise_withResolvers<{
-      sessions: AgentSession<SM>[];
+      feeds: Feed<SM>[];
       nextCursor?: string;
     }>();
 
-    pendingAgentSessionsRequests.set(requestId, { resolve, reject });
+    pendingFeedsRequests.set(requestId, { resolve, reject });
 
-    // Send the WebSocket message
-    const message: FetchAgentSessionsClientMsg = {
-      type: ClientMsgCode.FETCH_AGENT_SESSIONS,
+    const message: FetchFeedsClientMsg = {
+      type: ClientMsgCode.FETCH_FEEDS,
+      requestId,
       cursor: options?.cursor,
       since: options?.since,
       limit: options?.limit,
@@ -2755,76 +2807,129 @@ export function createRoom<
     };
 
     context.buffer.messages.push(message);
-    // Flush immediately to avoid throttle delay for fetch operations
     flushNowOrSoon();
 
-    // Clean up after a timeout to prevent memory leaks
     setTimeout(() => {
-      if (pendingAgentSessionsRequests.has(requestId)) {
-        pendingAgentSessionsRequests.delete(requestId);
-        reject(new Error("Agent sessions fetch timeout"));
+      if (pendingFeedsRequests.has(requestId)) {
+        pendingFeedsRequests.delete(requestId);
+        reject(new Error("Feeds fetch timeout"));
       }
-    }, 30000); // 30 second timeout
+    }, 30000);
 
     return promise;
   }
 
-  async function fetchAgentMessages(
-    sessionId: string,
+  async function fetchFeedMessages(
+    feedId: string,
     options?: {
       cursor?: string;
       since?: number;
       limit?: number;
     }
-  ): Promise<{ messages: AgentMessage<MD>[]; nextCursor?: string }> {
-    // Create a unique request ID based on sessionId and options
-    const requestId = JSON.stringify({
-      sessionId,
-      cursor: options?.cursor,
-      since: options?.since,
-      limit: options?.limit,
-    });
+  ): Promise<{ messages: FeedMessage<MD>[]; nextCursor?: string }> {
+    const requestId = nanoid();
 
-    // Check if there's already a pending request with the same parameters
-    const existingRequest = pendingAgentMessagesRequests.get(requestId);
-    if (existingRequest) {
-      // Return the existing promise
-      return new Promise((resolve, reject) => {
-        existingRequest.resolve = resolve;
-        existingRequest.reject = reject;
-      });
-    }
-
-    // Create a new promise for this request
     const { promise, resolve, reject } = Promise_withResolvers<{
-      messages: AgentMessage<MD>[];
+      messages: FeedMessage<MD>[];
       nextCursor?: string;
     }>();
 
-    pendingAgentMessagesRequests.set(requestId, { resolve, reject });
+    pendingFeedMessagesRequests.set(requestId, { resolve, reject });
 
-    // Send the WebSocket message
-    const message: FetchAgentMessagesClientMsg = {
-      type: ClientMsgCode.FETCH_AGENT_MESSAGES,
-      sessionId,
+    const message: FetchFeedMessagesClientMsg = {
+      type: ClientMsgCode.FETCH_FEED_MESSAGES,
+      requestId,
+      feedId,
       cursor: options?.cursor,
       since: options?.since,
       limit: options?.limit,
     };
 
     context.buffer.messages.push(message);
-    // Flush immediately to avoid throttle delay for fetch operations
     flushNowOrSoon();
 
-    // Clean up after a timeout to prevent memory leaks
     setTimeout(() => {
-      if (pendingAgentMessagesRequests.has(requestId)) {
-        pendingAgentMessagesRequests.delete(requestId);
-        reject(new Error("Agent messages fetch timeout"));
+      if (pendingFeedMessagesRequests.has(requestId)) {
+        pendingFeedMessagesRequests.delete(requestId);
+        reject(new Error("Feed messages fetch timeout"));
       }
-    }, 30000); // 30 second timeout
+    }, 30000);
 
     return promise;
+  }
+
+  function addFeed(
+    feedId: string,
+    options?: { metadata?: JsonObject; timestamp?: number }
+  ): void {
+    const message: AddFeedClientMsg = {
+      type: ClientMsgCode.ADD_FEED,
+      feedId,
+      metadata: options?.metadata,
+      timestamp: options?.timestamp,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+  }
+
+  function updateFeed(feedId: string, metadata: JsonObject): void {
+    const message: UpdateFeedClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED,
+      feedId,
+      metadata,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+  }
+
+  function deleteFeed(feedId: string): void {
+    const message: DeleteFeedClientMsg = {
+      type: ClientMsgCode.DELETE_FEED,
+      feedId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+  }
+
+  function addFeedMessage(
+    feedId: string,
+    data: JsonObject,
+    options?: { id?: string; timestamp?: number }
+  ): void {
+    const message: AddFeedMessageClientMsg = {
+      type: ClientMsgCode.ADD_FEED_MESSAGE,
+      feedId,
+      data,
+      id: options?.id,
+      timestamp: options?.timestamp,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+  }
+
+  function updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: JsonObject
+  ): void {
+    const message: UpdateFeedMessageClientMsg = {
+      type: ClientMsgCode.UPDATE_FEED_MESSAGE,
+      feedId,
+      messageId,
+      data,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
+  }
+
+  function deleteFeedMessage(feedId: string, messageId: string): void {
+    const message: DeleteFeedMessageClientMsg = {
+      type: ClientMsgCode.DELETE_FEED_MESSAGE,
+      feedId,
+      messageId,
+    };
+    context.buffer.messages.push(message);
+    flushNowOrSoon();
   }
 
   function undo() {
@@ -3022,7 +3127,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
-    agentSessions: eventHub.agentSessions.observable,
+    feeds: eventHub.feeds.observable,
     roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
@@ -3368,8 +3473,14 @@ export function createRoom<
       },
 
       fetchYDoc,
-      fetchAgentSessions,
-      fetchAgentMessages,
+      fetchFeeds,
+      fetchFeedMessages,
+      addFeed,
+      updateFeed,
+      deleteFeed,
+      addFeedMessage,
+      updateFeedMessage,
+      deleteFeedMessage,
       getStorage,
       getStorageSnapshot,
       getStorageStatus,

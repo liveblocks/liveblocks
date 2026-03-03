@@ -15,9 +15,15 @@ export const ClientMsgCode = Object.freeze({
   FETCH_YDOC: 300,
   UPDATE_YDOC: 301,
 
-  // For Agent Sessions
-  FETCH_AGENT_SESSIONS: 500,
-  FETCH_AGENT_MESSAGES: 502,
+  // For Feeds
+  FETCH_FEEDS: 510,
+  FETCH_FEED_MESSAGES: 511,
+  ADD_FEED: 512,
+  UPDATE_FEED: 513,
+  DELETE_FEED: 514,
+  ADD_FEED_MESSAGE: 515,
+  UPDATE_FEED_MESSAGE: 516,
+  DELETE_FEED_MESSAGE: 517,
 });
 
 export namespace ClientMsgCode {
@@ -27,8 +33,14 @@ export namespace ClientMsgCode {
   export type UPDATE_STORAGE = typeof ClientMsgCode.UPDATE_STORAGE;
   export type FETCH_YDOC = typeof ClientMsgCode.FETCH_YDOC;
   export type UPDATE_YDOC = typeof ClientMsgCode.UPDATE_YDOC;
-  export type FETCH_AGENT_SESSIONS = typeof ClientMsgCode.FETCH_AGENT_SESSIONS;
-  export type FETCH_AGENT_MESSAGES = typeof ClientMsgCode.FETCH_AGENT_MESSAGES;
+  export type FETCH_FEEDS = typeof ClientMsgCode.FETCH_FEEDS;
+  export type FETCH_FEED_MESSAGES = typeof ClientMsgCode.FETCH_FEED_MESSAGES;
+  export type ADD_FEED = typeof ClientMsgCode.ADD_FEED;
+  export type UPDATE_FEED = typeof ClientMsgCode.UPDATE_FEED;
+  export type DELETE_FEED = typeof ClientMsgCode.DELETE_FEED;
+  export type ADD_FEED_MESSAGE = typeof ClientMsgCode.ADD_FEED_MESSAGE;
+  export type UPDATE_FEED_MESSAGE = typeof ClientMsgCode.UPDATE_FEED_MESSAGE;
+  export type DELETE_FEED_MESSAGE = typeof ClientMsgCode.DELETE_FEED_MESSAGE;
 }
 
 /**
@@ -47,9 +59,15 @@ export type ClientMsg<P extends JsonObject, E extends Json> =
   | FetchYDocClientMsg
   | UpdateYDocClientMsg
 
-  // For Agent Sessions
-  | FetchAgentSessionsClientMsg
-  | FetchAgentMessagesClientMsg;
+  // For Feeds
+  | FetchFeedsClientMsg
+  | FetchFeedMessagesClientMsg
+  | AddFeedClientMsg
+  | UpdateFeedClientMsg
+  | DeleteFeedClientMsg
+  | AddFeedMessageClientMsg
+  | UpdateFeedMessageClientMsg
+  | DeleteFeedMessageClientMsg;
 
 export type BroadcastEventClientMsg<E extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
@@ -115,18 +133,59 @@ export type UpdateYDocClientMsg = {
   readonly v2?: boolean; // if it's a v2 update
 };
 
-export type FetchAgentSessionsClientMsg = {
-  readonly type: ClientMsgCode.FETCH_AGENT_SESSIONS;
+export type FetchFeedsClientMsg = {
+  readonly type: ClientMsgCode.FETCH_FEEDS;
+  readonly requestId: string;
   readonly cursor?: string;
   readonly since?: number;
   readonly limit?: number;
   readonly metadata?: Record<string, string>;
 };
 
-export type FetchAgentMessagesClientMsg = {
-  readonly type: ClientMsgCode.FETCH_AGENT_MESSAGES;
-  readonly sessionId: string;
+export type FetchFeedMessagesClientMsg = {
+  readonly type: ClientMsgCode.FETCH_FEED_MESSAGES;
+  readonly requestId: string;
+  readonly feedId: string;
   readonly cursor?: string;
   readonly since?: number;
   readonly limit?: number;
+};
+
+export type AddFeedClientMsg = {
+  readonly type: ClientMsgCode.ADD_FEED;
+  readonly feedId: string;
+  readonly metadata?: JsonObject;
+  readonly timestamp?: number;
+};
+
+export type UpdateFeedClientMsg = {
+  readonly type: ClientMsgCode.UPDATE_FEED;
+  readonly feedId: string;
+  readonly metadata: JsonObject;
+};
+
+export type DeleteFeedClientMsg = {
+  readonly type: ClientMsgCode.DELETE_FEED;
+  readonly feedId: string;
+};
+
+export type AddFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.ADD_FEED_MESSAGE;
+  readonly feedId: string;
+  readonly data: JsonObject;
+  readonly id?: string;
+  readonly timestamp?: number;
+};
+
+export type UpdateFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.UPDATE_FEED_MESSAGE;
+  readonly feedId: string;
+  readonly messageId: string;
+  readonly data: JsonObject;
+};
+
+export type DeleteFeedMessageClientMsg = {
+  readonly type: ClientMsgCode.DELETE_FEED_MESSAGE;
+  readonly feedId: string;
+  readonly messageId: string;
 };
