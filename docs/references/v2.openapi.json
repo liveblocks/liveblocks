@@ -4761,7 +4761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectsResponse"
+                  "$ref": "#/components/schemas/GetManagementProjectsResponse"
                 },
                 "examples": {
                   "example": {
@@ -4817,7 +4817,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                  "$ref": "#/components/schemas/CreateManagementProjectResponse"
                 },
                 "examples": {
                   "example": {
@@ -4901,7 +4901,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                  "$ref": "#/components/schemas/GetManagementProjectResponse"
                 }
               }
             }
@@ -4943,7 +4943,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectResponse"
+                  "$ref": "#/components/schemas/UpdateManagementProjectResponse"
                 }
               }
             }
@@ -4961,12 +4961,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-project",
+        "operationId": "update-management-project",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateManagementProject"
+                "$ref": "#/components/schemas/UpdateManagementProjectRequestBody"
               },
               "examples": {
                 "example": {
@@ -5044,7 +5044,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "post-management-project-public-key-activate"
+        "operationId": "activate-project-public-api-key"
       }
     },
     "/management/projects/{projectId}/api-keys/public/deactivate": {
@@ -5078,7 +5078,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "post-management-project-public-key-deactivate"
+        "operationId": "deactivate-project-public-api-key"
       }
     },
     "/management/projects/{projectId}/api-keys/public/roll": {
@@ -5104,7 +5104,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectPublicKeyResponse"
+                  "$ref": "#/components/schemas/RollProjectPublicApiKeyResponse"
                 }
               }
             }
@@ -5122,13 +5122,13 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-project-public-key-roll",
+        "operationId": "roll-project-public-api-key",
         "requestBody": {
           "required": false,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+                "$ref": "#/components/schemas/RollProjectPublicApiKeyRequestBody"
               },
               "examples": {
                 "example": {
@@ -5165,7 +5165,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementProjectSecretKeyResponse"
+                  "$ref": "#/components/schemas/RollProjectSecretApiKeyResponse"
                 }
               }
             }
@@ -5183,13 +5183,13 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-project-secret-key-roll",
+        "operationId": "roll-project-secret-api-key",
         "requestBody": {
           "required": false,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementProjectKeyRollRequest"
+                "$ref": "#/components/schemas/RollProjectSecretApiKeyRequestBody"
               },
               "examples": {
                 "example": {
@@ -5245,7 +5245,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhooksResponse"
+                  "$ref": "#/components/schemas/GetManagementWebhooksResponse"
                 }
               }
             }
@@ -5287,7 +5287,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                  "$ref": "#/components/schemas/CreateManagementWebhookResponse"
                 }
               }
             }
@@ -5305,12 +5305,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhooks",
+        "operationId": "create-management-webhook",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateManagementWebhook"
+                "$ref": "#/components/schemas/CreateManagementWebhookRequestBody"
               },
               "examples": {
                 "example": {
@@ -5363,7 +5363,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                  "$ref": "#/components/schemas/GetManagementWebhookResponse"
                 }
               }
             }
@@ -5411,7 +5411,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookResponse"
+                  "$ref": "#/components/schemas/UpdateManagementWebhookResponse"
                 }
               }
             }
@@ -5429,12 +5429,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhook",
+        "operationId": "update-management-webhook",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateManagementWebhook"
+                "$ref": "#/components/schemas/UpdateManagementWebhookRequestBody"
               },
               "examples": {
                 "example": {
@@ -5526,7 +5526,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookSecretRotateResponse"
+                  "$ref": "#/components/schemas/RotateManagementWebhookSecretResponse"
                 }
               }
             }
@@ -5541,7 +5541,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "post-management-webhook-secret-roll"
+        "operationId": "roll-management-webhook-secret"
       }
     },
     "/management/projects/{projectId}/webhooks/{webhookId}/additional-headers": {
@@ -5576,7 +5576,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                  "$ref": "#/components/schemas/UpsertManagementWebhookHeadersResponse"
                 }
               }
             }
@@ -5594,12 +5594,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhook-headers",
+        "operationId": "upsert-management-webhook-additional-headers",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementWebhookHeadersPatch"
+                "$ref": "#/components/schemas/UpsertManagementWebhookHeadersRequestBody"
               },
               "examples": {
                 "example": {
@@ -5645,7 +5645,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                  "$ref": "#/components/schemas/GetManagementWebhookHeadersResponse"
                 }
               }
             }
@@ -5660,7 +5660,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "operationId": "get-management-webhook-headers"
+        "operationId": "get-management-webhook-additional-headers"
       }
     },
     "/management/projects/{projectId}/webhooks/{webhookId}/delete-additional-headers": {
@@ -5695,7 +5695,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookHeadersResponse"
+                  "$ref": "#/components/schemas/DeleteManagementWebhookHeadersResponse"
                 }
               }
             }
@@ -5713,12 +5713,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhook-headers-delete",
+        "operationId": "delete-management-webhook-additional-headers",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementWebhookHeadersDelete"
+                "$ref": "#/components/schemas/DeleteManagementWebhookHeadersRequestBody"
               },
               "examples": {
                 "example": {
@@ -5780,7 +5780,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementWebhookRecoverRequest"
+                "$ref": "#/components/schemas/RecoverManagementWebhookFailedMessagesRequestBody"
               },
               "examples": {
                 "example": {
@@ -5826,7 +5826,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ManagementWebhookTestResponse"
+                  "$ref": "#/components/schemas/TestManagementWebhookResponse"
                 }
               }
             }
@@ -5849,7 +5849,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ManagementWebhookTestRequest"
+                "$ref": "#/components/schemas/TestManagementWebhookRequestBody"
               },
               "examples": {
                 "example": {
@@ -8099,6 +8099,24 @@
           "versionCreationTimeout"
         ]
       },
+      "GetManagementProjectsResponse": {
+        "title": "GetManagementProjectsResponse",
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManagementProject"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["projects", "nextCursor"],
+        "additionalProperties": false
+      },
       "CreateManagementProject": {
         "title": "CreateManagementProject",
         "type": "object",
@@ -8116,8 +8134,8 @@
         },
         "required": ["type"]
       },
-      "UpdateManagementProject": {
-        "title": "UpdateManagementProject",
+      "UpdateManagementProjectRequestBody": {
+        "title": "UpdateManagementProjectRequestBody",
         "type": "object",
         "properties": {
           "name": {
@@ -8128,8 +8146,52 @@
           }
         }
       },
-      "ManagementProjectKeyRollRequest": {
-        "title": "ManagementProjectKeyRollRequest",
+      "CreateManagementProjectResponse": {
+        "title": "CreateManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"],
+        "additionalProperties": false
+      },
+      "GetManagementProjectResponse": {
+        "title": "GetManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"],
+        "additionalProperties": false
+      },
+      "UpdateManagementProjectResponse": {
+        "title": "UpdateManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"],
+        "additionalProperties": false
+      },
+      "RollProjectPublicApiKeyResponse": {
+        "title": "RollProjectPublicApiKeyResponse",
+        "type": "object",
+        "properties": {
+          "publicKey": {
+            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+          }
+        },
+        "required": ["publicKey"],
+        "additionalProperties": false
+      },
+      "RollProjectPublicApiKeyRequestBody": {
+        "title": "RollProjectPublicApiKeyRequestBody",
         "type": "object",
         "properties": {
           "expirationIn": {
@@ -8151,53 +8213,45 @@
             ],
             "default": "now"
           }
-        }
+        },
+        "additionalProperties": false
       },
-      "ManagementProjectsResponse": {
-        "title": "ManagementProjectsResponse",
+      "RollProjectSecretApiKeyRequestBody": {
+        "title": "RollProjectSecretApiKeyRequestBody",
         "type": "object",
         "properties": {
-          "projects": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ManagementProject"
-            }
-          },
-          "nextCursor": {
+          "expirationIn": {
             "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ManagementProjectResponse": {
-        "title": "ManagementProjectResponse",
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/components/schemas/ManagementProject"
-          }
-        },
-        "required": ["project"]
-      },
-      "ManagementProjectPublicKeyResponse": {
-        "title": "ManagementProjectPublicKeyResponse",
-        "type": "object",
-        "properties": {
-          "publicKey": {
-            "$ref": "#/components/schemas/ManagementProjectPublicKey"
+            "enum": [
+              "now",
+              "1h",
+              "1hour",
+              "1 hour",
+              "24hrs",
+              "24hours",
+              "24 hours",
+              "3d",
+              "3days",
+              "3 days",
+              "7d",
+              "7days",
+              "7 days"
+            ],
+            "default": "now"
           }
         },
-        "required": ["publicKey"]
+        "additionalProperties": false
       },
-      "ManagementProjectSecretKeyResponse": {
-        "title": "ManagementProjectSecretKeyResponse",
+      "RollProjectSecretApiKeyResponse": {
+        "title": "ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse",
         "type": "object",
         "properties": {
           "secretKey": {
             "$ref": "#/components/schemas/ManagementProjectSecretKey"
           }
         },
-        "required": ["secretKey"]
+        "required": ["secretKey"],
+        "additionalProperties": false
       },
       "ManagementWebhookEvent": {
         "title": "ManagementWebhookEvent",
@@ -8267,8 +8321,14 @@
             }
           },
           "secret": {
-            "$ref": "#/components/schemas/ManagementWebhookSecret",
-            "nullable": true
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ManagementWebhookSecret"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "additionalHeaders": {
             "type": "object",
@@ -8295,8 +8355,8 @@
           "yDocUpdatedThrottleSeconds"
         ]
       },
-      "CreateManagementWebhook": {
-        "title": "CreateManagementWebhook",
+      "CreateManagementWebhookRequestBody": {
+        "title": "CreateManagementWebhookRequestBody",
         "type": "object",
         "properties": {
           "url": {
@@ -8329,8 +8389,8 @@
         },
         "required": ["url", "subscribedEvents"]
       },
-      "UpdateManagementWebhook": {
-        "title": "UpdateManagementWebhook",
+      "UpdateManagementWebhookRequestBody": {
+        "title": "UpdateManagementWebhookRequestBody",
         "type": "object",
         "properties": {
           "url": {
@@ -8359,18 +8419,60 @@
           }
         }
       },
-      "ManagementWebhookHeadersPatch": {
-        "title": "ManagementWebhookHeadersPatch",
+      "ManagementWebhookAdditionalHeaders": {
+        "title": "ManagementWebhookAdditionalHeaders",
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "UpsertManagementWebhookHeadersRequestBody": {
+        "title": "UpsertManagementWebhookHeadersRequestBody",
         "type": "object",
         "properties": {
           "headers": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
+            "$ref": "#/components/schemas/ManagementWebhookAdditionalHeaders"
           }
         },
-        "required": ["headers"]
+        "required": ["headers"],
+        "additionalProperties": false
+      },
+      "GetManagementWebhookHeadersResponse": {
+        "title": "GetManagementWebhookHeadersResponse",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "$ref": "#/components/schemas/ManagementWebhookAdditionalHeaders"
+          }
+        },
+        "required": ["headers"],
+        "additionalProperties": false
+      },
+      "DeleteManagementWebhookHeadersRequestBody": {
+        "title": "DeleteManagementWebhookHeadersRequestBody",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "required": ["headers"],
+        "additionalProperties": false
+      },
+      "DeleteManagementWebhookHeadersResponse": {
+        "title": "DeleteManagementWebhookHeadersResponse",
+        "type": "object",
+        "properties": {
+          "headers": {
+            "$ref": "#/components/schemas/ManagementWebhookAdditionalHeaders"
+          }
+        },
+        "required": ["headers"],
+        "additionalProperties": false
       },
       "ManagementWebhookHeadersDelete": {
         "title": "ManagementWebhookHeadersDelete",
@@ -8385,8 +8487,8 @@
         },
         "required": ["headers"]
       },
-      "ManagementWebhookHeadersResponse": {
-        "title": "ManagementWebhookHeadersResponse",
+      "UpsertManagementWebhookHeadersResponse": {
+        "title": "UpsertManagementWebhookHeadersResponse",
         "type": "object",
         "properties": {
           "headers": {
@@ -8396,10 +8498,11 @@
             }
           }
         },
-        "required": ["headers"]
+        "required": ["headers"],
+        "additionalProperties": false
       },
-      "ManagementWebhooksResponse": {
-        "title": "ManagementWebhooksResponse",
+      "GetManagementWebhooksResponse": {
+        "title": "GetManagementWebhooksResponse",
         "type": "object",
         "properties": {
           "webhooks": {
@@ -8412,20 +8515,45 @@
             "type": "string",
             "nullable": true
           }
-        }
+        },
+        "required": ["webhooks", "nextCursor"],
+        "additionalProperties": false
       },
-      "ManagementWebhookResponse": {
-        "title": "ManagementWebhookResponse",
+      "CreateManagementWebhookResponse": {
+        "title": "CreateManagementWebhookResponse",
         "type": "object",
         "properties": {
           "webhook": {
             "$ref": "#/components/schemas/ManagementWebhook"
           }
         },
-        "required": ["webhook"]
+        "required": ["webhook"],
+        "additionalProperties": false
       },
-      "ManagementWebhookSecretRotateResponse": {
-        "title": "ManagementWebhookSecretRotateResponse",
+      "GetManagementWebhookResponse": {
+        "title": "GetManagementWebhookResponse",
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "$ref": "#/components/schemas/ManagementWebhook"
+          }
+        },
+        "required": ["webhook"],
+        "additionalProperties": false
+      },
+      "UpdateManagementWebhookResponse": {
+        "title": "UpdateManagementWebhookResponse",
+        "type": "object",
+        "properties": {
+          "webhook": {
+            "$ref": "#/components/schemas/ManagementWebhook"
+          }
+        },
+        "required": ["webhook"],
+        "additionalProperties": false
+      },
+      "RotateManagementWebhookSecretResponse": {
+        "title": "RotateManagementWebhookSecretResponse",
         "type": "object",
         "properties": {
           "secret": {
@@ -8437,8 +8565,8 @@
         },
         "required": ["secret", "message"]
       },
-      "ManagementWebhookRecoverRequest": {
-        "title": "ManagementWebhookRecoverRequest",
+      "RecoverManagementWebhookFailedMessagesRequestBody": {
+        "title": "RecoverManagementWebhookFailedMessagesRequestBody",
         "type": "object",
         "properties": {
           "since": {
@@ -8446,10 +8574,11 @@
             "format": "date-time"
           }
         },
-        "required": ["since"]
+        "required": ["since"],
+        "additionalProperties": false
       },
-      "ManagementWebhookTestRequest": {
-        "title": "ManagementWebhookTestRequest",
+      "TestManagementWebhookRequestBody": {
+        "title": "TestManagementWebhookRequestBody",
         "type": "object",
         "properties": {
           "subscribedEvent": {
@@ -8458,8 +8587,8 @@
         },
         "required": ["subscribedEvent"]
       },
-      "ManagementWebhookTestResponse": {
-        "title": "ManagementWebhookTestResponse",
+      "TestManagementWebhookResponse": {
+        "title": "TestManagementWebhookResponse",
         "type": "object",
         "properties": {
           "message": {
@@ -8474,10 +8603,12 @@
                 "nullable": true
               }
             },
-            "required": ["id"]
+            "required": ["id"],
+            "additionalProperties": false
           }
         },
-        "required": ["message"]
+        "required": ["message"],
+        "additionalProperties": false
       }
     },
     "securitySchemes": {
