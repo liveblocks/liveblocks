@@ -17,15 +17,15 @@ T = TypeVar("T", bound="UserSubscription")
 class UserSubscription:
     """
     Attributes:
-        kind (str | Unset):
-        subject_id (str | Unset):
-        created_at (datetime.datetime | Unset):
+        kind (str):
+        subject_id (str):
+        created_at (datetime.datetime):
         user_id (str | Unset):
     """
 
-    kind: str | Unset = UNSET
-    subject_id: str | Unset = UNSET
-    created_at: datetime.datetime | Unset = UNSET
+    kind: str
+    subject_id: str
+    created_at: datetime.datetime
     user_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -34,21 +34,19 @@ class UserSubscription:
 
         subject_id = self.subject_id
 
-        created_at: str | Unset = UNSET
-        if not isinstance(self.created_at, Unset):
-            created_at = self.created_at.isoformat()
+        created_at = self.created_at.isoformat()
 
         user_id = self.user_id
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if kind is not UNSET:
-            field_dict["kind"] = kind
-        if subject_id is not UNSET:
-            field_dict["subjectId"] = subject_id
-        if created_at is not UNSET:
-            field_dict["createdAt"] = created_at
+        field_dict.update(
+            {
+                "kind": kind,
+                "subjectId": subject_id,
+                "createdAt": created_at,
+            }
+        )
         if user_id is not UNSET:
             field_dict["userId"] = user_id
 
@@ -57,16 +55,11 @@ class UserSubscription:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        kind = d.pop("kind", UNSET)
+        kind = d.pop("kind")
 
-        subject_id = d.pop("subjectId", UNSET)
+        subject_id = d.pop("subjectId")
 
-        _created_at = d.pop("createdAt", UNSET)
-        created_at: datetime.datetime | Unset
-        if isinstance(_created_at, Unset):
-            created_at = UNSET
-        else:
-            created_at = isoparse(_created_at)
+        created_at = isoparse(d.pop("createdAt"))
 
         user_id = d.pop("userId", UNSET)
 

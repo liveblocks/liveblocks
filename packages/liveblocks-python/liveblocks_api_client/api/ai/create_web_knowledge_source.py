@@ -4,15 +4,15 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.create_web_knowledge_source import CreateWebKnowledgeSource
-from ...models.create_web_knowledge_source_response_200 import CreateWebKnowledgeSourceResponse200
+from ...models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
+from ...models.create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
 from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     copilot_id: str,
     *,
-    body: CreateWebKnowledgeSource | Unset = UNSET,
+    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -32,9 +32,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> CreateWebKnowledgeSourceResponse200:
+def _parse_response(*, response: httpx.Response) -> CreateWebKnowledgeSourceResponse:
     if response.status_code == 200:
-        response_200 = CreateWebKnowledgeSourceResponse200.from_dict(response.json())
+        response_200 = CreateWebKnowledgeSourceResponse.from_dict(response.json())
 
         return response_200
 
@@ -45,8 +45,8 @@ def _sync(
     copilot_id: str,
     *,
     client: httpx.Client,
-    body: CreateWebKnowledgeSource | Unset = UNSET,
-) -> CreateWebKnowledgeSourceResponse200:
+    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+) -> CreateWebKnowledgeSourceResponse:
     """Create web knowledge source
 
      This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
@@ -55,14 +55,14 @@ def _sync(
 
     Args:
         copilot_id (str):
-        body (CreateWebKnowledgeSource | Unset):
+        body (CreateWebKnowledgeSourceRequestBody | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CreateWebKnowledgeSourceResponse200
+        CreateWebKnowledgeSourceResponse
     """
 
     kwargs = _get_kwargs(
@@ -73,7 +73,6 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
@@ -81,8 +80,8 @@ async def _asyncio(
     copilot_id: str,
     *,
     client: httpx.AsyncClient,
-    body: CreateWebKnowledgeSource | Unset = UNSET,
-) -> CreateWebKnowledgeSourceResponse200:
+    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+) -> CreateWebKnowledgeSourceResponse:
     """Create web knowledge source
 
      This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
@@ -91,14 +90,14 @@ async def _asyncio(
 
     Args:
         copilot_id (str):
-        body (CreateWebKnowledgeSource | Unset):
+        body (CreateWebKnowledgeSourceRequestBody | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        CreateWebKnowledgeSourceResponse200
+        CreateWebKnowledgeSourceResponse
     """
 
     kwargs = _get_kwargs(

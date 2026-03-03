@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_knowledge_sources import GetKnowledgeSources
+from ...models.get_knowledge_sources_response import GetKnowledgeSourcesResponse
 from ...types import UNSET, Unset
 
 
@@ -34,9 +34,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetKnowledgeSources:
+def _parse_response(*, response: httpx.Response) -> GetKnowledgeSourcesResponse:
     if response.status_code == 200:
-        response_200 = GetKnowledgeSources.from_dict(response.json())
+        response_200 = GetKnowledgeSourcesResponse.from_dict(response.json())
 
         return response_200
 
@@ -49,7 +49,7 @@ def _sync(
     client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetKnowledgeSources:
+) -> GetKnowledgeSourcesResponse:
     """Get knowledge sources
 
      This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
@@ -65,7 +65,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetKnowledgeSources
+        GetKnowledgeSourcesResponse
     """
 
     kwargs = _get_kwargs(
@@ -77,7 +77,6 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
@@ -87,7 +86,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetKnowledgeSources:
+) -> GetKnowledgeSourcesResponse:
     """Get knowledge sources
 
      This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
@@ -103,7 +102,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetKnowledgeSources
+        GetKnowledgeSourcesResponse
     """
 
     kwargs = _get_kwargs(

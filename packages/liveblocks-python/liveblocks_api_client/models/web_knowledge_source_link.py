@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar
 
 from attrs import define as _attrs_define
-from attrs import field as _attrs_field
+from dateutil.parser import isoparse
 
-from ..models.web_knowledge_source_link_type import WebKnowledgeSourceLinkType
-from ..types import UNSET, Unset
+from ..models.web_knowledge_source_link_status import WebKnowledgeSourceLinkStatus
 
 T = TypeVar("T", bound="WebKnowledgeSourceLink")
 
@@ -16,63 +16,63 @@ T = TypeVar("T", bound="WebKnowledgeSourceLink")
 class WebKnowledgeSourceLink:
     """
     Attributes:
-        url (str | Unset):
-        type_ (WebKnowledgeSourceLinkType | Unset):
+        id (str):
+        url (str):
+        status (WebKnowledgeSourceLinkStatus):
+        created_at (datetime.datetime):
+        last_indexed_at (datetime.datetime):
     """
 
-    url: str | Unset = UNSET
-    type_: WebKnowledgeSourceLinkType | Unset = UNSET
-    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+    id: str
+    url: str
+    status: WebKnowledgeSourceLinkStatus
+    created_at: datetime.datetime
+    last_indexed_at: datetime.datetime
 
     def to_dict(self) -> dict[str, Any]:
+        id = self.id
+
         url = self.url
 
-        type_: str | Unset = UNSET
-        if not isinstance(self.type_, Unset):
-            type_ = self.type_.value
+        status = self.status.value
+
+        created_at = self.created_at.isoformat()
+
+        last_indexed_at = self.last_indexed_at.isoformat()
 
         field_dict: dict[str, Any] = {}
-        field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if url is not UNSET:
-            field_dict["url"] = url
-        if type_ is not UNSET:
-            field_dict["type"] = type_
+
+        field_dict.update(
+            {
+                "id": id,
+                "url": url,
+                "status": status,
+                "createdAt": created_at,
+                "lastIndexedAt": last_indexed_at,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        url = d.pop("url", UNSET)
+        id = d.pop("id")
 
-        _type_ = d.pop("type", UNSET)
-        type_: WebKnowledgeSourceLinkType | Unset
-        if isinstance(_type_, Unset):
-            type_ = UNSET
-        else:
-            type_ = WebKnowledgeSourceLinkType(_type_)
+        url = d.pop("url")
+
+        status = WebKnowledgeSourceLinkStatus(d.pop("status"))
+
+        created_at = isoparse(d.pop("createdAt"))
+
+        last_indexed_at = isoparse(d.pop("lastIndexedAt"))
 
         web_knowledge_source_link = cls(
+            id=id,
             url=url,
-            type_=type_,
+            status=status,
+            created_at=created_at,
+            last_indexed_at=last_indexed_at,
         )
 
-        web_knowledge_source_link.additional_properties = d
         return web_knowledge_source_link
-
-    @property
-    def additional_keys(self) -> list[str]:
-        return list(self.additional_properties.keys())
-
-    def __getitem__(self, key: str) -> Any:
-        return self.additional_properties[key]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        self.additional_properties[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        del self.additional_properties[key]
-
-    def __contains__(self, key: str) -> bool:
-        return key in self.additional_properties

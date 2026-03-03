@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> Any:
+def _parse_response(*, response: httpx.Response) -> None:
     if response.status_code == 204:
         return None
 
@@ -31,7 +31,7 @@ def _sync(
     user_id: str,
     *,
     client: httpx.Client,
-) -> Any:
+) -> None:
     """Delete all inbox notifications
 
      This endpoint deletes all the user’s inbox notifications.
@@ -44,7 +44,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -54,15 +54,14 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    return None
+    return _parse_response(response=response)
 
 
 async def _asyncio(
     user_id: str,
     *,
     client: httpx.AsyncClient,
-) -> Any:
+) -> None:
     """Delete all inbox notifications
 
      This endpoint deletes all the user’s inbox notifications.
@@ -75,7 +74,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -86,4 +85,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    return None
+    return _parse_response(response=response)

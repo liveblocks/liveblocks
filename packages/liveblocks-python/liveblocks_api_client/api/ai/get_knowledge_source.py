@@ -4,8 +4,8 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.file_knowledge_source import FileKnowledgeSource
-from ...models.web_knowledge_source import WebKnowledgeSource
+from ...models.knowledge_source_file_source import KnowledgeSourceFileSource
+from ...models.knowledge_source_web_source import KnowledgeSourceWebSource
 
 
 def _get_kwargs(
@@ -24,23 +24,23 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> FileKnowledgeSource | WebKnowledgeSource:
+def _parse_response(*, response: httpx.Response) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
     if response.status_code == 200:
 
-        def _parse_response_200(data: object) -> FileKnowledgeSource | WebKnowledgeSource:
+        def _parse_response_200(data: object) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                componentsschemas_knowledge_source_web_knowledge_source = WebKnowledgeSource.from_dict(data)
+                componentsschemas_knowledge_source_type_0 = KnowledgeSourceWebSource.from_dict(data)
 
-                return componentsschemas_knowledge_source_web_knowledge_source
+                return componentsschemas_knowledge_source_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             if not isinstance(data, dict):
                 raise TypeError()
-            componentsschemas_knowledge_source_file_knowledge_source = FileKnowledgeSource.from_dict(data)
+            componentsschemas_knowledge_source_type_1 = KnowledgeSourceFileSource.from_dict(data)
 
-            return componentsschemas_knowledge_source_file_knowledge_source
+            return componentsschemas_knowledge_source_type_1
 
         response_200 = _parse_response_200(response.json())
 
@@ -54,7 +54,7 @@ def _sync(
     knowledge_source_id: str,
     *,
     client: httpx.Client,
-) -> FileKnowledgeSource | WebKnowledgeSource:
+) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
     """Get knowledge source
 
      This endpoint returns a specific knowledge source by its ID. Corresponds to
@@ -69,7 +69,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        FileKnowledgeSource | WebKnowledgeSource
+        KnowledgeSourceFileSource | KnowledgeSourceWebSource
     """
 
     kwargs = _get_kwargs(
@@ -80,7 +80,6 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
@@ -89,7 +88,7 @@ async def _asyncio(
     knowledge_source_id: str,
     *,
     client: httpx.AsyncClient,
-) -> FileKnowledgeSource | WebKnowledgeSource:
+) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
     """Get knowledge source
 
      This endpoint returns a specific knowledge source by its ID. Corresponds to
@@ -104,7 +103,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        FileKnowledgeSource | WebKnowledgeSource
+        KnowledgeSourceFileSource | KnowledgeSourceWebSource
     """
 
     kwargs = _get_kwargs(

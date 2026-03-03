@@ -3,17 +3,24 @@ from typing import Any
 import httpx
 
 from ... import errors
-from ...models.ai_copilot_type_0 import AiCopilotType0
-from ...models.ai_copilot_type_1 import AiCopilotType1
-from ...models.ai_copilot_type_2 import AiCopilotType2
-from ...models.ai_copilot_type_3 import AiCopilotType3
-from ...models.create_ai_copilot import CreateAiCopilot
+from ...models.ai_copilot_anthropic import AiCopilotAnthropic
+from ...models.ai_copilot_google import AiCopilotGoogle
+from ...models.ai_copilot_open_ai import AiCopilotOpenAi
+from ...models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
+from ...models.create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
+from ...models.create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
+from ...models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
+from ...models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
 from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: CreateAiCopilot | Unset = UNSET,
+    body: CreateAiCopilotOptionsAnthropic
+    | CreateAiCopilotOptionsGoogle
+    | CreateAiCopilotOptionsOpenAi
+    | CreateAiCopilotOptionsOpenAiCompatible
+    | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -22,7 +29,13 @@ def _get_kwargs(
         "url": "/ai/copilots",
     }
 
-    if not isinstance(body, Unset):
+    if isinstance(body, CreateAiCopilotOptionsOpenAi):
+        _kwargs["json"] = body.to_dict()
+    elif isinstance(body, CreateAiCopilotOptionsAnthropic):
+        _kwargs["json"] = body.to_dict()
+    elif isinstance(body, CreateAiCopilotOptionsGoogle):
+        _kwargs["json"] = body.to_dict()
+    else:
         _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
@@ -31,14 +44,18 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+def _parse_response(
+    *, response: httpx.Response
+) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     if response.status_code == 201:
 
-        def _parse_response_201(data: object) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+        def _parse_response_201(
+            data: object,
+        ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                componentsschemas_ai_copilot_type_0 = AiCopilotType0.from_dict(data)
+                componentsschemas_ai_copilot_type_0 = AiCopilotOpenAi.from_dict(data)
 
                 return componentsschemas_ai_copilot_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -46,7 +63,7 @@ def _parse_response(*, response: httpx.Response) -> AiCopilotType0 | AiCopilotTy
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                componentsschemas_ai_copilot_type_1 = AiCopilotType1.from_dict(data)
+                componentsschemas_ai_copilot_type_1 = AiCopilotAnthropic.from_dict(data)
 
                 return componentsschemas_ai_copilot_type_1
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -54,14 +71,14 @@ def _parse_response(*, response: httpx.Response) -> AiCopilotType0 | AiCopilotTy
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                componentsschemas_ai_copilot_type_2 = AiCopilotType2.from_dict(data)
+                componentsschemas_ai_copilot_type_2 = AiCopilotGoogle.from_dict(data)
 
                 return componentsschemas_ai_copilot_type_2
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             if not isinstance(data, dict):
                 raise TypeError()
-            componentsschemas_ai_copilot_type_3 = AiCopilotType3.from_dict(data)
+            componentsschemas_ai_copilot_type_3 = AiCopilotOpenAiCompatible.from_dict(data)
 
             return componentsschemas_ai_copilot_type_3
 
@@ -75,22 +92,27 @@ def _parse_response(*, response: httpx.Response) -> AiCopilotType0 | AiCopilotTy
 def _sync(
     *,
     client: httpx.Client,
-    body: CreateAiCopilot | Unset = UNSET,
-) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+    body: CreateAiCopilotOptionsAnthropic
+    | CreateAiCopilotOptionsGoogle
+    | CreateAiCopilotOptionsOpenAi
+    | CreateAiCopilotOptionsOpenAiCompatible
+    | Unset = UNSET,
+) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     """Create AI copilot
 
      This endpoint creates a new AI copilot with the given configuration. Corresponds to
     [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
 
     Args:
-        body (CreateAiCopilot | Unset):
+        body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
+            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3
+        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
     """
 
     kwargs = _get_kwargs(
@@ -100,29 +122,33 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: CreateAiCopilot | Unset = UNSET,
-) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+    body: CreateAiCopilotOptionsAnthropic
+    | CreateAiCopilotOptionsGoogle
+    | CreateAiCopilotOptionsOpenAi
+    | CreateAiCopilotOptionsOpenAiCompatible
+    | Unset = UNSET,
+) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     """Create AI copilot
 
      This endpoint creates a new AI copilot with the given configuration. Corresponds to
     [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
 
     Args:
-        body (CreateAiCopilot | Unset):
+        body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
+            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3
+        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
     """
 
     kwargs = _get_kwargs(

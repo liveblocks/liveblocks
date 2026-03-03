@@ -4,6 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
+from ...models.get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
 from ...types import UNSET, Unset
 
 
@@ -35,7 +36,12 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> None:
+def _parse_response(*, response: httpx.Response) -> GetWebKnowledgeSourceLinksResponse:
+    if response.status_code == 200:
+        response_200 = GetWebKnowledgeSourceLinksResponse.from_dict(response.json())
+
+        return response_200
+
     raise errors.LiveblocksError.from_response(response)
 
 
@@ -46,7 +52,7 @@ def _sync(
     client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> None:
+) -> GetWebKnowledgeSourceLinksResponse:
     """Get web knowledge source links
 
      This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
@@ -65,7 +71,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        None
+        GetWebKnowledgeSourceLinksResponse
     """
 
     kwargs = _get_kwargs(
@@ -78,8 +84,7 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    return None
+    return _parse_response(response=response)
 
 
 async def _asyncio(
@@ -89,7 +94,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> None:
+) -> GetWebKnowledgeSourceLinksResponse:
     """Get web knowledge source links
 
      This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
@@ -108,7 +113,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        None
+        GetWebKnowledgeSourceLinksResponse
     """
 
     kwargs = _get_kwargs(
@@ -122,4 +127,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    return None
+    return _parse_response(response=response)

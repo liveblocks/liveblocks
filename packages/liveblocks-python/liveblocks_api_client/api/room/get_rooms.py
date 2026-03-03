@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 from ... import errors
-from ...models.get_rooms import GetRooms
+from ...models.get_rooms_response import GetRoomsResponse
 from ...types import UNSET, Unset
 
 
@@ -42,9 +42,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetRooms:
+def _parse_response(*, response: httpx.Response) -> GetRoomsResponse:
     if response.status_code == 200:
-        response_200 = GetRooms.from_dict(response.json())
+        response_200 = GetRoomsResponse.from_dict(response.json())
 
         return response_200
 
@@ -60,7 +60,7 @@ def _sync(
     query: str | Unset = UNSET,
     user_id: str | Unset = UNSET,
     group_ids: str | Unset = UNSET,
-) -> GetRooms:
+) -> GetRoomsResponse:
     """Get rooms
 
      This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
@@ -93,7 +93,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetRooms
+        GetRoomsResponse
     """
 
     kwargs = _get_kwargs(
@@ -108,7 +108,6 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
@@ -121,7 +120,7 @@ async def _asyncio(
     query: str | Unset = UNSET,
     user_id: str | Unset = UNSET,
     group_ids: str | Unset = UNSET,
-) -> GetRooms:
+) -> GetRoomsResponse:
     """Get rooms
 
      This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
@@ -154,7 +153,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetRooms
+        GetRoomsResponse
     """
 
     kwargs = _get_kwargs(

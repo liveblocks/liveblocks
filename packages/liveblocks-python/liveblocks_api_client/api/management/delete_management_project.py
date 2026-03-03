@@ -20,7 +20,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> Any:
+def _parse_response(*, response: httpx.Response) -> None:
     if response.status_code == 200:
         return None
 
@@ -31,7 +31,7 @@ def _sync(
     project_id: str,
     *,
     client: httpx.Client,
-) -> Any:
+) -> None:
     """Delete project
 
      Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the
@@ -45,7 +45,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -55,15 +55,14 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    return None
+    return _parse_response(response=response)
 
 
 async def _asyncio(
     project_id: str,
     *,
     client: httpx.AsyncClient,
-) -> Any:
+) -> None:
     """Delete project
 
      Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the
@@ -77,7 +76,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -88,4 +87,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    return None
+    return _parse_response(response=response)

@@ -11,54 +11,62 @@ if TYPE_CHECKING:
     from session import AsyncSession, Session
 
     from .models.active_users_response import ActiveUsersResponse
-    from .models.add_comment_reaction import AddCommentReaction
+    from .models.add_comment_reaction_request_body import AddCommentReactionRequestBody
     from .models.add_group_members import AddGroupMembers
-    from .models.ai_copilot_type_0 import AiCopilotType0
-    from .models.ai_copilot_type_1 import AiCopilotType1
-    from .models.ai_copilot_type_2 import AiCopilotType2
-    from .models.ai_copilot_type_3 import AiCopilotType3
-    from .models.an_http_response_body_containing_a_token import AnHTTPResponseBodyContainingAToken
-    from .models.authorization import Authorization
-    from .models.authorize_user_request import AuthorizeUserRequest
+    from .models.add_json_patch_operation import AddJsonPatchOperation
+    from .models.ai_copilot_anthropic import AiCopilotAnthropic
+    from .models.ai_copilot_google import AiCopilotGoogle
+    from .models.ai_copilot_open_ai import AiCopilotOpenAi
+    from .models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
+    from .models.authorize_user_request_body import AuthorizeUserRequestBody
+    from .models.authorize_user_response import AuthorizeUserResponse
     from .models.comment import Comment
     from .models.comment_metadata import CommentMetadata
     from .models.comment_reaction import CommentReaction
-    from .models.create_ai_copilot import CreateAiCopilot
-    from .models.create_authorization import CreateAuthorization
+    from .models.copy_json_patch_operation import CopyJsonPatchOperation
+    from .models.create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
+    from .models.create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
+    from .models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
+    from .models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
+    from .models.create_comment_request_body import CreateCommentRequestBody
     from .models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
     from .models.create_group import CreateGroup
     from .models.create_management_project import CreateManagementProject
     from .models.create_management_webhook import CreateManagementWebhook
-    from .models.create_room import CreateRoom
-    from .models.create_thread import CreateThread
-    from .models.create_web_knowledge_source import CreateWebKnowledgeSource
-    from .models.create_web_knowledge_source_response_200 import CreateWebKnowledgeSourceResponse200
-    from .models.create_yjs_version import CreateYjsVersion
-    from .models.file_knowledge_source import FileKnowledgeSource
-    from .models.get_ai_copilots import GetAiCopilots
-    from .models.get_file_knowledge_source_content_response_200 import GetFileKnowledgeSourceContentResponse200
+    from .models.create_room_request_body import CreateRoomRequestBody
+    from .models.create_thread_request_body import CreateThreadRequestBody
+    from .models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
+    from .models.create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
+    from .models.create_yjs_version_response import CreateYjsVersionResponse
+    from .models.edit_comment_metadata_request_body import EditCommentMetadataRequestBody
+    from .models.edit_comment_request_body import EditCommentRequestBody
+    from .models.get_ai_copilots_response import GetAiCopilotsResponse
+    from .models.get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
     from .models.get_groups import GetGroups
-    from .models.get_knowledge_sources import GetKnowledgeSources
-    from .models.get_rooms import GetRooms
-    from .models.get_rooms_room_id_storage_format import GetRoomsRoomIdStorageFormat
-    from .models.get_rooms_room_id_storage_response_200 import GetRoomsRoomIdStorageResponse200
-    from .models.get_rooms_room_id_threads_thread_id_participants_response_200 import (
-        GetRoomsRoomIdThreadsThreadIdParticipantsResponse200,
-    )
-    from .models.get_rooms_room_id_threads_thread_id_subscriptions_response_200 import (
-        GetRoomsRoomIdThreadsThreadIdSubscriptionsResponse200,
-    )
-    from .models.get_rooms_room_id_ydoc_response_200 import GetRoomsRoomIdYdocResponse200
-    from .models.get_rooms_room_id_ydoc_type import GetRoomsRoomIdYdocType
+    from .models.get_knowledge_sources_response import GetKnowledgeSourcesResponse
+    from .models.get_rooms_response import GetRoomsResponse
+    from .models.get_storage_document_format import GetStorageDocumentFormat
+    from .models.get_storage_document_response import GetStorageDocumentResponse
+    from .models.get_thread_participants_response import GetThreadParticipantsResponse
+    from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
+    from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups import GetUserGroups
     from .models.get_users_user_id_subscription_settings_response_200 import (
         GetUsersUserIdSubscriptionSettingsResponse200,
     )
-    from .models.get_yjs_versions import GetYjsVersions
+    from .models.get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
+    from .models.get_yjs_document_response import GetYjsDocumentResponse
+    from .models.get_yjs_document_type import GetYjsDocumentType
+    from .models.get_yjs_versions_response import GetYjsVersionsResponse
     from .models.group import Group
-    from .models.identify_user_request import IdentifyUserRequest
+    from .models.identify_user_request_body import IdentifyUserRequestBody
+    from .models.identify_user_response import IdentifyUserResponse
     from .models.inbox_notification_custom_data import InboxNotificationCustomData
     from .models.inbox_notification_thread_data import InboxNotificationThreadData
+    from .models.initialize_storage_document_body import InitializeStorageDocumentBody
+    from .models.initialize_storage_document_response import InitializeStorageDocumentResponse
+    from .models.knowledge_source_file_source import KnowledgeSourceFileSource
+    from .models.knowledge_source_web_source import KnowledgeSourceWebSource
     from .models.management_project_key_roll_request import ManagementProjectKeyRollRequest
     from .models.management_project_public_key_response import ManagementProjectPublicKeyResponse
     from .models.management_project_response import ManagementProjectResponse
@@ -73,39 +81,30 @@ if TYPE_CHECKING:
     from .models.management_webhook_test_request import ManagementWebhookTestRequest
     from .models.management_webhook_test_response import ManagementWebhookTestResponse
     from .models.management_webhooks_response import ManagementWebhooksResponse
+    from .models.move_json_patch_operation import MoveJsonPatchOperation
     from .models.notification_settings import NotificationSettings
     from .models.partial_notification_settings import PartialNotificationSettings
-    from .models.patch_rooms_room_id_storage_json_patch_body_item import PatchRoomsRoomIdStorageJsonPatchBodyItem
-    from .models.post_rooms_room_id_files_body import PostRoomsRoomIdFilesBody
-    from .models.post_rooms_room_id_storage_body import PostRoomsRoomIdStorageBody
-    from .models.post_rooms_room_id_storage_response_200 import PostRoomsRoomIdStorageResponse200
-    from .models.post_rooms_room_id_threads_thread_id_subscribe_body import PostRoomsRoomIdThreadsThreadIdSubscribeBody
-    from .models.post_rooms_room_id_threads_thread_id_unsubscribe_body import (
-        PostRoomsRoomIdThreadsThreadIdUnsubscribeBody,
-    )
-    from .models.post_rooms_room_id_threads_thread_id_unsubscribe_response_200 import (
-        PostRoomsRoomIdThreadsThreadIdUnsubscribeResponse200,
-    )
-    from .models.post_rooms_update_room_id_files_body import PostRoomsUpdateRoomIdFilesBody
-    from .models.public_authorize_body_request import PublicAuthorizeBodyRequest
-    from .models.remove_comment_reaction import RemoveCommentReaction
+    from .models.remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
     from .models.remove_group_members import RemoveGroupMembers
+    from .models.remove_json_patch_operation import RemoveJsonPatchOperation
+    from .models.replace_json_patch_operation import ReplaceJsonPatchOperation
     from .models.room import Room
     from .models.room_subscription_settings import RoomSubscriptionSettings
-    from .models.set_presence import SetPresence
+    from .models.set_presence_request_body import SetPresenceRequestBody
+    from .models.subscribe_to_thread_request_body import SubscribeToThreadRequestBody
     from .models.subscription import Subscription
+    from .models.test_json_patch_operation import TestJsonPatchOperation
+    from .models.thread import Thread
     from .models.thread_metadata import ThreadMetadata
     from .models.trigger_inbox_notification import TriggerInboxNotification
-    from .models.update_ai_copilot import UpdateAiCopilot
-    from .models.update_comment import UpdateComment
-    from .models.update_comment_metadata import UpdateCommentMetadata
+    from .models.unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
+    from .models.update_ai_copilot_request_body import UpdateAiCopilotRequestBody
     from .models.update_management_project import UpdateManagementProject
     from .models.update_management_webhook import UpdateManagementWebhook
-    from .models.update_room import UpdateRoom
-    from .models.update_thread_metadata import UpdateThreadMetadata
-    from .models.upsert_room import UpsertRoom
-    from .models.upsert_rooms_room_id_files_body import UpsertRoomsRoomIdFilesBody
-    from .models.web_knowledge_source import WebKnowledgeSource
+    from .models.update_room_id_request_body import UpdateRoomIdRequestBody
+    from .models.update_room_request_body import UpdateRoomRequestBody
+    from .models.update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
+    from .models.upsert_room_request_body import UpsertRoomRequestBody
 
 _DEFAULT_BASE_URL = "https://api.liveblocks.io"
 _VALID_KEY_CHARS_REGEX = re.compile(r"^[\w-]+$")
@@ -171,7 +170,7 @@ class Liveblocks:
         query: str | Unset = UNSET,
         user_id: str | Unset = UNSET,
         group_ids: str | Unset = UNSET,
-    ) -> GetRooms:
+    ) -> GetRoomsResponse:
         from .api.room import get_rooms
 
         return get_rooms._sync(
@@ -184,141 +183,155 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_rooms(
+    def create_room(
         self,
         *,
-        body: CreateRoom | Unset = UNSET,
+        body: CreateRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms
+        from .api.room import create_room
 
-        return post_rooms._sync(
+        return create_room._sync(
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id(
+    def get_room(
         self,
         room_id: str,
     ) -> Room:
-        from .api.room import get_rooms_room_id
+        from .api.room import get_room
 
-        return get_rooms_room_id._sync(
+        return get_room._sync(
             room_id=room_id,
             client=self._client,
         )
 
-    def post_rooms_room_id(
+    def update_room(
         self,
         room_id: str,
         *,
-        body: UpdateRoom | PostRoomsRoomIdFilesBody | Unset = UNSET,
+        body: UpdateRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms_room_id
+        from .api.room import update_room
 
-        return post_rooms_room_id._sync(
-            room_id=room_id,
-            body=body,
-            client=self._client,
-        )
-
-    def delete_rooms_room_id(
-        self,
-        room_id: str,
-    ) -> Any:
-        from .api.room import delete_rooms_room_id
-
-        return delete_rooms_room_id._sync(
-            room_id=room_id,
-            client=self._client,
-        )
-
-    def get_rooms_room_id_prewarm(
-        self,
-        room_id: str,
-    ) -> Any:
-        from .api.room import get_rooms_room_id_prewarm
-
-        return get_rooms_room_id_prewarm._sync(
-            room_id=room_id,
-            client=self._client,
-        )
-
-    def upsert_rooms_room_id(
-        self,
-        room_id: str,
-        *,
-        body: UpsertRoom | UpsertRoomsRoomIdFilesBody | Unset = UNSET,
-    ) -> Room:
-        from .api.room import upsert_rooms_room_id
-
-        return upsert_rooms_room_id._sync(
+        return update_room._sync(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    def post_rooms_update_room_id(
+    def delete_room(
+        self,
+        room_id: str,
+    ) -> None:
+        from .api.room import delete_room
+
+        return delete_room._sync(
+            room_id=room_id,
+            client=self._client,
+        )
+
+    def prewarm_room(
+        self,
+        room_id: str,
+    ) -> None:
+        from .api.room import prewarm_room
+
+        return prewarm_room._sync(
+            room_id=room_id,
+            client=self._client,
+        )
+
+    def upsert_room(
         self,
         room_id: str,
         *,
-        body: PostRoomsUpdateRoomIdFilesBody | Unset = UNSET,
+        body: UpsertRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms_update_room_id
+        from .api.room import upsert_room
 
-        return post_rooms_update_room_id._sync(
+        return upsert_room._sync(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_active_users(
+    def update_room_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        from .api.room import update_room_id
+
+        return update_room_id._sync(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    def get_active_users(
         self,
         room_id: str,
     ) -> ActiveUsersResponse:
-        from .api.room import get_rooms_room_id_active_users
+        from .api.room import get_active_users
 
-        return get_rooms_room_id_active_users._sync(
+        return get_active_users._sync(
             room_id=room_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_presence(
+    def set_presence(
         self,
         room_id: str,
         *,
-        body: SetPresence,
-    ) -> Any:
-        from .api.room import post_rooms_room_id_presence
+        body: SetPresenceRequestBody,
+    ) -> None:
+        from .api.room import set_presence
 
-        return post_rooms_room_id_presence._sync(
+        return set_presence._sync(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_storage(
+    def broadcast_event(
         self,
         room_id: str,
         *,
-        format_: GetRoomsRoomIdStorageFormat | Unset = UNSET,
-    ) -> GetRoomsRoomIdStorageResponse200:
-        from .api.storage import get_rooms_room_id_storage
+        body: Any | Unset = UNSET,
+    ) -> None:
+        from .api.room import broadcast_event
 
-        return get_rooms_room_id_storage._sync(
+        return broadcast_event._sync(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    def get_storage_document(
+        self,
+        room_id: str,
+        *,
+        format_: GetStorageDocumentFormat | Unset = UNSET,
+    ) -> GetStorageDocumentResponse:
+        from .api.storage import get_storage_document
+
+        return get_storage_document._sync(
             room_id=room_id,
             format_=format_,
             client=self._client,
         )
 
-    def post_rooms_room_id_storage(
+    def initialize_storage_document(
         self,
         room_id: str,
         *,
-        body: PostRoomsRoomIdStorageBody | Unset = UNSET,
-    ) -> PostRoomsRoomIdStorageResponse200:
-        from .api.storage import post_rooms_room_id_storage
+        body: InitializeStorageDocumentBody | Unset = UNSET,
+    ) -> InitializeStorageDocumentResponse:
+        from .api.storage import initialize_storage_document
 
-        return post_rooms_room_id_storage._sync(
+        return initialize_storage_document._sync(
             room_id=room_id,
             body=body,
             client=self._client,
@@ -327,7 +340,7 @@ class Liveblocks:
     def delete_rooms_room_id_storage(
         self,
         room_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.storage import delete_rooms_room_id_storage
 
         return delete_rooms_room_id_storage._sync(
@@ -335,31 +348,38 @@ class Liveblocks:
             client=self._client,
         )
 
-    def patch_rooms_room_id_storage_json_patch(
+    def patch_storage_document(
         self,
         room_id: str,
         *,
-        body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-    ) -> Any:
-        from .api.storage import patch_rooms_room_id_storage_json_patch
+        body: list[
+            AddJsonPatchOperation
+            | CopyJsonPatchOperation
+            | MoveJsonPatchOperation
+            | RemoveJsonPatchOperation
+            | ReplaceJsonPatchOperation
+            | TestJsonPatchOperation
+        ],
+    ) -> None:
+        from .api.storage import patch_storage_document
 
-        return patch_rooms_room_id_storage_json_patch._sync(
+        return patch_storage_document._sync(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_ydoc(
+    def get_yjs_document(
         self,
         room_id: str,
         *,
         formatting: bool | Unset = UNSET,
         key: str | Unset = UNSET,
-        type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-    ) -> GetRoomsRoomIdYdocResponse200:
-        from .api.yjs import get_rooms_room_id_ydoc
+        type_: GetYjsDocumentType | Unset = UNSET,
+    ) -> GetYjsDocumentResponse:
+        from .api.yjs import get_yjs_document
 
-        return get_rooms_room_id_ydoc._sync(
+        return get_yjs_document._sync(
             room_id=room_id,
             formatting=formatting,
             key=key,
@@ -367,259 +387,259 @@ class Liveblocks:
             client=self._client,
         )
 
-    def put_rooms_room_id_ydoc(
+    def send_yjs_binary_update(
         self,
         room_id: str,
         *,
         body: File | Unset = UNSET,
         guid: str | Unset = UNSET,
-    ) -> Any:
-        from .api.yjs import put_rooms_room_id_ydoc
+    ) -> None:
+        from .api.yjs import send_yjs_binary_update
 
-        return put_rooms_room_id_ydoc._sync(
+        return send_yjs_binary_update._sync(
             room_id=room_id,
             body=body,
             guid=guid,
             client=self._client,
         )
 
-    def get_rooms_room_id_ydoc_binary(
+    def get_yjs_document_as_binary_update(
         self,
         room_id: str,
         *,
         guid: str | Unset = UNSET,
     ) -> File:
-        from .api.yjs import get_rooms_room_id_ydoc_binary
+        from .api.yjs import get_yjs_document_as_binary_update
 
-        return get_rooms_room_id_ydoc_binary._sync(
+        return get_yjs_document_as_binary_update._sync(
             room_id=room_id,
             guid=guid,
             client=self._client,
         )
 
-    def get_rooms_room_id_versions(
+    def get_yjs_versions(
         self,
         room_id: str,
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> GetYjsVersions:
-        from .api.yjs import get_rooms_room_id_versions
+    ) -> GetYjsVersionsResponse:
+        from .api.yjs import get_yjs_versions
 
-        return get_rooms_room_id_versions._sync(
+        return get_yjs_versions._sync(
             room_id=room_id,
             limit=limit,
             cursor=cursor,
             client=self._client,
         )
 
-    def get_rooms_room_id_version_version_id(
+    def get_yjs_version(
         self,
         room_id: str,
         version_id: str,
     ) -> File:
-        from .api.yjs import get_rooms_room_id_version_version_id
+        from .api.yjs import get_yjs_version
 
-        return get_rooms_room_id_version_version_id._sync(
+        return get_yjs_version._sync(
             room_id=room_id,
             version_id=version_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_version(
+    def create_yjs_version(
         self,
         room_id: str,
-    ) -> CreateYjsVersion:
-        from .api.yjs import post_rooms_room_id_version
+    ) -> CreateYjsVersionResponse:
+        from .api.yjs import create_yjs_version
 
-        return post_rooms_room_id_version._sync(
+        return create_yjs_version._sync(
             room_id=room_id,
             client=self._client,
         )
 
-    def get_rooms_room_id_threads(
+    def get_threads(
         self,
         room_id: str,
         *,
         query: str | Unset = UNSET,
-    ) -> None:
-        from .api.comments import get_rooms_room_id_threads
+    ) -> GetThreadsResponse:
+        from .api.comments import get_threads
 
-        return get_rooms_room_id_threads._sync(
+        return get_threads._sync(
             room_id=room_id,
             query=query,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads(
+    def create_thread(
         self,
         room_id: str,
         *,
-        body: CreateThread | Unset = UNSET,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads
+        body: CreateThreadRequestBody | Unset = UNSET,
+    ) -> Thread:
+        from .api.comments import create_thread
 
-        return post_rooms_room_id_threads._sync(
+        return create_thread._sync(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_threads_thread_id(
+    def get_thread(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> Thread:
+        from .api.comments import get_thread
+
+        return get_thread._sync(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
+    def delete_thread(
         self,
         room_id: str,
         thread_id: str,
     ) -> None:
-        from .api.comments import get_rooms_room_id_threads_thread_id
+        from .api.comments import delete_thread
 
-        return get_rooms_room_id_threads_thread_id._sync(
+        return delete_thread._sync(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    def delete_rooms_room_id_threads_thread_id(
-        self,
-        room_id: str,
-        thread_id: str,
-    ) -> Any:
-        from .api.comments import delete_rooms_room_id_threads_thread_id
-
-        return delete_rooms_room_id_threads_thread_id._sync(
-            room_id=room_id,
-            thread_id=thread_id,
-            client=self._client,
-        )
-
-    def post_rooms_room_id_threads_thread_id_metadata(
+    def edit_thread_metadata(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadata | Unset = UNSET,
+        body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
     ) -> ThreadMetadata:
-        from .api.comments import post_rooms_room_id_threads_thread_id_metadata
+        from .api.comments import edit_thread_metadata
 
-        return post_rooms_room_id_threads_thread_id_metadata._sync(
+        return edit_thread_metadata._sync(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_mark_as_resolved(
+    def mark_thread_as_resolved(
         self,
         room_id: str,
         thread_id: str,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads_thread_id_mark_as_resolved
+    ) -> Thread:
+        from .api.comments import mark_thread_as_resolved
 
-        return post_rooms_room_id_threads_thread_id_mark_as_resolved._sync(
+        return mark_thread_as_resolved._sync(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_mark_as_unresolved(
+    def mark_thread_as_unresolved(
         self,
         room_id: str,
         thread_id: str,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads_thread_id_mark_as_unresolved
+    ) -> Thread:
+        from .api.comments import mark_thread_as_unresolved
 
-        return post_rooms_room_id_threads_thread_id_mark_as_unresolved._sync(
+        return mark_thread_as_unresolved._sync(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_subscribe(
+    def subscribe_to_thread(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: PostRoomsRoomIdThreadsThreadIdSubscribeBody,
+        body: SubscribeToThreadRequestBody,
     ) -> Subscription:
-        from .api.comments import post_rooms_room_id_threads_thread_id_subscribe
+        from .api.comments import subscribe_to_thread
 
-        return post_rooms_room_id_threads_thread_id_subscribe._sync(
+        return subscribe_to_thread._sync(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_unsubscribe(
+    def unsubscribe_from_thread(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: PostRoomsRoomIdThreadsThreadIdUnsubscribeBody,
-    ) -> PostRoomsRoomIdThreadsThreadIdUnsubscribeResponse200:
-        from .api.comments import post_rooms_room_id_threads_thread_id_unsubscribe
+        body: UnsubscribeFromThreadRequestBody,
+    ) -> None:
+        from .api.comments import unsubscribe_from_thread
 
-        return post_rooms_room_id_threads_thread_id_unsubscribe._sync(
+        return unsubscribe_from_thread._sync(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_threads_thread_id_subscriptions(
+    def get_thread_subscriptions(
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetRoomsRoomIdThreadsThreadIdSubscriptionsResponse200:
-        from .api.comments import get_rooms_room_id_threads_thread_id_subscriptions
+    ) -> GetThreadSubscriptionsResponse:
+        from .api.comments import get_thread_subscriptions
 
-        return get_rooms_room_id_threads_thread_id_subscriptions._sync(
+        return get_thread_subscriptions._sync(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_comments(
+    def create_comment(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateComment | Unset = UNSET,
+        body: CreateCommentRequestBody | Unset = UNSET,
     ) -> Comment:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments
+        from .api.comments import create_comment
 
-        return post_rooms_room_id_threads_thread_id_comments._sync(
+        return create_comment._sync(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    def get_rooms_room_id_threads_thread_id_comments_comment_id(
+    def get_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
     ) -> Comment:
-        from .api.comments import get_rooms_room_id_threads_thread_id_comments_comment_id
+        from .api.comments import get_comment
 
-        return get_rooms_room_id_threads_thread_id_comments_comment_id._sync(
+        return get_comment._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_comments_comment_id(
+    def edit_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: UpdateComment | Unset = UNSET,
-    ) -> UpdateComment:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id
+        body: EditCommentRequestBody | Unset = UNSET,
+    ) -> Comment:
+        from .api.comments import edit_comment
 
-        return post_rooms_room_id_threads_thread_id_comments_comment_id._sync(
+        return edit_comment._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -627,32 +647,32 @@ class Liveblocks:
             client=self._client,
         )
 
-    def delete_rooms_room_id_threads_thread_id_comments_comment_id(
+    def delete_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
-    ) -> Any:
-        from .api.comments import delete_rooms_room_id_threads_thread_id_comments_comment_id
+    ) -> None:
+        from .api.comments import delete_comment
 
-        return delete_rooms_room_id_threads_thread_id_comments_comment_id._sync(
+        return delete_comment._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction(
+    def add_comment_reaction(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: AddCommentReaction | Unset = UNSET,
+        body: AddCommentReactionRequestBody | Unset = UNSET,
     ) -> CommentReaction:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction
+        from .api.comments import add_comment_reaction
 
-        return post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction._sync(
+        return add_comment_reaction._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -660,17 +680,17 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction(
+    def remove_comment_reaction(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: RemoveCommentReaction | Unset = UNSET,
-    ) -> Any:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction
+        body: RemoveCommentReactionRequestBody | Unset = UNSET,
+    ) -> None:
+        from .api.comments import remove_comment_reaction
 
-        return post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction._sync(
+        return remove_comment_reaction._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -678,17 +698,17 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_rooms_room_id_threads_thread_id_comments_comment_id_metadata(
+    def edit_comment_metadata(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: UpdateCommentMetadata | Unset = UNSET,
+        body: EditCommentMetadataRequestBody | Unset = UNSET,
     ) -> CommentMetadata:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_metadata
+        from .api.comments import edit_comment_metadata
 
-        return post_rooms_room_id_threads_thread_id_comments_comment_id_metadata._sync(
+        return edit_comment_metadata._sync(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -696,44 +716,16 @@ class Liveblocks:
             client=self._client,
         )
 
-    def get_rooms_room_id_threads_thread_id_participants(
+    def get_thread_participants(
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetRoomsRoomIdThreadsThreadIdParticipantsResponse200:
-        from .api.deprecated import get_rooms_room_id_threads_thread_id_participants
+    ) -> GetThreadParticipantsResponse:
+        from .api.deprecated import get_thread_participants
 
-        return get_rooms_room_id_threads_thread_id_participants._sync(
+        return get_thread_participants._sync(
             room_id=room_id,
             thread_id=thread_id,
-            client=self._client,
-        )
-
-    def post_authorize(
-        self,
-        room_id: str,
-        *,
-        body: CreateAuthorization | Unset = UNSET,
-    ) -> Authorization:
-        from .api.deprecated import post_authorize
-
-        return post_authorize._sync(
-            room_id=room_id,
-            body=body,
-            client=self._client,
-        )
-
-    def post_public_authorize(
-        self,
-        room_id: str,
-        *,
-        body: PublicAuthorizeBodyRequest | Unset = UNSET,
-    ) -> Authorization:
-        from .api.deprecated import post_public_authorize
-
-        return post_public_authorize._sync(
-            room_id=room_id,
-            body=body,
             client=self._client,
         )
 
@@ -770,7 +762,7 @@ class Liveblocks:
         self,
         room_id: str,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.deprecated import delete_rooms_room_id_users_user_id_notification_settings
 
         return delete_rooms_room_id_users_user_id_notification_settings._sync(
@@ -779,26 +771,26 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_authorize_user(
+    def authorize_user(
         self,
         *,
-        body: AuthorizeUserRequest | Unset = UNSET,
-    ) -> AnHTTPResponseBodyContainingAToken:
-        from .api.authentication import post_authorize_user
+        body: AuthorizeUserRequestBody | Unset = UNSET,
+    ) -> AuthorizeUserResponse:
+        from .api.authentication import authorize_user
 
-        return post_authorize_user._sync(
+        return authorize_user._sync(
             body=body,
             client=self._client,
         )
 
-    def post_identify_user(
+    def identify_user(
         self,
         *,
-        body: IdentifyUserRequest | Unset = UNSET,
-    ) -> AnHTTPResponseBodyContainingAToken:
-        from .api.authentication import post_identify_user
+        body: IdentifyUserRequestBody | Unset = UNSET,
+    ) -> IdentifyUserResponse:
+        from .api.authentication import identify_user
 
-        return post_identify_user._sync(
+        return identify_user._sync(
             body=body,
             client=self._client,
         )
@@ -820,7 +812,7 @@ class Liveblocks:
         self,
         user_id: str,
         inbox_notification_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_inbox_notifications_inbox_notification_id
 
         return delete_users_user_id_inbox_notifications_inbox_notification_id._sync(
@@ -852,7 +844,7 @@ class Liveblocks:
     def delete_users_user_id_inbox_notifications(
         self,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_inbox_notifications
 
         return delete_users_user_id_inbox_notifications._sync(
@@ -888,7 +880,7 @@ class Liveblocks:
     def delete_users_user_id_notification_settings(
         self,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_notification_settings
 
         return delete_users_user_id_notification_settings._sync(
@@ -929,7 +921,7 @@ class Liveblocks:
         self,
         room_id: str,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_rooms_room_id_users_user_id_subscription_settings
 
         return delete_rooms_room_id_users_user_id_subscription_settings._sync(
@@ -958,7 +950,7 @@ class Liveblocks:
         self,
         *,
         body: TriggerInboxNotification | Unset = UNSET,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import post_inbox_notifications_trigger
 
         return post_inbox_notifications_trigger._sync(
@@ -1006,7 +998,7 @@ class Liveblocks:
     def delete_groups_group_id(
         self,
         group_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.groups import delete_groups_group_id
 
         return delete_groups_group_id._sync(
@@ -1063,7 +1055,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetAiCopilots:
+    ) -> GetAiCopilotsResponse:
         from .api.ai import get_ai_copilots
 
         return get_ai_copilots._sync(
@@ -1075,8 +1067,12 @@ class Liveblocks:
     def create_ai_copilot(
         self,
         *,
-        body: CreateAiCopilot | Unset = UNSET,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+        body: CreateAiCopilotOptionsAnthropic
+        | CreateAiCopilotOptionsGoogle
+        | CreateAiCopilotOptionsOpenAi
+        | CreateAiCopilotOptionsOpenAiCompatible
+        | Unset = UNSET,
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import create_ai_copilot
 
         return create_ai_copilot._sync(
@@ -1087,7 +1083,7 @@ class Liveblocks:
     def get_ai_copilot(
         self,
         copilot_id: str,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import get_ai_copilot
 
         return get_ai_copilot._sync(
@@ -1099,8 +1095,8 @@ class Liveblocks:
         self,
         copilot_id: str,
         *,
-        body: UpdateAiCopilot | Unset = UNSET,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+        body: UpdateAiCopilotRequestBody | Unset = UNSET,
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import update_ai_copilot
 
         return update_ai_copilot._sync(
@@ -1112,7 +1108,7 @@ class Liveblocks:
     def delete_ai_copilot(
         self,
         copilot_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_ai_copilot
 
         return delete_ai_copilot._sync(
@@ -1126,7 +1122,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetKnowledgeSources:
+    ) -> GetKnowledgeSourcesResponse:
         from .api.ai import get_knowledge_sources
 
         return get_knowledge_sources._sync(
@@ -1140,7 +1136,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> FileKnowledgeSource | WebKnowledgeSource:
+    ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
         from .api.ai import get_knowledge_source
 
         return get_knowledge_source._sync(
@@ -1153,8 +1149,8 @@ class Liveblocks:
         self,
         copilot_id: str,
         *,
-        body: CreateWebKnowledgeSource | Unset = UNSET,
-    ) -> CreateWebKnowledgeSourceResponse200:
+        body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+    ) -> CreateWebKnowledgeSourceResponse:
         from .api.ai import create_web_knowledge_source
 
         return create_web_knowledge_source._sync(
@@ -1179,14 +1175,14 @@ class Liveblocks:
             client=self._client,
         )
 
-    def get_file_knowledge_source_content(
+    def get_file_knowledge_source_markdown(
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> GetFileKnowledgeSourceContentResponse200:
-        from .api.ai import get_file_knowledge_source_content
+    ) -> GetFileKnowledgeSourceMarkdownResponse:
+        from .api.ai import get_file_knowledge_source_markdown
 
-        return get_file_knowledge_source_content._sync(
+        return get_file_knowledge_source_markdown._sync(
             copilot_id=copilot_id,
             knowledge_source_id=knowledge_source_id,
             client=self._client,
@@ -1196,7 +1192,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_file_knowledge_source
 
         return delete_file_knowledge_source._sync(
@@ -1209,7 +1205,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_web_knowledge_source
 
         return delete_web_knowledge_source._sync(
@@ -1225,7 +1221,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> None:
+    ) -> GetWebKnowledgeSourceLinksResponse:
         from .api.ai import get_web_knowledge_source_links
 
         return get_web_knowledge_source_links._sync(
@@ -1290,7 +1286,7 @@ class Liveblocks:
     def delete_management_project(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import delete_management_project
 
         return delete_management_project._sync(
@@ -1301,7 +1297,7 @@ class Liveblocks:
     def post_management_project_public_key_activate(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_project_public_key_activate
 
         return post_management_project_public_key_activate._sync(
@@ -1312,7 +1308,7 @@ class Liveblocks:
     def post_management_project_public_key_deactivate(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_project_public_key_deactivate
 
         return post_management_project_public_key_deactivate._sync(
@@ -1411,7 +1407,7 @@ class Liveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import delete_management_webhook
 
         return delete_management_webhook._sync(
@@ -1484,7 +1480,7 @@ class Liveblocks:
         webhook_id: str,
         *,
         body: ManagementWebhookRecoverRequest | Unset = UNSET,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_webhook_recover_failed_messages
 
         return post_management_webhook_recover_failed_messages._sync(
@@ -1553,7 +1549,7 @@ class AsyncLiveblocks:
         query: str | Unset = UNSET,
         user_id: str | Unset = UNSET,
         group_ids: str | Unset = UNSET,
-    ) -> GetRooms:
+    ) -> GetRoomsResponse:
         from .api.room import get_rooms
 
         return await get_rooms._asyncio(
@@ -1566,141 +1562,155 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_rooms(
+    async def create_room(
         self,
         *,
-        body: CreateRoom | Unset = UNSET,
+        body: CreateRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms
+        from .api.room import create_room
 
-        return await post_rooms._asyncio(
+        return await create_room._asyncio(
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id(
+    async def get_room(
         self,
         room_id: str,
     ) -> Room:
-        from .api.room import get_rooms_room_id
+        from .api.room import get_room
 
-        return await get_rooms_room_id._asyncio(
+        return await get_room._asyncio(
             room_id=room_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id(
+    async def update_room(
         self,
         room_id: str,
         *,
-        body: UpdateRoom | PostRoomsRoomIdFilesBody | Unset = UNSET,
+        body: UpdateRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms_room_id
+        from .api.room import update_room
 
-        return await post_rooms_room_id._asyncio(
-            room_id=room_id,
-            body=body,
-            client=self._client,
-        )
-
-    async def delete_rooms_room_id(
-        self,
-        room_id: str,
-    ) -> Any:
-        from .api.room import delete_rooms_room_id
-
-        return await delete_rooms_room_id._asyncio(
-            room_id=room_id,
-            client=self._client,
-        )
-
-    async def get_rooms_room_id_prewarm(
-        self,
-        room_id: str,
-    ) -> Any:
-        from .api.room import get_rooms_room_id_prewarm
-
-        return await get_rooms_room_id_prewarm._asyncio(
-            room_id=room_id,
-            client=self._client,
-        )
-
-    async def upsert_rooms_room_id(
-        self,
-        room_id: str,
-        *,
-        body: UpsertRoom | UpsertRoomsRoomIdFilesBody | Unset = UNSET,
-    ) -> Room:
-        from .api.room import upsert_rooms_room_id
-
-        return await upsert_rooms_room_id._asyncio(
+        return await update_room._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    async def post_rooms_update_room_id(
+    async def delete_room(
+        self,
+        room_id: str,
+    ) -> None:
+        from .api.room import delete_room
+
+        return await delete_room._asyncio(
+            room_id=room_id,
+            client=self._client,
+        )
+
+    async def prewarm_room(
+        self,
+        room_id: str,
+    ) -> None:
+        from .api.room import prewarm_room
+
+        return await prewarm_room._asyncio(
+            room_id=room_id,
+            client=self._client,
+        )
+
+    async def upsert_room(
         self,
         room_id: str,
         *,
-        body: PostRoomsUpdateRoomIdFilesBody | Unset = UNSET,
+        body: UpsertRoomRequestBody | Unset = UNSET,
     ) -> Room:
-        from .api.room import post_rooms_update_room_id
+        from .api.room import upsert_room
 
-        return await post_rooms_update_room_id._asyncio(
+        return await upsert_room._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_active_users(
+    async def update_room_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        from .api.room import update_room_id
+
+        return await update_room_id._asyncio(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def get_active_users(
         self,
         room_id: str,
     ) -> ActiveUsersResponse:
-        from .api.room import get_rooms_room_id_active_users
+        from .api.room import get_active_users
 
-        return await get_rooms_room_id_active_users._asyncio(
+        return await get_active_users._asyncio(
             room_id=room_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_presence(
+    async def set_presence(
         self,
         room_id: str,
         *,
-        body: SetPresence,
-    ) -> Any:
-        from .api.room import post_rooms_room_id_presence
+        body: SetPresenceRequestBody,
+    ) -> None:
+        from .api.room import set_presence
 
-        return await post_rooms_room_id_presence._asyncio(
+        return await set_presence._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_storage(
+    async def broadcast_event(
         self,
         room_id: str,
         *,
-        format_: GetRoomsRoomIdStorageFormat | Unset = UNSET,
-    ) -> GetRoomsRoomIdStorageResponse200:
-        from .api.storage import get_rooms_room_id_storage
+        body: Any | Unset = UNSET,
+    ) -> None:
+        from .api.room import broadcast_event
 
-        return await get_rooms_room_id_storage._asyncio(
+        return await broadcast_event._asyncio(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    async def get_storage_document(
+        self,
+        room_id: str,
+        *,
+        format_: GetStorageDocumentFormat | Unset = UNSET,
+    ) -> GetStorageDocumentResponse:
+        from .api.storage import get_storage_document
+
+        return await get_storage_document._asyncio(
             room_id=room_id,
             format_=format_,
             client=self._client,
         )
 
-    async def post_rooms_room_id_storage(
+    async def initialize_storage_document(
         self,
         room_id: str,
         *,
-        body: PostRoomsRoomIdStorageBody | Unset = UNSET,
-    ) -> PostRoomsRoomIdStorageResponse200:
-        from .api.storage import post_rooms_room_id_storage
+        body: InitializeStorageDocumentBody | Unset = UNSET,
+    ) -> InitializeStorageDocumentResponse:
+        from .api.storage import initialize_storage_document
 
-        return await post_rooms_room_id_storage._asyncio(
+        return await initialize_storage_document._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
@@ -1709,7 +1719,7 @@ class AsyncLiveblocks:
     async def delete_rooms_room_id_storage(
         self,
         room_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.storage import delete_rooms_room_id_storage
 
         return await delete_rooms_room_id_storage._asyncio(
@@ -1717,31 +1727,38 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def patch_rooms_room_id_storage_json_patch(
+    async def patch_storage_document(
         self,
         room_id: str,
         *,
-        body: list[PatchRoomsRoomIdStorageJsonPatchBodyItem],
-    ) -> Any:
-        from .api.storage import patch_rooms_room_id_storage_json_patch
+        body: list[
+            AddJsonPatchOperation
+            | CopyJsonPatchOperation
+            | MoveJsonPatchOperation
+            | RemoveJsonPatchOperation
+            | ReplaceJsonPatchOperation
+            | TestJsonPatchOperation
+        ],
+    ) -> None:
+        from .api.storage import patch_storage_document
 
-        return await patch_rooms_room_id_storage_json_patch._asyncio(
+        return await patch_storage_document._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_ydoc(
+    async def get_yjs_document(
         self,
         room_id: str,
         *,
         formatting: bool | Unset = UNSET,
         key: str | Unset = UNSET,
-        type_: GetRoomsRoomIdYdocType | Unset = UNSET,
-    ) -> GetRoomsRoomIdYdocResponse200:
-        from .api.yjs import get_rooms_room_id_ydoc
+        type_: GetYjsDocumentType | Unset = UNSET,
+    ) -> GetYjsDocumentResponse:
+        from .api.yjs import get_yjs_document
 
-        return await get_rooms_room_id_ydoc._asyncio(
+        return await get_yjs_document._asyncio(
             room_id=room_id,
             formatting=formatting,
             key=key,
@@ -1749,259 +1766,259 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def put_rooms_room_id_ydoc(
+    async def send_yjs_binary_update(
         self,
         room_id: str,
         *,
         body: File | Unset = UNSET,
         guid: str | Unset = UNSET,
-    ) -> Any:
-        from .api.yjs import put_rooms_room_id_ydoc
+    ) -> None:
+        from .api.yjs import send_yjs_binary_update
 
-        return await put_rooms_room_id_ydoc._asyncio(
+        return await send_yjs_binary_update._asyncio(
             room_id=room_id,
             body=body,
             guid=guid,
             client=self._client,
         )
 
-    async def get_rooms_room_id_ydoc_binary(
+    async def get_yjs_document_as_binary_update(
         self,
         room_id: str,
         *,
         guid: str | Unset = UNSET,
     ) -> File:
-        from .api.yjs import get_rooms_room_id_ydoc_binary
+        from .api.yjs import get_yjs_document_as_binary_update
 
-        return await get_rooms_room_id_ydoc_binary._asyncio(
+        return await get_yjs_document_as_binary_update._asyncio(
             room_id=room_id,
             guid=guid,
             client=self._client,
         )
 
-    async def get_rooms_room_id_versions(
+    async def get_yjs_versions(
         self,
         room_id: str,
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> GetYjsVersions:
-        from .api.yjs import get_rooms_room_id_versions
+    ) -> GetYjsVersionsResponse:
+        from .api.yjs import get_yjs_versions
 
-        return await get_rooms_room_id_versions._asyncio(
+        return await get_yjs_versions._asyncio(
             room_id=room_id,
             limit=limit,
             cursor=cursor,
             client=self._client,
         )
 
-    async def get_rooms_room_id_version_version_id(
+    async def get_yjs_version(
         self,
         room_id: str,
         version_id: str,
     ) -> File:
-        from .api.yjs import get_rooms_room_id_version_version_id
+        from .api.yjs import get_yjs_version
 
-        return await get_rooms_room_id_version_version_id._asyncio(
+        return await get_yjs_version._asyncio(
             room_id=room_id,
             version_id=version_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_version(
+    async def create_yjs_version(
         self,
         room_id: str,
-    ) -> CreateYjsVersion:
-        from .api.yjs import post_rooms_room_id_version
+    ) -> CreateYjsVersionResponse:
+        from .api.yjs import create_yjs_version
 
-        return await post_rooms_room_id_version._asyncio(
+        return await create_yjs_version._asyncio(
             room_id=room_id,
             client=self._client,
         )
 
-    async def get_rooms_room_id_threads(
+    async def get_threads(
         self,
         room_id: str,
         *,
         query: str | Unset = UNSET,
-    ) -> None:
-        from .api.comments import get_rooms_room_id_threads
+    ) -> GetThreadsResponse:
+        from .api.comments import get_threads
 
-        return await get_rooms_room_id_threads._asyncio(
+        return await get_threads._asyncio(
             room_id=room_id,
             query=query,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads(
+    async def create_thread(
         self,
         room_id: str,
         *,
-        body: CreateThread | Unset = UNSET,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads
+        body: CreateThreadRequestBody | Unset = UNSET,
+    ) -> Thread:
+        from .api.comments import create_thread
 
-        return await post_rooms_room_id_threads._asyncio(
+        return await create_thread._asyncio(
             room_id=room_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_threads_thread_id(
+    async def get_thread(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> Thread:
+        from .api.comments import get_thread
+
+        return await get_thread._asyncio(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
+    async def delete_thread(
         self,
         room_id: str,
         thread_id: str,
     ) -> None:
-        from .api.comments import get_rooms_room_id_threads_thread_id
+        from .api.comments import delete_thread
 
-        return await get_rooms_room_id_threads_thread_id._asyncio(
+        return await delete_thread._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    async def delete_rooms_room_id_threads_thread_id(
-        self,
-        room_id: str,
-        thread_id: str,
-    ) -> Any:
-        from .api.comments import delete_rooms_room_id_threads_thread_id
-
-        return await delete_rooms_room_id_threads_thread_id._asyncio(
-            room_id=room_id,
-            thread_id=thread_id,
-            client=self._client,
-        )
-
-    async def post_rooms_room_id_threads_thread_id_metadata(
+    async def edit_thread_metadata(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadata | Unset = UNSET,
+        body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
     ) -> ThreadMetadata:
-        from .api.comments import post_rooms_room_id_threads_thread_id_metadata
+        from .api.comments import edit_thread_metadata
 
-        return await post_rooms_room_id_threads_thread_id_metadata._asyncio(
+        return await edit_thread_metadata._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_mark_as_resolved(
+    async def mark_thread_as_resolved(
         self,
         room_id: str,
         thread_id: str,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads_thread_id_mark_as_resolved
+    ) -> Thread:
+        from .api.comments import mark_thread_as_resolved
 
-        return await post_rooms_room_id_threads_thread_id_mark_as_resolved._asyncio(
+        return await mark_thread_as_resolved._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_mark_as_unresolved(
+    async def mark_thread_as_unresolved(
         self,
         room_id: str,
         thread_id: str,
-    ) -> None:
-        from .api.comments import post_rooms_room_id_threads_thread_id_mark_as_unresolved
+    ) -> Thread:
+        from .api.comments import mark_thread_as_unresolved
 
-        return await post_rooms_room_id_threads_thread_id_mark_as_unresolved._asyncio(
+        return await mark_thread_as_unresolved._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_subscribe(
+    async def subscribe_to_thread(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: PostRoomsRoomIdThreadsThreadIdSubscribeBody,
+        body: SubscribeToThreadRequestBody,
     ) -> Subscription:
-        from .api.comments import post_rooms_room_id_threads_thread_id_subscribe
+        from .api.comments import subscribe_to_thread
 
-        return await post_rooms_room_id_threads_thread_id_subscribe._asyncio(
+        return await subscribe_to_thread._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_unsubscribe(
+    async def unsubscribe_from_thread(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: PostRoomsRoomIdThreadsThreadIdUnsubscribeBody,
-    ) -> PostRoomsRoomIdThreadsThreadIdUnsubscribeResponse200:
-        from .api.comments import post_rooms_room_id_threads_thread_id_unsubscribe
+        body: UnsubscribeFromThreadRequestBody,
+    ) -> None:
+        from .api.comments import unsubscribe_from_thread
 
-        return await post_rooms_room_id_threads_thread_id_unsubscribe._asyncio(
+        return await unsubscribe_from_thread._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_threads_thread_id_subscriptions(
+    async def get_thread_subscriptions(
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetRoomsRoomIdThreadsThreadIdSubscriptionsResponse200:
-        from .api.comments import get_rooms_room_id_threads_thread_id_subscriptions
+    ) -> GetThreadSubscriptionsResponse:
+        from .api.comments import get_thread_subscriptions
 
-        return await get_rooms_room_id_threads_thread_id_subscriptions._asyncio(
+        return await get_thread_subscriptions._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_comments(
+    async def create_comment(
         self,
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateComment | Unset = UNSET,
+        body: CreateCommentRequestBody | Unset = UNSET,
     ) -> Comment:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments
+        from .api.comments import create_comment
 
-        return await post_rooms_room_id_threads_thread_id_comments._asyncio(
+        return await create_comment._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             body=body,
             client=self._client,
         )
 
-    async def get_rooms_room_id_threads_thread_id_comments_comment_id(
+    async def get_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
     ) -> Comment:
-        from .api.comments import get_rooms_room_id_threads_thread_id_comments_comment_id
+        from .api.comments import get_comment
 
-        return await get_rooms_room_id_threads_thread_id_comments_comment_id._asyncio(
+        return await get_comment._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_comments_comment_id(
+    async def edit_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: UpdateComment | Unset = UNSET,
-    ) -> UpdateComment:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id
+        body: EditCommentRequestBody | Unset = UNSET,
+    ) -> Comment:
+        from .api.comments import edit_comment
 
-        return await post_rooms_room_id_threads_thread_id_comments_comment_id._asyncio(
+        return await edit_comment._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -2009,32 +2026,32 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def delete_rooms_room_id_threads_thread_id_comments_comment_id(
+    async def delete_comment(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
-    ) -> Any:
-        from .api.comments import delete_rooms_room_id_threads_thread_id_comments_comment_id
+    ) -> None:
+        from .api.comments import delete_comment
 
-        return await delete_rooms_room_id_threads_thread_id_comments_comment_id._asyncio(
+        return await delete_comment._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction(
+    async def add_comment_reaction(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: AddCommentReaction | Unset = UNSET,
+        body: AddCommentReactionRequestBody | Unset = UNSET,
     ) -> CommentReaction:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction
+        from .api.comments import add_comment_reaction
 
-        return await post_rooms_room_id_threads_thread_id_comments_comment_id_add_reaction._asyncio(
+        return await add_comment_reaction._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -2042,17 +2059,17 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction(
+    async def remove_comment_reaction(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: RemoveCommentReaction | Unset = UNSET,
-    ) -> Any:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction
+        body: RemoveCommentReactionRequestBody | Unset = UNSET,
+    ) -> None:
+        from .api.comments import remove_comment_reaction
 
-        return await post_rooms_room_id_threads_thread_id_comments_comment_id_remove_reaction._asyncio(
+        return await remove_comment_reaction._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -2060,17 +2077,17 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_rooms_room_id_threads_thread_id_comments_comment_id_metadata(
+    async def edit_comment_metadata(
         self,
         room_id: str,
         thread_id: str,
         comment_id: str,
         *,
-        body: UpdateCommentMetadata | Unset = UNSET,
+        body: EditCommentMetadataRequestBody | Unset = UNSET,
     ) -> CommentMetadata:
-        from .api.comments import post_rooms_room_id_threads_thread_id_comments_comment_id_metadata
+        from .api.comments import edit_comment_metadata
 
-        return await post_rooms_room_id_threads_thread_id_comments_comment_id_metadata._asyncio(
+        return await edit_comment_metadata._asyncio(
             room_id=room_id,
             thread_id=thread_id,
             comment_id=comment_id,
@@ -2078,44 +2095,16 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def get_rooms_room_id_threads_thread_id_participants(
+    async def get_thread_participants(
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetRoomsRoomIdThreadsThreadIdParticipantsResponse200:
-        from .api.deprecated import get_rooms_room_id_threads_thread_id_participants
+    ) -> GetThreadParticipantsResponse:
+        from .api.deprecated import get_thread_participants
 
-        return await get_rooms_room_id_threads_thread_id_participants._asyncio(
+        return await get_thread_participants._asyncio(
             room_id=room_id,
             thread_id=thread_id,
-            client=self._client,
-        )
-
-    async def post_authorize(
-        self,
-        room_id: str,
-        *,
-        body: CreateAuthorization | Unset = UNSET,
-    ) -> Authorization:
-        from .api.deprecated import post_authorize
-
-        return await post_authorize._asyncio(
-            room_id=room_id,
-            body=body,
-            client=self._client,
-        )
-
-    async def post_public_authorize(
-        self,
-        room_id: str,
-        *,
-        body: PublicAuthorizeBodyRequest | Unset = UNSET,
-    ) -> Authorization:
-        from .api.deprecated import post_public_authorize
-
-        return await post_public_authorize._asyncio(
-            room_id=room_id,
-            body=body,
             client=self._client,
         )
 
@@ -2152,7 +2141,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.deprecated import delete_rooms_room_id_users_user_id_notification_settings
 
         return await delete_rooms_room_id_users_user_id_notification_settings._asyncio(
@@ -2161,26 +2150,26 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_authorize_user(
+    async def authorize_user(
         self,
         *,
-        body: AuthorizeUserRequest | Unset = UNSET,
-    ) -> AnHTTPResponseBodyContainingAToken:
-        from .api.authentication import post_authorize_user
+        body: AuthorizeUserRequestBody | Unset = UNSET,
+    ) -> AuthorizeUserResponse:
+        from .api.authentication import authorize_user
 
-        return await post_authorize_user._asyncio(
+        return await authorize_user._asyncio(
             body=body,
             client=self._client,
         )
 
-    async def post_identify_user(
+    async def identify_user(
         self,
         *,
-        body: IdentifyUserRequest | Unset = UNSET,
-    ) -> AnHTTPResponseBodyContainingAToken:
-        from .api.authentication import post_identify_user
+        body: IdentifyUserRequestBody | Unset = UNSET,
+    ) -> IdentifyUserResponse:
+        from .api.authentication import identify_user
 
-        return await post_identify_user._asyncio(
+        return await identify_user._asyncio(
             body=body,
             client=self._client,
         )
@@ -2202,7 +2191,7 @@ class AsyncLiveblocks:
         self,
         user_id: str,
         inbox_notification_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_inbox_notifications_inbox_notification_id
 
         return await delete_users_user_id_inbox_notifications_inbox_notification_id._asyncio(
@@ -2234,7 +2223,7 @@ class AsyncLiveblocks:
     async def delete_users_user_id_inbox_notifications(
         self,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_inbox_notifications
 
         return await delete_users_user_id_inbox_notifications._asyncio(
@@ -2270,7 +2259,7 @@ class AsyncLiveblocks:
     async def delete_users_user_id_notification_settings(
         self,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_users_user_id_notification_settings
 
         return await delete_users_user_id_notification_settings._asyncio(
@@ -2311,7 +2300,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         user_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import delete_rooms_room_id_users_user_id_subscription_settings
 
         return await delete_rooms_room_id_users_user_id_subscription_settings._asyncio(
@@ -2340,7 +2329,7 @@ class AsyncLiveblocks:
         self,
         *,
         body: TriggerInboxNotification | Unset = UNSET,
-    ) -> Any:
+    ) -> None:
         from .api.notifications import post_inbox_notifications_trigger
 
         return await post_inbox_notifications_trigger._asyncio(
@@ -2388,7 +2377,7 @@ class AsyncLiveblocks:
     async def delete_groups_group_id(
         self,
         group_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.groups import delete_groups_group_id
 
         return await delete_groups_group_id._asyncio(
@@ -2445,7 +2434,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetAiCopilots:
+    ) -> GetAiCopilotsResponse:
         from .api.ai import get_ai_copilots
 
         return await get_ai_copilots._asyncio(
@@ -2457,8 +2446,12 @@ class AsyncLiveblocks:
     async def create_ai_copilot(
         self,
         *,
-        body: CreateAiCopilot | Unset = UNSET,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+        body: CreateAiCopilotOptionsAnthropic
+        | CreateAiCopilotOptionsGoogle
+        | CreateAiCopilotOptionsOpenAi
+        | CreateAiCopilotOptionsOpenAiCompatible
+        | Unset = UNSET,
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import create_ai_copilot
 
         return await create_ai_copilot._asyncio(
@@ -2469,7 +2462,7 @@ class AsyncLiveblocks:
     async def get_ai_copilot(
         self,
         copilot_id: str,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import get_ai_copilot
 
         return await get_ai_copilot._asyncio(
@@ -2481,8 +2474,8 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         *,
-        body: UpdateAiCopilot | Unset = UNSET,
-    ) -> AiCopilotType0 | AiCopilotType1 | AiCopilotType2 | AiCopilotType3:
+        body: UpdateAiCopilotRequestBody | Unset = UNSET,
+    ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import update_ai_copilot
 
         return await update_ai_copilot._asyncio(
@@ -2494,7 +2487,7 @@ class AsyncLiveblocks:
     async def delete_ai_copilot(
         self,
         copilot_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_ai_copilot
 
         return await delete_ai_copilot._asyncio(
@@ -2508,7 +2501,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetKnowledgeSources:
+    ) -> GetKnowledgeSourcesResponse:
         from .api.ai import get_knowledge_sources
 
         return await get_knowledge_sources._asyncio(
@@ -2522,7 +2515,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> FileKnowledgeSource | WebKnowledgeSource:
+    ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
         from .api.ai import get_knowledge_source
 
         return await get_knowledge_source._asyncio(
@@ -2535,8 +2528,8 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         *,
-        body: CreateWebKnowledgeSource | Unset = UNSET,
-    ) -> CreateWebKnowledgeSourceResponse200:
+        body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+    ) -> CreateWebKnowledgeSourceResponse:
         from .api.ai import create_web_knowledge_source
 
         return await create_web_knowledge_source._asyncio(
@@ -2561,14 +2554,14 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def get_file_knowledge_source_content(
+    async def get_file_knowledge_source_markdown(
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> GetFileKnowledgeSourceContentResponse200:
-        from .api.ai import get_file_knowledge_source_content
+    ) -> GetFileKnowledgeSourceMarkdownResponse:
+        from .api.ai import get_file_knowledge_source_markdown
 
-        return await get_file_knowledge_source_content._asyncio(
+        return await get_file_knowledge_source_markdown._asyncio(
             copilot_id=copilot_id,
             knowledge_source_id=knowledge_source_id,
             client=self._client,
@@ -2578,7 +2571,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_file_knowledge_source
 
         return await delete_file_knowledge_source._asyncio(
@@ -2591,7 +2584,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         knowledge_source_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.ai import delete_web_knowledge_source
 
         return await delete_web_knowledge_source._asyncio(
@@ -2607,7 +2600,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> None:
+    ) -> GetWebKnowledgeSourceLinksResponse:
         from .api.ai import get_web_knowledge_source_links
 
         return await get_web_knowledge_source_links._asyncio(
@@ -2672,7 +2665,7 @@ class AsyncLiveblocks:
     async def delete_management_project(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import delete_management_project
 
         return await delete_management_project._asyncio(
@@ -2683,7 +2676,7 @@ class AsyncLiveblocks:
     async def post_management_project_public_key_activate(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_project_public_key_activate
 
         return await post_management_project_public_key_activate._asyncio(
@@ -2694,7 +2687,7 @@ class AsyncLiveblocks:
     async def post_management_project_public_key_deactivate(
         self,
         project_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_project_public_key_deactivate
 
         return await post_management_project_public_key_deactivate._asyncio(
@@ -2793,7 +2786,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> Any:
+    ) -> None:
         from .api.management import delete_management_webhook
 
         return await delete_management_webhook._asyncio(
@@ -2866,7 +2859,7 @@ class AsyncLiveblocks:
         webhook_id: str,
         *,
         body: ManagementWebhookRecoverRequest | Unset = UNSET,
-    ) -> Any:
+    ) -> None:
         from .api.management import post_management_webhook_recover_failed_messages
 
         return await post_management_webhook_recover_failed_messages._asyncio(

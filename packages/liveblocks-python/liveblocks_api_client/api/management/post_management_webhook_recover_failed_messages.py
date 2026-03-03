@@ -33,7 +33,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> Any:
+def _parse_response(*, response: httpx.Response) -> None:
     if response.status_code == 200:
         return None
 
@@ -46,7 +46,7 @@ def _sync(
     *,
     client: httpx.Client,
     body: ManagementWebhookRecoverRequest | Unset = UNSET,
-) -> Any:
+) -> None:
     """Recover failed webhook messages
 
      Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
@@ -63,7 +63,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -75,8 +75,7 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    return None
+    return _parse_response(response=response)
 
 
 async def _asyncio(
@@ -85,7 +84,7 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
     body: ManagementWebhookRecoverRequest | Unset = UNSET,
-) -> Any:
+) -> None:
     """Recover failed webhook messages
 
      Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
@@ -102,7 +101,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -115,4 +114,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    return None
+    return _parse_response(response=response)

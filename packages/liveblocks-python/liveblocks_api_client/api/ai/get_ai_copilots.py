@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 from ... import errors
-from ...models.get_ai_copilots import GetAiCopilots
+from ...models.get_ai_copilots_response import GetAiCopilotsResponse
 from ...types import UNSET, Unset
 
 
@@ -30,9 +30,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetAiCopilots:
+def _parse_response(*, response: httpx.Response) -> GetAiCopilotsResponse:
     if response.status_code == 200:
-        response_200 = GetAiCopilots.from_dict(response.json())
+        response_200 = GetAiCopilotsResponse.from_dict(response.json())
 
         return response_200
 
@@ -44,7 +44,7 @@ def _sync(
     client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetAiCopilots:
+) -> GetAiCopilotsResponse:
     """Get AI copilots
 
      This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
@@ -60,7 +60,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetAiCopilots
+        GetAiCopilotsResponse
     """
 
     kwargs = _get_kwargs(
@@ -71,7 +71,6 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
     return _parse_response(response=response)
 
 
@@ -80,7 +79,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetAiCopilots:
+) -> GetAiCopilotsResponse:
     """Get AI copilots
 
      This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
@@ -96,7 +95,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetAiCopilots
+        GetAiCopilotsResponse
     """
 
     kwargs = _get_kwargs(

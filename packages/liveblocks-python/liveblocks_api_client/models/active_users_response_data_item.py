@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
+if TYPE_CHECKING:
+    from ..models.active_users_response_data_item_info import ActiveUsersResponseDataItemInfo
+
 
 T = TypeVar("T", bound="ActiveUsersResponseDataItem")
 
@@ -15,38 +17,65 @@ T = TypeVar("T", bound="ActiveUsersResponseDataItem")
 class ActiveUsersResponseDataItem:
     """
     Attributes:
-        type_ (str | Unset):
-        connection_id (float | Unset):
+        type_ (Literal['user']):
+        id (None | str):
+        info (ActiveUsersResponseDataItemInfo):
+        connection_id (float):
     """
 
-    type_: str | Unset = UNSET
-    connection_id: float | Unset = UNSET
+    type_: Literal["user"]
+    id: None | str
+    info: ActiveUsersResponseDataItemInfo
+    connection_id: float
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         type_ = self.type_
 
+        id: None | str
+        id = self.id
+
+        info = self.info.to_dict()
+
         connection_id = self.connection_id
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if type_ is not UNSET:
-            field_dict["type"] = type_
-        if connection_id is not UNSET:
-            field_dict["connectionId"] = connection_id
+        field_dict.update(
+            {
+                "type": type_,
+                "id": id,
+                "info": info,
+                "connectionId": connection_id,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        d = dict(src_dict)
-        type_ = d.pop("type", UNSET)
+        from ..models.active_users_response_data_item_info import ActiveUsersResponseDataItemInfo
 
-        connection_id = d.pop("connectionId", UNSET)
+        d = dict(src_dict)
+        type_ = cast(Literal["user"], d.pop("type"))
+        if type_ != "user":
+            raise ValueError(f"type must match const 'user', got '{type_}'")
+
+        def _parse_id(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        id = _parse_id(d.pop("id"))
+
+        info = ActiveUsersResponseDataItemInfo.from_dict(d.pop("info"))
+
+        connection_id = d.pop("connectionId")
 
         active_users_response_data_item = cls(
             type_=type_,
+            id=id,
+            info=info,
             connection_id=connection_id,
         )
 

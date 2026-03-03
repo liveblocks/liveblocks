@@ -22,28 +22,28 @@ T = TypeVar("T", bound="Comment")
 class Comment:
     """
     Attributes:
-        type_ (Literal['comment']):  Default: 'comment'.
+        type_ (Literal['comment']):
         thread_id (str):
         room_id (str):
         id (str):
         user_id (str):
         created_at (datetime.datetime):
+        metadata (CommentMetadata):
         edited_at (datetime.datetime | Unset):
         deleted_at (datetime.datetime | Unset):
         body (CommentBody | Unset):
-        metadata (CommentMetadata | Unset):
     """
 
+    type_: Literal["comment"]
     thread_id: str
     room_id: str
     id: str
     user_id: str
     created_at: datetime.datetime
-    type_: Literal["comment"] = "comment"
+    metadata: CommentMetadata
     edited_at: datetime.datetime | Unset = UNSET
     deleted_at: datetime.datetime | Unset = UNSET
     body: CommentBody | Unset = UNSET
-    metadata: CommentMetadata | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -59,6 +59,8 @@ class Comment:
 
         created_at = self.created_at.isoformat()
 
+        metadata = self.metadata.to_dict()
+
         edited_at: str | Unset = UNSET
         if not isinstance(self.edited_at, Unset):
             edited_at = self.edited_at.isoformat()
@@ -71,10 +73,6 @@ class Comment:
         if not isinstance(self.body, Unset):
             body = self.body.to_dict()
 
-        metadata: dict[str, Any] | Unset = UNSET
-        if not isinstance(self.metadata, Unset):
-            metadata = self.metadata.to_dict()
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -85,6 +83,7 @@ class Comment:
                 "id": id,
                 "userId": user_id,
                 "createdAt": created_at,
+                "metadata": metadata,
             }
         )
         if edited_at is not UNSET:
@@ -93,8 +92,6 @@ class Comment:
             field_dict["deletedAt"] = deleted_at
         if body is not UNSET:
             field_dict["body"] = body
-        if metadata is not UNSET:
-            field_dict["metadata"] = metadata
 
         return field_dict
 
@@ -118,6 +115,8 @@ class Comment:
 
         created_at = isoparse(d.pop("createdAt"))
 
+        metadata = CommentMetadata.from_dict(d.pop("metadata"))
+
         _edited_at = d.pop("editedAt", UNSET)
         edited_at: datetime.datetime | Unset
         if isinstance(_edited_at, Unset):
@@ -139,13 +138,6 @@ class Comment:
         else:
             body = CommentBody.from_dict(_body)
 
-        _metadata = d.pop("metadata", UNSET)
-        metadata: CommentMetadata | Unset
-        if isinstance(_metadata, Unset):
-            metadata = UNSET
-        else:
-            metadata = CommentMetadata.from_dict(_metadata)
-
         comment = cls(
             type_=type_,
             thread_id=thread_id,
@@ -153,10 +145,10 @@ class Comment:
             id=id,
             user_id=user_id,
             created_at=created_at,
+            metadata=metadata,
             edited_at=edited_at,
             deleted_at=deleted_at,
             body=body,
-            metadata=metadata,
         )
 
         comment.additional_properties = d

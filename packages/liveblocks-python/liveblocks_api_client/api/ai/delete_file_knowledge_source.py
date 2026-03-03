@@ -22,7 +22,7 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> Any:
+def _parse_response(*, response: httpx.Response) -> None:
     if response.status_code == 204:
         return None
 
@@ -34,7 +34,7 @@ def _sync(
     knowledge_source_id: str,
     *,
     client: httpx.Client,
-) -> Any:
+) -> None:
     """Delete file knowledge source
 
      This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
@@ -51,7 +51,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -62,8 +62,7 @@ def _sync(
     response = client.request(
         **kwargs,
     )
-
-    return None
+    return _parse_response(response=response)
 
 
 async def _asyncio(
@@ -71,7 +70,7 @@ async def _asyncio(
     knowledge_source_id: str,
     *,
     client: httpx.AsyncClient,
-) -> Any:
+) -> None:
     """Delete file knowledge source
 
      This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
@@ -88,7 +87,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Any
+        None
     """
 
     kwargs = _get_kwargs(
@@ -100,4 +99,4 @@ async def _asyncio(
         **kwargs,
     )
 
-    return None
+    return _parse_response(response=response)
