@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/server",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Liveblocks backend server foundation.",
   "type": "module",
   "main": "./dist/index.js",
