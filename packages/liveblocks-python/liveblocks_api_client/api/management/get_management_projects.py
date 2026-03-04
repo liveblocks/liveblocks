@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 
 from ... import errors
-from ...models.management_projects_response import ManagementProjectsResponse
+from ...models.get_management_projects_response import GetManagementProjectsResponse
 from ...types import UNSET, Unset
 
 
@@ -30,9 +30,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> ManagementProjectsResponse:
+def _parse_response(*, response: httpx.Response) -> GetManagementProjectsResponse:
     if response.status_code == 200:
-        response_200 = ManagementProjectsResponse.from_dict(response.json())
+        response_200 = GetManagementProjectsResponse.from_dict(response.json())
 
         return response_200
 
@@ -44,7 +44,7 @@ def _sync(
     client: httpx.Client,
     limit: float | Unset = 20.0,
     cursor: str | Unset = UNSET,
-) -> ManagementProjectsResponse:
+) -> GetManagementProjectsResponse:
     """List projects
 
      Returns a paginated list of projects. You can limit the number of projects returned per page and use
@@ -59,7 +59,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ManagementProjectsResponse
+        GetManagementProjectsResponse
     """
 
     kwargs = _get_kwargs(
@@ -78,7 +78,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     cursor: str | Unset = UNSET,
-) -> ManagementProjectsResponse:
+) -> GetManagementProjectsResponse:
     """List projects
 
      Returns a paginated list of projects. You can limit the number of projects returned per page and use
@@ -93,7 +93,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ManagementProjectsResponse
+        GetManagementProjectsResponse
     """
 
     kwargs = _get_kwargs(

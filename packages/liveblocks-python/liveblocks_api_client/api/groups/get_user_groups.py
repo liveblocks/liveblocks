@@ -1,13 +1,15 @@
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...models.get_groups_response import GetGroupsResponse
+from ...models.get_user_groups_response import GetUserGroupsResponse
 from ...types import UNSET, Unset
 
 
 def _get_kwargs(
+    user_id: str,
     *,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
@@ -23,16 +25,18 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/groups",
+        "url": "/users/{user_id}/groups".format(
+            user_id=quote(str(user_id), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetGroupsResponse:
+def _parse_response(*, response: httpx.Response) -> GetUserGroupsResponse:
     if response.status_code == 200:
-        response_200 = GetGroupsResponse.from_dict(response.json())
+        response_200 = GetUserGroupsResponse.from_dict(response.json())
 
         return response_200
 
@@ -40,17 +44,19 @@ def _parse_response(*, response: httpx.Response) -> GetGroupsResponse:
 
 
 def _sync(
+    user_id: str,
     *,
     client: httpx.Client,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetGroupsResponse:
-    """Get groups
+) -> GetUserGroupsResponse:
+    """Get user groups
 
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+     This endpoint returns all groups that a specific user is a member of. Corresponds to
+    [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
 
     Args:
+        user_id (str):
         limit (float | Unset):  Default: 20.0.
         starting_after (str | Unset):
 
@@ -59,10 +65,11 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetGroupsResponse
+        GetUserGroupsResponse
     """
 
     kwargs = _get_kwargs(
+        user_id=user_id,
         limit=limit,
         starting_after=starting_after,
     )
@@ -74,17 +81,19 @@ def _sync(
 
 
 async def _asyncio(
+    user_id: str,
     *,
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetGroupsResponse:
-    """Get groups
+) -> GetUserGroupsResponse:
+    """Get user groups
 
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+     This endpoint returns all groups that a specific user is a member of. Corresponds to
+    [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
 
     Args:
+        user_id (str):
         limit (float | Unset):  Default: 20.0.
         starting_after (str | Unset):
 
@@ -93,10 +102,11 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetGroupsResponse
+        GetUserGroupsResponse
     """
 
     kwargs = _get_kwargs(
+        user_id=user_id,
         limit=limit,
         starting_after=starting_after,
     )

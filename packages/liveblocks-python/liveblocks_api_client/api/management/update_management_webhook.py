@@ -4,28 +4,39 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_management_webhook_response import GetManagementWebhookResponse
+from ...models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
+from ...models.update_management_webhook_response import UpdateManagementWebhookResponse
+from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     project_id: str,
     webhook_id: str,
+    *,
+    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "get",
+        "method": "post",
         "url": "/management/projects/{project_id}/webhooks/{webhook_id}".format(
             project_id=quote(str(project_id), safe=""),
             webhook_id=quote(str(webhook_id), safe=""),
         ),
     }
 
+    if not isinstance(body, Unset):
+        _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetManagementWebhookResponse:
+def _parse_response(*, response: httpx.Response) -> UpdateManagementWebhookResponse:
     if response.status_code == 200:
-        response_200 = GetManagementWebhookResponse.from_dict(response.json())
+        response_200 = UpdateManagementWebhookResponse.from_dict(response.json())
 
         return response_200
 
@@ -37,28 +48,31 @@ def _sync(
     webhook_id: str,
     *,
     client: httpx.Client,
-) -> GetManagementWebhookResponse:
-    """Get webhook
+    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+) -> UpdateManagementWebhookResponse:
+    """Update webhook
 
-     Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
-    events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook
-    does not exist. This endpoint requires the `read:all` scope.
+     Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
+    stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation
+    errors. This endpoint requires the `write:all` scope.
 
     Args:
         project_id (str):
         webhook_id (str):
+        body (UpdateManagementWebhookRequestBody | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetManagementWebhookResponse
+        UpdateManagementWebhookResponse
     """
 
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
+        body=body,
     )
 
     response = client.request(
@@ -72,28 +86,31 @@ async def _asyncio(
     webhook_id: str,
     *,
     client: httpx.AsyncClient,
-) -> GetManagementWebhookResponse:
-    """Get webhook
+    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+) -> UpdateManagementWebhookResponse:
+    """Update webhook
 
-     Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
-    events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook
-    does not exist. This endpoint requires the `read:all` scope.
+     Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
+    stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation
+    errors. This endpoint requires the `write:all` scope.
 
     Args:
         project_id (str):
         webhook_id (str):
+        body (UpdateManagementWebhookRequestBody | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetManagementWebhookResponse
+        UpdateManagementWebhookResponse
     """
 
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
+        body=body,
     )
 
     response = await client.request(

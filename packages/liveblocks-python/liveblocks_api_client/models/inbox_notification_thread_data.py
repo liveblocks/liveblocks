@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
-from attrs import field as _attrs_field
 from dateutil.parser import isoparse
-
-from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="InboxNotificationThreadData")
 
@@ -17,21 +14,20 @@ T = TypeVar("T", bound="InboxNotificationThreadData")
 class InboxNotificationThreadData:
     """
     Attributes:
-        id (str | Unset):
-        kind (str | Unset):
-        thread_id (str | Unset):
-        room_id (str | Unset):
-        read_at (datetime.datetime | Unset):
-        notified_at (datetime.datetime | Unset):
+        id (str):
+        kind (str):
+        thread_id (str):
+        room_id (str):
+        read_at (datetime.datetime | None):
+        notified_at (datetime.datetime):
     """
 
-    id: str | Unset = UNSET
-    kind: str | Unset = UNSET
-    thread_id: str | Unset = UNSET
-    room_id: str | Unset = UNSET
-    read_at: datetime.datetime | Unset = UNSET
-    notified_at: datetime.datetime | Unset = UNSET
-    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+    id: str
+    kind: str
+    thread_id: str
+    room_id: str
+    read_at: datetime.datetime | None
+    notified_at: datetime.datetime
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
@@ -42,56 +38,56 @@ class InboxNotificationThreadData:
 
         room_id = self.room_id
 
-        read_at: str | Unset = UNSET
-        if not isinstance(self.read_at, Unset):
+        read_at: None | str
+        if isinstance(self.read_at, datetime.datetime):
             read_at = self.read_at.isoformat()
+        else:
+            read_at = self.read_at
 
-        notified_at: str | Unset = UNSET
-        if not isinstance(self.notified_at, Unset):
-            notified_at = self.notified_at.isoformat()
+        notified_at = self.notified_at.isoformat()
 
         field_dict: dict[str, Any] = {}
-        field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if id is not UNSET:
-            field_dict["id"] = id
-        if kind is not UNSET:
-            field_dict["kind"] = kind
-        if thread_id is not UNSET:
-            field_dict["threadId"] = thread_id
-        if room_id is not UNSET:
-            field_dict["roomId"] = room_id
-        if read_at is not UNSET:
-            field_dict["readAt"] = read_at
-        if notified_at is not UNSET:
-            field_dict["notifiedAt"] = notified_at
+
+        field_dict.update(
+            {
+                "id": id,
+                "kind": kind,
+                "threadId": thread_id,
+                "roomId": room_id,
+                "readAt": read_at,
+                "notifiedAt": notified_at,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        id = d.pop("id", UNSET)
+        id = d.pop("id")
 
-        kind = d.pop("kind", UNSET)
+        kind = d.pop("kind")
 
-        thread_id = d.pop("threadId", UNSET)
+        thread_id = d.pop("threadId")
 
-        room_id = d.pop("roomId", UNSET)
+        room_id = d.pop("roomId")
 
-        _read_at = d.pop("readAt", UNSET)
-        read_at: datetime.datetime | Unset
-        if isinstance(_read_at, Unset):
-            read_at = UNSET
-        else:
-            read_at = isoparse(_read_at)
+        def _parse_read_at(data: object) -> datetime.datetime | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, str):
+                    raise TypeError()
+                read_at_type_0 = isoparse(data)
 
-        _notified_at = d.pop("notifiedAt", UNSET)
-        notified_at: datetime.datetime | Unset
-        if isinstance(_notified_at, Unset):
-            notified_at = UNSET
-        else:
-            notified_at = isoparse(_notified_at)
+                return read_at_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(datetime.datetime | None, data)
+
+        read_at = _parse_read_at(d.pop("readAt"))
+
+        notified_at = isoparse(d.pop("notifiedAt"))
 
         inbox_notification_thread_data = cls(
             id=id,
@@ -102,21 +98,4 @@ class InboxNotificationThreadData:
             notified_at=notified_at,
         )
 
-        inbox_notification_thread_data.additional_properties = d
         return inbox_notification_thread_data
-
-    @property
-    def additional_keys(self) -> list[str]:
-        return list(self.additional_properties.keys())
-
-    def __getitem__(self, key: str) -> Any:
-        return self.additional_properties[key]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        self.additional_properties[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        del self.additional_properties[key]
-
-    def __contains__(self, key: str) -> bool:
-        return key in self.additional_properties

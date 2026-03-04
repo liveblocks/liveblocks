@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.management_webhooks_response import ManagementWebhooksResponse
+from ...models.get_management_webhooks_response import GetManagementWebhooksResponse
 from ...types import UNSET, Unset
 
 
@@ -34,9 +34,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> ManagementWebhooksResponse:
+def _parse_response(*, response: httpx.Response) -> GetManagementWebhooksResponse:
     if response.status_code == 200:
-        response_200 = ManagementWebhooksResponse.from_dict(response.json())
+        response_200 = GetManagementWebhooksResponse.from_dict(response.json())
 
         return response_200
 
@@ -49,7 +49,7 @@ def _sync(
     client: httpx.Client,
     limit: float | Unset = 20.0,
     cursor: str | Unset = UNSET,
-) -> ManagementWebhooksResponse:
+) -> GetManagementWebhooksResponse:
     """List webhooks
 
      Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
@@ -69,7 +69,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ManagementWebhooksResponse
+        GetManagementWebhooksResponse
     """
 
     kwargs = _get_kwargs(
@@ -90,7 +90,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     limit: float | Unset = 20.0,
     cursor: str | Unset = UNSET,
-) -> ManagementWebhooksResponse:
+) -> GetManagementWebhooksResponse:
     """List webhooks
 
      Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
@@ -110,7 +110,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ManagementWebhooksResponse
+        GetManagementWebhooksResponse
     """
 
     kwargs = _get_kwargs(

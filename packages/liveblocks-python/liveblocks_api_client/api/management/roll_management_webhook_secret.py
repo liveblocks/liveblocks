@@ -4,26 +4,28 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_management_project_response import GetManagementProjectResponse
+from ...models.rotate_management_webhook_secret_response import RotateManagementWebhookSecretResponse
 
 
 def _get_kwargs(
     project_id: str,
+    webhook_id: str,
 ) -> dict[str, Any]:
 
     _kwargs: dict[str, Any] = {
-        "method": "get",
-        "url": "/management/projects/{project_id}".format(
+        "method": "post",
+        "url": "/management/projects/{project_id}/webhooks/{webhook_id}/secret/roll".format(
             project_id=quote(str(project_id), safe=""),
+            webhook_id=quote(str(webhook_id), safe=""),
         ),
     }
 
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetManagementProjectResponse:
+def _parse_response(*, response: httpx.Response) -> RotateManagementWebhookSecretResponse:
     if response.status_code == 200:
-        response_200 = GetManagementProjectResponse.from_dict(response.json())
+        response_200 = RotateManagementWebhookSecretResponse.from_dict(response.json())
 
         return response_200
 
@@ -32,27 +34,31 @@ def _parse_response(*, response: httpx.Response) -> GetManagementProjectResponse
 
 def _sync(
     project_id: str,
+    webhook_id: str,
     *,
     client: httpx.Client,
-) -> GetManagementProjectResponse:
-    """Get project
+) -> RotateManagementWebhookSecretResponse:
+    """Roll webhook secret
 
-     Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
-    project cannot be found, a 404 error response is returned.
+     Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
+    hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
+    `write:all` scope.
 
     Args:
         project_id (str):
+        webhook_id (str):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetManagementProjectResponse
+        RotateManagementWebhookSecretResponse
     """
 
     kwargs = _get_kwargs(
         project_id=project_id,
+        webhook_id=webhook_id,
     )
 
     response = client.request(
@@ -63,27 +69,31 @@ def _sync(
 
 async def _asyncio(
     project_id: str,
+    webhook_id: str,
     *,
     client: httpx.AsyncClient,
-) -> GetManagementProjectResponse:
-    """Get project
+) -> RotateManagementWebhookSecretResponse:
+    """Roll webhook secret
 
-     Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
-    project cannot be found, a 404 error response is returned.
+     Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
+    hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
+    `write:all` scope.
 
     Args:
         project_id (str):
+        webhook_id (str):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetManagementProjectResponse
+        RotateManagementWebhookSecretResponse
     """
 
     kwargs = _get_kwargs(
         project_id=project_id,
+        webhook_id=webhook_id,
     )
 
     response = await client.request(

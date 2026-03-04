@@ -1,38 +1,42 @@
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from ... import errors
-from ...models.get_groups_response import GetGroupsResponse
+from ...models.get_user_room_subscription_settings_response_200 import GetUserRoomSubscriptionSettingsResponse200
 from ...types import UNSET, Unset
 
 
 def _get_kwargs(
+    user_id: str,
     *,
-    limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
+    limit: float | Unset = 50.0,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
 
-    params["limit"] = limit
-
     params["startingAfter"] = starting_after
+
+    params["limit"] = limit
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/groups",
+        "url": "/users/{user_id}/room-subscription-settings".format(
+            user_id=quote(str(user_id), safe=""),
+        ),
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetGroupsResponse:
+def _parse_response(*, response: httpx.Response) -> GetUserRoomSubscriptionSettingsResponse200:
     if response.status_code == 200:
-        response_200 = GetGroupsResponse.from_dict(response.json())
+        response_200 = GetUserRoomSubscriptionSettingsResponse200.from_dict(response.json())
 
         return response_200
 
@@ -40,31 +44,35 @@ def _parse_response(*, response: httpx.Response) -> GetGroupsResponse:
 
 
 def _sync(
+    user_id: str,
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetGroupsResponse:
-    """Get groups
+    limit: float | Unset = 50.0,
+) -> GetUserRoomSubscriptionSettingsResponse200:
+    """Get user room subscription settings
 
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+     This endpoint returns the list of a user's room subscription settings. Corresponds to
+    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+    room-subscription-settings).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        user_id (str):
         starting_after (str | Unset):
+        limit (float | Unset):  Default: 50.0.
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetGroupsResponse
+        GetUserRoomSubscriptionSettingsResponse200
     """
 
     kwargs = _get_kwargs(
-        limit=limit,
+        user_id=user_id,
         starting_after=starting_after,
+        limit=limit,
     )
 
     response = client.request(
@@ -74,31 +82,35 @@ def _sync(
 
 
 async def _asyncio(
+    user_id: str,
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
     starting_after: str | Unset = UNSET,
-) -> GetGroupsResponse:
-    """Get groups
+    limit: float | Unset = 50.0,
+) -> GetUserRoomSubscriptionSettingsResponse200:
+    """Get user room subscription settings
 
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+     This endpoint returns the list of a user's room subscription settings. Corresponds to
+    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+    room-subscription-settings).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        user_id (str):
         starting_after (str | Unset):
+        limit (float | Unset):  Default: 50.0.
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetGroupsResponse
+        GetUserRoomSubscriptionSettingsResponse200
     """
 
     kwargs = _get_kwargs(
-        limit=limit,
+        user_id=user_id,
         starting_after=starting_after,
+        limit=limit,
     )
 
     response = await client.request(

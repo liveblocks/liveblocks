@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
     from .models.active_users_response import ActiveUsersResponse
     from .models.add_comment_reaction_request_body import AddCommentReactionRequestBody
-    from .models.add_group_members import AddGroupMembers
+    from .models.add_group_members_request_body import AddGroupMembersRequestBody
     from .models.add_json_patch_operation import AddJsonPatchOperation
     from .models.ai_copilot_anthropic import AiCopilotAnthropic
     from .models.ai_copilot_google import AiCopilotGoogle
@@ -30,30 +30,37 @@ if TYPE_CHECKING:
     from .models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
     from .models.create_comment_request_body import CreateCommentRequestBody
     from .models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
-    from .models.create_group import CreateGroup
-    from .models.create_management_project import CreateManagementProject
-    from .models.create_management_webhook import CreateManagementWebhook
+    from .models.create_group_request_body import CreateGroupRequestBody
+    from .models.create_management_project_request_body import CreateManagementProjectRequestBody
+    from .models.create_management_project_response import CreateManagementProjectResponse
+    from .models.create_management_webhook_request_body import CreateManagementWebhookRequestBody
+    from .models.create_management_webhook_response import CreateManagementWebhookResponse
     from .models.create_room_request_body import CreateRoomRequestBody
     from .models.create_thread_request_body import CreateThreadRequestBody
     from .models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
     from .models.create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
     from .models.create_yjs_version_response import CreateYjsVersionResponse
+    from .models.delete_management_webhook_headers_request_body import DeleteManagementWebhookHeadersRequestBody
+    from .models.delete_management_webhook_headers_response import DeleteManagementWebhookHeadersResponse
     from .models.edit_comment_metadata_request_body import EditCommentMetadataRequestBody
     from .models.edit_comment_request_body import EditCommentRequestBody
     from .models.get_ai_copilots_response import GetAiCopilotsResponse
     from .models.get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
-    from .models.get_groups import GetGroups
+    from .models.get_groups_response import GetGroupsResponse
     from .models.get_knowledge_sources_response import GetKnowledgeSourcesResponse
+    from .models.get_management_project_response import GetManagementProjectResponse
+    from .models.get_management_projects_response import GetManagementProjectsResponse
+    from .models.get_management_webhook_headers_response import GetManagementWebhookHeadersResponse
+    from .models.get_management_webhook_response import GetManagementWebhookResponse
+    from .models.get_management_webhooks_response import GetManagementWebhooksResponse
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
     from .models.get_thread_participants_response import GetThreadParticipantsResponse
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
-    from .models.get_user_groups import GetUserGroups
-    from .models.get_users_user_id_subscription_settings_response_200 import (
-        GetUsersUserIdSubscriptionSettingsResponse200,
-    )
+    from .models.get_user_groups_response import GetUserGroupsResponse
+    from .models.get_user_room_subscription_settings_response_200 import GetUserRoomSubscriptionSettingsResponse200
     from .models.get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
     from .models.get_yjs_document_response import GetYjsDocumentResponse
     from .models.get_yjs_document_type import GetYjsDocumentType
@@ -67,43 +74,46 @@ if TYPE_CHECKING:
     from .models.initialize_storage_document_response import InitializeStorageDocumentResponse
     from .models.knowledge_source_file_source import KnowledgeSourceFileSource
     from .models.knowledge_source_web_source import KnowledgeSourceWebSource
-    from .models.management_project_key_roll_request import ManagementProjectKeyRollRequest
-    from .models.management_project_public_key_response import ManagementProjectPublicKeyResponse
-    from .models.management_project_response import ManagementProjectResponse
-    from .models.management_project_secret_key_response import ManagementProjectSecretKeyResponse
-    from .models.management_projects_response import ManagementProjectsResponse
-    from .models.management_webhook_headers_delete import ManagementWebhookHeadersDelete
-    from .models.management_webhook_headers_patch import ManagementWebhookHeadersPatch
-    from .models.management_webhook_headers_response import ManagementWebhookHeadersResponse
-    from .models.management_webhook_recover_request import ManagementWebhookRecoverRequest
-    from .models.management_webhook_response import ManagementWebhookResponse
-    from .models.management_webhook_secret_rotate_response import ManagementWebhookSecretRotateResponse
-    from .models.management_webhook_test_request import ManagementWebhookTestRequest
-    from .models.management_webhook_test_response import ManagementWebhookTestResponse
-    from .models.management_webhooks_response import ManagementWebhooksResponse
+    from .models.management_project_roll_project_secret_api_key_response_secret_key_response import (
+        ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
+    )
     from .models.move_json_patch_operation import MoveJsonPatchOperation
     from .models.notification_settings import NotificationSettings
-    from .models.partial_notification_settings import PartialNotificationSettings
+    from .models.recover_management_webhook_failed_messages_request_body import (
+        RecoverManagementWebhookFailedMessagesRequestBody,
+    )
     from .models.remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
-    from .models.remove_group_members import RemoveGroupMembers
+    from .models.remove_group_members_request_body import RemoveGroupMembersRequestBody
     from .models.remove_json_patch_operation import RemoveJsonPatchOperation
     from .models.replace_json_patch_operation import ReplaceJsonPatchOperation
+    from .models.roll_project_public_api_key_request_body import RollProjectPublicApiKeyRequestBody
+    from .models.roll_project_public_api_key_response import RollProjectPublicApiKeyResponse
+    from .models.roll_project_secret_api_key_request_body import RollProjectSecretApiKeyRequestBody
     from .models.room import Room
     from .models.room_subscription_settings import RoomSubscriptionSettings
+    from .models.rotate_management_webhook_secret_response import RotateManagementWebhookSecretResponse
     from .models.set_presence_request_body import SetPresenceRequestBody
     from .models.subscribe_to_thread_request_body import SubscribeToThreadRequestBody
     from .models.subscription import Subscription
     from .models.test_json_patch_operation import TestJsonPatchOperation
+    from .models.test_management_webhook_request_body import TestManagementWebhookRequestBody
+    from .models.test_management_webhook_response import TestManagementWebhookResponse
     from .models.thread import Thread
     from .models.thread_metadata import ThreadMetadata
-    from .models.trigger_inbox_notification import TriggerInboxNotification
+    from .models.trigger_inbox_notification_request_body import TriggerInboxNotificationRequestBody
     from .models.unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
     from .models.update_ai_copilot_request_body import UpdateAiCopilotRequestBody
-    from .models.update_management_project import UpdateManagementProject
-    from .models.update_management_webhook import UpdateManagementWebhook
+    from .models.update_management_project_request_body import UpdateManagementProjectRequestBody
+    from .models.update_management_project_response import UpdateManagementProjectResponse
+    from .models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
+    from .models.update_management_webhook_response import UpdateManagementWebhookResponse
+    from .models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
     from .models.update_room_request_body import UpdateRoomRequestBody
+    from .models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
     from .models.update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
+    from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
+    from .models.upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
     from .models.upsert_room_request_body import UpsertRoomRequestBody
 
 _DEFAULT_BASE_URL = "https://api.liveblocks.io"
@@ -337,13 +347,13 @@ class Liveblocks:
             client=self._client,
         )
 
-    def delete_rooms_room_id_storage(
+    def delete_storage_document(
         self,
         room_id: str,
     ) -> None:
-        from .api.storage import delete_rooms_room_id_storage
+        from .api.storage import delete_storage_document
 
-        return delete_rooms_room_id_storage._sync(
+        return delete_storage_document._sync(
             room_id=room_id,
             client=self._client,
         )
@@ -729,43 +739,43 @@ class Liveblocks:
             client=self._client,
         )
 
-    def get_rooms_room_id_users_user_id_notification_settings(
+    def get_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
-        from .api.deprecated import get_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import get_room_notification_settings
 
-        return get_rooms_room_id_users_user_id_notification_settings._sync(
+        return get_room_notification_settings._sync(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_users_user_id_notification_settings(
+    def update_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
         *,
-        body: RoomSubscriptionSettings | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
-        from .api.deprecated import post_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import update_room_notification_settings
 
-        return post_rooms_room_id_users_user_id_notification_settings._sync(
+        return update_room_notification_settings._sync(
             room_id=room_id,
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    def delete_rooms_room_id_users_user_id_notification_settings(
+    def delete_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> None:
-        from .api.deprecated import delete_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import delete_room_notification_settings
 
-        return delete_rooms_room_id_users_user_id_notification_settings._sync(
+        return delete_room_notification_settings._sync(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
@@ -795,33 +805,33 @@ class Liveblocks:
             client=self._client,
         )
 
-    def get_users_user_id_inbox_notifications_inbox_notification_id(
+    def get_inbox_notification(
         self,
         user_id: str,
         inbox_notification_id: str,
     ) -> InboxNotificationCustomData | InboxNotificationThreadData:
-        from .api.notifications import get_users_user_id_inbox_notifications_inbox_notification_id
+        from .api.notifications import get_inbox_notification
 
-        return get_users_user_id_inbox_notifications_inbox_notification_id._sync(
+        return get_inbox_notification._sync(
             user_id=user_id,
             inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 
-    def delete_users_user_id_inbox_notifications_inbox_notification_id(
+    def delete_inbox_notification(
         self,
         user_id: str,
         inbox_notification_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_inbox_notifications_inbox_notification_id
+        from .api.notifications import delete_inbox_notification
 
-        return delete_users_user_id_inbox_notifications_inbox_notification_id._sync(
+        return delete_inbox_notification._sync(
             user_id=user_id,
             inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 
-    def get_users_user_id_inbox_notifications(
+    def get_inbox_notifications(
         self,
         user_id: str,
         *,
@@ -830,9 +840,9 @@ class Liveblocks:
         limit: float | Unset = 50.0,
         starting_after: str | Unset = UNSET,
     ) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
-        from .api.notifications import get_users_user_id_inbox_notifications
+        from .api.notifications import get_inbox_notifications
 
-        return get_users_user_id_inbox_notifications._sync(
+        return get_inbox_notifications._sync(
             user_id=user_id,
             organization_id=organization_id,
             query=query,
@@ -841,119 +851,119 @@ class Liveblocks:
             client=self._client,
         )
 
-    def delete_users_user_id_inbox_notifications(
+    def delete_all_inbox_notifications(
         self,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_inbox_notifications
+        from .api.notifications import delete_all_inbox_notifications
 
-        return delete_users_user_id_inbox_notifications._sync(
+        return delete_all_inbox_notifications._sync(
             user_id=user_id,
             client=self._client,
         )
 
-    def get_users_user_id_notification_settings(
+    def get_notification_settings(
         self,
         user_id: str,
     ) -> NotificationSettings:
-        from .api.notifications import get_users_user_id_notification_settings
+        from .api.notifications import get_notification_settings
 
-        return get_users_user_id_notification_settings._sync(
+        return get_notification_settings._sync(
             user_id=user_id,
             client=self._client,
         )
 
-    def post_users_user_id_notification_settings(
+    def update_notification_settings(
         self,
         user_id: str,
         *,
-        body: PartialNotificationSettings | Unset = UNSET,
+        body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
     ) -> NotificationSettings:
-        from .api.notifications import post_users_user_id_notification_settings
+        from .api.notifications import update_notification_settings
 
-        return post_users_user_id_notification_settings._sync(
+        return update_notification_settings._sync(
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    def delete_users_user_id_notification_settings(
+    def delete_notification_settings(
         self,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_notification_settings
+        from .api.notifications import delete_notification_settings
 
-        return delete_users_user_id_notification_settings._sync(
+        return delete_notification_settings._sync(
             user_id=user_id,
             client=self._client,
         )
 
-    def get_rooms_room_id_users_user_id_subscription_settings(
+    def get_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
-        from .api.notifications import get_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import get_room_subscription_settings
 
-        return get_rooms_room_id_users_user_id_subscription_settings._sync(
+        return get_room_subscription_settings._sync(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    def post_rooms_room_id_users_user_id_subscription_settings(
+    def update_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
         *,
-        body: RoomSubscriptionSettings | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
-        from .api.notifications import post_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import update_room_subscription_settings
 
-        return post_rooms_room_id_users_user_id_subscription_settings._sync(
+        return update_room_subscription_settings._sync(
             room_id=room_id,
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    def delete_rooms_room_id_users_user_id_subscription_settings(
+    def delete_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import delete_room_subscription_settings
 
-        return delete_rooms_room_id_users_user_id_subscription_settings._sync(
+        return delete_room_subscription_settings._sync(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    def get_users_user_id_subscription_settings(
+    def get_user_room_subscription_settings(
         self,
         user_id: str,
         *,
         starting_after: str | Unset = UNSET,
         limit: float | Unset = 50.0,
-    ) -> GetUsersUserIdSubscriptionSettingsResponse200:
-        from .api.notifications import get_users_user_id_subscription_settings
+    ) -> GetUserRoomSubscriptionSettingsResponse200:
+        from .api.notifications import get_user_room_subscription_settings
 
-        return get_users_user_id_subscription_settings._sync(
+        return get_user_room_subscription_settings._sync(
             user_id=user_id,
             starting_after=starting_after,
             limit=limit,
             client=self._client,
         )
 
-    def post_inbox_notifications_trigger(
+    def trigger_inbox_notification(
         self,
         *,
-        body: TriggerInboxNotification | Unset = UNSET,
+        body: TriggerInboxNotificationRequestBody | Unset = UNSET,
     ) -> None:
-        from .api.notifications import post_inbox_notifications_trigger
+        from .api.notifications import trigger_inbox_notification
 
-        return post_inbox_notifications_trigger._sync(
+        return trigger_inbox_notification._sync(
             body=body,
             client=self._client,
         )
@@ -963,7 +973,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetGroups:
+    ) -> GetGroupsResponse:
         from .api.groups import get_groups
 
         return get_groups._sync(
@@ -972,78 +982,78 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_groups(
+    def create_group(
         self,
         *,
-        body: CreateGroup | Unset = UNSET,
+        body: CreateGroupRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups
+        from .api.groups import create_group
 
-        return post_groups._sync(
+        return create_group._sync(
             body=body,
             client=self._client,
         )
 
-    def get_groups_group_id(
+    def get_group(
         self,
         group_id: str,
     ) -> Group:
-        from .api.groups import get_groups_group_id
+        from .api.groups import get_group
 
-        return get_groups_group_id._sync(
+        return get_group._sync(
             group_id=group_id,
             client=self._client,
         )
 
-    def delete_groups_group_id(
+    def delete_group(
         self,
         group_id: str,
     ) -> None:
-        from .api.groups import delete_groups_group_id
+        from .api.groups import delete_group
 
-        return delete_groups_group_id._sync(
+        return delete_group._sync(
             group_id=group_id,
             client=self._client,
         )
 
-    def post_groups_group_id_add_members(
+    def add_group_members(
         self,
         group_id: str,
         *,
-        body: AddGroupMembers | Unset = UNSET,
+        body: AddGroupMembersRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups_group_id_add_members
+        from .api.groups import add_group_members
 
-        return post_groups_group_id_add_members._sync(
+        return add_group_members._sync(
             group_id=group_id,
             body=body,
             client=self._client,
         )
 
-    def post_groups_group_id_remove_members(
+    def remove_group_members(
         self,
         group_id: str,
         *,
-        body: RemoveGroupMembers | Unset = UNSET,
+        body: RemoveGroupMembersRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups_group_id_remove_members
+        from .api.groups import remove_group_members
 
-        return post_groups_group_id_remove_members._sync(
+        return remove_group_members._sync(
             group_id=group_id,
             body=body,
             client=self._client,
         )
 
-    def get_users_user_id_groups(
+    def get_user_groups(
         self,
         user_id: str,
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetUserGroups:
-        from .api.groups import get_users_user_id_groups
+    ) -> GetUserGroupsResponse:
+        from .api.groups import get_user_groups
 
-        return get_users_user_id_groups._sync(
+        return get_user_groups._sync(
             user_id=user_id,
             limit=limit,
             starting_after=starting_after,
@@ -1237,7 +1247,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> ManagementProjectsResponse:
+    ) -> GetManagementProjectsResponse:
         from .api.management import get_management_projects
 
         return get_management_projects._sync(
@@ -1246,14 +1256,14 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_projects(
+    def create_management_project(
         self,
         *,
-        body: CreateManagementProject | Unset = UNSET,
-    ) -> ManagementProjectResponse:
-        from .api.management import post_management_projects
+        body: CreateManagementProjectRequestBody | Unset = UNSET,
+    ) -> CreateManagementProjectResponse:
+        from .api.management import create_management_project
 
-        return post_management_projects._sync(
+        return create_management_project._sync(
             body=body,
             client=self._client,
         )
@@ -1261,7 +1271,7 @@ class Liveblocks:
     def get_management_project(
         self,
         project_id: str,
-    ) -> ManagementProjectResponse:
+    ) -> GetManagementProjectResponse:
         from .api.management import get_management_project
 
         return get_management_project._sync(
@@ -1269,15 +1279,15 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_project(
+    def update_management_project(
         self,
         project_id: str,
         *,
-        body: UpdateManagementProject | Unset = UNSET,
-    ) -> ManagementProjectResponse:
-        from .api.management import post_management_project
+        body: UpdateManagementProjectRequestBody | Unset = UNSET,
+    ) -> UpdateManagementProjectResponse:
+        from .api.management import update_management_project
 
-        return post_management_project._sync(
+        return update_management_project._sync(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -1294,51 +1304,51 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_project_public_key_activate(
+    def activate_project_public_api_key(
         self,
         project_id: str,
     ) -> None:
-        from .api.management import post_management_project_public_key_activate
+        from .api.management import activate_project_public_api_key
 
-        return post_management_project_public_key_activate._sync(
+        return activate_project_public_api_key._sync(
             project_id=project_id,
             client=self._client,
         )
 
-    def post_management_project_public_key_deactivate(
+    def deactivate_project_public_api_key(
         self,
         project_id: str,
     ) -> None:
-        from .api.management import post_management_project_public_key_deactivate
+        from .api.management import deactivate_project_public_api_key
 
-        return post_management_project_public_key_deactivate._sync(
+        return deactivate_project_public_api_key._sync(
             project_id=project_id,
             client=self._client,
         )
 
-    def post_management_project_public_key_roll(
+    def roll_project_public_api_key(
         self,
         project_id: str,
         *,
-        body: ManagementProjectKeyRollRequest | Unset = UNSET,
-    ) -> ManagementProjectPublicKeyResponse:
-        from .api.management import post_management_project_public_key_roll
+        body: RollProjectPublicApiKeyRequestBody | Unset = UNSET,
+    ) -> RollProjectPublicApiKeyResponse:
+        from .api.management import roll_project_public_api_key
 
-        return post_management_project_public_key_roll._sync(
+        return roll_project_public_api_key._sync(
             project_id=project_id,
             body=body,
             client=self._client,
         )
 
-    def post_management_project_secret_key_roll(
+    def roll_project_secret_api_key(
         self,
         project_id: str,
         *,
-        body: ManagementProjectKeyRollRequest | Unset = UNSET,
-    ) -> ManagementProjectSecretKeyResponse:
-        from .api.management import post_management_project_secret_key_roll
+        body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
+    ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
+        from .api.management import roll_project_secret_api_key
 
-        return post_management_project_secret_key_roll._sync(
+        return roll_project_secret_api_key._sync(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -1350,7 +1360,7 @@ class Liveblocks:
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> ManagementWebhooksResponse:
+    ) -> GetManagementWebhooksResponse:
         from .api.management import get_management_webhooks
 
         return get_management_webhooks._sync(
@@ -1360,15 +1370,15 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_webhooks(
+    def create_management_webhook(
         self,
         project_id: str,
         *,
-        body: CreateManagementWebhook | Unset = UNSET,
-    ) -> ManagementWebhookResponse:
-        from .api.management import post_management_webhooks
+        body: CreateManagementWebhookRequestBody | Unset = UNSET,
+    ) -> CreateManagementWebhookResponse:
+        from .api.management import create_management_webhook
 
-        return post_management_webhooks._sync(
+        return create_management_webhook._sync(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -1378,7 +1388,7 @@ class Liveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookResponse:
+    ) -> GetManagementWebhookResponse:
         from .api.management import get_management_webhook
 
         return get_management_webhook._sync(
@@ -1387,16 +1397,16 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_webhook(
+    def update_management_webhook(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: UpdateManagementWebhook | Unset = UNSET,
-    ) -> ManagementWebhookResponse:
-        from .api.management import post_management_webhook
+        body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+    ) -> UpdateManagementWebhookResponse:
+        from .api.management import update_management_webhook
 
-        return post_management_webhook._sync(
+        return update_management_webhook._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
@@ -1416,90 +1426,90 @@ class Liveblocks:
             client=self._client,
         )
 
-    def post_management_webhook_secret_roll(
+    def roll_management_webhook_secret(
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookSecretRotateResponse:
-        from .api.management import post_management_webhook_secret_roll
+    ) -> RotateManagementWebhookSecretResponse:
+        from .api.management import roll_management_webhook_secret
 
-        return post_management_webhook_secret_roll._sync(
+        return roll_management_webhook_secret._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             client=self._client,
         )
 
-    def get_management_webhook_headers(
+    def get_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import get_management_webhook_headers
+    ) -> GetManagementWebhookHeadersResponse:
+        from .api.management import get_management_webhook_additional_headers
 
-        return get_management_webhook_headers._sync(
+        return get_management_webhook_additional_headers._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             client=self._client,
         )
 
-    def post_management_webhook_headers(
+    def upsert_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookHeadersPatch | Unset = UNSET,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import post_management_webhook_headers
+        body: UpsertManagementWebhookHeadersRequestBody | Unset = UNSET,
+    ) -> UpsertManagementWebhookHeadersResponse:
+        from .api.management import upsert_management_webhook_additional_headers
 
-        return post_management_webhook_headers._sync(
+        return upsert_management_webhook_additional_headers._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    def post_management_webhook_headers_delete(
+    def delete_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookHeadersDelete | Unset = UNSET,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import post_management_webhook_headers_delete
+        body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+    ) -> DeleteManagementWebhookHeadersResponse:
+        from .api.management import delete_management_webhook_additional_headers
 
-        return post_management_webhook_headers_delete._sync(
+        return delete_management_webhook_additional_headers._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    def post_management_webhook_recover_failed_messages(
+    def recover_failed_webhook_messages(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookRecoverRequest | Unset = UNSET,
+        body: RecoverManagementWebhookFailedMessagesRequestBody | Unset = UNSET,
     ) -> None:
-        from .api.management import post_management_webhook_recover_failed_messages
+        from .api.management import recover_failed_webhook_messages
 
-        return post_management_webhook_recover_failed_messages._sync(
+        return recover_failed_webhook_messages._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    def post_management_webhook_test(
+    def send_test_webhook(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookTestRequest | Unset = UNSET,
-    ) -> ManagementWebhookTestResponse:
-        from .api.management import post_management_webhook_test
+        body: TestManagementWebhookRequestBody | Unset = UNSET,
+    ) -> TestManagementWebhookResponse:
+        from .api.management import send_test_webhook
 
-        return post_management_webhook_test._sync(
+        return send_test_webhook._sync(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
@@ -1716,13 +1726,13 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def delete_rooms_room_id_storage(
+    async def delete_storage_document(
         self,
         room_id: str,
     ) -> None:
-        from .api.storage import delete_rooms_room_id_storage
+        from .api.storage import delete_storage_document
 
-        return await delete_rooms_room_id_storage._asyncio(
+        return await delete_storage_document._asyncio(
             room_id=room_id,
             client=self._client,
         )
@@ -2108,43 +2118,43 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def get_rooms_room_id_users_user_id_notification_settings(
+    async def get_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
-        from .api.deprecated import get_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import get_room_notification_settings
 
-        return await get_rooms_room_id_users_user_id_notification_settings._asyncio(
+        return await get_room_notification_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_users_user_id_notification_settings(
+    async def update_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
         *,
-        body: RoomSubscriptionSettings | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
-        from .api.deprecated import post_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import update_room_notification_settings
 
-        return await post_rooms_room_id_users_user_id_notification_settings._asyncio(
+        return await update_room_notification_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    async def delete_rooms_room_id_users_user_id_notification_settings(
+    async def delete_room_notification_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> None:
-        from .api.deprecated import delete_rooms_room_id_users_user_id_notification_settings
+        from .api.deprecated import delete_room_notification_settings
 
-        return await delete_rooms_room_id_users_user_id_notification_settings._asyncio(
+        return await delete_room_notification_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
@@ -2174,33 +2184,33 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def get_users_user_id_inbox_notifications_inbox_notification_id(
+    async def get_inbox_notification(
         self,
         user_id: str,
         inbox_notification_id: str,
     ) -> InboxNotificationCustomData | InboxNotificationThreadData:
-        from .api.notifications import get_users_user_id_inbox_notifications_inbox_notification_id
+        from .api.notifications import get_inbox_notification
 
-        return await get_users_user_id_inbox_notifications_inbox_notification_id._asyncio(
+        return await get_inbox_notification._asyncio(
             user_id=user_id,
             inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 
-    async def delete_users_user_id_inbox_notifications_inbox_notification_id(
+    async def delete_inbox_notification(
         self,
         user_id: str,
         inbox_notification_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_inbox_notifications_inbox_notification_id
+        from .api.notifications import delete_inbox_notification
 
-        return await delete_users_user_id_inbox_notifications_inbox_notification_id._asyncio(
+        return await delete_inbox_notification._asyncio(
             user_id=user_id,
             inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 
-    async def get_users_user_id_inbox_notifications(
+    async def get_inbox_notifications(
         self,
         user_id: str,
         *,
@@ -2209,9 +2219,9 @@ class AsyncLiveblocks:
         limit: float | Unset = 50.0,
         starting_after: str | Unset = UNSET,
     ) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
-        from .api.notifications import get_users_user_id_inbox_notifications
+        from .api.notifications import get_inbox_notifications
 
-        return await get_users_user_id_inbox_notifications._asyncio(
+        return await get_inbox_notifications._asyncio(
             user_id=user_id,
             organization_id=organization_id,
             query=query,
@@ -2220,119 +2230,119 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def delete_users_user_id_inbox_notifications(
+    async def delete_all_inbox_notifications(
         self,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_inbox_notifications
+        from .api.notifications import delete_all_inbox_notifications
 
-        return await delete_users_user_id_inbox_notifications._asyncio(
+        return await delete_all_inbox_notifications._asyncio(
             user_id=user_id,
             client=self._client,
         )
 
-    async def get_users_user_id_notification_settings(
+    async def get_notification_settings(
         self,
         user_id: str,
     ) -> NotificationSettings:
-        from .api.notifications import get_users_user_id_notification_settings
+        from .api.notifications import get_notification_settings
 
-        return await get_users_user_id_notification_settings._asyncio(
+        return await get_notification_settings._asyncio(
             user_id=user_id,
             client=self._client,
         )
 
-    async def post_users_user_id_notification_settings(
+    async def update_notification_settings(
         self,
         user_id: str,
         *,
-        body: PartialNotificationSettings | Unset = UNSET,
+        body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
     ) -> NotificationSettings:
-        from .api.notifications import post_users_user_id_notification_settings
+        from .api.notifications import update_notification_settings
 
-        return await post_users_user_id_notification_settings._asyncio(
+        return await update_notification_settings._asyncio(
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    async def delete_users_user_id_notification_settings(
+    async def delete_notification_settings(
         self,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_users_user_id_notification_settings
+        from .api.notifications import delete_notification_settings
 
-        return await delete_users_user_id_notification_settings._asyncio(
+        return await delete_notification_settings._asyncio(
             user_id=user_id,
             client=self._client,
         )
 
-    async def get_rooms_room_id_users_user_id_subscription_settings(
+    async def get_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
-        from .api.notifications import get_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import get_room_subscription_settings
 
-        return await get_rooms_room_id_users_user_id_subscription_settings._asyncio(
+        return await get_room_subscription_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    async def post_rooms_room_id_users_user_id_subscription_settings(
+    async def update_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
         *,
-        body: RoomSubscriptionSettings | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
-        from .api.notifications import post_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import update_room_subscription_settings
 
-        return await post_rooms_room_id_users_user_id_subscription_settings._asyncio(
+        return await update_room_subscription_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             body=body,
             client=self._client,
         )
 
-    async def delete_rooms_room_id_users_user_id_subscription_settings(
+    async def delete_room_subscription_settings(
         self,
         room_id: str,
         user_id: str,
     ) -> None:
-        from .api.notifications import delete_rooms_room_id_users_user_id_subscription_settings
+        from .api.notifications import delete_room_subscription_settings
 
-        return await delete_rooms_room_id_users_user_id_subscription_settings._asyncio(
+        return await delete_room_subscription_settings._asyncio(
             room_id=room_id,
             user_id=user_id,
             client=self._client,
         )
 
-    async def get_users_user_id_subscription_settings(
+    async def get_user_room_subscription_settings(
         self,
         user_id: str,
         *,
         starting_after: str | Unset = UNSET,
         limit: float | Unset = 50.0,
-    ) -> GetUsersUserIdSubscriptionSettingsResponse200:
-        from .api.notifications import get_users_user_id_subscription_settings
+    ) -> GetUserRoomSubscriptionSettingsResponse200:
+        from .api.notifications import get_user_room_subscription_settings
 
-        return await get_users_user_id_subscription_settings._asyncio(
+        return await get_user_room_subscription_settings._asyncio(
             user_id=user_id,
             starting_after=starting_after,
             limit=limit,
             client=self._client,
         )
 
-    async def post_inbox_notifications_trigger(
+    async def trigger_inbox_notification(
         self,
         *,
-        body: TriggerInboxNotification | Unset = UNSET,
+        body: TriggerInboxNotificationRequestBody | Unset = UNSET,
     ) -> None:
-        from .api.notifications import post_inbox_notifications_trigger
+        from .api.notifications import trigger_inbox_notification
 
-        return await post_inbox_notifications_trigger._asyncio(
+        return await trigger_inbox_notification._asyncio(
             body=body,
             client=self._client,
         )
@@ -2342,7 +2352,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetGroups:
+    ) -> GetGroupsResponse:
         from .api.groups import get_groups
 
         return await get_groups._asyncio(
@@ -2351,78 +2361,78 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_groups(
+    async def create_group(
         self,
         *,
-        body: CreateGroup | Unset = UNSET,
+        body: CreateGroupRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups
+        from .api.groups import create_group
 
-        return await post_groups._asyncio(
+        return await create_group._asyncio(
             body=body,
             client=self._client,
         )
 
-    async def get_groups_group_id(
+    async def get_group(
         self,
         group_id: str,
     ) -> Group:
-        from .api.groups import get_groups_group_id
+        from .api.groups import get_group
 
-        return await get_groups_group_id._asyncio(
+        return await get_group._asyncio(
             group_id=group_id,
             client=self._client,
         )
 
-    async def delete_groups_group_id(
+    async def delete_group(
         self,
         group_id: str,
     ) -> None:
-        from .api.groups import delete_groups_group_id
+        from .api.groups import delete_group
 
-        return await delete_groups_group_id._asyncio(
+        return await delete_group._asyncio(
             group_id=group_id,
             client=self._client,
         )
 
-    async def post_groups_group_id_add_members(
+    async def add_group_members(
         self,
         group_id: str,
         *,
-        body: AddGroupMembers | Unset = UNSET,
+        body: AddGroupMembersRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups_group_id_add_members
+        from .api.groups import add_group_members
 
-        return await post_groups_group_id_add_members._asyncio(
+        return await add_group_members._asyncio(
             group_id=group_id,
             body=body,
             client=self._client,
         )
 
-    async def post_groups_group_id_remove_members(
+    async def remove_group_members(
         self,
         group_id: str,
         *,
-        body: RemoveGroupMembers | Unset = UNSET,
+        body: RemoveGroupMembersRequestBody | Unset = UNSET,
     ) -> Group:
-        from .api.groups import post_groups_group_id_remove_members
+        from .api.groups import remove_group_members
 
-        return await post_groups_group_id_remove_members._asyncio(
+        return await remove_group_members._asyncio(
             group_id=group_id,
             body=body,
             client=self._client,
         )
 
-    async def get_users_user_id_groups(
+    async def get_user_groups(
         self,
         user_id: str,
         *,
         limit: float | Unset = 20.0,
         starting_after: str | Unset = UNSET,
-    ) -> GetUserGroups:
-        from .api.groups import get_users_user_id_groups
+    ) -> GetUserGroupsResponse:
+        from .api.groups import get_user_groups
 
-        return await get_users_user_id_groups._asyncio(
+        return await get_user_groups._asyncio(
             user_id=user_id,
             limit=limit,
             starting_after=starting_after,
@@ -2616,7 +2626,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> ManagementProjectsResponse:
+    ) -> GetManagementProjectsResponse:
         from .api.management import get_management_projects
 
         return await get_management_projects._asyncio(
@@ -2625,14 +2635,14 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_projects(
+    async def create_management_project(
         self,
         *,
-        body: CreateManagementProject | Unset = UNSET,
-    ) -> ManagementProjectResponse:
-        from .api.management import post_management_projects
+        body: CreateManagementProjectRequestBody | Unset = UNSET,
+    ) -> CreateManagementProjectResponse:
+        from .api.management import create_management_project
 
-        return await post_management_projects._asyncio(
+        return await create_management_project._asyncio(
             body=body,
             client=self._client,
         )
@@ -2640,7 +2650,7 @@ class AsyncLiveblocks:
     async def get_management_project(
         self,
         project_id: str,
-    ) -> ManagementProjectResponse:
+    ) -> GetManagementProjectResponse:
         from .api.management import get_management_project
 
         return await get_management_project._asyncio(
@@ -2648,15 +2658,15 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_project(
+    async def update_management_project(
         self,
         project_id: str,
         *,
-        body: UpdateManagementProject | Unset = UNSET,
-    ) -> ManagementProjectResponse:
-        from .api.management import post_management_project
+        body: UpdateManagementProjectRequestBody | Unset = UNSET,
+    ) -> UpdateManagementProjectResponse:
+        from .api.management import update_management_project
 
-        return await post_management_project._asyncio(
+        return await update_management_project._asyncio(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -2673,51 +2683,51 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_project_public_key_activate(
+    async def activate_project_public_api_key(
         self,
         project_id: str,
     ) -> None:
-        from .api.management import post_management_project_public_key_activate
+        from .api.management import activate_project_public_api_key
 
-        return await post_management_project_public_key_activate._asyncio(
+        return await activate_project_public_api_key._asyncio(
             project_id=project_id,
             client=self._client,
         )
 
-    async def post_management_project_public_key_deactivate(
+    async def deactivate_project_public_api_key(
         self,
         project_id: str,
     ) -> None:
-        from .api.management import post_management_project_public_key_deactivate
+        from .api.management import deactivate_project_public_api_key
 
-        return await post_management_project_public_key_deactivate._asyncio(
+        return await deactivate_project_public_api_key._asyncio(
             project_id=project_id,
             client=self._client,
         )
 
-    async def post_management_project_public_key_roll(
+    async def roll_project_public_api_key(
         self,
         project_id: str,
         *,
-        body: ManagementProjectKeyRollRequest | Unset = UNSET,
-    ) -> ManagementProjectPublicKeyResponse:
-        from .api.management import post_management_project_public_key_roll
+        body: RollProjectPublicApiKeyRequestBody | Unset = UNSET,
+    ) -> RollProjectPublicApiKeyResponse:
+        from .api.management import roll_project_public_api_key
 
-        return await post_management_project_public_key_roll._asyncio(
+        return await roll_project_public_api_key._asyncio(
             project_id=project_id,
             body=body,
             client=self._client,
         )
 
-    async def post_management_project_secret_key_roll(
+    async def roll_project_secret_api_key(
         self,
         project_id: str,
         *,
-        body: ManagementProjectKeyRollRequest | Unset = UNSET,
-    ) -> ManagementProjectSecretKeyResponse:
-        from .api.management import post_management_project_secret_key_roll
+        body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
+    ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
+        from .api.management import roll_project_secret_api_key
 
-        return await post_management_project_secret_key_roll._asyncio(
+        return await roll_project_secret_api_key._asyncio(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -2729,7 +2739,7 @@ class AsyncLiveblocks:
         *,
         limit: float | Unset = 20.0,
         cursor: str | Unset = UNSET,
-    ) -> ManagementWebhooksResponse:
+    ) -> GetManagementWebhooksResponse:
         from .api.management import get_management_webhooks
 
         return await get_management_webhooks._asyncio(
@@ -2739,15 +2749,15 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_webhooks(
+    async def create_management_webhook(
         self,
         project_id: str,
         *,
-        body: CreateManagementWebhook | Unset = UNSET,
-    ) -> ManagementWebhookResponse:
-        from .api.management import post_management_webhooks
+        body: CreateManagementWebhookRequestBody | Unset = UNSET,
+    ) -> CreateManagementWebhookResponse:
+        from .api.management import create_management_webhook
 
-        return await post_management_webhooks._asyncio(
+        return await create_management_webhook._asyncio(
             project_id=project_id,
             body=body,
             client=self._client,
@@ -2757,7 +2767,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookResponse:
+    ) -> GetManagementWebhookResponse:
         from .api.management import get_management_webhook
 
         return await get_management_webhook._asyncio(
@@ -2766,16 +2776,16 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_webhook(
+    async def update_management_webhook(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: UpdateManagementWebhook | Unset = UNSET,
-    ) -> ManagementWebhookResponse:
-        from .api.management import post_management_webhook
+        body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+    ) -> UpdateManagementWebhookResponse:
+        from .api.management import update_management_webhook
 
-        return await post_management_webhook._asyncio(
+        return await update_management_webhook._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
@@ -2795,90 +2805,90 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
-    async def post_management_webhook_secret_roll(
+    async def roll_management_webhook_secret(
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookSecretRotateResponse:
-        from .api.management import post_management_webhook_secret_roll
+    ) -> RotateManagementWebhookSecretResponse:
+        from .api.management import roll_management_webhook_secret
 
-        return await post_management_webhook_secret_roll._asyncio(
+        return await roll_management_webhook_secret._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             client=self._client,
         )
 
-    async def get_management_webhook_headers(
+    async def get_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import get_management_webhook_headers
+    ) -> GetManagementWebhookHeadersResponse:
+        from .api.management import get_management_webhook_additional_headers
 
-        return await get_management_webhook_headers._asyncio(
+        return await get_management_webhook_additional_headers._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             client=self._client,
         )
 
-    async def post_management_webhook_headers(
+    async def upsert_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookHeadersPatch | Unset = UNSET,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import post_management_webhook_headers
+        body: UpsertManagementWebhookHeadersRequestBody | Unset = UNSET,
+    ) -> UpsertManagementWebhookHeadersResponse:
+        from .api.management import upsert_management_webhook_additional_headers
 
-        return await post_management_webhook_headers._asyncio(
+        return await upsert_management_webhook_additional_headers._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    async def post_management_webhook_headers_delete(
+    async def delete_management_webhook_additional_headers(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookHeadersDelete | Unset = UNSET,
-    ) -> ManagementWebhookHeadersResponse:
-        from .api.management import post_management_webhook_headers_delete
+        body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+    ) -> DeleteManagementWebhookHeadersResponse:
+        from .api.management import delete_management_webhook_additional_headers
 
-        return await post_management_webhook_headers_delete._asyncio(
+        return await delete_management_webhook_additional_headers._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    async def post_management_webhook_recover_failed_messages(
+    async def recover_failed_webhook_messages(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookRecoverRequest | Unset = UNSET,
+        body: RecoverManagementWebhookFailedMessagesRequestBody | Unset = UNSET,
     ) -> None:
-        from .api.management import post_management_webhook_recover_failed_messages
+        from .api.management import recover_failed_webhook_messages
 
-        return await post_management_webhook_recover_failed_messages._asyncio(
+        return await recover_failed_webhook_messages._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,
             client=self._client,
         )
 
-    async def post_management_webhook_test(
+    async def send_test_webhook(
         self,
         project_id: str,
         webhook_id: str,
         *,
-        body: ManagementWebhookTestRequest | Unset = UNSET,
-    ) -> ManagementWebhookTestResponse:
-        from .api.management import post_management_webhook_test
+        body: TestManagementWebhookRequestBody | Unset = UNSET,
+    ) -> TestManagementWebhookResponse:
+        from .api.management import send_test_webhook
 
-        return await post_management_webhook_test._asyncio(
+        return await send_test_webhook._asyncio(
             project_id=project_id,
             webhook_id=webhook_id,
             body=body,

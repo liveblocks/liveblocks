@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 from dateutil.parser import isoparse
-
-from ..models.group_type import GroupType
 
 if TYPE_CHECKING:
     from ..models.group_member import GroupMember
@@ -22,7 +20,7 @@ T = TypeVar("T", bound="Group")
 class Group:
     """
     Attributes:
-        type_ (GroupType):
+        type_ (Literal['group']):
         id (str):
         organization_id (str):
         created_at (datetime.datetime):
@@ -31,7 +29,7 @@ class Group:
         members (list[GroupMember]):
     """
 
-    type_: GroupType
+    type_: Literal["group"]
     id: str
     organization_id: str
     created_at: datetime.datetime
@@ -41,7 +39,7 @@ class Group:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        type_ = self.type_.value
+        type_ = self.type_
 
         id = self.id
 
@@ -80,7 +78,9 @@ class Group:
         from ..models.group_scopes import GroupScopes
 
         d = dict(src_dict)
-        type_ = GroupType(d.pop("type"))
+        type_ = cast(Literal["group"], d.pop("type"))
+        if type_ != "group":
+            raise ValueError(f"type must match const 'group', got '{type_}'")
 
         id = d.pop("id")
 

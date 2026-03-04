@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
-from attrs import field as _attrs_field
 from dateutil.parser import isoparse
 
 from ..models.management_webhook_event import ManagementWebhookEvent
@@ -29,7 +28,7 @@ class ManagementWebhook:
         url (str):
         disabled (bool):
         subscribed_events (list[ManagementWebhookEvent]):
-        secret (ManagementWebhookSecret):
+        secret (ManagementWebhookSecret | None):
         storage_updated_throttle_seconds (float):
         y_doc_updated_throttle_seconds (float):
         rate_limit (float | Unset):
@@ -42,14 +41,15 @@ class ManagementWebhook:
     url: str
     disabled: bool
     subscribed_events: list[ManagementWebhookEvent]
-    secret: ManagementWebhookSecret
+    secret: ManagementWebhookSecret | None
     storage_updated_throttle_seconds: float
     y_doc_updated_throttle_seconds: float
     rate_limit: float | Unset = UNSET
     additional_headers: ManagementWebhookAdditionalHeaders | Unset = UNSET
-    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.management_webhook_secret import ManagementWebhookSecret
+
         id = self.id
 
         created_at = self.created_at.isoformat()
@@ -65,7 +65,11 @@ class ManagementWebhook:
             subscribed_events_item = subscribed_events_item_data.value
             subscribed_events.append(subscribed_events_item)
 
-        secret = self.secret.to_dict()
+        secret: dict[str, Any] | None
+        if isinstance(self.secret, ManagementWebhookSecret):
+            secret = self.secret.to_dict()
+        else:
+            secret = self.secret
 
         storage_updated_throttle_seconds = self.storage_updated_throttle_seconds
 
@@ -78,7 +82,7 @@ class ManagementWebhook:
             additional_headers = self.additional_headers.to_dict()
 
         field_dict: dict[str, Any] = {}
-        field_dict.update(self.additional_properties)
+
         field_dict.update(
             {
                 "id": id,
@@ -122,7 +126,20 @@ class ManagementWebhook:
 
             subscribed_events.append(subscribed_events_item)
 
-        secret = ManagementWebhookSecret.from_dict(d.pop("secret"))
+        def _parse_secret(data: object) -> ManagementWebhookSecret | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                secret_type_0 = ManagementWebhookSecret.from_dict(data)
+
+                return secret_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(ManagementWebhookSecret | None, data)
+
+        secret = _parse_secret(d.pop("secret"))
 
         storage_updated_throttle_seconds = d.pop("storageUpdatedThrottleSeconds")
 
@@ -151,21 +168,4 @@ class ManagementWebhook:
             additional_headers=additional_headers,
         )
 
-        management_webhook.additional_properties = d
         return management_webhook
-
-    @property
-    def additional_keys(self) -> list[str]:
-        return list(self.additional_properties.keys())
-
-    def __getitem__(self, key: str) -> Any:
-        return self.additional_properties[key]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        self.additional_properties[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        del self.additional_properties[key]
-
-    def __contains__(self, key: str) -> bool:
-        return key in self.additional_properties

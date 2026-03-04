@@ -11,12 +11,12 @@ if TYPE_CHECKING:
     from ..models.notification_channel_settings import NotificationChannelSettings
 
 
-T = TypeVar("T", bound="NotificationSettings")
+T = TypeVar("T", bound="UpdateNotificationSettingsRequestBody")
 
 
 @_attrs_define
-class NotificationSettings:
-    """Notification settings for each supported channel
+class UpdateNotificationSettingsRequestBody:
+    """Partial notification settings - all properties are optional
 
     Attributes:
         email (NotificationChannelSettings | Unset):
@@ -94,11 +94,11 @@ class NotificationSettings:
         else:
             web_push = NotificationChannelSettings.from_dict(_web_push)
 
-        notification_settings = cls(
+        update_notification_settings_request_body = cls(
             email=email,
             slack=slack,
             teams=teams,
             web_push=web_push,
         )
 
-        return notification_settings
+        return update_notification_settings_request_body
