@@ -146,8 +146,10 @@ export async function prepareStorageTest<S extends LsonObject>(
   const clientA = await enterAndConnect<S>(roomId);
   const clientB = await enterAndConnect<S>(roomId);
 
-  const storageA = await clientA.room.getStorage();
-  const storageB = await clientB.room.getStorage();
+  const [storageA, storageB] = await Promise.all([
+    clientA.room.getStorage(),
+    clientB.room.getStorage(),
+  ]);
 
   // Wait for both clients to have synced initial storage
   await waitFor(() => {
@@ -262,8 +264,10 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
   const clientA = await enterAndConnect<S>(roomId);
   const clientB = await enterAndConnect<S>(roomId);
 
-  const storageA = await clientA.room.getStorage();
-  const storageB = await clientB.room.getStorage();
+  const [storageA, storageB] = await Promise.all([
+    clientA.room.getStorage(),
+    clientB.room.getStorage(),
+  ]);
 
   // Wait for both clients to have synced initial storage
   await waitFor(() => {
