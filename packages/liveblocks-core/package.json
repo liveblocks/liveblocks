@@ -37,7 +37,7 @@
     "format": "(eslint --fix src/ e2e/ || true) && prettier --write src/ e2e/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "npx liveblocks dev -c 'vitest run'",
+    "test": "npx liveblocks dev -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest",
