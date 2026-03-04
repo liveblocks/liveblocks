@@ -81,7 +81,7 @@ class _BaseSession:
             AuthorizeUserRequestBodyPermissions,
         )
 
-        if (self._sealed):
+        if self._sealed:
             raise RuntimeError("You cannot reuse Session instances. Please create a new session every time.")
         self._sealed = True
         if len(self._permissions) > 0:
