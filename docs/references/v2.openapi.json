@@ -2944,7 +2944,7 @@
             "description": "ID of the inbox notification"
           }
         ],
-        "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
+        "operationId": "get-inbox-notification",
         "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
         "responses": {
           "200": {
@@ -2998,7 +2998,7 @@
             "description": "ID of the inbox notification"
           }
         ],
-        "operationId": "delete-users-userId-inboxNotifications-inboxNotificationId",
+        "operationId": "delete-inbox-notification",
         "description": "This endpoint deletes a user’s inbox notification by its ID.",
         "responses": {
           "204": {
@@ -3041,7 +3041,7 @@
             "description": "ID of the user"
           }
         ],
-        "operationId": "delete-users-userId-inboxNotifications",
+        "operationId": "delete-all-inbox-notifications",
         "description": "This endpoint deletes all the user’s inbox notifications.",
         "responses": {
           "204": {
@@ -3107,7 +3107,7 @@
             "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
           }
         ],
-        "operationId": "get-users-userId-inboxNotifications",
+        "operationId": "get-inbox-notifications",
         "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
         "responses": {
           "200": {
@@ -3153,7 +3153,7 @@
       "get": {
         "summary": "Get notification settings",
         "tags": ["Notifications"],
-        "operationId": "get-users-userId-notification-settings",
+        "operationId": "get-notification-settings",
         "description": "This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).",
         "parameters": [
           {
@@ -3214,7 +3214,7 @@
       "post": {
         "summary": "Update notification settings",
         "tags": ["Notifications"],
-        "operationId": "post-users-userId-notification-settings",
+        "operationId": "update-notification-settings",
         "description": "This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).",
         "parameters": [
           {
@@ -3231,7 +3231,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PartialNotificationSettings"
+                "$ref": "#/components/schemas/UpdateNotificationSettingsRequestBody"
               },
               "examples": {
                 "example": {
@@ -3303,7 +3303,7 @@
       "delete": {
         "summary": "Delete notification settings",
         "tags": ["Notifications"],
-        "operationId": "delete-users-userId-notification-settings",
+        "operationId": "delete-notification-settings",
         "description": "This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).",
         "parameters": [
           {
@@ -3351,7 +3351,7 @@
       "get": {
         "summary": "Get room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "get-rooms-roomId-users-userId-subscription-settings",
+        "operationId": "get-room-subscription-settings",
         "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
@@ -3398,7 +3398,7 @@
       "post": {
         "summary": "Update room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "post-rooms-roomId-users-userId-subscription-settings",
+        "operationId": "update-room-subscription-settings",
         "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
@@ -3448,7 +3448,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                "$ref": "#/components/schemas/UpdateRoomSubscriptionSettingsRequestBody"
               }
             }
           }
@@ -3457,7 +3457,7 @@
       "delete": {
         "summary": "Delete room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "delete-rooms-roomId-users-userId-subscription-settings",
+        "operationId": "delete-room-subscription-settings",
         "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
@@ -3509,7 +3509,7 @@
       "get": {
         "summary": "Get user room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "get-users-userId-subscription-settings",
+        "operationId": "get-user-room-subscription-settings",
         "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
         "parameters": [
           {
@@ -3601,10 +3601,10 @@
       ],
       "get": {
         "summary": "Get room notification settings",
-        "operationId": "get-rooms-roomId-users-userId-notification-settings",
+        "operationId": "get-room-notification-settings",
         "tags": ["Deprecated"],
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3649,10 +3649,10 @@
       },
       "post": {
         "summary": "Update room notification settings",
-        "operationId": "post-rooms-roomId-users-userId-notification-settings",
+        "operationId": "update-room-notification-settings",
         "tags": ["Deprecated"],
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](post-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3701,7 +3701,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                "$ref": "#/components/schemas/UpdateRoomSubscriptionSettingsRequestBody"
               }
             }
           }
@@ -3709,10 +3709,10 @@
       },
       "delete": {
         "summary": "Delete room notification settings",
-        "operationId": "delete-rooms-roomId-users-userId-notification-settings",
+        "operationId": "delete-room-notification-settings",
         "tags": ["Deprecated"],
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3754,7 +3754,7 @@
       "post": {
         "summary": "Trigger inbox notification",
         "tags": ["Notifications"],
-        "operationId": "post-inbox-notifications-trigger",
+        "operationId": "trigger-inbox-notification",
         "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
         "responses": {
           "200": {
@@ -3777,7 +3777,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TriggerInboxNotification"
+                "$ref": "#/components/schemas/TriggerInboxNotificationRequestBody"
               }
             }
           }
@@ -4857,12 +4857,12 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-projects",
+        "operationId": "create-management-project",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateManagementProject"
+                "$ref": "#/components/schemas/CreateManagementProjectRequestBody"
               },
               "examples": {
                 "example": {
@@ -6973,14 +6973,61 @@
             "type": "string"
           },
           "readAt": {
-            "type": "string",
-            "format": "date-time"
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "notifiedAt": {
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "required": [
+          "kind",
+          "id",
+          "roomId",
+          "threadId",
+          "notifiedAt",
+          "readAt"
+        ],
+        "additionalProperties": false
+      },
+      "InboxNotificationActivity": {
+        "title": "InboxNotificationActivity",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        },
+        "required": ["id", "createdAt", "data"],
+        "additionalProperties": false
       },
       "InboxNotificationCustomData": {
         "title": "InboxNotificationCustomData",
@@ -6990,7 +7037,8 @@
             "type": "string"
           },
           "kind": {
-            "type": "string"
+            "type": "string",
+            "const": "custom"
           },
           "subjectId": {
             "type": "string"
@@ -6999,17 +7047,36 @@
             "type": "string"
           },
           "readAt": {
-            "type": "string",
-            "format": "date-time"
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "notifiedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "activityData": {
-            "type": "object"
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxNotificationActivity"
+            }
           }
-        }
+        },
+        "required": [
+          "kind",
+          "id",
+          "subjectId",
+          "notifiedAt",
+          "readAt",
+          "activities"
+        ],
+        "additionalProperties": false
       },
       "NotificationChannelSettings": {
         "type": "object",
@@ -7042,9 +7109,11 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
+        "additionalProperties": false,
         "description": "Notification settings for each supported channel"
       },
-      "PartialNotificationSettings": {
+      "UpdateNotificationSettingsRequestBody": {
+        "title": "UpdateNotificationSettingsRequestBody",
         "type": "object",
         "properties": {
           "email": {
@@ -7060,6 +7129,7 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
+        "additionalProperties": false,
         "description": "Partial notification settings - all properties are optional"
       },
       "RoomSubscriptionSettings": {
@@ -7072,13 +7142,30 @@
           "textMentions": {
             "enum": ["mine", "none"]
           }
-        }
+        },
+        "required": ["threads", "textMentions"],
+        "additionalProperties": false
+      },
+      "UpdateRoomSubscriptionSettingsRequestBody": {
+        "title": "UpdateRoomSubscriptionSettingsRequestBody",
+        "type": "object",
+        "properties": {
+          "threads": {
+            "enum": ["all", "replies_and_mentions", "none"]
+          },
+          "textMentions": {
+            "enum": ["mine", "none"]
+          }
+        },
+        "additionalProperties": false,
+        "description": "Partial room subscription settings - all properties are optional"
       },
       "UserRoomSubscriptionSettings": {
         "title": "UserRoomSubscriptionSettings",
         "type": "object",
         "properties": {
           "threads": {
+            "type": "string",
             "enum": ["all", "replies_and_mentions", "none"]
           },
           "textMentions": {
@@ -7087,10 +7174,12 @@
           "roomId": {
             "type": "string"
           }
-        }
+        },
+        "required": ["threads", "textMentions", "roomId"],
+        "additionalProperties": false
       },
-      "TriggerInboxNotification": {
-        "title": "TriggerInboxNotification",
+      "TriggerInboxNotificationRequestBody": {
+        "title": "TriggerInboxNotificationRequestBody",
         "type": "object",
         "properties": {
           "userId": {
@@ -7106,7 +7195,8 @@
             "type": "string"
           },
           "activityData": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "required": ["userId", "kind", "subjectId", "activityData"],
@@ -8110,15 +8200,21 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": ["projects", "nextCursor"],
         "additionalProperties": false
       },
-      "CreateManagementProject": {
-        "title": "CreateManagementProject",
+      "CreateManagementProjectRequestBody": {
+        "title": "CreateManagementProjectRequestBody",
         "type": "object",
         "properties": {
           "name": {
@@ -8134,6 +8230,17 @@
         },
         "required": ["type"]
       },
+      "CreateManagementProjectResponse": {
+        "title": "CreateManagementProjectResponse",
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/ManagementProject"
+          }
+        },
+        "required": ["project"],
+        "additionalProperties": false
+      },
       "UpdateManagementProjectRequestBody": {
         "title": "UpdateManagementProjectRequestBody",
         "type": "object",
@@ -8146,8 +8253,8 @@
           }
         }
       },
-      "CreateManagementProjectResponse": {
-        "title": "CreateManagementProjectResponse",
+      "UpdateManagementProjectResponse": {
+        "title": "UpdateManagementProjectResponse",
         "type": "object",
         "properties": {
           "project": {
@@ -8159,17 +8266,6 @@
       },
       "GetManagementProjectResponse": {
         "title": "GetManagementProjectResponse",
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/components/schemas/ManagementProject"
-          }
-        },
-        "required": ["project"],
-        "additionalProperties": false
-      },
-      "UpdateManagementProjectResponse": {
-        "title": "UpdateManagementProjectResponse",
         "type": "object",
         "properties": {
           "project": {
@@ -8331,10 +8427,7 @@
             ]
           },
           "additionalHeaders": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
+            "$ref": "#/components/schemas/ManagementWebhookAdditionalHeaders"
           },
           "storageUpdatedThrottleSeconds": {
             "type": "number"
@@ -8353,7 +8446,8 @@
           "secret",
           "storageUpdatedThrottleSeconds",
           "yDocUpdatedThrottleSeconds"
-        ]
+        ],
+        "additionalProperties": false
       },
       "CreateManagementWebhookRequestBody": {
         "title": "CreateManagementWebhookRequestBody",
@@ -8512,8 +8606,14 @@
             }
           },
           "nextCursor": {
-            "type": "string",
-            "nullable": true
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": ["webhooks", "nextCursor"],
