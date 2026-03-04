@@ -22,6 +22,11 @@
             "hidden": true
           },
           {
+            "title": "Next.js / Presence",
+            "path": "/get-started/nextjs-presence",
+            "hidden": true
+          },
+          {
             "title": "AI Copilots",
             "path": "/get-started/react-ai-chat",
             "hidden": true
