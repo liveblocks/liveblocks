@@ -170,6 +170,7 @@
         },
         "operationId": "create-room",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -323,6 +324,7 @@
         "operationId": "update-room",
         "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -551,6 +553,7 @@
         "operationId": "upsert-room",
         "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -824,6 +827,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "description": "Any valid JSON.",
           "content": {
             "application/json": {
@@ -1278,6 +1282,7 @@
         "operationId": "send-yjs-binary-update",
         "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/octet-stream": {
               "schema": {
@@ -1664,6 +1669,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1921,6 +1927,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2307,6 +2314,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2483,6 +2491,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2622,6 +2631,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2772,6 +2782,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2822,6 +2833,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2878,6 +2890,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3228,6 +3241,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3445,6 +3459,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3959,6 +3974,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4011,6 +4027,7 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4177,6 +4194,7 @@
         },
         "operationId": "create-ai-copilot",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4267,6 +4285,7 @@
         },
         "operationId": "update-ai-copilot",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4455,6 +4474,7 @@
         },
         "operationId": "create-web-knowledge-source",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4518,6 +4538,7 @@
         },
         "operationId": "create-file-knowledge-source",
         "requestBody": {
+          "required": true,
           "content": {
             "application/octet-stream": {
               "schema": {
@@ -4859,6 +4880,7 @@
         },
         "operationId": "create-management-project",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4963,6 +4985,7 @@
         },
         "operationId": "update-management-project",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5307,6 +5330,7 @@
         },
         "operationId": "create-management-webhook",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5431,6 +5455,7 @@
         },
         "operationId": "update-management-webhook",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5596,6 +5621,7 @@
         },
         "operationId": "upsert-management-webhook-additional-headers",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5715,6 +5741,7 @@
         },
         "operationId": "delete-management-webhook-additional-headers",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5777,6 +5804,7 @@
         },
         "operationId": "recover-failed-webhook-messages",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -5846,6 +5874,7 @@
         },
         "operationId": "send-test-webhook",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
