@@ -11,10 +11,14 @@
   <a href="https://github.com/liveblocks/liveblocks/blob/main/licenses/LICENSE-AGPL-3.0"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License" /></a>
 </p>
 
-`@liveblocks/server` provides the core Liveblocks server functionality. It
-powers both the Liveblocks production environment, and
-[our dev server](https://liveblocks.io/docs/tools/dev-server), so the behavior
-is identical. You typically don't need to install or use this package directly.
+`@liveblocks/server` provides the core Liveblocks server functionality, powering
+both the Liveblocks production environment, and [dev server][devserver], so the
+behavior is identical. **You typically don't need to install or use this package
+directly.**
+
+If you are interested in running Liveblocks locally or within your CI
+environment, check out the [dev server][devserver] instead (which has an actual
+web server wrapped around it, contains documentation, and a Dockerfile).
 
 While `@liveblocks/server` contains the same core technology that powers
 Liveblocks, we do not yet offer or recommend self-hosting or on-premises
@@ -29,3 +33,5 @@ Licensed under the GNU Affero General Public License v3.0 or later, Copyright ©
 2021-present [Liveblocks](https://liveblocks.io).
 
 See [LICENSE-AGPL-3.0](./LICENSE) for more information.
+
+[devserver]: https://liveblocks.io/docs/tools/dev-server
