@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.room import Room
 from ...models.upsert_room_request_body import UpsertRoomRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: UpsertRoomRequestBody | Unset = UNSET,
+    body: UpsertRoomRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: UpsertRoomRequestBody | Unset = UNSET,
+    body: UpsertRoomRequestBody,
 ) -> Room:
     r"""Upsert (update or create) room
 
@@ -74,7 +72,7 @@ def _sync(
 
     Args:
         room_id (str):
-        body (UpsertRoomRequestBody | Unset):
+        body (UpsertRoomRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -99,7 +97,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpsertRoomRequestBody | Unset = UNSET,
+    body: UpsertRoomRequestBody,
 ) -> Room:
     r"""Upsert (update or create) room
 
@@ -128,7 +126,7 @@ async def _asyncio(
 
     Args:
         room_id (str):
-        body (UpsertRoomRequestBody | Unset):
+        body (UpsertRoomRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

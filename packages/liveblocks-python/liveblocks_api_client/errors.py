@@ -42,5 +42,7 @@ class LiveblocksError(Exception):
         details = "\n".join(parts) or None
         return cls(message, response.status_code, details)
 
+    return "\n".join(parts)
+
 
 __all__ = ["LiveblocksError"]

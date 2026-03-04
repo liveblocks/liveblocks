@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.notification_settings import NotificationSettings
 from ...models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     user_id: str,
     *,
-    body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
+    body: UpdateNotificationSettingsRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     user_id: str,
     *,
     client: httpx.Client,
-    body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
+    body: UpdateNotificationSettingsRequestBody,
 ) -> NotificationSettings:
     """Update notification settings
 
@@ -55,7 +53,7 @@ def _sync(
 
     Args:
         user_id (str):
-        body (UpdateNotificationSettingsRequestBody | Unset): Partial notification settings - all
+        body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
             properties are optional
 
     Raises:
@@ -81,7 +79,7 @@ async def _asyncio(
     user_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
+    body: UpdateNotificationSettingsRequestBody,
 ) -> NotificationSettings:
     """Update notification settings
 
@@ -91,7 +89,7 @@ async def _asyncio(
 
     Args:
         user_id (str):
-        body (UpdateNotificationSettingsRequestBody | Unset): Partial notification settings - all
+        body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
             properties are optional
 
     Raises:

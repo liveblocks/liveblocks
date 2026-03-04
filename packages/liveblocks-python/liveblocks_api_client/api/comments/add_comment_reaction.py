@@ -6,7 +6,6 @@ import httpx
 from ... import errors
 from ...models.add_comment_reaction_request_body import AddCommentReactionRequestBody
 from ...models.comment_reaction import CommentReaction
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -14,7 +13,7 @@ def _get_kwargs(
     thread_id: str,
     comment_id: str,
     *,
-    body: AddCommentReactionRequestBody | Unset = UNSET,
+    body: AddCommentReactionRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -27,8 +26,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -51,7 +49,7 @@ def _sync(
     comment_id: str,
     *,
     client: httpx.Client,
-    body: AddCommentReactionRequestBody | Unset = UNSET,
+    body: AddCommentReactionRequestBody,
 ) -> CommentReaction:
     """Add comment reaction
 
@@ -63,7 +61,7 @@ def _sync(
         room_id (str):
         thread_id (str):
         comment_id (str):
-        body (AddCommentReactionRequestBody | Unset):
+        body (AddCommentReactionRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -92,7 +90,7 @@ async def _asyncio(
     comment_id: str,
     *,
     client: httpx.AsyncClient,
-    body: AddCommentReactionRequestBody | Unset = UNSET,
+    body: AddCommentReactionRequestBody,
 ) -> CommentReaction:
     """Add comment reaction
 
@@ -104,7 +102,7 @@ async def _asyncio(
         room_id (str):
         thread_id (str):
         comment_id (str):
-        body (AddCommentReactionRequestBody | Unset):
+        body (AddCommentReactionRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

@@ -5,12 +5,11 @@ import httpx
 from ... import errors
 from ...models.identify_user_request_body import IdentifyUserRequestBody
 from ...models.identify_user_response import IdentifyUserResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: IdentifyUserRequestBody | Unset = UNSET,
+    body: IdentifyUserRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -19,8 +18,7 @@ def _get_kwargs(
         "url": "/identify-user",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -40,7 +38,7 @@ def _parse_response(*, response: httpx.Response) -> IdentifyUserResponse:
 def _sync(
     *,
     client: httpx.Client,
-    body: IdentifyUserRequestBody | Unset = UNSET,
+    body: IdentifyUserRequestBody,
 ) -> IdentifyUserResponse:
     r"""Get ID token with secret key
 
@@ -75,7 +73,7 @@ def _sync(
     or the user’s display name.
 
     Args:
-        body (IdentifyUserRequestBody | Unset):
+        body (IdentifyUserRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -98,7 +96,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: IdentifyUserRequestBody | Unset = UNSET,
+    body: IdentifyUserRequestBody,
 ) -> IdentifyUserResponse:
     r"""Get ID token with secret key
 
@@ -133,7 +131,7 @@ async def _asyncio(
     or the user’s display name.
 
     Args:
-        body (IdentifyUserRequestBody | Unset):
+        body (IdentifyUserRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

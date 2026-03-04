@@ -196,7 +196,7 @@ class Liveblocks:
     def create_room(
         self,
         *,
-        body: CreateRoomRequestBody | Unset = UNSET,
+        body: CreateRoomRequestBody,
     ) -> Room:
         from .api.room import create_room
 
@@ -220,7 +220,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomRequestBody | Unset = UNSET,
+        body: UpdateRoomRequestBody,
     ) -> Room:
         from .api.room import update_room
 
@@ -256,7 +256,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: UpsertRoomRequestBody | Unset = UNSET,
+        body: UpsertRoomRequestBody,
     ) -> Room:
         from .api.room import upsert_room
 
@@ -309,7 +309,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: Any | Unset = UNSET,
+        body: Any,
     ) -> None:
         from .api.room import broadcast_event
 
@@ -401,7 +401,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: File | Unset = UNSET,
+        body: File,
         guid: str | Unset = UNSET,
     ) -> None:
         from .api.yjs import send_yjs_binary_update
@@ -485,7 +485,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: CreateThreadRequestBody | Unset = UNSET,
+        body: CreateThreadRequestBody,
     ) -> Thread:
         from .api.comments import create_thread
 
@@ -526,7 +526,7 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
+        body: UpdateThreadMetadataReqeuestBody,
     ) -> ThreadMetadata:
         from .api.comments import edit_thread_metadata
 
@@ -613,7 +613,7 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: CreateCommentRequestBody | Unset = UNSET,
+        body: CreateCommentRequestBody,
     ) -> Comment:
         from .api.comments import create_comment
 
@@ -645,7 +645,7 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: EditCommentRequestBody | Unset = UNSET,
+        body: EditCommentRequestBody,
     ) -> Comment:
         from .api.comments import edit_comment
 
@@ -678,7 +678,7 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: AddCommentReactionRequestBody | Unset = UNSET,
+        body: AddCommentReactionRequestBody,
     ) -> CommentReaction:
         from .api.comments import add_comment_reaction
 
@@ -714,7 +714,7 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: EditCommentMetadataRequestBody | Unset = UNSET,
+        body: EditCommentMetadataRequestBody,
     ) -> CommentMetadata:
         from .api.comments import edit_comment_metadata
 
@@ -784,7 +784,7 @@ class Liveblocks:
     def authorize_user(
         self,
         *,
-        body: AuthorizeUserRequestBody | Unset = UNSET,
+        body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
         from .api.authentication import authorize_user
 
@@ -796,7 +796,7 @@ class Liveblocks:
     def identify_user(
         self,
         *,
-        body: IdentifyUserRequestBody | Unset = UNSET,
+        body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
         from .api.authentication import identify_user
 
@@ -877,7 +877,7 @@ class Liveblocks:
         self,
         user_id: str,
         *,
-        body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
+        body: UpdateNotificationSettingsRequestBody,
     ) -> NotificationSettings:
         from .api.notifications import update_notification_settings
 
@@ -916,7 +916,7 @@ class Liveblocks:
         room_id: str,
         user_id: str,
         *,
-        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody,
     ) -> RoomSubscriptionSettings:
         from .api.notifications import update_room_subscription_settings
 
@@ -1020,7 +1020,7 @@ class Liveblocks:
         self,
         group_id: str,
         *,
-        body: AddGroupMembersRequestBody | Unset = UNSET,
+        body: AddGroupMembersRequestBody,
     ) -> Group:
         from .api.groups import add_group_members
 
@@ -1034,7 +1034,7 @@ class Liveblocks:
         self,
         group_id: str,
         *,
-        body: RemoveGroupMembersRequestBody | Unset = UNSET,
+        body: RemoveGroupMembersRequestBody,
     ) -> Group:
         from .api.groups import remove_group_members
 
@@ -1080,8 +1080,7 @@ class Liveblocks:
         body: CreateAiCopilotOptionsAnthropic
         | CreateAiCopilotOptionsGoogle
         | CreateAiCopilotOptionsOpenAi
-        | CreateAiCopilotOptionsOpenAiCompatible
-        | Unset = UNSET,
+        | CreateAiCopilotOptionsOpenAiCompatible,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import create_ai_copilot
 
@@ -1105,7 +1104,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         *,
-        body: UpdateAiCopilotRequestBody | Unset = UNSET,
+        body: UpdateAiCopilotRequestBody,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import update_ai_copilot
 
@@ -1159,7 +1158,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         *,
-        body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+        body: CreateWebKnowledgeSourceRequestBody,
     ) -> CreateWebKnowledgeSourceResponse:
         from .api.ai import create_web_knowledge_source
 
@@ -1174,7 +1173,7 @@ class Liveblocks:
         copilot_id: str,
         name: str,
         *,
-        body: File | Unset = UNSET,
+        body: File,
     ) -> CreateFileKnowledgeSourceResponse200:
         from .api.ai import create_file_knowledge_source
 
@@ -1259,7 +1258,7 @@ class Liveblocks:
     def create_management_project(
         self,
         *,
-        body: CreateManagementProjectRequestBody | Unset = UNSET,
+        body: CreateManagementProjectRequestBody,
     ) -> CreateManagementProjectResponse:
         from .api.management import create_management_project
 
@@ -1283,7 +1282,7 @@ class Liveblocks:
         self,
         project_id: str,
         *,
-        body: UpdateManagementProjectRequestBody | Unset = UNSET,
+        body: UpdateManagementProjectRequestBody,
     ) -> UpdateManagementProjectResponse:
         from .api.management import update_management_project
 
@@ -1374,7 +1373,7 @@ class Liveblocks:
         self,
         project_id: str,
         *,
-        body: CreateManagementWebhookRequestBody | Unset = UNSET,
+        body: CreateManagementWebhookRequestBody,
     ) -> CreateManagementWebhookResponse:
         from .api.management import create_management_webhook
 
@@ -1402,7 +1401,7 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+        body: UpdateManagementWebhookRequestBody,
     ) -> UpdateManagementWebhookResponse:
         from .api.management import update_management_webhook
 
@@ -1457,7 +1456,7 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: UpsertManagementWebhookHeadersRequestBody | Unset = UNSET,
+        body: UpsertManagementWebhookHeadersRequestBody,
     ) -> UpsertManagementWebhookHeadersResponse:
         from .api.management import upsert_management_webhook_additional_headers
 
@@ -1473,7 +1472,7 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+        body: DeleteManagementWebhookHeadersRequestBody,
     ) -> DeleteManagementWebhookHeadersResponse:
         from .api.management import delete_management_webhook_additional_headers
 
@@ -1489,7 +1488,7 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: RecoverManagementWebhookFailedMessagesRequestBody | Unset = UNSET,
+        body: RecoverManagementWebhookFailedMessagesRequestBody,
     ) -> None:
         from .api.management import recover_failed_webhook_messages
 
@@ -1505,7 +1504,7 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: TestManagementWebhookRequestBody | Unset = UNSET,
+        body: TestManagementWebhookRequestBody,
     ) -> TestManagementWebhookResponse:
         from .api.management import send_test_webhook
 
@@ -1575,7 +1574,7 @@ class AsyncLiveblocks:
     async def create_room(
         self,
         *,
-        body: CreateRoomRequestBody | Unset = UNSET,
+        body: CreateRoomRequestBody,
     ) -> Room:
         from .api.room import create_room
 
@@ -1599,7 +1598,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomRequestBody | Unset = UNSET,
+        body: UpdateRoomRequestBody,
     ) -> Room:
         from .api.room import update_room
 
@@ -1635,7 +1634,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: UpsertRoomRequestBody | Unset = UNSET,
+        body: UpsertRoomRequestBody,
     ) -> Room:
         from .api.room import upsert_room
 
@@ -1688,7 +1687,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: Any | Unset = UNSET,
+        body: Any,
     ) -> None:
         from .api.room import broadcast_event
 
@@ -1780,7 +1779,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: File | Unset = UNSET,
+        body: File,
         guid: str | Unset = UNSET,
     ) -> None:
         from .api.yjs import send_yjs_binary_update
@@ -1864,7 +1863,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: CreateThreadRequestBody | Unset = UNSET,
+        body: CreateThreadRequestBody,
     ) -> Thread:
         from .api.comments import create_thread
 
@@ -1905,7 +1904,7 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
+        body: UpdateThreadMetadataReqeuestBody,
     ) -> ThreadMetadata:
         from .api.comments import edit_thread_metadata
 
@@ -1992,7 +1991,7 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: CreateCommentRequestBody | Unset = UNSET,
+        body: CreateCommentRequestBody,
     ) -> Comment:
         from .api.comments import create_comment
 
@@ -2024,7 +2023,7 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: EditCommentRequestBody | Unset = UNSET,
+        body: EditCommentRequestBody,
     ) -> Comment:
         from .api.comments import edit_comment
 
@@ -2057,7 +2056,7 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: AddCommentReactionRequestBody | Unset = UNSET,
+        body: AddCommentReactionRequestBody,
     ) -> CommentReaction:
         from .api.comments import add_comment_reaction
 
@@ -2093,7 +2092,7 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: EditCommentMetadataRequestBody | Unset = UNSET,
+        body: EditCommentMetadataRequestBody,
     ) -> CommentMetadata:
         from .api.comments import edit_comment_metadata
 
@@ -2163,7 +2162,7 @@ class AsyncLiveblocks:
     async def authorize_user(
         self,
         *,
-        body: AuthorizeUserRequestBody | Unset = UNSET,
+        body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
         from .api.authentication import authorize_user
 
@@ -2175,7 +2174,7 @@ class AsyncLiveblocks:
     async def identify_user(
         self,
         *,
-        body: IdentifyUserRequestBody | Unset = UNSET,
+        body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
         from .api.authentication import identify_user
 
@@ -2256,7 +2255,7 @@ class AsyncLiveblocks:
         self,
         user_id: str,
         *,
-        body: UpdateNotificationSettingsRequestBody | Unset = UNSET,
+        body: UpdateNotificationSettingsRequestBody,
     ) -> NotificationSettings:
         from .api.notifications import update_notification_settings
 
@@ -2295,7 +2294,7 @@ class AsyncLiveblocks:
         room_id: str,
         user_id: str,
         *,
-        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
+        body: UpdateRoomSubscriptionSettingsRequestBody,
     ) -> RoomSubscriptionSettings:
         from .api.notifications import update_room_subscription_settings
 
@@ -2399,7 +2398,7 @@ class AsyncLiveblocks:
         self,
         group_id: str,
         *,
-        body: AddGroupMembersRequestBody | Unset = UNSET,
+        body: AddGroupMembersRequestBody,
     ) -> Group:
         from .api.groups import add_group_members
 
@@ -2413,7 +2412,7 @@ class AsyncLiveblocks:
         self,
         group_id: str,
         *,
-        body: RemoveGroupMembersRequestBody | Unset = UNSET,
+        body: RemoveGroupMembersRequestBody,
     ) -> Group:
         from .api.groups import remove_group_members
 
@@ -2459,8 +2458,7 @@ class AsyncLiveblocks:
         body: CreateAiCopilotOptionsAnthropic
         | CreateAiCopilotOptionsGoogle
         | CreateAiCopilotOptionsOpenAi
-        | CreateAiCopilotOptionsOpenAiCompatible
-        | Unset = UNSET,
+        | CreateAiCopilotOptionsOpenAiCompatible,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import create_ai_copilot
 
@@ -2484,7 +2482,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         *,
-        body: UpdateAiCopilotRequestBody | Unset = UNSET,
+        body: UpdateAiCopilotRequestBody,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         from .api.ai import update_ai_copilot
 
@@ -2538,7 +2536,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         *,
-        body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+        body: CreateWebKnowledgeSourceRequestBody,
     ) -> CreateWebKnowledgeSourceResponse:
         from .api.ai import create_web_knowledge_source
 
@@ -2553,7 +2551,7 @@ class AsyncLiveblocks:
         copilot_id: str,
         name: str,
         *,
-        body: File | Unset = UNSET,
+        body: File,
     ) -> CreateFileKnowledgeSourceResponse200:
         from .api.ai import create_file_knowledge_source
 
@@ -2638,7 +2636,7 @@ class AsyncLiveblocks:
     async def create_management_project(
         self,
         *,
-        body: CreateManagementProjectRequestBody | Unset = UNSET,
+        body: CreateManagementProjectRequestBody,
     ) -> CreateManagementProjectResponse:
         from .api.management import create_management_project
 
@@ -2662,7 +2660,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         *,
-        body: UpdateManagementProjectRequestBody | Unset = UNSET,
+        body: UpdateManagementProjectRequestBody,
     ) -> UpdateManagementProjectResponse:
         from .api.management import update_management_project
 
@@ -2753,7 +2751,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         *,
-        body: CreateManagementWebhookRequestBody | Unset = UNSET,
+        body: CreateManagementWebhookRequestBody,
     ) -> CreateManagementWebhookResponse:
         from .api.management import create_management_webhook
 
@@ -2781,7 +2779,7 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+        body: UpdateManagementWebhookRequestBody,
     ) -> UpdateManagementWebhookResponse:
         from .api.management import update_management_webhook
 
@@ -2836,7 +2834,7 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: UpsertManagementWebhookHeadersRequestBody | Unset = UNSET,
+        body: UpsertManagementWebhookHeadersRequestBody,
     ) -> UpsertManagementWebhookHeadersResponse:
         from .api.management import upsert_management_webhook_additional_headers
 
@@ -2852,7 +2850,7 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+        body: DeleteManagementWebhookHeadersRequestBody,
     ) -> DeleteManagementWebhookHeadersResponse:
         from .api.management import delete_management_webhook_additional_headers
 
@@ -2868,7 +2866,7 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: RecoverManagementWebhookFailedMessagesRequestBody | Unset = UNSET,
+        body: RecoverManagementWebhookFailedMessagesRequestBody,
     ) -> None:
         from .api.management import recover_failed_webhook_messages
 
@@ -2884,7 +2882,7 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
         *,
-        body: TestManagementWebhookRequestBody | Unset = UNSET,
+        body: TestManagementWebhookRequestBody,
     ) -> TestManagementWebhookResponse:
         from .api.management import send_test_webhook
 

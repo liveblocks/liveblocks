@@ -5,12 +5,11 @@ import httpx
 from ... import errors
 from ...models.create_room_request_body import CreateRoomRequestBody
 from ...models.room import Room
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: CreateRoomRequestBody | Unset = UNSET,
+    body: CreateRoomRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -19,8 +18,7 @@ def _get_kwargs(
         "url": "/rooms",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -40,7 +38,7 @@ def _parse_response(*, response: httpx.Response) -> Room:
 def _sync(
     *,
     client: httpx.Client,
-    body: CreateRoomRequestBody | Unset = UNSET,
+    body: CreateRoomRequestBody,
 ) -> Room:
     r"""Create room
 
@@ -58,7 +56,7 @@ def _sync(
     - `groupsAccesses` are optional fields.
 
     Args:
-        body (CreateRoomRequestBody | Unset):
+        body (CreateRoomRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -81,7 +79,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: CreateRoomRequestBody | Unset = UNSET,
+    body: CreateRoomRequestBody,
 ) -> Room:
     r"""Create room
 
@@ -99,7 +97,7 @@ async def _asyncio(
     - `groupsAccesses` are optional fields.
 
     Args:
-        body (CreateRoomRequestBody | Unset):
+        body (CreateRoomRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

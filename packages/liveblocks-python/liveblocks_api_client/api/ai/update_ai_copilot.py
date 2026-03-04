@@ -9,13 +9,12 @@ from ...models.ai_copilot_google import AiCopilotGoogle
 from ...models.ai_copilot_open_ai import AiCopilotOpenAi
 from ...models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
 from ...models.update_ai_copilot_request_body import UpdateAiCopilotRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     copilot_id: str,
     *,
-    body: UpdateAiCopilotRequestBody | Unset = UNSET,
+    body: UpdateAiCopilotRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -26,8 +25,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -84,7 +82,7 @@ def _sync(
     copilot_id: str,
     *,
     client: httpx.Client,
-    body: UpdateAiCopilotRequestBody | Unset = UNSET,
+    body: UpdateAiCopilotRequestBody,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     r"""Update AI copilot
 
@@ -98,7 +96,7 @@ def _sync(
 
     Args:
         copilot_id (str):
-        body (UpdateAiCopilotRequestBody | Unset):
+        body (UpdateAiCopilotRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -123,7 +121,7 @@ async def _asyncio(
     copilot_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateAiCopilotRequestBody | Unset = UNSET,
+    body: UpdateAiCopilotRequestBody,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     r"""Update AI copilot
 
@@ -137,7 +135,7 @@ async def _asyncio(
 
     Args:
         copilot_id (str):
-        body (UpdateAiCopilotRequestBody | Unset):
+        body (UpdateAiCopilotRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

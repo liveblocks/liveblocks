@@ -6,14 +6,13 @@ import httpx
 from ... import errors
 from ...models.delete_management_webhook_headers_request_body import DeleteManagementWebhookHeadersRequestBody
 from ...models.delete_management_webhook_headers_response import DeleteManagementWebhookHeadersResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     project_id: str,
     webhook_id: str,
     *,
-    body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+    body: DeleteManagementWebhookHeadersRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     webhook_id: str,
     *,
     client: httpx.Client,
-    body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+    body: DeleteManagementWebhookHeadersRequestBody,
 ) -> DeleteManagementWebhookHeadersResponse:
     """Delete webhook headers
 
@@ -60,7 +58,7 @@ def _sync(
     Args:
         project_id (str):
         webhook_id (str):
-        body (DeleteManagementWebhookHeadersRequestBody | Unset):
+        body (DeleteManagementWebhookHeadersRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -87,7 +85,7 @@ async def _asyncio(
     webhook_id: str,
     *,
     client: httpx.AsyncClient,
-    body: DeleteManagementWebhookHeadersRequestBody | Unset = UNSET,
+    body: DeleteManagementWebhookHeadersRequestBody,
 ) -> DeleteManagementWebhookHeadersResponse:
     """Delete webhook headers
 
@@ -99,7 +97,7 @@ async def _asyncio(
     Args:
         project_id (str):
         webhook_id (str):
-        body (DeleteManagementWebhookHeadersRequestBody | Unset):
+        body (DeleteManagementWebhookHeadersRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

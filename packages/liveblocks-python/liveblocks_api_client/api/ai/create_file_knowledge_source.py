@@ -5,14 +5,14 @@ import httpx
 
 from ... import errors
 from ...models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
-from ...types import UNSET, File, Unset
+from ...types import File
 
 
 def _get_kwargs(
     copilot_id: str,
     name: str,
     *,
-    body: File | Unset = UNSET,
+    body: File,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -24,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["content"] = body.payload
+    _kwargs["content"] = body.payload
 
     headers["Content-Type"] = "application/octet-stream"
 
@@ -47,7 +46,7 @@ def _sync(
     name: str,
     *,
     client: httpx.Client,
-    body: File | Unset = UNSET,
+    body: File,
 ) -> CreateFileKnowledgeSourceResponse200:
     """Create file knowledge source
 
@@ -59,7 +58,7 @@ def _sync(
     Args:
         copilot_id (str):
         name (str):
-        body (File | Unset):
+        body (File):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -86,7 +85,7 @@ async def _asyncio(
     name: str,
     *,
     client: httpx.AsyncClient,
-    body: File | Unset = UNSET,
+    body: File,
 ) -> CreateFileKnowledgeSourceResponse200:
     """Create file knowledge source
 
@@ -98,7 +97,7 @@ async def _asyncio(
     Args:
         copilot_id (str):
         name (str):
-        body (File | Unset):
+        body (File):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

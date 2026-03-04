@@ -6,14 +6,13 @@ import httpx
 from ... import errors
 from ...models.room_subscription_settings import RoomSubscriptionSettings
 from ...models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     user_id: str,
     *,
-    body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
+    body: UpdateRoomSubscriptionSettingsRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     user_id: str,
     *,
     client: httpx.Client,
-    body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
+    body: UpdateRoomSubscriptionSettingsRequestBody,
 ) -> RoomSubscriptionSettings:
     """Update room subscription settings
 
@@ -59,8 +57,8 @@ def _sync(
     Args:
         room_id (str):
         user_id (str):
-        body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
-            settings - all properties are optional
+        body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
+            properties are optional
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -87,7 +85,7 @@ async def _asyncio(
     user_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
+    body: UpdateRoomSubscriptionSettingsRequestBody,
 ) -> RoomSubscriptionSettings:
     """Update room subscription settings
 
@@ -98,8 +96,8 @@ async def _asyncio(
     Args:
         room_id (str):
         user_id (str):
-        body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
-            settings - all properties are optional
+        body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
+            properties are optional
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

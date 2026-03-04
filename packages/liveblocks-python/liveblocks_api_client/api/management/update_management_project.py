@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.update_management_project_request_body import UpdateManagementProjectRequestBody
 from ...models.update_management_project_response import UpdateManagementProjectResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     project_id: str,
     *,
-    body: UpdateManagementProjectRequestBody | Unset = UNSET,
+    body: UpdateManagementProjectRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     project_id: str,
     *,
     client: httpx.Client,
-    body: UpdateManagementProjectRequestBody | Unset = UNSET,
+    body: UpdateManagementProjectRequestBody,
 ) -> UpdateManagementProjectResponse:
     """Update project
 
@@ -58,7 +56,7 @@ def _sync(
 
     Args:
         project_id (str):
-        body (UpdateManagementProjectRequestBody | Unset):
+        body (UpdateManagementProjectRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -83,7 +81,7 @@ async def _asyncio(
     project_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateManagementProjectRequestBody | Unset = UNSET,
+    body: UpdateManagementProjectRequestBody,
 ) -> UpdateManagementProjectResponse:
     """Update project
 
@@ -96,7 +94,7 @@ async def _asyncio(
 
     Args:
         project_id (str):
-        body (UpdateManagementProjectRequestBody | Unset):
+        body (UpdateManagementProjectRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

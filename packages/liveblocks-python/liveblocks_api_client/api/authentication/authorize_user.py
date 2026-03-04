@@ -5,12 +5,11 @@ import httpx
 from ... import errors
 from ...models.authorize_user_request_body import AuthorizeUserRequestBody
 from ...models.authorize_user_response import AuthorizeUserResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: AuthorizeUserRequestBody | Unset = UNSET,
+    body: AuthorizeUserRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -19,8 +18,7 @@ def _get_kwargs(
         "url": "/authorize-user",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -40,7 +38,7 @@ def _parse_response(*, response: httpx.Response) -> AuthorizeUserResponse:
 def _sync(
     *,
     client: httpx.Client,
-    body: AuthorizeUserRequestBody | Unset = UNSET,
+    body: AuthorizeUserRequestBody,
 ) -> AuthorizeUserResponse:
     r"""Get access token with secret key
 
@@ -74,7 +72,7 @@ def _sync(
     tokens](/docs/authentication/access-token).
 
     Args:
-        body (AuthorizeUserRequestBody | Unset):
+        body (AuthorizeUserRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -97,7 +95,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: AuthorizeUserRequestBody | Unset = UNSET,
+    body: AuthorizeUserRequestBody,
 ) -> AuthorizeUserResponse:
     r"""Get access token with secret key
 
@@ -131,7 +129,7 @@ async def _asyncio(
     tokens](/docs/authentication/access-token).
 
     Args:
-        body (AuthorizeUserRequestBody | Unset):
+        body (AuthorizeUserRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

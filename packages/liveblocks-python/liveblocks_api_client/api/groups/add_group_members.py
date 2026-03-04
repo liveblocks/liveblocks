@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.add_group_members_request_body import AddGroupMembersRequestBody
 from ...models.group import Group
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     group_id: str,
     *,
-    body: AddGroupMembersRequestBody | Unset = UNSET,
+    body: AddGroupMembersRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     group_id: str,
     *,
     client: httpx.Client,
-    body: AddGroupMembersRequestBody | Unset = UNSET,
+    body: AddGroupMembersRequestBody,
 ) -> Group:
     """Add group members
 
@@ -54,7 +52,7 @@ def _sync(
 
     Args:
         group_id (str):
-        body (AddGroupMembersRequestBody | Unset):
+        body (AddGroupMembersRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -79,7 +77,7 @@ async def _asyncio(
     group_id: str,
     *,
     client: httpx.AsyncClient,
-    body: AddGroupMembersRequestBody | Unset = UNSET,
+    body: AddGroupMembersRequestBody,
 ) -> Group:
     """Add group members
 
@@ -88,7 +86,7 @@ async def _asyncio(
 
     Args:
         group_id (str):
-        body (AddGroupMembersRequestBody | Unset):
+        body (AddGroupMembersRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

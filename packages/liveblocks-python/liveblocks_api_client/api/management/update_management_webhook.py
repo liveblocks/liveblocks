@@ -6,14 +6,13 @@ import httpx
 from ... import errors
 from ...models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
 from ...models.update_management_webhook_response import UpdateManagementWebhookResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     project_id: str,
     webhook_id: str,
     *,
-    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+    body: UpdateManagementWebhookRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     webhook_id: str,
     *,
     client: httpx.Client,
-    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+    body: UpdateManagementWebhookRequestBody,
 ) -> UpdateManagementWebhookResponse:
     """Update webhook
 
@@ -59,7 +57,7 @@ def _sync(
     Args:
         project_id (str):
         webhook_id (str):
-        body (UpdateManagementWebhookRequestBody | Unset):
+        body (UpdateManagementWebhookRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -86,7 +84,7 @@ async def _asyncio(
     webhook_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateManagementWebhookRequestBody | Unset = UNSET,
+    body: UpdateManagementWebhookRequestBody,
 ) -> UpdateManagementWebhookResponse:
     """Update webhook
 
@@ -97,7 +95,7 @@ async def _asyncio(
     Args:
         project_id (str):
         webhook_id (str):
-        body (UpdateManagementWebhookRequestBody | Unset):
+        body (UpdateManagementWebhookRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

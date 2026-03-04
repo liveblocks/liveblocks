@@ -10,7 +10,7 @@ from ...types import UNSET, File, Unset
 def _get_kwargs(
     room_id: str,
     *,
-    body: File | Unset = UNSET,
+    body: File,
     guid: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
@@ -29,8 +29,7 @@ def _get_kwargs(
         "params": params,
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["content"] = body.payload
+    _kwargs["content"] = body.payload
 
     headers["Content-Type"] = "application/octet-stream"
 
@@ -49,7 +48,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: File | Unset = UNSET,
+    body: File,
     guid: str | Unset = UNSET,
 ) -> None:
     """Send a binary Yjs update
@@ -68,7 +67,7 @@ def _sync(
     Args:
         room_id (str):
         guid (str | Unset):
-        body (File | Unset):
+        body (File):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -94,7 +93,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: File | Unset = UNSET,
+    body: File,
     guid: str | Unset = UNSET,
 ) -> None:
     """Send a binary Yjs update
@@ -113,7 +112,7 @@ async def _asyncio(
     Args:
         room_id (str):
         guid (str | Unset):
-        body (File | Unset):
+        body (File):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

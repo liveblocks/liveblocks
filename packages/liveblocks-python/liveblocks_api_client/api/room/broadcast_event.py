@@ -4,13 +4,12 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: Any | Unset = UNSET,
+    body: Any,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -21,8 +20,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body
+    _kwargs["json"] = body
 
     headers["Content-Type"] = "application/json"
 
@@ -41,7 +39,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: Any | Unset = UNSET,
+    body: Any,
 ) -> None:
     """Broadcast event to a room
 
@@ -52,7 +50,7 @@ def _sync(
 
     Args:
         room_id (str):
-        body (Any | Unset):
+        body (Any):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -77,7 +75,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: Any | Unset = UNSET,
+    body: Any,
 ) -> None:
     """Broadcast event to a room
 
@@ -88,7 +86,7 @@ async def _asyncio(
 
     Args:
         room_id (str):
-        body (Any | Unset):
+        body (Any):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

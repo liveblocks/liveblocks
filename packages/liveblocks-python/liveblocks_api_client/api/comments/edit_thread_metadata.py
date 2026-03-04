@@ -6,14 +6,13 @@ import httpx
 from ... import errors
 from ...models.thread_metadata import ThreadMetadata
 from ...models.update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     thread_id: str,
     *,
-    body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
+    body: UpdateThreadMetadataReqeuestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     thread_id: str,
     *,
     client: httpx.Client,
-    body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
+    body: UpdateThreadMetadataReqeuestBody,
 ) -> ThreadMetadata:
     """Edit thread metadata
 
@@ -60,7 +58,7 @@ def _sync(
     Args:
         room_id (str):
         thread_id (str):
-        body (UpdateThreadMetadataReqeuestBody | Unset):
+        body (UpdateThreadMetadataReqeuestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -87,7 +85,7 @@ async def _asyncio(
     thread_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateThreadMetadataReqeuestBody | Unset = UNSET,
+    body: UpdateThreadMetadataReqeuestBody,
 ) -> ThreadMetadata:
     """Edit thread metadata
 
@@ -99,7 +97,7 @@ async def _asyncio(
     Args:
         room_id (str):
         thread_id (str):
-        body (UpdateThreadMetadataReqeuestBody | Unset):
+        body (UpdateThreadMetadataReqeuestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

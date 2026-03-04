@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
 from ...models.create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     copilot_id: str,
     *,
-    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+    body: CreateWebKnowledgeSourceRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     copilot_id: str,
     *,
     client: httpx.Client,
-    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+    body: CreateWebKnowledgeSourceRequestBody,
 ) -> CreateWebKnowledgeSourceResponse:
     """Create web knowledge source
 
@@ -55,7 +53,7 @@ def _sync(
 
     Args:
         copilot_id (str):
-        body (CreateWebKnowledgeSourceRequestBody | Unset):
+        body (CreateWebKnowledgeSourceRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -80,7 +78,7 @@ async def _asyncio(
     copilot_id: str,
     *,
     client: httpx.AsyncClient,
-    body: CreateWebKnowledgeSourceRequestBody | Unset = UNSET,
+    body: CreateWebKnowledgeSourceRequestBody,
 ) -> CreateWebKnowledgeSourceResponse:
     """Create web knowledge source
 
@@ -90,7 +88,7 @@ async def _asyncio(
 
     Args:
         copilot_id (str):
-        body (CreateWebKnowledgeSourceRequestBody | Unset):
+        body (CreateWebKnowledgeSourceRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

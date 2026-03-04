@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.create_thread_request_body import CreateThreadRequestBody
 from ...models.thread import Thread
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: CreateThreadRequestBody | Unset = UNSET,
+    body: CreateThreadRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: CreateThreadRequestBody | Unset = UNSET,
+    body: CreateThreadRequestBody,
 ) -> Thread:
     r"""Create thread
 
@@ -67,7 +65,7 @@ def _sync(
 
     Args:
         room_id (str):
-        body (CreateThreadRequestBody | Unset):
+        body (CreateThreadRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -92,7 +90,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: CreateThreadRequestBody | Unset = UNSET,
+    body: CreateThreadRequestBody,
 ) -> Thread:
     r"""Create thread
 
@@ -114,7 +112,7 @@ async def _asyncio(
 
     Args:
         room_id (str):
-        body (CreateThreadRequestBody | Unset):
+        body (CreateThreadRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

@@ -11,7 +11,6 @@ from ...models.create_ai_copilot_options_anthropic import CreateAiCopilotOptions
 from ...models.create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
 from ...models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
 from ...models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -19,8 +18,7 @@ def _get_kwargs(
     body: CreateAiCopilotOptionsAnthropic
     | CreateAiCopilotOptionsGoogle
     | CreateAiCopilotOptionsOpenAi
-    | CreateAiCopilotOptionsOpenAiCompatible
-    | Unset = UNSET,
+    | CreateAiCopilotOptionsOpenAiCompatible,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -95,8 +93,7 @@ def _sync(
     body: CreateAiCopilotOptionsAnthropic
     | CreateAiCopilotOptionsGoogle
     | CreateAiCopilotOptionsOpenAi
-    | CreateAiCopilotOptionsOpenAiCompatible
-    | Unset = UNSET,
+    | CreateAiCopilotOptionsOpenAiCompatible,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     """Create AI copilot
 
@@ -105,7 +102,7 @@ def _sync(
 
     Args:
         body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible | Unset):
+            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -131,8 +128,7 @@ async def _asyncio(
     body: CreateAiCopilotOptionsAnthropic
     | CreateAiCopilotOptionsGoogle
     | CreateAiCopilotOptionsOpenAi
-    | CreateAiCopilotOptionsOpenAiCompatible
-    | Unset = UNSET,
+    | CreateAiCopilotOptionsOpenAiCompatible,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
     """Create AI copilot
 
@@ -141,7 +137,7 @@ async def _asyncio(
 
     Args:
         body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible | Unset):
+            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

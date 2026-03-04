@@ -6,14 +6,13 @@ import httpx
 from ... import errors
 from ...models.test_management_webhook_request_body import TestManagementWebhookRequestBody
 from ...models.test_management_webhook_response import TestManagementWebhookResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     project_id: str,
     webhook_id: str,
     *,
-    body: TestManagementWebhookRequestBody | Unset = UNSET,
+    body: TestManagementWebhookRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -25,8 +24,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     webhook_id: str,
     *,
     client: httpx.Client,
-    body: TestManagementWebhookRequestBody | Unset = UNSET,
+    body: TestManagementWebhookRequestBody,
 ) -> TestManagementWebhookResponse:
     """Send test webhook
 
@@ -59,7 +57,7 @@ def _sync(
     Args:
         project_id (str):
         webhook_id (str):
-        body (TestManagementWebhookRequestBody | Unset):
+        body (TestManagementWebhookRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -86,7 +84,7 @@ async def _asyncio(
     webhook_id: str,
     *,
     client: httpx.AsyncClient,
-    body: TestManagementWebhookRequestBody | Unset = UNSET,
+    body: TestManagementWebhookRequestBody,
 ) -> TestManagementWebhookResponse:
     """Send test webhook
 
@@ -97,7 +95,7 @@ async def _asyncio(
     Args:
         project_id (str):
         webhook_id (str):
-        body (TestManagementWebhookRequestBody | Unset):
+        body (TestManagementWebhookRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

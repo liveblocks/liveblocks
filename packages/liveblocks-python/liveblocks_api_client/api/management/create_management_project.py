@@ -5,12 +5,11 @@ import httpx
 from ... import errors
 from ...models.create_management_project_request_body import CreateManagementProjectRequestBody
 from ...models.create_management_project_response import CreateManagementProjectResponse
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: CreateManagementProjectRequestBody | Unset = UNSET,
+    body: CreateManagementProjectRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -19,8 +18,7 @@ def _get_kwargs(
         "url": "/management/projects",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -40,7 +38,7 @@ def _parse_response(*, response: httpx.Response) -> CreateManagementProjectRespo
 def _sync(
     *,
     client: httpx.Client,
-    body: CreateManagementProjectRequestBody | Unset = UNSET,
+    body: CreateManagementProjectRequestBody,
 ) -> CreateManagementProjectResponse:
     """Create project
 
@@ -49,7 +47,7 @@ def _sync(
     about the newly created project, including its ID, keys, region, and settings.
 
     Args:
-        body (CreateManagementProjectRequestBody | Unset):
+        body (CreateManagementProjectRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -72,7 +70,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: CreateManagementProjectRequestBody | Unset = UNSET,
+    body: CreateManagementProjectRequestBody,
 ) -> CreateManagementProjectResponse:
     """Create project
 
@@ -81,7 +79,7 @@ async def _asyncio(
     about the newly created project, including its ID, keys, region, and settings.
 
     Args:
-        body (CreateManagementProjectRequestBody | Unset):
+        body (CreateManagementProjectRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
