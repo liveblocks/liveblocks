@@ -236,7 +236,7 @@ export interface ThreadProps<
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents & ThreadComponents>;
+  components?: Partial<GlobalComponents & ThreadComponents<TM, CM>>;
 }
 
 /**

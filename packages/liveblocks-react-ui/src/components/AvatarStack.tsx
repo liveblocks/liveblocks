@@ -28,6 +28,11 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   max?: number;
 
   /**
+   * The size of the avatars.
+   */
+  size?: string | number;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides>;
@@ -41,6 +46,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
     {
       userIds: additionalUserIds = [],
       max = 3,
+      size,
       overrides,
       className,
       style,
@@ -79,6 +85,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           style={
             {
               "--lb-avatar-stack-count": visibleItemsCount - 1,
+              "--lb-avatar-stack-size": size,
               ...style,
             } as CSSProperties
           }

@@ -1296,7 +1296,14 @@ Displays a floating thread attached to a trigger element.
 </FloatingThread>
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/comments/floating-thread.png"
+    alt="FloatingThread"
+    width={768}
+    height={508}
+  />
+</Figure>
 
 `FloatingThread` can be combined with [`CommentPin`](#CommentPin) in canvas-like
 UIs.
@@ -1314,7 +1321,14 @@ UIs.
 </FloatingThread>
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/comments/floating-thread-comment-pin.png"
+    alt="FloatingThread with CommentPin"
+    width={768}
+    height={508}
+  />
+</Figure>
 
 ##### Props [#FloatingThread-props]
 
@@ -1610,7 +1624,14 @@ Displays a floating composer attached to a trigger element.
 </FloatingComposer>
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/comments/floating-composer.png"
+    alt="FloatingComposer"
+    width={768}
+    height={411}
+  />
+</Figure>
 
 Use `metadata` to attach context to the thread when submitting (for example
 canvas coordinates or table cell IDs).
@@ -1629,6 +1650,15 @@ canvas-like UIs.
   />
 </FloatingComposer>
 ```
+
+<Figure>
+  <Image
+    src="/assets/comments/floating-composer-comment-pin.png"
+    alt="FloatingComposer with CommentPin"
+    width={768}
+    height={411}
+  />
+</Figure>
 
 ##### Props [#FloatingComposer-props]
 
@@ -1864,7 +1894,14 @@ Displays a comment pin that can be used as a trigger for `FloatingComposer` and
 <CommentPin userId="stacy@example.com" />
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/comments/comment-pin.png"
+    alt="CommentPin"
+    width={768}
+    height={413}
+  />
+</Figure>
 
 Set the `userId` prop to display an avatar inside the pin, for example to
 represent the thread’s author.
@@ -1887,6 +1924,15 @@ itself to always point to wherever it is positioned.
 />
 ```
 
+You can either use the `size` prop or override `--lb-comment-pin-size` with CSS
+to change the pin’s size.
+
+```tsx
+<CommentPin size={40} />
+
+<CommentPin className="[--lb-comment-pin-size:3rem]" />
+```
+
 ##### Props [#CommentPin-props]
 
 <PropertiesList>
@@ -1899,6 +1945,9 @@ itself to always point to wherever it is positioned.
   </PropertiesListItem>
   <PropertiesListItem name="userId" type="string">
     The user ID to optionally display an avatar for.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the pin.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3679,7 +3728,14 @@ Displays a stack of avatars for users currently present in the room.
 <AvatarStack />
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/presence/avatar-stack.png"
+    alt="AvatarStack"
+    width={768}
+    height={456}
+  />
+</Figure>
 
 You can include additional users (e.g. users who are invited to the room but not
 currently present) and control how many avatars are shown before grouping the
@@ -3692,6 +3748,15 @@ rest as `+N`.
 User IDs (both from Presence and the `userIds` prop) are deduplicated so the
 same user present with multiple tabs for example will only be displayed once in
 the stack.
+
+You can either use the `size` prop or override `--lb-avatar-stack-size` with CSS
+to change the avatars’ size.
+
+```tsx
+<AvatarStack size={40} />
+
+<AvatarStack className="[--lb-avatar-stack-size:3rem]" />
+```
 
 ##### User information
 
@@ -3732,6 +3797,9 @@ properties.
   <PropertiesListItem name="max" type="number" defaultValue="3">
     The maximum number of visible avatars.
   </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the avatars.
+  </PropertiesListItem>
   <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
     Override the component’s strings.
   </PropertiesListItem>
@@ -3758,7 +3826,14 @@ It works out-of-the-box with best practices built-in:
 </Cursors>
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/presence/cursors.png"
+    alt="Cursors"
+    width={768}
+    height={461}
+  />
+</Figure>
 
 By default, cursor coordinates are stored in Presence under `"cursor"`. Use
 `presenceKey` to render multiple `Cursors` areas in a single room.
@@ -3817,7 +3892,14 @@ Displays a multiplayer cursor with a color and an optional label.
 <Cursor />
 ```
 
-{/* TODO: Add image */}
+<Figure>
+  <Image
+    src="/assets/presence/cursor.png"
+    alt="Cursor"
+    width={768}
+    height={461}
+  />
+</Figure>
 
 You can either use the `color` prop or override `--lb-cursor-color` with CSS to
 change the cursor’s color, by default it’s set to `--lb-accent`. The label’s

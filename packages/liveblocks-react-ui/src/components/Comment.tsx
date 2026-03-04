@@ -28,6 +28,7 @@ import type {
   MouseEvent,
   PropsWithChildren,
   ReactNode,
+  RefAttributes,
   SyntheticEvent,
 } from "react";
 import {
@@ -1125,7 +1126,9 @@ export const Comment = Object.assign(
         </TooltipProvider>
       );
     }
-  ),
+  ) as <CM extends BaseMetadata = DCM>(
+    props: CommentProps<CM> & RefAttributes<HTMLDivElement>
+  ) => JSX.Element,
   {
     /**
      * Displays a dropdown item in the comment's dropdown.
