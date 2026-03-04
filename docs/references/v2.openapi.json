@@ -1048,7 +1048,7 @@
       "delete": {
         "summary": "Delete Storage document",
         "tags": ["Storage"],
-        "operationId": "delete-rooms-roomId-storage",
+        "operationId": "delete-storage-document",
         "parameters": [
           {
             "schema": {
@@ -5775,7 +5775,7 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhook-recover-failed-messages",
+        "operationId": "recover-failed-webhook-messages",
         "requestBody": {
           "content": {
             "application/json": {
@@ -5844,7 +5844,7 @@
             "$ref": "#/components/responses/422"
           }
         },
-        "operationId": "post-management-webhook-test",
+        "operationId": "send-test-webhook",
         "requestBody": {
           "content": {
             "application/json": {
