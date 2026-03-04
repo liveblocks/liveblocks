@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/avatars-cursors-use-high-level-components",
+  "name": "@liveblocks-examples/nextjs-comments-ag-grid",
   "description": "This example shows how to build AG Grid commenting with Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,

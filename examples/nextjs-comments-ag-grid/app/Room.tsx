@@ -10,7 +10,7 @@ import {
 export function Room({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-      <RoomProvider id="liveblocks:examples:avatars-cursors-use-high-level-components">
+      <RoomProvider id="liveblocks:examples:nextjs-comments-ag-grid">
         <ClientSideSuspense fallback={<div>Loading…</div>}>
           {children}
         </ClientSideSuspense>

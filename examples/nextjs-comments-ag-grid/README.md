@@ -21,7 +21,7 @@ This example shows how to build AG Grid commenting with [Liveblocks](https://liv
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example avatars-cursors-use-high-level-components --api-key
+npx create-liveblocks-app@latest --example nextjs-comments-ag-grid --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling you to automatically get your API key from your [liveblocks.io](https://liveblocks.io) account.
