@@ -3789,12 +3789,12 @@
         "summary": "Create group",
         "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).",
         "tags": ["Groups"],
-        "operationId": "post-groups",
+        "operationId": "create-group",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateGroup"
+                "$ref": "#/components/schemas/CreateGroupRequestBody"
               }
             }
           }
@@ -3856,7 +3856,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetGroups"
+                  "$ref": "#/components/schemas/GetGroupsResponse"
                 }
               }
             }
@@ -3875,7 +3875,7 @@
         "summary": "Get group",
         "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-reference/liveblocks-node#get-group).",
         "tags": ["Groups"],
-        "operationId": "get-groups-groupId",
+        "operationId": "get-group",
         "parameters": [
           {
             "schema": {
@@ -3913,7 +3913,7 @@
         "summary": "Delete group",
         "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-reference/liveblocks-node#delete-group).",
         "tags": ["Groups"],
-        "operationId": "delete-groups-groupId",
+        "operationId": "delete-group",
         "parameters": [
           {
             "schema": {
@@ -3946,7 +3946,7 @@
         "summary": "Add group members",
         "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).",
         "tags": ["Groups"],
-        "operationId": "post-groups-groupId-add-members",
+        "operationId": "add-group-members",
         "parameters": [
           {
             "schema": {
@@ -3962,7 +3962,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddGroupMembers"
+                "$ref": "#/components/schemas/AddGroupMembersRequestBody"
               }
             }
           }
@@ -3998,7 +3998,7 @@
         "summary": "Remove group members",
         "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).",
         "tags": ["Groups"],
-        "operationId": "post-groups-groupId-remove-members",
+        "operationId": "remove-group-members",
         "parameters": [
           {
             "schema": {
@@ -4014,7 +4014,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RemoveGroupMembers"
+                "$ref": "#/components/schemas/RemoveGroupMembersRequestBody"
               }
             }
           }
@@ -4050,7 +4050,7 @@
         "summary": "Get user groups",
         "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).",
         "tags": ["Groups"],
-        "operationId": "get-users-userId-groups",
+        "operationId": "get-user-groups",
         "parameters": [
           {
             "schema": {
@@ -4087,7 +4087,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetUserGroups"
+                  "$ref": "#/components/schemas/GetUserGroupsResponse"
                 }
               }
             }
@@ -7944,7 +7944,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["group"]
+            "const": "group"
           },
           "id": {
             "type": "string"
@@ -7999,11 +7999,11 @@
         },
         "required": ["id", "addedAt"]
       },
-      "CreateGroup": {
-        "title": "CreateGroup",
+      "CreateGroupRequestBody": {
+        "title": "CreateGroupRequestBody",
         "type": "object",
         "properties": {
-          "groupId": {
+          "id": {
             "type": "string"
           },
           "memberIds": {
@@ -8024,10 +8024,11 @@
             }
           }
         },
-        "required": ["groupId"]
+        "required": ["id"],
+        "additionalProperties": false
       },
-      "AddGroupMembers": {
-        "title": "AddGroupMembers",
+      "AddGroupMembersRequestBody": {
+        "title": "AddGroupMembersRequestBody",
         "type": "object",
         "properties": {
           "memberIds": {
@@ -8039,8 +8040,8 @@
         },
         "required": ["memberIds"]
       },
-      "RemoveGroupMembers": {
-        "title": "RemoveGroupMembers",
+      "RemoveGroupMembersRequestBody": {
+        "title": "RemoveGroupMembersRequestBody",
         "type": "object",
         "properties": {
           "memberIds": {
@@ -8052,8 +8053,8 @@
         },
         "required": ["memberIds"]
       },
-      "GetGroups": {
-        "title": "GetGroups",
+      "GetGroupsResponse": {
+        "title": "GetGroupsResponse",
         "type": "object",
         "properties": {
           "data": {
@@ -8063,12 +8064,21 @@
             }
           },
           "nextCursor": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
-        }
+        },
+        "required": ["data", "nextCursor"],
+        "additionalProperties": false
       },
-      "GetUserGroups": {
-        "title": "GetUserGroups",
+      "GetUserGroupsResponse": {
+        "title": "GetUserGroupsResponse",
         "type": "object",
         "properties": {
           "data": {
@@ -8078,9 +8088,18 @@
             }
           },
           "nextCursor": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
-        }
+        },
+        "required": ["data", "nextCursor"],
+        "additionalProperties": false
       },
       "ManagementProjectType": {
         "title": "ManagementProjectType",
