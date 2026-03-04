@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Composer } from "@liveblocks/react-ui";
-import { useCreateThread } from "@liveblocks/react/suspense";
+import { useCallback, useEffect, useState } from "react";
+import { CommentPin, FloatingComposer } from "@liveblocks/react-ui";
 import { useSelf } from "@liveblocks/react";
-import styles from "./Toolbar.module.css";
-import avatarStyles from "./CommentsCanvas.module.css";
-import { useMaxZIndex, useNearEdge } from "../hooks";
+import { useMaxZIndex } from "../hooks";
 
-export function Toolbar() {
+export function PlaceThreadButton() {
   const [state, setState] = useState<"initial" | "placing" | "placed">(
     "initial"
   );
@@ -19,12 +16,19 @@ export function Toolbar() {
 
   return (
     <>
-      {/* Allows you to place composers */}
-      <div className={styles.toolbar}>
+      {/* Allows you to place floating composers */}
+      <div style={{ position: "absolute", top: 12, right: 12 }}>
         <button
-          className={styles.button}
           onClick={() => setState("placing")}
-          style={{ cursor: state === "placing" ? "none" : undefined }}
+          style={{
+            cursor: state === "placing" ? "none" : undefined,
+            background: "#ffffff",
+            border: "1px solid #00000030",
+            borderRadius: 8,
+            width: 36,
+            height: 36,
+            fontSize: 24,
+          }}
         >
           +
         </button>
@@ -32,23 +36,37 @@ export function Toolbar() {
 
       {/* Overlay that lets you click and cancel placing */}
       <div
-        className={styles.cancelPlacing}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          background: "rgba(0, 0, 0, 0.2)",
+          pointerEvents: state === "initial" ? "none" : undefined,
+          opacity: state !== "initial" ? 1 : 0,
+        }}
         onClick={reset}
         onContextMenu={(e) => {
           e.preventDefault();
           reset();
         }}
-        data-enabled={state !== "initial" ? true : undefined}
       />
 
       {/* The visible cursor when you're placing */}
       {state === "placing" ? (
         <div
-          className={styles.newThreadClick}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            cursor: "none",
+          }}
           onClick={(e) => {
             // On click, get coords and place down composer
-            const avatarOffset = 42;
-            setCoords({ x: e.clientX + avatarOffset, y: e.clientY });
+            setCoords({ x: e.clientX, y: e.clientY });
             setState("placed");
           }}
           onContextMenu={(e) => {
@@ -75,58 +93,32 @@ function ThreadComposer({
   coords: { x: number; y: number };
   onSubmit: () => void;
 }) {
-  // Get create thread function and the current user
-  const createThread = useCreateThread();
-  const creator = useSelf((me) => me.info);
-
+  // Get the current user
+  const creatorId = useSelf((me) => me.id);
   // Create thread above other threads
   const maxZIndex = useMaxZIndex();
 
-  // Used to flip composer near edge of screen
-  const ref = useRef<HTMLDivElement>(null);
-  const { nearRightEdge, nearBottomEdge } = useNearEdge(ref);
-
   return (
-    <div
-      ref={ref}
-      className={styles.composerWrapper}
-      style={{
-        transform: `translate(${coords.x}px, ${coords.y}px)`,
+    <FloatingComposer
+      defaultOpen={true}
+      metadata={{
+        x: coords.x,
+        y: coords.y,
+        zIndex: maxZIndex + 1,
       }}
+      onComposerSubmit={onSubmit}
     >
-      <div className={avatarStyles.avatar} style={{ cursor: "default" }}>
-        {creator ? (
-          <img
-            src={creator.avatar}
-            alt={creator.name}
-            width="28px"
-            height="28px"
-            draggable={false}
-          />
-        ) : (
-          <div />
-        )}
-      </div>
-      <Composer
-        className="composer"
-        onComposerSubmit={({ body }, e) => {
-          e.preventDefault();
-          // Create a new thread with the current coords as metadata
-          createThread({
-            body,
-            metadata: {
-              x: coords.x,
-              y: coords.y,
-              zIndex: maxZIndex + 1,
-            },
-          });
-          onSubmit();
+      <CommentPin
+        userId={creatorId ?? undefined}
+        corner="top-left"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transform: `translate(${coords.x}px, ${coords.y}px)`,
         }}
-        autoFocus={true}
-        data-flip-vertical={nearBottomEdge || undefined}
-        data-flip-horizontal={nearRightEdge || undefined}
       />
-    </div>
+    </FloatingComposer>
   );
 }
 
@@ -155,9 +147,13 @@ function NewThreadCursor() {
   }, []);
 
   return (
-    <div
-      className={styles.newThreadCursor}
+    <CommentPin
+      corner="top-left"
       style={{
+        cursor: "none",
+        position: "fixed",
+        top: 0,
+        left: 0,
         transform: `translate(${coords.x}px, ${coords.y}px)`,
         zIndex: 99999999999,
       }}
