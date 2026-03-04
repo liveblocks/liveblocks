@@ -1,4 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
+import { getSession } from "../../../example";
 
 /**
  * Authenticating your Liveblocks application
@@ -9,20 +10,14 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
-export async function POST() {
-  // We're generating random users and avatars here.
-  // In a real-world scenario, this is where you'd assign the
-  // user based on their real identity from your auth provider.
-  const userIndex = Math.floor(Math.random() * NAMES.length);
+export async function POST(request: Request) {
+  // Get the current user's unique id and info from your database
+  const user = await getSession(request);
 
-  // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`user-${userIndex}`, {
-    userInfo: {
-      name: NAMES[userIndex],
-      avatar: `https://liveblocks.io/avatars/avatar-${Math.floor(
-        Math.random() * 30
-      )}.png`,
-    },
+  // Create a Liveblocks session for the current user
+  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: user.info,
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
@@ -31,14 +26,3 @@ export async function POST() {
   const { status, body } = await session.authorize();
   return new Response(body, { status });
 }
-
-const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];

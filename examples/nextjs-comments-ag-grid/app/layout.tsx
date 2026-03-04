@@ -1,4 +1,7 @@
+import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+import { Providers } from "./Providers";
 
 export const metadata = {
   title: "Liveblocks",
@@ -26,7 +29,9 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
