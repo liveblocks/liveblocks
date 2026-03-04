@@ -1,6 +1,7 @@
 ---
 meta:
-  title: "Get started with commenting using Liveblocks and Next.js"
+  title:
+    "Get started with commenting in an HTML table using Liveblocks and Next.js"
   parentTitle: "Quickstart"
   description:
     "Learn how to get started with commenting using Liveblocks and Next.js"
@@ -38,6 +39,44 @@ components from
       ```bash
       npx create-liveblocks-app@latest --init --framework react
       ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+
+    <StepTitle>Define thread metadata</StepTitle>
+    <StepContent>
+
+      Inside the new `liveblocks.config.ts` file, define the metadata shape for threads.
+      Metadata is used to attach comment threads to table cells.
+
+      ```tsx file="liveblocks.config.ts"
+      declare global {
+        interface Liveblocks {
+          ThreadMetadata: {
+            rowId: string;
+            columnId: string;
+          };
+        }
+      }
+
+      export {};
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Import default styles</StepTitle>
+    <StepContent>
+
+    The default components come with default styles, you can import them into the
+    root layout of your app or directly into a CSS file with `@import`.
+
+    ```tsx file="app/layout.tsx"
+    import "@liveblocks/react-ui/styles.css";
+    ```
 
     </StepContent>
 
@@ -113,42 +152,101 @@ components from
     <StepContent>
 
       Now that we’re connected to a room, we can start using the Liveblocks hooks and components.
-      We’ll add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room, then we’ll use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component
-      to render them. Finally, we’ll add a way to create threads by adding a [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer).
+      Add [`useThreads`](/docs/api-reference/liveblocks-react#useThreads) to get the threads in the room,
+      and insert them into the table cells using [`FloatingThread`](/docs/api-reference/liveblocks-react-ui#FloatingThread)
+      and [`FloatingComposer`](/docs/api-reference/liveblocks-react-ui#FloatingComposer). Replace the table data with your own.
 
-      ```tsx file="app/CollaborativeApp.tsx" highlight="7,11-14"
+      ```tsx file="app/CollaborativeApp.tsx"
       "use client";
 
+      import { useState } from "react";
       import { useThreads } from "@liveblocks/react/suspense";
-      import { Composer, Thread } from "@liveblocks/react-ui";
+      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+
+      const TABLE_DATA = [
+        { id: "1", name: "Laptop", price: 1000 },
+        { id: "2", name: "Phone", price: 500 },
+        { id: "3", name: "Tablet", price: 300 },
+      ];
+
+      const COLUMNS = [
+        { id: "name", label: "Name" },
+        { id: "price", label: "Price" },
+      ];
 
       export function CollaborativeApp() {
         const { threads } = useThreads();
 
+        const [openCell, setOpenCell] = useState<{
+          rowId: string;
+          columnId: string;
+        } | null>(null);
+
         return (
-          <div>
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} />
-            ))}
-            <Composer />
-          </div>
+          <table>
+            <tbody>
+              {TABLE_DATA.map((row) => (
+                <tr key={row.id}>
+                  {COLUMNS.map((column) => {
+                    // Check if there's already a thread for this cell
+                    const thread = threads.find(
+                      ({ metadata }) =>
+                        metadata.rowId === row.id && metadata.columnId === column.id,
+                    );
+
+                    // When a thread is created, open it by default
+                    const defaultOpen =
+                      openCell !== null &&
+                      openCell.rowId === row.id &&
+                      openCell.columnId === column.id;
+
+                    const metadata = { rowId: row.id, columnId: column.id };
+
+                    return (
+                      <td key={column.id} style={{ padding: 12 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          {/* Cell contents */}
+                          {row[column.id as keyof typeof row]}
+
+                          {/* Show thread if it exists, otherwise show thread composer */}
+                          {thread ? (
+                            <FloatingThread
+                              thread={thread}
+                              defaultOpen={defaultOpen}
+                              onOpenChange={(isOpen) => {
+                                if (!isOpen && defaultOpen) {
+                                  setOpenCell(null);
+                                }
+                              }}
+                              autoFocus
+                            >
+                              <button style={{ marginLeft: 16 }}>💬</button>
+                            </FloatingThread>
+                          ) : (
+                            <FloatingComposer
+                              metadata={metadata}
+                              onComposerSubmit={() => setOpenCell(metadata)}
+                            >
+                              <button style={{ marginLeft: 16 }}>➕</button>
+                            </FloatingComposer>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         );
       }
       ```
-
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Import default styles</StepTitle>
-    <StepContent>
-
-    The default components come with default styles, you can import them into the
-    root layout of your app or directly into a CSS file with `@import`.
-
-    ```tsx file="app/layout.tsx"
-    import "@liveblocks/react-ui/styles.css";
-    ```
 
     </StepContent>
 
@@ -157,7 +255,7 @@ components from
     <StepTitle>Next: authenticate and add your users</StepTitle>
     <StepContent>
 
-      Comments is set up and working now, but each user is anonymous—the next step is to
+      Comments is set up and working now inside your table, but each user is anonymous—the next step is to
       authenticate each user as they connect, and attach their name and avatar to their comments.
 
       <Button asChild className="not-markdown">

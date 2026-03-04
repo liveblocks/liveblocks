@@ -44,14 +44,13 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.1",
+    "@floating-ui/react-dom": "^2.1.0",
     "@liveblocks/client": "3.14.1",
     "@liveblocks/core": "3.14.1",
     "@liveblocks/react": "3.14.1",
     "@liveblocks/react-ui": "3.14.1",
     "@liveblocks/yjs": "3.14.1",
-    "@radix-ui/react-select": "^2.1.2",
-    "@radix-ui/react-toggle": "^1.1.0",
+    "radix-ui": "^1.4.0",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {

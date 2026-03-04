@@ -99,7 +99,7 @@ interface MarkToggleProps extends ComposerMarkToggleProps {
   shortcut?: string;
 }
 
-type ComposerCreateThreadProps<
+export type ComposerCreateThreadProps<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
 > = {
@@ -118,7 +118,7 @@ type ComposerCreateThreadProps<
   commentMetadata?: CM;
 };
 
-type ComposerCreateCommentProps<CM extends BaseMetadata> = {
+export type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to reply to.
    */
@@ -134,7 +134,7 @@ type ComposerCreateCommentProps<CM extends BaseMetadata> = {
   commentMetadata?: CM;
 };
 
-type ComposerEditCommentProps<CM extends BaseMetadata> = {
+export type ComposerEditCommentProps<CM extends BaseMetadata> = {
   /**
    * The ID of the thread to edit a comment in.
    */
