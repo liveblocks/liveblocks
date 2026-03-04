@@ -30,15 +30,19 @@ jobs:
 
       - name: Set version
         working-directory: packages/liveblocks-python
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          sed -i "s/^version = .*/version = \"${{ inputs.version }}\"/" pyproject.toml
-          sed -i "s/^package_version_override: .*/package_version_override: ${{ inputs.version }}/" config.yaml
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
 
       - name: Commit version bump
         working-directory: packages/liveblocks-python
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           git add pyproject.toml config.yaml
-          git commit -m "Bump liveblocks-python to ${{ inputs.version }}"
+          git commit -m "Bump liveblocks-python to $VERSION"
 
       - name: Build and publish
         working-directory: packages/liveblocks-python
