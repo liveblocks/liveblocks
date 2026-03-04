@@ -2,14 +2,18 @@
  * Test utilities for running @liveblocks/core unit tests against the real
  * local dev server at localhost:1154.
  */
-import { onTestFinished } from "vitest";
+import { expect, onTestFinished } from "vitest";
 
 import { createClient } from "../client";
 import type { LsonObject } from "../crdts/Lson";
+import type { ToImmutable } from "../crdts/utils";
+import { kInternal } from "../internal";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import { wait } from "../lib/utils";
 import type { PlainLsonObject } from "../types/PlainLson";
+import type { JsonStorageUpdate } from "./_updatesUtils";
+import { serializeUpdateToJson } from "./_updatesUtils";
 
 const DEV_SERVER = "http://localhost:1154";
 
@@ -113,4 +117,195 @@ export async function enterAndConnect<S extends LsonObject>(
 
   await waitFor(() => room.getStatus() === "connected");
   return { room, leave };
+}
+
+// ---------------------------------------------------------------------------
+// High-level test helpers
+// ---------------------------------------------------------------------------
+
+function deepCloneWithoutOpId<T>(item: T) {
+  return JSON.parse(
+    JSON.stringify(item),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    (key, value) => (key === "opId" ? undefined : value)
+  ) as T;
+}
+
+/**
+ * Two clients (A and B) connected to the same room.
+ *
+ * Mirrors the old prepareStorageTest from _utils.ts, but uses real server
+ * sync instead of mock message forwarding. As a result, expectStorage and
+ * assertUndoRedo are async (they wait for client B to catch up).
+ */
+export async function prepareStorageTest<S extends LsonObject>(
+  initialStorage: PlainLsonObject
+) {
+  const roomId = await initRoom(initialStorage);
+
+  const clientA = await enterAndConnect<S>(roomId);
+  const clientB = await enterAndConnect<S>(roomId);
+
+  const storageA = await clientA.room.getStorage();
+  const storageB = await clientB.room.getStorage();
+
+  // Wait for both clients to have synced initial storage
+  await waitFor(() => {
+    try {
+      expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  const states: ToImmutable<S>[] = [];
+
+  async function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
+    expect(storageA.root.toImmutable()).toEqual(data);
+
+    await waitFor(() => {
+      try {
+        expect(storageB.root.toImmutable()).toEqual(data);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    expect(clientA.room[kInternal].nodeCount).toBe(
+      clientB.room[kInternal].nodeCount
+    );
+  }
+
+  async function expectStorage(data: ToImmutable<S>) {
+    states.push(data);
+    await expectBothClientStoragesToEqual(data);
+  }
+
+  async function assertUndoRedo() {
+    const before = deepCloneWithoutOpId(
+      clientA.room[kInternal].undoStack[
+        clientA.room[kInternal].undoStack.length - 1
+      ]
+    );
+
+    // Undo the whole stack
+    for (let i = 0; i < states.length - 1; i++) {
+      clientA.room.history.undo();
+      await expectBothClientStoragesToEqual(states[states.length - 2 - i]);
+    }
+
+    // Redo the whole stack
+    for (let i = 0; i < states.length - 1; i++) {
+      clientA.room.history.redo();
+      await expectBothClientStoragesToEqual(states[i + 1]);
+    }
+
+    const after = deepCloneWithoutOpId(
+      clientA.room[kInternal].undoStack[
+        clientA.room[kInternal].undoStack.length - 1
+      ]
+    );
+
+    // It should be identical before/after
+    expect(before).toEqual(after);
+
+    // Undo everything again
+    for (let i = 0; i < states.length - 1; i++) {
+      clientA.room.history.undo();
+      await expectBothClientStoragesToEqual(states[states.length - 2 - i]);
+    }
+  }
+
+  return {
+    roomA: clientA.room,
+    roomB: clientB.room,
+    storageA,
+    storageB,
+    expectStorage,
+    assertUndoRedo,
+  };
+}
+
+/**
+ * Single client connected to a room with given initial storage.
+ */
+export async function prepareIsolatedStorageTest<S extends LsonObject>(
+  initialStorage: PlainLsonObject
+) {
+  const roomId = await initRoom(initialStorage);
+
+  const { room } = await enterAndConnect<S>(roomId);
+  const storage = await room.getStorage();
+
+  function expectStorage(data: ToImmutable<S>) {
+    expect(storage.root.toImmutable()).toEqual(data);
+  }
+
+  return {
+    root: storage.root,
+    room,
+    expectStorage,
+  };
+}
+
+/**
+ * Two clients tracking storage update events. Returns helpers to make
+ * assertions about which updates were emitted.
+ */
+export async function prepareStorageUpdateTest<S extends LsonObject>(
+  initialStorage: PlainLsonObject
+) {
+  const roomId = await initRoom(initialStorage);
+
+  const clientA = await enterAndConnect<S>(roomId);
+  const clientB = await enterAndConnect<S>(roomId);
+
+  const storageA = await clientA.room.getStorage();
+  const storageB = await clientB.room.getStorage();
+
+  // Wait for both clients to have synced initial storage
+  await waitFor(() => {
+    try {
+      expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  const updatesA: JsonStorageUpdate[][] = [];
+  const updatesB: JsonStorageUpdate[][] = [];
+
+  onTestFinished(
+    clientA.room.events.storageBatch.subscribe((updates) =>
+      updatesA.push(updates.map(serializeUpdateToJson))
+    )
+  );
+  onTestFinished(
+    clientB.room.events.storageBatch.subscribe((updates) =>
+      updatesB.push(updates.map(serializeUpdateToJson))
+    )
+  );
+
+  async function expectUpdates(updates: JsonStorageUpdate[][]) {
+    expect(updatesA).toEqual(updates);
+
+    await waitFor(() => {
+      try {
+        expect(updatesB).toEqual(updates);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  return {
+    roomA: clientA.room,
+    roomB: clientB.room,
+    root: storageA.root,
+    expectUpdates,
+  };
 }
