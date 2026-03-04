@@ -81,8 +81,10 @@ class _BaseSession:
             AuthorizeUserRequestBodyPermissions,
         )
 
-        self.seal()
-        if not len(self._permissions) <= 0:
+        if (self._sealed):
+            raise RuntimeError("You cannot reuse Session instances. Please create a new session every time.")
+        self._sealed = True
+        if len(self._permissions) > 0:
             warnings.warn(
                 "Access tokens without any permission will not be supported soon, "
                 "you should use wildcards when the client requests a token for "
