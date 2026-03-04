@@ -1924,6 +1924,15 @@ itself to always point to wherever it is positioned.
 />
 ```
 
+You can either use the `size` prop or override `--lb-comment-pin-size` with CSS
+to change the pin’s size.
+
+```tsx
+<CommentPin size={40} />
+
+<CommentPin className="[--lb-comment-pin-size:3rem]" />
+```
+
 ##### Props [#CommentPin-props]
 
 <PropertiesList>
@@ -1936,6 +1945,9 @@ itself to always point to wherever it is positioned.
   </PropertiesListItem>
   <PropertiesListItem name="userId" type="string">
     The user ID to optionally display an avatar for.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the pin.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3737,6 +3749,15 @@ User IDs (both from Presence and the `userIds` prop) are deduplicated so the
 same user present with multiple tabs for example will only be displayed once in
 the stack.
 
+You can either use the `size` prop or override `--lb-avatar-stack-size` with CSS
+to change the avatars’ size.
+
+```tsx
+<AvatarStack size={40} />
+
+<AvatarStack className="[--lb-avatar-stack-size:3rem]" />
+```
+
 ##### User information
 
 `AvatarStack` uses
@@ -3775,6 +3796,9 @@ properties.
   </PropertiesListItem>
   <PropertiesListItem name="max" type="number" defaultValue="3">
     The maximum number of visible avatars.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the avatars.
   </PropertiesListItem>
   <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
     Override the component’s strings.
