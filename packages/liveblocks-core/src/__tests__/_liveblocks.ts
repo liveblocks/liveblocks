@@ -242,9 +242,11 @@ export async function prepareStorageTest<S extends LsonObject>(
  *   storage equals `data` (no second client to wait for).
  */
 export async function prepareIsolatedStorageTest<S extends LsonObject>(
-  initialStorage: PlainLsonObject
+  initialStorage?: PlainLsonObject
 ) {
-  const roomId = await initRoom(initialStorage);
+  const roomId = initialStorage
+    ? await initRoom(initialStorage)
+    : randomRoomId();
 
   const { room } = await enterAndConnect<S>(roomId);
   const storage = await room.getStorage();
