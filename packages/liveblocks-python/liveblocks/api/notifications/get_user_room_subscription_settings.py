@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_user_room_subscription_settings_response_200 import GetUserRoomSubscriptionSettingsResponse200
+from ...models.get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
 from ...types import UNSET, Unset
 
 
@@ -13,6 +13,7 @@ def _get_kwargs(
     *,
     starting_after: str | Unset = UNSET,
     limit: float | Unset = 50.0,
+    organization_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -20,6 +21,8 @@ def _get_kwargs(
     params["startingAfter"] = starting_after
 
     params["limit"] = limit
+
+    params["organizationId"] = organization_id
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -34,9 +37,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetUserRoomSubscriptionSettingsResponse200:
+def _parse_response(*, response: httpx.Response) -> GetRoomSubscriptionSettingsResponse:
     if response.status_code == 200:
-        response_200 = GetUserRoomSubscriptionSettingsResponse200.from_dict(response.json())
+        response_200 = GetRoomSubscriptionSettingsResponse.from_dict(response.json())
 
         return response_200
 
@@ -49,7 +52,8 @@ def _sync(
     client: httpx.Client,
     starting_after: str | Unset = UNSET,
     limit: float | Unset = 50.0,
-) -> GetUserRoomSubscriptionSettingsResponse200:
+    organization_id: str | Unset = UNSET,
+) -> GetRoomSubscriptionSettingsResponse:
     """Get user room subscription settings
 
      This endpoint returns the list of a user's room subscription settings. Corresponds to
@@ -60,19 +64,21 @@ def _sync(
         user_id (str):
         starting_after (str | Unset):
         limit (float | Unset):  Default: 50.0.
+        organization_id (str | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetUserRoomSubscriptionSettingsResponse200
+        GetRoomSubscriptionSettingsResponse
     """
 
     kwargs = _get_kwargs(
         user_id=user_id,
         starting_after=starting_after,
         limit=limit,
+        organization_id=organization_id,
     )
 
     response = client.request(
@@ -87,7 +93,8 @@ async def _asyncio(
     client: httpx.AsyncClient,
     starting_after: str | Unset = UNSET,
     limit: float | Unset = 50.0,
-) -> GetUserRoomSubscriptionSettingsResponse200:
+    organization_id: str | Unset = UNSET,
+) -> GetRoomSubscriptionSettingsResponse:
     """Get user room subscription settings
 
      This endpoint returns the list of a user's room subscription settings. Corresponds to
@@ -98,19 +105,21 @@ async def _asyncio(
         user_id (str):
         starting_after (str | Unset):
         limit (float | Unset):  Default: 50.0.
+        organization_id (str | Unset):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GetUserRoomSubscriptionSettingsResponse200
+        GetRoomSubscriptionSettingsResponse
     """
 
     kwargs = _get_kwargs(
         user_id=user_id,
         starting_after=starting_after,
         limit=limit,
+        organization_id=organization_id,
     )
 
     response = await client.request(

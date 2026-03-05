@@ -5,14 +5,14 @@ import httpx
 
 from ... import errors
 from ...models.thread_metadata import ThreadMetadata
-from ...models.update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
+from ...models.update_thread_metadata_request_body import UpdateThreadMetadataRequestBody
 
 
 def _get_kwargs(
     room_id: str,
     thread_id: str,
     *,
-    body: UpdateThreadMetadataReqeuestBody,
+    body: UpdateThreadMetadataRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -46,7 +46,7 @@ def _sync(
     thread_id: str,
     *,
     client: httpx.Client,
-    body: UpdateThreadMetadataReqeuestBody,
+    body: UpdateThreadMetadataRequestBody,
 ) -> ThreadMetadata:
     """Edit thread metadata
 
@@ -58,7 +58,7 @@ def _sync(
     Args:
         room_id (str):
         thread_id (str):
-        body (UpdateThreadMetadataReqeuestBody):
+        body (UpdateThreadMetadataRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -85,7 +85,7 @@ async def _asyncio(
     thread_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateThreadMetadataReqeuestBody,
+    body: UpdateThreadMetadataRequestBody,
 ) -> ThreadMetadata:
     """Edit thread metadata
 
@@ -97,7 +97,7 @@ async def _asyncio(
     Args:
         room_id (str):
         thread_id (str):
-        body (UpdateThreadMetadataReqeuestBody):
+        body (UpdateThreadMetadataRequestBody):
 
     Raises:
         errors.LiveblocksError: If the server returns a response with non-2xx status code.

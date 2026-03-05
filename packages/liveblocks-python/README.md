@@ -81,7 +81,7 @@ result = client.get_rooms()
 #### `create_room`
 
 **Create room**
-This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
+This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
 
 - **HTTP:** `POST` `/rooms`
 - **Returns:** `Room`
@@ -90,6 +90,7 @@ This endpoint creates a new room. `id` and `defaultAccesses` are required. When 
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `idempotent` | `bool \| Unset` | No |  |
 | `body` | `CreateRoomRequestBody` | Yes | Request body (application/json) |
 
 <details>
@@ -777,7 +778,7 @@ This endpoint edits the metadata of a thread. The metadata is a JSON object that
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes |  |
 | `thread_id` | `str` | Yes |  |
-| `body` | `UpdateThreadMetadataReqeuestBody` | Yes | Request body (application/json) |
+| `body` | `UpdateThreadMetadataRequestBody` | Yes | Request body (application/json) |
 
 <details>
 <summary>Example</summary>
@@ -1408,7 +1409,7 @@ result = client.delete_inbox_notification(
 This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
 
 - **HTTP:** `GET` `/users/{user_id}/inbox-notifications`
-- **Returns:** `list[InboxNotificationCustomData | InboxNotificationThreadData]`
+- **Returns:** `GetInboxNotificationsResponse`
 
 **Parameters:**
 
@@ -1638,7 +1639,7 @@ result = client.delete_room_subscription_settings(
 This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).
 
 - **HTTP:** `GET` `/users/{user_id}/room-subscription-settings`
-- **Returns:** `GetUserRoomSubscriptionSettingsResponse200`
+- **Returns:** `GetRoomSubscriptionSettingsResponse`
 
 **Parameters:**
 
@@ -1647,6 +1648,7 @@ This endpoint returns the list of a user's room subscription settings. Correspon
 | `user_id` | `str` | Yes |  |
 | `starting_after` | `str \| Unset` | No |  |
 | `limit` | `float \| Unset` | No |  *(default: `50.0`)* |
+| `organization_id` | `str \| Unset` | No |  |
 
 <details>
 <summary>Example</summary>
@@ -2878,6 +2880,7 @@ The following data models are available in `liveblocks.models`:
 - `GetAiCopilotsResponse`
 - `GetFileKnowledgeSourceMarkdownResponse`
 - `GetGroupsResponse`
+- `GetInboxNotificationsResponse`
 - `GetKnowledgeSourcesResponse`
 - `GetManagementProjectResponse`
 - `GetManagementProjectsResponse`
@@ -2885,6 +2888,7 @@ The following data models are available in `liveblocks.models`:
 - `GetManagementWebhookResponse`
 - `GetManagementWebhooksResponse`
 - `GetRoomsResponse`
+- `GetRoomSubscriptionSettingsResponse`
 - `GetStorageDocumentResponse`
 - `GetThreadParticipantsResponse`
 - `GetThreadsResponse`
@@ -2951,7 +2955,7 @@ The following data models are available in `liveblocks.models`:
 - `UpdateRoomIdRequestBody`
 - `UpdateRoomRequestBody`
 - `UpdateRoomSubscriptionSettingsRequestBody` — Partial room subscription settings - all properties are optional
-- `UpdateThreadMetadataReqeuestBody`
+- `UpdateThreadMetadataRequestBody`
 - `UpsertManagementWebhookHeadersRequestBody`
 - `UpsertManagementWebhookHeadersResponse`
 - `UpsertRoomRequestBody`
@@ -2979,13 +2983,11 @@ The following data models are available in `liveblocks.models`:
 - `ActiveUsersResponseDataItemInfo`
 - `KnowledgeSourceWebSourceLink`
 - `TestManagementWebhookResponseMessage`
-- `GetUserRoomSubscriptionSettingsResponse200Meta`
 - `UpdateRoomRequestBodyMetadata`
-- `UpdateThreadMetadataReqeuestBodyMetadata`
+- `UpdateThreadMetadataRequestBodyMetadata`
 - `EditCommentMetadataRequestBodyMetadata`
 - `OpenAiProviderOptionsOpenai`
 - `AuthorizeUserRequestBodyPermissions`
-- `GetUserRoomSubscriptionSettingsResponse200`
 - `CreateFileKnowledgeSourceResponse200`
 - `GroupScopes`
 - `CreateGroupRequestBodyScopes`

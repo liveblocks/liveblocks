@@ -4,8 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.inbox_notification_custom_data import InboxNotificationCustomData
-from ...models.inbox_notification_thread_data import InboxNotificationThreadData
+from ...models.get_inbox_notifications_response import GetInboxNotificationsResponse
 from ...types import UNSET, Unset
 
 
@@ -41,30 +40,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
+def _parse_response(*, response: httpx.Response) -> GetInboxNotificationsResponse:
     if response.status_code == 200:
-        response_200 = []
-        _response_200 = response.json()
-        for response_200_item_data in _response_200:
-
-            def _parse_response_200_item(data: object) -> InboxNotificationCustomData | InboxNotificationThreadData:
-                try:
-                    if not isinstance(data, dict):
-                        raise TypeError()
-                    response_200_item_type_0 = InboxNotificationThreadData.from_dict(data)
-
-                    return response_200_item_type_0
-                except (TypeError, ValueError, AttributeError, KeyError):
-                    pass
-                if not isinstance(data, dict):
-                    raise TypeError()
-                response_200_item_type_1 = InboxNotificationCustomData.from_dict(data)
-
-                return response_200_item_type_1
-
-            response_200_item = _parse_response_200_item(response_200_item_data)
-
-            response_200.append(response_200_item)
+        response_200 = GetInboxNotificationsResponse.from_dict(response.json())
 
         return response_200
 
@@ -79,7 +57,7 @@ def _sync(
     query: str | Unset = UNSET,
     limit: float | Unset = 50.0,
     starting_after: str | Unset = UNSET,
-) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
+) -> GetInboxNotificationsResponse:
     """Get all inbox notifications
 
      This endpoint returns all the user’s inbox notifications. Corresponds to
@@ -98,7 +76,7 @@ def _sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list[InboxNotificationCustomData | InboxNotificationThreadData]
+        GetInboxNotificationsResponse
     """
 
     kwargs = _get_kwargs(
@@ -123,7 +101,7 @@ async def _asyncio(
     query: str | Unset = UNSET,
     limit: float | Unset = 50.0,
     starting_after: str | Unset = UNSET,
-) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
+) -> GetInboxNotificationsResponse:
     """Get all inbox notifications
 
      This endpoint returns all the user’s inbox notifications. Corresponds to
@@ -142,7 +120,7 @@ async def _asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        list[InboxNotificationCustomData | InboxNotificationThreadData]
+        GetInboxNotificationsResponse
     """
 
     kwargs = _get_kwargs(

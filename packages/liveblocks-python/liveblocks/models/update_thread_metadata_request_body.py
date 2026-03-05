@@ -11,22 +11,22 @@ from dateutil.parser import isoparse
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.update_thread_metadata_reqeuest_body_metadata import UpdateThreadMetadataReqeuestBodyMetadata
+    from ..models.update_thread_metadata_request_body_metadata import UpdateThreadMetadataRequestBodyMetadata
 
 
-T = TypeVar("T", bound="UpdateThreadMetadataReqeuestBody")
+T = TypeVar("T", bound="UpdateThreadMetadataRequestBody")
 
 
 @_attrs_define
-class UpdateThreadMetadataReqeuestBody:
+class UpdateThreadMetadataRequestBody:
     """
     Attributes:
-        metadata (UpdateThreadMetadataReqeuestBodyMetadata):
+        metadata (UpdateThreadMetadataRequestBodyMetadata):
         user_id (str):
         updated_at (datetime.datetime | Unset):
     """
 
-    metadata: UpdateThreadMetadataReqeuestBodyMetadata
+    metadata: UpdateThreadMetadataRequestBodyMetadata
     user_id: str
     updated_at: datetime.datetime | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -55,10 +55,10 @@ class UpdateThreadMetadataReqeuestBody:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.update_thread_metadata_reqeuest_body_metadata import UpdateThreadMetadataReqeuestBodyMetadata
+        from ..models.update_thread_metadata_request_body_metadata import UpdateThreadMetadataRequestBodyMetadata
 
         d = dict(src_dict)
-        metadata = UpdateThreadMetadataReqeuestBodyMetadata.from_dict(d.pop("metadata"))
+        metadata = UpdateThreadMetadataRequestBodyMetadata.from_dict(d.pop("metadata"))
 
         user_id = d.pop("userId")
 
@@ -69,14 +69,14 @@ class UpdateThreadMetadataReqeuestBody:
         else:
             updated_at = isoparse(_updated_at)
 
-        update_thread_metadata_reqeuest_body = cls(
+        update_thread_metadata_request_body = cls(
             metadata=metadata,
             user_id=user_id,
             updated_at=updated_at,
         )
 
-        update_thread_metadata_reqeuest_body.additional_properties = d
-        return update_thread_metadata_reqeuest_body
+        update_thread_metadata_request_body.additional_properties = d
+        return update_thread_metadata_request_body
 
     @property
     def additional_keys(self) -> list[str]:

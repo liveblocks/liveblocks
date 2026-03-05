@@ -70,12 +70,14 @@ from .error import Error
 from .get_ai_copilots_response import GetAiCopilotsResponse
 from .get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
 from .get_groups_response import GetGroupsResponse
+from .get_inbox_notifications_response import GetInboxNotificationsResponse
 from .get_knowledge_sources_response import GetKnowledgeSourcesResponse
 from .get_management_project_response import GetManagementProjectResponse
 from .get_management_projects_response import GetManagementProjectsResponse
 from .get_management_webhook_headers_response import GetManagementWebhookHeadersResponse
 from .get_management_webhook_response import GetManagementWebhookResponse
 from .get_management_webhooks_response import GetManagementWebhooksResponse
+from .get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
 from .get_rooms_response import GetRoomsResponse
 from .get_storage_document_format import GetStorageDocumentFormat
 from .get_storage_document_response import GetStorageDocumentResponse
@@ -83,8 +85,6 @@ from .get_thread_participants_response import GetThreadParticipantsResponse
 from .get_thread_subscriptions_response import GetThreadSubscriptionsResponse
 from .get_threads_response import GetThreadsResponse
 from .get_user_groups_response import GetUserGroupsResponse
-from .get_user_room_subscription_settings_response_200 import GetUserRoomSubscriptionSettingsResponse200
-from .get_user_room_subscription_settings_response_200_meta import GetUserRoomSubscriptionSettingsResponse200Meta
 from .get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
 from .get_yjs_document_response import GetYjsDocumentResponse
 from .get_yjs_document_type import GetYjsDocumentType
@@ -192,8 +192,8 @@ from .update_room_subscription_settings_request_body_text_mentions import (
     UpdateRoomSubscriptionSettingsRequestBodyTextMentions,
 )
 from .update_room_subscription_settings_request_body_threads import UpdateRoomSubscriptionSettingsRequestBodyThreads
-from .update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
-from .update_thread_metadata_reqeuest_body_metadata import UpdateThreadMetadataReqeuestBodyMetadata
+from .update_thread_metadata_request_body import UpdateThreadMetadataRequestBody
+from .update_thread_metadata_request_body_metadata import UpdateThreadMetadataRequestBodyMetadata
 from .upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
 from .upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
 from .upsert_management_webhook_headers_response_headers import UpsertManagementWebhookHeadersResponseHeaders
@@ -270,6 +270,7 @@ __all__ = (
     "GetAiCopilotsResponse",
     "GetFileKnowledgeSourceMarkdownResponse",
     "GetGroupsResponse",
+    "GetInboxNotificationsResponse",
     "GetKnowledgeSourcesResponse",
     "GetManagementProjectResponse",
     "GetManagementProjectsResponse",
@@ -277,14 +278,13 @@ __all__ = (
     "GetManagementWebhookResponse",
     "GetManagementWebhooksResponse",
     "GetRoomsResponse",
+    "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
     "GetStorageDocumentResponse",
     "GetThreadParticipantsResponse",
     "GetThreadsResponse",
     "GetThreadSubscriptionsResponse",
     "GetUserGroupsResponse",
-    "GetUserRoomSubscriptionSettingsResponse200",
-    "GetUserRoomSubscriptionSettingsResponse200Meta",
     "GetWebKnowledgeSourceLinksResponse",
     "GetYjsDocumentResponse",
     "GetYjsDocumentType",
@@ -384,8 +384,8 @@ __all__ = (
     "UpdateRoomSubscriptionSettingsRequestBody",
     "UpdateRoomSubscriptionSettingsRequestBodyTextMentions",
     "UpdateRoomSubscriptionSettingsRequestBodyThreads",
-    "UpdateThreadMetadataReqeuestBody",
-    "UpdateThreadMetadataReqeuestBodyMetadata",
+    "UpdateThreadMetadataRequestBody",
+    "UpdateThreadMetadataRequestBodyMetadata",
     "UpsertManagementWebhookHeadersRequestBody",
     "UpsertManagementWebhookHeadersResponse",
     "UpsertManagementWebhookHeadersResponseHeaders",

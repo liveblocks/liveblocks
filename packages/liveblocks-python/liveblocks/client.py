@@ -47,12 +47,14 @@ if TYPE_CHECKING:
     from .models.get_ai_copilots_response import GetAiCopilotsResponse
     from .models.get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
     from .models.get_groups_response import GetGroupsResponse
+    from .models.get_inbox_notifications_response import GetInboxNotificationsResponse
     from .models.get_knowledge_sources_response import GetKnowledgeSourcesResponse
     from .models.get_management_project_response import GetManagementProjectResponse
     from .models.get_management_projects_response import GetManagementProjectsResponse
     from .models.get_management_webhook_headers_response import GetManagementWebhookHeadersResponse
     from .models.get_management_webhook_response import GetManagementWebhookResponse
     from .models.get_management_webhooks_response import GetManagementWebhooksResponse
+    from .models.get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
@@ -60,7 +62,6 @@ if TYPE_CHECKING:
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
-    from .models.get_user_room_subscription_settings_response_200 import GetUserRoomSubscriptionSettingsResponse200
     from .models.get_web_knowledge_source_links_response import GetWebKnowledgeSourceLinksResponse
     from .models.get_yjs_document_response import GetYjsDocumentResponse
     from .models.get_yjs_document_type import GetYjsDocumentType
@@ -111,7 +112,7 @@ if TYPE_CHECKING:
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
     from .models.update_room_request_body import UpdateRoomRequestBody
     from .models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
-    from .models.update_thread_metadata_reqeuest_body import UpdateThreadMetadataReqeuestBody
+    from .models.update_thread_metadata_request_body import UpdateThreadMetadataRequestBody
     from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
     from .models.upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
     from .models.upsert_room_request_body import UpsertRoomRequestBody
@@ -204,11 +205,13 @@ class Liveblocks:
         self,
         *,
         body: CreateRoomRequestBody,
+        idempotent: bool | Unset = UNSET,
     ) -> Room:
         from .api.room import create_room
 
         return create_room._sync(
             body=body,
+            idempotent=idempotent,
             client=self._client,
         )
 
@@ -533,7 +536,7 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataReqeuestBody,
+        body: UpdateThreadMetadataRequestBody,
     ) -> ThreadMetadata:
         from .api.comments import edit_thread_metadata
 
@@ -846,7 +849,7 @@ class Liveblocks:
         query: str | Unset = UNSET,
         limit: float | Unset = 50.0,
         starting_after: str | Unset = UNSET,
-    ) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
+    ) -> GetInboxNotificationsResponse:
         from .api.notifications import get_inbox_notifications
 
         return get_inbox_notifications._sync(
@@ -953,13 +956,15 @@ class Liveblocks:
         *,
         starting_after: str | Unset = UNSET,
         limit: float | Unset = 50.0,
-    ) -> GetUserRoomSubscriptionSettingsResponse200:
+        organization_id: str | Unset = UNSET,
+    ) -> GetRoomSubscriptionSettingsResponse:
         from .api.notifications import get_user_room_subscription_settings
 
         return get_user_room_subscription_settings._sync(
             user_id=user_id,
             starting_after=starting_after,
             limit=limit,
+            organization_id=organization_id,
             client=self._client,
         )
 
@@ -1592,11 +1597,13 @@ class AsyncLiveblocks:
         self,
         *,
         body: CreateRoomRequestBody,
+        idempotent: bool | Unset = UNSET,
     ) -> Room:
         from .api.room import create_room
 
         return await create_room._asyncio(
             body=body,
+            idempotent=idempotent,
             client=self._client,
         )
 
@@ -1921,7 +1928,7 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataReqeuestBody,
+        body: UpdateThreadMetadataRequestBody,
     ) -> ThreadMetadata:
         from .api.comments import edit_thread_metadata
 
@@ -2234,7 +2241,7 @@ class AsyncLiveblocks:
         query: str | Unset = UNSET,
         limit: float | Unset = 50.0,
         starting_after: str | Unset = UNSET,
-    ) -> list[InboxNotificationCustomData | InboxNotificationThreadData]:
+    ) -> GetInboxNotificationsResponse:
         from .api.notifications import get_inbox_notifications
 
         return await get_inbox_notifications._asyncio(
@@ -2341,13 +2348,15 @@ class AsyncLiveblocks:
         *,
         starting_after: str | Unset = UNSET,
         limit: float | Unset = 50.0,
-    ) -> GetUserRoomSubscriptionSettingsResponse200:
+        organization_id: str | Unset = UNSET,
+    ) -> GetRoomSubscriptionSettingsResponse:
         from .api.notifications import get_user_room_subscription_settings
 
         return await get_user_room_subscription_settings._asyncio(
             user_id=user_id,
             starting_after=starting_after,
             limit=limit,
+            organization_id=organization_id,
             client=self._client,
         )
 
