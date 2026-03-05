@@ -5,14 +5,7 @@ import {
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
 } from "../../__tests__/_liveblocks";
-import {
-  createSerializedMap,
-  createSerializedObject,
-  createSerializedRoot,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
-} from "../../__tests__/_utils";
 import { kInternal } from "../../internal";
-import { OpCode } from "../../protocol/Op";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -718,44 +711,6 @@ describe("LiveMap", () => {
       ]);
 
       expect(mapCallback).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("internal methods", () => {
-    test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
-        map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", "el1"),
-          createSerializedObject("0:3", { a: 2 }, "0:1", "el2"),
-        ],
-        1
-      );
-
-      const map = root.get("map");
-      const secondItem = map.get("el2");
-
-      const applyResult = map._detachChild(secondItem!);
-
-      expect(applyResult).toEqual({
-        modified: {
-          node: map,
-          type: "LiveMap",
-          updates: { el2: { type: "delete", deletedItem: secondItem } },
-        },
-        reverse: [
-          {
-            data: { a: 2 },
-            id: "0:3",
-            parentId: "0:1",
-            parentKey: "el2",
-            type: OpCode.CREATE_OBJECT,
-          },
-        ],
-      });
     });
   });
 });

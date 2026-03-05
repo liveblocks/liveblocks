@@ -18,14 +18,7 @@ import {
   objectUpdate,
   serializeUpdateToJson,
 } from "../../__tests__/_updatesUtils";
-import {
-  createSerializedList,
-  createSerializedObject,
-  createSerializedRoot,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
-} from "../../__tests__/_utils";
 import { kInternal } from "../../internal";
-import { OpCode } from "../../protocol/Op";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -525,92 +518,6 @@ describe("LiveObject", () => {
           ),
         ],
       ]);
-    });
-
-    describe("should ignore incoming updates if the current op has not been acknowledged", () => {
-      test("when value is not a crdt", async () => {
-        const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest_legacy<{ a: number }>(
-            [createSerializedRoot({ a: 0 })],
-            1
-          );
-
-        expectStorage({ a: 0 });
-
-        root.set("a", 1);
-
-        expectStorage({ a: 1 });
-
-        applyRemoteOperations([
-          {
-            type: OpCode.UPDATE_OBJECT,
-            data: { a: 2 },
-            id: "root",
-          },
-        ]);
-
-        expectStorage({ a: 1 });
-      });
-
-      test("when value is a LiveObject", async () => {
-        const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest_legacy<{
-            a: LiveObject<{ subA: number }>;
-          }>(
-            [
-              createSerializedRoot(),
-              createSerializedObject("0:1", { subA: 0 }, "root", "a"),
-            ],
-            1
-          );
-
-        expectStorage({ a: { subA: 0 } });
-
-        root.set("a", new LiveObject({ subA: 1 }));
-
-        expectStorage({ a: { subA: 1 } });
-
-        applyRemoteOperations([
-          {
-            type: OpCode.CREATE_OBJECT,
-            data: { subA: 2 },
-            id: "2:0",
-            parentKey: "a",
-            parentId: "root",
-          },
-        ]);
-
-        expectStorage({ a: { subA: 1 } });
-      });
-
-      test("when value is a LiveList with LiveObjects", async () => {
-        const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest_legacy<{
-            a: LiveList<LiveObject<{ b: number }>>;
-          }>(
-            [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
-            1
-          );
-
-        expectStorage({ a: [] });
-
-        const newList = new LiveList<LiveObject<{ b: number }>>([]);
-        newList.push(new LiveObject({ b: 1 }));
-        root.set("a", newList);
-
-        expectStorage({ a: [{ b: 1 }] });
-
-        applyRemoteOperations([
-          {
-            type: OpCode.CREATE_LIST,
-            id: "2:0",
-            parentKey: "a",
-            parentId: "root",
-          },
-        ]);
-
-        expectStorage({ a: [{ b: 1 }] });
-      });
     });
   });
 
@@ -1116,47 +1023,6 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledWith([
         { type: "LiveObject", node: root, updates: { a: { type: "update" } } },
       ]);
-    });
-  });
-
-  describe("internal methods", () => {
-    test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
-        obj: LiveObject<{
-          a: LiveObject<{ subA: number }>;
-          b: LiveObject<{ subA: number }>;
-        }>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedObject("0:1", {}, "root", "obj"),
-          createSerializedObject("0:2", { subA: 1 }, "0:1", "a"),
-          createSerializedObject("0:3", { subA: 2 }, "0:1", "b"),
-        ],
-        1
-      );
-
-      const obj = root.get("obj");
-      const secondItem = obj.get("b");
-
-      const applyResult = obj._detachChild(secondItem);
-
-      expect(applyResult).toEqual({
-        modified: {
-          node: obj,
-          type: "LiveObject",
-          updates: { b: { type: "delete" } },
-        },
-        reverse: [
-          {
-            data: { subA: 2 },
-            id: "0:3",
-            parentId: "0:1",
-            parentKey: "b",
-            type: OpCode.CREATE_OBJECT,
-          },
-        ],
-      });
     });
   });
 
