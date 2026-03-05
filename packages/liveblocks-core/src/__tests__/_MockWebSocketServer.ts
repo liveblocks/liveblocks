@@ -1,3 +1,10 @@
+/**
+ * Mock WebSocket server for testing connection edge cases.
+ *
+ * Used by room.mockserver.test.ts and *.mockserver.test.ts for scenarios
+ * requiring low-level socket control. Normal tests use the real dev server
+ * instead. See `_liveblocks.ts` for dev-server-based test helpers.
+ */
 import type { EventSource, Observable } from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json } from "../lib/Json";

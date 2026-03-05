@@ -1,3 +1,11 @@
+/**
+ * MockWebSocket-based test utilities for testing edge cases that cannot be
+ * tested against the real dev server: connection state machine (auth,
+ * reconnection, backoff, close codes), wire protocol message inspection,
+ * and CRDT conflict resolution with precise op injection.
+ *
+ * For normal storage/presence/history tests, use `_liveblocks.ts`.
+ */
 import { expect, onTestFinished } from "vitest";
 
 import { createApiClient } from "../api-client";
