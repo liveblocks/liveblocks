@@ -3711,6 +3711,228 @@ console.log(url);
   </PropertiesListItem>
 </PropertiesList>
 
+## Feeds
+
+### Room.fetchFeeds
+
+Fetches feeds in the current room. Returns a paginated list of feeds with an
+optional cursor for fetching more.
+
+```ts
+const { feeds, nextCursor } = await room.fetchFeeds();
+
+// [{ feedId: "feed-1", metadata: {...}, timestamp: 1234567890 }, ...]
+console.log(feeds);
+```
+
+A number of options are available for filtering and pagination.
+
+```ts
+const { feeds, nextCursor } = await room.fetchFeeds({
+  // Optional, cursor for pagination. Use nextCursor from previous response
+  cursor: "abc123",
+
+  // Optional, only return feeds created or updated after this timestamp (ms)
+  since: 1234567890000,
+
+  // Optional, limit the number of feeds to return
+  limit: 50,
+
+  // Optional, filter feeds by metadata. Only feeds with matching metadata are returned
+  metadata: {
+    channel: true,
+    name: "My Feed",
+  },
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="feeds" type="Feed[]">
+    Feeds within the current room.
+  </PropertiesListItem>
+  <PropertiesListItem name="nextCursor" type="string | undefined">
+    Cursor for fetching the next page of feeds.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.fetchFeedMessages
+
+Fetches messages for a specific feed in the current room. Returns a paginated
+list of messages with an optional cursor for fetching more.
+
+```ts
+const { messages, nextCursor } = await room.fetchFeedMessages("my-feed-id");
+
+// [{ id: "msg-1", timestamp: 1234567890, data: {...} }, ...]
+console.log(messages);
+```
+
+```ts
+const { messages, nextCursor } = await room.fetchFeedMessages("my-feed-id", {
+  // Optional, cursor for pagination
+  cursor: "abc123",
+
+  // Optional, only return messages created after this timestamp (ms)
+  since: 1234567890000,
+
+  // Optional, limit the number of messages to return
+  limit: 50,
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="messages" type="FeedMessage[]">
+    Messages within the feed.
+  </PropertiesListItem>
+  <PropertiesListItem name="nextCursor" type="string | undefined">
+    Cursor for fetching the next page of messages.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.addFeed
+
+Adds a new feed to the room. Changes are synchronized in real-time to all
+connected clients.
+
+```ts
+room.addFeed("my-feed-id");
+
+// With optional metadata and timestamp
+room.addFeed("my-feed-id", {
+  metadata: { name: "My Feed", channel: true },
+  timestamp: Date.now(),
+});
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed to create.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.metadata" type="object">
+    Optional custom metadata for the feed.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.timestamp" type="number">
+    Optional timestamp in milliseconds. Defaults to current time if not
+    provided.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.updateFeed
+
+Updates the metadata of an existing feed. Changes are synchronized in real-time
+to all connected clients.
+
+```ts
+room.updateFeed("my-feed-id", {
+  name: "Updated Feed Name",
+  updated: new Date().toISOString(),
+});
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed to update.
+  </PropertiesListItem>
+  <PropertiesListItem name="metadata" type="object" required>
+    The new metadata for the feed.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.deleteFeed
+
+Deletes a feed from the room. Changes are synchronized in real-time to all
+connected clients.
+
+```ts
+room.deleteFeed("my-feed-id");
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed to delete.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.addFeedMessage
+
+Adds a new message to a feed. Changes are synchronized in real-time to all
+connected clients.
+
+```ts
+room.addFeedMessage("my-feed-id", {
+  role: "user",
+  content: "Hello, world!",
+});
+
+// With optional id and timestamp
+room.addFeedMessage(
+  "my-feed-id",
+  { role: "user", content: "Hello!" },
+  {
+    id: "my-message-id",
+    timestamp: Date.now(),
+  }
+);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed to add the message to.
+  </PropertiesListItem>
+  <PropertiesListItem name="data" type="object" required>
+    The message data.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.id" type="string">
+    Optional message ID. One will be generated if not provided.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.timestamp" type="number">
+    Optional timestamp in milliseconds. Defaults to current time if not
+    provided.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.updateFeedMessage
+
+Updates an existing feed message. Changes are synchronized in real-time to all
+connected clients.
+
+```ts
+room.updateFeedMessage("my-feed-id", "my-message-id", {
+  role: "user",
+  content: "Updated content",
+});
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed containing the message.
+  </PropertiesListItem>
+  <PropertiesListItem name="messageId" type="string" required>
+    The ID of the message to update.
+  </PropertiesListItem>
+  <PropertiesListItem name="data" type="object" required>
+    The new message data.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.deleteFeedMessage
+
+Deletes a feed message. Changes are synchronized in real-time to all connected
+clients.
+
+```ts
+room.deleteFeedMessage("my-feed-id", "my-message-id");
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="feedId" type="string" required>
+    The ID of the feed containing the message.
+  </PropertiesListItem>
+  <PropertiesListItem name="messageId" type="string" required>
+    The ID of the message to delete.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Notifications
 
 ### Client.getInboxNotifications

@@ -29,6 +29,8 @@ import type {
   CommentData,
   DGI,
   DRI,
+  Feed,
+  FeedMessage,
   GroupData,
   HistoryVersion,
   InboxNotificationData,
@@ -210,6 +212,28 @@ export type UseInboxNotificationsOptions = {
   query?: InboxNotificationsQuery;
 };
 
+export type UseFeedsOptions = {
+  /**
+   * Optional timestamp filter. Only feeds created or updated after this timestamp will be returned.
+   */
+  since?: number;
+  /**
+   * Optional metadata filter. Only feeds with matching metadata will be returned.
+   */
+  metadata?: Record<string, Json>;
+};
+
+export type UseFeedMessagesOptions = {
+  /**
+   * Optional cursor for pagination.
+   */
+  cursor?: string;
+  /**
+   * Optional limit for the number of messages to fetch.
+   */
+  limit?: number;
+};
+
 export type UserAsyncResult<T> = AsyncResult<T, "user">;
 export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
@@ -295,6 +319,12 @@ export type SearchCommentsAsyncResult = AsyncResult<Array<SearchCommentsResult>,
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+
+export type FeedsAsyncSuccess<FM extends Json = Json> = PagedAsyncSuccess<Feed<FM>[], "feeds">; // prettier-ignore
+export type FeedsAsyncResult<FM extends Json = Json> = PagedAsyncResult<Feed<FM>[], "feeds">; // prettier-ignore
+
+export type FeedMessagesAsyncSuccess<FMD extends Json = Json> = PagedAsyncSuccess<FeedMessage<FMD>[], "messages">; // prettier-ignore
+export type FeedMessagesAsyncResult<FMD extends Json = Json> = PagedAsyncResult<FeedMessage<FMD>[], "messages">; // prettier-ignore
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
@@ -602,13 +632,15 @@ type RoomContextBundleCommon<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: Context<Room<P, S, U, E, TM, CM> | null>;
+  RoomContext: Context<Room<P, S, U, E, TM, CM, SM, MD> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -621,10 +653,12 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
+  useRoom(options?: {
+    allowOutsideRoom: false;
+  }): Room<P, S, U, E, TM, CM, SM, MD>;
   useRoom(options: {
     allowOutsideRoom: boolean;
-  }): Room<P, S, U, E, TM, CM> | null;
+  }): Room<P, S, U, E, TM, CM, SM, MD> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -1085,8 +1119,10 @@ export type RoomContextBundle<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = Resolve<
-  RoomContextBundleCommon<P, S, U, E, TM, CM> &
+  RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1160,6 +1196,93 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<TM>): ThreadsAsyncResult<TM, CM>;
 
       /**
+       * Returns feeds for the current room.
+       *
+       * @example
+       * const { feeds, error, isLoading } = useFeeds();
+       */
+      useFeeds(options?: UseFeedsOptions): FeedsAsyncResult<SM>;
+
+      /**
+       * Returns messages for a specific feed in the current room.
+       *
+       * @example
+       * const { messages, error, isLoading } = useFeedMessages("feed-id");
+       */
+      useFeedMessages(
+        feedId: string,
+        options?: UseFeedMessagesOptions
+      ): FeedMessagesAsyncResult<MD>;
+
+      /**
+       * Returns a function that creates a new feed in the current room.
+       *
+       * @example
+       * const createFeed = useCreateFeed();
+       * createFeed("feed-id", { metadata: { name: "My Feed" } });
+       */
+      useCreateFeed(): (
+        feedId: string,
+        options?: { metadata?: JsonObject; timestamp?: number }
+      ) => void;
+
+      /**
+       * Returns a function that deletes a feed from the current room.
+       *
+       * @example
+       * const deleteFeed = useDeleteFeed();
+       * deleteFeed("feed-id");
+       */
+      useDeleteFeed(): (feedId: string) => void;
+
+      /**
+       * Returns a function that updates a feed's metadata in the current room.
+       *
+       * @example
+       * const updateFeedMetadata = useUpdateFeedMetadata();
+       * updateFeedMetadata("feed-id", { name: "Updated Name" });
+       */
+      useUpdateFeedMetadata(): (feedId: string, metadata: JsonObject) => void;
+
+      /**
+       * Returns a function that adds a message to a feed in the current room.
+       *
+       * @example
+       * const createFeedMessage = useCreateFeedMessage();
+       * createFeedMessage("feed-id", { text: "Hello" });
+       */
+      useCreateFeedMessage(): (
+        feedId: string,
+        data: JsonObject,
+        options?: { id?: string; timestamp?: number }
+      ) => void;
+
+      /**
+       * Returns a function that deletes a message from a feed in the current room.
+       *
+       * @example
+       * const deleteFeedMessage = useDeleteFeedMessage();
+       * deleteFeedMessage("feed-id", "message-id");
+       */
+      useDeleteFeedMessage(): (
+        feedId: string,
+        messageId: string
+      ) => void;
+
+      /**
+       * Returns a function that updates a feed message in the current room.
+       *
+       * @example
+       * const updateFeedMessage = useUpdateFeedMessage();
+       * updateFeedMessage("feed-id", "message-id", { text: "Updated" });
+       */
+      useUpdateFeedMessage(): (
+        feedId: string,
+        messageId: string,
+        data: JsonObject
+      ) => void;
+
+      /**
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
        *
        * @example
@@ -1206,7 +1329,7 @@ export type RoomContextBundle<
       useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
-        RoomContextBundleCommon<P, S, U, E, TM, CM> &
+        RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1274,6 +1397,48 @@ export type RoomContextBundle<
             useThreads(
               options?: UseThreadsOptions<TM>
             ): ThreadsAsyncSuccess<TM, CM>;
+
+            /**
+             * Returns feeds for the current room.
+             *
+             * @example
+             * const { feeds } = useFeeds();
+             */
+            useFeeds(options?: UseFeedsOptions): FeedsAsyncSuccess<SM>;
+
+            /**
+             * Returns messages for a specific feed in the current room.
+             *
+             * @example
+             * const { messages } = useFeedMessages("feed-id");
+             */
+            useFeedMessages(
+              feedId: string,
+              options?: UseFeedMessagesOptions
+            ): FeedMessagesAsyncSuccess<MD>;
+            useCreateFeed(): (
+              feedId: string,
+              options?: { metadata?: JsonObject; timestamp?: number }
+            ) => void;
+            useDeleteFeed(): (feedId: string) => void;
+            useUpdateFeedMetadata(): (
+              feedId: string,
+              metadata: JsonObject
+            ) => void;
+            useCreateFeedMessage(): (
+              feedId: string,
+              data: JsonObject,
+              options?: { id?: string; timestamp?: number }
+            ) => void;
+            useDeleteFeedMessage(): (
+              feedId: string,
+              messageId: string
+            ) => void;
+            useUpdateFeedMessage(): (
+              feedId: string,
+              messageId: string,
+              data: JsonObject
+            ) => void;
 
             /**
              * (Private beta) Returns a history of versions of the current room.

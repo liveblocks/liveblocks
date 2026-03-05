@@ -7,6 +7,8 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export type {
   AiCopilot,
   CreateAiCopilotOptions,
+  CreateFeedMessageOptions,
+  CreateFeedOptions,
   CreateFileKnowledgeSourceOptions,
   CreateRoomOptions,
   CreateWebKnowledgeSourceOptions,
@@ -32,6 +34,8 @@ export type {
   SetPresenceOptions,
   ThreadParticipants,
   UpdateAiCopilotOptions,
+  UpdateFeedMessageOptions,
+  UpdateFeedOptions,
   UpdateRoomOptions,
   UpsertRoomOptions,
   WebKnowledgeSourceLink,
