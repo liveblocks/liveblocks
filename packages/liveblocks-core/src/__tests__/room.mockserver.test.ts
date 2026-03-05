@@ -58,9 +58,9 @@ import {
   createSerializedRoot,
   FIRST_POSITION,
   makeSyncSource,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareIsolatedStorageTest,
   prepareRoomWithStorage_loadWithDelay,
-  prepareStorageTest as prepareStorageTest_legacy,
+  prepareStorageTest,
   serverMessage,
 } from "./_utils";
 import {
@@ -1345,7 +1345,7 @@ describe("room", () => {
         storage,
         expectStorage,
         refRoom: refRoom,
-      } = await prepareStorageTest_legacy<S, P, M, E>(
+      } = await prepareStorageTest<S, P, M, E>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
@@ -1629,7 +1629,7 @@ describe("room", () => {
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
-        await prepareStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -1695,7 +1695,7 @@ describe("room", () => {
 
     test("disconnect and reconnect with remote changes", async () => {
       const { expectStorage, room, wss } =
-        await prepareIsolatedStorageTest_legacy<{
+        await prepareIsolatedStorageTest<{
           items?: LiveList<string>;
           items2?: LiveList<string>;
         }>(
@@ -1753,7 +1753,7 @@ describe("room", () => {
 
     test("disconnect and reconnect should keep user current presence", async () => {
       const { room, refRoom, reconnect, refWss } =
-        await prepareStorageTest_legacy<never, { x: number }>(
+        await prepareStorageTest<never, { x: number }>(
           [createSerializedRoot()],
           1
         );
@@ -1788,7 +1788,7 @@ describe("room", () => {
 
     test("hasPendingStorageModifications", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
-        await prepareStorageTest_legacy<{ x: number }>(
+        await prepareStorageTest<{ x: number }>(
           [createSerializedRoot({ x: 0 })],
           1
         );
@@ -2385,7 +2385,7 @@ describe("room", () => {
 
   describe("initial storage", () => {
     test("initialize room with initial storage should send operation only once", async () => {
-      const { wss, expectStorage } = await prepareIsolatedStorageTest_legacy<{
+      const { wss, expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>([createSerializedRoot()], 1, { items: new LiveList([]) });
 

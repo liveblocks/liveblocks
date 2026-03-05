@@ -11,7 +11,7 @@ import {
   createSerializedList,
   createSerializedObject,
   createSerializedRoot,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareIsolatedStorageTest,
 } from "../../__tests__/_utils";
 import { kInternal } from "../../internal";
 import type { ServerWireOp } from "../../protocol/Op";
@@ -38,7 +38,7 @@ describe("LiveObject edge cases", () => {
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
         const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{ a: number }>(
+          await prepareIsolatedStorageTest<{ a: number }>(
             [createSerializedRoot({ a: 0 })],
             1
           );
@@ -62,7 +62,7 @@ describe("LiveObject edge cases", () => {
 
       test("when value is a LiveObject", async () => {
         const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{
+          await prepareIsolatedStorageTest<{
             a: LiveObject<{ subA: number }>;
           }>(
             [
@@ -93,7 +93,7 @@ describe("LiveObject edge cases", () => {
 
       test("when value is a LiveList with LiveObjects", async () => {
         const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{
+          await prepareIsolatedStorageTest<{
             a: LiveList<LiveObject<{ b: number }>>;
           }>(
             [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
@@ -124,7 +124,7 @@ describe("LiveObject edge cases", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
+      const { root } = await prepareIsolatedStorageTest<{
         obj: LiveObject<{
           a: LiveObject<{ subA: number }>;
           b: LiveObject<{ subA: number }>;

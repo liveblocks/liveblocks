@@ -11,7 +11,7 @@ import {
   createSerializedMap,
   createSerializedObject,
   createSerializedRoot,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareIsolatedStorageTest,
 } from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
 import type { LiveMap } from "../LiveMap";
@@ -20,7 +20,7 @@ import type { LiveObject } from "../LiveObject";
 describe("LiveMap edge cases", () => {
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
+      const { root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [

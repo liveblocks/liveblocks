@@ -15,7 +15,7 @@ import {
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
-  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareIsolatedStorageTest,
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
@@ -51,7 +51,7 @@ describe("LiveList edge cases", () => {
   describe("conflict", () => {
     test("list conflicts", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -94,7 +94,7 @@ describe("LiveList edge cases", () => {
 
     test("list conflicts 2", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -164,7 +164,7 @@ describe("LiveList edge cases", () => {
 
     test("list conflicts with offline", async () => {
       const { room, root, expectStorage, wss } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -210,7 +210,7 @@ describe("LiveList edge cases", () => {
     // because the reconnection cycle affects how the room buffers ops.
     test("list conflicts with undo redo and remote change", async () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -254,7 +254,7 @@ describe("LiveList edge cases", () => {
 
     test("list conflicts - move", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -308,7 +308,7 @@ describe("LiveList edge cases", () => {
 
     test("list conflicts - ack has different position that local item", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -382,7 +382,7 @@ describe("LiveList edge cases", () => {
 
     test("list conflicts - ack has different position that local and ack position is used", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -438,7 +438,7 @@ describe("LiveList edge cases", () => {
     // items from implicitlyDeletedItems, otherwise subscriptions won't fire.
     test("restoring item from implicitlyDeletedItems triggers subscription", async () => {
       const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -490,7 +490,7 @@ describe("LiveList edge cases", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("register added to list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
+        await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
           [
@@ -572,7 +572,7 @@ describe("LiveList edge cases", () => {
 
     test("register moved in list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
+        await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
           [
@@ -643,7 +643,7 @@ describe("LiveList edge cases", () => {
 
     test("register deleted from list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
+        await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
           [
@@ -706,7 +706,7 @@ describe("LiveList edge cases", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
@@ -744,7 +744,7 @@ describe("LiveList edge cases", () => {
     describe("apply CreateRegister", () => {
       test('with intent "set" should replace existing item', async () => {
         const { room, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -774,7 +774,7 @@ describe("LiveList edge cases", () => {
       });
 
       test('with intent "set" should notify with a "set" update', async () => {
-        const { room, root } = await prepareIsolatedStorageTest_legacy<{
+        const { room, root } = await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
           [
@@ -812,7 +812,7 @@ describe("LiveList edge cases", () => {
 
       test('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -850,7 +850,7 @@ describe("LiveList edge cases", () => {
       });
 
       test('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
-        const { room, root } = await prepareIsolatedStorageTest_legacy<{
+        const { room, root } = await prepareIsolatedStorageTest<{
           items: LiveList<string>;
         }>(
           [
@@ -889,7 +889,7 @@ describe("LiveList edge cases", () => {
 
       test("on existing position should give the right update", async () => {
         const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:1", "root", "items"),
