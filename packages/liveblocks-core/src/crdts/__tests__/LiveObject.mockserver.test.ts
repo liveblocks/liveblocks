@@ -12,7 +12,7 @@ import {
   createSerializedObject,
   createSerializedRoot,
   prepareIsolatedStorageTest,
-} from "../../__tests__/_utils";
+} from "../../__tests__/_MockWebSocketServer.setup";
 import { kInternal } from "../../internal";
 import type { ServerWireOp } from "../../protocol/Op";
 import { OpCode } from "../../protocol/Op";

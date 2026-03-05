@@ -19,7 +19,7 @@ import {
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
-} from "../../__tests__/_utils";
+} from "../../__tests__/_MockWebSocketServer.setup";
 import {
   waitUntilStatus,
   waitUntilStorageUpdate,

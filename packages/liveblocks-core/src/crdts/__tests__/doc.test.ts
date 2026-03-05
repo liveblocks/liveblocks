@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { prepareStorageTest } from "../../__tests__/_liveblocks";
+import { prepareStorageTest } from "../../__tests__/_devserver";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";

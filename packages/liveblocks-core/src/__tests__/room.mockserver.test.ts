@@ -51,7 +51,7 @@ import {
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
   SOCKET_THROWS,
-} from "./_behaviors";
+} from "./_MockWebSocketServer.behaviors";
 import {
   createSerializedList,
   createSerializedRegister,
@@ -62,7 +62,7 @@ import {
   prepareRoomWithStorage_loadWithDelay,
   prepareStorageTest,
   serverMessage,
-} from "./_utils";
+} from "./_MockWebSocketServer.setup";
 import {
   waitUntilCustomEvent,
   waitUntilOthersEvent,

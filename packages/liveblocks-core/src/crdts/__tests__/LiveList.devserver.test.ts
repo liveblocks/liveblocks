@@ -10,7 +10,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
-} from "../../__tests__/_liveblocks";
+} from "../../__tests__/_devserver";
 import {
   listUpdate,
   listUpdateDelete,

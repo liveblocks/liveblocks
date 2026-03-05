@@ -12,7 +12,7 @@ import {
   createSerializedObject,
   createSerializedRoot,
   prepareIsolatedStorageTest,
-} from "../../__tests__/_utils";
+} from "../../__tests__/_MockWebSocketServer.setup";
 import { OpCode } from "../../protocol/Op";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";

@@ -24,7 +24,7 @@ import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
-import { enterConnectAndGetStorage, initRoom } from "./_liveblocks";
+import { enterConnectAndGetStorage, initRoom } from "./_devserver";
 
 /**
  * Sets up two real clients (A and B) connected to the same room via the dev

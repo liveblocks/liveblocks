@@ -4,7 +4,7 @@
  * reconnection, backoff, close codes), wire protocol message inspection,
  * and CRDT conflict resolution with precise op injection.
  *
- * For normal storage/presence/history tests, use `_liveblocks.ts`.
+ * For normal storage/presence/history tests, use `_devserver.ts`.
  */
 import { expect, onTestFinished } from "vitest";
 
@@ -46,7 +46,7 @@ import {
   ALWAYS_AUTH_WITH_ACCESS_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
-} from "./_behaviors";
+} from "./_MockWebSocketServer.behaviors";
 import type { MockWebSocketServer } from "./_MockWebSocketServer";
 import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";

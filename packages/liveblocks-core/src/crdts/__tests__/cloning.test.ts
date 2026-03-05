@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
-import { prepareStorageUpdateTest } from "../../__tests__/_liveblocks";
+import { prepareStorageUpdateTest } from "../../__tests__/_devserver";
 import {
   listUpdate,
   listUpdateInsert,

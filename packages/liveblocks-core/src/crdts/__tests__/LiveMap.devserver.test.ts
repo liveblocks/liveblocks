@@ -10,7 +10,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
-} from "../../__tests__/_liveblocks";
+} from "../../__tests__/_devserver";
 import { kInternal } from "../../internal";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";

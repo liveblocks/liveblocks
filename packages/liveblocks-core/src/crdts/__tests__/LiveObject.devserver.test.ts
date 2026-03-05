@@ -18,7 +18,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
-} from "../../__tests__/_liveblocks";
+} from "../../__tests__/_devserver";
 import {
   type JsonStorageUpdate,
   objectUpdate,

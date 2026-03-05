@@ -12,7 +12,7 @@ import { LiveObject } from "../crdts/LiveObject";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject } from "../immutable";
 import { nn } from "../lib/assert";
-import { prepareIsolatedStorageTest } from "./_liveblocks";
+import { prepareIsolatedStorageTest } from "./_devserver";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import {
   listUpdate,
