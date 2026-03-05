@@ -470,7 +470,7 @@
     "date": "2026-01-29"
   },
   {
-    "title": "The new Storage engine and its benefits",
+    "title": "The new realtime data storage engine and its benefits",
     "path": "/about-the-new-storage-engine",
     "topics": [],
     "technologies": ["storage"],
@@ -489,5 +489,27 @@
     "topics": ["tutorials", "testing"],
     "technologies": ["nextjs", "react"],
     "date": "2026-02-17"
+  },
+  {
+    "title": "Modifying Storage via REST API with JSON Patch",
+    "path": "/modifying-storage-via-rest-api-with-json-patch",
+    "topics": ["rest-api", "storage"],
+    "technologies": ["storage"],
+    "date": "2026-02-20"
+  },
+  {
+    "title": "Enabling agentic workflows with Liveblocks",
+    "path": "/enabling-agentic-workflows-with-liveblocks",
+    "topics": ["rest-api", "ai-copilots", "webhooks"],
+    "technologies": ["react", "nodejs"],
+    "date": "2026-02-20",
+    "featured": true
+  },
+  {
+    "title": "How to add users to Liveblocks presence components",
+    "path": "/how-to-add-users-to-liveblocks-presence-components",
+    "topics": ["presence", "tutorials", "data-fetching"],
+    "technologies": ["react-ui", "react"],
+    "date": "2026-03-04"
   }
 ]

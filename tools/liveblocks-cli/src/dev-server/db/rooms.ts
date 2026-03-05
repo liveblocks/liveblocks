@@ -30,11 +30,15 @@ let isEphemeral = false;
 /**
  * Initialize the rooms database. When persist is false, a temp directory is
  * used and cleaned up on exit via `cleanup()`.
+ *
+ * Returns the root temp directory. Room data is stored in a `data/`
+ * subdirectory so that sibling files (e.g. server.log) survive cleanup.
  */
 export function useEphemeralStorage(): string {
-  basePath = mkdtempSync(join(tmpdir(), "liveblocks-dev-"));
+  const root = mkdtempSync(join(tmpdir(), "liveblocks-dev-"));
+  basePath = join(root, "data");
   isEphemeral = true;
-  return basePath;
+  return root;
 }
 
 export type RoomMeta = string; // Room metadata: just use the room ID
@@ -141,6 +145,17 @@ export async function remove(roomId: string): Promise<void> {
   } catch (error) {
     // File might not exist, ignore
   }
+}
+
+/**
+ * Unload all room instances and clear the instances map, but keep SQLite
+ * files on disk so storage survives a reboot.
+ */
+export function unloadAll(): void {
+  for (const room of instances.values()) {
+    room.unload();
+  }
+  instances.clear();
 }
 
 /**

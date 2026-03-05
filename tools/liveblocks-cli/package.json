@@ -1,6 +1,6 @@
 {
   "name": "liveblocks",
-  "version": "1.0.8",
+  "version": "1.0.15",
   "description": "Liveblocks command line interface",
   "type": "module",
   "bin": {
@@ -22,6 +22,7 @@
     "test:typescript": "tsc --noEmit"
   },
   "license": "AGPL-3.0-or-later",
+  "author": "Liveblocks Inc.",
   "keywords": [
     "Liveblocks",
     "CLI",
@@ -38,11 +39,10 @@
     "eslint-plugin-license-header": "^0.8.0"
   },
   "dependencies": {
-    "@bomb.sh/args": "^0.3.1",
-    "@liveblocks/core": "3.14.0-rc1",
-    "@liveblocks/server": "1.0.8",
-    "@liveblocks/zenrouter": "1.0.8",
-    "decoders": "^2.8.0-1",
+    "@liveblocks/core": "3.14.0",
+    "@liveblocks/server": "1.0.15",
+    "@liveblocks/zenrouter": "^1.0.17",
+    "decoders": "^2.9.0-pre.4",
     "js-base64": "^3.7.5",
     "yjs": "^13.6.10"
   }

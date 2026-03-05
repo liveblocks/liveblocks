@@ -973,7 +973,76 @@ setting `maxVisibleComments` to an object.
 <Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
 ```
 
-##### Custom dropdown items
+##### Customize comments
+
+You can provide a custom `Comment` component via the `components` prop to fully
+customize how comments are rendered within a thread. This allows you to render a
+fully custom React component in the provided `Comment` slot, however it's often
+preferable to insert the default
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment) component, and use
+its customization options instead.
+
+The `children` prop on `Comment` allows overriding or wrapping the comments’
+content, while the `additionalContent` prop can be useful to render custom
+content integrated into the comments’ content, just below the comment body.
+
+`Comment` also offers `avatar`, `author`, and `date` props to allow overriding
+or customizing the comment’s displayed avatar, author, and date respectively.
+`Comment.Avatar`, `Comment.Author`, and `Comment.Date` can be used to retain the
+default behavior and styles but with more control over them.
+
+```tsx
+import { Comment, Thread } from "@liveblocks/react-ui";
+
+<Thread
+  thread={thread}
+  components={{
+    Comment: ({ comment, ...props }) => (
+      <Comment
+        comment={comment}
+        avatar={
+          <div className="custom-avatar">
+            <Comment.Avatar userId={props.comment.userId} />
+            <div className="custom-badge" />
+          </div>
+        }
+        author={
+          <span className="custom-author">
+            <Comment.Author userId={props.comment.userId} />
+            <span>Custom label</span>
+          </span>
+        }
+        date={
+          <span className="custom-date">
+            <Comment.Date date={props.comment.createdAt} />
+            {props.comment.editedAt && (
+              <span className="custom-edited-label">Edited</span>
+            )}
+          </span>
+        }
+        additionalContent={
+          <div className="custom-additional-content">
+            Content below the comment's body (above reactions and attachments)
+          </div>
+        }
+        {...props}
+      >
+        {({ children }) => (
+          <div className="custom-content-wrapper">
+            {children}
+            <div>
+              Content below the comment's content (including reactions and
+              attachments)
+            </div>
+          </div>
+        )}
+      </Comment>
+    ),
+  }}
+/>;
+```
+
+##### Customize dropdown items
 
 `Thread` shows a dropdown menu for threads and comments which contains actions
 related to them: “Subscribe to thread”, “Edit comment”, “Delete comment”, etc.
@@ -1196,9 +1265,113 @@ icon next to the item’s label.
   >
     Override the component’s strings.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<GlobalComponents & ThreadComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### components [#Thread-components]
+
+Override the component’s components, including providing a custom `Comment`
+component.
+
+<PropertiesList>
+  <PropertiesListItem name="Comment" type="ComponentType<CommentProps>">
+    The component used to display comments.
+  </PropertiesListItem>
 </PropertiesList>
 
 {/* TODO: Document classes and data attributes */}
+
+#### FloatingThread
+
+Displays a floating thread attached to a trigger element.
+
+```tsx
+<FloatingThread thread={thread}>
+  <button>Open thread</button>
+</FloatingThread>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/floating-thread.png"
+    alt="FloatingThread"
+    width={768}
+    height={508}
+  />
+</Figure>
+
+`FloatingThread` can be combined with [`CommentPin`](#CommentPin) in canvas-like
+UIs.
+
+```tsx
+<FloatingThread thread={thread}>
+  <CommentPin
+    userId={thread.comments[0]?.userId}
+    style={{
+      position: "absolute",
+      left: thread.metadata.x,
+      top: thread.metadata.y,
+    }}
+  />
+</FloatingThread>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/floating-thread-comment-pin.png"
+    alt="FloatingThread with CommentPin"
+    width={768}
+    height={508}
+  />
+</Figure>
+
+##### Props [#FloatingThread-props]
+
+In addition to all [`Thread`](#Thread-props) props:
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The element which opens the floating thread.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultOpen" type="boolean">
+    Whether the floating thread is initially open.
+  </PropertiesListItem>
+  <PropertiesListItem name="open" type="boolean">
+    Whether the floating thread is currently open.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onOpenChange"
+    type="function"
+    detailedType="(open: boolean) => void"
+  >
+    The event handler called when the open state changes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="side"
+    type='"top" | "right" | "bottom" | "left"'
+    defaultValue='"right"'
+  >
+    The preferred side of the trigger to render the floating thread on.
+  </PropertiesListItem>
+  <PropertiesListItem name="sideOffset" type="number" defaultValue="6">
+    The side offset in pixels from the trigger.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="align"
+    type='"start" | "center" | "end"'
+    defaultValue='"start"'
+  >
+    How the floating thread is aligned against its trigger.
+  </PropertiesListItem>
+  <PropertiesListItem name="alignOffset" type="number">
+    The alignment offset in pixels.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Composer
 
@@ -1441,6 +1614,96 @@ Learn more about mutation hooks under
   </PropertiesListItem>
 </PropertiesList>
 
+#### FloatingComposer
+
+Displays a floating composer attached to a trigger element.
+
+```tsx
+<FloatingComposer>
+  <button>Add comment</button>
+</FloatingComposer>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/floating-composer.png"
+    alt="FloatingComposer"
+    width={768}
+    height={411}
+  />
+</Figure>
+
+Use `metadata` to attach context to the thread when submitting (for example
+canvas coordinates or table cell IDs).
+
+`FloatingComposer` can be combined with [`CommentPin`](#CommentPin) in
+canvas-like UIs.
+
+```tsx
+<FloatingComposer metadata={{ x: 120, y: 80 }}>
+  <CommentPin
+    style={{
+      position: "absolute",
+      left: 120,
+      top: 80,
+    }}
+  />
+</FloatingComposer>
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/floating-composer-comment-pin.png"
+    alt="FloatingComposer with CommentPin"
+    width={768}
+    height={411}
+  />
+</Figure>
+
+##### Props [#FloatingComposer-props]
+
+In addition to all [`Composer`](#Composer-props) props (except `collapsed`,
+`onCollapsedChange`, and `defaultCollapsed`):
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode" required>
+    The element which opens the floating composer.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultOpen" type="boolean">
+    Whether the floating composer is initially open.
+  </PropertiesListItem>
+  <PropertiesListItem name="open" type="boolean">
+    Whether the floating composer is currently open.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onOpenChange"
+    type="function"
+    detailedType="(open: boolean) => void"
+  >
+    The event handler called when the open state changes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="side"
+    type='"top" | "right" | "bottom" | "left"'
+    defaultValue='"right"'
+  >
+    The preferred side of the trigger to render the floating composer on.
+  </PropertiesListItem>
+  <PropertiesListItem name="sideOffset" type="number" defaultValue="6">
+    The side offset in pixels from the trigger.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="align"
+    type='"start" | "center" | "end"'
+    defaultValue='"start"'
+  >
+    How the floating composer is aligned against its trigger.
+  </PropertiesListItem>
+  <PropertiesListItem name="alignOffset" type="number">
+    The alignment offset in pixels.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Comment
 
 Displays a single comment.
@@ -1520,6 +1783,18 @@ function Component() {
   <PropertiesListItem name="comment" type="CommentData" required>
     The comment to display.
   </PropertiesListItem>
+  <PropertiesListItem name="avatar" type="ReactNode">
+    The comment’s avatar. Can be combined with `Comment.Avatar` to easily follow
+    default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="author" type="ReactNode">
+    The comment’s author. Can be combined with `Comment.Author` to easily follow
+    default styles.
+  </PropertiesListItem>
+  <PropertiesListItem name="date" type="ReactNode">
+    The comment’s date. Can be combined with `Comment.Date` to easily follow
+    default styles, or the `Timestamp` primitive for more control.
+  </PropertiesListItem>
   <PropertiesListItem
     name="showActions"
     type='boolean | "hover"'
@@ -1543,6 +1818,9 @@ function Component() {
   <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
     Whether to indent the comment’s content.
   </PropertiesListItem>
+  <PropertiesListItem name="additionalContent" type="ReactNode">
+    Additional content to display below the comment’s body.
+  </PropertiesListItem>
   <PropertiesListItem name="showDeleted" type="boolean" defaultValue="false">
     Whether to show the comment if it was deleted. If set to `false`, it will
     render deleted comments as `null`.
@@ -1553,6 +1831,14 @@ function Component() {
     detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
   >
     Add (or change) items to display in the comment’s dropdown.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="ReactNode | (props) => ReactNode"
+    detailedType="ReactNode | ((props: { children: ReactNode, comment: CommentData }) => ReactNode)"
+  >
+    Override the comment’s content. Receives the comment data and the default
+    content as children.
   </PropertiesListItem>
   <PropertiesListItem
     name="onCommentEdit"
@@ -1594,6 +1880,160 @@ function Component() {
     type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### CommentPin
+
+Displays a comment pin that can be used as a trigger for `FloatingComposer` and
+`FloatingThread`, or anywhere else in your UI.
+
+```tsx
+<CommentPin />
+
+<CommentPin userId="stacy@example.com" />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/comment-pin.png"
+    alt="CommentPin"
+    width={768}
+    height={413}
+  />
+</Figure>
+
+Set the `userId` prop to display an avatar inside the pin, for example to
+represent the thread’s author.
+
+```tsx
+<CommentPin userId={thread.comments[0]?.userId} />
+```
+
+Use the `corner` prop to choose which corner the pin points to, it will move
+itself to always point to wherever it is positioned.
+
+```tsx
+<CommentPin
+  corner="top-left"
+  style={{
+    position: "absolute",
+    left: thread.metadata.x,
+    top: thread.metadata.y,
+  }}
+/>
+```
+
+You can either use the `size` prop or override `--lb-comment-pin-size` with CSS
+to change the pin’s size.
+
+```tsx
+<CommentPin size={40} />
+
+<CommentPin className="[--lb-comment-pin-size:3rem]" />
+```
+
+##### Props [#CommentPin-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="corner"
+    type='"top-left" | "top-right" | "bottom-right" | "bottom-left"'
+    defaultValue='"bottom-left"'
+  >
+    The corner that points to the comment position.
+  </PropertiesListItem>
+  <PropertiesListItem name="userId" type="string">
+    The user ID to optionally display an avatar for.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the pin.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Avatar [#Comment.Avatar]
+
+Displays a comment’s avatar. Use this within the `avatar` prop to follow default
+styles while customizing the avatar.
+
+```tsx
+<Comment
+  comment={comment}
+  avatar={
+    <div className="custom-avatar-wrapper">
+      <Comment.Avatar userId={comment.userId} />
+      <div className="custom-badge" />
+    </div>
+  }
+/>
+```
+
+###### Props [#Comment.Avatar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string" required>
+    The user ID to display the avatar for.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.Author [#Comment.Author]
+
+Displays a comment’s author. Use this within the `author` prop to follow default
+styles while customizing the author.
+
+```tsx
+<Comment
+  comment={comment}
+  author={
+    <span className="custom-author-wrapper">
+      <Comment.Author userId={comment.userId} />
+      <span>Custom label</span>
+    </span>
+  }
+/>
+```
+
+###### Props [#Comment.Author-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userId" type="string" required>
+    The user ID to display the author for.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Comment.DropdownItem [#Comment.DropdownItem]
+
+Displays a dropdown item in the comment’s dropdown menu. Use this within the
+`dropdownItems` prop to add custom actions.
+
+```tsx
+<Comment
+  comment={comment}
+  dropdownItems={
+    <>
+      <Comment.DropdownItem
+        onSelect={() => console.log("Custom action")}
+        icon={<Icon.QuestionMark />}
+      >
+        Custom action
+      </Comment.DropdownItem>
+    </>
+  }
+/>
+```
+
+###### Props [#Comment.DropdownItem-props]
+
+<PropertiesList>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this dropdown item.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onSelect"
+    type="function"
+    detailedType="(event: Event) => void"
+  >
+    The event handler called when the dropdown item is selected.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -3276,6 +3716,220 @@ element.
 All hooks for Notifications are in
 [`@liveblocks/react`](/docs/api-reference/liveblocks-react#Notifications).
 
+## Presence
+
+### Default components [#Presence-Components]
+
+#### AvatarStack
+
+Displays a stack of avatars for users currently present in the room.
+
+```tsx
+<AvatarStack />
+```
+
+<Figure>
+  <Image
+    src="/assets/presence/avatar-stack.png"
+    alt="AvatarStack"
+    width={768}
+    height={456}
+  />
+</Figure>
+
+You can include additional users (e.g. users who are invited to the room but not
+currently present) and control how many avatars are shown before grouping the
+rest as `+N`.
+
+```tsx
+<AvatarStack userIds={["stacy@example.com", "chris@example.com"]} max={5} />
+```
+
+User IDs (both from Presence and the `userIds` prop) are deduplicated so the
+same user present with multiple tabs for example will only be displayed once in
+the stack.
+
+You can either use the `size` prop or override `--lb-avatar-stack-size` with CSS
+to change the avatars’ size.
+
+```tsx
+<AvatarStack size={40} />
+
+<AvatarStack className="[--lb-avatar-stack-size:3rem]" />
+```
+
+##### User information
+
+`AvatarStack` uses
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to resolve each user’s information and then uses the `name` and `avatar`
+properties.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // ["stacy@example.com", ...]
+    console.log(userIds);
+
+    // Get users from your back-end
+    const users = await __fetchUsers__(userIds);
+
+    // [{ name: "Stacy", avatar: "https://example.com/stacy.png" }, ...]
+    console.log(users);
+
+    // Return a list of users
+    return users;
+  }}
+  // +++
+>
+  <RoomProvider id="my-room-id">{/* ... */}</RoomProvider>
+</LiveblocksProvider>
+```
+
+##### Props [#AvatarStack-props]
+
+<PropertiesList>
+  <PropertiesListItem name="userIds" type="string[]">
+    Optional additional user IDs to include in the stack.
+  </PropertiesListItem>
+  <PropertiesListItem name="max" type="number" defaultValue="3">
+    The maximum number of visible avatars.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the avatars.
+  </PropertiesListItem>
+  <PropertiesListItem name="overrides" type="Partial<GlobalOverrides>">
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Cursors
+
+Displays multiplayer cursors for other users in the room while tracking your own
+pointer position.
+
+It works out-of-the-box with best practices built-in:
+
+- Cursors are positioned relative to the container’s size
+  - Their coordinates are percentage-based instead of absolute pixels
+- Cursors are interpolated with springs to smooth their movement
+  - Learn more about this in our article about
+    [animating multiplayer cursors](/blog/how-to-animate-multiplayer-cursors)
+- Performance bottlenecks like re-renders or `position: absolute` layout
+  thrashing are avoided
+
+```tsx
+<Cursors className="relative h-full w-full">
+  <YourCanvas />
+</Cursors>
+```
+
+<Figure>
+  <Image
+    src="/assets/presence/cursors.png"
+    alt="Cursors"
+    width={768}
+    height={461}
+  />
+</Figure>
+
+By default, cursor coordinates are stored in Presence under `"cursor"`. Use
+`presenceKey` to render multiple `Cursors` areas in a single room.
+
+If you need more control, you can use the single [`Cursor`](#Cursor) component
+and handle positioning manually with the Presence hooks in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Presence).
+
+##### User information
+
+`Cursors` uses
+[`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers)
+to resolve each user’s information and then uses the `name` and `color`
+properties.
+
+```tsx
+<LiveblocksProvider
+  authEndpoint="/api/liveblocks-auth"
+  // +++
+  resolveUsers={async ({ userIds }) => {
+    // ["stacy@example.com", ...]
+    console.log(userIds);
+
+    // Get users from your back-end
+    const users = await __fetchUsers__(userIds);
+
+    // [{ name: "Stacy", color: "#22c55e", ...]
+    console.log(users);
+
+    // Return a list of users
+    return users;
+  }}
+  // +++
+>
+  <RoomProvider id="my-room-id">{/* ... */}</RoomProvider>
+</LiveblocksProvider>
+```
+
+##### Props [#Cursors-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="presenceKey"
+    type="string"
+    defaultValue={`"cursor"`}
+  >
+    The key used to store cursor coordinates in users’ Presence.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Cursor
+
+Displays a multiplayer cursor with a color and an optional label.
+
+```tsx
+<Cursor />
+```
+
+<Figure>
+  <Image
+    src="/assets/presence/cursor.png"
+    alt="Cursor"
+    width={768}
+    height={461}
+  />
+</Figure>
+
+You can either use the `color` prop or override `--lb-cursor-color` with CSS to
+change the cursor’s color, by default it’s set to `--lb-accent`. The label’s
+text color is dynamically set to contrast with the cursor’s color automatically.
+
+```tsx
+<Cursor label="Stacy" color="#22c55e" />
+
+<Cursor label="Chris" className="[--lb-cursor-color:var(--color-rose-500)]" />
+```
+
+It’s sized as 0×0px to make it easy to position it either via `transform` or
+`top`/`left`.
+
+##### Props [#Cursor-props]
+
+<PropertiesList>
+  <PropertiesListItem name="color" type="string">
+    The color of the cursor.
+  </PropertiesListItem>
+  <PropertiesListItem name="label" type="ReactNode">
+    A floating label to display next to the cursor.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Hooks [#Presence-hooks]
+
+All hooks for Presence are in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Presence).
+
 ## Version History
 
 Version history enables you to track and restore versions of your
@@ -3286,7 +3940,7 @@ using the
 [REST API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-version).
 These components aid in displaying a list of those versions.
 
-### Default components
+### Default components [#Version-History-Components]
 
 ### HistoryVersionSummary
 

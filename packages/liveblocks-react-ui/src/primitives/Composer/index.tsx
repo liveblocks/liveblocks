@@ -19,8 +19,7 @@ import {
   useResolveMentionSuggestions,
   useSyncSource,
 } from "@liveblocks/react/_private";
-import { Slot, Slottable } from "@radix-ui/react-slot";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
+import { Slot as SlotPrimitive, Toggle as TogglePrimitive } from "radix-ui";
 import type {
   AriaAttributes,
   ChangeEvent,
@@ -68,6 +67,7 @@ import {
   withReact,
 } from "slate-react";
 
+import { useCurrentUserId } from "../../shared";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -84,6 +84,7 @@ import { requestSubmit } from "../../utils/request-submit";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useObservable } from "../../utils/use-observable";
+import { usePreResolveUser } from "../../utils/use-pre-resolve-user";
 import { useRefs } from "../../utils/use-refs";
 import { withEmptyClearFormatting } from "../slate/plugins/empty-clear-formatting";
 import { withNormalize } from "../slate/plugins/normalize";
@@ -480,7 +481,7 @@ const ComposerFloatingToolbar = forwardRef<
     () => getSideAndAlignFromFloatingPlacement(placement),
     [placement]
   );
-  const Component = asChild ? Slot : "div";
+  const Component = asChild ? SlotPrimitive.Slot : "div";
   useAnimationPersist(ref);
 
   const handlePointerDown = useCallback(
@@ -601,7 +602,7 @@ function ComposerEditorPlaceholder({
  */
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "span";
+    const Component = asChild ? SlotPrimitive.Slot : "span";
     const isSelected = useSelected();
 
     return (
@@ -624,7 +625,7 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
  */
 const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "a";
+    const Component = asChild ? SlotPrimitive.Slot : "a";
 
     return (
       <Component
@@ -658,7 +659,7 @@ const ComposerSuggestions = forwardRef<
     () => getSideAndAlignFromFloatingPlacement(placement),
     [placement]
   );
-  const Component = asChild ? Slot : "div";
+  const Component = asChild ? SlotPrimitive.Slot : "div";
   useAnimationPersist(ref);
 
   return (
@@ -699,7 +700,7 @@ const ComposerSuggestionsList = forwardRef<
   ComposerSuggestionsListProps
 >(({ children, asChild, ...props }, forwardedRef) => {
   const { id } = useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_LIST_NAME);
-  const Component = asChild ? Slot : "ul";
+  const Component = asChild ? SlotPrimitive.Slot : "ul";
 
   return (
     <Component
@@ -742,7 +743,7 @@ const ComposerSuggestionsListItem = forwardRef<
     const mergedRefs = useRefs(forwardedRef, ref);
     const { selectedValue, setSelectedValue, itemId, onItemSelect } =
       useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_LIST_ITEM_NAME);
-    const Component = asChild ? Slot : "li";
+    const Component = asChild ? SlotPrimitive.Slot : "li";
     const isSelected = useMemo(
       () => selectedValue === value,
       [selectedValue, value]
@@ -871,6 +872,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       isDisabled: isComposerDisabled,
       isFocused,
     } = useComposer();
+    const currentUserId = useCurrentUserId();
+    const preResolveUser = usePreResolveUser();
     const isDisabled = isComposerDisabled || disabled;
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
@@ -1070,9 +1073,15 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
         if (!event.isDefaultPrevented()) {
           setFocused(true);
+
+          // Pre-resolve the current user's info the first time
+          // they focus a composer editor.
+          if (currentUserId) {
+            preResolveUser(currentUserId);
+          }
         }
       },
-      [onFocus, setFocused]
+      [onFocus, setFocused, currentUserId, preResolveUser]
     );
 
     const handleBlur = useCallback(
@@ -1174,6 +1183,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       >
         <Editable
           dir={dir}
+          tabIndex={isDisabled ? -1 : 0}
           enterKeyHint={mentionDraft ? "enter" : "send"}
           autoCapitalize="sentences"
           aria-label="Composer editor"
@@ -1259,7 +1269,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "form";
+    const Component = asChild ? SlotPrimitive.Slot : "form";
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
@@ -1616,7 +1626,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 tabIndex={-1}
                 style={{ display: "none" }}
               />
-              <Slottable>{children}</Slottable>
+              <SlotPrimitive.Slottable>{children}</SlotPrimitive.Slottable>
             </Component>
           </ComposerContext.Provider>
         </ComposerAttachmentsContext.Provider>
@@ -1633,7 +1643,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
  */
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "button";
+    const Component = asChild ? SlotPrimitive.Slot : "button";
     const { canSubmit, isDisabled: isComposerDisabled } = useComposer();
     const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
@@ -1660,7 +1670,7 @@ const ComposerAttachFiles = forwardRef<
   HTMLButtonElement,
   ComposerAttachFilesProps
 >(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
-  const Component = asChild ? Slot : "button";
+  const Component = asChild ? SlotPrimitive.Slot : "button";
   const { hasMaxAttachments } = useComposerAttachmentsContext();
   const { isDisabled: isComposerDisabled, attachFiles } = useComposer();
   const isDisabled = isComposerDisabled || hasMaxAttachments || disabled;
@@ -1713,7 +1723,7 @@ const ComposerAttachmentsDropArea = forwardRef<
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "div";
+    const Component = asChild ? SlotPrimitive.Slot : "div";
     const { isDisabled: isComposerDisabled } = useComposer();
     const isDisabled = isComposerDisabled || disabled;
     const [, dropAreaProps] = useComposerAttachmentsDropArea({
@@ -1759,7 +1769,7 @@ const ComposerMarkToggle = forwardRef<
     },
     forwardedRef
   ) => {
-    const Component = asChild ? Slot : "button";
+    const Component = asChild ? SlotPrimitive.Slot : "button";
     const { marks, toggleMark } = useComposer();
 
     const handlePointerDown = useCallback(

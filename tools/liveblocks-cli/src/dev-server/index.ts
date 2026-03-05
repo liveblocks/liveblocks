@@ -15,13 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { parse } from "@bomb.sh/args";
 import { WebsocketCloseCodes as CloseCode } from "@liveblocks/core";
 import type { Room, SessionKey, Ticket } from "@liveblocks/server";
 import { ZenRelay } from "@liveblocks/zenrouter";
 import Bun from "bun";
+import { join } from "path";
 
 import type { SubCommand } from "~/interfaces/SubCommand";
+import { parseArgs } from "~/lib/args";
 import { bold, dim, green, red, yellow } from "~/lib/term-colors";
 
 import { authorizeWebSocket } from "./auth";
@@ -93,48 +94,78 @@ function parsePort(value: string | undefined): number | undefined {
   return Number.isInteger(n) && n > 0 && n <= 65535 ? n : undefined;
 }
 
+function shellCmd(cmd: string): string[] {
+  return process.platform === "win32"
+    ? [process.env.COMSPEC || "cmd.exe", "/c", cmd]
+    : ["sh", "-c", cmd];
+}
+
+type Options = {
+  port: string;
+  host?: string;
+  cmd?: string;
+  help: boolean;
+  "no-check": boolean;
+  ci: boolean;
+  verbose: boolean;
+};
+
 const dev: SubCommand = {
   description: "Start the local Liveblocks dev server",
 
-  async run(_argv) {
-    const args = parse(_argv, {
-      string: ["port", "host"],
-      boolean: ["help", "check", "ephemeral", "ci"],
-      default: { check: true },
-      alias: { h: "help", p: "port" },
+  async run(argv) {
+    const { options } = parseArgs<Options>(argv, {
+      port: { type: "string", short: "p", default: DEFAULT_PORT.toString() },
+      host: { type: "string" },
+      cmd: { type: "string", short: "c" },
+      help: { type: "boolean", short: "h", default: false },
+      "no-check": { type: "boolean", default: false },
+      ci: { type: "boolean", default: false },
+      verbose: { type: "boolean", short: "v", default: false },
     });
 
-    if (args.help) {
+    if (options.help) {
       console.log("Usage: liveblocks dev [options]");
       console.log();
       console.log("Start the local Liveblocks dev server");
       console.log();
       console.log("Options:");
-      console.log(`  --port, -p    Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
-      console.log("  --host        Host to bind to (default: localhost)");
-      console.log("  --ci          Best defaults for CI (same as --ephemeral --no-check)"); // prettier-ignore
-      console.log("  --no-check    Skip project setup check");
-      console.log("  --ephemeral   Do not persist state between restarts"); // prettier-ignore
-      console.log("                  (Recommended for running unit tests.)"); // prettier-ignore
-      console.log("  --help, -h    Show this help message");
+      console.log(`  --port, -p      Port to listen on (default: ${DEFAULT_PORT})`); // prettier-ignore
+      console.log("  --host          Host to bind to (default: localhost)");
+      console.log("  --cmd, -c       Run a one-off command against a fresh server instance, then"); // prettier-ignore
+      console.log("                    shut down. Does not affect your local data in .liveblocks/."); // prettier-ignore
+      console.log("  --ci            Start a fresh server instance on every boot, ideal for CI"); // prettier-ignore
+      console.log("  --no-check      Skip project setup check on start");
+      console.log("  --verbose, -v   Show verbose output");
+      console.log("  --help, -h      Show help");
       return;
     }
 
-    // --ci is a shorthand for --ephemeral --no-check
-    if (args.ci) {
-      args.ephemeral = true;
-      args.check = false;
+    let ephemeral = false;
+
+    // --ci implies ephemeral + --no-check
+    if (options.ci) {
+      ephemeral = true;
+      options["no-check"] = true;
+    }
+
+    // --cmd implies ephemeral + --no-check
+    if (options.cmd) {
+      // NOTE: While this is CURRENTLY the same as --ci, we keep it separate in
+      // case we want to have different implications here in the future
+      ephemeral = true;
+      options["no-check"] = true;
     }
 
     // Precedence: CLI flag > env var > default
     const port =
-      parsePort(args.port) ??
+      parsePort(options.port) ??
       parsePort(process.env.LIVEBLOCKS_DEVSERVER_PORT) ??
       DEFAULT_PORT;
     const hostname =
-      args.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
+      options.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
 
-    const ephemeralPath = args.ephemeral ? RoomsDB.useEphemeralStorage() : null;
+    const ephemeralPath = ephemeral ? RoomsDB.useEphemeralStorage() : null;
 
     if (await isPortInUse(port, hostname)) {
       console.error(
@@ -143,149 +174,233 @@ const dev: SubCommand = {
       process.exit(1);
     }
 
-    const server = Bun.serve<SocketData>({
-      hostname,
-      port,
+    let server: Bun.Server<SocketData>;
 
-      async fetch(req, server) {
-        // WebSocket bypass - handle upgrades directly
-        if (req.headers.get("Upgrade") === "websocket") {
-          const authResult = authorizeWebSocket(req);
+    function createServer() {
+      return Bun.serve<SocketData>({
+        hostname,
+        port,
 
-          if (!authResult.ok) {
-            warn(authResult.xwarn, true);
-            return refuseSocketConnection(
-              server,
-              req,
-              CloseCode.NOT_ALLOWED,
-              "You have no access to this room"
-            );
+        async fetch(req, server) {
+          // WebSocket bypass - handle upgrades directly
+          if (req.headers.get("Upgrade") === "websocket") {
+            const authResult = authorizeWebSocket(req);
+
+            if (!authResult.ok) {
+              warn(authResult.xwarn, true);
+              return refuseSocketConnection(
+                server,
+                req,
+                CloseCode.NOT_ALLOWED,
+                "You have no access to this room"
+              );
+            }
+
+            const { roomId, ticketData } = authResult;
+
+            // Look up or create the room for the requested room ID
+            const room = RoomsDB.getOrCreate(roomId);
+            await room.load();
+
+            const ticket = await room.createTicket(ticketData);
+            const sessionKey = ticket.sessionKey;
+            const success = server.upgrade(req, {
+              data: { room, ticket, sessionKey },
+            });
+            if (success) {
+              // Bun automatically returns a 101 Switching Protocols
+              // if the upgrade succeeds
+              console.log(
+                `${green("101")} WS ${new URL(req.url).pathname}${dim(` - ${roomId}`)}`
+              );
+              return undefined;
+            }
+
+            return new Response("Could not upgrade to WebSocket", {
+              status: 426,
+            });
           }
 
-          const { roomId, ticketData } = authResult;
-
-          // Look up or create the room for the requested room ID
-          const room = RoomsDB.getOrCreate(roomId);
-          await room.load();
-
-          const ticket = await room.createTicket(ticketData);
-          const sessionKey = ticket.sessionKey;
-          const success = server.upgrade(req, {
-            data: { room, ticket, sessionKey },
-          });
-          if (success) {
-            // Bun automatically returns a 101 Switching Protocols
-            // if the upgrade succeeds
-            console.log(`${green("101")} WS ${new URL(req.url).pathname}`);
-            return undefined;
+          // Force-reboot: drop all connections (clients see 1006) and restart
+          const url = new URL(req.url);
+          if (req.method === "POST" && url.pathname === "/crash") {
+            console.log(`${green("204")} POST /crash`);
+            setTimeout(() => void reboot(), 0);
+            return new Response(null, { status: 204 });
           }
 
-          return new Response("Could not upgrade to WebSocket", {
-            status: 426,
-          });
-        }
-
-        // Defer all other routing to ZenRouter
-        // TODO: Maybe port this logging to ZenRouter natively
-        const url = new URL(req.url);
-        const route = `${req.method} ${url.pathname}`;
-        const resp = await zen.fetch(req);
-        const status = resp.status;
-        const colorStatus =
-          status >= 500
-            ? red(String(status))
-            : status >= 400
-              ? yellow(String(status))
-              : green(String(status));
-        console.log(`${colorStatus} ${route}`);
-        const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
-        warn(warnMsg, !resp.ok);
-        return resp;
-      },
-
-      // Bun will call this if an error happens during the handling of an HTTP request
-      error(err): Response {
-        // YYY Define a lint rule that forbids the use of `console`, in favor of
-        // using `ctx.logger`
-        console.error(err);
-        return new Response("An unknown error occurred", { status: 500 });
-      },
-
-      websocket: {
-        // The socket is opened
-        async open(ws): Promise<void> {
-          const { refuseConnection, room, ticket } = ws.data;
-
-          // If this connection should be refused, close it immediately
-          if (refuseConnection) {
-            ws.close(refuseConnection.code, refuseConnection.message);
-            return;
-          }
-
-          if (room && ticket) {
-            await room.startBrowserSession(ticket, ws);
-          }
+          // Defer all other routing to ZenRouter
+          // TODO: Maybe port this logging to ZenRouter natively
+          const route = `${req.method} ${url.pathname}`;
+          const resp = await zen.fetch(req);
+          const status = resp.status;
+          const colorStatus =
+            status >= 500
+              ? red(String(status))
+              : status >= 400
+                ? yellow(String(status))
+                : green(String(status));
+          console.log(`${colorStatus} ${route}`);
+          const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
+          warn(warnMsg, !resp.ok);
+          return resp;
         },
 
-        // A message is received
-        async message(ws, data): Promise<void> {
-          const { room, sessionKey } = ws.data;
-          // Ignore messages for refused connections
-          if (room && sessionKey) {
-            await room.handleData(sessionKey, data);
-          }
+        // Bun will call this if an error happens during the handling of an HTTP request
+        error(err): Response {
+          // YYY Define a lint rule that forbids the use of `console`, in favor of
+          // using `ctx.logger`
+          console.error(err);
+          return new Response("An unknown error occurred", { status: 500 });
         },
 
-        // The socket is closed by the client side
-        close(ws, code, message): void {
-          const { room, sessionKey } = ws.data;
-          // Ignore close events for refused connections
-          if (room && sessionKey) {
-            room.endBrowserSession(sessionKey, code, message);
-          }
-        },
+        websocket: {
+          // The socket is opened
+          async open(ws): Promise<void> {
+            const { refuseConnection, room, ticket } = ws.data;
 
-        // The socket is ready to receive more data
-        // drain(ws): void {
-        //   // Will be invoked if a previous .send() message returned -1 (there
-        //   // was back pressure), but now (at a later moment) the socket is ready
-        //   // to receive more data, so we may want to re-attempt this.
-        // },
-      },
-    });
+            // If this connection should be refused, close it immediately
+            if (refuseConnection) {
+              ws.close(refuseConnection.code, refuseConnection.message);
+              return;
+            }
+
+            if (room && ticket) {
+              await room.startBrowserSession(ticket, ws);
+            }
+          },
+
+          // A message is received
+          async message(ws, data): Promise<void> {
+            const { room, sessionKey } = ws.data;
+            // Ignore messages for refused connections
+            if (room && sessionKey) {
+              await room.handleData(sessionKey, data);
+            }
+          },
+
+          // The socket is closed by the client side
+          close(ws, code, message): void {
+            const { room, sessionKey } = ws.data;
+            // Ignore close events for refused connections
+            if (room && sessionKey) {
+              room.endBrowserSession(sessionKey, code, message);
+            }
+          },
+
+          // The socket is ready to receive more data
+          // drain(ws): void {
+          //   // Will be invoked if a previous .send() message returned -1 (there
+          //   // was back pressure), but now (at a later moment) the socket is ready
+          //   // to receive more data, so we may want to re-attempt this.
+          // },
+        },
+      });
+    }
+
+    server = createServer();
+
+    async function reboot() {
+      RoomsDB.unloadAll();
+      await server.stop(true);
+      server = createServer();
+      console.log("Crash \uD83D\uDCA5");
+    }
 
     // -----------------------------------------------------------------------------
 
-    console.log(
-      `Liveblocks dev server running at http://${server.hostname}:${server.port}`
+    const stderr = (msg: string) => process.stderr.write(msg + "\n");
+
+    stderr(
+      `Liveblocks dev server ${dim(`v${__VERSION__}`)} running at http://${server.hostname}:${server.port}`
     );
-    if (ephemeralPath) {
-      console.log(dim(`Ephemeral mode, using ${ephemeralPath}`));
+    if (ephemeralPath && options.verbose) {
+      stderr(dim(`Ephemeral mode, using ${ephemeralPath}`));
     }
 
-    // Check if the current project is configured to use the local dev server
-    const configIssues = args.check ? await checkLiveblocksSetup(port) : [];
-    const baseUrl = `http://localhost:${port}`;
+    if (options.cmd) {
+      // Redirect all further console output to a log file
+      const logPath = join(ephemeralPath!, "server.log");
+      stderr(dim(`Server logs: ${logPath}`));
 
-    console.log(
-      dim("Press ") +
-        bold("q") +
-        dim(" to quit, ") +
-        bold("c") +
-        dim(" to clear")
-    );
+      const logFile = Bun.file(logPath).writer();
+      const writeLine = (...args: unknown[]) => {
+        void logFile.write(args.map(String).join(" ") + "\n");
+        void logFile.flush();
+      };
+      console.log = writeLine;
+      console.error = writeLine;
 
-    // Listen for keypresses
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
+      // Spawn child process, then shut down on exit
+      let code = 1;
+      try {
+        const proc = Bun.spawn(shellCmd(options.cmd), {
+          stdin: "inherit",
+          stdout: "inherit",
+          stderr: "inherit",
+          env: {
+            ...process.env,
+            LIVEBLOCKS_DEV_SERVER_HOST: hostname,
+            LIVEBLOCKS_DEV_SERVER_PORT: String(port),
+          },
+        });
+
+        // If we get killed, take the child tree down with us
+        const killChild = () => {
+          proc.kill();
+        };
+        process.on("SIGTERM", killChild);
+        process.on("SIGINT", killChild);
+
+        code = await proc.exited;
+      } finally {
+        void logFile.end();
+        await server.stop();
+        RoomsDB.cleanup();
+        stderr(dim("Liveblocks dev server shut down"));
+      }
+      process.exit(code);
+    } else {
+      // Check if the current project is configured to use the local dev server
+      const baseUrl = `http://${hostname}:${port}`;
+      const configIssues = options["no-check"] ? [] : await checkLiveblocksSetup(baseUrl); // prettier-ignore
+
+      // Listen for keypresses
+      console.log(
+        dim("Press ") +
+          bold("q") +
+          dim(" to quit, ") +
+          bold("!") +
+          dim(" to crash, ") +
+          bold("c") +
+          dim(" to clear")
+      );
+
+      let rebootTimer: ReturnType<typeof setTimeout> | null = null;
+
+      process.stdin.setRawMode?.(true);
       process.stdin.resume();
       process.stdin.on("data", (data: Buffer) => {
         const ch = data.toString();
         if (ch === "q" || ch === "\x03" /* Ctrl-C */) {
-          void server.stop().then(() => {
+          void server.stop(true).then(() => {
             RoomsDB.cleanup();
             process.exit(0);
           });
+        } else if (ch === "!") {
+          if (rebootTimer !== null) {
+            clearTimeout(rebootTimer);
+            rebootTimer = null;
+            void reboot();
+          } else {
+            console.log(
+              "Simulating crash in 2.5s... (press ! again to crash now)"
+            );
+            rebootTimer = setTimeout(() => {
+              rebootTimer = null;
+              void reboot();
+            }, 2500);
+          }
         } else if (ch === "c") {
           console.clear();
         } else if (ch === "p") {

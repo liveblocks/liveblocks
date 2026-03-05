@@ -55,8 +55,9 @@ function AvatarLayout({
       data-loading={isLoading ? "" : undefined}
       {...props}
     >
-      {src && <img className="lb-avatar-image" src={src} alt={name} />}
-      {nameInitials ? (
+      {src ? (
+        <img className="lb-avatar-image" src={src} alt={name} />
+      ) : nameInitials ? (
         <span className="lb-avatar-fallback" aria-hidden>
           {nameInitials}
         </span>

@@ -1,21 +1,22 @@
 "use server";
 
 import { auth } from "@/auth";
+import { DEFAULT_ORGANIZATION_ID } from "@/constants";
 import { getUser } from "@/lib/database/getUser";
 import {
   buildDocument,
   buildDocumentUsers,
-  documentAccessToRoomAccesses,
   isUserDocumentOwner,
+  permissionTypeToRoomAccesses,
   userAllowedInRoom,
 } from "@/lib/utils";
 import { liveblocks } from "@/liveblocks.server.config";
-import { Document, DocumentAccess, DocumentUser } from "@/types";
+import { Document, DocumentPermissionType, DocumentUser } from "@/types";
 
 type Props = {
   userId: DocumentUser["id"];
   documentId: Document["id"];
-  access: DocumentAccess;
+  access: DocumentPermissionType;
 };
 
 /**
@@ -29,19 +30,21 @@ type Props = {
  * @param access - The access level of the user
  */
 export async function updateUserAccess({ userId, documentId, access }: Props) {
-  let session;
+  const session = await auth();
+  // Default to personal workspace for authenticated users
+  const organizationId =
+    session?.user.currentOrganizationId ?? DEFAULT_ORGANIZATION_ID;
+
   let room;
   let user;
   try {
-    // Get session and room
+    // Get room and user
     const result = await Promise.all([
-      auth(),
       liveblocks.getRoom(documentId),
       getUser(userId),
     ]);
-    session = result[0];
-    room = result[1];
-    user = result[2];
+    room = result[0];
+    user = result[1];
   } catch (err) {
     console.error(err);
     return {
@@ -64,13 +67,13 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
     };
   }
 
-  // Check current logged-in user is set as a user with id, ignoring groupIds and default access
+  // Check current logged-in user is set as a user with id, ignoring default access
   if (
     !userAllowedInRoom({
       accessAllowed: "write",
       checkAccessLevel: "user",
       userId: session.user.info.id,
-      groupIds: [],
+      organizationId,
       room,
     })
   ) {
@@ -119,24 +122,22 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   }
 
   // If room exists, create userAccesses element for new collaborator with passed access level
-  const userAccess = documentAccessToRoomAccesses(access);
-
-  // TODO - Type this better after package fixes
+  const userAccess = permissionTypeToRoomAccesses(access);
   const usersAccesses: Record<
     string,
-    | ["room:write"]
-    | ["room:read", "room:presence:write"]
-    | ["room:read", "room:presence:write", "comments:write"]
-    | null
+    ["room:write"] | ["room:read", "room:presence:write"] | null
   > = {
-    [userId]: userAccess.length === 0 ? null : userAccess,
+    [userId]:
+      userAccess.length === 0
+        ? null
+        : (userAccess as ["room:write"] | ["room:read", "room:presence:write"]),
   };
 
   // Send userAccesses to room and remove user
   let updatedRoom;
   try {
     updatedRoom = await liveblocks.updateRoom(documentId, {
-      usersAccesses: usersAccesses as any, // TODO - Type this better after package fixes
+      usersAccesses,
     });
   } catch (err) {
     return {
@@ -159,13 +160,14 @@ export async function updateUserAccess({ userId, documentId, access }: Props) {
   }
 
   // If the user previously had no access to document, send a notification saying they've been added
-  const previousAccessLevel = document.accesses.users[userId];
-  if (!previousAccessLevel || previousAccessLevel === DocumentAccess.NONE) {
+  const previousAccess = room.usersAccesses?.[userId];
+  if (!previousAccess) {
     liveblocks.triggerInboxNotification({
       userId,
       kind: "$addedToDocument",
       subjectId: document.id,
       roomId: room.id,
+      organizationId,
       activityData: {
         documentId: document.id,
       },

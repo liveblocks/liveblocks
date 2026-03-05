@@ -1,5 +1,5 @@
-import { DocumentsLayout } from "@/layouts/Documents";
+import { DocumentsList } from "@/components/DocumentsList";
 
 export default async function DashboardPage() {
-  return <DocumentsLayout filter="all" />;
+  return <DocumentsList filter="all" />;
 }

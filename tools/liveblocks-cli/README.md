@@ -14,14 +14,15 @@ npx liveblocks dev
 
 Options:
 
-| Flag           | Description                                                                                   | Default                             |
-| -------------- | --------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `-p`, `--port` | Port to listen on.                                                                            | `1153`                              |
-| `--host`       | Host to bind to.                                                                              | `localhost`                         |
-| `--ci`         | Best defaults for running the Liveblocks dev server in CI. Alias of `--ephemeral --no-check`. |                                     |
-| `--ephemeral`  | Do not persist state between restarts. Recommended for running unit tests.                    | Persist between restarts by default |
-| `--no-check`   | Skip project setup check on start.                                                            | Checks by default                   |
-| `-h`, `--help` | Show help.                                                                                    |                                     |
+| Flag              | Description                                                                                                               | Default           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `--port`, `-p`    | Port to listen on.                                                                                                        | `1153`            |
+| `--host`          | Host to bind to.                                                                                                          | `localhost`       |
+| `--cmd`, `-c`     | Run a one-off command against a fresh server instance, then shut down. Does not affect your local data in `.liveblocks/`. |                   |
+| `--ci`            | Start a fresh server instance on every boot, ideal for CI.                                                                |                   |
+| `--no-check`      | Skip project setup check on start.                                                                                        | Checks by default |
+| `--verbose`, `-v` | Show verbose output.                                                                                                      |                   |
+| `--help`, `-h`    | Show help.                                                                                                                |                   |
 
 By default, the dev server scans your project on startup for common Liveblocks
 call sites (`<LiveblocksProvider>`, `createClient()`, `new Liveblocks()`) and

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/server",
-  "version": "1.0.8",
+  "version": "1.0.15",
   "description": "Liveblocks backend server foundation.",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,6 +43,7 @@
     "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.js"
   },
   "license": "AGPL-3.0-or-later",
+  "author": "Liveblocks Inc.",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
@@ -55,9 +56,9 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@liveblocks/core": "3.14.0-rc1",
+    "@liveblocks/core": "3.14.0",
     "async-mutex": "^0.4.0",
-    "decoders": "^2.8.0-1",
+    "decoders": "^2.9.0-pre.4",
     "itertools": "^2.3.2",
     "js-base64": "^3.7.5",
     "nanoid": "^3",

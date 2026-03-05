@@ -1,7 +1,4 @@
-import {
-  ClientSideSuspense,
-  useUnreadInboxNotificationsCount,
-} from "@liveblocks/react";
+import { useUnreadInboxNotificationsCount } from "@liveblocks/react";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useEffect, useState } from "react";
 import { InboxIcon } from "@/icons";
@@ -9,14 +6,6 @@ import { Button } from "@/primitives/Button";
 import { Popover } from "@/primitives/Popover";
 import { Inbox } from "./Inbox";
 import styles from "./InboxPopover.module.css";
-
-function InboxPopoverUnreadCount() {
-  const { count } = useUnreadInboxNotificationsCount();
-
-  return count ? (
-    <div className={styles.inboxPopoverUnreadCount}>{count}</div>
-  ) : null;
-}
 
 export function InboxPopover(
   props: Omit<ComponentProps<typeof Popover>, "content">
@@ -35,12 +24,27 @@ export function InboxPopover(
       content={<Inbox className={styles.inboxPopover} />}
       {...props}
     >
-      <Button variant="secondary" icon={<InboxIcon />} iconButton>
+      <Button
+        variant="secondary"
+        icon={<InboxIcon />}
+        iconButton
+        suppressHydrationWarning={true}
+      >
         <span className="sr-only">Notification inbox</span>
-        <ClientSideSuspense fallback={null}>
-          <InboxPopoverUnreadCount />
-        </ClientSideSuspense>
+        <InboxPopoverUnreadCount />
       </Button>
     </Popover>
   );
+}
+
+function InboxPopoverUnreadCount() {
+  const { count, isLoading } = useUnreadInboxNotificationsCount();
+
+  if (isLoading) {
+    return null;
+  }
+
+  return count ? (
+    <div className={styles.inboxPopoverUnreadCount}>{count}</div>
+  ) : null;
 }

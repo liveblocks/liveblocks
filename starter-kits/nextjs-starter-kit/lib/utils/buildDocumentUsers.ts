@@ -1,6 +1,6 @@
 import { RoomData } from "@liveblocks/node";
 import { getUser } from "@/lib/database/getUser";
-import { roomAccessesToDocumentAccess } from "@/lib/utils/convertAccessType";
+import { roomAccessesToPermissionType } from "@/lib/utils";
 import { DocumentUser } from "@/types";
 
 /**
@@ -18,8 +18,7 @@ export async function buildDocumentUsers(result: RoomData, userId: string) {
     if (user) {
       users.push({
         ...user,
-        // @ts-ignore
-        access: roomAccessesToDocumentAccess(accessValue, true),
+        access: roomAccessesToPermissionType(accessValue),
         isCurrentUser: id === userId,
       });
     }

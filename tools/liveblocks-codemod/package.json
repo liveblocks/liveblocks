@@ -3,6 +3,7 @@
   "version": "2.20240816.0",
   "description": "Codemods for updating Liveblocks apps.",
   "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
   "bin": "dist/bin/liveblocks-codemod.js",
   "files": [
     "dist/**",
