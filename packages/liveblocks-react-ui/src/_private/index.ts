@@ -19,6 +19,7 @@ export { cn } from "../utils/cn";
 export { Portal } from "../utils/Portal";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";
+export { useStableComponent } from "../utils/use-stable-component";
 
 // Private primitives (which will be exported from @liveblocks/react-ui/primitives when/if made public)
 

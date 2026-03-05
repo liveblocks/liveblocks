@@ -1362,11 +1362,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <FloatingThreads
   threads={threads}
@@ -1374,15 +1377,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}
@@ -1615,11 +1621,14 @@ import { Thread } from "@liveblocks/react-ui";
 ```
 
 You can return any custom `ReactNode` here, including anything from a simple
-wrapper around `Thread`, up to a full custom `Thread` component built using our
+wrapper around [`Thread`][]. You can also use [`Thread`][]'s
+[`components`](/docs/api-reference/liveblocks-react-ui#Thread-components) prop
+to customize individual comments, or build a fully custom `Thread` component
+using our
 [Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
 
 ```tsx
-import { Comment } from "@liveblocks/react-ui/primitives";
+import { Comment, Thread } from "@liveblocks/react-ui";
 
 <AnchoredThreads
   threads={threads}
@@ -1628,15 +1637,18 @@ import { Comment } from "@liveblocks/react-ui/primitives";
   components={{
     Thread: (props) => (
       // +++
-      <div>
-        {props.thread.comments.map((comment) => (
-          <Comment.Body
-            key={comment.id}
-            body={comment.body}
-            components={/* ... */}
-          />
-        ))}
-      </div>
+      <Thread
+        {...props}
+        components={{
+          Comment: ({ comment, ...commentProps }) => (
+            <Comment
+              comment={comment}
+              {/* Customize `Comment`'s props */}
+              {...commentProps}
+            />
+          ),
+        }}
+      />
       // +++
     ),
   }}

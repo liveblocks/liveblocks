@@ -21,6 +21,7 @@ import {
   useState,
 } from "react";
 
+import { useStableComponent } from "../_private";
 import type { GlobalComponents } from "../components";
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { SpinnerIcon } from "../icons/Spinner";
@@ -521,8 +522,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       useState<MessageId | null>(null);
 
     const $ = useOverrides(overrides);
-    const Empty = components?.Empty ?? defaultComponents.Empty;
-    const Loading = components?.Loading ?? defaultComponents.Loading;
+    const Empty = useStableComponent(
+      components?.Empty,
+      defaultComponents.Empty
+    );
+    const Loading = useStableComponent(
+      components?.Loading,
+      defaultComponents.Loading
+    );
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);

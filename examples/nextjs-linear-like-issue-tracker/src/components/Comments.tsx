@@ -5,10 +5,44 @@ import {
   useRoom,
   ClientSideSuspense,
 } from "@liveblocks/react/suspense";
+import { useOthers, useSelf } from "@liveblocks/react";
 import { ThreadData } from "@liveblocks/client";
 import { Composer, Thread, Comment, Icon } from "@liveblocks/react-ui";
-import { useState } from "react";
+import { ComponentPropsWithoutRef, useState } from "react";
 import { getIssueId } from "@/config";
+
+function useUserIdPresence(userId: string) {
+  const isSelf = useSelf((self) => self.id === userId) ?? false;
+  const isOther =
+    useOthers((others) => others.some((other) => other.id === userId)) ?? false;
+  return isSelf || isOther;
+}
+
+function CommentAvatarWithPresence({ userId }: { userId: string }) {
+  const isPresent = useUserIdPresence(userId);
+
+  return (
+    <div className="relative isolate">
+      <Comment.Avatar userId={userId} />
+      {isPresent && (
+        <div className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 z-10 ring-2 ring-[var(--lb-dynamic-background)]" />
+      )}
+    </div>
+  );
+}
+
+function CommentWithPresence({
+  comment,
+  ...props
+}: ComponentPropsWithoutRef<typeof Comment>) {
+  return (
+    <Comment
+      {...props}
+      comment={comment}
+      avatar={<CommentAvatarWithPresence userId={comment.userId} />}
+    />
+  );
+}
 
 export function Comments() {
   return (
@@ -70,6 +104,7 @@ function CustomThread({ thread }: { thread: ThreadData }) {
           setOpen(false);
         }
       }}
+      components={{ Comment: CommentWithPresence }}
       // Adding a custom dropdown item to each comment
       commentDropdownItems={({ children, comment }) => (
         <>

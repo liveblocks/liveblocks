@@ -19,6 +19,7 @@ import type {
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
 import { Composer as DefaultComposer } from "@liveblocks/react-ui";
+import { Portal, useStableComponent } from "@liveblocks/react-ui/_private";
 import type { LexicalCommand } from "lexical";
 import {
   $getSelection,
@@ -27,7 +28,6 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import { Portal } from "@liveblocks/react-ui/_private";
 import type { ComponentType, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
 
@@ -164,7 +164,7 @@ const FloatingComposerImpl = forwardRef<
     components,
     ...composerProps
   } = props;
-  const Composer = components?.Composer ?? DefaultComposer;
+  const Composer = useStableComponent(components?.Composer, DefaultComposer);
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
 
