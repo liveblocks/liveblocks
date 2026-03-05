@@ -1,3 +1,10 @@
+/**
+ * LiveMap tests that use a MockWebSocket server for precise control over
+ * wire-level operations. Covers internal methods that need deterministic
+ * node IDs.
+ *
+ * For normal storage/presence/history tests, see LiveMap.devserver.test.ts.
+ */
 import { describe, expect, test } from "vitest";
 
 import {

@@ -1,3 +1,10 @@
+/**
+ * Room tests that run against the real dev server. Covers history (undo/redo,
+ * pause/resume, batch, clear) and storage subscription behavior.
+ *
+ * For connection state machine, auth, reconnection, and wire protocol tests,
+ * see room.mockserver.test.ts.
+ */
 import { describe, expect, onTestFinished, test } from "vitest";
 
 import { LiveList } from "../crdts/LiveList";

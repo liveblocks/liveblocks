@@ -1,3 +1,9 @@
+/**
+ * LiveMap tests that run against the real dev server.
+ *
+ * For edge cases that require precise control over wire-level ops (internal
+ * methods), see LiveMap.mockserver.test.ts.
+ */
 import { describe, expect, test, vi } from "vitest";
 
 import {

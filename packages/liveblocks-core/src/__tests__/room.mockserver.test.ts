@@ -1,3 +1,10 @@
+/**
+ * Room tests that use a MockWebSocket server. Covers connection state machine
+ * (auth flows, reconnection, backoff, close codes), wire protocol message
+ * inspection, presence, subscriptions, and offline behavior.
+ *
+ * For normal history/batch/storage tests, see room.devserver.test.ts.
+ */
 import {
   afterEach,
   beforeEach,

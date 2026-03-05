@@ -1,3 +1,9 @@
+/**
+ * LiveList tests that run against the real dev server.
+ *
+ * For edge cases that require precise control over wire-level ops (CRDT
+ * conflict resolution, reconnection behavior), see LiveList.mockserver.test.ts.
+ */
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {

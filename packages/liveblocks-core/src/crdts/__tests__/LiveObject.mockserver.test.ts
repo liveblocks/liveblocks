@@ -1,3 +1,10 @@
+/**
+ * LiveObject tests that use a MockWebSocket server for precise control over
+ * wire-level operations. Covers ack mechanism edge cases and internal methods
+ * that need deterministic node IDs.
+ *
+ * For normal storage/presence/history tests, see LiveObject.devserver.test.ts.
+ */
 import { describe, expect, test } from "vitest";
 
 import {

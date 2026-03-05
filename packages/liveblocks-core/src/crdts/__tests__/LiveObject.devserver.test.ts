@@ -1,3 +1,9 @@
+/**
+ * LiveObject tests that run against the real dev server.
+ *
+ * For edge cases that require precise control over wire-level ops (ack
+ * mechanism, internal methods), see LiveObject.mockserver.test.ts.
+ */
 import {
   afterEach,
   beforeAll,
