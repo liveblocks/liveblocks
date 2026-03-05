@@ -166,10 +166,17 @@ class Liveblocks:
     def prepare_session(
         self,
         user_id: str,
+        user_info: dict[str, Any] | None = None,
+        organization_id: str | None = None,
     ) -> Session:
         from session import Session
 
-        return Session(client=self, user_id=user_id)
+        return Session(
+            client=self,
+            user_id=user_id,
+            user_info=user_info,
+            organization_id=organization_id,
+        )
 
     def get_rooms(
         self,
@@ -1544,10 +1551,20 @@ class AsyncLiveblocks:
     async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
         await self._client.__aexit__(*args, **kwargs)
 
-    def prepare_session(self, user_id: str) -> AsyncSession:
+    def prepare_session(
+        self,
+        user_id: str,
+        user_info: dict[str, Any] | None = None,
+        organization_id: str | None = None,
+    ) -> AsyncSession:
         from session import AsyncSession
 
-        return AsyncSession(client=self, user_id=user_id)
+        return AsyncSession(
+            client=self,
+            user_id=user_id,
+            user_info=user_info,
+            organization_id=organization_id,
+        )
 
     async def get_rooms(
         self,

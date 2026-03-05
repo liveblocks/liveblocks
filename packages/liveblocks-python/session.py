@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 import warnings
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     import liveblocks.models.authorize_user_response as AuthorizeUserResponse
@@ -35,7 +35,12 @@ class _BaseSession:
     FULL_ACCESS = FULL_ACCESS
     READ_ACCESS = READ_ACCESS
 
-    def __init__(self, user_id: str) -> None:
+    def __init__(
+        self,
+        user_id: str,
+        user_info: dict[str, Any] | None = None,
+        organization_id: str | None = None,
+    ) -> None:
         if not user_id:
             raise ValueError(
                 "Invalid value for 'user_id'. Please provide a non-empty string. "
@@ -43,6 +48,8 @@ class _BaseSession:
             )
 
         self._user_id = user_id
+        self._user_info = user_info
+        self._organization_id = organization_id
         self._sealed = False
         self._permissions: dict[str, list[str]] = {}
 
@@ -64,7 +71,7 @@ class _BaseSession:
     def allow(self, room_id_or_pattern: str, permissions: Sequence[Permission]) -> _BaseSession:
         if not _ROOM_PATTERN_RE.match(room_id_or_pattern):
             raise ValueError("Invalid room name or pattern")
-        if len(permissions) == 0:
+        if not permissions:
             raise ValueError("Permission list cannot be empty")
 
         existing = self._get_or_create(room_id_or_pattern)
@@ -75,16 +82,26 @@ class _BaseSession:
                 existing.append(perm)
         return self
 
+    @property
+    def _has_permissions(self) -> bool:
+        return bool(self._permissions)
+
+    def _serialize_permissions(self) -> dict[str, list[str]]:
+        return {pat: list(perms) for pat, perms in self._permissions.items()}
+
     def _build_request_body(self) -> AuthorizeUserRequestBody:
         from liveblocks.models.authorize_user_request_body import AuthorizeUserRequestBody
         from liveblocks.models.authorize_user_request_body_permissions import (
             AuthorizeUserRequestBodyPermissions,
         )
+        from liveblocks.models.authorize_user_request_body_user_info import (
+            AuthorizeUserRequestBodyUserInfo,
+        )
 
         if self._sealed:
             raise RuntimeError("You cannot reuse Session instances. Please create a new session every time.")
         self._sealed = True
-        if len(self._permissions) > 0:
+        if not self._permissions:
             warnings.warn(
                 "Access tokens without any permission will not be supported soon, "
                 "you should use wildcards when the client requests a token for "
@@ -94,12 +111,24 @@ class _BaseSession:
             )
 
         perms_model = AuthorizeUserRequestBodyPermissions()
-        perms_model.additional_properties = {pat: list(perms) for pat, perms in self._permissions.items()}
+        perms_model.additional_properties = self._serialize_permissions()
 
-        return AuthorizeUserRequestBody(
+        user_info_model: AuthorizeUserRequestBodyUserInfo | None = None
+        if self._user_info is not None:
+            user_info_model = AuthorizeUserRequestBodyUserInfo()
+            user_info_model.additional_properties = dict(self._user_info)
+
+        body = AuthorizeUserRequestBody(
             user_id=self._user_id,
             permissions=perms_model,
         )
+
+        if user_info_model is not None:
+            body.user_info = user_info_model
+        if self._organization_id is not None:
+            body.organization_id = self._organization_id
+
+        return body
 
 
 class Session(_BaseSession):
@@ -116,8 +145,10 @@ class Session(_BaseSession):
         self,
         client: Liveblocks,
         user_id: str,
+        user_info: dict[str, Any] | None = None,
+        organization_id: str | None = None,
     ) -> None:
-        super().__init__(user_id)
+        super().__init__(user_id, user_info=user_info, organization_id=organization_id)
         self._client = client
 
     def allow(self, room_id_or_pattern: str, permissions: Sequence[Permission]) -> Session:
@@ -143,8 +174,10 @@ class AsyncSession(_BaseSession):
         self,
         client: AsyncLiveblocks,
         user_id: str,
+        user_info: dict[str, Any] | None = None,
+        organization_id: str | None = None,
     ) -> None:
-        super().__init__(user_id)
+        super().__init__(user_id, user_info=user_info, organization_id=organization_id)
         self._client = client
 
     def allow(self, room_id_or_pattern: str, permissions: Sequence[Permission]) -> AsyncSession:
