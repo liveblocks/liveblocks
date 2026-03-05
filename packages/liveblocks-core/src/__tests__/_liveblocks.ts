@@ -264,7 +264,7 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
  * Two clients (A and B) connected to the same room via the real dev server,
  * both subscribed to storageBatch events.
  *
- * Returns { roomA, roomB, root, expectUpdates }.
+ * Returns { roomA, roomB, rootA, expectUpdates }.
  *
  * - expectUpdates(updates) is async: asserts client A received the expected
  *   update batches, then waits for client B to receive the same.
@@ -322,7 +322,7 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
   return {
     roomA: clientA.room,
     roomB: clientB.room,
-    root: storageA.root,
+    rootA: storageA.root,
     expectUpdates,
   };
 }

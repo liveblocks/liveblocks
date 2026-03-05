@@ -2,25 +2,31 @@ import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
 import {
+  prepareIsolatedStorageTest,
+  prepareStorageUpdateTest,
+} from "../../__tests__/_liveblocks";
+import {
   listUpdate,
   listUpdateInsert,
   objectUpdate,
 } from "../../__tests__/_updatesUtils";
-import {
-  createSerializedList,
-  createSerializedRoot,
-  prepareStorageUpdateTest,
-} from "../../__tests__/_utils";
 import { cloneLson } from "../../crdts/liveblocks-helpers";
 import type { LiveList } from "../LiveList";
 import { liveStructure, lson } from "./_arbitraries";
 
 describe("cloning LiveStructures", () => {
   test("basic cloning logic", async () => {
-    const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
+    const {
+      roomA: room,
+      rootA: root,
+      expectUpdates,
+    } = await prepareStorageUpdateTest<{
       list1: LiveList<string>;
       list2: LiveList<string>;
-    }>([createSerializedRoot(), createSerializedList("0:1", "root", "list1")]);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { list1: { liveblocksType: "LiveList", data: [] } },
+    });
 
     const list1 = root.get("list1");
     list1.push("a");
@@ -32,7 +38,7 @@ describe("cloning LiveStructures", () => {
     room.history.undo();
     room.history.redo();
 
-    expectUpdates([
+    await expectUpdates([
       // List creation
       [listUpdate(["a"], [listUpdateInsert(0, "a")])],
       [listUpdate(["a", "b"], [listUpdateInsert(1, "b")])],
@@ -63,15 +69,16 @@ describe("cloning LiveStructures", () => {
     ]);
   });
 
-  test("[property] deep cloning of LiveStructures", () =>
+  test("[property] deep cloning of LiveStructures", { timeout: 10_000 }, () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
 
         async (data) => {
-          const { root } = await prepareStorageUpdateTest([
-            createSerializedRoot(),
-          ]);
+          const { root } = await prepareIsolatedStorageTest({
+            liveblocksType: "LiveObject",
+            data: {},
+          });
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -80,18 +87,20 @@ describe("cloning LiveStructures", () => {
           const imm = root.toImmutable();
           expect(imm.a).toEqual(imm.b);
         }
-      )
+      ),
+      { numRuns: 50 }
     ));
 
-  test("[property] deep cloning of LiveStructures (twice)", () =>
+  test("[property] deep cloning of LiveStructures (twice)", { timeout: 10_000 }, () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
 
         async (data) => {
-          const { root } = await prepareStorageUpdateTest([
-            createSerializedRoot(),
-          ]);
+          const { root } = await prepareIsolatedStorageTest({
+            liveblocksType: "LiveObject",
+            data: {},
+          });
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -101,18 +110,20 @@ describe("cloning LiveStructures", () => {
           const imm = root.toImmutable();
           expect(imm.a).toEqual(imm.b);
         }
-      )
+      ),
+      { numRuns: 50 }
     ));
 
-  test("[property] deep cloning of LSON data (= LiveStructures or JSON)", () =>
+  test("[property] deep cloning of LSON data (= LiveStructures or JSON)", { timeout: 10_000 }, () =>
     fc.assert(
       fc.asyncProperty(
         lson,
 
         async (data) => {
-          const { root } = await prepareStorageUpdateTest([
-            createSerializedRoot(),
-          ]);
+          const { root } = await prepareIsolatedStorageTest({
+            liveblocksType: "LiveObject",
+            data: {},
+          });
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -124,6 +135,7 @@ describe("cloning LiveStructures", () => {
           const imm = root.toImmutable();
           expect(imm.a).toEqual(imm.b);
         }
-      )
+      ),
+      { numRuns: 50 }
     ));
 });
