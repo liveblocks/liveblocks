@@ -27,7 +27,6 @@ import {
   waitUntilStorageUpdate,
 } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
-import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { StorageNode } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
