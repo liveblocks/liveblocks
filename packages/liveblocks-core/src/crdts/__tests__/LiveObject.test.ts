@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  waitFor,
 } from "../../__tests__/_liveblocks";
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
@@ -837,132 +838,126 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe remote operation", async () => {
-      const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest_legacy<{
-          child: LiveObject<{
-            a: number;
-            subchild: LiveObject<{ b: number }>;
-          }>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedObject("0:1", { a: 0 }, "root", "child"),
-            createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
-          ],
-          1
-        );
+      const { roomA, storageA, storageB } = await prepareStorageTest<{
+        child: LiveObject<{
+          a: number;
+          subchild: LiveObject<{ b: number }>;
+        }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: {
+            liveblocksType: "LiveObject",
+            data: {
+              a: 0,
+              subchild: { liveblocksType: "LiveObject", data: { b: 0 } },
+            },
+          },
+        },
+      });
 
       const callback = vi.fn();
 
-      const root = storage.root;
+      const rootA = storageA.root;
 
-      const unsubscribe = room.subscribe(root, callback, { isDeep: true });
+      const unsubscribe = roomA.subscribe(rootA, callback, { isDeep: true });
 
-      root.get("child").set("a", 1);
+      rootA.get("child").set("a", 1);
 
-      applyRemoteOperations([
-        {
-          type: OpCode.UPDATE_OBJECT,
-          data: { b: 1 },
-          id: "0:2",
-        },
-      ]);
+      // Remote change via client B
+      storageB.root.get("child").get("subchild").set("b", 1);
+      await waitFor(
+        () => rootA.get("child").get("subchild").get("b") === 1
+      );
 
       unsubscribe();
 
-      root.get("child").set("a", 2);
+      rootA.get("child").set("a", 2);
 
       expect(callback).toHaveBeenCalledTimes(2);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
-          node: root.get("child"),
+          node: rootA.get("child"),
           updates: { a: { type: "update" } },
         },
       ]);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
-          node: root.get("child").get("subchild"),
+          node: rootA.get("child").get("subchild"),
           updates: { b: { type: "update" } },
         },
       ]);
     });
 
     test("subscribe subchild remote operation", async () => {
-      const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest_legacy<{
-          child: LiveObject<{
-            a: number;
-            subchild: LiveObject<{ b: number }>;
-          }>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedObject("0:1", { a: 0 }, "root", "child"),
-            createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
-          ],
-          1
-        );
+      const { roomA, storageA, storageB } = await prepareStorageTest<{
+        child: LiveObject<{
+          a: number;
+          subchild: LiveObject<{ b: number }>;
+        }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: {
+            liveblocksType: "LiveObject",
+            data: {
+              a: 0,
+              subchild: { liveblocksType: "LiveObject", data: { b: 0 } },
+            },
+          },
+        },
+      });
 
       const callback = vi.fn();
 
-      const root = storage.root;
+      const rootA = storageA.root;
 
-      const subchild = root.get("child").get("subchild");
+      const subchild = rootA.get("child").get("subchild");
 
-      const unsubscribe = room.subscribe(subchild, callback);
+      const unsubscribe = roomA.subscribe(subchild, callback);
 
-      applyRemoteOperations([
-        {
-          type: OpCode.UPDATE_OBJECT,
-          data: { a: 1 },
-          id: "0:1",
-        },
-        {
-          type: OpCode.UPDATE_OBJECT,
-          data: { b: 1 },
-          id: "0:2",
-        },
-      ]);
+      // Remote changes via client B
+      storageB.root.get("child").set("a", 1);
+      storageB.root.get("child").get("subchild").set("b", 1);
+      await waitFor(
+        () => rootA.get("child").get("subchild").get("b") === 1
+      );
 
       unsubscribe();
 
-      root.get("child").get("subchild").set("b", 2);
+      rootA.get("child").get("subchild").set("b", 2);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(root.get("child").get("subchild"));
+      expect(callback).toHaveBeenCalledWith(rootA.get("child").get("subchild"));
     });
 
     test("deep subscribe remote and local operation - delete object key", async () => {
-      const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest_legacy<{
-          child: LiveObject<{ a?: number; b?: number }>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedObject("0:1", { a: -1, b: -2 }, "root", "child"),
-          ],
-          1
-        );
+      const { roomA, storageA, storageB } = await prepareStorageTest<{
+        child: LiveObject<{ a?: number; b?: number }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: {
+            liveblocksType: "LiveObject",
+            data: { a: -1, b: -2 },
+          },
+        },
+      });
 
       const callback = vi.fn();
 
-      const root = storage.root;
+      const rootA = storageA.root;
 
-      const unsubscribe = room.subscribe(root, callback, { isDeep: true });
+      const unsubscribe = roomA.subscribe(rootA, callback, { isDeep: true });
 
-      // Remote deletion
-      applyRemoteOperations([
-        {
-          type: OpCode.DELETE_OBJECT_KEY,
-          key: "a",
-          id: "0:1",
-        },
-      ]);
+      // Remote deletion via client B
+      storageB.root.get("child").delete("a");
+      await waitFor(() => rootA.get("child").get("a") === undefined);
 
       // Local deletion
-      root.get("child").delete("b");
+      rootA.get("child").delete("b");
 
       unsubscribe();
 
@@ -970,14 +965,14 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenNthCalledWith(1, [
         {
           type: "LiveObject",
-          node: root.get("child"),
+          node: rootA.get("child"),
           updates: { a: { type: "delete", deletedItem: -1 } },
         },
       ]);
       expect(callback).toHaveBeenNthCalledWith(2, [
         {
           type: "LiveObject",
-          node: root.get("child"),
+          node: rootA.get("child"),
           updates: { b: { type: "delete", deletedItem: -2 } },
         },
       ]);
