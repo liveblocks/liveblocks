@@ -11,6 +11,7 @@ import {
 import type { GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
+import { px } from "../utils/px";
 import { Avatar } from "./internal/Avatar";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
@@ -85,7 +86,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           style={
             {
               "--lb-avatar-stack-count": visibleItemsCount - 1,
-              "--lb-avatar-stack-size": size,
+              "--lb-avatar-stack-size": px(size),
               ...style,
             } as CSSProperties
           }

@@ -4,6 +4,7 @@ import type { ComponentPropsWithoutRef, CSSProperties } from "react";
 import { forwardRef } from "react";
 
 import { cn } from "../utils/cn";
+import { px } from "../utils/px";
 import { Avatar } from "./internal/Avatar";
 
 export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
@@ -45,7 +46,7 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
       <button
         className={cn("lb-root lb-comment-pin", className)}
         data-corner={corner}
-        style={{ "--lb-comment-pin-size": size, ...style } as CSSProperties}
+        style={{ "--lb-comment-pin-size": px(size), ...style } as CSSProperties}
         type={type}
         {...props}
         ref={forwardedRef}
