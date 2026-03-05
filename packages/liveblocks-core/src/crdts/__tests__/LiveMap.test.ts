@@ -11,7 +11,6 @@ import {
   createSerializedObject,
   createSerializedRoot,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
-  prepareStorageTest as prepareStorageTest_legacy,
 } from "../../__tests__/_utils";
 import { kInternal } from "../../internal";
 import { OpCode } from "../../protocol/Op";

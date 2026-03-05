@@ -1,6 +1,10 @@
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
-import { prepareIsolatedStorageTest } from "../../__tests__/_liveblocks";
+import {
+  prepareIsolatedStorageTest,
+  prepareStorageTest,
+  prepareStorageUpdateTest,
+} from "../../__tests__/_liveblocks";
 import {
   listUpdate,
   listUpdateDelete,
@@ -16,8 +20,6 @@ import {
   FIRST_POSITION,
   FOURTH_POSITION,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
-  prepareStorageTest as prepareStorageTest_legacy,
-  prepareStorageUpdateTest as prepareStorageUpdateTest_legacy,
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
@@ -77,12 +79,12 @@ describe("LiveList", () => {
 
   describe("deserialization", () => {
     test("create document with list in root", async () => {
-      const { expectStorage } = await prepareIsolatedStorageTest_legacy<{
+      const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
-      }>([
-        createSerializedRoot(),
-        createSerializedList("0:1", "root", "items"),
-      ]);
+      }>({
+        liveblocksType: "LiveObject",
+        data: { items: { liveblocksType: "LiveList", data: [] } },
+      });
 
       expectStorage({
         items: [],
@@ -90,15 +92,21 @@ describe("LiveList", () => {
     });
 
     test("init list with items", async () => {
-      const { expectStorage } = await prepareIsolatedStorageTest_legacy<{
+      const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
-      }>([
-        createSerializedRoot(),
-        createSerializedList("0:1", "root", "items"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
-        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
-        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
-      ]);
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: {
+            liveblocksType: "LiveList",
+            data: [
+              { liveblocksType: "LiveObject", data: { a: 0 } },
+              { liveblocksType: "LiveObject", data: { a: 1 } },
+              { liveblocksType: "LiveObject", data: { a: 2 } },
+            ],
+          },
+        },
+      });
 
       expectStorage({
         items: [{ a: 0 }, { a: 1 }, { a: 2 }],
@@ -129,19 +137,19 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("push on empty list update", async () => {
-        const { root, expectUpdates, room } =
-          await prepareStorageUpdateTest_legacy<{
+        const { rootA: root, expectUpdates, roomA: room } =
+          await prepareStorageUpdateTest<{
             items: LiveList<string>;
-          }>([
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-          ]);
+          }>({
+            liveblocksType: "LiveObject",
+            data: { items: { liveblocksType: "LiveList", data: [] } },
+          });
 
         root.get("items").push("a");
         room.history.undo();
         room.history.redo();
 
-        expectUpdates([
+        await expectUpdates([
           [listUpdate(["a"], [listUpdateInsert(0, "a")])],
           [listUpdate([], [listUpdateDelete(0, "a")])],
           [listUpdate(["a"], [listUpdateInsert(0, "a")])],
@@ -150,87 +158,78 @@ describe("LiveList", () => {
     });
 
     test("push LiveObject on empty list", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.get("items");
 
-      expectStorage({
+      await expectStorage({
         items: [],
       });
 
       items.push(new LiveObject({ a: 0 }));
 
-      expectStorage({
+      await expectStorage({
         items: [{ a: 0 }],
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("push number on empty list", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<number>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
 
-      expectStorage({ items: [] });
+      await expectStorage({ items: [] });
 
       items.push(0);
-      expectStorage({ items: [0] });
+      await expectStorage({ items: [0] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("push LiveMap on empty list", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<LiveMap<string, number>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.get("items");
 
-      expectStorage({ items: [] });
+      await expectStorage({ items: [] });
 
       items.push(new LiveMap([["first", 0]]));
 
-      expectStorage({ items: [new Map([["first", 0]])] });
+      await expectStorage({ items: [new Map([["first", 0]])] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("push already attached LiveObject should throw", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { items: { liveblocksType: "LiveList", data: [] } },
+      });
 
       const items = root.toObject().items;
 
@@ -264,21 +263,21 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("insert at the middle update", async () => {
-        const { root, expectUpdates, room } =
-          await prepareStorageUpdateTest_legacy<{
+        const { rootA: root, expectUpdates, roomA: room } =
+          await prepareStorageUpdateTest<{
             items: LiveList<string>;
-          }>([
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
-          ]);
+          }>({
+            liveblocksType: "LiveObject",
+            data: {
+              items: { liveblocksType: "LiveList", data: ["A", "C"] },
+            },
+          });
 
         root.get("items").insert("B", 1);
         room.history.undo();
         room.history.redo();
 
-        expectUpdates([
+        await expectUpdates([
           [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
           [listUpdate(["A", "C"], [listUpdateDelete(1, "B")])],
           [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
@@ -287,30 +286,31 @@ describe("LiveList", () => {
     });
 
     test("insert LiveObject at position 0", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: {
+              liveblocksType: "LiveList",
+              data: [{ liveblocksType: "LiveObject", data: { a: 1 } }],
+            },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         items: [{ a: 1 }],
       });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
 
       items.insert(new LiveObject({ a: 0 }), 0);
 
-      expectStorage({ items: [{ a: 0 }, { a: 1 }] });
+      await expectStorage({ items: [{ a: 0 }, { a: 1 }] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
@@ -337,20 +337,21 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("delete first update", async () => {
-        const { root, expectUpdates, room } =
-          await prepareStorageUpdateTest_legacy<{
+        const { rootA: root, expectUpdates, roomA: room } =
+          await prepareStorageUpdateTest<{
             items: LiveList<string>;
-          }>([
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          ]);
+          }>({
+            liveblocksType: "LiveObject",
+            data: {
+              items: { liveblocksType: "LiveList", data: ["A"] },
+            },
+          });
 
         root.get("items").delete(0);
         room.history.undo();
         room.history.redo();
 
-        expectUpdates([
+        await expectUpdates([
           [listUpdate([], [listUpdateDelete(0, "A")])],
           [listUpdate(["A"], [listUpdateInsert(0, "A")])],
           [listUpdate([], [listUpdateDelete(0, "A")])],
@@ -359,57 +360,70 @@ describe("LiveList", () => {
     });
 
     test("delete first item", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-        ]);
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B"] },
+          },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
 
-      expectStorage({
+      await expectStorage({
         items: ["A", "B"],
       });
 
       items.delete(0);
 
-      expectStorage({
+      await expectStorage({
         items: ["B"],
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("delete should remove descendants", async () => {
-      const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { roomA, storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedObject("0:2", {}, "0:1", "!"),
-          createSerializedObject("0:3", { a: 0 }, "0:2", "child"),
-        ]);
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: {
+              liveblocksType: "LiveList",
+              data: [
+                {
+                  liveblocksType: "LiveObject",
+                  data: {
+                    child: {
+                      liveblocksType: "LiveObject",
+                      data: { a: 0 },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         items: [{ child: { a: 0 } }],
       });
 
-      storage.root.toObject().items.delete(0);
+      storageA.root.toObject().items.delete(0);
 
-      expectStorage({
+      await expectStorage({
         items: [],
       });
 
       // Ensure that LiveStructure are deleted properly
-      expect(room[kInternal].nodeCount).toBe(2);
+      expect(roomA[kInternal].nodeCount).toBe(2);
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
@@ -436,21 +450,21 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("move at the end update", async () => {
-        const { root, expectUpdates, room } =
-          await prepareStorageUpdateTest_legacy<{
+        const { rootA: root, expectUpdates, roomA: room } =
+          await prepareStorageUpdateTest<{
             items: LiveList<string>;
-          }>([
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          ]);
+          }>({
+            liveblocksType: "LiveObject",
+            data: {
+              items: { liveblocksType: "LiveList", data: ["A", "B"] },
+            },
+          });
 
         root.get("items").move(0, 1);
         room.history.undo();
         room.history.redo();
 
-        expectUpdates([
+        await expectUpdates([
           [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
           [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
           [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
@@ -459,84 +473,78 @@ describe("LiveList", () => {
     });
 
     test("move after current position", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ]);
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B", "C"] },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         items: ["A", "B", "C"],
       });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
       items.move(0, 1);
 
-      expectStorage({ items: ["B", "A", "C"] });
+      await expectStorage({ items: ["B", "A", "C"] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("move before current position", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B", "C"] },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         items: ["A", "B", "C"],
       });
 
-      const items = storage.root.get("items");
+      const items = storageA.root.get("items");
 
       items.move(0, 1);
-      expectStorage({
+      await expectStorage({
         items: ["B", "A", "C"],
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("move at the end of the list", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ]);
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B", "C"] },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         items: ["A", "B", "C"],
       });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
       items.move(0, 2);
 
-      expectStorage({
+      await expectStorage({
         items: ["B", "C", "A"],
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
@@ -563,21 +571,21 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("clear updates", async () => {
-        const { root, expectUpdates, room } =
-          await prepareStorageUpdateTest_legacy<{
+        const { rootA: root, expectUpdates, roomA: room } =
+          await prepareStorageUpdateTest<{
             items: LiveList<string>;
-          }>([
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          ]);
+          }>({
+            liveblocksType: "LiveObject",
+            data: {
+              items: { liveblocksType: "LiveList", data: ["A", "B"] },
+            },
+          });
 
         root.get("items").clear();
         room.history.undo();
         room.history.redo();
 
-        expectUpdates([
+        await expectUpdates([
           [
             listUpdate(
               [],
@@ -602,64 +610,57 @@ describe("LiveList", () => {
     });
 
     test("clear should delete all items", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B", "C"] },
+          },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.get("items");
 
-      expectStorage({
+      await expectStorage({
         items: ["A", "B", "C"],
       });
 
       items.clear();
-      expectStorage({
+      await expectStorage({
         items: [],
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
   describe("batch", () => {
     test("batch multiple inserts", async () => {
-      const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { roomA: room, storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        });
 
-      const items = storage.root.get("items");
+      const items = storageA.root.get("items");
 
-      expectStorage({ items: [] });
+      await expectStorage({ items: [] });
 
       room.batch(() => {
         items.push("A");
         items.push("B");
       });
 
-      expectStorage(
+      await expectStorage(
         { items: ["A", "B"] }
         // Updates are not tested here because undo/redo is not symetric
       );
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
@@ -701,56 +702,53 @@ describe("LiveList", () => {
     });
 
     test("set register", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B", "C"] },
+          },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
 
-      expectStorage({ items: ["A", "B", "C"] });
+      await expectStorage({ items: ["A", "B", "C"] });
 
       items.set(0, "D");
-      expectStorage({ items: ["D", "B", "C"] });
+      await expectStorage({ items: ["D", "B", "C"] });
 
       items.set(1, "E");
-      expectStorage({ items: ["D", "E", "C"] });
+      await expectStorage({ items: ["D", "E", "C"] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("set nested object", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: {
+              liveblocksType: "LiveList",
+              data: [{ liveblocksType: "LiveObject", data: { a: 1 } }],
+            },
+          },
+        });
 
-      const root = storage.root;
+      const root = storageA.root;
       const items = root.toObject().items;
 
-      expectStorage({ items: [{ a: 1 }] });
+      await expectStorage({ items: [{ a: 1 }] });
 
       items.set(0, new LiveObject({ a: 2 }));
-      expectStorage({ items: [{ a: 2 }] });
+      await expectStorage({ items: [{ a: 2 }] });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
   });
 
@@ -1193,21 +1191,19 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest_legacy<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-        ],
-        1
-      );
+      const { room, root, expectStorage } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["a"] },
+          },
+        });
 
       const callback = vi.fn();
       onTestFinished(room.events.storageBatch.subscribe(callback));
 
-      const root = storage.root;
       const liveList = root.get("items");
 
       room.batch(() => {
@@ -1231,21 +1227,19 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest_legacy<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-        ],
-        1
-      );
+      const { room, root, expectStorage } =
+        await prepareIsolatedStorageTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["a"] },
+          },
+        });
 
       const callback = vi.fn();
       onTestFinished(room.events.storageBatch.subscribe(callback));
 
-      const root = storage.root;
       const liveList = root.get("items");
 
       room.batch(() => {
