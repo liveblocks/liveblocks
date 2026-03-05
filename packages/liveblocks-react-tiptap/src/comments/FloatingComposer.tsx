@@ -18,7 +18,7 @@ import type {
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
 import { Composer as DefaultComposer } from "@liveblocks/react-ui";
-import { Portal } from "@liveblocks/react-ui/_private";
+import { Portal, useStableComponent } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type {
   ComponentType,
@@ -72,7 +72,7 @@ export const FloatingComposer = forwardRef<
   { editor, onComposerSubmit, onKeyDown, onClick, components, ...props },
   forwardedRef
 ) {
-  const Composer = components?.Composer ?? DefaultComposer;
+  const Composer = useStableComponent(components?.Composer, DefaultComposer);
   const createThread = useCreateThread();
   const pendingCommentSelection =
     useEditorState({

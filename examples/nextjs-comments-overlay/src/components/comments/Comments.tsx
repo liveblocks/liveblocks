@@ -8,7 +8,6 @@ import styles from "./Toolbar.module.css";
 
 export function Comments() {
   return (
-    /* @ts-ignore */
     <ErrorBoundary
       fallback={
         <div className={styles.toolbar}>
