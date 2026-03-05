@@ -97,7 +97,6 @@ export function createTestClient(permissions?: string[]) {
     baseUrl: DEV_SERVER,
     authEndpoint: (roomId) => UNSAFE_generateAccessToken(roomId, permissions),
     polyfills: { WebSocket: globalThis.WebSocket },
-    // @ts-expect-error Deliberately testing internal option to disable throttling for tests
     __DANGEROUSLY_disableThrottling: true,
   });
 }
@@ -111,10 +110,14 @@ export async function enterAndConnect<S extends LsonObject>(
   opts?: { initialStorage?: S; permissions?: string[] }
 ) {
   const client = createTestClient(opts?.permissions);
-  const { room, leave } = client.enterRoom<JsonObject, S>(roomId, {
-    initialPresence: {},
-    initialStorage: (opts?.initialStorage ?? {}) as S,
-  });
+  const { room, leave } = client.enterRoom<JsonObject, S>(
+    roomId,
+    // @ts-expect-error Test helper passes options directly
+    {
+      initialPresence: {},
+      initialStorage: (opts?.initialStorage ?? {}) as S,
+    }
+  );
 
   onTestFinished(leave);
 

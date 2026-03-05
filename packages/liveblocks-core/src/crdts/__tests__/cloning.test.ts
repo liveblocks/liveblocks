@@ -8,6 +8,7 @@ import {
   objectUpdate,
 } from "../../__tests__/_updatesUtils";
 import { cloneLson } from "../../crdts/liveblocks-helpers";
+import type { LsonObject } from "../../crdts/Lson";
 import type { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 import { liveStructure, lson } from "./_arbitraries";
@@ -73,7 +74,7 @@ describe("cloning LiveStructures", () => {
         liveStructure,
 
         (data) => {
-          const root = new LiveObject({});
+          const root = new LiveObject<LsonObject>({});
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -91,7 +92,7 @@ describe("cloning LiveStructures", () => {
         liveStructure,
 
         (data) => {
-          const root = new LiveObject({});
+          const root = new LiveObject<LsonObject>({});
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -110,7 +111,7 @@ describe("cloning LiveStructures", () => {
         lson,
 
         (data) => {
-          const root = new LiveObject({});
+          const root = new LiveObject<LsonObject>({});
 
           // Clone "a" to "b"
           root.set("a", data);
