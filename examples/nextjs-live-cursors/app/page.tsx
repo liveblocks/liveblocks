@@ -14,14 +14,16 @@ function Example() {
   const [{ cursor }] = useMyPresence();
 
   return (
-    <main className={styles.container}>
-      <Cursors />
+    <Cursors
+      style={{ width: "100%", height: "100%" }}
+      className={styles.container}
+    >
       <div className={styles.text}>
         {cursor
           ? `${cursor.x} × ${cursor.y}`
           : "Move your cursor to broadcast its position to other people in the room."}
       </div>
-    </main>
+    </Cursors>
   );
 }
 

@@ -1,6 +1,7 @@
 import "../styles/globals.css";
 import { Providers } from "./Providers";
 import "@liveblocks/react-ui/styles.css";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -27,7 +28,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Suspense>
+          <Providers>{children}</Providers>
+        </Suspense>
       </body>
     </html>
   );
