@@ -63,7 +63,7 @@
           {
             "schema": {
               "type": "string",
-              "examples": ["groupsIds=group1,group2"]
+              "examples": ["groupIds=group1,group2"]
             },
             "in": "query",
             "name": "groupIds",
@@ -121,9 +121,18 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
-        "parameters": [],
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "idempotent",
+            "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the created room.",
@@ -831,7 +840,10 @@
           "description": "Any valid JSON.",
           "content": {
             "application/json": {
-              "schema": {},
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              },
               "examples": {
                 "example": {
                   "value": {
@@ -1931,7 +1943,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateThreadMetadataReqeuestBody"
+                "$ref": "#/components/schemas/UpdateThreadMetadataRequestBody"
               },
               "examples": {
                 "example": {
@@ -3128,17 +3140,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "oneOf": [
-                      {
-                        "$ref": "#/components/schemas/InboxNotificationThreadData"
-                      },
-                      {
-                        "$ref": "#/components/schemas/InboxNotificationCustomData"
-                      }
-                    ]
-                  }
+                  "$ref": "#/components/schemas/GetInboxNotificationsResponse"
                 }
               }
             }
@@ -3554,6 +3556,14 @@
             "in": "query",
             "name": "limit",
             "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "organizationId",
+            "description": "The organization ID to filter room subscription settings for."
           }
         ],
         "responses": {
@@ -3562,23 +3572,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserRoomSubscriptionSettings"
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "nextCursor": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  }
+                  "$ref": "#/components/schemas/GetRoomSubscriptionSettingsResponse"
                 }
               }
             }
@@ -6643,8 +6637,8 @@
         "required": ["participantIds"],
         "additionalProperties": false
       },
-      "UpdateThreadMetadataReqeuestBody": {
-        "title": "UpdateThreadMetadataReqeuestBody",
+      "UpdateThreadMetadataRequestBody": {
+        "title": "UpdateThreadMetadataRequestBody",
         "type": "object",
         "properties": {
           "metadata": {
@@ -6985,6 +6979,31 @@
           }
         ]
       },
+      "GetInboxNotificationsResponse": {
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/InboxNotificationThreadData"
+                },
+                {
+                  "$ref": "#/components/schemas/InboxNotificationCustomData"
+                }
+              ]
+            }
+          }
+        },
+        "required": ["data", "nextCursor"],
+        "additionalProperties": false
+      },
       "InboxNotificationThreadData": {
         "title": "InboxNotificationThreadData",
         "type": "object",
@@ -7160,6 +7179,24 @@
         },
         "additionalProperties": false,
         "description": "Partial notification settings - all properties are optional"
+      },
+      "GetRoomSubscriptionSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserRoomSubscriptionSettings"
+            }
+          }
+        },
+        "required": ["data", "nextCursor"],
+        "additionalProperties": false
       },
       "RoomSubscriptionSettings": {
         "title": "RoomSubscriptionSettings",
@@ -8936,7 +8973,7 @@
                   "error": "ROOM_ALREADY_EXISTS",
                   "message": "The room already exists.",
                   "suggestion": "Please use a different room ID or update the existing room.",
-                  "doc": ""
+                  "docs": ""
                 }
               }
             }
