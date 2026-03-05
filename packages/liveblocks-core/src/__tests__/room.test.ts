@@ -57,7 +57,6 @@ import {
 } from "./_updatesUtils";
 import {
   createSerializedList,
-  createSerializedObject,
   createSerializedRegister,
   createSerializedRoot,
   FIRST_POSITION,
