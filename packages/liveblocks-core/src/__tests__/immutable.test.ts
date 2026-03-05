@@ -39,10 +39,10 @@ import { enterAndConnect, initRoom, waitFor } from "./_liveblocks";
  *   with the caller. Tests mutate this object directly (e.g.
  *   `state.foo = "bar"`) and then call `patchLiveObjectKey` to propagate
  *   the diff into the live CRDT tree.
- * - `expectStorageAndState(data, itemsCount?, _storageOpsCount?)` — asserts
- *   that both clients' storage equals `data`, that the CRDT node count
- *   matches `itemsCount` (if provided), and that the JSON `state` mirror
- *   was kept in sync by the `storageBatch` subscription.
+ * - `expectStorageAndState(data, itemsCount?)` — asserts that both clients'
+ *   storage equals `data`, that the CRDT node count matches `itemsCount`
+ *   (if provided), and that the JSON `state` mirror was kept in sync by
+ *   the `storageBatch` subscription.
  * - `expectStorage(data)` — lighter variant that only checks storage equality
  *   across both clients (no node count or state mirror checks).
  */
@@ -80,8 +80,7 @@ export async function prepareStorageImmutableTest<
 
   async function expectStorageAndState(
     data: ToJson<S>,
-    itemsCount?: number,
-    _storageOpsCount?: number
+    itemsCount?: number
   ) {
     expect(lsonToJson(storageA.root)).toEqual(data);
 
@@ -184,7 +183,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      await expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
+      await expectStorageAndState({ syncObj: { a: 1 } }, 2);
     });
 
     test("update object", async () => {
@@ -211,7 +210,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      await expectStorageAndState({ syncObj: { a: 1 } }, 2, 1);
+      await expectStorageAndState({ syncObj: { a: 1 } }, 2);
     });
 
     test("add nested object", async () => {
@@ -238,7 +237,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      await expectStorageAndState({ syncObj: { a: { subA: "ok" } } }, 3, 1);
+      await expectStorageAndState({ syncObj: { a: { subA: "ok" } } }, 3);
     });
 
     test("create LiveList with one LiveRegister item in same batch", async () => {
@@ -260,7 +259,7 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      await expectStorageAndState({ doc: { sub: [0] } }, 4, 2);
+      await expectStorageAndState({ doc: { sub: [0] } }, 4);
     });
 
     test("create nested LiveList with one LiveObject item in same batch", async () => {
@@ -282,7 +281,7 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      await expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
+      await expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5);
     });
 
     test("Add nested objects in same batch", async () => {
@@ -304,7 +303,7 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
 
-      await expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4, 2);
+      await expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4);
     });
 
     test("delete object key", async () => {
@@ -331,7 +330,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncObj"]
       );
 
-      await expectStorageAndState({ syncObj: {} }, 2, 1);
+      await expectStorageAndState({ syncObj: {} }, 2);
     });
   });
 
@@ -383,7 +382,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["a"] }, 3, 1);
+      await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("replace first item in array", async () => {
@@ -403,7 +402,7 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObject(storage.root, oldState, newState);
 
-      await expectStorageAndState({ list: ["D", "B", "C"] }, 5, 1);
+      await expectStorageAndState({ list: ["D", "B", "C"] }, 5);
     });
 
     test("replace last item in array", async () => {
@@ -423,7 +422,7 @@ describe("2 ways tests with two clients", () => {
 
       patchLiveObject(storage.root, oldState, newState);
 
-      await expectStorageAndState({ list: ["A", "B", "D"] }, 5, 1);
+      await expectStorageAndState({ list: ["A", "B", "D"] }, 5);
     });
 
     test("insert item at beginning of array", async () => {
@@ -448,7 +447,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["b", "a"] }, 4, 1);
+      await expectStorageAndState({ syncList: ["b", "a"] }, 4);
     });
 
     test("swap items in array", async () => {
@@ -476,7 +475,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["d", "b", "c", "a"] }, 6, 4);
+      await expectStorageAndState({ syncList: ["d", "b", "c", "a"] }, 6);
     });
 
     test("array of objects", async () => {
@@ -504,7 +503,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: [{ a: 2 }] }, 3, 1);
+      await expectStorageAndState({ syncList: [{ a: 2 }] }, 3);
     });
 
     test("remove first item from array", async () => {
@@ -529,7 +528,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["b"] }, 3, 1);
+      await expectStorageAndState({ syncList: ["b"] }, 3);
     });
 
     test("remove last item from array", async () => {
@@ -554,7 +553,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["a"] }, 3, 1);
+      await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("remove all elements of array except first", async () => {
@@ -582,7 +581,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["a"] }, 3, 2);
+      await expectStorageAndState({ syncList: ["a"] }, 3);
     });
 
     test("remove all elements of array except last", async () => {
@@ -610,7 +609,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: ["c"] }, 3, 2);
+      await expectStorageAndState({ syncList: ["c"] }, 3);
     });
 
     test("remove all elements of array", async () => {
@@ -638,7 +637,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      await expectStorageAndState({ syncList: [] }, 2, 3);
+      await expectStorageAndState({ syncList: [] }, 2);
     });
   });
 
