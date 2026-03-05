@@ -1,21 +1,20 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { prepareIsolatedStorageTest } from "../../__tests__/_liveblocks";
 import {
-  createSerializedList,
+  prepareIsolatedStorageTest,
+  prepareStorageTest,
+  replaceStorageAndReconnectDevServer,
+  waitFor,
+} from "../../__tests__/_liveblocks";
+import {
   createSerializedMap,
   createSerializedObject,
-  createSerializedRegister,
   createSerializedRoot,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
   prepareStorageTest as prepareStorageTest_legacy,
-  replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
-import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
 import { OpCode } from "../../protocol/Op";
-import type { StorageNode } from "../../protocol/StorageNode";
-import { CrdtType } from "../../protocol/StorageNode";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -98,12 +97,14 @@ describe("LiveMap", () => {
   });
 
   test("create document with map in root", async () => {
-    const { storage, expectStorage } = await prepareStorageTest_legacy<{
+    const { root, expectStorage } = await prepareIsolatedStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { map: { liveblocksType: "LiveMap", data: {} } },
+    });
 
-    const root = storage.root;
-    const map = root.toObject().map;
+    const map = root.get("map");
     expect(Array.from(map.entries())).toEqual([]);
     expectStorage({ map: new Map() });
   });
@@ -159,26 +160,26 @@ describe("LiveMap", () => {
   });
 
   test("map.set object", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map: LiveMap<string, number>;
-      }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      });
 
-    const root = storage.root;
-    const map = root.toObject().map;
+    const root = storageA.root;
+    const map = root.get("map");
 
-    expectStorage({ map: new Map() });
+    await expectStorage({ map: new Map() });
 
     map.set("first", 0);
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", 0]]),
     });
 
     map.set("second", 1);
-    expectStorage({
+    await expectStorage({
       map: new Map([
         ["first", 0],
         ["second", 1],
@@ -186,7 +187,7 @@ describe("LiveMap", () => {
     });
 
     map.set("third", 2);
-    expectStorage({
+    await expectStorage({
       map: new Map([
         ["first", 0],
         ["second", 1],
@@ -194,7 +195,7 @@ describe("LiveMap", () => {
       ]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   describe("delete", () => {
@@ -218,21 +219,23 @@ describe("LiveMap", () => {
     });
 
     test("should delete LiveObject", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           map: LiveMap<string, number>;
-        }>([
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedRegister("0:2", "0:1", "first", 0),
-          createSerializedRegister("0:3", "0:1", "second", 1),
-          createSerializedRegister("0:4", "0:1", "third", 2),
-        ]);
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            map: {
+              liveblocksType: "LiveMap",
+              data: { first: 0, second: 1, third: 2 },
+            },
+          },
+        });
 
-      const root = storage.root;
-      const map = root.toObject().map;
+      const root = storageA.root;
+      const map = root.get("map");
 
-      expectStorage({
+      await expectStorage({
         map: new Map([
           ["first", 0],
           ["second", 1],
@@ -241,7 +244,7 @@ describe("LiveMap", () => {
       });
 
       map.delete("first");
-      expectStorage({
+      await expectStorage({
         map: new Map([
           ["second", 1],
           ["third", 2],
@@ -249,94 +252,99 @@ describe("LiveMap", () => {
       });
 
       map.delete("second");
-      expectStorage({
+      await expectStorage({
         map: new Map([["third", 2]]),
       });
 
       map.delete("third");
-      expectStorage({
+      await expectStorage({
         map: new Map(),
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("should remove nested data structure from cache", async () => {
-      const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { roomA, storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           map: LiveMap<string, LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedMap("0:1", "root", "map"),
-            createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            map: {
+              liveblocksType: "LiveMap",
+              data: {
+                first: { liveblocksType: "LiveObject", data: { a: 0 } },
+              },
+            },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         map: new Map([["first", { a: 0 }]]),
       });
 
-      const root = storage.root;
-      const map = root.toObject().map;
+      const root = storageA.root;
+      const map = root.get("map");
 
-      expect(room[kInternal].nodeCount).toBe(3);
+      expect(roomA[kInternal].nodeCount).toBe(3);
       expect(map.delete("first")).toBe(true);
-      expect(room[kInternal].nodeCount).toBe(2);
+      expect(roomA[kInternal].nodeCount).toBe(2);
 
-      expectStorage({
+      await expectStorage({
         map: new Map(),
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("should delete live list", async () => {
-      const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
+      const { roomA, storageA, expectStorage, assertUndoRedo } =
+        await prepareStorageTest<{
           map: LiveMap<string, LiveList<number>>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedMap("0:1", "root", "map"),
-            createSerializedList("0:2", "0:1", "first"),
-            createSerializedRegister("0:3", "0:2", "!", 0),
-          ],
-          1
-        );
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            map: {
+              liveblocksType: "LiveMap",
+              data: {
+                first: { liveblocksType: "LiveList", data: [0] },
+              },
+            },
+          },
+        });
 
-      expectStorage({
+      await expectStorage({
         map: new Map([["first", [0]]]),
       });
 
-      const root = storage.root;
-      const map = root.toObject().map;
+      const root = storageA.root;
+      const map = root.get("map");
 
-      expect(room[kInternal].nodeCount).toBe(4);
+      expect(roomA[kInternal].nodeCount).toBe(4);
       expect(map.delete("first")).toBe(true);
-      expect(room[kInternal].nodeCount).toBe(2);
+      expect(roomA[kInternal].nodeCount).toBe(2);
 
-      expectStorage({
+      await expectStorage({
         map: new Map(),
       });
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     // https://github.com/liveblocks/liveblocks/issues/95
     test("should have deleted key when subscriber is called", async () => {
-      const { room, root } = await prepareIsolatedStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-          createSerializedRegister("0:3", "0:1", "second", "b"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: { first: "a", second: "b" },
+          },
+        },
+      });
 
       const map = root.get("map");
 
@@ -350,17 +358,17 @@ describe("LiveMap", () => {
     });
 
     test("should call subscribe when key is deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-          createSerializedRegister("0:3", "0:1", "second", "b"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: { first: "a", second: "b" },
+          },
+        },
+      });
 
       const map = root.get("map");
 
@@ -375,17 +383,17 @@ describe("LiveMap", () => {
     });
 
     test("should not call subscribe when key is not deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-          createSerializedRegister("0:3", "0:1", "second", "b"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: { first: "a", second: "b" },
+          },
+        },
+      });
 
       const map = root.get("map");
 
@@ -400,36 +408,38 @@ describe("LiveMap", () => {
   });
 
   test("map.set live object", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      });
 
-    const root = storage.root;
-    const map = root.toObject().map;
-    expectStorage({
+    const root = storageA.root;
+    const map = root.get("map");
+    await expectStorage({
       map: new Map(),
     });
 
     map.set("first", new LiveObject({ a: 0 }));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("map.set already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest_legacy<{
+    const { root } = await prepareIsolatedStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { map: { liveblocksType: "LiveMap", data: {} } },
+    });
 
-    const root = storage.root;
-    const map = root.toObject().map;
+    const map = root.get("map");
 
     const object = new LiveObject({ a: 0 });
 
@@ -438,12 +448,14 @@ describe("LiveMap", () => {
   });
 
   test("new Map with already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest_legacy<{
+    const { root } = await prepareIsolatedStorageTest<{
       child: LiveObject<{ a: number }> | null;
       map: LiveMap<string, LiveObject<{ a: number }>> | null;
-    }>([createSerializedRoot({ child: null, map: null })], 1);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { child: null, map: null },
+    });
 
-    const root = storage.root;
     const child = new LiveObject({ a: 0 });
     root.update({ child });
 
@@ -451,139 +463,152 @@ describe("LiveMap", () => {
   });
 
   test("map.set live object on existing key", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: {
+              first: { liveblocksType: "LiveObject", data: { a: 0 } },
+            },
+          },
+        },
+      });
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 0 }]]),
     });
 
-    const root = storage.root;
-    const map = root.toObject().map;
+    const root = storageA.root;
+    const map = root.get("map");
 
     map.set("first", new LiveObject({ a: 1 }));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 1 }]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("attach map with items to root", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
-      }>([createSerializedRoot()], 1);
+      }>({
+        liveblocksType: "LiveObject",
+        data: {},
+      });
 
-    expectStorage({});
+    await expectStorage({});
 
-    storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
+    storageA.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("attach map with live objects to root", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map?: LiveMap<string, LiveObject<{ a: number }>>;
-      }>([createSerializedRoot()], 1);
+      }>({
+        liveblocksType: "LiveObject",
+        data: {},
+      });
 
-    expectStorage({});
+    await expectStorage({});
 
-    storage.root.set("map", new LiveMap([["first", new LiveObject({ a: 0 })]]));
+    storageA.root.set(
+      "map",
+      new LiveMap([["first", new LiveObject({ a: 0 })]])
+    );
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("attach map with objects to root", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map?: LiveMap<string, { a: number }>;
-      }>([createSerializedRoot()], 1);
+      }>({
+        liveblocksType: "LiveObject",
+        data: {},
+      });
 
-    expectStorage({});
+    await expectStorage({});
 
-    storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
+    storageA.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("add list in map", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map: LiveMap<string, LiveList<string>>;
-      }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      });
 
-    expectStorage({ map: new Map() });
+    await expectStorage({ map: new Map() });
 
-    const map = storage.root.get("map");
+    const map = storageA.root.get("map");
     map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["list", ["itemA", "itemB", "itemC"]]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("add map in map", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
+    const { storageA, expectStorage, assertUndoRedo } =
+      await prepareStorageTest<{
         map: LiveMap<string, LiveMap<string, string>>;
-      }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      });
 
-    expectStorage({ map: new Map() });
+    await expectStorage({ map: new Map() });
 
-    const map = storage.root.get("map");
+    const map = storageA.root.get("map");
     map.set("map", new LiveMap([["first", "itemA"]]));
 
-    expectStorage({
+    await expectStorage({
       map: new Map([["map", new Map([["first", "itemA"]])]]),
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { room, storage } = await prepareStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
-      }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      });
 
       const callback = vi.fn();
-
-      const root = storage.root;
 
       const liveMap = root.get("map");
 
@@ -596,20 +621,22 @@ describe("LiveMap", () => {
     });
 
     test("deep subscribe", async () => {
-      const { room, storage } = await prepareStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedMap("0:1", "root", "map"),
-          createSerializedObject("0:2", { a: 0 }, "0:1", "mapElement"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: {
+              mapElement: { liveblocksType: "LiveObject", data: { a: 0 } },
+            },
+          },
+        },
+      });
 
       const callback = vi.fn();
 
-      const root = storage.root;
       const mapElement = root.get("map").get("mapElement");
 
       const unsubscribe = room.subscribe(root.get("map"), callback, {
@@ -634,55 +661,42 @@ describe("LiveMap", () => {
   });
 
   describe("reconnect with remote changes and subscribe", () => {
-    test("register added to map", async () => {
-      const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
-          map: LiveMap<string, string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedMap("0:1", "root", "map"),
-            createSerializedRegister("0:2", "0:1", "first", "a"),
-          ],
-          1
-        );
+    // TODO: Needs atomic storage replacement in dev server
+    // See https://linear.app/liveblocks/issue/LB-3529/dev-server-needs-support-for-a-crash-replace-storage-atomic-feature
+    test.skip("register added to map", async () => {
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: { first: "a" },
+          },
+        },
+      });
 
       const rootDeepCallback = vi.fn();
       const mapCallback = vi.fn();
 
-      const listItems = root.get("map");
+      const map = root.get("map");
 
       room.subscribe(root, rootDeepCallback, { isDeep: true });
-      room.subscribe(listItems, mapCallback);
+      room.subscribe(map, mapCallback);
 
       expectStorage({ map: new Map([["first", "a"]]) });
 
-      const newInitStorage: StorageNode[] = [
-        ["root", { type: CrdtType.OBJECT, data: {} }],
-        ["0:1", { type: CrdtType.MAP, parentId: "root", parentKey: "map" }],
-        [
-          "0:2",
-          {
-            type: CrdtType.REGISTER,
-            parentId: "0:1",
-            parentKey: "first",
-            data: "a",
+      await replaceStorageAndReconnectDevServer(room.id, {
+        liveblocksType: "LiveObject",
+        data: {
+          map: {
+            liveblocksType: "LiveMap",
+            data: { first: "a", second: "b" },
           },
-        ],
-        [
-          "2:0",
-          {
-            type: CrdtType.REGISTER,
-            parentId: "0:1",
-            parentKey: "second",
-            data: "b",
-          },
-        ],
-      ];
+        },
+      });
 
-      replaceRemoteStorageAndReconnect(wss, newInitStorage);
-
-      await waitUntilStorageUpdate(room);
+      await waitFor(() => root.toImmutable().map.has("second"));
       expectStorage({
         map: new Map([
           ["first", "a"],
@@ -695,7 +709,7 @@ describe("LiveMap", () => {
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
           type: "LiveMap",
-          node: listItems,
+          node: map,
           updates: { second: { type: "update" } },
         },
       ]);
