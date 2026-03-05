@@ -1,0 +1,159 @@
+{% from "endpoint_macros.py.jinja" import return_type, arguments %}
+{# Build a tag description lookup from the raw OpenAPI tags array #}
+{% set tag_descriptions = {} %}
+{% if openapi.description %}
+# {{ project_name }}
+
+{{ package_description }}
+
+{{ openapi.description }}
+{% else %}
+# {{ project_name }}
+
+{{ package_description }}
+{% endif %}
+
+## Installation
+
+```bash
+pip install {{ project_name }}
+```
+
+## Quick Start
+
+### Synchronous
+
+```python
+from {{ package_name }} import Liveblocks
+
+client = Liveblocks(secret="sk_your_secret_key")
+
+with client:
+    rooms = client.get_rooms()
+    print(rooms)
+```
+
+### Asynchronous
+
+```python
+from {{ package_name }} import AsyncLiveblocks
+
+client = AsyncLiveblocks(secret="sk_your_secret_key")
+
+async with client:
+    rooms = await client.get_rooms()
+    print(rooms)
+```
+
+## Authentication
+
+All API calls require a **secret key** starting with `sk_`. You can find your secret key in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys).
+
+```python
+client = Liveblocks(secret="sk_your_secret_key")
+```
+
+---
+
+## API Reference
+
+{% for tag, collection in endpoint_collections_by_tag.items() %}
+### {{ collection.tag }}
+
+{% for endpoint in collection.endpoints %}
+{% set ns = namespace(success_responses=[]) %}
+{% for response in endpoint.responses.patterns %}
+{% set code_range = response.status_code.range %}
+{% if code_range[0] >= 200 and code_range[1] <= 299 %}
+{% set ns.success_responses = ns.success_responses + [response] %}
+{% endif %}
+{% endfor %}
+{% set ret_type = return_type(ns.success_responses) %}
+{% set method_name = endpoint.name | snakecase %}
+{% set all_params = endpoint.list_all_parameters() %}
+#### `{{ method_name }}`
+
+{% if endpoint.summary %}**{{ endpoint.summary }}**{% endif %}
+
+{% if endpoint.description %}
+{{ endpoint.description.split('\n')[0] }}
+{% endif %}
+
+- **HTTP:** `{{ endpoint.method | upper }}` `{{ endpoint.path }}`
+- **Returns:** `{{ ret_type }}`
+{% if endpoint.requires_security %}- **Auth required**{% endif %}
+
+{% if endpoint.path_parameters or endpoint.query_parameters or endpoint.bodies %}
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+{% for param in endpoint.path_parameters %}
+| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | Yes | {{ param.description or "" }} |
+{% endfor %}
+{% for param in endpoint.query_parameters %}
+| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | {{ "Yes" if param.required else "No" }} | {{ param.description or "" }}{% if param.default %} *(default: `{{ param.default.python_code }}`)*{% endif %} |
+{% endfor %}
+{% for body in endpoint.bodies %}
+| `body` | `{{ body.prop.get_type_string() | replace("|", "\\|") }}` | {{ "Yes" if body.prop.required else "No" }} | Request body ({{ body.content_type }}) |
+{% endfor %}
+
+{% endif %}
+<details>
+<summary>Example</summary>
+
+```python
+{% if endpoint.path_parameters or (endpoint.query_parameters | selectattr("required") | list) or (endpoint.bodies | selectattr("prop.required") | list) %}
+result = client.{{ method_name }}(
+{% for param in endpoint.path_parameters %}
+    {{ param.python_name }}="...",
+{% endfor %}
+{% for param in endpoint.query_parameters %}
+{% if param.required %}
+    {{ param.python_name }}={{ param.example or '"..."' }},
+{% endif %}
+{% endfor %}
+{% for body in endpoint.bodies %}
+{% if body.prop.required %}
+    body=...,
+{% endif %}
+{% endfor %}
+)
+{% else %}
+result = client.{{ method_name }}()
+{% endif %}
+```
+
+</details>
+
+---
+
+{% endfor %}
+{% endfor %}
+
+## Models
+
+The following data models are available in `{{ package_name }}.models`:
+
+{% for model in openapi.models | sort(attribute='name') %}
+- `{{ model.class_info.name }}`{% if model.description %} — {{ model.description.split('\n')[0] }}{% endif %}
+
+{% endfor %}
+
+## Error Handling
+
+All API methods raise `errors.LiveblocksError` when the server returns a non-2xx status code. You can catch and inspect these errors:
+
+```python
+from {{ package_name }} import errors, Liveblocks
+
+client = Liveblocks(secret="sk_your_secret_key")
+
+with client:
+    try:
+        room = client.get_room(room_id="my-room")
+    except errors.LiveblocksError as e:
+        print(f"API error: {e}")
+```
+
+Methods also raise `httpx.TimeoutException` if the request exceeds the timeout.

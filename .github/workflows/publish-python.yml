@@ -1,0 +1,68 @@
+name: Publish Python package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: "Version to publish (e.g. 0.1.0)"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Set version
+        working-directory: packages/liveblocks-python
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
+
+      - name: Commit version bump
+        working-directory: packages/liveblocks-python
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git add pyproject.toml config.yaml
+          git commit -m "Bump liveblocks-python to $VERSION"
+
+      - name: Build and publish
+        working-directory: packages/liveblocks-python
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          uv build
+          uv publish
+
+      - name: Create release tag
+        env:
+          VERSION: ${{ inputs.version }}
+          GIT_TAG: v${{ inputs.version }}
+          GITHUB_URL: "https://github.com/liveblocks/liveblocks"
+        run: |
+          if [ "$(git branch --show-current)" = "main" ]; then
+            if ! git push origin main; then
+              echo "ERROR: Could not push to main!" >&2
+              exit 2
+            fi
+          fi
+          git tag "$GIT_TAG" -m "Release $GIT_TAG (python)"
+          git push origin "$GIT_TAG"

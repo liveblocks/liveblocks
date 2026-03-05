@@ -1,0 +1,13 @@
+""" Contains all the data models used in inputs/outputs """
+
+{% for import in imports | sort %}
+{{ import }}
+{% endfor %}
+
+{% if imports %}
+__all__ = (
+    {% for all in alls | sort %}
+    "{{ all }}",
+    {% endfor %}
+)
+{% endif %}

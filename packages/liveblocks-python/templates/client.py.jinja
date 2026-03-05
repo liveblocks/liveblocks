@@ -1,0 +1,170 @@
+from __future__ import annotations
+
+import re
+from typing import Any, TYPE_CHECKING
+
+import httpx
+
+from .types import File, Response, UNSET, Unset
+
+{% from "endpoint_macros.py.jinja" import arguments, kwargs, return_type %}
+
+if TYPE_CHECKING:
+{% set ns = namespace(imports=[]) %}
+{% for tag, collection in endpoint_collections_by_tag.items() %}
+{% for endpoint in collection.endpoints %}
+{% for _import in endpoint.relative_imports | sort %}
+{% set import = _import | replace("from ...", "from .") %}
+{% if import not in ns.imports and "from .models." in import %}
+    {{ import }}
+{% set ns.imports = ns.imports + [import] %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+    from session import AsyncSession, Session
+
+_DEFAULT_BASE_URL = "https://api.liveblocks.io"
+_VALID_KEY_CHARS_REGEX = re.compile(r"^[\w-]+$")
+
+
+def _assert_secret_key(value: str) -> None:
+    if not value.startswith("sk_"):
+        raise ValueError(
+            "Invalid value for 'secret'. Secret keys must start with 'sk_'. "
+            "Please provide the secret key from your Liveblocks dashboard at "
+            "https://liveblocks.io/dashboard/apikeys."
+        )
+    if not _VALID_KEY_CHARS_REGEX.match(value):
+        raise ValueError(
+            "Invalid chars found in 'secret'. Please check that you correctly "
+            "copied the secret key from your Liveblocks dashboard at "
+            "https://liveblocks.io/dashboard/apikeys."
+        )
+
+
+class Liveblocks:
+    """Synchronous client for the Liveblocks API.
+
+    Args:
+        secret: The Liveblocks secret key. Must start with ``sk_``.
+            Get it from https://liveblocks.io/dashboard/apikeys
+        base_url: Point the client to an alternative Liveblocks server.
+    """
+
+    _client: httpx.Client
+
+    def __init__(self, *, secret: str, base_url: str | None = None) -> None:
+        _assert_secret_key(secret)
+        self._client = httpx.Client(
+            base_url=base_url or _DEFAULT_BASE_URL,
+            headers={"Authorization": f"Bearer {secret}"},
+        )
+
+    def close(self) -> None:
+        self._client.close()
+
+    def __enter__(self) -> Liveblocks:
+        self._client.__enter__()
+        return self
+
+    def __exit__(self, *args: Any, **kwargs: Any) -> None:
+        self._client.__exit__(*args, **kwargs)
+
+    def prepare_session(
+        self,
+        user_id: str,
+    ) -> Session:
+        from session import Session
+
+        return Session(
+            client=self,
+            user_id=user_id
+        )
+
+    {% for tag, collection in endpoint_collections_by_tag.items() %}
+    {% for endpoint in collection.endpoints %}
+
+    {% set ns = namespace(success_responses=[]) %}
+    {% for response in endpoint.responses.patterns %}
+    {% set code_range = response.status_code.range %}
+    {% if code_range[0] >= 200 and code_range[1] <= 299 %}
+        {% set ns.success_responses = ns.success_responses + [response] %}
+    {% endif %}
+    {% endfor %}
+
+    def {{ endpoint.name | snakecase }}(
+        self,
+        {{ arguments(endpoint, include_client=False) | indent(8) }}
+    ) -> ({{ return_type(ns.success_responses) }}):
+        from .api.{{ tag }} import {{ endpoint.name | snakecase }}
+
+        return {{ endpoint.name | snakecase }}._sync(
+            {{ kwargs(endpoint, include_client=False) | indent(12) }}client=self._client,
+        )
+    {% endfor %}
+    {% endfor %}
+
+
+class AsyncLiveblocks:
+    """Asynchronous client for the Liveblocks API.
+
+    Args:
+        secret: The Liveblocks secret key. Must start with ``sk_``.
+            Get it from https://liveblocks.io/dashboard/apikeys
+        base_url: Point the client to an alternative Liveblocks server.
+    """
+
+    _client: httpx.AsyncClient
+
+    def __init__(self, *, secret: str, base_url: str | None = None) -> None:
+        _assert_secret_key(secret)
+        self._client = httpx.AsyncClient(
+            base_url=base_url or _DEFAULT_BASE_URL,
+            headers={"Authorization": f"Bearer {secret}"},
+        )
+
+    async def close(self) -> None:
+        await self._client.aclose()
+
+    async def __aenter__(self) -> AsyncLiveblocks:
+        await self._client.__aenter__()
+        return self
+
+    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+        await self._client.__aexit__(*args, **kwargs)
+
+    def prepare_session(
+        self,
+        user_id: str
+    ) -> AsyncSession:
+        from session import AsyncSession
+
+        return AsyncSession(
+            client=self,
+            user_id=user_id
+        )
+
+    {% for tag, collection in endpoint_collections_by_tag.items() %}
+    {% for endpoint in collection.endpoints %}
+
+    {% set ns = namespace(success_responses=[]) %}
+    {% for response in endpoint.responses.patterns %}
+    {% set code_range = response.status_code.range %}
+    {% if code_range[0] >= 200 and code_range[1] <= 299 %}
+        {% set ns.success_responses = ns.success_responses + [response] %}
+    {% endif %}
+    {% endfor %}
+
+    async def {{ endpoint.name | snakecase }}(
+        self,
+        {{ arguments(endpoint, include_client=False) | indent(8) }}
+    ) -> ({{ return_type(ns.success_responses) }}):
+        from .api.{{ tag }} import {{ endpoint.name | snakecase }}
+
+        return await {{ endpoint.name | snakecase }}._asyncio(
+            {{ kwargs(endpoint, include_client=False) | indent(12) }}client=self._client,
+        )
+    {% endfor %}
+    {% endfor %}
