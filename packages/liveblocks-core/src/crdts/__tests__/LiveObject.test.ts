@@ -697,36 +697,50 @@ describe("LiveObject", () => {
   });
 
   describe("applyDeleteObjectKey", () => {
-    test("should not notify if property does not exist", async () => {
-      const { room, root, applyRemoteOperations } =
-        await prepareIsolatedStorageTest_legacy<{ a?: number }>([
-          createSerializedRoot(),
-        ]);
+    // When a remote DELETE_OBJECT_KEY arrives for a key that doesn't exist
+    // locally (because this client already deleted it), the subscription
+    // callback should NOT fire. We test this by having both clients delete
+    // an overlapping key "c" simultaneously:
+    //
+    //   Start:    { a, b, c } on both clients
+    //   Client A: deletes a + c locally
+    //   Client B: deletes b + c locally
+    //
+    // After sync, each client gets 3 notifications (not 4):
+    //   - 2 from their own local deletes
+    //   - 1 from the other client's non-overlapping delete
+    //   - 0 from the other client's overlapping "delete c" (already gone)
+    test("should not notify for redundant remote delete", async () => {
+      const { roomA, roomB, storageA, storageB } = await prepareStorageTest<{
+        a?: number;
+        b?: number;
+        c?: number;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1, b: 2, c: 3 },
+      });
 
-      const callback = vi.fn();
-      room.subscribe(root, callback);
+      const callbackA = vi.fn();
+      const callbackB = vi.fn();
 
-      applyRemoteOperations([
-        { type: OpCode.DELETE_OBJECT_KEY, id: "root", key: "a" },
-      ]);
+      roomA.subscribe(storageA.root, callbackA);
+      roomB.subscribe(storageB.root, callbackB);
 
-      expect(callback).toHaveBeenCalledTimes(0);
-    });
+      // Both clients delete an overlapping key "c" simultaneously
+      storageA.root.delete("a");
+      storageA.root.delete("c");
 
-    test("should notify if property has been deleted", async () => {
-      const { room, root, applyRemoteOperations } =
-        await prepareIsolatedStorageTest_legacy<{ a?: number }>([
-          createSerializedRoot({ a: 1 }),
-        ]);
+      storageB.root.delete("b");
+      storageB.root.delete("c");
 
-      const callback = vi.fn();
-      room.subscribe(root, callback);
+      // Wait for both clients to fully sync
+      await waitFor(() => storageA.root.get("b") === undefined);
+      await waitFor(() => storageB.root.get("a") === undefined);
 
-      applyRemoteOperations([
-        { type: OpCode.DELETE_OBJECT_KEY, id: "root", key: "a" },
-      ]);
-
-      expect(callback).toHaveBeenCalledTimes(1);
+      // Each client: 2 local deletes + 1 remote delete = 3
+      // The redundant remote "delete c" must NOT fire a 4th notification
+      expect(callbackA).toHaveBeenCalledTimes(3);
+      expect(callbackB).toHaveBeenCalledTimes(3);
     });
   });
 
