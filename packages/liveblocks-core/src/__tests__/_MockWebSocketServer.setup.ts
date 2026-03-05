@@ -42,13 +42,13 @@ import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
+import type { MockWebSocketServer } from "./_MockWebSocketServer";
+import { MockWebSocket } from "./_MockWebSocketServer";
 import {
   ALWAYS_AUTH_WITH_ACCESS_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
 } from "./_MockWebSocketServer.behaviors";
-import type { MockWebSocketServer } from "./_MockWebSocketServer";
-import { MockWebSocket } from "./_MockWebSocketServer";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

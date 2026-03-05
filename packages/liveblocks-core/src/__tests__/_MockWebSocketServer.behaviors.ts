@@ -18,7 +18,11 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { MockWebSocket } from "./_MockWebSocketServer";
 import { MockWebSocketServer } from "./_MockWebSocketServer";
-import { makeAccessToken, makeIDToken, serverMessage } from "./_MockWebSocketServer.setup";
+import {
+  makeAccessToken,
+  makeIDToken,
+  serverMessage,
+} from "./_MockWebSocketServer.setup";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;

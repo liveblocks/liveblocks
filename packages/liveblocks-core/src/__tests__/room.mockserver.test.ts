@@ -1694,18 +1694,17 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { expectStorage, room, wss } =
-        await prepareIsolatedStorageTest<{
-          items?: LiveList<string>;
-          items2?: LiveList<string>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedList("0:1", "root", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { expectStorage, room, wss } = await prepareIsolatedStorageTest<{
+        items?: LiveList<string>;
+        items2?: LiveList<string>;
+      }>(
+        [
+          createSerializedRoot(),
+          createSerializedList("0:1", "root", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       expectStorage({ items: ["a"] });
 
@@ -1752,11 +1751,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { room, refRoom, reconnect, refWss } =
-        await prepareStorageTest<never, { x: number }>(
-          [createSerializedRoot()],
-          1
-        );
+      const { room, refRoom, reconnect, refWss } = await prepareStorageTest<
+        never,
+        { x: number }
+      >([createSerializedRoot()], 1);
 
       room.updatePresence({ x: 1 });
 

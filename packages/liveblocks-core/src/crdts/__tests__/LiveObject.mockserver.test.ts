@@ -37,11 +37,9 @@ describe("LiveObject edge cases", () => {
   describe("acknowledge mechanism", () => {
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
-        const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest<{ a: number }>(
-            [createSerializedRoot({ a: 0 })],
-            1
-          );
+        const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+          a: number;
+        }>([createSerializedRoot({ a: 0 })], 1);
 
         expectStorage({ a: 0 });
 
@@ -61,16 +59,15 @@ describe("LiveObject edge cases", () => {
       });
 
       test("when value is a LiveObject", async () => {
-        const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest<{
-            a: LiveObject<{ subA: number }>;
-          }>(
-            [
-              createSerializedRoot(),
-              createSerializedObject("0:1", { subA: 0 }, "root", "a"),
-            ],
-            1
-          );
+        const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+          a: LiveObject<{ subA: number }>;
+        }>(
+          [
+            createSerializedRoot(),
+            createSerializedObject("0:1", { subA: 0 }, "root", "a"),
+          ],
+          1
+        );
 
         expectStorage({ a: { subA: 0 } });
 
@@ -92,13 +89,12 @@ describe("LiveObject edge cases", () => {
       });
 
       test("when value is a LiveList with LiveObjects", async () => {
-        const { room, root, expectStorage } =
-          await prepareIsolatedStorageTest<{
-            a: LiveList<LiveObject<{ b: number }>>;
-          }>(
-            [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
-            1
-          );
+        const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+          a: LiveList<LiveObject<{ b: number }>>;
+        }>(
+          [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
+          1
+        );
 
         expectStorage({ a: [] });
 
