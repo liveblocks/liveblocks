@@ -73,7 +73,10 @@ export async function initRoom(storage?: PlainLsonObject): Promise<string> {
   return roomId;
 }
 
-async function UNSAFE_generateAccessToken(roomId?: string) {
+async function UNSAFE_generateAccessToken(
+  roomId?: string,
+  permissions?: string[]
+) {
   const res = await fetch(`${DEV_SERVER}/v2/authorize-user`, {
     method: "POST",
     headers: {
@@ -83,16 +86,17 @@ async function UNSAFE_generateAccessToken(roomId?: string) {
     body: JSON.stringify({
       userId: `user-${nanoid()}`,
       userInfo: { name: "Testy McTester" },
-      permissions: { [roomId!]: ["room:write"] },
+      permissions: { [roomId!]: permissions ?? ["room:write"] },
     }),
   });
   return (await res.json()) as { token: string };
 }
 
-export function createTestClient() {
+export function createTestClient(permissions?: string[]) {
   return createClient({
     baseUrl: DEV_SERVER,
-    authEndpoint: UNSAFE_generateAccessToken,
+    authEndpoint: (roomId) =>
+      UNSAFE_generateAccessToken(roomId, permissions),
     polyfills: { WebSocket: globalThis.WebSocket },
     // @ts-expect-error Deliberately testing internal option to disable throttling for tests
     __DANGEROUSLY_disableThrottling: true,
@@ -105,9 +109,9 @@ export function createTestClient() {
  */
 export async function enterAndConnect<S extends LsonObject>(
   roomId: string,
-  opts?: { initialStorage?: S }
+  opts?: { initialStorage?: S; permissions?: string[] }
 ) {
-  const client = createTestClient();
+  const client = createTestClient(opts?.permissions);
   const { room, leave } = client.enterRoom<JsonObject, S>(roomId, {
     initialPresence: {},
     initialStorage: (opts?.initialStorage ?? {}) as S,
@@ -242,13 +246,16 @@ export async function prepareStorageTest<S extends LsonObject>(
  *   storage equals `data` (no second client to wait for).
  */
 export async function prepareIsolatedStorageTest<S extends LsonObject>(
-  initialStorage?: PlainLsonObject
+  initialStorage?: PlainLsonObject,
+  opts?: { permissions?: string[] }
 ) {
   const roomId = initialStorage
     ? await initRoom(initialStorage)
     : randomRoomId();
 
-  const { room } = await enterAndConnect<S>(roomId);
+  const { room } = await enterAndConnect<S>(roomId, {
+    permissions: opts?.permissions,
+  });
   const storage = await room.getStorage();
 
   function expectStorage(data: ToImmutable<S>) {

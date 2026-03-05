@@ -1,5 +1,6 @@
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 
+import { prepareIsolatedStorageTest } from "../../__tests__/_liveblocks";
 import {
   listUpdate,
   listUpdateDelete,
@@ -107,16 +108,19 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.push("first")).toThrow(
@@ -239,16 +243,19 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.insert("first", 0)).toThrow(
@@ -309,16 +316,19 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.delete(0)).toThrow(
@@ -405,16 +415,19 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.move(0, 1)).toThrow(
@@ -529,16 +542,19 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.clear()).toThrow(
@@ -649,16 +665,19 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const root = storage.root;
       const items = root.get("items");
 
       expect(() => items.set(0, "A")).toThrow(

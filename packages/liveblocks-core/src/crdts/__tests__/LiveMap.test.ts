@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
+import { prepareIsolatedStorageTest } from "../../__tests__/_liveblocks";
 import {
   createSerializedList,
   createSerializedMap,
@@ -12,7 +13,6 @@ import {
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
-import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { StorageNode } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
@@ -108,15 +108,20 @@ describe("LiveMap", () => {
     expectStorage({ map: new Map() });
   });
 
-  test("set throws on read-only", async () => {
-    const { storage } = await prepareStorageTest_legacy<{
+  // TODO: Needs read-only permission support in dev server
+  // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+  test.skip("set throws on read-only", async () => {
+    const { root } = await prepareIsolatedStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")], 1, [
-      Permission.Read,
-      Permission.PresenceWrite,
-    ]);
+    }>(
+      {
+        liveblocksType: "LiveObject",
+        data: { map: { liveblocksType: "LiveMap", data: {} } },
+      },
+      { permissions: ["room:read", "room:presence:write"] }
+    );
 
-    const map = storage.root.get("map");
+    const map = root.get("map");
     expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
@@ -193,16 +198,20 @@ describe("LiveMap", () => {
   });
 
   describe("delete", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, number>;
       }>(
-        [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: { map: { liveblocksType: "LiveMap", data: {} } },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      const map = storage.root.get("map");
+      const map = root.get("map");
       expect(() => map.delete("key")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );

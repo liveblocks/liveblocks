@@ -96,14 +96,15 @@ describe("LiveObject", () => {
     await assertUndoRedo();
   });
 
-  test("update throws on read-only", async () => {
-    const { storage } = await prepareStorageTest_legacy(
-      [createSerializedRoot({ a: 0 })],
-      1,
-      [Permission.Read, Permission.PresenceWrite]
+  // TODO: Needs read-only permission support in dev server
+  // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+  test.skip("update throws on read-only", async () => {
+    const { root } = await prepareIsolatedStorageTest<{ a: number }>(
+      { liveblocksType: "LiveObject", data: { a: 0 } },
+      { permissions: ["room:read", "room:presence:write"] }
     );
 
-    expect(() => storage.root.update({ a: 1 })).toThrow(
+    expect(() => root.update({ a: 1 })).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -176,14 +177,15 @@ describe("LiveObject", () => {
     await assertUndoRedo();
   });
 
-  test("set throws on read-only", async () => {
-    const { storage } = await prepareStorageTest_legacy(
-      [createSerializedRoot()],
-      1,
-      [Permission.Read, Permission.PresenceWrite]
+  // TODO: Needs read-only permission support in dev server
+  // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+  test.skip("set throws on read-only", async () => {
+    const { root } = await prepareIsolatedStorageTest(
+      undefined,
+      { permissions: ["room:read", "room:presence:write"] }
     );
 
-    expect(() => storage.root.set("a", 1)).toThrow(
+    expect(() => root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
     );
   });
@@ -620,19 +622,23 @@ describe("LiveObject", () => {
   });
 
   describe("delete", () => {
-    test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest_legacy<{
+    // TODO: Needs read-only permission support in dev server
+    // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
+    test.skip("throws on read-only", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number }>;
       }>(
-        [
-          createSerializedRoot({ a: 1 }),
-          createSerializedObject("0:1", { b: 2 }, "root", "child"),
-        ],
-        1,
-        [Permission.Read, Permission.PresenceWrite]
+        {
+          liveblocksType: "LiveObject",
+          data: {
+            a: 1,
+            child: { liveblocksType: "LiveObject", data: { b: 2 } },
+          },
+        },
+        { permissions: ["room:read", "room:presence:write"] }
       );
 
-      expect(() => storage.root.get("child").delete("a")).toThrow(
+      expect(() => root.get("child").delete("a")).toThrow(
         "Cannot write to storage with a read only user, please ensure the user has write permissions"
       );
     });
