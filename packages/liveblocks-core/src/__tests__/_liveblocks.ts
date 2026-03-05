@@ -132,11 +132,14 @@ function deepCloneWithoutOpId<T>(item: T) {
 }
 
 /**
- * Two clients (A and B) connected to the same room.
+ * Two clients (A and B) connected to the same room via the real dev server.
  *
- * Mirrors the old prepareStorageTest from _utils.ts, but uses real server
- * sync instead of mock message forwarding. As a result, expectStorage and
- * assertUndoRedo are async (they wait for client B to catch up).
+ * Returns { roomA, roomB, storageA, storageB, expectStorage, assertUndoRedo }.
+ *
+ * - expectStorage(data) is async: asserts client A's storage equals `data`,
+ *   then waits for client B to sync to the same state.
+ * - assertUndoRedo() is async: walks the full undo/redo stack on client A,
+ *   verifying client B stays in sync at each step.
  */
 export async function prepareStorageTest<S extends LsonObject>(
   initialStorage: PlainLsonObject
@@ -231,7 +234,12 @@ export async function prepareStorageTest<S extends LsonObject>(
 }
 
 /**
- * Single client connected to a room with given initial storage.
+ * Single client connected to a room via the real dev server.
+ *
+ * Returns { root, room, expectStorage }.
+ *
+ * - expectStorage(data) is synchronous: just asserts the single client's
+ *   storage equals `data` (no second client to wait for).
  */
 export async function prepareIsolatedStorageTest<S extends LsonObject>(
   initialStorage: PlainLsonObject
@@ -253,8 +261,13 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
 }
 
 /**
- * Two clients tracking storage update events. Returns helpers to make
- * assertions about which updates were emitted.
+ * Two clients (A and B) connected to the same room via the real dev server,
+ * both subscribed to storageBatch events.
+ *
+ * Returns { roomA, roomB, root, expectUpdates }.
+ *
+ * - expectUpdates(updates) is async: asserts client A received the expected
+ *   update batches, then waits for client B to receive the same.
  */
 export async function prepareStorageUpdateTest<S extends LsonObject>(
   initialStorage: PlainLsonObject
