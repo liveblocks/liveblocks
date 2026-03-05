@@ -2,6 +2,7 @@ import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
 import { Providers } from "./Providers";
+import { Suspense } from "react";
 
 export const metadata = {
   title: "Liveblocks",
@@ -30,7 +31,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Suspense>
+          <Providers>{children}</Providers>
+        </Suspense>
       </body>
     </html>
   );
