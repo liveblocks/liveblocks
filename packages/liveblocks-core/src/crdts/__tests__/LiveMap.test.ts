@@ -129,26 +129,31 @@ describe("LiveMap", () => {
   });
 
   test("init map with items", async () => {
-    const { storage, expectStorage } = await prepareStorageTest_legacy<{
+    const { root, expectStorage } = await prepareIsolatedStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([
-      createSerializedRoot(),
-      createSerializedMap("0:1", "root", "map"),
-      createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-      createSerializedObject("0:3", { a: 1 }, "0:1", "second"),
-      createSerializedObject("0:4", { a: 2 }, "0:1", "third"),
-    ]);
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        map: {
+          liveblocksType: "LiveMap",
+          data: {
+            first: { liveblocksType: "LiveObject", data: { a: 0 } },
+            second: { liveblocksType: "LiveObject", data: { a: 1 } },
+            third: { liveblocksType: "LiveObject", data: { a: 2 } },
+          },
+        },
+      },
+    });
 
-    const root = storage.root;
     const map = root.get("map");
 
-    expect(
-      Array.from(map.entries()).map((entry) => [entry[0], entry[1].toObject()])
-    ).toMatchObject([
-      ["first", { a: 0 }],
-      ["second", { a: 1 }],
-      ["third", { a: 2 }],
-    ]);
+    expect(map.toImmutable()).toEqual(
+      new Map([
+        ["first", { a: 0 }],
+        ["second", { a: 1 }],
+        ["third", { a: 2 }],
+      ])
+    );
 
     expectStorage({
       map: new Map([
