@@ -1,12 +1,5 @@
 import pytest
 
-from liveblocks.client import AsyncLiveblocks, Liveblocks
-
-
-@pytest.fixture(params=[Liveblocks, AsyncLiveblocks], ids=["sync", "async"])
-def client_cls(request):
-    return request.param
-
 
 class TestConstructorValidation:
     def test_rejects_invalid_prefix(self, client_cls):
