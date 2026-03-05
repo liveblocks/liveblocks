@@ -2,7 +2,7 @@
  * Test utilities for running @liveblocks/core unit tests against the real
  * local dev server at localhost:1154.
  */
-import { expect, onTestFinished } from "vitest";
+import { expect, onTestFinished, vi } from "vitest";
 
 import { createClient } from "../client";
 import type { LsonObject } from "../crdts/Lson";
@@ -10,7 +10,6 @@ import type { ToImmutable } from "../crdts/utils";
 import { kInternal } from "../internal";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
-import { wait } from "../lib/utils";
 import type { PlainLsonObject } from "../types/PlainLson";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
@@ -19,24 +18,6 @@ const DEV_SERVER = "http://localhost:1154";
 
 export function randomRoomId(): string {
   return `room-${nanoid()}`;
-}
-
-export async function waitFor(predicate: () => boolean): Promise<void> {
-  const result = predicate();
-  if (result) {
-    return;
-  }
-
-  const time = new Date().getTime();
-
-  while (new Date().getTime() - time < 2000) {
-    await wait(100);
-    if (predicate()) {
-      return;
-    }
-  }
-
-  throw new Error("TIMEOUT");
 }
 
 /**
@@ -121,7 +102,7 @@ export async function enterAndConnect<S extends LsonObject>(
 
   onTestFinished(leave);
 
-  await waitFor(() => room.getStatus() === "connected");
+  await vi.waitUntil(() => room.getStatus() === "connected");
   return { room, leave };
 }
 
@@ -202,13 +183,8 @@ export async function prepareStorageTest<S extends LsonObject>(
   const storageB = clientB.storage;
 
   // Wait for both clients to have synced initial storage
-  await waitFor(() => {
-    try {
-      expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
-      return true;
-    } catch {
-      return false;
-    }
+  await vi.waitFor(() => {
+    expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
   });
 
   const states: ToImmutable<S>[] = [];
@@ -216,13 +192,8 @@ export async function prepareStorageTest<S extends LsonObject>(
   async function expectBothClientStoragesToEqual(data: ToImmutable<S>) {
     expect(storageA.root.toImmutable()).toEqual(data);
 
-    await waitFor(() => {
-      try {
-        expect(storageB.root.toImmutable()).toEqual(data);
-        return true;
-      } catch {
-        return false;
-      }
+    await vi.waitFor(() => {
+      expect(storageB.root.toImmutable()).toEqual(data);
     });
 
     expect(clientA.room[kInternal].nodeCount).toBe(
@@ -334,13 +305,8 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
   const storageB = clientB.storage;
 
   // Wait for both clients to have synced initial storage
-  await waitFor(() => {
-    try {
-      expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
-      return true;
-    } catch {
-      return false;
-    }
+  await vi.waitFor(() => {
+    expect(storageA.root.toImmutable()).toEqual(storageB.root.toImmutable());
   });
 
   const updatesA: JsonStorageUpdate[][] = [];
@@ -360,13 +326,8 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
   async function expectUpdates(updates: JsonStorageUpdate[][]) {
     expect(updatesA).toEqual(updates);
 
-    await waitFor(() => {
-      try {
-        expect(updatesB).toEqual(updates);
-        return true;
-      } catch {
-        return false;
-      }
+    await vi.waitFor(() => {
+      expect(updatesB).toEqual(updates);
     });
   }
 

@@ -4,7 +4,6 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
-  waitFor,
 } from "../../__tests__/_liveblocks";
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
@@ -728,8 +727,8 @@ describe("LiveObject", () => {
       storageB.root.delete("c");
 
       // Wait for both clients to fully sync
-      await waitFor(() => storageA.root.get("b") === undefined);
-      await waitFor(() => storageB.root.get("a") === undefined);
+      await vi.waitUntil(() => storageA.root.get("b") === undefined);
+      await vi.waitUntil(() => storageB.root.get("a") === undefined);
 
       // Each client: 2 local deletes + 1 remote delete = 3
       // The redundant remote "delete c" must NOT fire a 4th notification
@@ -856,7 +855,7 @@ describe("LiveObject", () => {
 
       // Remote change via client B
       storageB.root.get("child").get("subchild").set("b", 1);
-      await waitFor(() => rootA.get("child").get("subchild").get("b") === 1);
+      await vi.waitUntil(() => rootA.get("child").get("subchild").get("b") === 1);
 
       unsubscribe();
 
@@ -909,7 +908,7 @@ describe("LiveObject", () => {
       // Remote changes via client B
       storageB.root.get("child").set("a", 1);
       storageB.root.get("child").get("subchild").set("b", 1);
-      await waitFor(() => rootA.get("child").get("subchild").get("b") === 1);
+      await vi.waitUntil(() => rootA.get("child").get("subchild").get("b") === 1);
 
       unsubscribe();
 
@@ -940,7 +939,7 @@ describe("LiveObject", () => {
 
       // Remote deletion via client B
       storageB.root.get("child").delete("a");
-      await waitFor(() => rootA.get("child").get("a") === undefined);
+      await vi.waitUntil(() => rootA.get("child").get("a") === undefined);
 
       // Local deletion
       rootA.get("child").delete("b");
@@ -997,7 +996,7 @@ describe("LiveObject", () => {
         },
       });
 
-      await waitFor(() => root.get("obj").get("a") === 2);
+      await vi.waitUntil(() => root.get("obj").get("a") === 2);
       expectStorage({
         obj: { a: 2 },
       });
@@ -1046,7 +1045,7 @@ describe("LiveObject", () => {
         },
       });
 
-      await waitFor(() => root.get("obj").get("subObj") !== undefined);
+      await vi.waitUntil(() => root.get("obj").get("subObj") !== undefined);
       expectStorage({
         obj: { a: 1, subObj: { b: 1 } },
       });

@@ -24,7 +24,7 @@ import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
-import { enterConnectAndGetStorage, initRoom, waitFor } from "./_liveblocks";
+import { enterConnectAndGetStorage, initRoom } from "./_liveblocks";
 
 /**
  * Sets up two real clients (A and B) connected to the same room via the dev
@@ -60,13 +60,8 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
   const storageB = clientB.storage;
 
   // Wait for both clients to sync initial storage
-  await waitFor(() => {
-    try {
-      expect(lsonToJson(storageA.root)).toEqual(lsonToJson(storageB.root));
-      return true;
-    } catch {
-      return false;
-    }
+  await vi.waitFor(() => {
+    expect(lsonToJson(storageA.root)).toEqual(lsonToJson(storageB.root));
   });
 
   const state = lsonToJson(storageA.root) as ToJson<S>;
@@ -81,13 +76,8 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
   async function expectStorageAndState(data: ToJson<S>, itemsCount?: number) {
     expect(lsonToJson(storageA.root)).toEqual(data);
 
-    await waitFor(() => {
-      try {
-        expect(lsonToJson(storageB.root)).toEqual(data);
-        return true;
-      } catch {
-        return false;
-      }
+    await vi.waitFor(() => {
+      expect(lsonToJson(storageB.root)).toEqual(data);
     });
 
     if (itemsCount !== undefined) {
@@ -99,13 +89,8 @@ export async function prepareStorageImmutableTest<S extends LsonObject>(
 
   async function expectStorage(data: ToJson<S>) {
     expect(lsonToJson(storageA.root)).toEqual(data);
-    await waitFor(() => {
-      try {
-        expect(lsonToJson(storageB.root)).toEqual(data);
-        return true;
-      } catch {
-        return false;
-      }
+    await vi.waitFor(() => {
+      expect(lsonToJson(storageB.root)).toEqual(data);
     });
   }
 

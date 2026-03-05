@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { prepareStorageTest, waitFor } from "../../__tests__/_liveblocks";
+import { prepareStorageTest } from "../../__tests__/_liveblocks";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -48,12 +48,12 @@ describe("Storage", () => {
       const unsubscribe = roomA.subscribe(callback);
 
       storageB.root.set("a", 1);
-      await waitFor(() => storageA.root.get("a") === 1);
+      await vi.waitUntil(() => storageA.root.get("a") === 1);
 
       unsubscribe();
 
       storageB.root.set("a", 2);
-      await waitFor(() => storageA.root.get("a") === 2);
+      await vi.waitUntil(() => storageA.root.get("a") === 2);
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
@@ -82,12 +82,12 @@ describe("Storage", () => {
         storageB.root.set("a", 1);
         storageB.root.set("b", 1);
       });
-      await waitFor(() => storageA.root.get("a") === 1);
+      await vi.waitUntil(() => storageA.root.get("a") === 1);
 
       unsubscribe();
 
       storageB.root.set("a", 2);
-      await waitFor(() => storageA.root.get("a") === 2);
+      await vi.waitUntil(() => storageA.root.get("a") === 2);
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([

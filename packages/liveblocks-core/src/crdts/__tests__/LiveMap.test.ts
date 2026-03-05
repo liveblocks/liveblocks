@@ -4,7 +4,6 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
-  waitFor,
 } from "../../__tests__/_liveblocks";
 import {
   createSerializedMap,
@@ -700,7 +699,7 @@ describe("LiveMap", () => {
         },
       });
 
-      await waitFor(() => root.toImmutable().map.has("second"));
+      await vi.waitUntil(() => root.toImmutable().map.has("second"));
       expectStorage({
         map: new Map([
           ["first", "a"],
