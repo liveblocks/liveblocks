@@ -1,5 +1,9 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
+import {
+  prepareIsolatedStorageTest,
+  prepareStorageTest,
+} from "../../__tests__/_liveblocks";
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
@@ -26,28 +30,24 @@ describe("LiveObject", () => {
     });
 
     test("should be the associated room id if attached", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy(
-        [createSerializedRoot()],
-        1
-      );
+      const { root, room } = await prepareIsolatedStorageTest();
 
-      expect(root.roomId).toBe("room-id");
+      expect(root.roomId).toBe(room.id);
     });
 
     test("should be null after being detached", async () => {
-      const { root } = await prepareIsolatedStorageTest_legacy<{
+      const { root, room } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number }>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedObject("0:0", { a: 0 }, "root", "child"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: { liveblocksType: "LiveObject", data: { a: 0 } },
+        },
+      });
 
       const child = root.get("child");
 
-      expect(child.roomId).toBe("room-id");
+      expect(child.roomId).toBe(room.id);
 
       root.set("child", new LiveObject({ a: 1 }));
 
@@ -56,31 +56,43 @@ describe("LiveObject", () => {
   });
 
   test("update non existing property", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot()]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest({
+      liveblocksType: "LiveObject",
+      data: {},
+    });
 
-    expectStorage({});
+    await expectStorage({});
 
     storage.root.update({ a: 1 });
-    expectStorage({
+    await expectStorage({
       a: 1,
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update non existing property with null", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot()]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest({
+      liveblocksType: "LiveObject",
+      data: {},
+    });
 
-    expectStorage({});
+    await expectStorage({});
 
     storage.root.update({ a: null });
-    expectStorage({
+    await expectStorage({
       a: null,
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update throws on read-only", async () => {
@@ -96,53 +108,71 @@ describe("LiveObject", () => {
   });
 
   test("update existing property", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{ a: number }>({
+      liveblocksType: "LiveObject",
+      data: { a: 0 },
+    });
 
-    expectStorage({ a: 0 });
+    await expectStorage({ a: 0 });
 
     storage.root.update({ a: 1 });
-    expectStorage({
+    await expectStorage({
       a: 1,
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update existing property with null", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{ a: number | null }>({
+      liveblocksType: "LiveObject",
+      data: { a: 0 },
+    });
 
-    expectStorage({ a: 0 });
+    await expectStorage({ a: 0 });
 
     storage.root.update({ a: null });
-    expectStorage({
+    await expectStorage({
       a: null,
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update root", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{ a: number; b?: number }>({
+      liveblocksType: "LiveObject",
+      data: { a: 0 },
+    });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
     });
 
     storage.root.update({ a: 1 });
-    expectStorage({
+    await expectStorage({
       a: 1,
     });
 
     storage.root.update({ b: 1 });
-    expectStorage({
+    await expectStorage({
       a: 1,
       b: 1,
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("set throws on read-only", async () => {
@@ -217,20 +247,32 @@ describe("LiveObject", () => {
   });
 
   test("remove nested grand child record with update", async () => {
-    const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
-        a: number;
-        child: LiveObject<{
-          b: number;
-          grandChild: LiveObject<{ c: number }>;
-        }> | null;
-      }>([
-        createSerializedRoot({ a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "root", "child"),
-        createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
-      ]);
+    const {
+      roomA: room,
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{
+        b: number;
+        grandChild: LiveObject<{ c: number }>;
+      }> | null;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        a: 0,
+        child: {
+          liveblocksType: "LiveObject",
+          data: {
+            b: 0,
+            grandChild: { liveblocksType: "LiveObject", data: { c: 0 } },
+          },
+        },
+      },
+    });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 0,
@@ -242,26 +284,33 @@ describe("LiveObject", () => {
 
     storage.root.update({ child: null });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: null,
     });
     expect(room[kInternal].nodeCount).toBe(1);
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("remove nested child record with update", async () => {
-    const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
-        a: number;
-        child: LiveObject<{ b: number }> | null;
-      }>([
-        createSerializedRoot({ a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "root", "child"),
-      ]);
+    const {
+      roomA: room,
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{ b: number }> | null;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        a: 0,
+        child: { liveblocksType: "LiveObject", data: { b: 0 } },
+      },
+    });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 0,
@@ -270,26 +319,33 @@ describe("LiveObject", () => {
 
     storage.root.update({ child: null });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: null,
     });
     expect(room[kInternal].nodeCount).toBe(1);
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("add nested record with update", async () => {
-    const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot()], 1);
+    const {
+      roomA: room,
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest({
+      liveblocksType: "LiveObject",
+      data: {},
+    });
 
-    expectStorage({});
+    await expectStorage({});
 
     storage.root.update({
       child: new LiveObject({ a: 0 }),
     });
 
-    expectStorage({
+    await expectStorage({
       child: {
         a: 0,
       },
@@ -297,20 +353,27 @@ describe("LiveObject", () => {
 
     expect(room[kInternal].nodeCount).toBe(2);
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("replace nested record with update", async () => {
-    const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy([createSerializedRoot()], 1);
+    const {
+      roomA: room,
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest({
+      liveblocksType: "LiveObject",
+      data: {},
+    });
 
-    expectStorage({});
+    await expectStorage({});
 
     storage.root.update({
       child: new LiveObject({ a: 0 }),
     });
 
-    expectStorage({
+    await expectStorage({
       child: {
         a: 0,
       },
@@ -320,7 +383,7 @@ describe("LiveObject", () => {
       child: new LiveObject({ a: 1 }),
     });
 
-    expectStorage({
+    await expectStorage({
       child: {
         a: 1,
       },
@@ -328,23 +391,29 @@ describe("LiveObject", () => {
 
     expect(room[kInternal].nodeCount).toBe(2);
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update nested record", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
-        a: number;
-        child: LiveObject<{ b: number }>;
-      }>([
-        createSerializedRoot({ a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "root", "child"),
-      ]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{ b: number }>;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        a: 0,
+        child: { liveblocksType: "LiveObject", data: { b: 0 } },
+      },
+    });
 
     const root = storage.root;
     const child = root.toObject().child;
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 0,
@@ -352,28 +421,39 @@ describe("LiveObject", () => {
     });
 
     child.update({ b: 1 });
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 1,
       },
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("update deeply nested record", async () => {
-    const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
-        a: number;
-        child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
-      }>([
-        createSerializedRoot({ a: 0 }),
-        createSerializedObject("0:1", { b: 0 }, "root", "child"),
-        createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
-      ]);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        a: 0,
+        child: {
+          liveblocksType: "LiveObject",
+          data: {
+            b: 0,
+            grandChild: { liveblocksType: "LiveObject", data: { c: 0 } },
+          },
+        },
+      },
+    });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 0,
@@ -393,7 +473,7 @@ describe("LiveObject", () => {
     grandChild.update({ c: 1 });
     expect(grandChild.toObject()).toMatchObject({ c: 1 });
 
-    expectStorage({
+    await expectStorage({
       a: 0,
       child: {
         b: 0,
@@ -403,7 +483,7 @@ describe("LiveObject", () => {
       },
     });
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   describe("acknowledge mechanism", () => {
@@ -563,39 +643,50 @@ describe("LiveObject", () => {
     });
 
     test("should delete property from the object", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
-          a?: number;
-        }>([createSerializedRoot({ a: 0 })]);
-      expectStorage({ a: 0 });
+      const {
+        storageA: storage,
+        expectStorage,
+        assertUndoRedo,
+      } = await prepareStorageTest<{
+        a?: number;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 0 },
+      });
+      await expectStorage({ a: 0 });
 
       storage.root.delete("a");
-      expectStorage({});
+      await expectStorage({});
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("should delete nested crdt", async () => {
-      const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest_legacy<{
-          child?: LiveObject<{ a: number }>;
-        }>([
-          createSerializedRoot(),
-          createSerializedObject("0:1", { a: 0 }, "root", "child"),
-        ]);
+      const {
+        storageA: storage,
+        expectStorage,
+        assertUndoRedo,
+      } = await prepareStorageTest<{
+        child?: LiveObject<{ a: number }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: { liveblocksType: "LiveObject", data: { a: 0 } },
+        },
+      });
 
-      expectStorage({ child: { a: 0 } });
+      await expectStorage({ child: { a: 0 } });
 
       storage.root.delete("child");
-      expectStorage({});
+      await expectStorage({});
 
-      assertUndoRedo();
+      await assertUndoRedo();
     });
 
     test("should not notify if property does not exist", async () => {
-      const { room, root } = await prepareIsolatedStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
-      }>([createSerializedRoot()]);
+      }>();
 
       const callback = vi.fn();
       room.subscribe(root, callback);
@@ -606,9 +697,12 @@ describe("LiveObject", () => {
     });
 
     test("should notify if property has been deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
-      }>([createSerializedRoot({ a: 1 })]);
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
 
       const callback = vi.fn();
       room.subscribe(root, callback);
@@ -655,39 +749,34 @@ describe("LiveObject", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { room, storage } = await prepareStorageTest_legacy<{ a: number }>(
-        [createSerializedRoot({ a: 0 })],
-        1
-      );
+      const { room, root } = await prepareIsolatedStorageTest<{ a: number }>({
+        liveblocksType: "LiveObject",
+        data: { a: 0 },
+      });
 
       const callback = vi.fn();
-
-      const root = storage.root;
 
       room.subscribe(root, callback);
 
       root.set("a", 1);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(storage.root);
+      expect(callback).toHaveBeenCalledWith(root);
     });
 
     test("subscribe multiple actions", async () => {
-      const { room, storage } = await prepareStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number }>;
         child2: LiveObject<{ a: number }>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedObject("0:1", { a: 0 }, "root", "child"),
-          createSerializedObject("0:2", { a: 0 }, "root", "child2"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: { liveblocksType: "LiveObject", data: { a: 0 } },
+          child2: { liveblocksType: "LiveObject", data: { a: 0 } },
+        },
+      });
 
       const callback = vi.fn();
-
-      const root = storage.root;
 
       const unsubscribe = room.subscribe(root.get("child"), callback);
 
@@ -704,20 +793,22 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe", async () => {
-      const { room, storage } = await prepareStorageTest_legacy<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedObject("0:1", { a: 0 }, "root", "child"),
-          createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
-        ],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          child: {
+            liveblocksType: "LiveObject",
+            data: {
+              a: 0,
+              subchild: { liveblocksType: "LiveObject", data: { b: 0 } },
+            },
+          },
+        },
+      });
 
       const callback = vi.fn();
-
-      const root = storage.root;
 
       const unsubscribe = room.subscribe(root, callback, { isDeep: true });
 
@@ -1014,10 +1105,12 @@ describe("LiveObject", () => {
 
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
-      const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest_legacy<{
-          a: number;
-        }>([createSerializedRoot({ a: 0 })], 1);
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        a: number;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 0 },
+      });
 
       expectStorage({ a: 0 });
       root.set("a", 1);
