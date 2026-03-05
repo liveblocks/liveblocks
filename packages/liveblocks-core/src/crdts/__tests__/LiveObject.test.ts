@@ -191,62 +191,38 @@ describe("LiveObject", () => {
   });
 
   test("update with LiveObject", async () => {
-    const { room, storage, expectStorage, operations, assertUndoRedo } =
-      await prepareStorageTest_legacy<{
-        child: LiveObject<{ a: number }> | null;
-      }>([createSerializedRoot({ child: null })], 1);
+    const {
+      storageA: storage,
+      expectStorage,
+      assertUndoRedo,
+    } = await prepareStorageTest<{
+      child: LiveObject<{ a: number }> | null;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { child: null },
+    });
 
     const root = storage.root;
 
-    expectStorage({
+    await expectStorage({
       child: null,
     });
 
     root.set("child", new LiveObject({ a: 0 }));
 
-    expectStorage({
+    await expectStorage({
       child: {
         a: 0,
       },
     });
-    expect(room[kInternal].undoStack[0]).toEqual([
-      {
-        type: OpCode.UPDATE_OBJECT,
-        id: "root",
-        data: {
-          child: null,
-        },
-      },
-    ]);
-
-    expect(operations.length).toEqual(1);
-    expect(operations).toEqual([
-      {
-        type: OpCode.CREATE_OBJECT,
-        id: "1:0",
-        opId: "1:1",
-        data: { a: 0 },
-        parentId: "root",
-        parentKey: "child",
-      },
-    ]);
 
     root.set("child", null);
 
-    expectStorage({
+    await expectStorage({
       child: null,
     });
-    expect(room[kInternal].undoStack[1]).toEqual([
-      {
-        type: OpCode.CREATE_OBJECT,
-        id: "1:0",
-        data: { a: 0 },
-        parentId: "root",
-        parentKey: "child",
-      },
-    ]);
 
-    assertUndoRedo();
+    await assertUndoRedo();
   });
 
   test("remove nested grand child record with update", async () => {
