@@ -137,13 +137,16 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("push on empty list update", async () => {
-        const { rootA: root, expectUpdates, roomA: room } =
-          await prepareStorageUpdateTest<{
-            items: LiveList<string>;
-          }>({
-            liveblocksType: "LiveObject",
-            data: { items: { liveblocksType: "LiveList", data: [] } },
-          });
+        const {
+          rootA: root,
+          expectUpdates,
+          roomA: room,
+        } = await prepareStorageUpdateTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: { items: { liveblocksType: "LiveList", data: [] } },
+        });
 
         root.get("items").push("a");
         room.history.undo();
@@ -263,15 +266,18 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("insert at the middle update", async () => {
-        const { rootA: root, expectUpdates, roomA: room } =
-          await prepareStorageUpdateTest<{
-            items: LiveList<string>;
-          }>({
-            liveblocksType: "LiveObject",
-            data: {
-              items: { liveblocksType: "LiveList", data: ["A", "C"] },
-            },
-          });
+        const {
+          rootA: root,
+          expectUpdates,
+          roomA: room,
+        } = await prepareStorageUpdateTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "C"] },
+          },
+        });
 
         root.get("items").insert("B", 1);
         room.history.undo();
@@ -337,15 +343,18 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("delete first update", async () => {
-        const { rootA: root, expectUpdates, roomA: room } =
-          await prepareStorageUpdateTest<{
-            items: LiveList<string>;
-          }>({
-            liveblocksType: "LiveObject",
-            data: {
-              items: { liveblocksType: "LiveList", data: ["A"] },
-            },
-          });
+        const {
+          rootA: root,
+          expectUpdates,
+          roomA: room,
+        } = await prepareStorageUpdateTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A"] },
+          },
+        });
 
         root.get("items").delete(0);
         room.history.undo();
@@ -450,15 +459,18 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("move at the end update", async () => {
-        const { rootA: root, expectUpdates, roomA: room } =
-          await prepareStorageUpdateTest<{
-            items: LiveList<string>;
-          }>({
-            liveblocksType: "LiveObject",
-            data: {
-              items: { liveblocksType: "LiveList", data: ["A", "B"] },
-            },
-          });
+        const {
+          rootA: root,
+          expectUpdates,
+          roomA: room,
+        } = await prepareStorageUpdateTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B"] },
+          },
+        });
 
         root.get("items").move(0, 1);
         room.history.undo();
@@ -571,15 +583,18 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("clear updates", async () => {
-        const { rootA: root, expectUpdates, roomA: room } =
-          await prepareStorageUpdateTest<{
-            items: LiveList<string>;
-          }>({
-            liveblocksType: "LiveObject",
-            data: {
-              items: { liveblocksType: "LiveList", data: ["A", "B"] },
-            },
-          });
+        const {
+          rootA: root,
+          expectUpdates,
+          roomA: room,
+        } = await prepareStorageUpdateTest<{
+          items: LiveList<string>;
+        }>({
+          liveblocksType: "LiveObject",
+          data: {
+            items: { liveblocksType: "LiveList", data: ["A", "B"] },
+          },
+        });
 
         root.get("items").clear();
         room.history.undo();
@@ -638,13 +653,17 @@ describe("LiveList", () => {
 
   describe("batch", () => {
     test("batch multiple inserts", async () => {
-      const { roomA: room, storageA, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>({
-          liveblocksType: "LiveObject",
-          data: { items: { liveblocksType: "LiveList", data: [] } },
-        });
+      const {
+        roomA: room,
+        storageA,
+        expectStorage,
+        assertUndoRedo,
+      } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { items: { liveblocksType: "LiveList", data: [] } },
+      });
 
       const items = storageA.root.get("items");
 
@@ -1191,15 +1210,14 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>({
-          liveblocksType: "LiveObject",
-          data: {
-            items: { liveblocksType: "LiveList", data: ["a"] },
-          },
-        });
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: { liveblocksType: "LiveList", data: ["a"] },
+        },
+      });
 
       const callback = vi.fn();
       onTestFinished(room.events.storageBatch.subscribe(callback));
@@ -1227,15 +1245,14 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { room, root, expectStorage } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>({
-          liveblocksType: "LiveObject",
-          data: {
-            items: { liveblocksType: "LiveList", data: ["a"] },
-          },
-        });
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: { liveblocksType: "LiveList", data: ["a"] },
+        },
+      });
 
       const callback = vi.fn();
       onTestFinished(room.events.storageBatch.subscribe(callback));

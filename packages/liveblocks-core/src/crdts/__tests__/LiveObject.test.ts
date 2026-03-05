@@ -855,7 +855,9 @@ describe("LiveObject", () => {
 
       // Remote change via client B
       storageB.root.get("child").get("subchild").set("b", 1);
-      await vi.waitUntil(() => rootA.get("child").get("subchild").get("b") === 1);
+      await vi.waitUntil(
+        () => rootA.get("child").get("subchild").get("b") === 1
+      );
 
       unsubscribe();
 
@@ -908,7 +910,9 @@ describe("LiveObject", () => {
       // Remote changes via client B
       storageB.root.get("child").set("a", 1);
       storageB.root.get("child").get("subchild").set("b", 1);
-      await vi.waitUntil(() => rootA.get("child").get("subchild").get("b") === 1);
+      await vi.waitUntil(
+        () => rootA.get("child").get("subchild").get("b") === 1
+      );
 
       unsubscribe();
 

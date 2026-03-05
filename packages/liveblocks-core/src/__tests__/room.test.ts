@@ -47,7 +47,14 @@ import {
   SOCKET_SEQUENCE,
   SOCKET_THROWS,
 } from "./_behaviors";
-import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
+import { prepareIsolatedStorageTest } from "./_liveblocks";
+import type { JsonStorageUpdate } from "./_updatesUtils";
+import {
+  listUpdate,
+  listUpdateInsert,
+  listUpdateSet,
+  serializeUpdateToJson,
+} from "./_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -56,10 +63,9 @@ import {
   FIRST_POSITION,
   makeSyncSource,
   prepareDisconnectedStorageUpdateTest,
-  prepareIsolatedStorageTest,
+  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
   prepareRoomWithStorage_loadWithDelay,
-  prepareStorageTest,
-  prepareStorageUpdateTest,
+  prepareStorageTest as prepareStorageTest_legacy,
   serverMessage,
 } from "./_utils";
 import {
@@ -1098,13 +1104,17 @@ describe("room", () => {
   });
 
   test("pausing history twice is a no-op", async () => {
-    const { room, root } = await prepareDisconnectedStorageUpdateTest<{
+    const { room, root } = await prepareIsolatedStorageTest<{
       items: LiveList<LiveObject<Record<string, number>>>;
-    }>([
-      createSerializedRoot(),
-      createSerializedList("0:1", "root", "items"),
-      createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
-    ]);
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        items: {
+          liveblocksType: "LiveList",
+          data: [{ liveblocksType: "LiveObject", data: {} }],
+        },
+      },
+    });
 
     const items = root.get("items");
 
@@ -1342,14 +1352,17 @@ describe("room", () => {
   });
 
   test("canUndo / canRedo", async () => {
-    const { room, storage } = await prepareStorageTest<{
+    const { room, root } = await prepareIsolatedStorageTest<{
       a: number;
-    }>([createSerializedRoot({ a: 1 })], 1);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
 
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(false);
 
-    storage.root.set("a", 2);
+    root.set("a", 2);
 
     expect(room.history.canUndo()).toBe(true);
 
@@ -1359,16 +1372,19 @@ describe("room", () => {
   });
 
   test("clearing undo/redo stack", async () => {
-    const { room, storage } = await prepareStorageTest<{
+    const { room, root } = await prepareIsolatedStorageTest<{
       a: number;
-    }>([createSerializedRoot({ a: 1 })], 1);
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1 },
+    });
 
     expect(room.history.canUndo()).toBe(false);
     expect(room.history.canRedo()).toBe(false);
 
-    storage.root.set("a", 2);
-    storage.root.set("a", 3);
-    storage.root.set("a", 4);
+    root.set("a", 2);
+    root.set("a", 3);
+    root.set("a", 4);
     room.history.undo();
 
     expect(room.history.canUndo()).toBe(true);
@@ -1380,7 +1396,7 @@ describe("room", () => {
 
     room.history.undo(); // won't do anything now
 
-    expect(storage.root.toObject()).toEqual({ a: 3 });
+    expect(root.toObject()).toEqual({ a: 3 });
   });
 
   describe("subscription", () => {
@@ -1440,11 +1456,14 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest<{
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
         a: number;
-      }>([createSerializedRoot({ a: 1 })], 1);
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
 
-      storage.root.set("a", 2);
+      root.set("a", 2);
 
       // Batch without operations on storage or presence
       room.batch(() => {});
@@ -1457,14 +1476,16 @@ describe("room", () => {
     });
 
     test("batch storage with changes from server", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest<{
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
-      }>(
-        [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
-        1
-      );
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: { liveblocksType: "LiveList", data: [] },
+        },
+      });
 
-      const items = storage.root.get("items");
+      const items = root.get("items");
 
       room.batch(() => {
         items.push("A");
@@ -1500,7 +1521,7 @@ describe("room", () => {
         storage,
         expectStorage,
         refRoom: refRoom,
-      } = await prepareStorageTest<S, P, M, E>(
+      } = await prepareStorageTest_legacy<S, P, M, E>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1
       );
@@ -1548,21 +1569,33 @@ describe("room", () => {
     });
 
     test("nested storage updates", async () => {
-      const { room, root, expectUpdates } = await prepareStorageUpdateTest<{
+      const { room, root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ names: LiveList<string> }>>;
-      }>([
-        createSerializedRoot(),
-        createSerializedList("0:1", "root", "items"),
-        createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
-        createSerializedList("0:3", "0:2", "names"),
-      ]);
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: {
+            liveblocksType: "LiveList",
+            data: [
+              {
+                liveblocksType: "LiveObject",
+                data: {
+                  names: { liveblocksType: "LiveList", data: [] },
+                },
+              },
+            ],
+          },
+        },
+      });
 
+      const jsonUpdates: JsonStorageUpdate[][] = [];
       let receivedUpdates: StorageUpdate[] = [];
 
       onTestFinished(
-        room.events.storageBatch.subscribe(
-          (updates) => (receivedUpdates = updates)
-        )
+        room.events.storageBatch.subscribe((updates) => {
+          jsonUpdates.push(updates.map(serializeUpdateToJson));
+          receivedUpdates = updates;
+        })
       );
 
       const immutableState = root.toImmutable() as {
@@ -1576,7 +1609,7 @@ describe("room", () => {
         items.push(new LiveObject({ names: new LiveList(["James Doe"]) }));
       });
 
-      expectUpdates([
+      expect(jsonUpdates).toEqual([
         [
           listUpdate(
             [
@@ -1838,7 +1871,7 @@ describe("room", () => {
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
+        await prepareStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -1903,17 +1936,18 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { expectStorage, room, wss } = await prepareIsolatedStorageTest<{
-        items?: LiveList<string>;
-        items2?: LiveList<string>;
-      }>(
-        [
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-        ],
-        1
-      );
+      const { expectStorage, room, wss } =
+        await prepareIsolatedStorageTest_legacy<{
+          items?: LiveList<string>;
+          items2?: LiveList<string>;
+        }>(
+          [
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          ],
+          1
+        );
 
       expectStorage({ items: ["a"] });
 
@@ -1960,10 +1994,11 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { room, refRoom, reconnect, refWss } = await prepareStorageTest<
-        never,
-        { x: number }
-      >([createSerializedRoot()], 1);
+      const { room, refRoom, reconnect, refWss } =
+        await prepareStorageTest_legacy<never, { x: number }>(
+          [createSerializedRoot()],
+          1
+        );
 
       room.updatePresence({ x: 1 });
 
@@ -1995,7 +2030,7 @@ describe("room", () => {
 
     test("hasPendingStorageModifications", async () => {
       const { storage, expectStorage, room, refStorage, reconnect, wss } =
-        await prepareStorageTest<{ x: number }>(
+        await prepareStorageTest_legacy<{ x: number }>(
           [createSerializedRoot({ x: 0 })],
           1
         );
@@ -2592,7 +2627,7 @@ describe("room", () => {
 
   describe("initial storage", () => {
     test("initialize room with initial storage should send operation only once", async () => {
-      const { wss, expectStorage } = await prepareIsolatedStorageTest<{
+      const { wss, expectStorage } = await prepareIsolatedStorageTest_legacy<{
         items: LiveList<string>;
       }>([createSerializedRoot()], 1, { items: new LiveList([]) });
 
