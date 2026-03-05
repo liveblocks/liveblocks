@@ -161,7 +161,11 @@ components from
 
       import { useState } from "react";
       import { useThreads } from "@liveblocks/react/suspense";
-      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+      import {
+        Comment,
+        FloatingComposer,
+        FloatingThread,
+      } from "@liveblocks/react-ui";
 
       const TABLE_DATA = [
         { id: "1", name: "Laptop", price: 1000 },
@@ -226,7 +230,15 @@ components from
                               }}
                               autoFocus
                             >
-                              <button style={{ marginLeft: 16 }}>💬</button>
+                              <Comment.Avatar
+                                style={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "100%",
+                                  cursor: "pointer",
+                                }}
+                                userId={thread.comments[0]?.userId}
+                              />
                             </FloatingThread>
                           ) : (
                             <FloatingComposer
