@@ -1,0 +1,191 @@
+---
+meta:
+  title: "How to add users to Liveblocks presence components"
+  description:
+    "Learn how to add your user’s avatars and names to Liveblocks avatar stack
+    and cursors componentsusing the resolver functions."
+---
+
+After following the get started guide for presence components, you’ll notice
+that each user is currently “Anonymous”, and that there’s no way to mention or
+tag other users. To enable these features, we need to tell Liveblocks where to
+find your users’ information.
+
+<Figure>
+  <Image
+    src="/assets/presence/cursors.png"
+    alt="Cursors with resolved users"
+    width={1500}
+    height={900}
+  />
+</Figure>
+
+## What we’re learning
+
+In this guide we’ll be modifying
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+learning how to:
+
+- Authenticate your application with
+  [`authEndpoint`](/docs/api-reference/liveblocks-react#LiveblocksProviderAuthEndpoint)
+  and [`identifyUser`](/docs/api-reference/liveblocks-node#id-tokens).
+- Add names and avatars to threads and comments with
+  [`resolveUsers`](/docs/api-reference/liveblocks-react#resolveUsers).
+
+## Authenticate your application
+
+The first step is to find an
+[authentication guide for your framework](/docs/authentication) and authenticate
+your app, as this is necessary for adding users. Here’s an example using ID
+token authentication, our recommended method, with an email address as a user’s
+ID.
+
+```ts title="Metadata in ID tokens"
+const { status, body } = await liveblocks.identifyUser(
+  {
+    userId: "marc@example.com",
+
+    // Optional
+    // organizationId: "org-id",
+    // groupIds: ["group-id-1", "group-id-2"],
+  },
+  {
+    userInfo: {
+      // Optional, custom metadata
+      // ...
+    },
+  }
+);
+```
+
+## Resolving users
+
+To show each user’s name and avatar in the ready-made
+[`AvatarStack`](/docs/api-reference/liveblocks-react-ui#AvatarStack) and
+[`Cursors`](/docs/api-reference/liveblocks-react-ui#Cursors) components, we need
+to use
+[`resolveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-client#resolveUsers).
+
+<Figure>
+  <Image
+    src="/assets/presence/avatar-stack.png"
+    alt="Avatar stack with resolved users"
+    width={1500}
+    height={900}
+  />
+</Figure>
+
+<Steps>
+  <Step>
+    <StepTitle>Add the function to your LiveblocksProvider</StepTitle>
+    <StepContent>
+      The [`resolveUsers`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) function is passed as an option to
+      [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)—let’s add it. This function
+      provides you with `userIds`, an array of user IDs that have interacted with Comments.
+      These `userIds` match the IDs set when authenticating users in your app.
+
+      ```tsx highlight="2-8"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+
+          // Return a list of users
+          // ...
+        }}
+
+        // ...
+      />;
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Return your users</StepTitle>
+    <StepContent>
+      `resolveUsers` requires you to return a list of users in
+      the `UserMeta["info"]` format we set earlier. Remember
+      that _name_ and _avatar_ are required for the default components,
+      but you can also use any other metadata in your app.
+
+      ```tsx highlight="7-16"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // ["marc@example.com", ...]
+          console.log(userIds);
+
+          // Return a list of users
+          return [
+            {
+              name: "Marc",
+              avatar: "https://example.com/marc.png",
+
+              // Your custom metadata
+              // ...
+            },
+            // ...
+          ];
+        }}
+
+        // ...
+      />;
+      ```
+
+      We’re only returning one user here, but make sure to return an
+      array containing each user, in the same order you received the IDs.
+
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Real-world example</StepTitle>
+    <StepContent>
+      In your real application you’ll probably be getting users from your
+      API endpoint and database via `fetch`. This is how we’d recommend
+      building out this function.
+
+      ```tsx highlight="3-7"
+      <LiveblocksProvider
+        resolveUsers={async ({ userIds }) => {
+          // Get users from your back end
+          const users = await __fetchUsers__(userIds);
+
+          // Return a list of users
+          return users;
+        }}
+
+        // ...
+      />;
+      ```
+
+    </StepContent>
+
+  </Step>
+  <Step lastStep>
+    <StepTitle>Users are now visible</StepTitle>
+    <StepContent>
+      After adding this, you should now be able to see your users in threads!
+
+      <Figure>
+        <Image
+          src="/assets/presence/avatar-stack.png"
+          alt="Avatar stack with resolved users"
+          width={1500}
+          height={900}
+        />
+      </Figure>
+
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Next steps
+
+You’re now ready to start building your multiplayer Liveblocks application!
+Here’s where you can learn more:
+
+- [Overview](/docs/ready-made-features/multiplayer)
+- [API reference](/docs/api-reference/liveblocks-react)
+- [Examples](/examples/browse/comments)

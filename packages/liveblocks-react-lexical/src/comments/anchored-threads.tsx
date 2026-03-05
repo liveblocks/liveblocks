@@ -6,7 +6,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, useStableComponent } from "@liveblocks/react-ui/_private";
 import { $getNodeByKey } from "lexical";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import {
@@ -74,7 +74,7 @@ export function AnchoredThreads({
   ...props
 }: AnchoredThreadsProps) {
   const [editor] = useLexicalComposerContext();
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const activeThreads = useActiveThreads();

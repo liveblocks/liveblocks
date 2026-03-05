@@ -32,5 +32,9 @@ declare global {
       cursorX: AccurateCursorPositions["cursorX"];
       cursorY: AccurateCursorPositions["cursorY"];
     };
+    // Custom metadata set on comments, for useCreateComment, useEditComment, etc.
+    CommentMetadata: {
+      userAgent?: string;
+    };
   }
 }

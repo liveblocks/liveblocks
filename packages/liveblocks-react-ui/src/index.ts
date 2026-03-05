@@ -13,13 +13,28 @@ export type {
 export { AiChat } from "./components/AiChat";
 export type { AiToolIconProps, AiToolProps } from "./components/AiTool";
 export { AiTool } from "./components/AiTool";
+export type { AvatarStackProps } from "./components/AvatarStack";
+export { AvatarStack } from "./components/AvatarStack";
 export type {
+  CommentAuthorProps,
+  CommentAvatarProps,
+  CommentDateProps,
   CommentDropdownItemProps,
   CommentProps,
 } from "./components/Comment";
 export { Comment } from "./components/Comment";
+export type { CommentPinProps } from "./components/CommentPin";
+export { CommentPin } from "./components/CommentPin";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
+export type { CursorProps } from "./components/Cursor";
+export { Cursor } from "./components/Cursor";
+export type { CursorsProps } from "./components/Cursors";
+export { Cursors } from "./components/Cursors";
+export type { FloatingComposerProps } from "./components/FloatingComposer";
+export { FloatingComposer } from "./components/FloatingComposer";
+export type { FloatingThreadProps } from "./components/FloatingThread";
+export { FloatingThread } from "./components/FloatingThread";
 export type { HistoryVersionSummaryProps } from "./components/HistoryVersionSummary";
 export { HistoryVersionSummary } from "./components/HistoryVersionSummary";
 export type { HistoryVersionSummaryListProps } from "./components/HistoryVersionSummaryList";

@@ -1,4 +1,3 @@
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
   type Emoji as FrimousseEmoji,
   EmojiPicker as EmojiPickerPrimitive,
@@ -7,6 +6,7 @@ import {
   type EmojiPickerListRowProps,
   type Locale,
 } from "frimousse";
+import { Popover as PopoverPrimitive } from "radix-ui";
 import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
 import { forwardRef, useCallback, useState } from "react";
 
@@ -179,4 +179,4 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
   }
 );
 
-export { PopoverTrigger as EmojiPickerTrigger } from "@radix-ui/react-popover";
+export const EmojiPickerTrigger = PopoverPrimitive.Trigger;

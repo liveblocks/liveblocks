@@ -4,7 +4,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import { cn } from "@liveblocks/react-ui/_private";
+import { cn, useStableComponent } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,7 +51,7 @@ export function AnchoredThreads({
   editor,
   ...props
 }: AnchoredThreadsProps) {
-  const Thread = components?.Thread ?? DefaultThread;
+  const Thread = useStableComponent(components?.Thread, DefaultThread);
   const containerRef = useRef<HTMLDivElement>(null);
   const [orderedThreads, setOrderedThreads] = useState<
     { position: { from: number; to: number }; thread: ThreadData }[]
@@ -81,7 +81,14 @@ export function AnchoredThreads({
   // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
     const container = containerRef.current;
-    if (container === null || !editor || !editor.view) return;
+    if (
+      container === null ||
+      !editor ||
+      !editor.view ||
+      editor.view.isDestroyed
+    ) {
+      return;
+    }
 
     const activeIndex = orderedThreads.findIndex(
       ({ thread }) => thread.id === pluginState?.selectedThreadId
@@ -209,17 +216,15 @@ export function AnchoredThreads({
     >
       {orderedThreads.map(({ thread, position }) => {
         // In blocknote, it's possible for this to be undefined
-        if (!editor.view) {
+        if (!editor.view || editor.view.isDestroyed) {
           return null;
         }
         const coords = editor.view.coordsAtPos(
           Math.min(position.from, editor.state.doc.content.size - 1)
         );
         const rect = getRectFromCoords(coords);
-        let offset = 0;
-        if (editor.options.element instanceof HTMLElement) {
-          offset = editor.options.element.getBoundingClientRect().top;
-        }
+
+        const offset = editor.view.dom.getBoundingClientRect().top ?? 0;
 
         let top = rect.top - offset;
 

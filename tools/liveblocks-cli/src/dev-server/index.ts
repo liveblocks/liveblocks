@@ -174,118 +174,138 @@ const dev: SubCommand = {
       process.exit(1);
     }
 
-    const server = Bun.serve<SocketData>({
-      hostname,
-      port,
+    let server: Bun.Server<SocketData>;
 
-      async fetch(req, server) {
-        // WebSocket bypass - handle upgrades directly
-        if (req.headers.get("Upgrade") === "websocket") {
-          const authResult = authorizeWebSocket(req);
+    function createServer() {
+      return Bun.serve<SocketData>({
+        hostname,
+        port,
 
-          if (!authResult.ok) {
-            warn(authResult.xwarn, true);
-            return refuseSocketConnection(
-              server,
-              req,
-              CloseCode.NOT_ALLOWED,
-              "You have no access to this room"
-            );
+        async fetch(req, server) {
+          // WebSocket bypass - handle upgrades directly
+          if (req.headers.get("Upgrade") === "websocket") {
+            const authResult = authorizeWebSocket(req);
+
+            if (!authResult.ok) {
+              warn(authResult.xwarn, true);
+              return refuseSocketConnection(
+                server,
+                req,
+                CloseCode.NOT_ALLOWED,
+                "You have no access to this room"
+              );
+            }
+
+            const { roomId, ticketData } = authResult;
+
+            // Look up or create the room for the requested room ID
+            const room = RoomsDB.getOrCreate(roomId);
+            await room.load();
+
+            const ticket = await room.createTicket(ticketData);
+            const sessionKey = ticket.sessionKey;
+            const success = server.upgrade(req, {
+              data: { room, ticket, sessionKey },
+            });
+            if (success) {
+              // Bun automatically returns a 101 Switching Protocols
+              // if the upgrade succeeds
+              console.log(
+                `${green("101")} WS ${new URL(req.url).pathname}${dim(` - ${roomId}`)}`
+              );
+              return undefined;
+            }
+
+            return new Response("Could not upgrade to WebSocket", {
+              status: 426,
+            });
           }
 
-          const { roomId, ticketData } = authResult;
-
-          // Look up or create the room for the requested room ID
-          const room = RoomsDB.getOrCreate(roomId);
-          await room.load();
-
-          const ticket = await room.createTicket(ticketData);
-          const sessionKey = ticket.sessionKey;
-          const success = server.upgrade(req, {
-            data: { room, ticket, sessionKey },
-          });
-          if (success) {
-            // Bun automatically returns a 101 Switching Protocols
-            // if the upgrade succeeds
-            console.log(
-              `${green("101")} WS ${new URL(req.url).pathname}${dim(` - ${roomId}`)}`
-            );
-            return undefined;
+          // Force-reboot: drop all connections (clients see 1006) and restart
+          const url = new URL(req.url);
+          if (req.method === "POST" && url.pathname === "/crash") {
+            console.log(`${green("204")} POST /crash`);
+            setTimeout(() => void reboot(), 0);
+            return new Response(null, { status: 204 });
           }
 
-          return new Response("Could not upgrade to WebSocket", {
-            status: 426,
-          });
-        }
-
-        // Defer all other routing to ZenRouter
-        // TODO: Maybe port this logging to ZenRouter natively
-        const url = new URL(req.url);
-        const route = `${req.method} ${url.pathname}`;
-        const resp = await zen.fetch(req);
-        const status = resp.status;
-        const colorStatus =
-          status >= 500
-            ? red(String(status))
-            : status >= 400
-              ? yellow(String(status))
-              : green(String(status));
-        console.log(`${colorStatus} ${route}`);
-        const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
-        warn(warnMsg, !resp.ok);
-        return resp;
-      },
-
-      // Bun will call this if an error happens during the handling of an HTTP request
-      error(err): Response {
-        // YYY Define a lint rule that forbids the use of `console`, in favor of
-        // using `ctx.logger`
-        console.error(err);
-        return new Response("An unknown error occurred", { status: 500 });
-      },
-
-      websocket: {
-        // The socket is opened
-        async open(ws): Promise<void> {
-          const { refuseConnection, room, ticket } = ws.data;
-
-          // If this connection should be refused, close it immediately
-          if (refuseConnection) {
-            ws.close(refuseConnection.code, refuseConnection.message);
-            return;
-          }
-
-          if (room && ticket) {
-            await room.startBrowserSession(ticket, ws);
-          }
+          // Defer all other routing to ZenRouter
+          // TODO: Maybe port this logging to ZenRouter natively
+          const route = `${req.method} ${url.pathname}`;
+          const resp = await zen.fetch(req);
+          const status = resp.status;
+          const colorStatus =
+            status >= 500
+              ? red(String(status))
+              : status >= 400
+                ? yellow(String(status))
+                : green(String(status));
+          console.log(`${colorStatus} ${route}`);
+          const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
+          warn(warnMsg, !resp.ok);
+          return resp;
         },
 
-        // A message is received
-        async message(ws, data): Promise<void> {
-          const { room, sessionKey } = ws.data;
-          // Ignore messages for refused connections
-          if (room && sessionKey) {
-            await room.handleData(sessionKey, data);
-          }
+        // Bun will call this if an error happens during the handling of an HTTP request
+        error(err): Response {
+          // YYY Define a lint rule that forbids the use of `console`, in favor of
+          // using `ctx.logger`
+          console.error(err);
+          return new Response("An unknown error occurred", { status: 500 });
         },
 
-        // The socket is closed by the client side
-        close(ws, code, message): void {
-          const { room, sessionKey } = ws.data;
-          // Ignore close events for refused connections
-          if (room && sessionKey) {
-            room.endBrowserSession(sessionKey, code, message);
-          }
-        },
+        websocket: {
+          // The socket is opened
+          async open(ws): Promise<void> {
+            const { refuseConnection, room, ticket } = ws.data;
 
-        // The socket is ready to receive more data
-        // drain(ws): void {
-        //   // Will be invoked if a previous .send() message returned -1 (there
-        //   // was back pressure), but now (at a later moment) the socket is ready
-        //   // to receive more data, so we may want to re-attempt this.
-        // },
-      },
-    });
+            // If this connection should be refused, close it immediately
+            if (refuseConnection) {
+              ws.close(refuseConnection.code, refuseConnection.message);
+              return;
+            }
+
+            if (room && ticket) {
+              await room.startBrowserSession(ticket, ws);
+            }
+          },
+
+          // A message is received
+          async message(ws, data): Promise<void> {
+            const { room, sessionKey } = ws.data;
+            // Ignore messages for refused connections
+            if (room && sessionKey) {
+              await room.handleData(sessionKey, data);
+            }
+          },
+
+          // The socket is closed by the client side
+          close(ws, code, message): void {
+            const { room, sessionKey } = ws.data;
+            // Ignore close events for refused connections
+            if (room && sessionKey) {
+              room.endBrowserSession(sessionKey, code, message);
+            }
+          },
+
+          // The socket is ready to receive more data
+          // drain(ws): void {
+          //   // Will be invoked if a previous .send() message returned -1 (there
+          //   // was back pressure), but now (at a later moment) the socket is ready
+          //   // to receive more data, so we may want to re-attempt this.
+          // },
+        },
+      });
+    }
+
+    server = createServer();
+
+    async function reboot() {
+      RoomsDB.unloadAll();
+      await server.stop(true);
+      server = createServer();
+      console.log("Crash \uD83D\uDCA5");
+    }
 
     // -----------------------------------------------------------------------------
 
@@ -350,19 +370,37 @@ const dev: SubCommand = {
         dim("Press ") +
           bold("q") +
           dim(" to quit, ") +
+          bold("!") +
+          dim(" to crash, ") +
           bold("c") +
           dim(" to clear")
       );
+
+      let rebootTimer: ReturnType<typeof setTimeout> | null = null;
 
       process.stdin.setRawMode?.(true);
       process.stdin.resume();
       process.stdin.on("data", (data: Buffer) => {
         const ch = data.toString();
         if (ch === "q" || ch === "\x03" /* Ctrl-C */) {
-          void server.stop().then(() => {
+          void server.stop(true).then(() => {
             RoomsDB.cleanup();
             process.exit(0);
           });
+        } else if (ch === "!") {
+          if (rebootTimer !== null) {
+            clearTimeout(rebootTimer);
+            rebootTimer = null;
+            void reboot();
+          } else {
+            console.log(
+              "Simulating crash in 2.5s... (press ! again to crash now)"
+            );
+            rebootTimer = setTimeout(() => {
+              rebootTimer = null;
+              void reboot();
+            }, 2500);
+          }
         } else if (ch === "c") {
           console.clear();
         } else if (ch === "p") {
