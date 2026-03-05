@@ -24,7 +24,7 @@ import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
-import { enterAndConnect, initRoom, waitFor } from "./_liveblocks";
+import { enterConnectAndGetStorage, initRoom, waitFor } from "./_liveblocks";
 
 /**
  * Sets up two real clients (A and B) connected to the same room via the dev
@@ -46,18 +46,18 @@ import { enterAndConnect, initRoom, waitFor } from "./_liveblocks";
  * - `expectStorage(data)` — lighter variant that only checks storage equality
  *   across both clients (no node count or state mirror checks).
  */
-export async function prepareStorageImmutableTest<
-  S extends LsonObject,
->(initialStorage: PlainLsonObject) {
+export async function prepareStorageImmutableTest<S extends LsonObject>(
+  initialStorage: PlainLsonObject
+) {
   const roomId = await initRoom(initialStorage);
 
-  const clientA = await enterAndConnect<S>(roomId);
-  const clientB = await enterAndConnect<S>(roomId);
-
-  const [storageA, storageB] = await Promise.all([
-    clientA.room.getStorage(),
-    clientB.room.getStorage(),
+  const [clientA, clientB] = await Promise.all([
+    enterConnectAndGetStorage<S>(roomId),
+    enterConnectAndGetStorage<S>(roomId),
   ]);
+
+  const storageA = clientA.storage;
+  const storageB = clientB.storage;
 
   // Wait for both clients to sync initial storage
   await waitFor(() => {
@@ -78,10 +78,7 @@ export async function prepareStorageImmutableTest<
     })
   );
 
-  async function expectStorageAndState(
-    data: ToJson<S>,
-    itemsCount?: number
-  ) {
+  async function expectStorageAndState(data: ToJson<S>, itemsCount?: number) {
     expect(lsonToJson(storageA.root)).toEqual(data);
 
     await waitFor(() => {

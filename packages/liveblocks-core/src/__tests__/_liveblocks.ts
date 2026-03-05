@@ -126,6 +126,19 @@ export async function enterAndConnect<S extends LsonObject>(
 }
 
 /**
+ * Like enterAndConnect, but also calls getStorage() before returning.
+ * Useful for parallelizing connection + storage fetch across multiple clients.
+ */
+export async function enterConnectAndGetStorage<S extends LsonObject>(
+  roomId: string,
+  opts?: { permissions?: string[] }
+) {
+  const { room, leave } = await enterAndConnect<S>(roomId, opts);
+  const storage = await room.getStorage();
+  return { room, leave, storage };
+}
+
+/**
  * Atomically replaces a room's storage on the dev server and disconnects all
  * clients, forcing them to reconnect and reconcile with the new storage.
  *
@@ -180,13 +193,13 @@ export async function prepareStorageTest<S extends LsonObject>(
 ) {
   const roomId = await initRoom(initialStorage);
 
-  const clientA = await enterAndConnect<S>(roomId);
-  const clientB = await enterAndConnect<S>(roomId);
-
-  const [storageA, storageB] = await Promise.all([
-    clientA.room.getStorage(),
-    clientB.room.getStorage(),
+  const [clientA, clientB] = await Promise.all([
+    enterConnectAndGetStorage<S>(roomId),
+    enterConnectAndGetStorage<S>(roomId),
   ]);
+
+  const storageA = clientA.storage;
+  const storageB = clientB.storage;
 
   // Wait for both clients to have synced initial storage
   await waitFor(() => {
@@ -283,10 +296,9 @@ export async function prepareIsolatedStorageTest<S extends LsonObject>(
     ? await initRoom(initialStorage)
     : randomRoomId();
 
-  const { room } = await enterAndConnect<S>(roomId, {
+  const { room, storage } = await enterConnectAndGetStorage<S>(roomId, {
     permissions: opts?.permissions,
   });
-  const storage = await room.getStorage();
 
   function expectStorage(data: ToImmutable<S>) {
     expect(storage.root.toImmutable()).toEqual(data);
@@ -313,13 +325,13 @@ export async function prepareStorageUpdateTest<S extends LsonObject>(
 ) {
   const roomId = await initRoom(initialStorage);
 
-  const clientA = await enterAndConnect<S>(roomId);
-  const clientB = await enterAndConnect<S>(roomId);
-
-  const [storageA, storageB] = await Promise.all([
-    clientA.room.getStorage(),
-    clientB.room.getStorage(),
+  const [clientA, clientB] = await Promise.all([
+    enterConnectAndGetStorage<S>(roomId),
+    enterConnectAndGetStorage<S>(roomId),
   ]);
+
+  const storageA = clientA.storage;
+  const storageB = clientB.storage;
 
   // Wait for both clients to have synced initial storage
   await waitFor(() => {
