@@ -527,43 +527,6 @@ export async function prepareStorageUpdateTest<
   };
 }
 
-/**
- * Create a room, join with the client but sync local storage changes with the server
- */
-export async function prepareDisconnectedStorageUpdateTest<
-  S extends LsonObject,
-  P extends JsonObject = never,
-  U extends BaseUserMeta = never,
-  E extends Json = never,
-  TM extends BaseMetadata = never,
-  CM extends BaseMetadata = never,
->(items: StorageNode[]) {
-  const { storage, room } = await prepareRoomWithStorage<P, S, U, E, TM, CM>(
-    items,
-    -1
-  );
-
-  const receivedUpdates: JsonStorageUpdate[][] = [];
-
-  onTestFinished(
-    room.subscribe(
-      storage.root,
-      (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
-      { isDeep: true }
-    )
-  );
-
-  function expectUpdates(updates: JsonStorageUpdate[][]) {
-    expect(receivedUpdates).toEqual(updates);
-  }
-
-  return {
-    room,
-    root: storage.root,
-    expectUpdates,
-  };
-}
-
 export function replaceRemoteStorageAndReconnect(
   wss: MockWebSocketServer,
   nextStorageItems: StorageNode[]

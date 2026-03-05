@@ -62,7 +62,6 @@ import {
   createSerializedRoot,
   FIRST_POSITION,
   makeSyncSource,
-  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
   prepareRoomWithStorage_loadWithDelay,
   prepareStorageTest as prepareStorageTest_legacy,
@@ -1142,14 +1141,26 @@ describe("room", () => {
   });
 
   test("undo redo batch", async () => {
-    const { room, root, expectUpdates } =
-      await prepareDisconnectedStorageUpdateTest<{
-        items: LiveList<LiveObject<Record<string, number>>>;
-      }>([
-        createSerializedRoot(),
-        createSerializedList("0:1", "root", "items"),
-        createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
-      ]);
+    const { room, root } = await prepareIsolatedStorageTest<{
+      items: LiveList<LiveObject<Record<string, number>>>;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        items: {
+          liveblocksType: "LiveList",
+          data: [{ liveblocksType: "LiveObject", data: {} }],
+        },
+      },
+    });
+
+    const receivedUpdates: JsonStorageUpdate[][] = [];
+    onTestFinished(
+      room.subscribe(
+        root,
+        (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+        { isDeep: true }
+      )
+    );
 
     const items = root.get("items");
     room.batch(() => {
@@ -1164,7 +1175,7 @@ describe("room", () => {
     room.history.redo();
 
     expect(items.toImmutable()).toEqual([{ a: 2 }]);
-    expectUpdates([
+    expect(receivedUpdates).toEqual([
       [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
       [listUpdate([{}], [listUpdateSet(0, {})])],
       [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],

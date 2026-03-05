@@ -1,16 +1,27 @@
-import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  onTestFinished,
+  test,
+  vi,
+} from "vitest";
 
 import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceStorageAndReconnectDevServer,
 } from "../../__tests__/_liveblocks";
-import { objectUpdate } from "../../__tests__/_updatesUtils";
+import {
+  type JsonStorageUpdate,
+  objectUpdate,
+  serializeUpdateToJson,
+} from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
   createSerializedRoot,
-  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
 } from "../../__tests__/_utils";
 import { kInternal } from "../../internal";
@@ -460,13 +471,26 @@ describe("LiveObject", () => {
 
   describe("acknowledge mechanism", () => {
     test("should not ignore history updates if the current op has not been acknowledged", async () => {
-      const { room, root, expectUpdates } =
-        await prepareDisconnectedStorageUpdateTest<{
-          items: LiveObject<{ b?: string; a?: string }>;
-        }>([
-          createSerializedRoot(),
-          createSerializedObject("0:1", { a: "initial" }, "root", "items"),
-        ]);
+      const { room, root } = await prepareIsolatedStorageTest<{
+        items: LiveObject<{ b?: string; a?: string }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          items: {
+            liveblocksType: "LiveObject",
+            data: { a: "initial" },
+          },
+        },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
 
       const items = root.get("items");
       room.batch(() => {
@@ -475,7 +499,7 @@ describe("LiveObject", () => {
       });
 
       expect(items.toObject()).toEqual({ a: "A", b: "B" });
-      expectUpdates([
+      expect(receivedUpdates).toEqual([
         [
           objectUpdate(
             { a: "A", b: "B" },
@@ -487,7 +511,7 @@ describe("LiveObject", () => {
       room.history.undo();
 
       expect(items.toObject()).toEqual({ a: "initial" });
-      expectUpdates([
+      expect(receivedUpdates).toEqual([
         [
           objectUpdate(
             { a: "A", b: "B" },
