@@ -6,8 +6,8 @@ import {
   createSerializedObject,
   createSerializedRoot,
   prepareDisconnectedStorageUpdateTest,
-  prepareIsolatedStorageTest,
-  prepareStorageTest,
+  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareStorageTest as prepareStorageTest_legacy,
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
@@ -26,7 +26,7 @@ describe("LiveObject", () => {
     });
 
     test("should be the associated room id if attached", async () => {
-      const { root } = await prepareIsolatedStorageTest(
+      const { root } = await prepareIsolatedStorageTest_legacy(
         [createSerializedRoot()],
         1
       );
@@ -35,7 +35,7 @@ describe("LiveObject", () => {
     });
 
     test("should be null after being detached", async () => {
-      const { root } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest_legacy<{
         child: LiveObject<{ a: number }>;
       }>(
         [
@@ -56,9 +56,8 @@ describe("LiveObject", () => {
   });
 
   test("update non existing property", async () => {
-    const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedRoot()]
-    );
+    const { storage, expectStorage, assertUndoRedo } =
+      await prepareStorageTest_legacy([createSerializedRoot()]);
 
     expectStorage({});
 
@@ -71,9 +70,8 @@ describe("LiveObject", () => {
   });
 
   test("update non existing property with null", async () => {
-    const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedRoot()]
-    );
+    const { storage, expectStorage, assertUndoRedo } =
+      await prepareStorageTest_legacy([createSerializedRoot()]);
 
     expectStorage({});
 
@@ -86,7 +84,7 @@ describe("LiveObject", () => {
   });
 
   test("update throws on read-only", async () => {
-    const { storage } = await prepareStorageTest(
+    const { storage } = await prepareStorageTest_legacy(
       [createSerializedRoot({ a: 0 })],
       1,
       [Permission.Read, Permission.PresenceWrite]
@@ -98,9 +96,8 @@ describe("LiveObject", () => {
   });
 
   test("update existing property", async () => {
-    const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedRoot({ a: 0 })]
-    );
+    const { storage, expectStorage, assertUndoRedo } =
+      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
 
     expectStorage({ a: 0 });
 
@@ -113,9 +110,8 @@ describe("LiveObject", () => {
   });
 
   test("update existing property with null", async () => {
-    const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedRoot({ a: 0 })]
-    );
+    const { storage, expectStorage, assertUndoRedo } =
+      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
 
     expectStorage({ a: 0 });
 
@@ -128,9 +124,8 @@ describe("LiveObject", () => {
   });
 
   test("update root", async () => {
-    const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
-      [createSerializedRoot({ a: 0 })]
-    );
+    const { storage, expectStorage, assertUndoRedo } =
+      await prepareStorageTest_legacy([createSerializedRoot({ a: 0 })]);
 
     expectStorage({
       a: 0,
@@ -151,10 +146,11 @@ describe("LiveObject", () => {
   });
 
   test("set throws on read-only", async () => {
-    const { storage } = await prepareStorageTest([createSerializedRoot()], 1, [
-      Permission.Read,
-      Permission.PresenceWrite,
-    ]);
+    const { storage } = await prepareStorageTest_legacy(
+      [createSerializedRoot()],
+      1,
+      [Permission.Read, Permission.PresenceWrite]
+    );
 
     expect(() => storage.root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -163,10 +159,9 @@ describe("LiveObject", () => {
 
   test("update with LiveObject", async () => {
     const { room, storage, expectStorage, operations, assertUndoRedo } =
-      await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
-        [createSerializedRoot({ child: null })],
-        1
-      );
+      await prepareStorageTest_legacy<{
+        child: LiveObject<{ a: number }> | null;
+      }>([createSerializedRoot({ child: null })], 1);
 
     const root = storage.root;
 
@@ -223,7 +218,7 @@ describe("LiveObject", () => {
 
   test("remove nested grand child record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         a: number;
         child: LiveObject<{
           b: number;
@@ -258,7 +253,7 @@ describe("LiveObject", () => {
 
   test("remove nested child record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         a: number;
         child: LiveObject<{ b: number }> | null;
       }>([
@@ -286,7 +281,7 @@ describe("LiveObject", () => {
 
   test("add nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest([createSerializedRoot()], 1);
+      await prepareStorageTest_legacy([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -307,7 +302,7 @@ describe("LiveObject", () => {
 
   test("replace nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest([createSerializedRoot()], 1);
+      await prepareStorageTest_legacy([createSerializedRoot()], 1);
 
     expectStorage({});
 
@@ -338,7 +333,7 @@ describe("LiveObject", () => {
 
   test("update nested record", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         a: number;
         child: LiveObject<{ b: number }>;
       }>([
@@ -369,7 +364,7 @@ describe("LiveObject", () => {
 
   test("update deeply nested record", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         a: number;
         child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
       }>([
@@ -459,7 +454,7 @@ describe("LiveObject", () => {
     describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
         const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ a: number }>(
+          await prepareIsolatedStorageTest_legacy<{ a: number }>(
             [createSerializedRoot({ a: 0 })],
             1
           );
@@ -483,7 +478,7 @@ describe("LiveObject", () => {
 
       test("when value is a LiveObject", async () => {
         const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{
+          await prepareIsolatedStorageTest_legacy<{
             a: LiveObject<{ subA: number }>;
           }>(
             [
@@ -514,7 +509,7 @@ describe("LiveObject", () => {
 
       test("when value is a LiveList with LiveObjects", async () => {
         const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{
+          await prepareIsolatedStorageTest_legacy<{
             a: LiveList<LiveObject<{ b: number }>>;
           }>(
             [createSerializedRoot(), createSerializedList("0:1", "root", "a")],
@@ -545,7 +540,7 @@ describe("LiveObject", () => {
 
   describe("delete", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         child: LiveObject<{ a: number }>;
       }>(
         [
@@ -569,7 +564,7 @@ describe("LiveObject", () => {
 
     test("should delete property from the object", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           a?: number;
         }>([createSerializedRoot({ a: 0 })]);
       expectStorage({ a: 0 });
@@ -582,7 +577,7 @@ describe("LiveObject", () => {
 
     test("should delete nested crdt", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           child?: LiveObject<{ a: number }>;
         }>([
           createSerializedRoot(),
@@ -598,7 +593,7 @@ describe("LiveObject", () => {
     });
 
     test("should not notify if property does not exist", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest_legacy<{
         a?: number;
       }>([createSerializedRoot()]);
 
@@ -611,7 +606,7 @@ describe("LiveObject", () => {
     });
 
     test("should notify if property has been deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest_legacy<{
         a?: number;
       }>([createSerializedRoot({ a: 1 })]);
 
@@ -627,7 +622,7 @@ describe("LiveObject", () => {
   describe("applyDeleteObjectKey", () => {
     test("should not notify if property does not exist", async () => {
       const { room, root, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ a?: number }>([
+        await prepareIsolatedStorageTest_legacy<{ a?: number }>([
           createSerializedRoot(),
         ]);
 
@@ -643,7 +638,7 @@ describe("LiveObject", () => {
 
     test("should notify if property has been deleted", async () => {
       const { room, root, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ a?: number }>([
+        await prepareIsolatedStorageTest_legacy<{ a?: number }>([
           createSerializedRoot({ a: 1 }),
         ]);
 
@@ -660,7 +655,7 @@ describe("LiveObject", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { room, storage } = await prepareStorageTest<{ a: number }>(
+      const { room, storage } = await prepareStorageTest_legacy<{ a: number }>(
         [createSerializedRoot({ a: 0 })],
         1
       );
@@ -678,7 +673,7 @@ describe("LiveObject", () => {
     });
 
     test("subscribe multiple actions", async () => {
-      const { room, storage } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest_legacy<{
         child: LiveObject<{ a: number }>;
         child2: LiveObject<{ a: number }>;
       }>(
@@ -709,7 +704,7 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe", async () => {
-      const { room, storage } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest_legacy<{
         child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
       }>(
         [
@@ -752,7 +747,7 @@ describe("LiveObject", () => {
 
     test("deep subscribe remote operation", async () => {
       const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           child: LiveObject<{
             a: number;
             subchild: LiveObject<{ b: number }>;
@@ -805,7 +800,7 @@ describe("LiveObject", () => {
 
     test("subscribe subchild remote operation", async () => {
       const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           child: LiveObject<{
             a: number;
             subchild: LiveObject<{ b: number }>;
@@ -850,7 +845,7 @@ describe("LiveObject", () => {
 
     test("deep subscribe remote and local operation - delete object key", async () => {
       const { room, storage, applyRemoteOperations } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           child: LiveObject<{ a?: number; b?: number }>;
         }>(
           [
@@ -901,7 +896,7 @@ describe("LiveObject", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           obj: LiveObject<{ a: number }>;
         }>(
           [
@@ -954,7 +949,7 @@ describe("LiveObject", () => {
 
     test("LiveObject updated nested", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
         }>(
           [
@@ -1019,9 +1014,10 @@ describe("LiveObject", () => {
 
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
-      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
-        a: number;
-      }>([createSerializedRoot({ a: 0 })], 1);
+      const { room, root, expectStorage } =
+        await prepareIsolatedStorageTest_legacy<{
+          a: number;
+        }>([createSerializedRoot({ a: 0 })], 1);
 
       expectStorage({ a: 0 });
       root.set("a", 1);
@@ -1041,7 +1037,7 @@ describe("LiveObject", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest_legacy<{
         obj: LiveObject<{
           a: LiveObject<{ subA: number }>;
           b: LiveObject<{ subA: number }>;

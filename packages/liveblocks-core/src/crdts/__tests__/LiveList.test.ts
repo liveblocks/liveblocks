@@ -14,9 +14,9 @@ import {
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
-  prepareIsolatedStorageTest,
-  prepareStorageTest,
-  prepareStorageUpdateTest,
+  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareStorageTest as prepareStorageTest_legacy,
+  prepareStorageUpdateTest as prepareStorageUpdateTest_legacy,
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
@@ -77,7 +77,7 @@ describe("LiveList", () => {
 
   describe("deserialization", () => {
     test("create document with list in root", async () => {
-      const { expectStorage } = await prepareIsolatedStorageTest<{
+      const { expectStorage } = await prepareIsolatedStorageTest_legacy<{
         items: LiveList<never>;
       }>([
         createSerializedRoot(),
@@ -90,7 +90,7 @@ describe("LiveList", () => {
     });
 
     test("init list with items", async () => {
-      const { expectStorage } = await prepareIsolatedStorageTest<{
+      const { expectStorage } = await prepareIsolatedStorageTest_legacy<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
         createSerializedRoot(),
@@ -108,7 +108,7 @@ describe("LiveList", () => {
 
   describe("push", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
@@ -126,12 +126,13 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("push on empty list update", async () => {
-        const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-        ]);
+        const { root, expectUpdates, room } =
+          await prepareStorageUpdateTest_legacy<{
+            items: LiveList<string>;
+          }>([
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+          ]);
 
         root.get("items").push("a");
         room.history.undo();
@@ -147,7 +148,7 @@ describe("LiveList", () => {
 
     test("push LiveObject on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
@@ -175,7 +176,7 @@ describe("LiveList", () => {
 
     test("push number on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<number>;
         }>(
           [
@@ -198,7 +199,7 @@ describe("LiveList", () => {
 
     test("push LiveMap on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<LiveMap<string, number>>;
         }>(
           [
@@ -221,7 +222,7 @@ describe("LiveList", () => {
     });
 
     test("push already attached LiveObject should throw", async () => {
-      const { root } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest_legacy<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
@@ -239,7 +240,7 @@ describe("LiveList", () => {
 
   describe("insert", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
@@ -257,14 +258,15 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("insert at the middle update", async () => {
-        const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
-        ]);
+        const { root, expectUpdates, room } =
+          await prepareStorageUpdateTest_legacy<{
+            items: LiveList<string>;
+          }>([
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
+          ]);
 
         root.get("items").insert("B", 1);
         room.history.undo();
@@ -280,7 +282,7 @@ describe("LiveList", () => {
 
     test("insert LiveObject at position 0", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
@@ -308,7 +310,7 @@ describe("LiveList", () => {
 
   describe("delete", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
@@ -326,13 +328,14 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("delete first update", async () => {
-        const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-        ]);
+        const { root, expectUpdates, room } =
+          await prepareStorageUpdateTest_legacy<{
+            items: LiveList<string>;
+          }>([
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          ]);
 
         root.get("items").delete(0);
         room.history.undo();
@@ -348,7 +351,7 @@ describe("LiveList", () => {
 
     test("delete first item", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>([
           createSerializedRoot(),
@@ -375,7 +378,7 @@ describe("LiveList", () => {
 
     test("delete should remove descendants", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
         }>([
           createSerializedRoot(),
@@ -403,7 +406,7 @@ describe("LiveList", () => {
 
   describe("move", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
@@ -421,14 +424,15 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("move at the end update", async () => {
-        const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-        ]);
+        const { root, expectUpdates, room } =
+          await prepareStorageUpdateTest_legacy<{
+            items: LiveList<string>;
+          }>([
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          ]);
 
         root.get("items").move(0, 1);
         room.history.undo();
@@ -444,7 +448,7 @@ describe("LiveList", () => {
 
     test("move after current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>([
           createSerializedRoot(),
@@ -469,7 +473,7 @@ describe("LiveList", () => {
 
     test("move before current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -498,7 +502,7 @@ describe("LiveList", () => {
 
     test("move at the end of the list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>([
           createSerializedRoot(),
@@ -526,7 +530,9 @@ describe("LiveList", () => {
 
   describe("clear", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+      const { storage } = await prepareStorageTest_legacy<{
+        items: LiveList<string>;
+      }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
@@ -542,14 +548,15 @@ describe("LiveList", () => {
 
     describe("updates", () => {
       test("clear updates", async () => {
-        const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedRoot(),
-          createSerializedList("0:1", "root", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-        ]);
+        const { root, expectUpdates, room } =
+          await prepareStorageUpdateTest_legacy<{
+            items: LiveList<string>;
+          }>([
+            createSerializedRoot(),
+            createSerializedList("0:1", "root", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          ]);
 
         root.get("items").clear();
         room.history.undo();
@@ -581,7 +588,7 @@ describe("LiveList", () => {
 
     test("clear should delete all items", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -613,7 +620,7 @@ describe("LiveList", () => {
   describe("batch", () => {
     test("batch multiple inserts", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -643,7 +650,9 @@ describe("LiveList", () => {
 
   describe("set", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+      const { storage } = await prepareStorageTest_legacy<{
+        items: LiveList<string>;
+      }>(
         [createSerializedRoot(), createSerializedList("0:1", "root", "items")],
         1,
         [Permission.Read, Permission.PresenceWrite]
@@ -675,7 +684,7 @@ describe("LiveList", () => {
 
     test("set register", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -704,7 +713,7 @@ describe("LiveList", () => {
 
     test("set nested object", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           items: LiveList<LiveObject<{ a: number }>>;
         }>(
           [
@@ -730,7 +739,7 @@ describe("LiveList", () => {
   describe("conflict", () => {
     test("list conflicts", async () => {
       const { root, expectStorage, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -773,7 +782,7 @@ describe("LiveList", () => {
 
     test("list conflicts 2", async () => {
       const { root, applyRemoteOperations, expectStorage } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -843,7 +852,7 @@ describe("LiveList", () => {
 
     test("list conflicts with offline", async () => {
       const { room, root, expectStorage, applyRemoteOperations, wss } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -887,7 +896,7 @@ describe("LiveList", () => {
 
     test("list conflicts with undo redo and remote change", async () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -931,7 +940,7 @@ describe("LiveList", () => {
 
     test("list conflicts - move", async () => {
       const { root, expectStorage, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:1", "root", "items"),
@@ -985,7 +994,7 @@ describe("LiveList", () => {
 
     test("list conflicts - ack has different position that local item", async () => {
       const { root, expectStorage, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -1059,7 +1068,7 @@ describe("LiveList", () => {
 
     test("list conflicts - ack has different position that local and ack position is used", async () => {
       const { root, expectStorage, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -1115,7 +1124,7 @@ describe("LiveList", () => {
     // items from implicitlyDeletedItems, otherwise subscriptions won't fire.
     test("restoring item from implicitlyDeletedItems triggers subscription", async () => {
       const { room, root, expectStorage, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
           [
             createSerializedRoot(),
             createSerializedList("0:0", "root", "items"),
@@ -1166,7 +1175,7 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [
@@ -1204,7 +1213,7 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { room, storage, expectStorage } = await prepareStorageTest<{
+      const { room, storage, expectStorage } = await prepareStorageTest_legacy<{
         items: LiveList<string>;
       }>(
         [
@@ -1235,7 +1244,7 @@ describe("LiveList", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("register added to list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -1317,7 +1326,7 @@ describe("LiveList", () => {
 
     test("register moved in list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -1388,7 +1397,7 @@ describe("LiveList", () => {
 
     test("register deleted from list", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           items: LiveList<string>;
         }>(
           [
@@ -1451,7 +1460,7 @@ describe("LiveList", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest_legacy<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
@@ -1489,7 +1498,7 @@ describe("LiveList", () => {
     describe("apply CreateRegister", () => {
       test('with intent "set" should replace existing item', async () => {
         const { expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -1520,7 +1529,7 @@ describe("LiveList", () => {
 
       test('with intent "set" should notify with a "set" update', async () => {
         const { room, root, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -1556,7 +1565,7 @@ describe("LiveList", () => {
 
       test('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -1595,7 +1604,7 @@ describe("LiveList", () => {
 
       test('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
         const { room, root, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:0", "root", "items"),
@@ -1632,7 +1641,7 @@ describe("LiveList", () => {
 
       test("on existing position should give the right update", async () => {
         const { room, root, expectStorage, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          await prepareIsolatedStorageTest_legacy<{ items: LiveList<string> }>(
             [
               createSerializedRoot(),
               createSerializedList("0:1", "root", "items"),

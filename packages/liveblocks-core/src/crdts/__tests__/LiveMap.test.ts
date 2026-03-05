@@ -6,8 +6,8 @@ import {
   createSerializedObject,
   createSerializedRegister,
   createSerializedRoot,
-  prepareIsolatedStorageTest,
-  prepareStorageTest,
+  prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
+  prepareStorageTest as prepareStorageTest_legacy,
   replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
 import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
@@ -98,7 +98,7 @@ describe("LiveMap", () => {
   });
 
   test("create document with map in root", async () => {
-    const { storage, expectStorage } = await prepareStorageTest<{
+    const { storage, expectStorage } = await prepareStorageTest_legacy<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
 
@@ -109,7 +109,7 @@ describe("LiveMap", () => {
   });
 
   test("set throws on read-only", async () => {
-    const { storage } = await prepareStorageTest<{
+    const { storage } = await prepareStorageTest_legacy<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")], 1, [
       Permission.Read,
@@ -123,7 +123,7 @@ describe("LiveMap", () => {
   });
 
   test("init map with items", async () => {
-    const { storage, expectStorage } = await prepareStorageTest<{
+    const { storage, expectStorage } = await prepareStorageTest_legacy<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
       createSerializedRoot(),
@@ -155,7 +155,7 @@ describe("LiveMap", () => {
 
   test("map.set object", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map: LiveMap<string, number>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -194,7 +194,7 @@ describe("LiveMap", () => {
 
   describe("delete", () => {
     test("throws on read-only", async () => {
-      const { storage } = await prepareStorageTest<{
+      const { storage } = await prepareStorageTest_legacy<{
         map: LiveMap<string, number>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -210,7 +210,7 @@ describe("LiveMap", () => {
 
     test("should delete LiveObject", async () => {
       const { storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           map: LiveMap<string, number>;
         }>([
           createSerializedRoot(),
@@ -254,7 +254,7 @@ describe("LiveMap", () => {
 
     test("should remove nested data structure from cache", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{
+        await prepareStorageTest_legacy<{
           map: LiveMap<string, LiveObject<{ a: number }>>;
         }>(
           [
@@ -285,7 +285,9 @@ describe("LiveMap", () => {
 
     test("should delete live list", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
-        await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
+        await prepareStorageTest_legacy<{
+          map: LiveMap<string, LiveList<number>>;
+        }>(
           [
             createSerializedRoot(),
             createSerializedMap("0:1", "root", "map"),
@@ -315,7 +317,7 @@ describe("LiveMap", () => {
 
     // https://github.com/liveblocks/liveblocks/issues/95
     test("should have deleted key when subscriber is called", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest_legacy<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -339,7 +341,7 @@ describe("LiveMap", () => {
     });
 
     test("should call subscribe when key is deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest_legacy<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -364,7 +366,7 @@ describe("LiveMap", () => {
     });
 
     test("should not call subscribe when key is not deleted", async () => {
-      const { room, root } = await prepareIsolatedStorageTest<{
+      const { room, root } = await prepareIsolatedStorageTest_legacy<{
         map: LiveMap<string, string>;
       }>(
         [
@@ -390,7 +392,7 @@ describe("LiveMap", () => {
 
   test("map.set live object", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -413,7 +415,7 @@ describe("LiveMap", () => {
   });
 
   test("map.set already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest<{
+    const { storage } = await prepareStorageTest_legacy<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([createSerializedRoot(), createSerializedMap("0:1", "root", "map")]);
 
@@ -427,7 +429,7 @@ describe("LiveMap", () => {
   });
 
   test("new Map with already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest<{
+    const { storage } = await prepareStorageTest_legacy<{
       child: LiveObject<{ a: number }> | null;
       map: LiveMap<string, LiveObject<{ a: number }>> | null;
     }>([createSerializedRoot({ child: null, map: null })], 1);
@@ -441,7 +443,7 @@ describe("LiveMap", () => {
 
   test("map.set live object on existing key", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -470,7 +472,7 @@ describe("LiveMap", () => {
 
   test("attach map with items to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map?: LiveMap<string, { a: number }>;
       }>([createSerializedRoot()], 1);
 
@@ -487,7 +489,7 @@ describe("LiveMap", () => {
 
   test("attach map with live objects to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map?: LiveMap<string, LiveObject<{ a: number }>>;
       }>([createSerializedRoot()], 1);
 
@@ -504,7 +506,7 @@ describe("LiveMap", () => {
 
   test("attach map with objects to root", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map?: LiveMap<string, { a: number }>;
       }>([createSerializedRoot()], 1);
 
@@ -521,7 +523,7 @@ describe("LiveMap", () => {
 
   test("add list in map", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map: LiveMap<string, LiveList<string>>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -542,7 +544,7 @@ describe("LiveMap", () => {
 
   test("add map in map", async () => {
     const { storage, expectStorage, assertUndoRedo } =
-      await prepareStorageTest<{
+      await prepareStorageTest_legacy<{
         map: LiveMap<string, LiveMap<string, string>>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -563,7 +565,7 @@ describe("LiveMap", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { room, storage } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest_legacy<{
         map: LiveMap<string, string>;
       }>(
         [createSerializedRoot(), createSerializedMap("0:1", "root", "map")],
@@ -585,7 +587,7 @@ describe("LiveMap", () => {
     });
 
     test("deep subscribe", async () => {
-      const { room, storage } = await prepareStorageTest<{
+      const { room, storage } = await prepareStorageTest_legacy<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -625,7 +627,7 @@ describe("LiveMap", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("register added to map", async () => {
       const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest<{
+        await prepareIsolatedStorageTest_legacy<{
           map: LiveMap<string, string>;
         }>(
           [
@@ -695,7 +697,7 @@ describe("LiveMap", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<{
+      const { root } = await prepareIsolatedStorageTest_legacy<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
