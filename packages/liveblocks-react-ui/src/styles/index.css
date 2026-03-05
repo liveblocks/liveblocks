@@ -1761,7 +1761,7 @@
 .lb-avatar-stack-avatar {
   position: relative;
   z-index: calc(
-    var(--lb-avatar-stack-count) - var(--lb-avatar-stack-avatar-index)
+    var(--lb-avatar-stack-count) - 1 - var(--lb-avatar-stack-avatar-index)
   );
   inline-size: var(--lb-avatar-stack-size);
   block-size: var(--lb-avatar-stack-size);

@@ -85,7 +85,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           dir={$.dir}
           style={
             {
-              "--lb-avatar-stack-count": visibleItemsCount - 1,
+              "--lb-avatar-stack-count": visibleItemsCount,
               "--lb-avatar-stack-size": px(size),
               ...style,
             } as CSSProperties
