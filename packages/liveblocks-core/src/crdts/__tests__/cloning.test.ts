@@ -1,10 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, test } from "vitest";
 
-import {
-  prepareIsolatedStorageTest,
-  prepareStorageUpdateTest,
-} from "../../__tests__/_liveblocks";
+import { prepareStorageUpdateTest } from "../../__tests__/_liveblocks";
 import {
   listUpdate,
   listUpdateInsert,
@@ -12,6 +9,7 @@ import {
 } from "../../__tests__/_updatesUtils";
 import { cloneLson } from "../../crdts/liveblocks-helpers";
 import type { LiveList } from "../LiveList";
+import { LiveObject } from "../LiveObject";
 import { liveStructure, lson } from "./_arbitraries";
 
 describe("cloning LiveStructures", () => {
@@ -69,13 +67,13 @@ describe("cloning LiveStructures", () => {
     ]);
   });
 
-  test("[property] deep cloning of LiveStructures", { timeout: 10_000 }, () =>
+  test("[property] deep cloning of LiveStructures", () =>
     fc.assert(
-      fc.asyncProperty(
+      fc.property(
         liveStructure,
 
-        async (data) => {
-          const { root } = await prepareIsolatedStorageTest();
+        (data) => {
+          const root = new LiveObject({});
 
           // Clone "a" to "b"
           root.set("a", data);
@@ -84,58 +82,46 @@ describe("cloning LiveStructures", () => {
           const imm = root.toImmutable();
           expect(imm.a).toEqual(imm.b);
         }
-      ),
-      { numRuns: 50 }
-    )
-  );
-
-  test(
-    "[property] deep cloning of LiveStructures (twice)",
-    { timeout: 10_000 },
-    () =>
-      fc.assert(
-        fc.asyncProperty(
-          liveStructure,
-
-          async (data) => {
-            const { root } = await prepareIsolatedStorageTest();
-
-            // Clone "a" to "b"
-            root.set("a", data);
-            root.set("b", data.clone().clone());
-            //                        ^^^^^^^^ Deliberately cloning twice in this test
-
-            const imm = root.toImmutable();
-            expect(imm.a).toEqual(imm.b);
-          }
-        ),
-        { numRuns: 50 }
       )
-  );
+    ));
 
-  test(
-    "[property] deep cloning of LSON data (= LiveStructures or JSON)",
-    { timeout: 10_000 },
-    () =>
-      fc.assert(
-        fc.asyncProperty(
-          lson,
+  test("[property] deep cloning of LiveStructures (twice)", () =>
+    fc.assert(
+      fc.property(
+        liveStructure,
 
-          async (data) => {
-            const { root } = await prepareIsolatedStorageTest();
+        (data) => {
+          const root = new LiveObject({});
 
-            // Clone "a" to "b"
-            root.set("a", data);
-            root.set("b", cloneLson(data));
-            //            ^^^^^^^^^ Much like data.clone(), but generalized to
-            //                      work on _any_ LSON value, even if data is
-            //                      a JSON value
+          // Clone "a" to "b"
+          root.set("a", data);
+          root.set("b", data.clone().clone());
+          //                        ^^^^^^^^ Deliberately cloning twice in this test
 
-            const imm = root.toImmutable();
-            expect(imm.a).toEqual(imm.b);
-          }
-        ),
-        { numRuns: 50 }
+          const imm = root.toImmutable();
+          expect(imm.a).toEqual(imm.b);
+        }
       )
-  );
+    ));
+
+  test("[property] deep cloning of LSON data (= LiveStructures or JSON)", () =>
+    fc.assert(
+      fc.property(
+        lson,
+
+        (data) => {
+          const root = new LiveObject({});
+
+          // Clone "a" to "b"
+          root.set("a", data);
+          root.set("b", cloneLson(data));
+          //            ^^^^^^^^^ Much like data.clone(), but generalized to
+          //                      work on _any_ LSON value, even if data is
+          //                      a JSON value
+
+          const imm = root.toImmutable();
+          expect(imm.a).toEqual(imm.b);
+        }
+      )
+    ));
 });
