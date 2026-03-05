@@ -3,6 +3,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  replaceStorageAndReconnectDevServer,
   waitFor,
 } from "../../__tests__/_liveblocks";
 import { objectUpdate } from "../../__tests__/_updatesUtils";
@@ -12,15 +13,9 @@ import {
   createSerializedRoot,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest as prepareIsolatedStorageTest_legacy,
-  prepareStorageTest as prepareStorageTest_legacy,
-  replaceRemoteStorageAndReconnect,
 } from "../../__tests__/_utils";
-import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
 import { kInternal } from "../../internal";
-import { Permission } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
-import type { StorageNode } from "../../protocol/StorageNode";
-import { CrdtType } from "../../protocol/StorageNode";
 import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
@@ -180,10 +175,9 @@ describe("LiveObject", () => {
   // TODO: Needs read-only permission support in dev server
   // See https://linear.app/liveblocks/issue/LB-3528/dev-server-needs-support-for-read-only-rooms
   test.skip("set throws on read-only", async () => {
-    const { root } = await prepareIsolatedStorageTest(
-      undefined,
-      { permissions: ["room:read", "room:presence:write"] }
-    );
+    const { root } = await prepareIsolatedStorageTest(undefined, {
+      permissions: ["room:read", "room:presence:write"],
+    });
 
     expect(() => root.set("a", 1)).toThrow(
       "Cannot write to storage with a read only user, please ensure the user has write permissions"
@@ -862,9 +856,7 @@ describe("LiveObject", () => {
 
       // Remote change via client B
       storageB.root.get("child").get("subchild").set("b", 1);
-      await waitFor(
-        () => rootA.get("child").get("subchild").get("b") === 1
-      );
+      await waitFor(() => rootA.get("child").get("subchild").get("b") === 1);
 
       unsubscribe();
 
@@ -917,9 +909,7 @@ describe("LiveObject", () => {
       // Remote changes via client B
       storageB.root.get("child").set("a", 1);
       storageB.root.get("child").get("subchild").set("b", 1);
-      await waitFor(
-        () => rootA.get("child").get("subchild").get("b") === 1
-      );
+      await waitFor(() => rootA.get("child").get("subchild").get("b") === 1);
 
       unsubscribe();
 
@@ -975,18 +965,22 @@ describe("LiveObject", () => {
     });
   });
 
+  // TODO: Needs atomic storage replacement + reconnect support in dev server
+  // See https://linear.app/liveblocks/issue/LB-3529/dev-server-needs-support-for-a-crash-replace-storage-atomic-feature
+  //
+  // The dev server needs a new endpoint that atomically replaces a room's
+  // storage and disconnects all clients, forcing them to reconnect and
+  // reconcile the diff. Until then, these tests are skipped.
   describe("reconnect with remote changes and subscribe", () => {
-    test("LiveObject updated", async () => {
-      const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
-          obj: LiveObject<{ a: number }>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedObject("0:1", { a: 1 }, "root", "obj"),
-          ],
-          1
-        );
+    test.skip("LiveObject updated", async () => {
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          obj: { liveblocksType: "LiveObject", data: { a: 1 } },
+        },
+      });
 
       const rootDeepCallback = vi.fn();
       const liveObjectCallback = vi.fn();
@@ -996,22 +990,14 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      const newInitStorage: StorageNode[] = [
-        ["root", { type: CrdtType.OBJECT, data: {} }],
-        [
-          "0:1",
-          {
-            type: CrdtType.OBJECT,
-            data: { a: 2 },
-            parentId: "root",
-            parentKey: "obj",
-          },
-        ],
-      ];
+      await replaceStorageAndReconnectDevServer(room.id, {
+        liveblocksType: "LiveObject",
+        data: {
+          obj: { liveblocksType: "LiveObject", data: { a: 2 } },
+        },
+      });
 
-      replaceRemoteStorageAndReconnect(wss, newInitStorage);
-
-      await waitUntilStorageUpdate(room);
+      await waitFor(() => root.get("obj").get("a") === 2);
       expectStorage({
         obj: { a: 2 },
       });
@@ -1029,17 +1015,15 @@ describe("LiveObject", () => {
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);
     });
 
-    test("LiveObject updated nested", async () => {
-      const { expectStorage, room, root, wss } =
-        await prepareIsolatedStorageTest_legacy<{
-          obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
-        }>(
-          [
-            createSerializedRoot(),
-            createSerializedObject("0:1", { a: 1 }, "root", "obj"),
-          ],
-          1
-        );
+    test.skip("LiveObject updated nested", async () => {
+      const { room, root, expectStorage } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {
+          obj: { liveblocksType: "LiveObject", data: { a: 1 } },
+        },
+      });
 
       const rootDeepCallback = vi.fn();
       const liveObjectCallback = vi.fn();
@@ -1049,31 +1033,20 @@ describe("LiveObject", () => {
 
       expectStorage({ obj: { a: 1 } });
 
-      const newInitStorage: StorageNode[] = [
-        ["root", { type: CrdtType.OBJECT, data: {} }],
-        [
-          "0:1",
-          {
-            type: CrdtType.OBJECT,
-            data: { a: 1 },
-            parentId: "root",
-            parentKey: "obj",
+      await replaceStorageAndReconnectDevServer(room.id, {
+        liveblocksType: "LiveObject",
+        data: {
+          obj: {
+            liveblocksType: "LiveObject",
+            data: {
+              a: 1,
+              subObj: { liveblocksType: "LiveObject", data: { b: 1 } },
+            },
           },
-        ],
-        [
-          "0:2",
-          {
-            type: CrdtType.OBJECT,
-            data: { b: 1 },
-            parentId: "0:1",
-            parentKey: "subObj",
-          },
-        ],
-      ];
+        },
+      });
 
-      replaceRemoteStorageAndReconnect(wss, newInitStorage);
-
-      await waitUntilStorageUpdate(room);
+      await waitFor(() => root.get("obj").get("subObj") !== undefined);
       expectStorage({
         obj: { a: 1, subObj: { b: 1 } },
       });

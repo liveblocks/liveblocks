@@ -95,8 +95,7 @@ async function UNSAFE_generateAccessToken(
 export function createTestClient(permissions?: string[]) {
   return createClient({
     baseUrl: DEV_SERVER,
-    authEndpoint: (roomId) =>
-      UNSAFE_generateAccessToken(roomId, permissions),
+    authEndpoint: (roomId) => UNSAFE_generateAccessToken(roomId, permissions),
     polyfills: { WebSocket: globalThis.WebSocket },
     // @ts-expect-error Deliberately testing internal option to disable throttling for tests
     __DANGEROUSLY_disableThrottling: true,
@@ -121,6 +120,34 @@ export async function enterAndConnect<S extends LsonObject>(
 
   await waitFor(() => room.getStatus() === "connected");
   return { room, leave };
+}
+
+/**
+ * Atomically replaces a room's storage on the dev server and disconnects all
+ * clients, forcing them to reconnect and reconcile with the new storage.
+ *
+ * TODO: This does not exist yet in the dev server.
+ * See https://linear.app/liveblocks/issue/LB-3529/dev-server-needs-support-for-a-crash-replace-storage-atomic-feature
+ *
+ * The dev server needs a new endpoint (e.g. POST /v2/rooms/{roomId}/storage
+ * with force-replace semantics) that:
+ *   1. Replaces the room's storage with the provided PlainLsonObject
+ *   2. Disconnects all connected clients in that room
+ *   3. Clients reconnect automatically and receive the new storage
+ *   4. The client reconciles the diff and fires subscription callbacks
+ */
+export async function replaceStorageAndReconnectDevServer(
+  roomId: string,
+  newStorage: PlainLsonObject
+): Promise<void> {
+  await fetch(`${DEV_SERVER}/v2/rooms/${encodeURIComponent(roomId)}/storage`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer sk_localdev",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newStorage),
+  });
 }
 
 // ---------------------------------------------------------------------------
