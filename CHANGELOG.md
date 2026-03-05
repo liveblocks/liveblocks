@@ -1,5 +1,12 @@
 ## vNEXT (not yet released)
 
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+
 ## v3.15.0
 
 ### `@liveblocks/react-ui`
