@@ -1,5 +1,5 @@
 [project]
-name = "liveblocks-api-client"
+name = "liveblocks"
 version = "0.1.0"
 description = "A client library for accessing API v2"
 authors = []
@@ -16,8 +16,11 @@ dev = [
     "pytest>=8.0"
 ]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.uv.build-backend]
-module-name = "liveblocks_api_client"
+module-name = "liveblocks"
 module-root = ""
 
 [build-system]

@@ -1,11 +1,11 @@
-# liveblocks-api-client
+# liveblocks
 
 A client library for accessing API v2
 
 ## Installation
 
 ```bash
-pip install liveblocks-api-client
+pip install liveblocks
 ```
 
 ## Quick Start
@@ -13,7 +13,7 @@ pip install liveblocks-api-client
 ### Synchronous
 
 ```python
-from liveblocks_api_client import Liveblocks
+from liveblocks import Liveblocks
 
 client = Liveblocks(secret="sk_your_secret_key")
 
@@ -25,7 +25,7 @@ with client:
 ### Asynchronous
 
 ```python
-from liveblocks_api_client import AsyncLiveblocks
+from liveblocks import AsyncLiveblocks
 
 client = AsyncLiveblocks(secret="sk_your_secret_key")
 
@@ -2834,7 +2834,7 @@ result = client.send_test_webhook(
 
 ## Models
 
-The following data models are available in `liveblocks_api_client.models`:
+The following data models are available in `liveblocks.models`:
 
 - `ActiveUsersResponse`
 - `AddCommentReactionRequestBody`
@@ -3004,7 +3004,7 @@ The following data models are available in `liveblocks_api_client.models`:
 All API methods raise `errors.LiveblocksError` when the server returns a non-2xx status code. You can catch and inspect these errors:
 
 ```python
-from liveblocks_api_client import errors, Liveblocks
+from liveblocks import errors, Liveblocks
 
 client = Liveblocks(secret="sk_your_secret_key")
 

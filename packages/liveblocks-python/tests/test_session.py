@@ -1,6 +1,6 @@
 import pytest
 
-from liveblocks_api_client.client import Liveblocks
+from liveblocks.client import Liveblocks
 
 
 class TestConstructorValidation:

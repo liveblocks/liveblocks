@@ -1,6 +1,6 @@
 import pytest
 
-from liveblocks_api_client.client import AsyncLiveblocks, Liveblocks
+from liveblocks.client import AsyncLiveblocks, Liveblocks
 
 
 @pytest.fixture(params=[Liveblocks, AsyncLiveblocks], ids=["sync", "async"])

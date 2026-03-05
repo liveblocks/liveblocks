@@ -6,9 +6,9 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    import liveblocks_api_client.models.authorize_user_response as AuthorizeUserResponse
-    from liveblocks_api_client.client import AsyncLiveblocks, Liveblocks
-    from liveblocks_api_client.models.authorize_user_request_body import AuthorizeUserRequestBody
+    import liveblocks.models.authorize_user_response as AuthorizeUserResponse
+    from liveblocks.client import AsyncLiveblocks, Liveblocks
+    from liveblocks.models.authorize_user_request_body import AuthorizeUserRequestBody
 
 Permission = Literal[
     "room:write",
@@ -76,8 +76,8 @@ class _BaseSession:
         return self
 
     def _build_request_body(self) -> AuthorizeUserRequestBody:
-        from liveblocks_api_client.models.authorize_user_request_body import AuthorizeUserRequestBody
-        from liveblocks_api_client.models.authorize_user_request_body_permissions import (
+        from liveblocks.models.authorize_user_request_body import AuthorizeUserRequestBody
+        from liveblocks.models.authorize_user_request_body_permissions import (
             AuthorizeUserRequestBodyPermissions,
         )
 
