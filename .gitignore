@@ -35,8 +35,7 @@ playwright-report/
 .liveblocks/
 
 # Claude Code configs
-.claude/cache/
-.claude/*.local.json
+.claude/
 CLAUDE.local.md
 
 .mcp.json
