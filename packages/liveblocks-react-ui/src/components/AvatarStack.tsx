@@ -23,7 +23,7 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   userIds?: string[];
 
   /**
-   * The maximum number of items in the stack.
+   * The maximum number of items in the stack (at least 2).
    * Defaults to 3, set to `undefined` to show all avatars.
    */
   max?: number;
@@ -67,7 +67,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
 
       return [...uniqueUserIds];
     }, [selfId, otherIds, additionalUserIds]);
-    const maxItems = Math.max(1, Math.floor(max));
+    const maxItems = Math.max(2, Math.floor(max));
     const shouldShowMore = userIds.length > maxItems;
     const visibleAvatarsCount = shouldShowMore ? maxItems - 1 : maxItems;
     const visibleUserIds = userIds.slice(0, visibleAvatarsCount);
