@@ -68,6 +68,12 @@ pub struct ManagedSocket<C: WebSocketConnector, H: HttpClient> {
     /// The RoomHandle sets this so the timer can trigger processing.
     #[cfg(feature = "wasm")]
     pub(crate) on_deferred_event: Option<js_sys::Function>,
+    /// On native, the pending timer delay and the instant it was scheduled.
+    /// The FSM only ever has one timer active at a time (heartbeat, pong
+    /// timeout, or reconnect backoff), so a single slot suffices. The timer
+    /// fires when `Instant::now() >= scheduled_at + delay`.
+    #[cfg(not(feature = "wasm"))]
+    native_pending_timer: Option<(u64, std::time::Instant)>,
 }
 
 impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
@@ -89,6 +95,8 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
             deferred_events: Rc::new(RefCell::new(Vec::new())),
             #[cfg(feature = "wasm")]
             on_deferred_event: None,
+            #[cfg(not(feature = "wasm"))]
+            native_pending_timer: None,
         }
     }
 
@@ -142,6 +150,21 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
     /// These were spawned as separate tasks and need to be fed back
     /// into the FSM. This should be called from tick().
     pub async fn process_deferred_events(&mut self) {
+        // On native, check whether the pending timer has expired and, if
+        // so, push a TimerFired event into the deferred queue. This
+        // replaces the old behaviour of either (a) firing immediately in
+        // `process_effects_sync` or (b) blocking inline in
+        // `process_effects`, both of which starved the event loop.
+        #[cfg(not(feature = "wasm"))]
+        if let Some((delay_ms, scheduled_at)) = self.native_pending_timer {
+            if scheduled_at.elapsed() >= std::time::Duration::from_millis(delay_ms) {
+                self.native_pending_timer = None;
+                self.deferred_events
+                    .borrow_mut()
+                    .push(ConnEvent::TimerFired);
+            }
+        }
+
         loop {
             let events: Vec<ConnEvent> = self.deferred_events.borrow_mut().drain(..).collect();
             if events.is_empty() {
@@ -234,12 +257,20 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
                     }
                     #[cfg(not(feature = "wasm"))]
                     {
-                        let _ = delay_ms;
-                        self.deferred_events.borrow_mut().push(ConnEvent::TimerFired);
+                        // Store the timer for non-blocking expiry checking in
+                        // `process_deferred_events`. The FSM only has one
+                        // active timer at a time, so storing a new one
+                        // implicitly cancels the previous one.
+                        self.native_pending_timer =
+                            Some((delay_ms, std::time::Instant::now()));
                     }
                 }
                 Effect::CancelTimer => {
                     self.deferred_events.borrow_mut().clear();
+                    #[cfg(not(feature = "wasm"))]
+                    {
+                        self.native_pending_timer = None;
+                    }
                 }
                 Effect::SendPing => {
                     if let Some(socket) = &mut self.socket {
@@ -358,15 +389,20 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
                     }
                     #[cfg(not(feature = "wasm"))]
                     {
-                        // For native: await inline (native tests use
-                        // tokio which handles this correctly).
-                        self.do_schedule_timer(delay_ms).await;
-                        follow_ups.push(ConnEvent::TimerFired);
+                        // Store for non-blocking expiry in
+                        // `process_deferred_events`, matching the WASM
+                        // strategy of deferring TimerFired to a later tick.
+                        self.native_pending_timer =
+                            Some((delay_ms, std::time::Instant::now()));
                     }
                 }
                 Effect::CancelTimer => {
                     // Clear any pending deferred timer events
                     self.deferred_events.borrow_mut().clear();
+                    #[cfg(not(feature = "wasm"))]
+                    {
+                        self.native_pending_timer = None;
+                    }
                 }
                 Effect::SendPing => {
                     if let Some(socket) = &mut self.socket {
@@ -533,10 +569,6 @@ impl<C: WebSocketConnector, H: HttpClient> ManagedSocket<C, H> {
         }
     }
 
-    /// Schedule a timer delay.
-    async fn do_schedule_timer(&mut self, delay_ms: u64) {
-        self.delegates.timer.delay(delay_ms).await;
-    }
 }
 
 /// Simple URL-encoding for room IDs (just the basics).
