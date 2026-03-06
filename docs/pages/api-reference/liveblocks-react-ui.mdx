@@ -3807,9 +3807,9 @@ properties.
   <PropertiesListItem name="userIds" type="string[]">
     Optional additional user IDs to include in the stack.
   </PropertiesListItem>
-  <PropertiesListItem name="max" type="number" defaultValue="3">
-    The maximum number of items in the stack (at least 2). Set to `undefined` to
-    show all avatars.
+  <PropertiesListItem name="max" type="number | null" defaultValue="3">
+    The maximum number of items in the stack (at least 2). Set to `null` to show
+    all avatars.
   </PropertiesListItem>
   <PropertiesListItem name="size" type="string | number">
     The size of the avatars.
