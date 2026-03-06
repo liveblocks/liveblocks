@@ -18,6 +18,56 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 10 (2026-03-06)
+
+## v3.15.0
+
+### `@liveblocks/react-ui`
+
+- Add various new ways to customize `Thread` and `Comment`:
+  - Comments in `Thread` can now be overridden or customized via the
+    `components` prop.
+  - New parts of `Comment` (content, avatar, author, and date) can now be
+    overridden or customized via the `children`, `additionalContent`, `avatar`,
+    `author`, and `date` props.
+- Fix `commentDropdownItems` prop on `Thread` not working as expected in some
+  cases.
+
+### `@liveblocks/react`
+
+- Each `createRoomContext()` invocation now creates its own isolated context to
+  allow nesting independent room contexts and their `RoomProvider` components.
+
+### `@liveblocks/react-blocknote`
+
+- Support newer BlockNote versions and bump the minimum required version to
+  v0.43.0. (Thanks @nperez0111 for the contribution!)
+
+### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
+
+- Improve how inline components passed to `components={{ ... }}` props are
+  handled by keeping them stable instead of re-mounting them on every render.
+- Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
+
+## Examples
+
+- New example: [AG Grid Comments](https://liveblocks.io/examples/ag-grid-comments/nextjs-comments-ag-grid).
+- Update old examples to use new presence and commenting components.
+
+## Documentation
+
+- New quickstart: [Draggable comments with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-canvas).
+- New quickstart: [Commenting inside AG Grid with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ag-grid).
+- New quickstart: [Commenting inside a table with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-table).
+- New quickstart: [Realtime avatar and cursor presence with Next.js](https://liveblocks.io/docs/get-started/nextjs-presence).
+- New guide: [How to add users to Liveblocks presence components](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-presence-components).
+- Mention `sk_localdev` and `pk_localdev` keys more explicitly in dev server docs.
+- Mention `["comments:write"]` permission under authentication.
+
+## Contributors
+
+nperez0111, marcbouchenoire, ctnicholas
+
 # Week 9 (2026-02-27)
 
 ## v3.14.1
