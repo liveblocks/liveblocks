@@ -13,17 +13,11 @@ import type {
   MutableRefObject,
   PointerEvent,
 } from "react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
 import { type Animatable, makeAnimationLoop } from "../utils/animation-loop";
 import { cn } from "../utils/cn";
+import { useRefs } from "../utils/use-refs";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Cursor } from "./Cursor";
 
@@ -241,7 +235,8 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
     { className, children, presenceKey = DEFAULT_PRESENCE_KEY, ...props },
     forwardedRef
   ) => {
-    const ref = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const mergedRefs = useRefs(forwardedRef, containerRef);
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
     const sizeRef = useRef<Size | null>(null);
@@ -249,9 +244,9 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
     const isWindowFocused = useWindowFocus();
 
     useEffect(() => {
-      const element = ref.current;
+      const container = containerRef.current;
 
-      if (!element) {
+      if (!container) {
         return;
       }
 
@@ -262,7 +257,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
 
       const observer = new ResizeObserver((entries) => {
         for (const entry of entries) {
-          if (entry.target === element) {
+          if (entry.target === container) {
             setSize({
               width: entry.contentRect.width,
               height: entry.contentRect.height,
@@ -272,11 +267,11 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
       });
 
       setSize({
-        width: element.clientWidth,
-        height: element.clientHeight,
+        width: container.clientWidth,
+        height: container.clientHeight,
       });
 
-      observer.observe(element);
+      observer.observe(container);
 
       return () => {
         observer.disconnect();
@@ -285,13 +280,13 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
 
     const handlePointerMove = useCallback(
       (event: PointerEvent) => {
-        const element = ref.current;
+        const container = containerRef.current;
 
-        if (!element) {
+        if (!container) {
           return;
         }
 
-        const bounds = element.getBoundingClientRect();
+        const bounds = container.getBoundingClientRect();
 
         if (bounds.width === 0 || bounds.height === 0) {
           return;
@@ -321,19 +316,13 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
       }
     }, [isWindowFocused, updateMyPresence, presenceKey]);
 
-    useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
-      forwardedRef,
-      () => ref.current,
-      []
-    );
-
     return (
       <div
         className={cn("lb-root lb-cursors", className)}
         {...props}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
-        ref={ref}
+        ref={mergedRefs}
       >
         <div className="lb-cursors-container">
           {othersConnectionIds.map((connectionId) => (

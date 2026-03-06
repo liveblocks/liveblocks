@@ -7,7 +7,6 @@ import {
   forwardRef,
   type ReactNode,
   type RefAttributes,
-  useImperativeHandle,
   useRef,
 } from "react";
 
@@ -19,6 +18,7 @@ import {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
+import { useRefs } from "../utils/use-refs";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 
@@ -66,19 +66,14 @@ export const FloatingComposer = forwardRef(
     }: FloatingComposerProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const ref = useRef<HTMLFormElement>(null);
+    const composerRef = useRef<HTMLFormElement>(null);
+    const mergedRefs = useRefs(forwardedRef, composerRef);
     const $ = useOverrides(overrides);
     const { portalContainer } = useLiveblocksUiConfig();
     const [isOpen, setIsOpen] = useControllableState(
       defaultOpen ?? false,
       open,
       onOpenChange
-    );
-
-    useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
-      forwardedRef,
-      () => ref.current,
-      []
     );
 
     return (
@@ -118,13 +113,13 @@ export const FloatingComposer = forwardRef(
             onOpenAutoFocus={(event) => {
               if (!autoFocus) {
                 event.preventDefault();
-                ref.current?.focus();
+                composerRef.current?.focus();
               }
             }}
             asChild
           >
             <Composer
-              ref={ref}
+              ref={mergedRefs}
               overrides={overrides}
               autoFocus={autoFocus}
               collapsed={false}
