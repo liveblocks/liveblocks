@@ -60,15 +60,14 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
       [...others]
         .sort((a, b) => b.connectionId - a.connectionId)
         .map((user) => user.id)
-        .filter((userId): userId is string => userId !== undefined)
     );
     const selfId = useSelf((self) => self.id);
     const userIds = useMemo(() => {
-      const uniqueUserIds = new Set([
-        selfId,
-        ...otherIds,
-        ...additionalUserIds,
-      ]);
+      const uniqueUserIds = new Set(
+        [selfId, ...otherIds, ...additionalUserIds].filter(
+          (userId): userId is string => userId !== null && userId !== undefined
+        )
+      );
 
       return [...uniqueUserIds];
     }, [selfId, otherIds, additionalUserIds]);
