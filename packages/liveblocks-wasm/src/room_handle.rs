@@ -1780,7 +1780,7 @@ impl RoomHandle {
                     others.serialize(&serde_wasm_bindgen::Serializer::json_compatible())
                         .unwrap_or(JsValue::UNDEFINED),
                 ),
-                RoomEvent::StorageChanged(updates) => {
+                RoomEvent::StorageChanged { updates, .. } => {
                     if updates.is_empty() {
                         ("storage", JsValue::UNDEFINED)
                     } else {

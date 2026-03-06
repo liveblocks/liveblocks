@@ -61,7 +61,7 @@ async fn main() {
                         live.document_len()
                     );
                 }
-                RoomEvent::StorageChanged(_updates) => {
+                RoomEvent::StorageChanged { .. } => {
                     println!("[event] Storage changed");
                 }
                 RoomEvent::Error { message, code } => {

@@ -84,8 +84,8 @@ fn dispatch_mutation<C: WebSocketConnector, H: HttpClient>(
         .collect();
     room.storage_engine.dispatch_mutation(ops, reverse_frames);
 
-    // Fire events
-    room.events.notify_storage_change_with_updates(vec![update]);
+    // Fire events — mark as Local so consumers can distinguish from remote changes
+    room.events.notify_storage_change_with_updates(vec![update], crate::types::OpSource::Local);
     room.events
         .notify_history_change(room.storage_engine.can_undo(), room.storage_engine.can_redo());
 }

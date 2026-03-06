@@ -278,9 +278,9 @@ fn handle_storage_state<C: WebSocketConnector, H: HttpClient>(
         room.events.notify_storage_loaded();
         room.events.notify_storage_status("loaded");
         if !all_updates.is_empty() {
-            room.events.notify_storage_change_with_updates(all_updates);
+            room.events.notify_storage_change_with_updates(all_updates, OpSource::Theirs);
         } else {
-            room.events.notify_storage_change();
+            room.events.notify_storage_change(OpSource::Theirs);
         }
     } else {
         // First load — hydrate (replace document)
@@ -288,7 +288,7 @@ fn handle_storage_state<C: WebSocketConnector, H: HttpClient>(
         room.storage_status = super::StorageStatus::Loaded;
         room.events.notify_storage_loaded();
         room.events.notify_storage_status("loaded");
-        room.events.notify_storage_change();
+        room.events.notify_storage_change(OpSource::Theirs);
     }
 }
 
@@ -385,7 +385,7 @@ fn handle_update_storage<C: WebSocketConnector, H: HttpClient>(
 
     // Only fire storage change if any ops were actually applied (not just ACKs)
     if any_applied {
-        room.events.notify_storage_change_with_updates(all_updates);
+        room.events.notify_storage_change_with_updates(all_updates, OpSource::Theirs);
     }
 }
 

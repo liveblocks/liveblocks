@@ -529,7 +529,7 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             }
         }
 
-        self.events.notify_storage_change_with_updates(all_updates);
+        self.events.notify_storage_change_with_updates(all_updates, OpSource::Local);
         self.events
             .notify_history_change(self.can_undo(), self.can_redo());
 
@@ -593,7 +593,7 @@ impl<C: WebSocketConnector, H: HttpClient> Room<C, H> {
             }
         }
 
-        self.events.notify_storage_change_with_updates(all_updates);
+        self.events.notify_storage_change_with_updates(all_updates, OpSource::Local);
         self.events
             .notify_history_change(self.can_undo(), self.can_redo());
     }

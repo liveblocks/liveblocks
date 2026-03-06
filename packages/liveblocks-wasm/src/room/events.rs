@@ -5,6 +5,7 @@
 //! WASM: JS callbacks).
 
 use crate::connection::fsm::Status;
+use crate::types::OpSource;
 use crate::updates::StorageUpdate;
 use serde_json::Value as JsonValue;
 
@@ -19,7 +20,8 @@ pub enum RoomEvent {
     OthersChanged(JsonValue),
     /// Storage changed (batch of ops applied).
     /// Contains detailed updates describing what changed (may be empty for local mutations).
-    StorageChanged(Vec<StorageUpdate>),
+    /// `source` indicates whether this was a local optimistic update or a remote/server change.
+    StorageChanged { updates: Vec<StorageUpdate>, source: OpSource },
     /// Storage loaded for the first time.
     StorageLoaded,
     /// Storage status changed.
@@ -88,13 +90,13 @@ impl EventHub {
     }
 
     /// Notify: storage changed with detailed updates.
-    pub fn notify_storage_change_with_updates(&mut self, updates: Vec<StorageUpdate>) {
-        self.pending.push(RoomEvent::StorageChanged(updates));
+    pub fn notify_storage_change_with_updates(&mut self, updates: Vec<StorageUpdate>, source: OpSource) {
+        self.pending.push(RoomEvent::StorageChanged { updates, source });
     }
 
     /// Notify: storage changed (no detailed updates).
-    pub fn notify_storage_change(&mut self) {
-        self.pending.push(RoomEvent::StorageChanged(Vec::new()));
+    pub fn notify_storage_change(&mut self, source: OpSource) {
+        self.pending.push(RoomEvent::StorageChanged { updates: Vec::new(), source });
     }
 
     /// Notify: storage loaded.
