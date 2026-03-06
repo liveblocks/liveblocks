@@ -15,33 +15,38 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { styleText } from "node:util";
+
+type Stringable = { toString(): string };
+
+// Node's styleText auto-strips ANSI when not a TTY, but Bun's doesn't,
+// even with { stream, validateStream: true } (broken as of Bun 1.3.8)
 const enabled = process.stdout.isTTY;
-const RESET = "\x1b[0m";
 
-export function yellow(text: string): string {
-  return enabled ? `\x1b[33m${text}${RESET}` : text;
+export function yellow(text: Stringable): string {
+  return enabled ? styleText("yellow", String(text)) : String(text);
 }
 
-export function blue(text: string): string {
-  return enabled ? `\x1b[34m${text}${RESET}` : text;
+export function blue(text: Stringable): string {
+  return enabled ? styleText("blue", String(text)) : String(text);
 }
 
-export function magenta(text: string): string {
-  return enabled ? `\x1b[35m${text}${RESET}` : text;
+export function magenta(text: Stringable): string {
+  return enabled ? styleText("magenta", String(text)) : String(text);
 }
 
-export function green(text: string): string {
-  return enabled ? `\x1b[32m${text}${RESET}` : text;
+export function green(text: Stringable): string {
+  return enabled ? styleText("green", String(text)) : String(text);
 }
 
-export function red(text: string): string {
-  return enabled ? `\x1b[31m${text}${RESET}` : text;
+export function red(text: Stringable): string {
+  return enabled ? styleText("red", String(text)) : String(text);
 }
 
-export function bold(text: string): string {
-  return enabled ? `\x1b[1m${text}${RESET}` : text;
+export function bold(text: Stringable): string {
+  return enabled ? styleText("bold", String(text)) : String(text);
 }
 
-export function dim(text: string): string {
-  return enabled ? `\x1b[2m${text}${RESET}` : text;
+export function dim(text: Stringable): string {
+  return enabled ? styleText("dim", String(text)) : String(text);
 }
