@@ -1056,6 +1056,8 @@
   font-weight: 500;
   font-size: 35cqi;
   white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
 
   /**
    * Progressive enhancement: Only show the fallback when container queries are supported
@@ -1171,6 +1173,7 @@
   position: relative;
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
+  outline: none;
   transition-property: background;
 }
 
@@ -1737,6 +1740,10 @@
     border-end-start-radius: 2px;
     transform: translate(0, -100%);
   }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
 }
 
 .lb-comment-pin-avatar {
@@ -1761,7 +1768,7 @@
 .lb-avatar-stack-avatar {
   position: relative;
   z-index: calc(
-    var(--lb-avatar-stack-count) - var(--lb-avatar-stack-avatar-index)
+    var(--lb-avatar-stack-count) - 1 - var(--lb-avatar-stack-avatar-index)
   );
   inline-size: var(--lb-avatar-stack-size);
   block-size: var(--lb-avatar-stack-size);

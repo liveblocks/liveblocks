@@ -11,6 +11,7 @@ import {
 import type { GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
+import { px } from "../utils/px";
 import { Avatar } from "./internal/Avatar";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
@@ -22,10 +23,10 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
   userIds?: string[];
 
   /**
-   * The maximum number of visible avatars.
-   * Defaults to 3, set to `undefined` to show all avatars.
+   * The maximum number of items in the stack (at least 2).
+   * Defaults to 3, set to `null` to show all avatars.
    */
-  max?: number;
+  max?: number | null;
 
   /**
    * The size of the avatars.
@@ -55,19 +56,25 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const otherIds = useOthers((others) => others.map((user) => user.id));
+    const otherIds = useOthers((others) =>
+      [...others]
+        .sort((a, b) => b.connectionId - a.connectionId)
+        .map((user) => user.id)
+    );
     const selfId = useSelf((self) => self.id);
     const userIds = useMemo(() => {
-      const uniqueUserIds = new Set([
-        selfId,
-        ...otherIds,
-        ...additionalUserIds,
-      ]);
+      const uniqueUserIds = new Set(
+        [selfId, ...otherIds, ...additionalUserIds].filter(
+          (userId): userId is string => userId !== null
+        )
+      );
 
       return [...uniqueUserIds];
     }, [selfId, otherIds, additionalUserIds]);
-    const maxAvatars = Math.max(1, Math.floor(max));
-    const visibleUserIds = userIds.slice(0, maxAvatars);
+    const maxItems = max === null ? Infinity : Math.max(2, Math.floor(max));
+    const shouldShowMore = userIds.length > maxItems;
+    const visibleAvatarsCount = shouldShowMore ? maxItems - 1 : maxItems;
+    const visibleUserIds = userIds.slice(0, visibleAvatarsCount);
     const hiddenUserIds = userIds.slice(visibleUserIds.length);
     const remainingUsersCount = hiddenUserIds.length;
     const visibleItemsCount =
@@ -84,8 +91,8 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           dir={$.dir}
           style={
             {
-              "--lb-avatar-stack-count": visibleItemsCount - 1,
-              "--lb-avatar-stack-size": size,
+              "--lb-avatar-stack-count": visibleItemsCount,
+              "--lb-avatar-stack-size": px(size),
               ...style,
             } as CSSProperties
           }
