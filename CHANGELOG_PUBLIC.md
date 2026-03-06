@@ -52,7 +52,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Examples
 
 - New example: [AG Grid Comments](https://liveblocks.io/examples/ag-grid-comments/nextjs-comments-ag-grid).
-- Update old exmaples to use new presence components.
+- Update old exmaples to use new presence and commenting components.
 
 ## Documentation
 
