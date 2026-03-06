@@ -187,7 +187,11 @@ components from
       ```tsx file="app/CommentCell.tsx"
       "use client";
 
-      import { FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+      import {
+        Comment,
+        FloatingComposer,
+        FloatingThread,
+      } from "@liveblocks/react-ui";
       import { CustomCellRendererProps } from "ag-grid-react";
       import { useCellThread } from "./CellThreadContext";
 
@@ -249,7 +253,15 @@ components from
                 style={{ zIndex: 10 }}
                 autoFocus
               >
-                <button>💬</button>
+                <Comment.Avatar
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: "100%",
+                    cursor: "pointer",
+                  }}
+                  userId={thread.comments[0]?.userId}
+                />
               </FloatingThread>
             )}
           </div>
