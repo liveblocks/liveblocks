@@ -6,9 +6,10 @@ import {
   FloatingThread,
   Icon,
 } from "@liveblocks/react-ui";
+import { useSelf } from "@liveblocks/react";
 import { CustomCellRendererProps } from "ag-grid-react";
 import { useCellThread } from "./CellThreadContext";
-import { CSSProperties } from "react";
+import { CSSProperties, useState } from "react";
 
 const COMMENT_PIN_SIZE = 24;
 
@@ -22,6 +23,8 @@ const commentPinStyle = {
 
 export function CommentCell(params: CustomCellRendererProps) {
   const { threads, openCell, setOpenCell } = useCellThread();
+  const currentUserId = useSelf((self) => self.id) ?? undefined;
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
 
   const rowId = params.data?.id;
   const columnId = params.colDef?.field;
@@ -57,14 +60,24 @@ export function CommentCell(params: CustomCellRendererProps) {
 
       {/* Show thread if it exists, otherwise show thread composer (plus on hover) */}
       {!thread ? (
-        <div className="comment-cell-trigger">
+        <div
+          className="comment-cell-trigger"
+          data-open={isComposerOpen || undefined}
+        >
           <FloatingComposer
             metadata={metadata}
             onComposerSubmit={() => setOpenCell(metadata)}
+            onOpenChange={setIsComposerOpen}
             style={{ zIndex: 10 }}
           >
-            <CommentPin corner="top-left" style={commentPinStyle}>
-              <Icon.Plus style={{ width: 14, height: 14 }} />
+            <CommentPin
+              corner="top-left"
+              style={commentPinStyle}
+              userId={currentUserId}
+            >
+              {!isComposerOpen ? (
+                <Icon.Plus style={{ width: 14, height: 14 }} />
+              ) : null}
             </CommentPin>
           </FloatingComposer>
         </div>

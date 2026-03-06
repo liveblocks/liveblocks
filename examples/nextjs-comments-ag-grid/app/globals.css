@@ -39,7 +39,8 @@ button {
   opacity: 0;
   transition: opacity 0.15s ease;
 }
-.comment-cell:hover .comment-cell-trigger {
+.comment-cell:hover .comment-cell-trigger,
+.comment-cell-trigger[data-open] {
   opacity: 1;
 }
 
