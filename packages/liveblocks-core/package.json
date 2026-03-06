@@ -55,7 +55,7 @@
     "@types/ws": "^8.5.10",
     "eslint-plugin-rulesdir": "^0.2.2",
     "fast-check": "^4.3.0",
-    "msw": "^2.10.4",
+    "msw": "^2.12.10",
     "ws": "^8.17.1"
   },
   "peerDependencies": {
