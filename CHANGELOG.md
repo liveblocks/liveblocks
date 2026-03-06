@@ -6,6 +6,9 @@
 
 - Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
   when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
 
 ## v3.15.0
 
