@@ -89,8 +89,9 @@ export function makeSyncSource(): SyncSource {
   };
 }
 
-function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
-  mockedDelegates: RoomDelegates
+export function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
+  mockedDelegates: RoomDelegates,
+  overrides?: Partial<RoomConfig<TM, CM>>
 ): RoomConfig<TM, CM> {
   return {
     delegates: mockedDelegates,
@@ -113,6 +114,7 @@ function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
     }),
     // Not used in unit tests (yet)
     createSyncSource: makeSyncSource,
+    ...overrides,
   };
 }
 
@@ -121,7 +123,7 @@ function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
  * When LIVEBLOCKS_ENGINE=wasm and the RoomHandle class is registered,
  * uses createWasmRoom(). Otherwise falls back to createRoom().
  */
-function createRoomForTest<
+export function createRoomForTest<
   P extends JsonObject,
   S extends LsonObject,
   U extends BaseUserMeta,
