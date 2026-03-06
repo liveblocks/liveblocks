@@ -77,8 +77,7 @@ export const FloatingComposer = forwardRef(
 
     useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
       forwardedRef,
-      () => ref.current,
-      []
+      () => ref.current
     );
 
     return (

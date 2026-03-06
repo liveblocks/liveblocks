@@ -43,18 +43,17 @@ export interface AvatarStackProps extends ComponentPropsWithoutRef<"div"> {
  * Displays a stack of avatars for the users currently present in the room.
  */
 export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
-  (
-    {
+  (props, forwardedRef) => {
+    const {
       userIds: additionalUserIds = [],
-      max = 3,
+      max,
       size,
       overrides,
       className,
       style,
-      ...props
-    },
-    forwardedRef
-  ) => {
+      ...restProps
+    } = props;
+    const hasMaxProp = Object.prototype.hasOwnProperty.call(props, "max");
     const $ = useOverrides(overrides);
     const otherIds = useOthers((others) =>
       [...others]
@@ -72,7 +71,10 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
 
       return [...uniqueUserIds];
     }, [selfId, otherIds, additionalUserIds]);
-    const maxItems = Math.max(2, Math.floor(max));
+    const maxItems =
+      hasMaxProp && max === undefined
+        ? Infinity
+        : Math.max(2, Math.floor(max ?? 3));
     const shouldShowMore = userIds.length > maxItems;
     const visibleAvatarsCount = shouldShowMore ? maxItems - 1 : maxItems;
     const visibleUserIds = userIds.slice(0, visibleAvatarsCount);
@@ -97,7 +99,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
               ...style,
             } as CSSProperties
           }
-          {...props}
+          {...restProps}
           ref={forwardedRef}
         >
           {visibleUserIds.map((userId, index) => {
