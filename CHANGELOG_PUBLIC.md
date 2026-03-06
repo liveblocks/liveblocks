@@ -49,6 +49,19 @@ list and feel free to give them credit at the end of a line, e.g.:
   handled by keeping them stable instead of re-mounting them on every render.
 - Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
 
+## Examples
+
+- New example: [AG Grid Comments](https://liveblocks.io/examples/ag-grid-comments/nextjs-comments-ag-grid).
+
+## Documentation
+
+- New quickstart: [Draggable comments with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-canvas).
+- New quickstart: [Commenting inside AG Grid with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-ag-grid).
+- New quickstart: [Commenting inside a table with Next.js](https://liveblocks.io/docs/get-started/nextjs-comments-table).
+- New quickstart: [Realtime avatar and cursor presence with Next.js](https://liveblocks.io/docs/get-started/nextjs-presence).
+- New guide: [How to add users to Liveblocks presence components](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-presence-components).
+- Mention `sk_localdev` and `pk_localdev` keys more explicitly in dev server docs.
+
 ## Contributors
 
 nperez0111, marcbouchenoire
