@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentPropsWithoutRef, CSSProperties } from "react";
+import type { ComponentPropsWithoutRef, CSSProperties, ReactNode } from "react";
 import { forwardRef } from "react";
 
 import { cn } from "../utils/cn";
@@ -23,6 +23,12 @@ export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
    * The size of the pin.
    */
   size?: string | number;
+
+  /**
+   * The content shown in the pin.
+   * If provided, the `userId` prop is ignored.
+   */
+  children?: ReactNode;
 }
 
 /**
@@ -38,6 +44,7 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
       type = "button",
       className,
       style,
+      children,
       ...props
     },
     forwardedRef
@@ -51,9 +58,10 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
         {...props}
         ref={forwardedRef}
       >
-        {userId ? (
-          <Avatar className="lb-comment-pin-avatar" userId={userId} />
-        ) : null}
+        {children ??
+          (userId ? (
+            <Avatar className="lb-comment-pin-avatar" userId={userId} />
+          ) : null)}
       </button>
     );
   }

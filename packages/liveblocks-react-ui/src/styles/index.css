@@ -1739,6 +1739,10 @@
     border-end-start-radius: 2px;
     transform: translate(0, -100%);
   }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
 }
 
 .lb-comment-pin-avatar {

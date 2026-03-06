@@ -1883,74 +1883,6 @@ function Component() {
   </PropertiesListItem>
 </PropertiesList>
 
-#### CommentPin
-
-Displays a comment pin that can be used as a trigger for `FloatingComposer` and
-`FloatingThread`, or anywhere else in your UI.
-
-```tsx
-<CommentPin />
-
-<CommentPin userId="stacy@example.com" />
-```
-
-<Figure>
-  <Image
-    src="/assets/comments/comment-pin.png"
-    alt="CommentPin"
-    width={768}
-    height={413}
-  />
-</Figure>
-
-Set the `userId` prop to display an avatar inside the pin, for example to
-represent the thread’s author.
-
-```tsx
-<CommentPin userId={thread.comments[0]?.userId} />
-```
-
-Use the `corner` prop to choose which corner the pin points to, it will move
-itself to always point to wherever it is positioned.
-
-```tsx
-<CommentPin
-  corner="top-left"
-  style={{
-    position: "absolute",
-    left: thread.metadata.x,
-    top: thread.metadata.y,
-  }}
-/>
-```
-
-You can either use the `size` prop or override `--lb-comment-pin-size` with CSS
-to change the pin’s size.
-
-```tsx
-<CommentPin size={40} />
-
-<CommentPin className="[--lb-comment-pin-size:3rem]" />
-```
-
-##### Props [#CommentPin-props]
-
-<PropertiesList>
-  <PropertiesListItem
-    name="corner"
-    type='"top-left" | "top-right" | "bottom-right" | "bottom-left"'
-    defaultValue='"bottom-left"'
-  >
-    The corner that points to the comment position.
-  </PropertiesListItem>
-  <PropertiesListItem name="userId" type="string">
-    The user ID to optionally display an avatar for.
-  </PropertiesListItem>
-  <PropertiesListItem name="size" type="string | number">
-    The size of the pin.
-  </PropertiesListItem>
-</PropertiesList>
-
 ##### Comment.Avatar [#Comment.Avatar]
 
 Displays a comment’s avatar. Use this within the `avatar` prop to follow default
@@ -2034,6 +1966,87 @@ Displays a dropdown item in the comment’s dropdown menu. Use this within the
     detailedType="(event: Event) => void"
   >
     The event handler called when the dropdown item is selected.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### CommentPin
+
+Displays a comment pin that can be used as a trigger for `FloatingComposer` and
+`FloatingThread`, or anywhere else in your UI.
+
+```tsx
+<CommentPin />
+
+<CommentPin userId="stacy@example.com" />
+```
+
+<Figure>
+  <Image
+    src="/assets/comments/comment-pin.png"
+    alt="CommentPin"
+    width={768}
+    height={413}
+  />
+</Figure>
+
+Set the `userId` prop to display an avatar inside the pin, for example to
+represent the thread’s author.
+
+```tsx
+<CommentPin userId={thread.comments[0]?.userId} />
+```
+
+Use the `corner` prop to choose which corner the pin points to, it will move
+itself to always point to wherever it is positioned.
+
+```tsx
+<CommentPin
+  corner="top-left"
+  style={{
+    position: "absolute",
+    left: thread.metadata.x,
+    top: thread.metadata.y,
+  }}
+/>
+```
+
+You can either use the `size` prop or override `--lb-comment-pin-size` with CSS
+to change the pin’s size.
+
+```tsx
+<CommentPin size={40} />
+
+<CommentPin className="[--lb-comment-pin-size:3rem]" />
+```
+
+Pass `children` to display custom content inside the pin. When children are
+provided, the `userId` prop is ignored.
+
+```tsx
+<CommentPin>
+  <Icon.Plus />
+</CommentPin>
+```
+
+##### Props [#CommentPin-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="corner"
+    type='"top-left" | "top-right" | "bottom-right" | "bottom-left"'
+    defaultValue='"bottom-left"'
+  >
+    The corner that points to the comment position.
+  </PropertiesListItem>
+  <PropertiesListItem name="userId" type="string">
+    The user ID to optionally display an avatar for. Ignored if `children` is
+    provided.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="string | number">
+    The size of the pin.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content shown in the pin. If provided, the `userId` prop is ignored.
   </PropertiesListItem>
 </PropertiesList>
 
