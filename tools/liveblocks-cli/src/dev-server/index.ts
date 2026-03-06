@@ -236,10 +236,10 @@ const dev: SubCommand = {
           const status = resp.status;
           const colorStatus =
             status >= 500
-              ? red(String(status))
+              ? red(status)
               : status >= 400
-                ? yellow(String(status))
-                : green(String(status));
+                ? yellow(status)
+                : green(status);
           console.log(`${colorStatus} ${route}`);
           const warnMsg = resp.headers.get("X-LB-Warn") ?? undefined;
           warn(warnMsg, !resp.ok);
