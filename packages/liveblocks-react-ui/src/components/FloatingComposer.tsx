@@ -7,6 +7,8 @@ import {
   forwardRef,
   type ReactNode,
   type RefAttributes,
+  useImperativeHandle,
+  useRef,
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
@@ -57,18 +59,26 @@ export const FloatingComposer = forwardRef(
       sideOffset = FLOATING_ELEMENT_SIDE_OFFSET,
       align = "start",
       alignOffset,
+      autoFocus = true,
       overrides,
       className,
       ...props
     }: FloatingComposerProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
+    const ref = useRef<HTMLFormElement>(null);
     const $ = useOverrides(overrides);
     const { portalContainer } = useLiveblocksUiConfig();
     const [isOpen, setIsOpen] = useControllableState(
       defaultOpen ?? false,
       open,
       onOpenChange
+    );
+
+    useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
+      forwardedRef,
+      () => ref.current,
+      []
     );
 
     return (
@@ -105,13 +115,20 @@ export const FloatingComposer = forwardRef(
                 event.preventDefault();
               }
             }}
+            onOpenAutoFocus={(event) => {
+              if (!autoFocus) {
+                event.preventDefault();
+                ref.current?.focus();
+              }
+            }}
             asChild
           >
             <Composer
-              ref={forwardedRef}
+              ref={ref}
               overrides={overrides}
-              autoFocus
+              autoFocus={autoFocus}
               collapsed={false}
+              tabIndex={-1}
               {...(props as ComposerProps<TM, CM>)}
             />
           </PopoverPrimitive.Content>

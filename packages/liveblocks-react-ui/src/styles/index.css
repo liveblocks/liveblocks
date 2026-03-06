@@ -1173,6 +1173,7 @@
   position: relative;
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
+  outline: none;
   transition-property: background;
 }
 
