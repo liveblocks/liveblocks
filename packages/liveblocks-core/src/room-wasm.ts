@@ -184,6 +184,7 @@ export function createWasmRoom<
     try {
       handleRef.tick();
       handleRef.flush();
+      lastFlushedAt = Date.now();
     } catch {
       // Handle may be freed during teardown — ignore
     } finally {
@@ -269,6 +270,28 @@ export function createWasmRoom<
     lostConnectionTimeout: config.lostConnectionTimeout,
   });
   handleRef = handle;
+
+  // ---- Throttled flush ----
+  let lastFlushedAt = 0;
+  let flushTimerID: ReturnType<typeof setTimeout> | undefined;
+  const throttleDelay = config.throttleDelay;
+
+  function flushNowOrSoon(): void {
+    if (!handleRef) return;
+    if (throttleDelay <= 0) {
+      handleRef.flush();
+      return;
+    }
+    const now = Date.now();
+    const elapsed = now - lastFlushedAt;
+    if (elapsed >= throttleDelay) {
+      handleRef.flush();
+      lastFlushedAt = now;
+    } else {
+      clearTimeout(flushTimerID);
+      flushTimerID = setTimeout(flushNowOrSoon, throttleDelay - elapsed);
+    }
+  }
 
   // ---- Event sources ----
   const eventSources = {
@@ -744,7 +767,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.objectUpdate(nodeId, data);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       addObjectUpdate(nodeId, deltas);
@@ -761,7 +784,7 @@ export function createWasmRoom<
       if (deleted) {
         localStorageEventsPending++;
         if (!batchDepth) {
-          handle.flush();
+          flushNowOrSoon();
           checkStorageStatusTransition();
         }
         const delta: { type: string; deletedItem?: Lson } = oldValue !== undefined
@@ -777,7 +800,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listPush(nodeId, value);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       const entry = handle.listGetEntry(nodeId, index);
@@ -792,7 +815,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listInsert(nodeId, value, index);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       const entry = handle.listGetEntry(nodeId, index);
@@ -811,7 +834,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listMove(nodeId, from, to);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       addListUpdate(nodeId, {
@@ -831,7 +854,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listDelete(nodeId, index);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       addListUpdate(nodeId, {
@@ -849,7 +872,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listSet(nodeId, index, value);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       // Discard pending updates for the replaced node (it's now detached)
@@ -878,7 +901,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.listClear(nodeId);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       for (const deletedItem of items) {
@@ -891,7 +914,7 @@ export function createWasmRoom<
       localStorageEventsPending++;
       handle.mapSet(nodeId, key, value);
       if (!batchDepth) {
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
       }
       addMapUpdate(nodeId, { [key]: { type: "update" } });
@@ -903,7 +926,7 @@ export function createWasmRoom<
       if (deleted) {
         localStorageEventsPending++;
         if (!batchDepth) {
-          handle.flush();
+          flushNowOrSoon();
           checkStorageStatusTransition();
         }
         addMapUpdate(nodeId, { [key]: { type: "delete" } });
@@ -1068,6 +1091,7 @@ export function createWasmRoom<
       try {
         handle.tick();
         handle.flush();
+        lastFlushedAt = Date.now();
       } catch {
         // Ignore errors during tick (handle may be freed)
       }
@@ -1150,6 +1174,7 @@ export function createWasmRoom<
     reconnect: () => handle.reconnect(),
     destroy: () => {
       stopTickLoop();
+      clearTimeout(flushTimerID);
       isDestroyed = true;
       handleRef = null; // Prevent autoTick from calling freed handle
       eventSources.roomWillDestroy.notify();
@@ -1166,7 +1191,7 @@ export function createWasmRoom<
       _options?: { addToHistory: boolean },
     ) => {
       handle.updatePresence(patch);
-      handle.flush();
+      flushNowOrSoon();
     },
 
     // Yjs
@@ -1181,7 +1206,7 @@ export function createWasmRoom<
       _options?: { shouldQueueEventIfNotReady?: boolean },
     ) => {
       handle.broadcastEvent(event);
-      handle.flush();
+      flushNowOrSoon();
     },
 
     // Storage
@@ -1208,7 +1233,7 @@ export function createWasmRoom<
       }
       if (!batchDepth) {
         // Flush outbound ops as a single message (all mutations batched together)
-        handle.flush();
+        flushNowOrSoon();
         checkStorageStatusTransition();
         flushUpdates();
       }
@@ -1245,7 +1270,7 @@ export function createWasmRoom<
         }
         localStorageEventsPending++;
         handle.undo();
-        handle.flush();
+        flushNowOrSoon();
         // Use Rust-provided updates if available, otherwise empty
         if (lastRustStorageUpdates) {
           const converted = convertRustUpdates(lastRustStorageUpdates);
@@ -1261,7 +1286,7 @@ export function createWasmRoom<
         }
         localStorageEventsPending++;
         handle.redo();
-        handle.flush();
+        flushNowOrSoon();
         // Use Rust-provided updates if available, otherwise empty
         if (lastRustStorageUpdates) {
           eventSources.storageBatch.notify(
