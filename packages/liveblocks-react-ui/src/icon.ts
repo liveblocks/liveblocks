@@ -34,6 +34,7 @@ export {
   ListOrderedIcon as ListOrdered,
   ListUnorderedIcon as ListUnordered,
   MentionIcon as Mention,
+  PlusIcon as Plus,
   QuestionMarkIcon as QuestionMark,
   RedoIcon as Redo,
   RetryIcon as Retry,
