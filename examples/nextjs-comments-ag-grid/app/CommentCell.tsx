@@ -10,6 +10,16 @@ import { CustomCellRendererProps } from "ag-grid-react";
 import { useCellThread } from "./CellThreadContext";
 import { CSSProperties } from "react";
 
+const COMMENT_PIN_SIZE = 24;
+
+const commentPinStyle = {
+  "--lb-comment-pin-padding": "3px",
+  width: COMMENT_PIN_SIZE,
+  height: COMMENT_PIN_SIZE,
+  cursor: "pointer",
+  marginTop: 3,
+} as CSSProperties;
+
 export function CommentCell(params: CustomCellRendererProps) {
   const { threads, openCell, setOpenCell } = useCellThread();
 
@@ -53,7 +63,9 @@ export function CommentCell(params: CustomCellRendererProps) {
             onComposerSubmit={() => setOpenCell(metadata)}
             style={{ zIndex: 10 }}
           >
-            <CustomCommentPin />
+            <CommentPin corner="top-left" style={commentPinStyle}>
+              <Icon.Plus style={{ width: 14, height: 14 }} />
+            </CommentPin>
           </FloatingComposer>
         </div>
       ) : (
@@ -69,45 +81,13 @@ export function CommentCell(params: CustomCellRendererProps) {
           style={{ zIndex: 10 }}
           autoFocus
         >
-          <CustomCommentPin userId={thread.comments[0]?.userId} />
+          <CommentPin
+            corner="top-left"
+            style={commentPinStyle}
+            userId={thread.comments[0]?.userId}
+          />
         </FloatingThread>
       )}
     </div>
-  );
-}
-
-const COMMENT_PIN_SIZE = 24;
-
-// Show a plus icon in the pin if no user ID is passed
-function CustomCommentPin({ userId }: { userId?: string }) {
-  return (
-    <CommentPin
-      corner="top-left"
-      style={
-        {
-          "--lb-comment-pin-padding": "3px",
-          width: COMMENT_PIN_SIZE,
-          height: COMMENT_PIN_SIZE,
-          cursor: "pointer",
-          marginTop: 3,
-        } as CSSProperties
-      }
-      userId={userId}
-    >
-      {userId ? null : (
-        <svg
-          width={14}
-          height={14}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M5 12h14M12 5v14" />
-        </svg>
-      )}
-    </CommentPin>
   );
 }
