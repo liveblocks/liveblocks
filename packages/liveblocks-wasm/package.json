@@ -1,0 +1,17 @@
+{
+  "name": "@liveblocks/wasm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Liveblocks Rust core compiled to WebAssembly",
+  "type": "module",
+  "main": "./pkg/liveblocks_wasm.js",
+  "types": "./pkg/liveblocks_wasm.d.ts",
+  "files": [
+    "pkg/**"
+  ],
+  "scripts": {
+    "build": "command -v wasm-pack >/dev/null 2>&1 && wasm-pack build --target nodejs --release -- --features wasm || echo 'wasm-pack not found, skipping WASM build'",
+    "test": "cargo test && wasm-pack test --headless --chrome",
+    "lint": "cargo clippy -- -D warnings && cargo fmt --check"
+  }
+}

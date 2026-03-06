@@ -1294,6 +1294,10 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   // the Room instance, so it can directly call this back on the Client.
   createSyncSource: () => SyncSource;
   errorEventSource: EventSource<LiveblocksError>;
+
+  // Auth info passed through for WASM room (Rust handles its own auth flow)
+  publicApiKey?: string;
+  authEndpoint?: string;
 };
 
 function userToTreeNode(

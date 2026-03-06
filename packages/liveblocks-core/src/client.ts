@@ -63,6 +63,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import { createWasmRoom, getWasmRoomHandleClass } from "./room-wasm";
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
@@ -765,32 +766,43 @@ export function createClient<U extends BaseUserMeta = DU>(
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
 
-    const newRoom = createRoom<P, S, U, E, TM, CM>(
-      { initialPresence, initialStorage },
-      {
-        roomId,
-        throttleDelay,
-        lostConnectionTimeout,
-        backgroundKeepAliveTimeout,
-        polyfills: clientOptions.polyfills,
-        delegates: clientOptions.mockedDelegates ?? {
-          createSocket: makeCreateSocketDelegateForRoom(
-            roomId,
-            baseUrl,
-            clientOptions.polyfills?.WebSocket,
-            options.engine
-          ),
-          authenticate: makeAuthDelegateForRoom(roomId, authManager),
-        },
-        enableDebugLogging: clientOptions.enableDebugLogging,
-        baseUrl,
-        errorEventSource: liveblocksErrorSource,
-        unstable_streamData: !!clientOptions.unstable_streamData,
-        roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
-        createSyncSource,
-        badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
-      }
-    );
+    const roomConfig = {
+      roomId,
+      throttleDelay,
+      lostConnectionTimeout,
+      backgroundKeepAliveTimeout,
+      polyfills: clientOptions.polyfills,
+      delegates: clientOptions.mockedDelegates ?? {
+        createSocket: makeCreateSocketDelegateForRoom(
+          roomId,
+          baseUrl,
+          clientOptions.polyfills?.WebSocket,
+          options.engine
+        ),
+        authenticate: makeAuthDelegateForRoom(roomId, authManager),
+      },
+      enableDebugLogging: clientOptions.enableDebugLogging,
+      baseUrl,
+      errorEventSource: liveblocksErrorSource,
+      unstable_streamData: !!clientOptions.unstable_streamData,
+      roomHttpClient: httpClient as LiveblocksHttpApi<TM, CM>,
+      createSyncSource,
+      badgeLocation: clientOptions.badgeLocation ?? "bottom-right",
+      publicApiKey: "publicApiKey" in clientOptions ? (clientOptions.publicApiKey) : undefined,
+      authEndpoint: "authEndpoint" in clientOptions && typeof clientOptions.authEndpoint === "string" ? clientOptions.authEndpoint : undefined,
+    };
+
+    const wasmRoomHandleClass = getWasmRoomHandleClass();
+    const newRoom = wasmRoomHandleClass
+      ? createWasmRoom<P, S, U, E, TM, CM>(
+          { initialPresence, initialStorage },
+          roomConfig,
+          wasmRoomHandleClass
+        )
+      : createRoom<P, S, U, E, TM, CM>(
+          { initialPresence, initialStorage },
+          roomConfig
+        );
 
     const newRoomDetails: RoomDetails = {
       room: newRoom,

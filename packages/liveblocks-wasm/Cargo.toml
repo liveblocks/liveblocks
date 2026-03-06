@@ -1,0 +1,57 @@
+[package]
+name = "liveblocks-wasm"
+version = "0.1.0"
+edition = "2024"
+
+# wasm-opt bundled with wasm-pack needs explicit feature flags for
+# bulk-memory and nontrapping-float-to-int (standard since 2019,
+# supported in all modern browsers and Node.js 12+).
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+wasm = ["wasm-bindgen", "js-sys", "serde-wasm-bindgen", "web-sys", "wasm-bindgen-futures", "futures-channel", "futures-util"]
+native = ["tokio", "tokio-tungstenite", "reqwest", "futures-util", "base64"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_repr = "0.1.20"
+slotmap = { version = "1", features = ["serde"] }
+indexmap = { version = "2", features = ["serde"] }
+
+# WASM-only dependencies
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+js-sys = { version = "0.3", optional = true }
+web-sys = { version = "0.3", optional = true, features = [
+    "WebSocket", "MessageEvent", "CloseEvent", "ErrorEvent",
+    "Request", "RequestInit", "RequestMode", "Response", "Headers",
+    "Window",
+] }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+futures-channel = { version = "0.3", optional = true }
+
+# Native-only dependencies
+tokio = { version = "1", optional = true, features = ["rt", "rt-multi-thread", "time", "sync", "macros"] }
+tokio-tungstenite = { version = "0.24", optional = true, features = ["native-tls"] }
+reqwest = { version = "0.12", optional = true, features = ["json"] }
+futures-util = { version = "0.3", optional = true }
+base64 = { version = "0.22", optional = true }
+
+[[example]]
+name = "native_client"
+required-features = ["native"]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+strip = true

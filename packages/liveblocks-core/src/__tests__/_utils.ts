@@ -6,10 +6,10 @@ import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
+import { makePosition } from "../crdts/wasm-adapter";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
-import { makePosition } from "../lib/position";
 import { Signal } from "../lib/signals";
 import { deepClone } from "../lib/utils";
 import type { AccessToken, IDToken } from "../protocol/AuthToken";
@@ -32,6 +32,7 @@ import type {
 import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
+import { createWasmRoom, getWasmRoomHandleClass } from "../room-wasm";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
 import {
@@ -116,6 +117,29 @@ function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>(
 }
 
 /**
+ * Create a room using either the JS or WASM implementation.
+ * When LIVEBLOCKS_ENGINE=wasm and the RoomHandle class is registered,
+ * uses createWasmRoom(). Otherwise falls back to createRoom().
+ */
+function createRoomForTest<
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  options: { initialPresence: P; initialStorage?: S },
+  config: RoomConfig<TM, CM>
+): Room<P, S, U, E, TM, CM> {
+  const WasmRoomHandle = getWasmRoomHandleClass();
+  if (WasmRoomHandle) {
+    return createWasmRoom<P, S, U, E, TM, CM>(options, config, WasmRoomHandle);
+  }
+  return createRoom<P, S, U, E, TM, CM>(options, config);
+}
+
+/**
  * Sets up a Room instance that auto-connects to a server, but does not yet
  * start loading the initial storage.
  */
@@ -160,7 +184,7 @@ export function prepareRoomWithStorage_loadWithDelay<
     }
   });
 
-  const room = createRoom<P, S, U, E, TM, CM>(
+  const room = createRoomForTest<P, S, U, E, TM, CM>(
     {
       initialPresence: {} as P,
       initialStorage: defaultStorage || ({} as S),
@@ -286,12 +310,17 @@ export async function prepareStorageTest<
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           operations.push(...message.ops);
 
+          // Forward to ref WITHOUT opId — matches real server behavior
+          // (the server strips opId when forwarding to other clients).
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(
+                ({ opId: _, ...rest }) => rest
+              ) as typeof message.ops,
             })
           );
+          // Loopback to subject WITH opId (server echo / ACK).
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
@@ -484,12 +513,16 @@ export async function prepareStorageUpdateTest<
       const messages = parseAsClientMsgs(data);
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          // Forward to ref WITHOUT opId — matches real server behavior.
           ref.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,
-              ops: message.ops,
+              ops: message.ops.map(
+                ({ opId: _, ...rest }) => rest
+              ) as typeof message.ops,
             })
           );
+          // Loopback to subject WITH opId (server echo / ACK).
           subject.wss.last.send(
             serverMessage({
               type: ServerMsgCode.UPDATE_STORAGE,

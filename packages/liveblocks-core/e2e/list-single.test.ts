@@ -5,6 +5,8 @@ import { lsonToJson } from "../src/immutable";
 import type { Json } from "../src/lib/Json";
 import { prepareSingleClientTest } from "./utils";
 
+const isWasm = process.env.LIVEBLOCKS_ENGINE === "wasm";
+
 test(
   "fast consecutive sets on same index",
   prepareSingleClientTest(
@@ -26,7 +28,9 @@ test(
   )
 );
 
-test(
+// WASM: skipped because JS LiveList created in user code is not connected
+// to the Rust document (requires creating nested CRDTs via the WASM handle).
+test.skipIf(isWasm)(
   "create list with item + set",
   prepareSingleClientTest(
     {

@@ -96,15 +96,30 @@ export function isLiveNode(value: unknown): value is LiveNode {
 }
 
 export function isLiveList(value: unknown): value is LiveList<Lson> {
-  return value instanceof LiveList;
+  if (value instanceof LiveList) return true;
+  // Duck-type check for WasmLiveList
+  return isWasmLiveNode(value) && typeof (value as Record<string, unknown>).toArray === "function"
+    && !("toObject" in (value as object));
 }
 
 export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
-  return value instanceof LiveMap;
+  if (value instanceof LiveMap) return true;
+  // Duck-type check for WasmLiveMap
+  return isWasmLiveNode(value) && typeof (value as Record<string, unknown>).has === "function"
+    && typeof (value as Record<string, unknown>).size === "number";
 }
 
 export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
-  return value instanceof LiveObject;
+  if (value instanceof LiveObject) return true;
+  // Duck-type check for WasmLiveObject
+  return isWasmLiveNode(value) && typeof (value as Record<string, unknown>).toObject === "function";
+}
+
+/** Check if a value looks like a WasmLive* node (has _nodeId and _owner). */
+function isWasmLiveNode(value: unknown): boolean {
+  return value !== null && typeof value === "object"
+    && "_nodeId" in (value)
+    && "_owner" in (value);
 }
 
 export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
