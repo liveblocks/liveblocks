@@ -91,6 +91,7 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
             )}
             side="top"
             align="center"
+            updatePositionStrategy="always"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             {...props}
