@@ -62,6 +62,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New quickstart: [Realtime avatar and cursor presence with Next.js](https://liveblocks.io/docs/get-started/nextjs-presence).
 - New guide: [How to add users to Liveblocks presence components](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-presence-components).
 - Mention `sk_localdev` and `pk_localdev` keys more explicitly in dev server docs.
+- Mention `["comments:write"]` permission under authentication.
 
 ## Contributors
 
