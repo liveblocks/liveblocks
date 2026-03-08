@@ -85,7 +85,7 @@ export const AvatarStack = forwardRef<HTMLDivElement, AvatarStackProps>(
           style={
             {
               "--lb-avatar-stack-count": visibleItemsCount - 1,
-              "--lb-avatar-stack-size": size,
+              "--lb-avatar-stack-size": size + typeof size === "number" ? "px" : "",
               ...style,
             } as CSSProperties
           }
