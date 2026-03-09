@@ -25,6 +25,11 @@ export interface CommentPinProps extends ComponentPropsWithoutRef<"button"> {
   size?: string | number;
 
   /**
+   * The padding within the pin.
+   */
+  padding?: string | number;
+
+  /**
    * The content shown in the pin.
    * If provided, the `userId` prop is ignored.
    */
@@ -41,6 +46,7 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
       corner = "bottom-left",
       userId,
       size,
+      padding,
       type = "button",
       className,
       style,
@@ -53,7 +59,13 @@ export const CommentPin = forwardRef<HTMLButtonElement, CommentPinProps>(
       <button
         className={cn("lb-root lb-comment-pin", className)}
         data-corner={corner}
-        style={{ "--lb-comment-pin-size": px(size), ...style } as CSSProperties}
+        style={
+          {
+            "--lb-comment-pin-size": px(size),
+            "--lb-comment-pin-padding": px(padding),
+            ...style,
+          } as CSSProperties
+        }
         type={type}
         {...props}
         ref={forwardedRef}

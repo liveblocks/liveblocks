@@ -1757,8 +1757,8 @@
 
 .lb-avatar-stack {
   --lb-avatar-stack-size: 24px;
-  --lb-avatar-stack-overlap: calc(0.25 * var(--lb-avatar-stack-size));
   --lb-avatar-stack-gap: 2px;
+  --lb-avatar-stack-overlap: calc(0.25 * var(--lb-avatar-stack-size));
 
   display: flex;
   flex-direction: row;
