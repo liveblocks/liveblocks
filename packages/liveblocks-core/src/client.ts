@@ -63,7 +63,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import { createWasmRoom, getWasmRoomHandleClass } from "./room-wasm";
+// NOTE: WASM room factory is registered automatically via
+// _setWasmRoomHandleClass() → _setAlternativeRoomFactory(), so
+// createRoom() transparently delegates when WASM is active.
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
@@ -792,17 +794,10 @@ export function createClient<U extends BaseUserMeta = DU>(
       authEndpoint: "authEndpoint" in clientOptions && typeof clientOptions.authEndpoint === "string" ? clientOptions.authEndpoint : undefined,
     };
 
-    const wasmRoomHandleClass = getWasmRoomHandleClass();
-    const newRoom = wasmRoomHandleClass
-      ? createWasmRoom<P, S, U, E, TM, CM>(
-          { initialPresence, initialStorage },
-          roomConfig,
-          wasmRoomHandleClass
-        )
-      : createRoom<P, S, U, E, TM, CM>(
-          { initialPresence, initialStorage },
-          roomConfig
-        );
+    const newRoom = createRoom<P, S, U, E, TM, CM>(
+      { initialPresence, initialStorage },
+      roomConfig
+    );
 
     const newRoomDetails: RoomDetails = {
       room: newRoom,

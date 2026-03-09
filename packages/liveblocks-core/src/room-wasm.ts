@@ -25,6 +25,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { BaseMetadata } from "./protocol/Comments";
 import type { Room, RoomConfig, StorageStatus } from "./room";
+import { _setAlternativeRoomFactory } from "./room";
 import type { User } from "./types/User";
 
 // ---- RoomHandle class registration ----
@@ -37,9 +38,15 @@ let _wasmRoomHandleClass: RoomHandleConstructor | null = null;
 /**
  * Register the WASM RoomHandle class.
  * Called at startup when LIVEBLOCKS_ENGINE=wasm.
+ *
+ * Also registers the WASM room factory with createRoom() so that
+ * all room creation transparently uses the WASM implementation.
  */
 export function _setWasmRoomHandleClass(cls: RoomHandleConstructor): void {
   _wasmRoomHandleClass = cls;
+  _setAlternativeRoomFactory((options, config) =>
+    createWasmRoom(options, config, cls)
+  );
 }
 
 /**

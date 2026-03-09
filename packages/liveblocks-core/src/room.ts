@@ -1368,6 +1368,34 @@ function makeNodeMapBuffer() {
   };
 }
 
+// ---- Alternative room factory registration ----
+// When the WASM engine is active, it registers a factory here so that
+// createRoom() transparently delegates to createWasmRoom().
+
+type RoomFactory = <
+  P extends JsonObject,
+  S extends LsonObject,
+  U extends BaseUserMeta,
+  E extends Json,
+  TM extends BaseMetadata,
+  CM extends BaseMetadata,
+>(
+  options: { initialPresence: P; initialStorage?: S },
+  config: RoomConfig<TM, CM>
+) => Room<P, S, U, E, TM, CM>;
+
+let _alternativeRoomFactory: RoomFactory | null = null;
+
+/**
+ * @internal
+ * Register an alternative room factory (e.g. WASM-backed).
+ * When set, createRoom() delegates to this factory instead of
+ * building a JS room.
+ */
+export function _setAlternativeRoomFactory(factory: RoomFactory): void {
+  _alternativeRoomFactory = factory;
+}
+
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1383,6 +1411,11 @@ export function createRoom<
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<TM, CM>
 ): Room<P, S, U, E, TM, CM> {
+  // If a WASM (or other alternative) room factory is registered, use it
+  if (_alternativeRoomFactory) {
+    return _alternativeRoomFactory<P, S, U, E, TM, CM>(options, config);
+  }
+
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};

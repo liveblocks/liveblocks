@@ -32,7 +32,6 @@ import type {
 import { CrdtType, nodeStreamToCompactNodes } from "../protocol/StorageNode";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
-import { createWasmRoom, getWasmRoomHandleClass } from "../room-wasm";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import type { LiveblocksError } from "../types/LiveblocksError";
 import {
@@ -119,29 +118,6 @@ export function makeRoomConfig<TM extends BaseMetadata, CM extends BaseMetadata>
 }
 
 /**
- * Create a room using either the JS or WASM implementation.
- * When LIVEBLOCKS_ENGINE=wasm and the RoomHandle class is registered,
- * uses createWasmRoom(). Otherwise falls back to createRoom().
- */
-export function createRoomForTest<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  TM extends BaseMetadata,
-  CM extends BaseMetadata,
->(
-  options: { initialPresence: P; initialStorage?: S },
-  config: RoomConfig<TM, CM>
-): Room<P, S, U, E, TM, CM> {
-  const WasmRoomHandle = getWasmRoomHandleClass();
-  if (WasmRoomHandle) {
-    return createWasmRoom<P, S, U, E, TM, CM>(options, config, WasmRoomHandle);
-  }
-  return createRoom<P, S, U, E, TM, CM>(options, config);
-}
-
-/**
  * Sets up a Room instance that auto-connects to a server, but does not yet
  * start loading the initial storage.
  */
@@ -186,7 +162,7 @@ export function prepareRoomWithStorage_loadWithDelay<
     }
   });
 
-  const room = createRoomForTest<P, S, U, E, TM, CM>(
+  const room = createRoom<P, S, U, E, TM, CM>(
     {
       initialPresence: {} as P,
       initialStorage: defaultStorage || ({} as S),
