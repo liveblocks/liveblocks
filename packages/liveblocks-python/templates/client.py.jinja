@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 {% endfor %}
 {% endfor %}
 
-    from session import AsyncSession, Session
+    from .session import AsyncSession, Session
 
 _DEFAULT_BASE_URL = "https://api.liveblocks.io"
 _VALID_KEY_CHARS_REGEX = re.compile(r"^[\w-]+$")
@@ -78,7 +78,7 @@ class Liveblocks:
         user_info: dict[str, Any] | None = None,
         organization_id: str | None = None,
     ) -> Session:
-        from session import Session
+        from .session import Session
 
         return Session(
             client=self,
@@ -145,7 +145,7 @@ class AsyncLiveblocks:
         user_info: dict[str, Any] | None = None,
         organization_id: str | None = None,
     ) -> AsyncSession:
-        from session import AsyncSession
+        from .session import AsyncSession
 
         return AsyncSession(
             client=self,

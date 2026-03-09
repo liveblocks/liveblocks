@@ -2,8 +2,10 @@
 
 {{ safe_docstring(package_description) }}
 from .client import AsyncLiveblocks, Liveblocks
+from .webhooks import WebhookHandler
 
 __all__ = (
     "AsyncLiveblocks",
     "Liveblocks",
+    "WebhookHandler",
 )
