@@ -1,5 +1,19 @@
 ## vNEXT (not yet released)
 
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Add `gap` prop to `AvatarStack` to control the `--lb-avatar-stack-gap` CSS
+  variable.
+- Add `padding` prop to `CommentPin` to control the `--lb-comment-pin-padding`
+  CSS variable.
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
+
 ## v3.15.0
 
 ### `@liveblocks/react-ui`

@@ -81,6 +81,7 @@ export const FloatingThread = forwardRef(
             dir={$.dir}
             side={side}
             sideOffset={sideOffset}
+            updatePositionStrategy="always"
             align={align}
             alignOffset={alignOffset}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
