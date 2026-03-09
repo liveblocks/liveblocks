@@ -58,7 +58,7 @@
   "dependencies": {
     "@liveblocks/core": "3.14.0",
     "async-mutex": "^0.4.0",
-    "decoders": "^2.9.0-pre.4",
+    "decoders": "^2.9.0",
     "itertools": "^2.3.2",
     "js-base64": "^3.7.5",
     "nanoid": "^3",

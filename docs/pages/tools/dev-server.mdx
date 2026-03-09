@@ -84,13 +84,16 @@ authentication will be supported in future.
   <Step>
     <StepTitle>Connect to the dev server</StepTitle>
     <StepContent>
-      Point your client and auth endpoint to the dev server. The easiest way to
-      do this is run the dev server and press `p`. It copies a prompt you can 
-      paste into your AI code editor, which will intelligently make the changes
-      for you.
+      Point your client and auth endpoint to the dev server, and update your API
+      keys. You must use `"sk_localdev"` instead of your secret key and 
+      `"pk_localdev"` instead of your public key. 
+      
+      The easiest way to do this is to run the dev server and press `p`. It copies
+      a prompt you can paste into your AI code editor, which will intelligently 
+      make the changes for you.
 
       If you don’t use the prompt, you can manually add `baseUrl` and change
-      your `secret` key:
+      your API key:
 
       ```tsx
       import { LiveblocksProvider } from "@liveblocks/react";

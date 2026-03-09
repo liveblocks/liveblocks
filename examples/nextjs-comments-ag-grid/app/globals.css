@@ -34,28 +34,14 @@ button {
   --lb-accent: var(--ag-accent-color, #2196f3);
 }
 
-/* Comment cell: plus trigger is hidden until row/cell is hovered */
+/* Hover to show "+" CommentPin icon */
 .comment-cell-trigger {
   opacity: 0;
   transition: opacity 0.15s ease;
 }
-.comment-cell:hover .comment-cell-trigger {
+.comment-cell:hover .comment-cell-trigger,
+.comment-cell-trigger[data-open] {
   opacity: 1;
-}
-
-/* Style the plus (add comment) trigger here */
-.comment-cell-trigger button {
-  border-radius: 100%;
-  background: #ddf0ff;
-  padding-top: 0px;
-  appearance: none;
-  height: 28px;
-  width: 28px;
-  border: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #111c26;
 }
 
 .lb-portal {

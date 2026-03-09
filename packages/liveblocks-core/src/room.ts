@@ -1112,10 +1112,11 @@ export type PrivateRoomApi = {
     signal: AbortSignal;
   }): Promise<string>;
 
-  // NOTE: These are only used in our e2e test app!
+  // NOTE: These are only used for some edge case unit tests or our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
+    incomingMessage(data: string): void;
   };
 
   attachmentUrlsStore: BatchStore<string, string>;
@@ -3068,9 +3069,10 @@ export function createRoom<
 
         // prettier-ignore
         simulate: {
-          // These exist only for our E2E testing app
+          // These exist only for our E2E testing app and unit tests
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
+          incomingMessage: (data) => handleServerMessage(new MessageEvent("message", { data })),
         },
 
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
