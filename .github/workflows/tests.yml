@@ -350,19 +350,38 @@ jobs:
             exit 1
           fi
 
-  # Python tests
+  # Python tests with coverage
   test-python:
-    needs: check_for_code_changes
     runs-on: ubuntu-latest
-    if: needs.check_for_code_changes.outputs.changes == 'true'
+
+    permissions:
+      pull-requests: write
 
     steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            python_sdk:
+              - 'packages/liveblocks-python/**'
+
       - name: Checkout
+        if: steps.filter.outputs.python_sdk == 'true'
         uses: actions/checkout@v4
 
       - name: Install uv
+        if: steps.filter.outputs.python_sdk == 'true'
         uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
 
-      - name: Run Python tests
-        run: uv run pytest
+      - name: Run Python tests with coverage
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml:coverage.xml
         working-directory: packages/liveblocks-python
+
+      - name: Post coverage report as PR comment
+        if: steps.filter.outputs.python_sdk == 'true' && github.event_name == 'pull_request'
+        uses: orgoro/coverage@v3.2
+        with:
+          coverageFile: packages/liveblocks-python/coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          thresholdAll: 0.0

@@ -14,11 +14,23 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.0",
+    "pytest-cov>=7.0",
     "respx>=0.22.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["liveblocks"]
+omit = [
+    "liveblocks/models/*",
+    "liveblocks/api/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
 
 [tool.uv.build-backend]
 module-name = "{{ package_name }}"
