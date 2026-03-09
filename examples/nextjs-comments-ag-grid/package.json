@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.15.0-rc1",
-    "@liveblocks/node": "^3.15.0-rc1",
-    "@liveblocks/react": "^3.15.0-rc1",
-    "@liveblocks/react-ui": "^3.15.0-rc1",
+    "@liveblocks/client": "^3.15.1-rc1",
+    "@liveblocks/node": "^3.15.1-rc1",
+    "@liveblocks/react": "^3.15.1-rc1",
+    "@liveblocks/react-ui": "^3.15.1-rc1",
     "ag-grid-community": "^35.1.0",
     "ag-grid-react": "^35.1.0",
     "next": "^16.1.6",

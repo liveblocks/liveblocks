@@ -104,6 +104,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
           <PopoverPrimitive.Content
             side="top"
             align="center"
+            updatePositionStrategy="always"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className={cn(

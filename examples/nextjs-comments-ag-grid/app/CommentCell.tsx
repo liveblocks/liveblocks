@@ -1,15 +1,30 @@
 "use client";
 
 import {
-  Comment,
+  CommentPin,
   FloatingComposer,
   FloatingThread,
+  Icon,
 } from "@liveblocks/react-ui";
+import { useSelf } from "@liveblocks/react";
 import { CustomCellRendererProps } from "ag-grid-react";
 import { useCellThread } from "./CellThreadContext";
+import { CSSProperties, useState } from "react";
+
+const COMMENT_PIN_SIZE = 24;
+
+const commentPinStyle = {
+  "--lb-comment-pin-padding": "3px",
+  width: COMMENT_PIN_SIZE,
+  height: COMMENT_PIN_SIZE,
+  cursor: "pointer",
+  marginTop: 3,
+} as CSSProperties;
 
 export function CommentCell(params: CustomCellRendererProps) {
   const { threads, openCell, setOpenCell } = useCellThread();
+  const currentUserId = useSelf((self) => self.id) ?? undefined;
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
 
   const rowId = params.data?.id;
   const columnId = params.colDef?.field;
@@ -37,8 +52,7 @@ export function CommentCell(params: CustomCellRendererProps) {
       style={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 16,
+        gap: 12,
       }}
     >
       {/* Cell contents */}
@@ -46,26 +60,25 @@ export function CommentCell(params: CustomCellRendererProps) {
 
       {/* Show thread if it exists, otherwise show thread composer (plus on hover) */}
       {!thread ? (
-        <div className="comment-cell-trigger">
+        <div
+          className="comment-cell-trigger"
+          data-open={isComposerOpen || undefined}
+        >
           <FloatingComposer
             metadata={metadata}
             onComposerSubmit={() => setOpenCell(metadata)}
+            onOpenChange={setIsComposerOpen}
             style={{ zIndex: 10 }}
           >
-            <button>
-              <svg
-                width={16}
-                height={16}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M2.992 16.342a2 2 0 01.094 1.167l-1.065 3.29a1 1 0 001.236 1.168l3.413-.998a2 2 0 011.099.092 10 10 0 10-4.777-4.719M8 12h8M12 8v8" />
-              </svg>
-            </button>
+            <CommentPin
+              corner="top-left"
+              style={commentPinStyle}
+              userId={currentUserId}
+            >
+              {!isComposerOpen ? (
+                <Icon.Plus style={{ width: 14, height: 14 }} />
+              ) : null}
+            </CommentPin>
           </FloatingComposer>
         </div>
       ) : (
@@ -81,13 +94,9 @@ export function CommentCell(params: CustomCellRendererProps) {
           style={{ zIndex: 10 }}
           autoFocus
         >
-          <Comment.Avatar
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "100%",
-              cursor: "pointer",
-            }}
+          <CommentPin
+            corner="top-left"
+            style={commentPinStyle}
             userId={thread.comments[0]?.userId}
           />
         </FloatingThread>
