@@ -16,11 +16,11 @@ T = TypeVar("T", bound="CommentBody")
 class CommentBody:
     """
     Attributes:
-        version (float):
+        version (int):
         content (list[CommentBodyContentItem]):
     """
 
-    version: float
+    version: int
     content: list[CommentBodyContentItem]
 
     def to_dict(self) -> dict[str, Any]:

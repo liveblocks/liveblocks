@@ -9,7 +9,7 @@ from ...types import UNSET, Unset
 
 def _get_kwargs(
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -42,7 +42,7 @@ def _parse_response(*, response: httpx.Response) -> GetManagementProjectsRespons
 def _sync(
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementProjectsResponse:
     """List projects
@@ -51,7 +51,7 @@ def _sync(
     the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:
@@ -76,7 +76,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementProjectsResponse:
     """List projects
@@ -85,7 +85,7 @@ async def _asyncio(
     the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:

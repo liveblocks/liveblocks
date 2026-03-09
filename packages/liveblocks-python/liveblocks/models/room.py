@@ -30,6 +30,7 @@ class Room:
         users_accesses (RoomAccesses):
         groups_accesses (RoomAccesses):
         metadata (RoomMetadata):
+        organization_id (str):
         last_connection_at (datetime.datetime | Unset):
     """
 
@@ -40,6 +41,7 @@ class Room:
     users_accesses: RoomAccesses
     groups_accesses: RoomAccesses
     metadata: RoomMetadata
+    organization_id: str
     last_connection_at: datetime.datetime | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
@@ -60,6 +62,8 @@ class Room:
 
         metadata = self.metadata.to_dict()
 
+        organization_id = self.organization_id
+
         last_connection_at: str | Unset = UNSET
         if not isinstance(self.last_connection_at, Unset):
             last_connection_at = self.last_connection_at.isoformat()
@@ -75,6 +79,7 @@ class Room:
                 "usersAccesses": users_accesses,
                 "groupsAccesses": groups_accesses,
                 "metadata": metadata,
+                "organizationId": organization_id,
             }
         )
         if last_connection_at is not UNSET:
@@ -107,6 +112,8 @@ class Room:
 
         metadata = RoomMetadata.from_dict(d.pop("metadata"))
 
+        organization_id = d.pop("organizationId")
+
         _last_connection_at = d.pop("lastConnectionAt", UNSET)
         last_connection_at: datetime.datetime | Unset
         if isinstance(_last_connection_at, Unset):
@@ -122,6 +129,7 @@ class Room:
             users_accesses=users_accesses,
             groups_accesses=groups_accesses,
             metadata=metadata,
+            organization_id=organization_id,
             last_connection_at=last_connection_at,
         )
 

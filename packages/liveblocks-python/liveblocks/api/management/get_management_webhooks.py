@@ -11,7 +11,7 @@ from ...types import UNSET, Unset
 def _get_kwargs(
     project_id: str,
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -47,7 +47,7 @@ def _sync(
     project_id: str,
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementWebhooksResponse:
     """List webhooks
@@ -61,7 +61,7 @@ def _sync(
 
     Args:
         project_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:
@@ -88,7 +88,7 @@ async def _asyncio(
     project_id: str,
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementWebhooksResponse:
     """List webhooks
@@ -102,7 +102,7 @@ async def _asyncio(
 
     Args:
         project_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:

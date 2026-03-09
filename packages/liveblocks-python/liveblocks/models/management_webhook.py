@@ -29,9 +29,9 @@ class ManagementWebhook:
         disabled (bool):
         subscribed_events (list[ManagementWebhookEvent]):
         secret (ManagementWebhookSecret | None):
-        storage_updated_throttle_seconds (float):
-        y_doc_updated_throttle_seconds (float):
-        rate_limit (float | Unset):
+        storage_updated_throttle_seconds (int):
+        y_doc_updated_throttle_seconds (int):
+        rate_limit (int | Unset):
         additional_headers (ManagementWebhookAdditionalHeaders | Unset):
     """
 
@@ -42,9 +42,9 @@ class ManagementWebhook:
     disabled: bool
     subscribed_events: list[ManagementWebhookEvent]
     secret: ManagementWebhookSecret | None
-    storage_updated_throttle_seconds: float
-    y_doc_updated_throttle_seconds: float
-    rate_limit: float | Unset = UNSET
+    storage_updated_throttle_seconds: int
+    y_doc_updated_throttle_seconds: int
+    rate_limit: int | Unset = UNSET
     additional_headers: ManagementWebhookAdditionalHeaders | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:

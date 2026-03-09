@@ -20,13 +20,13 @@ class ActiveUsersResponseDataItem:
         type_ (Literal['user']):
         id (None | str):
         info (ActiveUsersResponseDataItemInfo):
-        connection_id (float):
+        connection_id (int):
     """
 
     type_: Literal["user"]
     id: None | str
     info: ActiveUsersResponseDataItemInfo
-    connection_id: float
+    connection_id: int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

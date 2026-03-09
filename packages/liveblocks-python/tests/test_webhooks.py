@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from webhooks import (
+from liveblocks.webhooks import (
     WebhookHandler,
     is_custom_notification_event,
     is_text_mention_notification_event,
@@ -294,7 +294,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=now_ms / 1000):
+        with patch("liveblocks.webhooks.time.time", return_value=now_ms / 1000):
             event = handler.verify_request(headers=headers, raw_body=raw_body)
 
         assert event == body
@@ -319,7 +319,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674851522):
+        with patch("liveblocks.webhooks.time.time", return_value=1674851522):
             event = handler.verify_request(headers=headers, raw_body=raw_body)
 
         assert event == ydoc_updated
@@ -346,7 +346,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674850126):
+        with patch("liveblocks.webhooks.time.time", return_value=1674850126):
             event = handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
         assert event == USER_ENTERED_BODY
@@ -361,7 +361,7 @@ class TestVerifyRequest:
         headers = {**USER_ENTERED_HEADERS, "webhook-signature": sig}
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674850126):
+        with patch("liveblocks.webhooks.time.time", return_value=1674850126):
             with pytest.raises(ValueError, match="Invalid raw_body"):
                 handler.verify_request(headers=headers, raw_body={})  # type: ignore[arg-type]
 
@@ -372,7 +372,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674850126):
+        with patch("liveblocks.webhooks.time.time", return_value=1674850126):
             with pytest.raises(ValueError, match="Invalid signature"):
                 handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
@@ -390,7 +390,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674850126):
+        with patch("liveblocks.webhooks.time.time", return_value=1674850126):
             with pytest.raises(ValueError, match="Invalid timestamp"):
                 handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
@@ -406,7 +406,7 @@ class TestVerifyRequest:
         headers = {**USER_ENTERED_HEADERS, "webhook-signature": sig}
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=ten_minutes_ago_s):
+        with patch("liveblocks.webhooks.time.time", return_value=ten_minutes_ago_s):
             with pytest.raises(ValueError, match="Timestamp in the future"):
                 handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
@@ -422,7 +422,7 @@ class TestVerifyRequest:
         headers = {**USER_ENTERED_HEADERS, "webhook-signature": sig}
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=ten_minutes_later_s):
+        with patch("liveblocks.webhooks.time.time", return_value=ten_minutes_later_s):
             with pytest.raises(ValueError, match="Timestamp too old"):
                 handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
@@ -446,7 +446,7 @@ class TestVerifyRequest:
         }
 
         handler = WebhookHandler(SECRET)
-        with patch("webhooks.time.time", return_value=1674851522):
+        with patch("liveblocks.webhooks.time.time", return_value=1674851522):
             with pytest.raises(ValueError, match="Unknown event type"):
                 handler.verify_request(headers=headers, raw_body=raw_body)
 

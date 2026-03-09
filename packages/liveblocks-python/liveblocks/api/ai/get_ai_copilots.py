@@ -9,7 +9,7 @@ from ...types import UNSET, Unset
 
 def _get_kwargs(
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -42,7 +42,7 @@ def _parse_response(*, response: httpx.Response) -> GetAiCopilotsResponse:
 def _sync(
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetAiCopilotsResponse:
     """Get AI copilots
@@ -52,7 +52,7 @@ def _sync(
     reference/liveblocks-node#get-ai-copilots).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:
@@ -77,7 +77,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetAiCopilotsResponse:
     """Get AI copilots
@@ -87,7 +87,7 @@ async def _asyncio(
     reference/liveblocks-node#get-ai-copilots).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:

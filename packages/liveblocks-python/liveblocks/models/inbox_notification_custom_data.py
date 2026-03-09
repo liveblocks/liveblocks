@@ -26,7 +26,7 @@ class InboxNotificationCustomData:
         read_at (datetime.datetime | None):
         notified_at (datetime.datetime):
         activities (list[InboxNotificationActivity]):
-        room_id (str | Unset):
+        room_id (None | str | Unset):
     """
 
     id: str
@@ -35,7 +35,7 @@ class InboxNotificationCustomData:
     read_at: datetime.datetime | None
     notified_at: datetime.datetime
     activities: list[InboxNotificationActivity]
-    room_id: str | Unset = UNSET
+    room_id: None | str | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
@@ -57,7 +57,11 @@ class InboxNotificationCustomData:
             activities_item = activities_item_data.to_dict()
             activities.append(activities_item)
 
-        room_id = self.room_id
+        room_id: None | str | Unset
+        if isinstance(self.room_id, Unset):
+            room_id = UNSET
+        else:
+            room_id = self.room_id
 
         field_dict: dict[str, Any] = {}
 
@@ -113,7 +117,14 @@ class InboxNotificationCustomData:
 
             activities.append(activities_item)
 
-        room_id = d.pop("roomId", UNSET)
+        def _parse_room_id(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        room_id = _parse_room_id(d.pop("roomId", UNSET))
 
         inbox_notification_custom_data = cls(
             id=id,

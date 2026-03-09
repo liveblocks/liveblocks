@@ -12,7 +12,7 @@ def _get_kwargs(
     user_id: str,
     *,
     starting_after: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     organization_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -51,7 +51,7 @@ def _sync(
     *,
     client: httpx.Client,
     starting_after: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     organization_id: str | Unset = UNSET,
 ) -> GetRoomSubscriptionSettingsResponse:
     """Get user room subscription settings
@@ -63,7 +63,7 @@ def _sync(
     Args:
         user_id (str):
         starting_after (str | Unset):
-        limit (float | Unset):  Default: 50.0.
+        limit (int | Unset):  Default: 50.
         organization_id (str | Unset):
 
     Raises:
@@ -92,7 +92,7 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
     starting_after: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     organization_id: str | Unset = UNSET,
 ) -> GetRoomSubscriptionSettingsResponse:
     """Get user room subscription settings
@@ -104,7 +104,7 @@ async def _asyncio(
     Args:
         user_id (str):
         starting_after (str | Unset):
-        limit (float | Unset):  Default: 50.0.
+        limit (int | Unset):  Default: 50.
         organization_id (str | Unset):
 
     Raises:

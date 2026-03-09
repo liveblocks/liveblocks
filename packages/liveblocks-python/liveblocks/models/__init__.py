@@ -30,11 +30,11 @@ from .authorize_user_request_body_permissions import AuthorizeUserRequestBodyPer
 from .authorize_user_request_body_user_info import AuthorizeUserRequestBodyUserInfo
 from .authorize_user_response import AuthorizeUserResponse
 from .comment import Comment
+from .comment_attachment import CommentAttachment
 from .comment_body import CommentBody
 from .comment_body_content_item import CommentBodyContentItem
 from .comment_metadata import CommentMetadata
 from .comment_reaction import CommentReaction
-from .copilot_settings import CopilotSettings
 from .copy_json_patch_operation import CopyJsonPatchOperation
 from .create_ai_copilot_options_anthropic import CreateAiCopilotOptionsAnthropic
 from .create_ai_copilot_options_base import CreateAiCopilotOptionsBase
@@ -232,11 +232,11 @@ __all__ = (
     "AuthorizeUserRequestBodyUserInfo",
     "AuthorizeUserResponse",
     "Comment",
+    "CommentAttachment",
     "CommentBody",
     "CommentBodyContentItem",
     "CommentMetadata",
     "CommentReaction",
-    "CopilotSettings",
     "CopyJsonPatchOperation",
     "CreateAiCopilotOptionsAnthropic",
     "CreateAiCopilotOptionsBase",

@@ -9,7 +9,7 @@ from ...types import UNSET, Unset
 
 def _get_kwargs(
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
@@ -54,7 +54,7 @@ def _parse_response(*, response: httpx.Response) -> GetRoomsResponse:
 def _sync(
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
@@ -81,7 +81,7 @@ def _sync(
     Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
         organization_id (str | Unset):
         query (str | Unset):
@@ -114,7 +114,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
@@ -141,7 +141,7 @@ async def _asyncio(
     Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
         organization_id (str | Unset):
         query (str | Unset):

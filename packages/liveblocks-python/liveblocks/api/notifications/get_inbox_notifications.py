@@ -13,7 +13,7 @@ def _get_kwargs(
     *,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     starting_after: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -55,7 +55,7 @@ def _sync(
     client: httpx.Client,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     starting_after: str | Unset = UNSET,
 ) -> GetInboxNotificationsResponse:
     """Get all inbox notifications
@@ -68,7 +68,7 @@ def _sync(
         user_id (str):
         organization_id (str | Unset):
         query (str | Unset):
-        limit (float | Unset):  Default: 50.0.
+        limit (int | Unset):  Default: 50.
         starting_after (str | Unset):
 
     Raises:
@@ -99,7 +99,7 @@ async def _asyncio(
     client: httpx.AsyncClient,
     organization_id: str | Unset = UNSET,
     query: str | Unset = UNSET,
-    limit: float | Unset = 50.0,
+    limit: int | Unset = 50,
     starting_after: str | Unset = UNSET,
 ) -> GetInboxNotificationsResponse:
     """Get all inbox notifications
@@ -112,7 +112,7 @@ async def _asyncio(
         user_id (str):
         organization_id (str | Unset):
         query (str | Unset):
-        limit (float | Unset):  Default: 50.0.
+        limit (int | Unset):  Default: 50.
         starting_after (str | Unset):
 
     Raises:

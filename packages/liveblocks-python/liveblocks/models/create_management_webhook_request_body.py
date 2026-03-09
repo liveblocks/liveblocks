@@ -24,18 +24,18 @@ class CreateManagementWebhookRequestBody:
     Attributes:
         url (str):
         subscribed_events (list[ManagementWebhookEvent]):
-        rate_limit (float | Unset):
+        rate_limit (int | Unset):
         additional_headers (CreateManagementWebhookRequestBodyAdditionalHeaders | Unset):
-        storage_updated_throttle_seconds (float | Unset):
-        y_doc_updated_throttle_seconds (float | Unset):
+        storage_updated_throttle_seconds (int | Unset):
+        y_doc_updated_throttle_seconds (int | Unset):
     """
 
     url: str
     subscribed_events: list[ManagementWebhookEvent]
-    rate_limit: float | Unset = UNSET
+    rate_limit: int | Unset = UNSET
     additional_headers: CreateManagementWebhookRequestBodyAdditionalHeaders | Unset = UNSET
-    storage_updated_throttle_seconds: float | Unset = UNSET
-    y_doc_updated_throttle_seconds: float | Unset = UNSET
+    storage_updated_throttle_seconds: int | Unset = UNSET
+    y_doc_updated_throttle_seconds: int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

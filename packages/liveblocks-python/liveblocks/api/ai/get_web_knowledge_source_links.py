@@ -12,7 +12,7 @@ def _get_kwargs(
     copilot_id: str,
     knowledge_source_id: str,
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -50,7 +50,7 @@ def _sync(
     knowledge_source_id: str,
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetWebKnowledgeSourceLinksResponse:
     """Get web knowledge source links
@@ -63,7 +63,7 @@ def _sync(
     Args:
         copilot_id (str):
         knowledge_source_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:
@@ -92,7 +92,7 @@ async def _asyncio(
     knowledge_source_id: str,
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetWebKnowledgeSourceLinksResponse:
     """Get web knowledge source links
@@ -105,7 +105,7 @@ async def _asyncio(
     Args:
         copilot_id (str):
         knowledge_source_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:

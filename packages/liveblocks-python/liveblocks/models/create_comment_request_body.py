@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -25,12 +25,14 @@ class CreateCommentRequestBody:
         body (CommentBody):
         created_at (datetime.datetime | Unset):
         metadata (CommentMetadata | Unset):
+        attachment_ids (list[str] | Unset):
     """
 
     user_id: str
     body: CommentBody
     created_at: datetime.datetime | Unset = UNSET
     metadata: CommentMetadata | Unset = UNSET
+    attachment_ids: list[str] | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         user_id = self.user_id
@@ -45,6 +47,10 @@ class CreateCommentRequestBody:
         if not isinstance(self.metadata, Unset):
             metadata = self.metadata.to_dict()
 
+        attachment_ids: list[str] | Unset = UNSET
+        if not isinstance(self.attachment_ids, Unset):
+            attachment_ids = self.attachment_ids
+
         field_dict: dict[str, Any] = {}
 
         field_dict.update(
@@ -57,6 +63,8 @@ class CreateCommentRequestBody:
             field_dict["createdAt"] = created_at
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
+        if attachment_ids is not UNSET:
+            field_dict["attachmentIds"] = attachment_ids
 
         return field_dict
 
@@ -84,11 +92,14 @@ class CreateCommentRequestBody:
         else:
             metadata = CommentMetadata.from_dict(_metadata)
 
+        attachment_ids = cast(list[str], d.pop("attachmentIds", UNSET))
+
         create_comment_request_body = cls(
             user_id=user_id,
             body=body,
             created_at=created_at,
             metadata=metadata,
+            attachment_ids=attachment_ids,
         )
 
         return create_comment_request_body

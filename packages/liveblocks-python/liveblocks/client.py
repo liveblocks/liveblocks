@@ -8,8 +8,6 @@ import httpx
 from .types import UNSET, File, Unset
 
 if TYPE_CHECKING:
-    from session import AsyncSession, Session
-
     from .models.active_users_response import ActiveUsersResponse
     from .models.add_comment_reaction_request_body import AddCommentReactionRequestBody
     from .models.add_group_members_request_body import AddGroupMembersRequestBody
@@ -116,6 +114,7 @@ if TYPE_CHECKING:
     from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
     from .models.upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
     from .models.upsert_room_request_body import UpsertRoomRequestBody
+    from .session import AsyncSession, Session
 
 _DEFAULT_BASE_URL = "https://api.liveblocks.io"
 _VALID_KEY_CHARS_REGEX = re.compile(r"^[\w-]+$")
@@ -170,7 +169,7 @@ class Liveblocks:
         user_info: dict[str, Any] | None = None,
         organization_id: str | None = None,
     ) -> Session:
-        from session import Session
+        from .session import Session
 
         return Session(
             client=self,
@@ -182,7 +181,7 @@ class Liveblocks:
     def get_rooms(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
         organization_id: str | Unset = UNSET,
         query: str | Unset = UNSET,
@@ -441,7 +440,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetYjsVersionsResponse:
         from .api.yjs import get_yjs_versions
@@ -847,7 +846,7 @@ class Liveblocks:
         *,
         organization_id: str | Unset = UNSET,
         query: str | Unset = UNSET,
-        limit: float | Unset = 50.0,
+        limit: int | Unset = 50,
         starting_after: str | Unset = UNSET,
     ) -> GetInboxNotificationsResponse:
         from .api.notifications import get_inbox_notifications
@@ -955,7 +954,7 @@ class Liveblocks:
         user_id: str,
         *,
         starting_after: str | Unset = UNSET,
-        limit: float | Unset = 50.0,
+        limit: int | Unset = 50,
         organization_id: str | Unset = UNSET,
     ) -> GetRoomSubscriptionSettingsResponse:
         from .api.notifications import get_user_room_subscription_settings
@@ -983,7 +982,7 @@ class Liveblocks:
     def get_groups(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetGroupsResponse:
         from .api.groups import get_groups
@@ -1060,7 +1059,7 @@ class Liveblocks:
         self,
         user_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetUserGroupsResponse:
         from .api.groups import get_user_groups
@@ -1075,7 +1074,7 @@ class Liveblocks:
     def get_ai_copilots(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetAiCopilotsResponse:
         from .api.ai import get_ai_copilots
@@ -1141,7 +1140,7 @@ class Liveblocks:
         self,
         copilot_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetKnowledgeSourcesResponse:
         from .api.ai import get_knowledge_sources
@@ -1240,7 +1239,7 @@ class Liveblocks:
         copilot_id: str,
         knowledge_source_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetWebKnowledgeSourceLinksResponse:
         from .api.ai import get_web_knowledge_source_links
@@ -1256,7 +1255,7 @@ class Liveblocks:
     def get_management_projects(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementProjectsResponse:
         from .api.management import get_management_projects
@@ -1369,7 +1368,7 @@ class Liveblocks:
         self,
         project_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementWebhooksResponse:
         from .api.management import get_management_webhooks
@@ -1562,7 +1561,7 @@ class AsyncLiveblocks:
         user_info: dict[str, Any] | None = None,
         organization_id: str | None = None,
     ) -> AsyncSession:
-        from session import AsyncSession
+        from .session import AsyncSession
 
         return AsyncSession(
             client=self,
@@ -1574,7 +1573,7 @@ class AsyncLiveblocks:
     async def get_rooms(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
         organization_id: str | Unset = UNSET,
         query: str | Unset = UNSET,
@@ -1833,7 +1832,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetYjsVersionsResponse:
         from .api.yjs import get_yjs_versions
@@ -2239,7 +2238,7 @@ class AsyncLiveblocks:
         *,
         organization_id: str | Unset = UNSET,
         query: str | Unset = UNSET,
-        limit: float | Unset = 50.0,
+        limit: int | Unset = 50,
         starting_after: str | Unset = UNSET,
     ) -> GetInboxNotificationsResponse:
         from .api.notifications import get_inbox_notifications
@@ -2347,7 +2346,7 @@ class AsyncLiveblocks:
         user_id: str,
         *,
         starting_after: str | Unset = UNSET,
-        limit: float | Unset = 50.0,
+        limit: int | Unset = 50,
         organization_id: str | Unset = UNSET,
     ) -> GetRoomSubscriptionSettingsResponse:
         from .api.notifications import get_user_room_subscription_settings
@@ -2375,7 +2374,7 @@ class AsyncLiveblocks:
     async def get_groups(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetGroupsResponse:
         from .api.groups import get_groups
@@ -2452,7 +2451,7 @@ class AsyncLiveblocks:
         self,
         user_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetUserGroupsResponse:
         from .api.groups import get_user_groups
@@ -2467,7 +2466,7 @@ class AsyncLiveblocks:
     async def get_ai_copilots(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetAiCopilotsResponse:
         from .api.ai import get_ai_copilots
@@ -2533,7 +2532,7 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetKnowledgeSourcesResponse:
         from .api.ai import get_knowledge_sources
@@ -2632,7 +2631,7 @@ class AsyncLiveblocks:
         copilot_id: str,
         knowledge_source_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetWebKnowledgeSourceLinksResponse:
         from .api.ai import get_web_knowledge_source_links
@@ -2648,7 +2647,7 @@ class AsyncLiveblocks:
     async def get_management_projects(
         self,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementProjectsResponse:
         from .api.management import get_management_projects
@@ -2761,7 +2760,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         *,
-        limit: float | Unset = 20.0,
+        limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementWebhooksResponse:
         from .api.management import get_management_webhooks

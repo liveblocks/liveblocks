@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 
@@ -19,11 +19,11 @@ T = TypeVar("T", bound="GetAiCopilotsResponse")
 class GetAiCopilotsResponse:
     """
     Attributes:
-        next_cursor (str):
+        next_cursor (None | str):
         data (list[AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible]):
     """
 
-    next_cursor: str
+    next_cursor: None | str
     data: list[AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible]
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,6 +31,7 @@ class GetAiCopilotsResponse:
         from ..models.ai_copilot_google import AiCopilotGoogle
         from ..models.ai_copilot_open_ai import AiCopilotOpenAi
 
+        next_cursor: None | str
         next_cursor = self.next_cursor
 
         data = []
@@ -66,7 +67,13 @@ class GetAiCopilotsResponse:
         from ..models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
 
         d = dict(src_dict)
-        next_cursor = d.pop("nextCursor")
+
+        def _parse_next_cursor(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        next_cursor = _parse_next_cursor(d.pop("nextCursor"))
 
         data = []
         _data = d.pop("data")

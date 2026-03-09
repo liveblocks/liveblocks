@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 
@@ -16,14 +16,15 @@ T = TypeVar("T", bound="GetWebKnowledgeSourceLinksResponse")
 class GetWebKnowledgeSourceLinksResponse:
     """
     Attributes:
-        next_cursor (str):
+        next_cursor (None | str):
         data (list[WebKnowledgeSourceLink]):
     """
 
-    next_cursor: str
+    next_cursor: None | str
     data: list[WebKnowledgeSourceLink]
 
     def to_dict(self) -> dict[str, Any]:
+        next_cursor: None | str
         next_cursor = self.next_cursor
 
         data = []
@@ -47,7 +48,13 @@ class GetWebKnowledgeSourceLinksResponse:
         from ..models.web_knowledge_source_link import WebKnowledgeSourceLink
 
         d = dict(src_dict)
-        next_cursor = d.pop("nextCursor")
+
+        def _parse_next_cursor(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        next_cursor = _parse_next_cursor(d.pop("nextCursor"))
 
         data = []
         _data = d.pop("data")

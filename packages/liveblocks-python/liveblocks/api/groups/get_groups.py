@@ -9,7 +9,7 @@ from ...types import UNSET, Unset
 
 def _get_kwargs(
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -42,7 +42,7 @@ def _parse_response(*, response: httpx.Response) -> GetGroupsResponse:
 def _sync(
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetGroupsResponse:
     """Get groups
@@ -51,7 +51,7 @@ def _sync(
     [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:
@@ -76,7 +76,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetGroupsResponse:
     """Get groups
@@ -85,7 +85,7 @@ async def _asyncio(
     [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
 
     Args:
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:

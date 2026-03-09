@@ -30,9 +30,9 @@ class ManagementProject:
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
         public_key (ManagementProjectPublicKey):
-        secret_key (ManagementProjectSecretKey):
+        secret_key (ManagementProjectSecretKey | None):
         region (ManagementProjectRegion):
-        version_creation_timeout (bool | float): False to disable timeout or number of seconds between 30 and 300.
+        version_creation_timeout (bool | int): False to disable timeout or number of seconds between 30 and 300.
     """
 
     id: str
@@ -42,12 +42,14 @@ class ManagementProject:
     created_at: datetime.datetime
     updated_at: datetime.datetime
     public_key: ManagementProjectPublicKey
-    secret_key: ManagementProjectSecretKey
+    secret_key: ManagementProjectSecretKey | None
     region: ManagementProjectRegion
-    version_creation_timeout: bool | float
+    version_creation_timeout: bool | int
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.management_project_secret_key import ManagementProjectSecretKey
+
         id = self.id
 
         team_id = self.team_id
@@ -62,11 +64,15 @@ class ManagementProject:
 
         public_key = self.public_key.to_dict()
 
-        secret_key = self.secret_key.to_dict()
+        secret_key: dict[str, Any] | None
+        if isinstance(self.secret_key, ManagementProjectSecretKey):
+            secret_key = self.secret_key.to_dict()
+        else:
+            secret_key = self.secret_key
 
         region = self.region.value
 
-        version_creation_timeout: bool | float
+        version_creation_timeout: bool | int
         version_creation_timeout = self.version_creation_timeout
 
         field_dict: dict[str, Any] = {}
@@ -108,12 +114,25 @@ class ManagementProject:
 
         public_key = ManagementProjectPublicKey.from_dict(d.pop("publicKey"))
 
-        secret_key = ManagementProjectSecretKey.from_dict(d.pop("secretKey"))
+        def _parse_secret_key(data: object) -> ManagementProjectSecretKey | None:
+            if data is None:
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                secret_key_type_0 = ManagementProjectSecretKey.from_dict(data)
+
+                return secret_key_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(ManagementProjectSecretKey | None, data)
+
+        secret_key = _parse_secret_key(d.pop("secretKey"))
 
         region = ManagementProjectRegion(d.pop("region"))
 
-        def _parse_version_creation_timeout(data: object) -> bool | float:
-            return cast(bool | float, data)
+        def _parse_version_creation_timeout(data: object) -> bool | int:
+            return cast(bool | int, data)
 
         version_creation_timeout = _parse_version_creation_timeout(d.pop("versionCreationTimeout"))
 

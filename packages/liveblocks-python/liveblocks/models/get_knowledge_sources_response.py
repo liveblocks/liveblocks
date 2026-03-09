@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 
@@ -17,16 +17,17 @@ T = TypeVar("T", bound="GetKnowledgeSourcesResponse")
 class GetKnowledgeSourcesResponse:
     """
     Attributes:
-        next_cursor (str):
+        next_cursor (None | str):
         data (list[KnowledgeSourceFileSource | KnowledgeSourceWebSource]):
     """
 
-    next_cursor: str
+    next_cursor: None | str
     data: list[KnowledgeSourceFileSource | KnowledgeSourceWebSource]
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.knowledge_source_web_source import KnowledgeSourceWebSource
 
+        next_cursor: None | str
         next_cursor = self.next_cursor
 
         data = []
@@ -56,7 +57,13 @@ class GetKnowledgeSourcesResponse:
         from ..models.knowledge_source_web_source import KnowledgeSourceWebSource
 
         d = dict(src_dict)
-        next_cursor = d.pop("nextCursor")
+
+        def _parse_next_cursor(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        next_cursor = _parse_next_cursor(d.pop("nextCursor"))
 
         data = []
         _data = d.pop("data")

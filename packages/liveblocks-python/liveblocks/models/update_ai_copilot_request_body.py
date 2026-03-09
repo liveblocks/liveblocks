@@ -9,8 +9,8 @@ from ..models.update_ai_copilot_request_body_provider import UpdateAiCopilotRequ
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
     from ..models.anthropic_provider_options import AnthropicProviderOptions
-    from ..models.copilot_settings import CopilotSettings
     from ..models.google_provider_options import GoogleProviderOptions
     from ..models.open_ai_provider_options import OpenAiProviderOptions
 
@@ -27,7 +27,7 @@ class UpdateAiCopilotRequestBody:
         system_prompt (str | Unset):
         knowledge_prompt (None | str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (CopilotSettings | None | Unset):
+        settings (AiCopilotProviderSettings | None | Unset):
         provider_api_key (str | Unset):
         provider (UpdateAiCopilotRequestBodyProvider | Unset):
         provider_model (str | Unset):
@@ -41,7 +41,7 @@ class UpdateAiCopilotRequestBody:
     system_prompt: str | Unset = UNSET
     knowledge_prompt: None | str | Unset = UNSET
     always_use_knowledge: bool | Unset = UNSET
-    settings: CopilotSettings | None | Unset = UNSET
+    settings: AiCopilotProviderSettings | None | Unset = UNSET
     provider_api_key: str | Unset = UNSET
     provider: UpdateAiCopilotRequestBodyProvider | Unset = UNSET
     provider_model: str | Unset = UNSET
@@ -50,8 +50,8 @@ class UpdateAiCopilotRequestBody:
     provider_base_url: str | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
         from ..models.anthropic_provider_options import AnthropicProviderOptions
-        from ..models.copilot_settings import CopilotSettings
         from ..models.google_provider_options import GoogleProviderOptions
         from ..models.open_ai_provider_options import OpenAiProviderOptions
 
@@ -76,7 +76,7 @@ class UpdateAiCopilotRequestBody:
         settings: dict[str, Any] | None | Unset
         if isinstance(self.settings, Unset):
             settings = UNSET
-        elif isinstance(self.settings, CopilotSettings):
+        elif isinstance(self.settings, AiCopilotProviderSettings):
             settings = self.settings.to_dict()
         else:
             settings = self.settings
@@ -137,8 +137,8 @@ class UpdateAiCopilotRequestBody:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
         from ..models.anthropic_provider_options import AnthropicProviderOptions
-        from ..models.copilot_settings import CopilotSettings
         from ..models.google_provider_options import GoogleProviderOptions
         from ..models.open_ai_provider_options import OpenAiProviderOptions
 
@@ -167,7 +167,7 @@ class UpdateAiCopilotRequestBody:
 
         always_use_knowledge = d.pop("alwaysUseKnowledge", UNSET)
 
-        def _parse_settings(data: object) -> CopilotSettings | None | Unset:
+        def _parse_settings(data: object) -> AiCopilotProviderSettings | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -175,12 +175,12 @@ class UpdateAiCopilotRequestBody:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                settings_type_0 = CopilotSettings.from_dict(data)
+                settings_type_0 = AiCopilotProviderSettings.from_dict(data)
 
                 return settings_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(CopilotSettings | None | Unset, data)
+            return cast(AiCopilotProviderSettings | None | Unset, data)
 
         settings = _parse_settings(d.pop("settings", UNSET))
 

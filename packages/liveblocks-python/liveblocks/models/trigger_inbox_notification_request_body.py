@@ -26,6 +26,7 @@ class TriggerInboxNotificationRequestBody:
         subject_id (str):
         activity_data (TriggerInboxNotificationRequestBodyActivityData):
         room_id (str | Unset):
+        organization_id (str | Unset):
     """
 
     user_id: str
@@ -33,6 +34,7 @@ class TriggerInboxNotificationRequestBody:
     subject_id: str
     activity_data: TriggerInboxNotificationRequestBodyActivityData
     room_id: str | Unset = UNSET
+    organization_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -46,6 +48,8 @@ class TriggerInboxNotificationRequestBody:
 
         room_id = self.room_id
 
+        organization_id = self.organization_id
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -58,6 +62,8 @@ class TriggerInboxNotificationRequestBody:
         )
         if room_id is not UNSET:
             field_dict["roomId"] = room_id
+        if organization_id is not UNSET:
+            field_dict["organizationId"] = organization_id
 
         return field_dict
 
@@ -78,12 +84,15 @@ class TriggerInboxNotificationRequestBody:
 
         room_id = d.pop("roomId", UNSET)
 
+        organization_id = d.pop("organizationId", UNSET)
+
         trigger_inbox_notification_request_body = cls(
             user_id=user_id,
             kind=kind,
             subject_id=subject_id,
             activity_data=activity_data,
             room_id=room_id,
+            organization_id=organization_id,
         )
 
         trigger_inbox_notification_request_body.additional_properties = d

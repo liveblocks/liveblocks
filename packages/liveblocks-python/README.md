@@ -60,7 +60,7 @@ This endpoint returns a list of your rooms. The rooms are returned sorted by cre
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 | `organization_id` | `str \| Unset` | No |  |
 | `query` | `str \| Unset` | No |  |
@@ -575,7 +575,7 @@ This endpoint returns a list of version history snapshots for the room's Yjs doc
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes |  |
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `cursor` | `str \| Unset` | No |  |
 
 <details>
@@ -1418,7 +1418,7 @@ This endpoint returns all the user’s inbox notifications. Corresponds to [`liv
 | `user_id` | `str` | Yes |  |
 | `organization_id` | `str \| Unset` | No |  |
 | `query` | `str \| Unset` | No |  |
-| `limit` | `float \| Unset` | No |  *(default: `50.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `50`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -1647,7 +1647,7 @@ This endpoint returns the list of a user's room subscription settings. Correspon
 |------|------|----------|-------------|
 | `user_id` | `str` | Yes |  |
 | `starting_after` | `str \| Unset` | No |  |
-| `limit` | `float \| Unset` | No |  *(default: `50.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `50`)* |
 | `organization_id` | `str \| Unset` | No |  |
 
 <details>
@@ -1702,7 +1702,7 @@ This endpoint returns a list of all groups in your project. Corresponds to [`liv
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -1866,7 +1866,7 @@ This endpoint returns all groups that a specific user is a member of. Correspond
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `user_id` | `str` | Yes |  |
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -1896,7 +1896,7 @@ This endpoint returns a paginated list of AI copilots. The copilots are returned
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -2033,7 +2033,7 @@ This endpoint returns a paginated list of knowledge sources for a specific AI co
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `copilot_id` | `str` | Yes |  |
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -2239,7 +2239,7 @@ This endpoint returns a paginated list of links that were indexed from a web kno
 |------|------|----------|-------------|
 | `copilot_id` | `str` | Yes |  |
 | `knowledge_source_id` | `str` | Yes |  |
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `starting_after` | `str \| Unset` | No |  |
 
 <details>
@@ -2270,7 +2270,7 @@ Returns a paginated list of projects. You can limit the number of projects retur
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `cursor` | `str \| Unset` | No |  |
 
 <details>
@@ -2517,7 +2517,7 @@ Returns a paginated list of webhooks for a project. This endpoint requires the `
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `project_id` | `str` | Yes |  |
-| `limit` | `float \| Unset` | No |  *(default: `20.0`)* |
+| `limit` | `int \| Unset` | No |  *(default: `20`)* |
 | `cursor` | `str \| Unset` | No |  |
 
 <details>
@@ -2852,10 +2852,10 @@ The following data models are available in `liveblocks.models`:
 - `AuthorizeUserRequestBody`
 - `AuthorizeUserResponse`
 - `Comment`
+- `CommentAttachment`
 - `CommentBody`
 - `CommentMetadata`
 - `CommentReaction`
-- `CopilotSettings`
 - `CreateAiCopilotOptionsAnthropic`
 - `CreateAiCopilotOptionsBase`
 - `CreateAiCopilotOptionsGoogle`

@@ -11,7 +11,7 @@ from ...types import UNSET, Unset
 def _get_kwargs(
     room_id: str,
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -47,7 +47,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetYjsVersionsResponse:
     """Get Yjs version history
@@ -57,7 +57,7 @@ def _sync(
 
     Args:
         room_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:
@@ -84,7 +84,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetYjsVersionsResponse:
     """Get Yjs version history
@@ -94,7 +94,7 @@ async def _asyncio(
 
     Args:
         room_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         cursor (str | Unset):
 
     Raises:

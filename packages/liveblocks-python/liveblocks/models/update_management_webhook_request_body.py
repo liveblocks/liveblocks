@@ -18,17 +18,17 @@ class UpdateManagementWebhookRequestBody:
     Attributes:
         url (str | Unset):
         subscribed_events (list[ManagementWebhookEvent] | Unset):
-        rate_limit (float | Unset):
-        storage_updated_throttle_seconds (float | Unset):
-        y_doc_updated_throttle_seconds (float | Unset):
+        rate_limit (int | Unset):
+        storage_updated_throttle_seconds (int | Unset):
+        y_doc_updated_throttle_seconds (int | Unset):
         disabled (bool | Unset):
     """
 
     url: str | Unset = UNSET
     subscribed_events: list[ManagementWebhookEvent] | Unset = UNSET
-    rate_limit: float | Unset = UNSET
-    storage_updated_throttle_seconds: float | Unset = UNSET
-    y_doc_updated_throttle_seconds: float | Unset = UNSET
+    rate_limit: int | Unset = UNSET
+    storage_updated_throttle_seconds: int | Unset = UNSET
+    y_doc_updated_throttle_seconds: int | Unset = UNSET
     disabled: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 

@@ -15,6 +15,7 @@ ROOM_JSON = {
     "usersAccesses": {},
     "groupsAccesses": {},
     "metadata": {},
+    "organizationId": "org_123456789",
 }
 
 

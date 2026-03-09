@@ -11,8 +11,10 @@ from dateutil.parser import isoparse
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.comment_attachment import CommentAttachment
     from ..models.comment_body import CommentBody
     from ..models.comment_metadata import CommentMetadata
+    from ..models.comment_reaction import CommentReaction
 
 
 T = TypeVar("T", bound="Comment")
@@ -29,6 +31,8 @@ class Comment:
         user_id (str):
         created_at (datetime.datetime):
         metadata (CommentMetadata):
+        reactions (list[CommentReaction]):
+        attachments (list[CommentAttachment]):
         edited_at (datetime.datetime | Unset):
         deleted_at (datetime.datetime | Unset):
         body (CommentBody | Unset):
@@ -41,6 +45,8 @@ class Comment:
     user_id: str
     created_at: datetime.datetime
     metadata: CommentMetadata
+    reactions: list[CommentReaction]
+    attachments: list[CommentAttachment]
     edited_at: datetime.datetime | Unset = UNSET
     deleted_at: datetime.datetime | Unset = UNSET
     body: CommentBody | Unset = UNSET
@@ -60,6 +66,16 @@ class Comment:
         created_at = self.created_at.isoformat()
 
         metadata = self.metadata.to_dict()
+
+        reactions = []
+        for reactions_item_data in self.reactions:
+            reactions_item = reactions_item_data.to_dict()
+            reactions.append(reactions_item)
+
+        attachments = []
+        for attachments_item_data in self.attachments:
+            attachments_item = attachments_item_data.to_dict()
+            attachments.append(attachments_item)
 
         edited_at: str | Unset = UNSET
         if not isinstance(self.edited_at, Unset):
@@ -84,6 +100,8 @@ class Comment:
                 "userId": user_id,
                 "createdAt": created_at,
                 "metadata": metadata,
+                "reactions": reactions,
+                "attachments": attachments,
             }
         )
         if edited_at is not UNSET:
@@ -97,8 +115,10 @@ class Comment:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.comment_attachment import CommentAttachment
         from ..models.comment_body import CommentBody
         from ..models.comment_metadata import CommentMetadata
+        from ..models.comment_reaction import CommentReaction
 
         d = dict(src_dict)
         type_ = cast(Literal["comment"], d.pop("type"))
@@ -116,6 +136,20 @@ class Comment:
         created_at = isoparse(d.pop("createdAt"))
 
         metadata = CommentMetadata.from_dict(d.pop("metadata"))
+
+        reactions = []
+        _reactions = d.pop("reactions")
+        for reactions_item_data in _reactions:
+            reactions_item = CommentReaction.from_dict(reactions_item_data)
+
+            reactions.append(reactions_item)
+
+        attachments = []
+        _attachments = d.pop("attachments")
+        for attachments_item_data in _attachments:
+            attachments_item = CommentAttachment.from_dict(attachments_item_data)
+
+            attachments.append(attachments_item)
 
         _edited_at = d.pop("editedAt", UNSET)
         edited_at: datetime.datetime | Unset
@@ -146,6 +180,8 @@ class Comment:
             user_id=user_id,
             created_at=created_at,
             metadata=metadata,
+            reactions=reactions,
+            attachments=attachments,
             edited_at=edited_at,
             deleted_at=deleted_at,
             body=body,

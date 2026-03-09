@@ -18,13 +18,12 @@ class CreateManagementProjectRequestBody:
     Attributes:
         type_ (ManagementProjectType):
         name (str | Unset):
-        version_creation_timeout (bool | float | Unset): False to disable timeout or number of seconds between 30 and
-            300.
+        version_creation_timeout (bool | int | Unset): False to disable timeout or number of seconds between 30 and 300.
     """
 
     type_: ManagementProjectType
     name: str | Unset = UNSET
-    version_creation_timeout: bool | float | Unset = UNSET
+    version_creation_timeout: bool | int | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -32,7 +31,7 @@ class CreateManagementProjectRequestBody:
 
         name = self.name
 
-        version_creation_timeout: bool | float | Unset
+        version_creation_timeout: bool | int | Unset
         if isinstance(self.version_creation_timeout, Unset):
             version_creation_timeout = UNSET
         else:
@@ -59,10 +58,10 @@ class CreateManagementProjectRequestBody:
 
         name = d.pop("name", UNSET)
 
-        def _parse_version_creation_timeout(data: object) -> bool | float | Unset:
+        def _parse_version_creation_timeout(data: object) -> bool | int | Unset:
             if isinstance(data, Unset):
                 return data
-            return cast(bool | float | Unset, data)
+            return cast(bool | int | Unset, data)
 
         version_creation_timeout = _parse_version_creation_timeout(d.pop("versionCreationTimeout", UNSET))
 

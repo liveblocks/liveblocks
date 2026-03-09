@@ -12,6 +12,7 @@ ROOM_DICT = {
     "usersAccesses": {},
     "groupsAccesses": {},
     "metadata": {},
+    "organizationId": "org_123456789",
 }
 
 ROOM_DICT_FULL = {
@@ -23,6 +24,7 @@ ROOM_DICT_FULL = {
     "usersAccesses": {"user-1": ["room:write"]},
     "groupsAccesses": {"team-a": ["room:write"]},
     "metadata": {"color": "blue", "tags": ["draft", "v2"]},
+    "organizationId": "org_123456789",
 }
 
 

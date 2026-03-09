@@ -29,6 +29,7 @@ class CreateRoomRequestBody:
         engine (CreateRoomRequestBodyEngine | Unset): Preferred storage engine version to use when creating new rooms.
             The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will
             become the default in the future.
+        organization_id (str | Unset):
     """
 
     id: str
@@ -37,6 +38,7 @@ class CreateRoomRequestBody:
     groups_accesses: RoomAccesses | Unset = UNSET
     metadata: RoomMetadata | Unset = UNSET
     engine: CreateRoomRequestBodyEngine | Unset = UNSET
+    organization_id: str | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
@@ -62,6 +64,8 @@ class CreateRoomRequestBody:
         if not isinstance(self.engine, Unset):
             engine = self.engine.value
 
+        organization_id = self.organization_id
+
         field_dict: dict[str, Any] = {}
 
         field_dict.update(
@@ -78,6 +82,8 @@ class CreateRoomRequestBody:
             field_dict["metadata"] = metadata
         if engine is not UNSET:
             field_dict["engine"] = engine
+        if organization_id is not UNSET:
+            field_dict["organizationId"] = organization_id
 
         return field_dict
 
@@ -124,6 +130,8 @@ class CreateRoomRequestBody:
         else:
             engine = CreateRoomRequestBodyEngine(_engine)
 
+        organization_id = d.pop("organizationId", UNSET)
+
         create_room_request_body = cls(
             id=id,
             default_accesses=default_accesses,
@@ -131,6 +139,7 @@ class CreateRoomRequestBody:
             groups_accesses=groups_accesses,
             metadata=metadata,
             engine=engine,
+            organization_id=organization_id,
         )
 
         return create_room_request_body

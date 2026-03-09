@@ -11,7 +11,7 @@ from ...types import UNSET, Unset
 def _get_kwargs(
     user_id: str,
     *,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
@@ -47,7 +47,7 @@ def _sync(
     user_id: str,
     *,
     client: httpx.Client,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetUserGroupsResponse:
     """Get user groups
@@ -57,7 +57,7 @@ def _sync(
 
     Args:
         user_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:
@@ -84,7 +84,7 @@ async def _asyncio(
     user_id: str,
     *,
     client: httpx.AsyncClient,
-    limit: float | Unset = 20.0,
+    limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetUserGroupsResponse:
     """Get user groups
@@ -94,7 +94,7 @@ async def _asyncio(
 
     Args:
         user_id (str):
-        limit (float | Unset):  Default: 20.0.
+        limit (int | Unset):  Default: 20.
         starting_after (str | Unset):
 
     Raises:
