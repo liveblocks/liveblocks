@@ -16,7 +16,7 @@ function Example() {
         alignItems: "center",
       }}
     >
-      <AvatarStack max={5} size={48} />
+      <AvatarStack max={5} size="48px" />
     </main>
   );
 }
