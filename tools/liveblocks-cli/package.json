@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "clean": "rm -rf dist/",
     "dev": "bun ./dist/index.js dev -v",
     "add-license-headers": "eslint --fix 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}'",
     "lint": "eslint 'src/**/*.{ts,tsx}' 'test/**/*.{ts,tsx}'",
