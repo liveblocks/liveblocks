@@ -18,7 +18,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -88,6 +88,7 @@
                           "id": "HTOGSiXcORTECjfNBBLii",
                           "lastConnectionAt": "2022-08-08T23:23:15.281Z",
                           "createdAt": "2022-08-08T23:23:15.281Z",
+                          "organizationId": "org_123456789",
                           "metadata": {
                             "name": ["My room"],
                             "type": ["whiteboard"]
@@ -148,6 +149,7 @@
                       "id": "my-room-3ebc26e2bf96",
                       "lastConnectionAt": "2022-08-22T15:10:25.225Z",
                       "createdAt": "2022-08-22T15:10:25.225Z",
+                      "organizationId": "org_123456789",
                       "metadata": {
                         "color": "blue"
                       },
@@ -238,6 +240,7 @@
                       "id": "react-todo-list",
                       "lastConnectionAt": "2022-08-04T21:07:09.380Z",
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "organizationId": "org_123456789",
                       "metadata": {
                         "color": "blue",
                         "size": "10",
@@ -298,6 +301,7 @@
                       "id": "react-todo-list",
                       "lastConnectionAt": "2022-08-04T21:07:09.380Z",
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "organizationId": "org_123456789",
                       "metadata": {
                         "color": "blue",
                         "size": "10",
@@ -530,6 +534,7 @@
                       "id": "react-todo-list",
                       "lastConnectionAt": "2022-08-04T21:07:09.380Z",
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "organizationId": "org_123456789",
                       "metadata": {
                         "color": "blue",
                         "size": "10",
@@ -624,6 +629,7 @@
                       "id": "react-todo-list",
                       "lastConnectionAt": "2022-08-04T21:07:09.380Z",
                       "createdAt": "2022-07-13T14:32:50.697Z",
+                      "organizationId": "org_123456789",
                       "metadata": {
                         "color": "blue",
                         "size": "10",
@@ -1371,7 +1377,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -3111,7 +3117,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 50,
               "default": 50
@@ -3545,7 +3551,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 50,
               "default": 50
@@ -3838,7 +3844,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -4071,7 +4077,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -4120,7 +4126,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -4335,7 +4341,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -4698,7 +4704,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -4749,7 +4755,7 @@
         "parameters": [
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -5235,7 +5241,7 @@
           },
           {
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100,
               "default": 20
@@ -5916,6 +5922,9 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/RoomMetadata"
+          },
+          "organizationId": {
+            "type": "string"
           }
         },
         "additionalProperties": false,
@@ -5926,7 +5935,8 @@
           "defaultAccesses",
           "usersAccesses",
           "groupsAccesses",
-          "metadata"
+          "metadata",
+          "organizationId"
         ]
       },
       "RoomMetadata": {
@@ -6015,6 +6025,9 @@
             "type": "integer",
             "enum": [1, 2],
             "description": "Preferred storage engine version to use when creating new rooms. The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will become the default in the future."
+          },
+          "organizationId": {
+            "type": "string"
           }
         },
         "required": ["id", "defaultAccesses"],
@@ -6139,7 +6152,7 @@
                   "additionalProperties": true
                 },
                 "connectionId": {
-                  "type": "number"
+                  "type": "integer"
                 }
               },
               "required": ["type", "id", "info", "connectionId"]
@@ -6171,6 +6184,7 @@
               },
               "avatar": {
                 "type": "string",
+                "format": "uri",
                 "description": "Optional avatar URL for the user"
               },
               "color": {
@@ -6617,8 +6631,7 @@
               "color": "blue"
             }
           }
-        ],
-        "description": ""
+        ]
       },
       "GetThreadParticipantsResponse": {
         "title": "GetThreadParticipantsResponse",
@@ -6671,15 +6684,14 @@
             "color": "blue",
             "age": 25
           }
-        ],
-        "description": ""
+        ]
       },
       "CommentBody": {
         "type": "object",
         "title": "CommentBody",
         "properties": {
           "version": {
-            "type": "number"
+            "type": "integer"
           },
           "content": {
             "type": "array",
@@ -6730,8 +6742,7 @@
             "userId": "alice",
             "updatedAt": "2023-07-13T14:32:50.697Z"
           }
-        ],
-        "description": ""
+        ]
       },
       "Comment": {
         "type": "object",
@@ -6769,6 +6780,18 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentReaction"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentAttachment"
+            }
           }
         },
         "required": [
@@ -6778,7 +6801,9 @@
           "id",
           "userId",
           "createdAt",
-          "metadata"
+          "metadata",
+          "reactions",
+          "attachments"
         ],
         "examples": [
           {
@@ -6813,6 +6838,13 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
+          },
+          "attachmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10
           }
         },
         "additionalProperties": false,
@@ -6830,8 +6862,7 @@
               "spam": false
             }
           }
-        ],
-        "description": ""
+        ]
       },
       "EditCommentRequestBody": {
         "title": "EditCommentRequestBody",
@@ -6846,6 +6877,13 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/CommentMetadata"
+          },
+          "attachmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10
           }
         },
         "required": ["body"],
@@ -6862,8 +6900,7 @@
               "spam": false
             }
           }
-        ],
-        "description": ""
+        ]
       },
       "SubscribeToThreadRequestBody": {
         "type": "object",
@@ -6926,6 +6963,30 @@
           }
         ]
       },
+      "CommentAttachment": {
+        "type": "object",
+        "title": "CommentAttachment",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "attachment"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          }
+        },
+        "required": ["type", "id", "mimeType", "name", "size"],
+        "additionalProperties": false
+      },
       "AddCommentReactionRequestBody": {
         "type": "object",
         "title": "AddCommentReactionRequestBody",
@@ -6980,8 +7041,10 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -7089,7 +7152,10 @@
             "type": "string"
           },
           "roomId": {
-            "type": "string"
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ]
           },
           "readAt": {
             "oneOf": [
@@ -7181,8 +7247,10 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "type": "string",
-            "nullable": true,
+            "oneOf": [
+              { "type": "string" },
+              { "type": "null" }
+            ],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -7260,6 +7328,9 @@
           "activityData": {
             "type": "object",
             "additionalProperties": true
+          },
+          "organizationId": {
+            "type": "string"
           }
         },
         "required": ["userId", "kind", "subjectId", "activityData"],
@@ -7452,7 +7523,9 @@
           "propertyName": "provider",
           "mapping": {
             "openai": "#/components/schemas/AiCopilotOpenAi",
-            "anthropic": "#/components/schemas/AiCopilotAnthropic"
+            "anthropic": "#/components/schemas/AiCopilotAnthropic",
+            "google": "#/components/schemas/AiCopilotGoogle",
+            "openai-compatible": "#/components/schemas/AiCopilotOpenAiCompatible"
           }
         },
         "additionalProperties": false
@@ -7573,20 +7646,20 @@
             "type": "string"
           },
           "description": {
-            "type": ["string", "null"]
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "systemPrompt": {
             "type": "string"
           },
           "knowledgePrompt": {
-            "type": ["string", "null"]
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "alwaysUseKnowledge": {
             "type": "boolean"
           },
           "settings": {
             "oneOf": [
-              { "$ref": "#/components/schemas/CopilotSettings" },
+              { "$ref": "#/components/schemas/AiCopilotProviderSettings" },
               { "type": "null" }
             ]
           },
@@ -7617,42 +7690,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "CopilotSettings": {
-        "title": "CopilotSettings",
-        "type": "object",
-        "properties": {
-          "maxTokens": {
-            "type": "number"
-          },
-          "temperature": {
-            "type": "number"
-          },
-          "topP": {
-            "type": "number"
-          },
-          "topK": {
-            "type": "number"
-          },
-          "frequencyPenalty": {
-            "type": "number"
-          },
-          "presencePenalty": {
-            "type": "number"
-          },
-          "stopSequences": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "seed": {
-            "type": "number"
-          },
-          "maxRetries": {
-            "type": "number"
-          }
-        }
       },
       "AiCopilotProviderSettings": {
         "title": "AiCopilotProviderSettings",
@@ -7821,7 +7858,7 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "type": "string"
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "data": {
             "type": "array",
@@ -7910,7 +7947,7 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "type": "string"
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "data": {
             "type": "array",
@@ -7930,7 +7967,8 @@
             "type": "string"
           },
           "url": {
-            "type": "string"
+            "type": "string",
+            "format": "uri"
           },
           "type": {
             "type": "string",
@@ -7989,7 +8027,7 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "type": "string"
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "data": {
             "type": "array",
@@ -8183,7 +8221,7 @@
             "enum": [false]
           },
           {
-            "type": "number",
+            "type": "integer",
             "minimum": 30,
             "maximum": 300
           }
@@ -8248,8 +8286,10 @@
             "$ref": "#/components/schemas/ManagementProjectPublicKey"
           },
           "secretKey": {
-            "$ref": "#/components/schemas/ManagementProjectSecretKey",
-            "nullable": true
+            "oneOf": [
+              { "$ref": "#/components/schemas/ManagementProjectSecretKey" },
+              { "type": "null" }
+            ]
           },
           "region": {
             "$ref": "#/components/schemas/ManagementProjectRegion"
@@ -8488,7 +8528,7 @@
             "type": "boolean"
           },
           "rateLimit": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
             "maximum": 65534
           },
@@ -8512,10 +8552,10 @@
             "$ref": "#/components/schemas/ManagementWebhookAdditionalHeaders"
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           }
         },
         "required": [
@@ -8546,7 +8586,7 @@
             }
           },
           "rateLimit": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
             "maximum": 65534
           },
@@ -8557,10 +8597,10 @@
             }
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           }
         },
         "required": ["url", "subscribedEvents"]
@@ -8580,15 +8620,15 @@
             }
           },
           "rateLimit": {
-            "type": "number",
+            "type": "integer",
             "minimum": 1,
             "maximum": 65534
           },
           "storageUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           },
           "yDocUpdatedThrottleSeconds": {
-            "type": "number"
+            "type": "integer"
           },
           "disabled": {
             "type": "boolean"
@@ -8780,9 +8820,10 @@
                 "type": "string"
               },
               "deliveredAt": {
-                "type": "string",
-                "format": "date-time",
-                "nullable": true
+                "oneOf": [
+                  { "type": "string", "format": "date-time" },
+                  { "type": "null" }
+                ]
               }
             },
             "required": ["id"],
