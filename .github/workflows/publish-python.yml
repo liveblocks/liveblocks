@@ -36,13 +36,14 @@ jobs:
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
           sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
 
-      - name: Commit version bump
+      - name: Commit and push version bump
         working-directory: packages/liveblocks-python
         env:
           VERSION: ${{ inputs.version }}
         run: |
           git add pyproject.toml config.yaml
           git commit -m "Bump liveblocks-python to $VERSION"
+          git push origin HEAD
 
       - name: Build and publish
         working-directory: packages/liveblocks-python
