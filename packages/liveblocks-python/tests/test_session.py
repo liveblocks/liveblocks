@@ -1,6 +1,9 @@
+import warnings
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
-from liveblocks.client import Liveblocks
+from liveblocks.client import AsyncLiveblocks, Liveblocks
 
 P1 = "room:read"
 P2 = "room:write"
@@ -139,3 +142,68 @@ class TestSessionOptions:
     def test_organization_id_is_optional(self):
         session = make_session()
         assert session.allow("room-1", [P1])._has_permissions is True
+
+
+class TestBuildRequestBody:
+    def test_empty_permissions_emits_warning(self):
+        session = make_session()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            session._build_request_body()
+
+        assert len(w) == 1
+        assert "Access tokens without any permission" in str(w[0].message)
+
+    def test_user_info_is_included_in_body(self):
+        session = make_session(user_info={"name": "Ada", "color": "blue"})
+        session.allow("room-1", [P1])
+        body = session._build_request_body()
+
+        assert body.user_info is not None
+        assert body.user_info.additional_properties == {"name": "Ada", "color": "blue"}
+
+    def test_organization_id_is_included_in_body(self):
+        session = make_session(organization_id="org-123")
+        session.allow("room-1", [P1])
+        body = session._build_request_body()
+
+        assert body.organization_id == "org-123"
+
+    def test_user_info_none_omits_field(self):
+        session = make_session(user_info=None)
+        session.allow("room-1", [P1])
+        body = session._build_request_body()
+
+        assert not isinstance(body.user_info, dict)
+
+    def test_organization_id_none_omits_field(self):
+        session = make_session(organization_id=None)
+        session.allow("room-1", [P1])
+        body = session._build_request_body()
+
+        assert not isinstance(body.organization_id, str)
+
+
+class TestAuthorize:
+    def test_sync_authorize_delegates_to_client(self):
+        client = Liveblocks(secret="sk_testingtesting")
+        client.authorize_user = MagicMock(return_value="mock_response")
+
+        session = client.prepare_session("user-123")
+        session.allow("room-1", [P1])
+        result = session.authorize()
+
+        assert result == "mock_response"
+        client.authorize_user.assert_called_once()
+
+    @pytest.mark.anyio
+    async def test_async_authorize_delegates_to_client(self):
+        client = AsyncLiveblocks(secret="sk_testingtesting")
+        client.authorize_user = AsyncMock(return_value="mock_response")
+
+        session = client.prepare_session("user-123")
+        session.allow("room-1", [P1])
+        result = await session.authorize()
+
+        assert result == "mock_response"
+        client.authorize_user.assert_called_once()

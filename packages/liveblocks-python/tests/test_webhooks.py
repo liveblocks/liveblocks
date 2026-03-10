@@ -57,6 +57,10 @@ class TestConstructorValidation:
         with pytest.raises(ValueError):
             WebhookHandler(invalid_secret)
 
+    def test_rejects_invalid_base64_after_prefix(self):
+        with pytest.raises(ValueError, match="invalid base64"):
+            WebhookHandler("whsec_!!!not-valid-base64!!!")
+
 
 # ---------------------------------------------------------------------------
 # verify_request
@@ -449,6 +453,64 @@ class TestVerifyRequest:
         with patch("liveblocks.webhooks.time.time", return_value=1674851522):
             with pytest.raises(ValueError, match="Unknown event type"):
                 handler.verify_request(headers=headers, raw_body=raw_body)
+
+    def test_raises_on_unknown_notification_kind(self):
+        body = {
+            "data": {
+                "kind": "unknownKind",
+                "channel": "email",
+                "projectId": "605a50b01a36d5ea7a2e9104",
+                "roomId": "examples-hero-21-07-2022",
+                "userId": "userId",
+                "inboxNotificationId": "605a50b01a36d5ea7a2e9104",
+                "createdAt": "2023-01-27T20:33:23.737Z",
+            },
+            "type": "notification",
+        }
+        raw_body = json.dumps(body, separators=(",", ":"))
+
+        webhook_id = "msg_2KvOK6yK9FO0U0nIyJYkM3jPwBs"
+        timestamp = "1674851522"
+        headers = {
+            "webhook-id": webhook_id,
+            "webhook-timestamp": timestamp,
+            "webhook-signature": _generate_signature(SECRET, webhook_id, timestamp, raw_body),
+        }
+
+        handler = WebhookHandler(SECRET)
+        with patch("liveblocks.webhooks.time.time", return_value=1674851522):
+            with pytest.raises(ValueError, match="Unknown notification kind"):
+                handler.verify_request(headers=headers, raw_body=raw_body)
+
+    def test_raises_on_missing_webhook_id_header(self):
+        headers = {
+            "webhook-timestamp": "1674851522",
+            "webhook-signature": "v1,test",
+        }
+
+        handler = WebhookHandler(SECRET)
+        with pytest.raises(ValueError, match="Invalid webhook-id header"):
+            handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
+
+    def test_raises_on_missing_webhook_timestamp_header(self):
+        headers = {
+            "webhook-id": "msg_test",
+            "webhook-signature": "v1,test",
+        }
+
+        handler = WebhookHandler(SECRET)
+        with pytest.raises(ValueError, match="Invalid webhook-timestamp header"):
+            handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
+
+    def test_raises_on_missing_webhook_signature_header(self):
+        headers = {
+            "webhook-id": "msg_test",
+            "webhook-timestamp": "1674851522",
+        }
+
+        handler = WebhookHandler(SECRET)
+        with pytest.raises(ValueError, match="Invalid webhook-signature header"):
+            handler.verify_request(headers=headers, raw_body=RAW_USER_ENTERED_BODY)
 
 
 # ---------------------------------------------------------------------------

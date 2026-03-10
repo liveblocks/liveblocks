@@ -35,13 +35,13 @@ def _get_kwargs(
     _kwargs: dict[str, Any] = {
         "method": "{{ endpoint.method }}",
         {% if endpoint.path_parameters %}
-        "url": "{{ endpoint.path }}".format(
+        "url": "/v2{{ endpoint.path }}".format(
         {%- for parameter in endpoint.path_parameters -%}
         {{parameter.python_name}}=quote(str({{parameter.python_name}}), safe=""),
         {%- endfor -%}
         ),
         {% else %}
-        "url": "{{ endpoint.path }}",
+        "url": "/v2{{ endpoint.path }}",
         {% endif %}
         {% if endpoint.query_parameters %}
         "params": params,

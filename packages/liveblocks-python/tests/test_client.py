@@ -1,5 +1,7 @@
 import pytest
 
+from liveblocks.client import AsyncLiveblocks, Liveblocks
+
 
 class TestConstructorValidation:
     def test_rejects_invalid_prefix(self, client_cls):
@@ -21,3 +23,39 @@ class TestConstructorValidation:
     def test_sets_auth_header(self, client_cls):
         client = client_cls(secret="sk_my_secret")
         assert client._client.headers["Authorization"] == "Bearer sk_my_secret"
+
+
+class TestSyncLifecycle:
+    def test_close(self):
+        client = Liveblocks(secret="sk_test")
+        client.close()
+        assert client._client.is_closed
+
+    def test_context_manager(self):
+        with Liveblocks(secret="sk_test") as client:
+            assert not client._client.is_closed
+        assert client._client.is_closed
+
+    def test_prepare_session(self):
+        client = Liveblocks(secret="sk_test")
+        session = client.prepare_session("user-1")
+        assert session._user_id == "user-1"
+
+
+class TestAsyncLifecycle:
+    @pytest.mark.anyio
+    async def test_close(self):
+        client = AsyncLiveblocks(secret="sk_test")
+        await client.close()
+        assert client._client.is_closed
+
+    @pytest.mark.anyio
+    async def test_context_manager(self):
+        async with AsyncLiveblocks(secret="sk_test") as client:
+            assert not client._client.is_closed
+        assert client._client.is_closed
+
+    def test_prepare_session(self):
+        client = AsyncLiveblocks(secret="sk_test")
+        session = client.prepare_session("user-1")
+        assert session._user_id == "user-1"

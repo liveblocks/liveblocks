@@ -26,7 +26,7 @@ ROOM_JSON = {
 
 class TestGetRooms:
     def test_sync_returns_parsed_response(self, sync_client, mock_api):
-        route = mock_api.get("/rooms").mock(
+        route = mock_api.get("/v2/rooms").mock(
             return_value=httpx.Response(200, json={"nextCursor": None, "data": [ROOM_JSON]})
         )
         result = sync_client.get_rooms()
@@ -38,7 +38,7 @@ class TestGetRooms:
 
     @pytest.mark.anyio
     async def test_async_returns_parsed_response(self, async_client, mock_api):
-        mock_api.get("/rooms").mock(
+        mock_api.get("/v2/rooms").mock(
             return_value=httpx.Response(200, json={"nextCursor": "cursor_abc", "data": [ROOM_JSON]})
         )
         result = await async_client.get_rooms()
@@ -48,7 +48,7 @@ class TestGetRooms:
         assert result.next_cursor == "cursor_abc"
 
     def test_passes_query_params(self, sync_client, mock_api):
-        route = mock_api.get("/rooms").mock(return_value=httpx.Response(200, json={"nextCursor": None, "data": []}))
+        route = mock_api.get("/v2/rooms").mock(return_value=httpx.Response(200, json={"nextCursor": None, "data": []}))
         sync_client.get_rooms(limit=5, user_id="user-1")
 
         request = route.calls.last.request
@@ -56,7 +56,7 @@ class TestGetRooms:
         assert request.url.params["userId"] == "user-1"
 
     def test_empty_room_list(self, sync_client, mock_api):
-        mock_api.get("/rooms").mock(return_value=httpx.Response(200, json={"nextCursor": None, "data": []}))
+        mock_api.get("/v2/rooms").mock(return_value=httpx.Response(200, json={"nextCursor": None, "data": []}))
         result = sync_client.get_rooms()
 
         assert result.data == []
@@ -69,7 +69,7 @@ class TestGetRooms:
 
 class TestGetRoom:
     def test_sync_returns_room(self, sync_client, mock_api):
-        mock_api.get("/rooms/my-room").mock(return_value=httpx.Response(200, json=ROOM_JSON))
+        mock_api.get("/v2/rooms/my-room").mock(return_value=httpx.Response(200, json=ROOM_JSON))
         room = sync_client.get_room("my-room")
 
         assert room.id == "my-room"
@@ -77,13 +77,13 @@ class TestGetRoom:
 
     @pytest.mark.anyio
     async def test_async_returns_room(self, async_client, mock_api):
-        mock_api.get("/rooms/my-room").mock(return_value=httpx.Response(200, json=ROOM_JSON))
+        mock_api.get("/v2/rooms/my-room").mock(return_value=httpx.Response(200, json=ROOM_JSON))
         room = await async_client.get_room("my-room")
 
         assert room.id == "my-room"
 
     def test_url_encodes_room_id(self, sync_client, mock_api):
-        mock_api.get("/rooms/room%2Fwith%2Fslashes").mock(
+        mock_api.get("/v2/rooms/room%2Fwith%2Fslashes").mock(
             return_value=httpx.Response(200, json={**ROOM_JSON, "id": "room/with/slashes"})
         )
         room = sync_client.get_room("room/with/slashes")
@@ -98,7 +98,7 @@ class TestGetRoom:
 
 class TestCreateRoom:
     def test_sync_sends_body_and_returns_room(self, sync_client, mock_api):
-        route = mock_api.post("/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
+        route = mock_api.post("/v2/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
         body = CreateRoomRequestBody.from_dict(
             {
                 "id": "my-room",
@@ -113,7 +113,7 @@ class TestCreateRoom:
 
     @pytest.mark.anyio
     async def test_async_sends_body_and_returns_room(self, async_client, mock_api):
-        mock_api.post("/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
+        mock_api.post("/v2/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
         body = CreateRoomRequestBody.from_dict(
             {
                 "id": "my-room",
@@ -125,7 +125,7 @@ class TestCreateRoom:
         assert room.id == "my-room"
 
     def test_request_body_serialization(self, sync_client, mock_api):
-        route = mock_api.post("/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
+        route = mock_api.post("/v2/rooms").mock(return_value=httpx.Response(200, json=ROOM_JSON))
         body = CreateRoomRequestBody(
             id="new-room",
             default_accesses=[RoomPermissionItem.ROOMWRITE],
@@ -146,14 +146,14 @@ class TestCreateRoom:
 
 class TestDeleteRoom:
     def test_sync_returns_none(self, sync_client, mock_api):
-        mock_api.delete("/rooms/my-room").mock(return_value=httpx.Response(204))
+        mock_api.delete("/v2/rooms/my-room").mock(return_value=httpx.Response(204))
         result = sync_client.delete_room("my-room")
 
         assert result is None
 
     @pytest.mark.anyio
     async def test_async_returns_none(self, async_client, mock_api):
-        mock_api.delete("/rooms/my-room").mock(return_value=httpx.Response(204))
+        mock_api.delete("/v2/rooms/my-room").mock(return_value=httpx.Response(204))
         result = await async_client.delete_room("my-room")
 
         assert result is None
@@ -166,7 +166,7 @@ class TestDeleteRoom:
 
 class TestErrorHandling:
     def test_403_raises_liveblocks_error(self, sync_client, mock_api):
-        mock_api.get("/rooms").mock(return_value=httpx.Response(403, json={"message": "Forbidden"}))
+        mock_api.get("/v2/rooms").mock(return_value=httpx.Response(403, json={"message": "Forbidden"}))
         with pytest.raises(LiveblocksError) as exc_info:
             sync_client.get_rooms()
 
@@ -174,14 +174,14 @@ class TestErrorHandling:
         assert "Forbidden" in str(exc_info.value)
 
     def test_404_raises_liveblocks_error(self, sync_client, mock_api):
-        mock_api.get("/rooms/nonexistent").mock(return_value=httpx.Response(404, json={"message": "Room not found"}))
+        mock_api.get("/v2/rooms/nonexistent").mock(return_value=httpx.Response(404, json={"message": "Room not found"}))
         with pytest.raises(LiveblocksError) as exc_info:
             sync_client.get_room("nonexistent")
 
         assert exc_info.value.status == 404
 
     def test_error_with_suggestion_and_docs(self, sync_client, mock_api):
-        mock_api.get("/rooms").mock(
+        mock_api.get("/v2/rooms").mock(
             return_value=httpx.Response(
                 401,
                 json={
@@ -201,7 +201,7 @@ class TestErrorHandling:
 
     @pytest.mark.anyio
     async def test_async_error_handling(self, async_client, mock_api):
-        mock_api.get("/rooms").mock(return_value=httpx.Response(500, json={"message": "Internal Server Error"}))
+        mock_api.get("/v2/rooms").mock(return_value=httpx.Response(500, json={"message": "Internal Server Error"}))
         with pytest.raises(LiveblocksError) as exc_info:
             await async_client.get_rooms()
 
