@@ -55,23 +55,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
-    """Get knowledge source
-
-     This endpoint returns a specific knowledge source by its ID. Corresponds to
-    [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        KnowledgeSourceFileSource | KnowledgeSourceWebSource
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,
@@ -89,23 +72,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
-    """Get knowledge source
-
-     This endpoint returns a specific knowledge source by its ID. Corresponds to
-    [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        KnowledgeSourceFileSource | KnowledgeSourceWebSource
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -14,9 +14,6 @@ from ..models.management_project_type import ManagementProjectType
 if TYPE_CHECKING:
     from ..models.management_project_public_key import ManagementProjectPublicKey
     from ..models.management_project_secret_key import ManagementProjectSecretKey
-
-
-T = TypeVar("T", bound="ManagementProject")
 
 
 @_attrs_define
@@ -95,7 +92,7 @@ class ManagementProject:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.management_project_public_key import ManagementProjectPublicKey
         from ..models.management_project_secret_key import ManagementProjectSecretKey
 

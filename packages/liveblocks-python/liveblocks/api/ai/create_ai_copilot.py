@@ -95,23 +95,6 @@ def _sync(
     | CreateAiCopilotOptionsOpenAi
     | CreateAiCopilotOptionsOpenAiCompatible,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    """Create AI copilot
-
-     This endpoint creates a new AI copilot with the given configuration. Corresponds to
-    [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
-
-    Args:
-        body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )
@@ -130,23 +113,6 @@ async def _asyncio(
     | CreateAiCopilotOptionsOpenAi
     | CreateAiCopilotOptionsOpenAiCompatible,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    """Create AI copilot
-
-     This endpoint creates a new AI copilot with the given configuration. Corresponds to
-    [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
-
-    Args:
-        body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-            CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )

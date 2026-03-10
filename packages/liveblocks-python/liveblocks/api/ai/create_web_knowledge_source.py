@@ -45,24 +45,6 @@ def _sync(
     client: httpx.Client,
     body: CreateWebKnowledgeSourceRequestBody,
 ) -> CreateWebKnowledgeSourceResponse:
-    """Create web knowledge source
-
-     This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
-    and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
-    reference/liveblocks-node#create-web-knowledge-source).
-
-    Args:
-        copilot_id (str):
-        body (CreateWebKnowledgeSourceRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateWebKnowledgeSourceResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         body=body,
@@ -80,24 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: CreateWebKnowledgeSourceRequestBody,
 ) -> CreateWebKnowledgeSourceResponse:
-    """Create web knowledge source
-
-     This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
-    and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
-    reference/liveblocks-node#create-web-knowledge-source).
-
-    Args:
-        copilot_id (str):
-        body (CreateWebKnowledgeSourceRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateWebKnowledgeSourceResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         body=body,

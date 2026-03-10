@@ -32,23 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete Storage document
-
-     This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
-    users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
-    reference/liveblocks-node#delete-rooms-roomId-storage).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )
@@ -64,23 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete Storage document
-
-     This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
-    users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
-    reference/liveblocks-node#delete-rooms-roomId-storage).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )

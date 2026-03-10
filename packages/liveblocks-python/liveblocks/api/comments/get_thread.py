@@ -38,23 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> Thread:
-    """Get thread
-
-     This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomId-threads-threadId).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Thread
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -72,23 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> Thread:
-    """Get thread
-
-     This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomId-threads-threadId).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Thread
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

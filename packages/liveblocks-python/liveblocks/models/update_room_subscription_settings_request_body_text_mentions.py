@@ -1,9 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UpdateRoomSubscriptionSettingsRequestBodyTextMentions(str, Enum):
+class UpdateRoomSubscriptionSettingsRequestBodyTextMentions(StrEnum):
     MINE = "mine"
     NONE = "none"
-
-    def __str__(self) -> str:
-        return str(self.value)

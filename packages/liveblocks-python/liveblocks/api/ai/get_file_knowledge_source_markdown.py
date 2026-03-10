@@ -38,25 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> GetFileKnowledgeSourceMarkdownResponse:
-    """Get file knowledge source content
-
-     This endpoint returns the content of a file knowledge source as markdown. This allows you to see
-    what content the AI copilot has access to from uploaded files. Corresponds to
-    [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
-    knowledge-source-markdown).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetFileKnowledgeSourceMarkdownResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,
@@ -74,25 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> GetFileKnowledgeSourceMarkdownResponse:
-    """Get file knowledge source content
-
-     This endpoint returns the content of a file knowledge source as markdown. This allows you to see
-    what content the AI copilot has access to from uploaded files. Corresponds to
-    [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
-    knowledge-source-markdown).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetFileKnowledgeSourceMarkdownResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,

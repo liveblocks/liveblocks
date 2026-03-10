@@ -32,23 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete AI copilot
-
-     This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
-    be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
-    node#delete-ai-copilot).
-
-    Args:
-        copilot_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
     )
@@ -64,23 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete AI copilot
-
-     This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
-    be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
-    node#delete-ai-copilot).
-
-    Args:
-        copilot_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
     )

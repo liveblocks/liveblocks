@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 
 if TYPE_CHECKING:
     from ..models.management_project import ManagementProject
-
-
-T = TypeVar("T", bound="GetManagementProjectsResponse")
 
 
 @_attrs_define
@@ -44,7 +41,7 @@ class GetManagementProjectsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.management_project import ManagementProject
 
         d = dict(src_dict)

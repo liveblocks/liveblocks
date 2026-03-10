@@ -49,27 +49,6 @@ def _sync(
     client: httpx.Client,
     body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
 ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
-    """Roll secret key
-
-     Rolls (rotates) the secret API key associated with the specified project, generating a new key value
-    while deprecating the previous one. The new key becomes immediately active. This endpoint requires
-    the `write:all` scope.
-
-    If the project cannot be found, a 404 error response is returned. An optional `expirationIn`
-    parameter can be provided in the request body to set when the previous key should expire.
-
-    Args:
-        project_id (str):
-        body (RollProjectSecretApiKeyRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,
@@ -87,27 +66,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
 ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
-    """Roll secret key
-
-     Rolls (rotates) the secret API key associated with the specified project, generating a new key value
-    while deprecating the previous one. The new key becomes immediately active. This endpoint requires
-    the `write:all` scope.
-
-    If the project cannot be found, a 404 error response is returned. An optional `expirationIn`
-    parameter can be provided in the request body to set when the previous key should expire.
-
-    Args:
-        project_id (str):
-        body (RollProjectSecretApiKeyRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,

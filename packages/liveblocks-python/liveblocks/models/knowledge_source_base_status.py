@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class KnowledgeSourceBaseStatus(str, Enum):
+class KnowledgeSourceBaseStatus(StrEnum):
     ERROR = "error"
     INGESTING = "ingesting"
     READY = "ready"
-
-    def __str__(self) -> str:
-        return str(self.value)

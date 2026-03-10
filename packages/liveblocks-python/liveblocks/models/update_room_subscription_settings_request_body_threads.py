@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UpdateRoomSubscriptionSettingsRequestBodyThreads(str, Enum):
+class UpdateRoomSubscriptionSettingsRequestBodyThreads(StrEnum):
     ALL = "all"
     NONE = "none"
     REPLIES_AND_MENTIONS = "replies_and_mentions"
-
-    def __str__(self) -> str:
-        return str(self.value)

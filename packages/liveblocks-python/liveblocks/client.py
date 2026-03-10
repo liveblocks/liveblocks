@@ -188,6 +188,41 @@ class Liveblocks:
         user_id: str | Unset = UNSET,
         group_ids: str | Unset = UNSET,
     ) -> GetRoomsResponse:
+        """Get rooms
+
+         This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
+        accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
+
+        There is a pagination system where the cursor to the next page is returned in the response as
+        `nextCursor`, which can be combined with `startingAfter`.
+        You can also limit the number of rooms by query.
+
+        Filtering by metadata works by giving key values like `metadata.color=red`. Of course you can
+        combine multiple metadata clauses to refine the response like
+        `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each
+        clauses.
+
+        Filtering by groups or userId works by giving a list of groups like
+        `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.
+        Notice here the operator OR is applied between each `groupIds` and the `userId`.
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+            organization_id (str | Unset):
+            query (str | Unset):
+            user_id (str | Unset):
+            group_ids (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetRoomsResponse
+        """
+
         from .api.room import get_rooms
 
         return get_rooms._sync(
@@ -206,6 +241,33 @@ class Liveblocks:
         body: CreateRoomRequestBody,
         idempotent: bool | Unset = UNSET,
     ) -> Room:
+        r"""Create room
+
+         This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a
+        `?idempotent` query argument, will not return a 409 when the room already exists, but instead return
+        the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-
+        node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-
+        create-rooms-roomId) when `?idempotent` is provided.
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` are optional fields.
+
+        Args:
+            idempotent (bool | Unset):
+            body (CreateRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import create_room
 
         return create_room._sync(
@@ -218,6 +280,22 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> Room:
+        """Get room
+
+         This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomid).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import get_room
 
         return get_room._sync(
@@ -231,6 +309,43 @@ class Liveblocks:
         *,
         body: UpdateRoomRequestBody,
     ) -> Room:
+        r"""Update room
+
+         This endpoint updates specific properties of a room. Corresponds to
+        [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid).
+
+        It’s not necessary to provide the entire room’s information.
+        Setting a property to `null` means to delete this property. For example, if you want to remove
+        access to a specific user without losing other users:
+        ``{
+            \"usersAccesses\": {
+                \"john\": null
+            }
+        }``
+        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
+        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        field.
+
+        Args:
+            room_id (str):
+            body (UpdateRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import update_room
 
         return update_room._sync(
@@ -243,6 +358,23 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Delete room
+
+         This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
+        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
+        node#delete-rooms-roomid).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import delete_room
 
         return delete_room._sync(
@@ -254,6 +386,24 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Prewarm room
+
+         Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be
+        connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
+        [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the
+        room will load quicker.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import prewarm_room
 
         return prewarm_room._sync(
@@ -267,6 +417,43 @@ class Liveblocks:
         *,
         body: UpsertRoomRequestBody,
     ) -> Room:
+        r"""Upsert (update or create) room
+
+         This endpoint updates specific properties of a room. Corresponds to
+        [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+
+        It’s not necessary to provide the entire room’s information.
+        Setting a property to `null` means to delete this property. For example, if you want to remove
+        access to a specific user without losing other users:
+        ``{
+            \"usersAccesses\": {
+                \"john\": null
+            }
+        }``
+        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
+        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        field.
+
+        Args:
+            room_id (str):
+            body (UpsertRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import upsert_room
 
         return upsert_room._sync(
@@ -281,6 +468,22 @@ class Liveblocks:
         *,
         body: UpdateRoomIdRequestBody | Unset = UNSET,
     ) -> Room:
+        """Update room ID
+
+         This endpoint permanently updates the room’s ID.
+
+        Args:
+            room_id (str):
+            body (UpdateRoomIdRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import update_room_id
 
         return update_room_id._sync(
@@ -293,6 +496,25 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> ActiveUsersResponse:
+        """Get active users
+
+         This endpoint returns a list of users currently present in the requested room. Corresponds to
+        [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
+
+        For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
+        Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ActiveUsersResponse
+        """
+
         from .api.room import get_active_users
 
         return get_active_users._sync(
@@ -306,6 +528,25 @@ class Liveblocks:
         *,
         body: SetPresenceRequestBody,
     ) -> None:
+        """Set ephemeral presence
+
+         This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
+        The presence data will automatically expire after the specified TTL (time-to-live). This is useful
+        for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
+        connected users in the room.
+
+        Args:
+            room_id (str):
+            body (SetPresenceRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import set_presence
 
         return set_presence._sync(
@@ -320,6 +561,25 @@ class Liveblocks:
         *,
         body: Any,
     ) -> None:
+        """Broadcast event to a room
+
+         This endpoint enables the broadcast of an event to a room without having to connect to it via the
+        `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
+        passed to event listeners is `-1` when using this API. Corresponds to
+        [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
+
+        Args:
+            room_id (str):
+            body (Any):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import broadcast_event
 
         return broadcast_event._sync(
@@ -334,6 +594,37 @@ class Liveblocks:
         *,
         format_: GetStorageDocumentFormat | Unset = UNSET,
     ) -> GetStorageDocumentResponse:
+        r"""Get Storage document
+
+         Returns the contents of the room’s Storage tree.  Corresponds to
+        [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
+
+        The default outputted format is called “plain LSON”, which includes information on the Live data
+        structures in the tree. These nodes show up in the output as objects with two properties, for
+        example:
+
+        ```json
+        {
+          \"liveblocksType\": \"LiveObject\",
+          \"data\": ...
+        }
+        ```
+
+        If you’re not interested in this information, you can use the simpler `?format=json` query param,
+        see below.
+
+        Args:
+            room_id (str):
+            format_ (GetStorageDocumentFormat | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetStorageDocumentResponse
+        """
+
         from .api.storage import get_storage_document
 
         return get_storage_document._sync(
@@ -348,6 +639,37 @@ class Liveblocks:
         *,
         body: InitializeStorageDocumentBody | Unset = UNSET,
     ) -> InitializeStorageDocumentResponse:
+        r"""Initialize Storage document
+
+         This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling
+        this endpoint will disconnect all users from the room if there are any, triggering a reconnect.
+        Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-storage).
+
+        The format of the request body is the same as what’s returned by the get Storage endpoint.
+
+        For each Liveblocks data structure that you want to create, you need a JSON element having two
+        properties:
+        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`
+        - `\"data\"` => contains the nested data structures (children) and data.
+
+        The root’s type can only be LiveObject.
+
+        A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert
+        `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+
+        Args:
+            room_id (str):
+            body (InitializeStorageDocumentBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            InitializeStorageDocumentResponse
+        """
+
         from .api.storage import initialize_storage_document
 
         return initialize_storage_document._sync(
@@ -360,6 +682,23 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Delete Storage document
+
+         This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
+        users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
+        reference/liveblocks-node#delete-rooms-roomId-storage).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.storage import delete_storage_document
 
         return delete_storage_document._sync(
@@ -380,6 +719,36 @@ class Liveblocks:
             | TestJsonPatchOperation
         ],
     ) -> None:
+        """Apply JSON Patch to Storage
+
+         Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
+        room's Storage document, useful for modifying Storage. Operations are applied in order; if any
+        operation fails, the document is not changed and a 422 response with a helpful message is returned.
+
+        **Paths and data types:** Be as specific as possible with your target path. Every parent in the
+        chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
+        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
+
+        **Performance:** For large Storage documents, applying a patch can be expensive because the full
+        state is reconstructed on the server to apply the operations. Very large documents may not be
+        suitable for this endpoint.
+
+        For a **full guide with examples**, see [Modifying storage via REST API with JSON
+        Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+
+        Args:
+            room_id (str):
+            body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
+                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.storage import patch_storage_document
 
         return patch_storage_document._sync(
@@ -396,6 +765,25 @@ class Liveblocks:
         key: str | Unset = UNSET,
         type_: GetYjsDocumentType | Unset = UNSET,
     ) -> GetYjsDocumentResponse:
+        """Get Yjs document
+
+         This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
+        [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
+
+        Args:
+            room_id (str):
+            formatting (bool | Unset):
+            key (str | Unset):
+            type_ (GetYjsDocumentType | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetYjsDocumentResponse
+        """
+
         from .api.yjs import get_yjs_document
 
         return get_yjs_document._sync(
@@ -413,6 +801,32 @@ class Liveblocks:
         body: File,
         guid: str | Unset = UNSET,
     ) -> None:
+        """Send a binary Yjs update
+
+         This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
+        endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
+        to a subdocument instead of the main document, pass its `guid`. Corresponds to
+        [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+
+        The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
+        documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
+        this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the
+        binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON,
+        unlike most other endpoints.
+
+        Args:
+            room_id (str):
+            guid (str | Unset):
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.yjs import send_yjs_binary_update
 
         return send_yjs_binary_update._sync(
@@ -428,6 +842,27 @@ class Liveblocks:
         *,
         guid: str | Unset = UNSET,
     ) -> File:
+        """Get Yjs document encoded as a binary Yjs update
+
+         This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by
+        `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
+        documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
+        updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
+        [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        ydoc-binary).
+
+        Args:
+            room_id (str):
+            guid (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            File
+        """
+
         from .api.yjs import get_yjs_document_as_binary_update
 
         return get_yjs_document_as_binary_update._sync(
@@ -443,6 +878,24 @@ class Liveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetYjsVersionsResponse:
+        """Get Yjs version history
+
+         This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
+        are returned sorted by creation date, from newest to oldest.
+
+        Args:
+            room_id (str):
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetYjsVersionsResponse
+        """
+
         from .api.yjs import get_yjs_versions
 
         return get_yjs_versions._sync(
@@ -457,6 +910,22 @@ class Liveblocks:
         room_id: str,
         version_id: str,
     ) -> File:
+        """Get Yjs document version
+
+         This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+
+        Args:
+            room_id (str):
+            version_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            File
+        """
+
         from .api.yjs import get_yjs_version
 
         return get_yjs_version._sync(
@@ -469,6 +938,21 @@ class Liveblocks:
         self,
         room_id: str,
     ) -> CreateYjsVersionResponse:
+        """Create Yjs version snapshot
+
+         This endpoint creates a new version history snapshot for the room's Yjs document.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateYjsVersionResponse
+        """
+
         from .api.yjs import create_yjs_version
 
         return create_yjs_version._sync(
@@ -482,6 +966,23 @@ class Liveblocks:
         *,
         query: str | Unset = UNSET,
     ) -> GetThreadsResponse:
+        """Get room threads
+
+         This endpoint returns the threads in the requested room. Corresponds to
+        [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+
+        Args:
+            room_id (str):
+            query (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadsResponse
+        """
+
         from .api.comments import get_threads
 
         return get_threads._sync(
@@ -496,6 +997,36 @@ class Liveblocks:
         *,
         body: CreateThreadRequestBody,
     ) -> Thread:
+        r"""Create thread
+
+         This endpoint creates a new thread and the first comment in the thread. Corresponds to
+        [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `comment.body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+        ```
+
+        Args:
+            room_id (str):
+            body (CreateThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import create_thread
 
         return create_thread._sync(
@@ -509,6 +1040,23 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Get thread
+
+         This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomId-threads-threadId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import get_thread
 
         return get_thread._sync(
@@ -522,6 +1070,23 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> None:
+        """Delete thread
+
+         This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-
+        reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import delete_thread
 
         return delete_thread._sync(
@@ -537,6 +1102,26 @@ class Liveblocks:
         *,
         body: UpdateThreadMetadataRequestBody,
     ) -> ThreadMetadata:
+        """Edit thread metadata
+
+         This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
+        store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
+        property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (UpdateThreadMetadataRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ThreadMetadata
+        """
+
         from .api.comments import edit_thread_metadata
 
         return edit_thread_metadata._sync(
@@ -551,6 +1136,22 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Mark thread as resolved
+
+         This endpoint marks a thread as resolved.
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import mark_thread_as_resolved
 
         return mark_thread_as_resolved._sync(
@@ -564,6 +1165,22 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Mark thread as unresolved
+
+         This endpoint marks a thread as unresolved.
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import mark_thread_as_unresolved
 
         return mark_thread_as_unresolved._sync(
@@ -579,6 +1196,24 @@ class Liveblocks:
         *,
         body: SubscribeToThreadRequestBody,
     ) -> Subscription:
+        """Subscribe to thread
+
+         This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (SubscribeToThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Subscription
+        """
+
         from .api.comments import subscribe_to_thread
 
         return subscribe_to_thread._sync(
@@ -595,6 +1230,25 @@ class Liveblocks:
         *,
         body: UnsubscribeFromThreadRequestBody,
     ) -> None:
+        """Unsubscribe from thread
+
+         This endpoint unsubscribes from a thread. Corresponds to
+        [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-unsubscribe).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (UnsubscribeFromThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import unsubscribe_from_thread
 
         return unsubscribe_from_thread._sync(
@@ -609,6 +1263,24 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> GetThreadSubscriptionsResponse:
+        """Get thread subscriptions
+
+         This endpoint gets the list of subscriptions to a thread. Corresponds to
+        [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
+        threadId-subscriptions).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadSubscriptionsResponse
+        """
+
         from .api.comments import get_thread_subscriptions
 
         return get_thread_subscriptions._sync(
@@ -624,6 +1296,37 @@ class Liveblocks:
         *,
         body: CreateCommentRequestBody,
     ) -> Comment:
+        r"""Create comment
+
+         This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to
+        [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-
+        comments).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (CreateCommentRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import create_comment
 
         return create_comment._sync(
@@ -639,6 +1342,24 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
     ) -> Comment:
+        """Get comment
+
+         This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import get_comment
 
         return get_comment._sync(
@@ -656,6 +1377,37 @@ class Liveblocks:
         *,
         body: EditCommentRequestBody,
     ) -> Comment:
+        r"""Edit comment
+
+         This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (EditCommentRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import edit_comment
 
         return edit_comment._sync(
@@ -672,6 +1424,25 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
     ) -> None:
+        """Delete comment
+
+         This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the
+        dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import delete_comment
 
         return delete_comment._sync(
@@ -689,6 +1460,26 @@ class Liveblocks:
         *,
         body: AddCommentReactionRequestBody,
     ) -> CommentReaction:
+        """Add comment reaction
+
+         This endpoint adds a reaction to a comment. Corresponds to
+        [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-comments-commentId-add-reaction).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (AddCommentReactionRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentReaction
+        """
+
         from .api.comments import add_comment_reaction
 
         return add_comment_reaction._sync(
@@ -707,6 +1498,27 @@ class Liveblocks:
         *,
         body: RemoveCommentReactionRequestBody | Unset = UNSET,
     ) -> None:
+        """Remove comment reaction
+
+         This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from
+        the API or the dashboard and it cannot be restored. Corresponds to
+        [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-comments-commentId-add-reaction).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (RemoveCommentReactionRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import remove_comment_reaction
 
         return remove_comment_reaction._sync(
@@ -725,6 +1537,27 @@ class Liveblocks:
         *,
         body: EditCommentMetadataRequestBody,
     ) -> CommentMetadata:
+        """Edit comment metadata
+
+         This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
+        store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
+        property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (EditCommentMetadataRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentMetadata
+        """
+
         from .api.comments import edit_comment_metadata
 
         return edit_comment_metadata._sync(
@@ -740,6 +1573,28 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
     ) -> GetThreadParticipantsResponse:
+        """Get thread participants
+
+         **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
+        subscriptions) instead.
+
+        This endpoint returns the list of thread participants. It is a list of unique user IDs representing
+        all the thread comment authors and mentioned users in comments. Corresponds to
+        [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
+        threadId-participants).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadParticipantsResponse
+        """
+
         from .api.deprecated import get_thread_participants
 
         return get_thread_participants._sync(
@@ -753,6 +1608,27 @@ class Liveblocks:
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
+        """Get room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
+        our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint returns a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.deprecated import get_room_notification_settings
 
         return get_room_notification_settings._sync(
@@ -768,6 +1644,29 @@ class Liveblocks:
         *,
         body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
+        """Update room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more
+        in our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint updates a user’s notification settings for a specific room. Corresponds to
+        [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
+        users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+            body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
+                settings - all properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.deprecated import update_room_notification_settings
 
         return update_room_notification_settings._sync(
@@ -782,6 +1681,27 @@ class Liveblocks:
         room_id: str,
         user_id: str,
     ) -> None:
+        """Delete room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
+        in our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint deletes a user’s notification settings for a specific room. Corresponds to
+        [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.deprecated import delete_room_notification_settings
 
         return delete_room_notification_settings._sync(
@@ -795,6 +1715,48 @@ class Liveblocks:
         *,
         body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
+        r"""Get access token with secret key
+
+         This endpoint lets your application server (your back end) obtain a token that one of its clients
+        (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
+        application’s custom authentication endpoint. When making this request, you’ll have to use your
+        secret key.
+
+        **Important:** The difference with an [ID token](#post-identify-user) is that an access token holds
+        all the permissions, and is the source of truth. With ID tokens, permissions are set in the
+        Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to
+        enter a room.
+
+        **Note:** When using the `@liveblocks/node` package, you can use
+        [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to
+        build this request.
+
+        You can pass the property `userId` in the request’s body. This can be whatever internal identifier
+        you use for your user accounts as long as it uniquely identifies an account. The property `userId`
+        is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId`
+        corresponds to one MAU.
+
+        Additionally, you can set custom metadata to the token, which will be publicly accessible by other
+        clients through the `user.info` property. This is useful for storing static data like avatar images
+        or the user’s display name.
+
+        Lastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This
+        is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
+        list of permissions to assign the user for any room that matches that name exactly (or starts with
+        the pattern’s prefix). For tips, see [Manage permissions with access
+        tokens](/docs/authentication/access-token).
+
+        Args:
+            body (AuthorizeUserRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AuthorizeUserResponse
+        """
+
         from .api.auth import authorize_user
 
         return authorize_user._sync(
@@ -807,6 +1769,49 @@ class Liveblocks:
         *,
         body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
+        r"""Get ID token with secret key
+
+         This endpoint lets your application server (your back end) obtain a token that one of its clients
+        (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
+        application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
+        should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
+        our [Manage permissions with ID tokens](/docs/authentication/id-token) section.
+
+        **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
+        doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
+        (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With
+        access tokens, all permissions are set in the token itself, and thus controlled from your back end
+        entirely.
+
+        **Note:** When using the `@liveblocks/node` package, you can use
+        [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this
+        request.
+
+        You can pass the property `userId` in the request’s body. This can be whatever internal identifier
+        you use for your user accounts as long as it uniquely identifies an account. The property `userId`
+        is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId`
+        corresponds to one MAU.
+
+        If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
+        The group ID values are yours, but they will have to match the group IDs you assign permissions to
+        when assigning permissions to rooms, see [Manage permissions with ID
+        tokens](/docs/authentication/id-token)).
+
+        Additionally, you can set custom metadata to the token, which will be publicly accessible by other
+        clients through the `user.info` property. This is useful for storing static data like avatar images
+        or the user’s display name.
+
+        Args:
+            body (IdentifyUserRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            IdentifyUserResponse
+        """
+
         from .api.auth import identify_user
 
         return identify_user._sync(
@@ -819,6 +1824,24 @@ class Liveblocks:
         user_id: str,
         inbox_notification_id: str,
     ) -> InboxNotificationCustomData | InboxNotificationThreadData:
+        """Get inbox notification
+
+         This endpoint returns a user’s inbox notification by its ID. Corresponds to
+        [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-
+        inboxNotifications-inboxNotificationId).
+
+        Args:
+            user_id (str):
+            inbox_notification_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            InboxNotificationCustomData | InboxNotificationThreadData
+        """
+
         from .api.notifications import get_inbox_notification
 
         return get_inbox_notification._sync(
@@ -832,6 +1855,22 @@ class Liveblocks:
         user_id: str,
         inbox_notification_id: str,
     ) -> None:
+        """Delete inbox notification
+
+         This endpoint deletes a user’s inbox notification by its ID.
+
+        Args:
+            user_id (str):
+            inbox_notification_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_inbox_notification
 
         return delete_inbox_notification._sync(
@@ -849,6 +1888,27 @@ class Liveblocks:
         limit: int | Unset = 50,
         starting_after: str | Unset = UNSET,
     ) -> GetInboxNotificationsResponse:
+        """Get all inbox notifications
+
+         This endpoint returns all the user’s inbox notifications. Corresponds to
+        [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
+        inboxNotifications).
+
+        Args:
+            user_id (str):
+            organization_id (str | Unset):
+            query (str | Unset):
+            limit (int | Unset):  Default: 50.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetInboxNotificationsResponse
+        """
+
         from .api.notifications import get_inbox_notifications
 
         return get_inbox_notifications._sync(
@@ -864,6 +1924,21 @@ class Liveblocks:
         self,
         user_id: str,
     ) -> None:
+        """Delete all inbox notifications
+
+         This endpoint deletes all the user’s inbox notifications.
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_all_inbox_notifications
 
         return delete_all_inbox_notifications._sync(
@@ -875,6 +1950,23 @@ class Liveblocks:
         self,
         user_id: str,
     ) -> NotificationSettings:
+        """Get notification settings
+
+         This endpoint returns a user's notification settings for the project. Corresponds to
+        [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            NotificationSettings
+        """
+
         from .api.notifications import get_notification_settings
 
         return get_notification_settings._sync(
@@ -888,6 +1980,25 @@ class Liveblocks:
         *,
         body: UpdateNotificationSettingsRequestBody,
     ) -> NotificationSettings:
+        """Update notification settings
+
+         This endpoint updates a user's notification settings for the project. Corresponds to
+        [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+            body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
+                properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            NotificationSettings
+        """
+
         from .api.notifications import update_notification_settings
 
         return update_notification_settings._sync(
@@ -900,6 +2011,23 @@ class Liveblocks:
         self,
         user_id: str,
     ) -> None:
+        """Delete notification settings
+
+         This endpoint deletes a user's notification settings for the project. Corresponds to
+        [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_notification_settings
 
         return delete_notification_settings._sync(
@@ -912,6 +2040,24 @@ class Liveblocks:
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
+        """Get room subscription settings
+
+         This endpoint returns a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.notifications import get_room_subscription_settings
 
         return get_room_subscription_settings._sync(
@@ -927,6 +2073,26 @@ class Liveblocks:
         *,
         body: UpdateRoomSubscriptionSettingsRequestBody,
     ) -> RoomSubscriptionSettings:
+        """Update room subscription settings
+
+         This endpoint updates a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
+        users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+            body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
+                properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.notifications import update_room_subscription_settings
 
         return update_room_subscription_settings._sync(
@@ -941,6 +2107,24 @@ class Liveblocks:
         room_id: str,
         user_id: str,
     ) -> None:
+        """Delete room subscription settings
+
+         This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_room_subscription_settings
 
         return delete_room_subscription_settings._sync(
@@ -957,6 +2141,26 @@ class Liveblocks:
         limit: int | Unset = 50,
         organization_id: str | Unset = UNSET,
     ) -> GetRoomSubscriptionSettingsResponse:
+        """Get user room subscription settings
+
+         This endpoint returns the list of a user's room subscription settings. Corresponds to
+        [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+        room-subscription-settings).
+
+        Args:
+            user_id (str):
+            starting_after (str | Unset):
+            limit (int | Unset):  Default: 50.
+            organization_id (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetRoomSubscriptionSettingsResponse
+        """
+
         from .api.notifications import get_user_room_subscription_settings
 
         return get_user_room_subscription_settings._sync(
@@ -972,6 +2176,23 @@ class Liveblocks:
         *,
         body: TriggerInboxNotificationRequestBody | Unset = UNSET,
     ) -> None:
+        """Trigger inbox notification
+
+         This endpoint triggers an inbox notification. Corresponds to
+        [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
+        notifications-trigger).
+
+        Args:
+            body (TriggerInboxNotificationRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import trigger_inbox_notification
 
         return trigger_inbox_notification._sync(
@@ -985,6 +2206,23 @@ class Liveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetGroupsResponse:
+        """Get groups
+
+         This endpoint returns a list of all groups in your project. Corresponds to
+        [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetGroupsResponse
+        """
+
         from .api.groups import get_groups
 
         return get_groups._sync(
@@ -998,6 +2236,22 @@ class Liveblocks:
         *,
         body: CreateGroupRequestBody | Unset = UNSET,
     ) -> Group:
+        """Create group
+
+         This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
+        reference/liveblocks-node#create-group).
+
+        Args:
+            body (CreateGroupRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import create_group
 
         return create_group._sync(
@@ -1009,6 +2263,22 @@ class Liveblocks:
         self,
         group_id: str,
     ) -> Group:
+        """Get group
+
+         This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
+        reference/liveblocks-node#get-group).
+
+        Args:
+            group_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import get_group
 
         return get_group._sync(
@@ -1020,6 +2290,22 @@ class Liveblocks:
         self,
         group_id: str,
     ) -> None:
+        """Delete group
+
+         This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
+        reference/liveblocks-node#delete-group).
+
+        Args:
+            group_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.groups import delete_group
 
         return delete_group._sync(
@@ -1033,6 +2319,23 @@ class Liveblocks:
         *,
         body: AddGroupMembersRequestBody,
     ) -> Group:
+        """Add group members
+
+         This endpoint adds new members to an existing group. Corresponds to
+        [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
+
+        Args:
+            group_id (str):
+            body (AddGroupMembersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import add_group_members
 
         return add_group_members._sync(
@@ -1047,6 +2350,23 @@ class Liveblocks:
         *,
         body: RemoveGroupMembersRequestBody,
     ) -> Group:
+        """Remove group members
+
+         This endpoint removes members from an existing group. Corresponds to
+        [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
+
+        Args:
+            group_id (str):
+            body (RemoveGroupMembersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import remove_group_members
 
         return remove_group_members._sync(
@@ -1062,6 +2382,24 @@ class Liveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetUserGroupsResponse:
+        """Get user groups
+
+         This endpoint returns all groups that a specific user is a member of. Corresponds to
+        [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
+
+        Args:
+            user_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetUserGroupsResponse
+        """
+
         from .api.groups import get_user_groups
 
         return get_user_groups._sync(
@@ -1077,6 +2415,24 @@ class Liveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetAiCopilotsResponse:
+        """Get AI copilots
+
+         This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
+        date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
+        reference/liveblocks-node#get-ai-copilots).
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetAiCopilotsResponse
+        """
+
         from .api.ai import get_ai_copilots
 
         return get_ai_copilots._sync(
@@ -1093,6 +2449,23 @@ class Liveblocks:
         | CreateAiCopilotOptionsOpenAi
         | CreateAiCopilotOptionsOpenAiCompatible,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        """Create AI copilot
+
+         This endpoint creates a new AI copilot with the given configuration. Corresponds to
+        [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
+
+        Args:
+            body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
+                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import create_ai_copilot
 
         return create_ai_copilot._sync(
@@ -1104,6 +2477,22 @@ class Liveblocks:
         self,
         copilot_id: str,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        """Get AI copilot
+
+         This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
+        reference/liveblocks-node#get-ai-copilot).
+
+        Args:
+            copilot_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import get_ai_copilot
 
         return get_ai_copilot._sync(
@@ -1117,6 +2506,28 @@ class Liveblocks:
         *,
         body: UpdateAiCopilotRequestBody,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        r"""Update AI copilot
+
+         This endpoint updates an existing AI copilot's configuration. Corresponds to
+        [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
+
+        This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
+        example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
+        model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422
+        response with an error message explaining where the validation failed.
+
+        Args:
+            copilot_id (str):
+            body (UpdateAiCopilotRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import update_ai_copilot
 
         return update_ai_copilot._sync(
@@ -1129,6 +2540,23 @@ class Liveblocks:
         self,
         copilot_id: str,
     ) -> None:
+        """Delete AI copilot
+
+         This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
+        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
+        node#delete-ai-copilot).
+
+        Args:
+            copilot_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_ai_copilot
 
         return delete_ai_copilot._sync(
@@ -1143,6 +2571,24 @@ class Liveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetKnowledgeSourcesResponse:
+        """Get knowledge sources
+
+         This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
+        to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
+
+        Args:
+            copilot_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetKnowledgeSourcesResponse
+        """
+
         from .api.ai import get_knowledge_sources
 
         return get_knowledge_sources._sync(
@@ -1157,6 +2603,23 @@ class Liveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
+        """Get knowledge source
+
+         This endpoint returns a specific knowledge source by its ID. Corresponds to
+        [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            KnowledgeSourceFileSource | KnowledgeSourceWebSource
+        """
+
         from .api.ai import get_knowledge_source
 
         return get_knowledge_source._sync(
@@ -1171,6 +2634,24 @@ class Liveblocks:
         *,
         body: CreateWebKnowledgeSourceRequestBody,
     ) -> CreateWebKnowledgeSourceResponse:
+        """Create web knowledge source
+
+         This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
+        and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
+        reference/liveblocks-node#create-web-knowledge-source).
+
+        Args:
+            copilot_id (str):
+            body (CreateWebKnowledgeSourceRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateWebKnowledgeSourceResponse
+        """
+
         from .api.ai import create_web_knowledge_source
 
         return create_web_knowledge_source._sync(
@@ -1186,6 +2667,26 @@ class Liveblocks:
         *,
         body: File,
     ) -> CreateFileKnowledgeSourceResponse200:
+        """Create file knowledge source
+
+         This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
+        then reference the content of the file when responding. Corresponds to
+        [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            name (str):
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateFileKnowledgeSourceResponse200
+        """
+
         from .api.ai import create_file_knowledge_source
 
         return create_file_knowledge_source._sync(
@@ -1200,6 +2701,25 @@ class Liveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> GetFileKnowledgeSourceMarkdownResponse:
+        """Get file knowledge source content
+
+         This endpoint returns the content of a file knowledge source as markdown. This allows you to see
+        what content the AI copilot has access to from uploaded files. Corresponds to
+        [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
+        knowledge-source-markdown).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFileKnowledgeSourceMarkdownResponse
+        """
+
         from .api.ai import get_file_knowledge_source_markdown
 
         return get_file_knowledge_source_markdown._sync(
@@ -1213,6 +2733,25 @@ class Liveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> None:
+        """Delete file knowledge source
+
+         This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
+        access to the content from this file. Corresponds to
+        [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_file_knowledge_source
 
         return delete_file_knowledge_source._sync(
@@ -1226,6 +2765,25 @@ class Liveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> None:
+        """Delete web knowledge source
+
+         This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have
+        access to the content from this source. Corresponds to
+        [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_web_knowledge_source
 
         return delete_web_knowledge_source._sync(
@@ -1242,6 +2800,27 @@ class Liveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetWebKnowledgeSourceLinksResponse:
+        """Get web knowledge source links
+
+         This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
+        is useful for understanding what content the AI copilot has access to from web sources. Corresponds
+        to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
+        source-links).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetWebKnowledgeSourceLinksResponse
+        """
+
         from .api.ai import get_web_knowledge_source_links
 
         return get_web_knowledge_source_links._sync(
@@ -1258,6 +2837,23 @@ class Liveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementProjectsResponse:
+        """List projects
+
+         Returns a paginated list of projects. You can limit the number of projects returned per page and use
+        the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementProjectsResponse
+        """
+
         from .api.management import get_management_projects
 
         return get_management_projects._sync(
@@ -1271,6 +2867,23 @@ class Liveblocks:
         *,
         body: CreateManagementProjectRequestBody,
     ) -> CreateManagementProjectResponse:
+        """Create project
+
+         Creates a new project within your account. This endpoint requires the `write:all` scope. You can
+        specify the project type, name, and version creation timeout. Upon success, returns information
+        about the newly created project, including its ID, keys, region, and settings.
+
+        Args:
+            body (CreateManagementProjectRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateManagementProjectResponse
+        """
+
         from .api.management import create_management_project
 
         return create_management_project._sync(
@@ -1282,6 +2895,22 @@ class Liveblocks:
         self,
         project_id: str,
     ) -> GetManagementProjectResponse:
+        """Get project
+
+         Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
+        project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementProjectResponse
+        """
+
         from .api.management import get_management_project
 
         return get_management_project._sync(
@@ -1295,6 +2924,27 @@ class Liveblocks:
         *,
         body: UpdateManagementProjectRequestBody,
     ) -> UpdateManagementProjectResponse:
+        """Update project
+
+         Updates an existing project specified by its ID. This endpoint allows you to modify project details
+        such as the project name and the version creation timeout. The `versionCreationTimeout` can be set
+        to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from
+        the request body will not be updated. Requires the `write:all` scope.
+
+        If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            body (UpdateManagementProjectRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpdateManagementProjectResponse
+        """
+
         from .api.management import update_management_project
 
         return update_management_project._sync(
@@ -1307,6 +2957,22 @@ class Liveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Delete project
+
+         Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the
+        project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import delete_management_project
 
         return delete_management_project._sync(
@@ -1318,6 +2984,22 @@ class Liveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Activate public key
+
+         Activates the public API key associated with the specified project. This endpoint requires the
+        `write:all` scope. If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import activate_project_public_api_key
 
         return activate_project_public_api_key._sync(
@@ -1329,6 +3011,22 @@ class Liveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Deactivate public key
+
+         Deactivates the public API key associated with the specified project. This endpoint requires the
+        `write:all` scope. If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import deactivate_project_public_api_key
 
         return deactivate_project_public_api_key._sync(
@@ -1342,6 +3040,28 @@ class Liveblocks:
         *,
         body: RollProjectPublicApiKeyRequestBody | Unset = UNSET,
     ) -> RollProjectPublicApiKeyResponse:
+        """Roll public key
+
+         Rolls (rotates) the public API key associated with the specified project, generating a new key value
+        while deprecating the previous one. The new key becomes immediately active. This endpoint requires
+        the `write:all` scope.
+
+        If the public key is not currently enabled for the project, a 403 error response is returned. If the
+        project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can
+        be provided in the request body to set when the previous key should expire.
+
+        Args:
+            project_id (str):
+            body (RollProjectPublicApiKeyRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RollProjectPublicApiKeyResponse
+        """
+
         from .api.management import roll_project_public_api_key
 
         return roll_project_public_api_key._sync(
@@ -1356,6 +3076,27 @@ class Liveblocks:
         *,
         body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
     ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
+        """Roll secret key
+
+         Rolls (rotates) the secret API key associated with the specified project, generating a new key value
+        while deprecating the previous one. The new key becomes immediately active. This endpoint requires
+        the `write:all` scope.
+
+        If the project cannot be found, a 404 error response is returned. An optional `expirationIn`
+        parameter can be provided in the request body to set when the previous key should expire.
+
+        Args:
+            project_id (str):
+            body (RollProjectSecretApiKeyRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse
+        """
+
         from .api.management import roll_project_secret_api_key
 
         return roll_project_secret_api_key._sync(
@@ -1371,6 +3112,28 @@ class Liveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementWebhooksResponse:
+        """List webhooks
+
+         Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
+        response includes an array of webhook objects associated with the specified project, as well as a
+        `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number
+        of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter
+        from the `nextCursor` value in the previous response to fetch subsequent pages. If the project
+        cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhooksResponse
+        """
+
         from .api.management import get_management_webhooks
 
         return get_management_webhooks._sync(
@@ -1386,6 +3149,23 @@ class Liveblocks:
         *,
         body: CreateManagementWebhookRequestBody,
     ) -> CreateManagementWebhookResponse:
+        """Create webhook
+
+         Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
+        cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            body (CreateManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateManagementWebhookResponse
+        """
+
         from .api.management import create_management_webhook
 
         return create_management_webhook._sync(
@@ -1399,6 +3179,24 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
     ) -> GetManagementWebhookResponse:
+        """Get webhook
+
+         Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
+        events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook
+        does not exist. This endpoint requires the `read:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhookResponse
+        """
+
         from .api.management import get_management_webhook
 
         return get_management_webhook._sync(
@@ -1414,6 +3212,25 @@ class Liveblocks:
         *,
         body: UpdateManagementWebhookRequestBody,
     ) -> UpdateManagementWebhookResponse:
+        """Update webhook
+
+         Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
+        stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation
+        errors. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (UpdateManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpdateManagementWebhookResponse
+        """
+
         from .api.management import update_management_webhook
 
         return update_management_webhook._sync(
@@ -1428,6 +3245,23 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
     ) -> None:
+        """Delete webhook
+
+         Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or
+        `404` if the project or webhook does not exist. Requires `write:all`.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import delete_management_webhook
 
         return delete_management_webhook._sync(
@@ -1441,6 +3275,24 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
     ) -> RotateManagementWebhookSecretResponse:
+        """Roll webhook secret
+
+         Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
+        hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
+        `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RotateManagementWebhookSecretResponse
+        """
+
         from .api.management import roll_management_webhook_secret
 
         return roll_management_webhook_secret._sync(
@@ -1454,6 +3306,23 @@ class Liveblocks:
         project_id: str,
         webhook_id: str,
     ) -> GetManagementWebhookHeadersResponse:
+        """Get webhook headers
+
+         Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires
+        `read:all`.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhookHeadersResponse
+        """
+
         from .api.management import get_management_webhook_additional_headers
 
         return get_management_webhook_additional_headers._sync(
@@ -1469,6 +3338,25 @@ class Liveblocks:
         *,
         body: UpsertManagementWebhookHeadersRequestBody,
     ) -> UpsertManagementWebhookHeadersResponse:
+        """Patch webhook headers
+
+         Upsert additional headers for a webhook. Provided headers are merged with existing headers, and
+        existing values are overwritten when names match. Returns updated headers, or `404` if the project
+        or webhook does not exist. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (UpsertManagementWebhookHeadersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpsertManagementWebhookHeadersResponse
+        """
+
         from .api.management import upsert_management_webhook_additional_headers
 
         return upsert_management_webhook_additional_headers._sync(
@@ -1485,6 +3373,26 @@ class Liveblocks:
         *,
         body: DeleteManagementWebhookHeadersRequestBody,
     ) -> DeleteManagementWebhookHeadersResponse:
+        """Delete webhook headers
+
+         Remove selected additional headers from a webhook. Send header names in `headers` field; other
+        headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist.
+        This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise,
+        a 422 error response is returned.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (DeleteManagementWebhookHeadersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            DeleteManagementWebhookHeadersResponse
+        """
+
         from .api.management import delete_management_webhook_additional_headers
 
         return delete_management_webhook_additional_headers._sync(
@@ -1501,6 +3409,25 @@ class Liveblocks:
         *,
         body: RecoverManagementWebhookFailedMessagesRequestBody,
     ) -> None:
+        """Recover failed webhook messages
+
+         Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
+        empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint
+        requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (RecoverManagementWebhookFailedMessagesRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import recover_failed_webhook_messages
 
         return recover_failed_webhook_messages._sync(
@@ -1517,6 +3444,25 @@ class Liveblocks:
         *,
         body: TestManagementWebhookRequestBody,
     ) -> TestManagementWebhookResponse:
+        """Send test webhook
+
+         Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be
+        one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the
+        project or webhook does not exist. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (TestManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            TestManagementWebhookResponse
+        """
+
         from .api.management import send_test_webhook
 
         return send_test_webhook._sync(
@@ -1580,6 +3526,41 @@ class AsyncLiveblocks:
         user_id: str | Unset = UNSET,
         group_ids: str | Unset = UNSET,
     ) -> GetRoomsResponse:
+        """Get rooms
+
+         This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
+        newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
+        accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
+
+        There is a pagination system where the cursor to the next page is returned in the response as
+        `nextCursor`, which can be combined with `startingAfter`.
+        You can also limit the number of rooms by query.
+
+        Filtering by metadata works by giving key values like `metadata.color=red`. Of course you can
+        combine multiple metadata clauses to refine the response like
+        `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each
+        clauses.
+
+        Filtering by groups or userId works by giving a list of groups like
+        `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.
+        Notice here the operator OR is applied between each `groupIds` and the `userId`.
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+            organization_id (str | Unset):
+            query (str | Unset):
+            user_id (str | Unset):
+            group_ids (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetRoomsResponse
+        """
+
         from .api.room import get_rooms
 
         return await get_rooms._asyncio(
@@ -1598,6 +3579,33 @@ class AsyncLiveblocks:
         body: CreateRoomRequestBody,
         idempotent: bool | Unset = UNSET,
     ) -> Room:
+        r"""Create room
+
+         This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a
+        `?idempotent` query argument, will not return a 409 when the room already exists, but instead return
+        the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-
+        node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-
+        create-rooms-roomId) when `?idempotent` is provided.
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` are optional fields.
+
+        Args:
+            idempotent (bool | Unset):
+            body (CreateRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import create_room
 
         return await create_room._asyncio(
@@ -1610,6 +3618,22 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> Room:
+        """Get room
+
+         This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomid).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import get_room
 
         return await get_room._asyncio(
@@ -1623,6 +3647,43 @@ class AsyncLiveblocks:
         *,
         body: UpdateRoomRequestBody,
     ) -> Room:
+        r"""Update room
+
+         This endpoint updates specific properties of a room. Corresponds to
+        [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid).
+
+        It’s not necessary to provide the entire room’s information.
+        Setting a property to `null` means to delete this property. For example, if you want to remove
+        access to a specific user without losing other users:
+        ``{
+            \"usersAccesses\": {
+                \"john\": null
+            }
+        }``
+        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
+        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        field.
+
+        Args:
+            room_id (str):
+            body (UpdateRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import update_room
 
         return await update_room._asyncio(
@@ -1635,6 +3696,23 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Delete room
+
+         This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
+        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
+        node#delete-rooms-roomid).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import delete_room
 
         return await delete_room._asyncio(
@@ -1646,6 +3724,24 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Prewarm room
+
+         Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be
+        connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
+        [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the
+        room will load quicker.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import prewarm_room
 
         return await prewarm_room._asyncio(
@@ -1659,6 +3755,43 @@ class AsyncLiveblocks:
         *,
         body: UpsertRoomRequestBody,
     ) -> Room:
+        r"""Upsert (update or create) room
+
+         This endpoint updates specific properties of a room. Corresponds to
+        [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+
+        It’s not necessary to provide the entire room’s information.
+        Setting a property to `null` means to delete this property. For example, if you want to remove
+        access to a specific user without losing other users:
+        ``{
+            \"usersAccesses\": {
+                \"john\": null
+            }
+        }``
+        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+
+        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
+        Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
+        `metadata` is optional field.
+        - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
+        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
+        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        field.
+
+        Args:
+            room_id (str):
+            body (UpsertRoomRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import upsert_room
 
         return await upsert_room._asyncio(
@@ -1673,6 +3806,22 @@ class AsyncLiveblocks:
         *,
         body: UpdateRoomIdRequestBody | Unset = UNSET,
     ) -> Room:
+        """Update room ID
+
+         This endpoint permanently updates the room’s ID.
+
+        Args:
+            room_id (str):
+            body (UpdateRoomIdRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
         from .api.room import update_room_id
 
         return await update_room_id._asyncio(
@@ -1685,6 +3834,25 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> ActiveUsersResponse:
+        """Get active users
+
+         This endpoint returns a list of users currently present in the requested room. Corresponds to
+        [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
+
+        For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
+        Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ActiveUsersResponse
+        """
+
         from .api.room import get_active_users
 
         return await get_active_users._asyncio(
@@ -1698,6 +3866,25 @@ class AsyncLiveblocks:
         *,
         body: SetPresenceRequestBody,
     ) -> None:
+        """Set ephemeral presence
+
+         This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
+        The presence data will automatically expire after the specified TTL (time-to-live). This is useful
+        for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
+        connected users in the room.
+
+        Args:
+            room_id (str):
+            body (SetPresenceRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import set_presence
 
         return await set_presence._asyncio(
@@ -1712,6 +3899,25 @@ class AsyncLiveblocks:
         *,
         body: Any,
     ) -> None:
+        """Broadcast event to a room
+
+         This endpoint enables the broadcast of an event to a room without having to connect to it via the
+        `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
+        passed to event listeners is `-1` when using this API. Corresponds to
+        [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
+
+        Args:
+            room_id (str):
+            body (Any):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.room import broadcast_event
 
         return await broadcast_event._asyncio(
@@ -1726,6 +3932,37 @@ class AsyncLiveblocks:
         *,
         format_: GetStorageDocumentFormat | Unset = UNSET,
     ) -> GetStorageDocumentResponse:
+        r"""Get Storage document
+
+         Returns the contents of the room’s Storage tree.  Corresponds to
+        [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
+
+        The default outputted format is called “plain LSON”, which includes information on the Live data
+        structures in the tree. These nodes show up in the output as objects with two properties, for
+        example:
+
+        ```json
+        {
+          \"liveblocksType\": \"LiveObject\",
+          \"data\": ...
+        }
+        ```
+
+        If you’re not interested in this information, you can use the simpler `?format=json` query param,
+        see below.
+
+        Args:
+            room_id (str):
+            format_ (GetStorageDocumentFormat | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetStorageDocumentResponse
+        """
+
         from .api.storage import get_storage_document
 
         return await get_storage_document._asyncio(
@@ -1740,6 +3977,37 @@ class AsyncLiveblocks:
         *,
         body: InitializeStorageDocumentBody | Unset = UNSET,
     ) -> InitializeStorageDocumentResponse:
+        r"""Initialize Storage document
+
+         This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling
+        this endpoint will disconnect all users from the room if there are any, triggering a reconnect.
+        Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-storage).
+
+        The format of the request body is the same as what’s returned by the get Storage endpoint.
+
+        For each Liveblocks data structure that you want to create, you need a JSON element having two
+        properties:
+        - `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`
+        - `\"data\"` => contains the nested data structures (children) and data.
+
+        The root’s type can only be LiveObject.
+
+        A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert
+        `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
+
+        Args:
+            room_id (str):
+            body (InitializeStorageDocumentBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            InitializeStorageDocumentResponse
+        """
+
         from .api.storage import initialize_storage_document
 
         return await initialize_storage_document._asyncio(
@@ -1752,6 +4020,23 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> None:
+        """Delete Storage document
+
+         This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
+        users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
+        reference/liveblocks-node#delete-rooms-roomId-storage).
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.storage import delete_storage_document
 
         return await delete_storage_document._asyncio(
@@ -1772,6 +4057,36 @@ class AsyncLiveblocks:
             | TestJsonPatchOperation
         ],
     ) -> None:
+        """Apply JSON Patch to Storage
+
+         Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
+        room's Storage document, useful for modifying Storage. Operations are applied in order; if any
+        operation fails, the document is not changed and a 422 response with a helpful message is returned.
+
+        **Paths and data types:** Be as specific as possible with your target path. Every parent in the
+        chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
+        `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
+
+        **Performance:** For large Storage documents, applying a patch can be expensive because the full
+        state is reconstructed on the server to apply the operations. Very large documents may not be
+        suitable for this endpoint.
+
+        For a **full guide with examples**, see [Modifying storage via REST API with JSON
+        Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+
+        Args:
+            room_id (str):
+            body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
+                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.storage import patch_storage_document
 
         return await patch_storage_document._asyncio(
@@ -1788,6 +4103,25 @@ class AsyncLiveblocks:
         key: str | Unset = UNSET,
         type_: GetYjsDocumentType | Unset = UNSET,
     ) -> GetYjsDocumentResponse:
+        """Get Yjs document
+
+         This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
+        [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
+
+        Args:
+            room_id (str):
+            formatting (bool | Unset):
+            key (str | Unset):
+            type_ (GetYjsDocumentType | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetYjsDocumentResponse
+        """
+
         from .api.yjs import get_yjs_document
 
         return await get_yjs_document._asyncio(
@@ -1805,6 +4139,32 @@ class AsyncLiveblocks:
         body: File,
         guid: str | Unset = UNSET,
     ) -> None:
+        """Send a binary Yjs update
+
+         This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
+        endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
+        to a subdocument instead of the main document, pass its `guid`. Corresponds to
+        [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+
+        The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
+        documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
+        this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the
+        binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON,
+        unlike most other endpoints.
+
+        Args:
+            room_id (str):
+            guid (str | Unset):
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.yjs import send_yjs_binary_update
 
         return await send_yjs_binary_update._asyncio(
@@ -1820,6 +4180,27 @@ class AsyncLiveblocks:
         *,
         guid: str | Unset = UNSET,
     ) -> File:
+        """Get Yjs document encoded as a binary Yjs update
+
+         This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by
+        `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
+        documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
+        updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
+        [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        ydoc-binary).
+
+        Args:
+            room_id (str):
+            guid (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            File
+        """
+
         from .api.yjs import get_yjs_document_as_binary_update
 
         return await get_yjs_document_as_binary_update._asyncio(
@@ -1835,6 +4216,24 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetYjsVersionsResponse:
+        """Get Yjs version history
+
+         This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
+        are returned sorted by creation date, from newest to oldest.
+
+        Args:
+            room_id (str):
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetYjsVersionsResponse
+        """
+
         from .api.yjs import get_yjs_versions
 
         return await get_yjs_versions._asyncio(
@@ -1849,6 +4248,22 @@ class AsyncLiveblocks:
         room_id: str,
         version_id: str,
     ) -> File:
+        """Get Yjs document version
+
+         This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
+
+        Args:
+            room_id (str):
+            version_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            File
+        """
+
         from .api.yjs import get_yjs_version
 
         return await get_yjs_version._asyncio(
@@ -1861,6 +4276,21 @@ class AsyncLiveblocks:
         self,
         room_id: str,
     ) -> CreateYjsVersionResponse:
+        """Create Yjs version snapshot
+
+         This endpoint creates a new version history snapshot for the room's Yjs document.
+
+        Args:
+            room_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateYjsVersionResponse
+        """
+
         from .api.yjs import create_yjs_version
 
         return await create_yjs_version._asyncio(
@@ -1874,6 +4304,23 @@ class AsyncLiveblocks:
         *,
         query: str | Unset = UNSET,
     ) -> GetThreadsResponse:
+        """Get room threads
+
+         This endpoint returns the threads in the requested room. Corresponds to
+        [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+
+        Args:
+            room_id (str):
+            query (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadsResponse
+        """
+
         from .api.comments import get_threads
 
         return await get_threads._asyncio(
@@ -1888,6 +4335,36 @@ class AsyncLiveblocks:
         *,
         body: CreateThreadRequestBody,
     ) -> Thread:
+        r"""Create thread
+
+         This endpoint creates a new thread and the first comment in the thread. Corresponds to
+        [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `comment.body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+        ```
+
+        Args:
+            room_id (str):
+            body (CreateThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import create_thread
 
         return await create_thread._asyncio(
@@ -1901,6 +4378,23 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Get thread
+
+         This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomId-threads-threadId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import get_thread
 
         return await get_thread._asyncio(
@@ -1914,6 +4408,23 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> None:
+        """Delete thread
+
+         This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-
+        reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import delete_thread
 
         return await delete_thread._asyncio(
@@ -1929,6 +4440,26 @@ class AsyncLiveblocks:
         *,
         body: UpdateThreadMetadataRequestBody,
     ) -> ThreadMetadata:
+        """Edit thread metadata
+
+         This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
+        store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
+        property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (UpdateThreadMetadataRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ThreadMetadata
+        """
+
         from .api.comments import edit_thread_metadata
 
         return await edit_thread_metadata._asyncio(
@@ -1943,6 +4474,22 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Mark thread as resolved
+
+         This endpoint marks a thread as resolved.
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import mark_thread_as_resolved
 
         return await mark_thread_as_resolved._asyncio(
@@ -1956,6 +4503,22 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> Thread:
+        """Mark thread as unresolved
+
+         This endpoint marks a thread as unresolved.
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Thread
+        """
+
         from .api.comments import mark_thread_as_unresolved
 
         return await mark_thread_as_unresolved._asyncio(
@@ -1971,6 +4534,24 @@ class AsyncLiveblocks:
         *,
         body: SubscribeToThreadRequestBody,
     ) -> Subscription:
+        """Subscribe to thread
+
+         This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (SubscribeToThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Subscription
+        """
+
         from .api.comments import subscribe_to_thread
 
         return await subscribe_to_thread._asyncio(
@@ -1987,6 +4568,25 @@ class AsyncLiveblocks:
         *,
         body: UnsubscribeFromThreadRequestBody,
     ) -> None:
+        """Unsubscribe from thread
+
+         This endpoint unsubscribes from a thread. Corresponds to
+        [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-unsubscribe).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (UnsubscribeFromThreadRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import unsubscribe_from_thread
 
         return await unsubscribe_from_thread._asyncio(
@@ -2001,6 +4601,24 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> GetThreadSubscriptionsResponse:
+        """Get thread subscriptions
+
+         This endpoint gets the list of subscriptions to a thread. Corresponds to
+        [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
+        threadId-subscriptions).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadSubscriptionsResponse
+        """
+
         from .api.comments import get_thread_subscriptions
 
         return await get_thread_subscriptions._asyncio(
@@ -2016,6 +4634,37 @@ class AsyncLiveblocks:
         *,
         body: CreateCommentRequestBody,
     ) -> Comment:
+        r"""Create comment
+
+         This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to
+        [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-
+        comments).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            body (CreateCommentRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import create_comment
 
         return await create_comment._asyncio(
@@ -2031,6 +4680,24 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
     ) -> Comment:
+        """Get comment
+
+         This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
+        reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import get_comment
 
         return await get_comment._asyncio(
@@ -2048,6 +4715,37 @@ class AsyncLiveblocks:
         *,
         body: EditCommentRequestBody,
     ) -> Comment:
+        r"""Edit comment
+
+         This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+
+        A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
+        construct a comment’s body, which can be submitted under `body`.
+
+        ```json
+        \"version\": 1,
+        \"content\": [
+          {
+            \"type\": \"paragraph\",
+            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+          }
+        ]
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (EditCommentRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Comment
+        """
+
         from .api.comments import edit_comment
 
         return await edit_comment._asyncio(
@@ -2064,6 +4762,25 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
     ) -> None:
+        """Delete comment
+
+         This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the
+        dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import delete_comment
 
         return await delete_comment._asyncio(
@@ -2081,6 +4798,26 @@ class AsyncLiveblocks:
         *,
         body: AddCommentReactionRequestBody,
     ) -> CommentReaction:
+        """Add comment reaction
+
+         This endpoint adds a reaction to a comment. Corresponds to
+        [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-comments-commentId-add-reaction).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (AddCommentReactionRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentReaction
+        """
+
         from .api.comments import add_comment_reaction
 
         return await add_comment_reaction._asyncio(
@@ -2099,6 +4836,27 @@ class AsyncLiveblocks:
         *,
         body: RemoveCommentReactionRequestBody | Unset = UNSET,
     ) -> None:
+        """Remove comment reaction
+
+         This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from
+        the API or the dashboard and it cannot be restored. Corresponds to
+        [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
+        threadId-comments-commentId-add-reaction).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (RemoveCommentReactionRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.comments import remove_comment_reaction
 
         return await remove_comment_reaction._asyncio(
@@ -2117,6 +4875,27 @@ class AsyncLiveblocks:
         *,
         body: EditCommentMetadataRequestBody,
     ) -> CommentMetadata:
+        """Edit comment metadata
+
+         This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
+        store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
+        property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+            comment_id (str):
+            body (EditCommentMetadataRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CommentMetadata
+        """
+
         from .api.comments import edit_comment_metadata
 
         return await edit_comment_metadata._asyncio(
@@ -2132,6 +4911,28 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
     ) -> GetThreadParticipantsResponse:
+        """Get thread participants
+
+         **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
+        subscriptions) instead.
+
+        This endpoint returns the list of thread participants. It is a list of unique user IDs representing
+        all the thread comment authors and mentioned users in comments. Corresponds to
+        [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
+        threadId-participants).
+
+        Args:
+            room_id (str):
+            thread_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadParticipantsResponse
+        """
+
         from .api.deprecated import get_thread_participants
 
         return await get_thread_participants._asyncio(
@@ -2145,6 +4946,27 @@ class AsyncLiveblocks:
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
+        """Get room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
+        our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint returns a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.deprecated import get_room_notification_settings
 
         return await get_room_notification_settings._asyncio(
@@ -2160,6 +4982,29 @@ class AsyncLiveblocks:
         *,
         body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
     ) -> RoomSubscriptionSettings:
+        """Update room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more
+        in our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint updates a user’s notification settings for a specific room. Corresponds to
+        [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
+        users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+            body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
+                settings - all properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.deprecated import update_room_notification_settings
 
         return await update_room_notification_settings._asyncio(
@@ -2174,6 +5019,27 @@ class AsyncLiveblocks:
         room_id: str,
         user_id: str,
     ) -> None:
+        """Delete room notification settings
+
+         **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
+        in our [migration guide](/docs/platform/upgrading/2.24).
+
+        This endpoint deletes a user’s notification settings for a specific room. Corresponds to
+        [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-users-userId-notification-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.deprecated import delete_room_notification_settings
 
         return await delete_room_notification_settings._asyncio(
@@ -2187,6 +5053,48 @@ class AsyncLiveblocks:
         *,
         body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
+        r"""Get access token with secret key
+
+         This endpoint lets your application server (your back end) obtain a token that one of its clients
+        (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
+        application’s custom authentication endpoint. When making this request, you’ll have to use your
+        secret key.
+
+        **Important:** The difference with an [ID token](#post-identify-user) is that an access token holds
+        all the permissions, and is the source of truth. With ID tokens, permissions are set in the
+        Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to
+        enter a room.
+
+        **Note:** When using the `@liveblocks/node` package, you can use
+        [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to
+        build this request.
+
+        You can pass the property `userId` in the request’s body. This can be whatever internal identifier
+        you use for your user accounts as long as it uniquely identifies an account. The property `userId`
+        is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId`
+        corresponds to one MAU.
+
+        Additionally, you can set custom metadata to the token, which will be publicly accessible by other
+        clients through the `user.info` property. This is useful for storing static data like avatar images
+        or the user’s display name.
+
+        Lastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This
+        is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
+        list of permissions to assign the user for any room that matches that name exactly (or starts with
+        the pattern’s prefix). For tips, see [Manage permissions with access
+        tokens](/docs/authentication/access-token).
+
+        Args:
+            body (AuthorizeUserRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AuthorizeUserResponse
+        """
+
         from .api.auth import authorize_user
 
         return await authorize_user._asyncio(
@@ -2199,6 +5107,49 @@ class AsyncLiveblocks:
         *,
         body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
+        r"""Get ID token with secret key
+
+         This endpoint lets your application server (your back end) obtain a token that one of its clients
+        (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
+        application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
+        should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
+        our [Manage permissions with ID tokens](/docs/authentication/id-token) section.
+
+        **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
+        doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
+        (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With
+        access tokens, all permissions are set in the token itself, and thus controlled from your back end
+        entirely.
+
+        **Note:** When using the `@liveblocks/node` package, you can use
+        [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this
+        request.
+
+        You can pass the property `userId` in the request’s body. This can be whatever internal identifier
+        you use for your user accounts as long as it uniquely identifies an account. The property `userId`
+        is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId`
+        corresponds to one MAU.
+
+        If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
+        The group ID values are yours, but they will have to match the group IDs you assign permissions to
+        when assigning permissions to rooms, see [Manage permissions with ID
+        tokens](/docs/authentication/id-token)).
+
+        Additionally, you can set custom metadata to the token, which will be publicly accessible by other
+        clients through the `user.info` property. This is useful for storing static data like avatar images
+        or the user’s display name.
+
+        Args:
+            body (IdentifyUserRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            IdentifyUserResponse
+        """
+
         from .api.auth import identify_user
 
         return await identify_user._asyncio(
@@ -2211,6 +5162,24 @@ class AsyncLiveblocks:
         user_id: str,
         inbox_notification_id: str,
     ) -> InboxNotificationCustomData | InboxNotificationThreadData:
+        """Get inbox notification
+
+         This endpoint returns a user’s inbox notification by its ID. Corresponds to
+        [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-
+        inboxNotifications-inboxNotificationId).
+
+        Args:
+            user_id (str):
+            inbox_notification_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            InboxNotificationCustomData | InboxNotificationThreadData
+        """
+
         from .api.notifications import get_inbox_notification
 
         return await get_inbox_notification._asyncio(
@@ -2224,6 +5193,22 @@ class AsyncLiveblocks:
         user_id: str,
         inbox_notification_id: str,
     ) -> None:
+        """Delete inbox notification
+
+         This endpoint deletes a user’s inbox notification by its ID.
+
+        Args:
+            user_id (str):
+            inbox_notification_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_inbox_notification
 
         return await delete_inbox_notification._asyncio(
@@ -2241,6 +5226,27 @@ class AsyncLiveblocks:
         limit: int | Unset = 50,
         starting_after: str | Unset = UNSET,
     ) -> GetInboxNotificationsResponse:
+        """Get all inbox notifications
+
+         This endpoint returns all the user’s inbox notifications. Corresponds to
+        [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
+        inboxNotifications).
+
+        Args:
+            user_id (str):
+            organization_id (str | Unset):
+            query (str | Unset):
+            limit (int | Unset):  Default: 50.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetInboxNotificationsResponse
+        """
+
         from .api.notifications import get_inbox_notifications
 
         return await get_inbox_notifications._asyncio(
@@ -2256,6 +5262,21 @@ class AsyncLiveblocks:
         self,
         user_id: str,
     ) -> None:
+        """Delete all inbox notifications
+
+         This endpoint deletes all the user’s inbox notifications.
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_all_inbox_notifications
 
         return await delete_all_inbox_notifications._asyncio(
@@ -2267,6 +5288,23 @@ class AsyncLiveblocks:
         self,
         user_id: str,
     ) -> NotificationSettings:
+        """Get notification settings
+
+         This endpoint returns a user's notification settings for the project. Corresponds to
+        [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            NotificationSettings
+        """
+
         from .api.notifications import get_notification_settings
 
         return await get_notification_settings._asyncio(
@@ -2280,6 +5318,25 @@ class AsyncLiveblocks:
         *,
         body: UpdateNotificationSettingsRequestBody,
     ) -> NotificationSettings:
+        """Update notification settings
+
+         This endpoint updates a user's notification settings for the project. Corresponds to
+        [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+            body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
+                properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            NotificationSettings
+        """
+
         from .api.notifications import update_notification_settings
 
         return await update_notification_settings._asyncio(
@@ -2292,6 +5349,23 @@ class AsyncLiveblocks:
         self,
         user_id: str,
     ) -> None:
+        """Delete notification settings
+
+         This endpoint deletes a user's notification settings for the project. Corresponds to
+        [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
+        notification-settings).
+
+        Args:
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_notification_settings
 
         return await delete_notification_settings._asyncio(
@@ -2304,6 +5378,24 @@ class AsyncLiveblocks:
         room_id: str,
         user_id: str,
     ) -> RoomSubscriptionSettings:
+        """Get room subscription settings
+
+         This endpoint returns a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.notifications import get_room_subscription_settings
 
         return await get_room_subscription_settings._asyncio(
@@ -2319,6 +5411,26 @@ class AsyncLiveblocks:
         *,
         body: UpdateRoomSubscriptionSettingsRequestBody,
     ) -> RoomSubscriptionSettings:
+        """Update room subscription settings
+
+         This endpoint updates a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
+        users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+            body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
+                properties are optional
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RoomSubscriptionSettings
+        """
+
         from .api.notifications import update_room_subscription_settings
 
         return await update_room_subscription_settings._asyncio(
@@ -2333,6 +5445,24 @@ class AsyncLiveblocks:
         room_id: str,
         user_id: str,
     ) -> None:
+        """Delete room subscription settings
+
+         This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
+        [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-users-userId-subscription-settings).
+
+        Args:
+            room_id (str):
+            user_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import delete_room_subscription_settings
 
         return await delete_room_subscription_settings._asyncio(
@@ -2349,6 +5479,26 @@ class AsyncLiveblocks:
         limit: int | Unset = 50,
         organization_id: str | Unset = UNSET,
     ) -> GetRoomSubscriptionSettingsResponse:
+        """Get user room subscription settings
+
+         This endpoint returns the list of a user's room subscription settings. Corresponds to
+        [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
+        room-subscription-settings).
+
+        Args:
+            user_id (str):
+            starting_after (str | Unset):
+            limit (int | Unset):  Default: 50.
+            organization_id (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetRoomSubscriptionSettingsResponse
+        """
+
         from .api.notifications import get_user_room_subscription_settings
 
         return await get_user_room_subscription_settings._asyncio(
@@ -2364,6 +5514,23 @@ class AsyncLiveblocks:
         *,
         body: TriggerInboxNotificationRequestBody | Unset = UNSET,
     ) -> None:
+        """Trigger inbox notification
+
+         This endpoint triggers an inbox notification. Corresponds to
+        [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
+        notifications-trigger).
+
+        Args:
+            body (TriggerInboxNotificationRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.notifications import trigger_inbox_notification
 
         return await trigger_inbox_notification._asyncio(
@@ -2377,6 +5544,23 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetGroupsResponse:
+        """Get groups
+
+         This endpoint returns a list of all groups in your project. Corresponds to
+        [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetGroupsResponse
+        """
+
         from .api.groups import get_groups
 
         return await get_groups._asyncio(
@@ -2390,6 +5574,22 @@ class AsyncLiveblocks:
         *,
         body: CreateGroupRequestBody | Unset = UNSET,
     ) -> Group:
+        """Create group
+
+         This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
+        reference/liveblocks-node#create-group).
+
+        Args:
+            body (CreateGroupRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import create_group
 
         return await create_group._asyncio(
@@ -2401,6 +5601,22 @@ class AsyncLiveblocks:
         self,
         group_id: str,
     ) -> Group:
+        """Get group
+
+         This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
+        reference/liveblocks-node#get-group).
+
+        Args:
+            group_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import get_group
 
         return await get_group._asyncio(
@@ -2412,6 +5628,22 @@ class AsyncLiveblocks:
         self,
         group_id: str,
     ) -> None:
+        """Delete group
+
+         This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
+        reference/liveblocks-node#delete-group).
+
+        Args:
+            group_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.groups import delete_group
 
         return await delete_group._asyncio(
@@ -2425,6 +5657,23 @@ class AsyncLiveblocks:
         *,
         body: AddGroupMembersRequestBody,
     ) -> Group:
+        """Add group members
+
+         This endpoint adds new members to an existing group. Corresponds to
+        [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
+
+        Args:
+            group_id (str):
+            body (AddGroupMembersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import add_group_members
 
         return await add_group_members._asyncio(
@@ -2439,6 +5688,23 @@ class AsyncLiveblocks:
         *,
         body: RemoveGroupMembersRequestBody,
     ) -> Group:
+        """Remove group members
+
+         This endpoint removes members from an existing group. Corresponds to
+        [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
+
+        Args:
+            group_id (str):
+            body (RemoveGroupMembersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Group
+        """
+
         from .api.groups import remove_group_members
 
         return await remove_group_members._asyncio(
@@ -2454,6 +5720,24 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetUserGroupsResponse:
+        """Get user groups
+
+         This endpoint returns all groups that a specific user is a member of. Corresponds to
+        [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
+
+        Args:
+            user_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetUserGroupsResponse
+        """
+
         from .api.groups import get_user_groups
 
         return await get_user_groups._asyncio(
@@ -2469,6 +5753,24 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetAiCopilotsResponse:
+        """Get AI copilots
+
+         This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
+        date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
+        reference/liveblocks-node#get-ai-copilots).
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetAiCopilotsResponse
+        """
+
         from .api.ai import get_ai_copilots
 
         return await get_ai_copilots._asyncio(
@@ -2485,6 +5787,23 @@ class AsyncLiveblocks:
         | CreateAiCopilotOptionsOpenAi
         | CreateAiCopilotOptionsOpenAiCompatible,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        """Create AI copilot
+
+         This endpoint creates a new AI copilot with the given configuration. Corresponds to
+        [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
+
+        Args:
+            body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
+                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import create_ai_copilot
 
         return await create_ai_copilot._asyncio(
@@ -2496,6 +5815,22 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        """Get AI copilot
+
+         This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
+        reference/liveblocks-node#get-ai-copilot).
+
+        Args:
+            copilot_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import get_ai_copilot
 
         return await get_ai_copilot._asyncio(
@@ -2509,6 +5844,28 @@ class AsyncLiveblocks:
         *,
         body: UpdateAiCopilotRequestBody,
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
+        r"""Update AI copilot
+
+         This endpoint updates an existing AI copilot's configuration. Corresponds to
+        [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
+
+        This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
+        example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
+        model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422
+        response with an error message explaining where the validation failed.
+
+        Args:
+            copilot_id (str):
+            body (UpdateAiCopilotRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
+        """
+
         from .api.ai import update_ai_copilot
 
         return await update_ai_copilot._asyncio(
@@ -2521,6 +5878,23 @@ class AsyncLiveblocks:
         self,
         copilot_id: str,
     ) -> None:
+        """Delete AI copilot
+
+         This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
+        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
+        node#delete-ai-copilot).
+
+        Args:
+            copilot_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_ai_copilot
 
         return await delete_ai_copilot._asyncio(
@@ -2535,6 +5909,24 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetKnowledgeSourcesResponse:
+        """Get knowledge sources
+
+         This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
+        to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
+
+        Args:
+            copilot_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetKnowledgeSourcesResponse
+        """
+
         from .api.ai import get_knowledge_sources
 
         return await get_knowledge_sources._asyncio(
@@ -2549,6 +5941,23 @@ class AsyncLiveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> KnowledgeSourceFileSource | KnowledgeSourceWebSource:
+        """Get knowledge source
+
+         This endpoint returns a specific knowledge source by its ID. Corresponds to
+        [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            KnowledgeSourceFileSource | KnowledgeSourceWebSource
+        """
+
         from .api.ai import get_knowledge_source
 
         return await get_knowledge_source._asyncio(
@@ -2563,6 +5972,24 @@ class AsyncLiveblocks:
         *,
         body: CreateWebKnowledgeSourceRequestBody,
     ) -> CreateWebKnowledgeSourceResponse:
+        """Create web knowledge source
+
+         This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
+        and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
+        reference/liveblocks-node#create-web-knowledge-source).
+
+        Args:
+            copilot_id (str):
+            body (CreateWebKnowledgeSourceRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateWebKnowledgeSourceResponse
+        """
+
         from .api.ai import create_web_knowledge_source
 
         return await create_web_knowledge_source._asyncio(
@@ -2578,6 +6005,26 @@ class AsyncLiveblocks:
         *,
         body: File,
     ) -> CreateFileKnowledgeSourceResponse200:
+        """Create file knowledge source
+
+         This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
+        then reference the content of the file when responding. Corresponds to
+        [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            name (str):
+            body (File):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateFileKnowledgeSourceResponse200
+        """
+
         from .api.ai import create_file_knowledge_source
 
         return await create_file_knowledge_source._asyncio(
@@ -2592,6 +6039,25 @@ class AsyncLiveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> GetFileKnowledgeSourceMarkdownResponse:
+        """Get file knowledge source content
+
+         This endpoint returns the content of a file knowledge source as markdown. This allows you to see
+        what content the AI copilot has access to from uploaded files. Corresponds to
+        [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
+        knowledge-source-markdown).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetFileKnowledgeSourceMarkdownResponse
+        """
+
         from .api.ai import get_file_knowledge_source_markdown
 
         return await get_file_knowledge_source_markdown._asyncio(
@@ -2605,6 +6071,25 @@ class AsyncLiveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> None:
+        """Delete file knowledge source
+
+         This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
+        access to the content from this file. Corresponds to
+        [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_file_knowledge_source
 
         return await delete_file_knowledge_source._asyncio(
@@ -2618,6 +6103,25 @@ class AsyncLiveblocks:
         copilot_id: str,
         knowledge_source_id: str,
     ) -> None:
+        """Delete web knowledge source
+
+         This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have
+        access to the content from this source. Corresponds to
+        [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-
+        source).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.ai import delete_web_knowledge_source
 
         return await delete_web_knowledge_source._asyncio(
@@ -2634,6 +6138,27 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         starting_after: str | Unset = UNSET,
     ) -> GetWebKnowledgeSourceLinksResponse:
+        """Get web knowledge source links
+
+         This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
+        is useful for understanding what content the AI copilot has access to from web sources. Corresponds
+        to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
+        source-links).
+
+        Args:
+            copilot_id (str):
+            knowledge_source_id (str):
+            limit (int | Unset):  Default: 20.
+            starting_after (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetWebKnowledgeSourceLinksResponse
+        """
+
         from .api.ai import get_web_knowledge_source_links
 
         return await get_web_knowledge_source_links._asyncio(
@@ -2650,6 +6175,23 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementProjectsResponse:
+        """List projects
+
+         Returns a paginated list of projects. You can limit the number of projects returned per page and use
+        the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
+
+        Args:
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementProjectsResponse
+        """
+
         from .api.management import get_management_projects
 
         return await get_management_projects._asyncio(
@@ -2663,6 +6205,23 @@ class AsyncLiveblocks:
         *,
         body: CreateManagementProjectRequestBody,
     ) -> CreateManagementProjectResponse:
+        """Create project
+
+         Creates a new project within your account. This endpoint requires the `write:all` scope. You can
+        specify the project type, name, and version creation timeout. Upon success, returns information
+        about the newly created project, including its ID, keys, region, and settings.
+
+        Args:
+            body (CreateManagementProjectRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateManagementProjectResponse
+        """
+
         from .api.management import create_management_project
 
         return await create_management_project._asyncio(
@@ -2674,6 +6233,22 @@ class AsyncLiveblocks:
         self,
         project_id: str,
     ) -> GetManagementProjectResponse:
+        """Get project
+
+         Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
+        project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementProjectResponse
+        """
+
         from .api.management import get_management_project
 
         return await get_management_project._asyncio(
@@ -2687,6 +6262,27 @@ class AsyncLiveblocks:
         *,
         body: UpdateManagementProjectRequestBody,
     ) -> UpdateManagementProjectResponse:
+        """Update project
+
+         Updates an existing project specified by its ID. This endpoint allows you to modify project details
+        such as the project name and the version creation timeout. The `versionCreationTimeout` can be set
+        to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from
+        the request body will not be updated. Requires the `write:all` scope.
+
+        If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            body (UpdateManagementProjectRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpdateManagementProjectResponse
+        """
+
         from .api.management import update_management_project
 
         return await update_management_project._asyncio(
@@ -2699,6 +6295,22 @@ class AsyncLiveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Delete project
+
+         Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the
+        project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import delete_management_project
 
         return await delete_management_project._asyncio(
@@ -2710,6 +6322,22 @@ class AsyncLiveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Activate public key
+
+         Activates the public API key associated with the specified project. This endpoint requires the
+        `write:all` scope. If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import activate_project_public_api_key
 
         return await activate_project_public_api_key._asyncio(
@@ -2721,6 +6349,22 @@ class AsyncLiveblocks:
         self,
         project_id: str,
     ) -> None:
+        """Deactivate public key
+
+         Deactivates the public API key associated with the specified project. This endpoint requires the
+        `write:all` scope. If the project cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import deactivate_project_public_api_key
 
         return await deactivate_project_public_api_key._asyncio(
@@ -2734,6 +6378,28 @@ class AsyncLiveblocks:
         *,
         body: RollProjectPublicApiKeyRequestBody | Unset = UNSET,
     ) -> RollProjectPublicApiKeyResponse:
+        """Roll public key
+
+         Rolls (rotates) the public API key associated with the specified project, generating a new key value
+        while deprecating the previous one. The new key becomes immediately active. This endpoint requires
+        the `write:all` scope.
+
+        If the public key is not currently enabled for the project, a 403 error response is returned. If the
+        project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can
+        be provided in the request body to set when the previous key should expire.
+
+        Args:
+            project_id (str):
+            body (RollProjectPublicApiKeyRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RollProjectPublicApiKeyResponse
+        """
+
         from .api.management import roll_project_public_api_key
 
         return await roll_project_public_api_key._asyncio(
@@ -2748,6 +6414,27 @@ class AsyncLiveblocks:
         *,
         body: RollProjectSecretApiKeyRequestBody | Unset = UNSET,
     ) -> ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
+        """Roll secret key
+
+         Rolls (rotates) the secret API key associated with the specified project, generating a new key value
+        while deprecating the previous one. The new key becomes immediately active. This endpoint requires
+        the `write:all` scope.
+
+        If the project cannot be found, a 404 error response is returned. An optional `expirationIn`
+        parameter can be provided in the request body to set when the previous key should expire.
+
+        Args:
+            project_id (str):
+            body (RollProjectSecretApiKeyRequestBody | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse
+        """
+
         from .api.management import roll_project_secret_api_key
 
         return await roll_project_secret_api_key._asyncio(
@@ -2763,6 +6450,28 @@ class AsyncLiveblocks:
         limit: int | Unset = 20,
         cursor: str | Unset = UNSET,
     ) -> GetManagementWebhooksResponse:
+        """List webhooks
+
+         Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
+        response includes an array of webhook objects associated with the specified project, as well as a
+        `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number
+        of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter
+        from the `nextCursor` value in the previous response to fetch subsequent pages. If the project
+        cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            limit (int | Unset):  Default: 20.
+            cursor (str | Unset):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhooksResponse
+        """
+
         from .api.management import get_management_webhooks
 
         return await get_management_webhooks._asyncio(
@@ -2778,6 +6487,23 @@ class AsyncLiveblocks:
         *,
         body: CreateManagementWebhookRequestBody,
     ) -> CreateManagementWebhookResponse:
+        """Create webhook
+
+         Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
+        cannot be found, a 404 error response is returned.
+
+        Args:
+            project_id (str):
+            body (CreateManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            CreateManagementWebhookResponse
+        """
+
         from .api.management import create_management_webhook
 
         return await create_management_webhook._asyncio(
@@ -2791,6 +6517,24 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
     ) -> GetManagementWebhookResponse:
+        """Get webhook
+
+         Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
+        events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook
+        does not exist. This endpoint requires the `read:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhookResponse
+        """
+
         from .api.management import get_management_webhook
 
         return await get_management_webhook._asyncio(
@@ -2806,6 +6550,25 @@ class AsyncLiveblocks:
         *,
         body: UpdateManagementWebhookRequestBody,
     ) -> UpdateManagementWebhookResponse:
+        """Update webhook
+
+         Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
+        stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation
+        errors. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (UpdateManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpdateManagementWebhookResponse
+        """
+
         from .api.management import update_management_webhook
 
         return await update_management_webhook._asyncio(
@@ -2820,6 +6583,23 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
     ) -> None:
+        """Delete webhook
+
+         Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or
+        `404` if the project or webhook does not exist. Requires `write:all`.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import delete_management_webhook
 
         return await delete_management_webhook._asyncio(
@@ -2833,6 +6613,24 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
     ) -> RotateManagementWebhookSecretResponse:
+        """Roll webhook secret
+
+         Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
+        hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
+        `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            RotateManagementWebhookSecretResponse
+        """
+
         from .api.management import roll_management_webhook_secret
 
         return await roll_management_webhook_secret._asyncio(
@@ -2846,6 +6644,23 @@ class AsyncLiveblocks:
         project_id: str,
         webhook_id: str,
     ) -> GetManagementWebhookHeadersResponse:
+        """Get webhook headers
+
+         Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires
+        `read:all`.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetManagementWebhookHeadersResponse
+        """
+
         from .api.management import get_management_webhook_additional_headers
 
         return await get_management_webhook_additional_headers._asyncio(
@@ -2861,6 +6676,25 @@ class AsyncLiveblocks:
         *,
         body: UpsertManagementWebhookHeadersRequestBody,
     ) -> UpsertManagementWebhookHeadersResponse:
+        """Patch webhook headers
+
+         Upsert additional headers for a webhook. Provided headers are merged with existing headers, and
+        existing values are overwritten when names match. Returns updated headers, or `404` if the project
+        or webhook does not exist. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (UpsertManagementWebhookHeadersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            UpsertManagementWebhookHeadersResponse
+        """
+
         from .api.management import upsert_management_webhook_additional_headers
 
         return await upsert_management_webhook_additional_headers._asyncio(
@@ -2877,6 +6711,26 @@ class AsyncLiveblocks:
         *,
         body: DeleteManagementWebhookHeadersRequestBody,
     ) -> DeleteManagementWebhookHeadersResponse:
+        """Delete webhook headers
+
+         Remove selected additional headers from a webhook. Send header names in `headers` field; other
+        headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist.
+        This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise,
+        a 422 error response is returned.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (DeleteManagementWebhookHeadersRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            DeleteManagementWebhookHeadersResponse
+        """
+
         from .api.management import delete_management_webhook_additional_headers
 
         return await delete_management_webhook_additional_headers._asyncio(
@@ -2893,6 +6747,25 @@ class AsyncLiveblocks:
         *,
         body: RecoverManagementWebhookFailedMessagesRequestBody,
     ) -> None:
+        """Recover failed webhook messages
+
+         Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
+        empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint
+        requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (RecoverManagementWebhookFailedMessagesRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
         from .api.management import recover_failed_webhook_messages
 
         return await recover_failed_webhook_messages._asyncio(
@@ -2909,6 +6782,25 @@ class AsyncLiveblocks:
         *,
         body: TestManagementWebhookRequestBody,
     ) -> TestManagementWebhookResponse:
+        """Send test webhook
+
+         Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be
+        one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the
+        project or webhook does not exist. This endpoint requires the `write:all` scope.
+
+        Args:
+            project_id (str):
+            webhook_id (str):
+            body (TestManagementWebhookRequestBody):
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            TestManagementWebhookResponse
+        """
+
         from .api.management import send_test_webhook
 
         return await send_test_webhook._asyncio(

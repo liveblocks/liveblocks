@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class OpenAiProviderOptionsOpenaiReasoningEffort(str, Enum):
+class OpenAiProviderOptionsOpenaiReasoningEffort(StrEnum):
     HIGH = "high"
     LOW = "low"
     MEDIUM = "medium"
-
-    def __str__(self) -> str:
-        return str(self.value)

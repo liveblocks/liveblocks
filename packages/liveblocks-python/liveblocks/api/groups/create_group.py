@@ -42,22 +42,6 @@ def _sync(
     client: httpx.Client,
     body: CreateGroupRequestBody | Unset = UNSET,
 ) -> Group:
-    """Create group
-
-     This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
-    reference/liveblocks-node#create-group).
-
-    Args:
-        body (CreateGroupRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )
@@ -73,22 +57,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: CreateGroupRequestBody | Unset = UNSET,
 ) -> Group:
-    """Create group
-
-     This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
-    reference/liveblocks-node#create-group).
-
-    Args:
-        body (CreateGroupRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )

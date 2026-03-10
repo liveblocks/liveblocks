@@ -35,24 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete room subscription settings
-
-     This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-    roomId-users-userId-subscription-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,
@@ -70,24 +52,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete room subscription settings
-
-     This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-    roomId-users-userId-subscription-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,

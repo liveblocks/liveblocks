@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ManagementProjectRegion(str, Enum):
+class ManagementProjectRegion(StrEnum):
     EARTH = "earth"
     EU = "eu"
     FEDRAMP = "fedramp"
-
-    def __str__(self) -> str:
-        return str(self.value)

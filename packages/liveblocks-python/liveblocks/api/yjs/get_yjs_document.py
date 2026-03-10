@@ -59,25 +59,6 @@ def _sync(
     key: str | Unset = UNSET,
     type_: GetYjsDocumentType | Unset = UNSET,
 ) -> GetYjsDocumentResponse:
-    """Get Yjs document
-
-     This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-    [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
-
-    Args:
-        room_id (str):
-        formatting (bool | Unset):
-        key (str | Unset):
-        type_ (GetYjsDocumentType | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetYjsDocumentResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         formatting=formatting,
@@ -99,25 +80,6 @@ async def _asyncio(
     key: str | Unset = UNSET,
     type_: GetYjsDocumentType | Unset = UNSET,
 ) -> GetYjsDocumentResponse:
-    """Get Yjs document
-
-     This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-    [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
-
-    Args:
-        room_id (str):
-        formatting (bool | Unset):
-        key (str | Unset):
-        type_ (GetYjsDocumentType | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetYjsDocumentResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         formatting=formatting,

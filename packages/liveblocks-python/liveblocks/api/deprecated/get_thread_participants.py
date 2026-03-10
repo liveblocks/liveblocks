@@ -38,28 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> GetThreadParticipantsResponse:
-    """Get thread participants
-
-     **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
-    subscriptions) instead.
-
-    This endpoint returns the list of thread participants. It is a list of unique user IDs representing
-    all the thread comment authors and mentioned users in comments. Corresponds to
-    [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-    threadId-participants).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetThreadParticipantsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -77,28 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> GetThreadParticipantsResponse:
-    """Get thread participants
-
-     **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
-    subscriptions) instead.
-
-    This endpoint returns the list of thread participants. It is a list of unique user IDs representing
-    all the thread comment authors and mentioned users in comments. Corresponds to
-    [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-    threadId-participants).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetThreadParticipantsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

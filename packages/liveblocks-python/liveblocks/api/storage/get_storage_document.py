@@ -51,37 +51,6 @@ def _sync(
     client: httpx.Client,
     format_: GetStorageDocumentFormat | Unset = UNSET,
 ) -> GetStorageDocumentResponse:
-    r"""Get Storage document
-
-     Returns the contents of the room’s Storage tree.  Corresponds to
-    [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
-
-    The default outputted format is called “plain LSON”, which includes information on the Live data
-    structures in the tree. These nodes show up in the output as objects with two properties, for
-    example:
-
-    ```json
-    {
-      \"liveblocksType\": \"LiveObject\",
-      \"data\": ...
-    }
-    ```
-
-    If you’re not interested in this information, you can use the simpler `?format=json` query param,
-    see below.
-
-    Args:
-        room_id (str):
-        format_ (GetStorageDocumentFormat | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetStorageDocumentResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         format_=format_,
@@ -99,37 +68,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     format_: GetStorageDocumentFormat | Unset = UNSET,
 ) -> GetStorageDocumentResponse:
-    r"""Get Storage document
-
-     Returns the contents of the room’s Storage tree.  Corresponds to
-    [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
-
-    The default outputted format is called “plain LSON”, which includes information on the Live data
-    structures in the tree. These nodes show up in the output as objects with two properties, for
-    example:
-
-    ```json
-    {
-      \"liveblocksType\": \"LiveObject\",
-      \"data\": ...
-    }
-    ```
-
-    If you’re not interested in this information, you can use the simpler `?format=json` query param,
-    see below.
-
-    Args:
-        room_id (str):
-        format_ (GetStorageDocumentFormat | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetStorageDocumentResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         format_=format_,

@@ -32,22 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Activate public key
-
-     Activates the public API key associated with the specified project. This endpoint requires the
-    `write:all` scope. If the project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
     )
@@ -63,22 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Activate public key
-
-     Activates the public API key associated with the specified project. This endpoint requires the
-    `write:all` scope. If the project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
     )

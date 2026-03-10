@@ -32,23 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete notification settings
-
-     This endpoint deletes a user's notification settings for the project. Corresponds to
-    [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
-    notification-settings).
-
-    Args:
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
     )
@@ -64,23 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete notification settings
-
-     This endpoint deletes a user's notification settings for the project. Corresponds to
-    [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
-    notification-settings).
-
-    Args:
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
     )

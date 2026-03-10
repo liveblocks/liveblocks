@@ -46,27 +46,6 @@ def _sync(
     client: httpx.Client,
     guid: str | Unset = UNSET,
 ) -> File:
-    """Get Yjs document encoded as a binary Yjs update
-
-     This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by
-    `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
-    documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
-    updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
-    [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-    ydoc-binary).
-
-    Args:
-        room_id (str):
-        guid (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        File
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         guid=guid,
@@ -84,27 +63,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     guid: str | Unset = UNSET,
 ) -> File:
-    """Get Yjs document encoded as a binary Yjs update
-
-     This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by
-    `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
-    documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
-    updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
-    [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-    ydoc-binary).
-
-    Args:
-        room_id (str):
-        guid (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        File
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         guid=guid,

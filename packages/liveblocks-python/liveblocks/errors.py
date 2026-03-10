@@ -12,6 +12,12 @@ class LiveblocksError(Exception):
         self.status = status
         self.details = details
 
+    def __str__(self) -> str:
+        msg = f"{self.args[0]} (status {self.status})"
+        if self.details:
+            msg += f"\n{self.details}"
+        return msg
+
     @classmethod
     def from_response(cls, response: httpx.Response) -> LiveblocksError:
         FALLBACK = "An error happened without an error message"

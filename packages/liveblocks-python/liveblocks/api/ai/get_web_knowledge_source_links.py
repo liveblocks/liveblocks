@@ -53,27 +53,6 @@ def _sync(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetWebKnowledgeSourceLinksResponse:
-    """Get web knowledge source links
-
-     This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
-    is useful for understanding what content the AI copilot has access to from web sources. Corresponds
-    to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
-    source-links).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetWebKnowledgeSourceLinksResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,
@@ -95,27 +74,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetWebKnowledgeSourceLinksResponse:
-    """Get web knowledge source links
-
-     This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
-    is useful for understanding what content the AI copilot has access to from web sources. Corresponds
-    to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
-    source-links).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetWebKnowledgeSourceLinksResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,

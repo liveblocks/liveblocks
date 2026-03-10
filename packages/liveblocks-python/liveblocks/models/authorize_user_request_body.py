@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Self
 
 from attrs import define as _attrs_define
 
@@ -10,9 +10,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.authorize_user_request_body_permissions import AuthorizeUserRequestBodyPermissions
     from ..models.authorize_user_request_body_user_info import AuthorizeUserRequestBodyUserInfo
-
-
-T = TypeVar("T", bound="AuthorizeUserRequestBody")
 
 
 @_attrs_define
@@ -57,7 +54,7 @@ class AuthorizeUserRequestBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.authorize_user_request_body_permissions import AuthorizeUserRequestBodyPermissions
         from ..models.authorize_user_request_body_user_info import AuthorizeUserRequestBodyUserInfo
 

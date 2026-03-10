@@ -45,27 +45,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateManagementProjectRequestBody,
 ) -> UpdateManagementProjectResponse:
-    """Update project
-
-     Updates an existing project specified by its ID. This endpoint allows you to modify project details
-    such as the project name and the version creation timeout. The `versionCreationTimeout` can be set
-    to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from
-    the request body will not be updated. Requires the `write:all` scope.
-
-    If the project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        body (UpdateManagementProjectRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        UpdateManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,
@@ -83,27 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateManagementProjectRequestBody,
 ) -> UpdateManagementProjectResponse:
-    """Update project
-
-     Updates an existing project specified by its ID. This endpoint allows you to modify project details
-    such as the project name and the version creation timeout. The `versionCreationTimeout` can be set
-    to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from
-    the request body will not be updated. Requires the `write:all` scope.
-
-    If the project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        body (UpdateManagementProjectRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        UpdateManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,

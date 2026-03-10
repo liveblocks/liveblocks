@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 
 if TYPE_CHECKING:
     from ..models.knowledge_source_file_source import KnowledgeSourceFileSource
     from ..models.knowledge_source_web_source import KnowledgeSourceWebSource
-
-
-T = TypeVar("T", bound="GetKnowledgeSourcesResponse")
 
 
 @_attrs_define
@@ -52,7 +49,7 @@ class GetKnowledgeSourcesResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.knowledge_source_file_source import KnowledgeSourceFileSource
         from ..models.knowledge_source_web_source import KnowledgeSourceWebSource
 

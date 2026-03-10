@@ -39,23 +39,6 @@ def _sync(
     client: httpx.Client,
     body: TriggerInboxNotificationRequestBody | Unset = UNSET,
 ) -> None:
-    """Trigger inbox notification
-
-     This endpoint triggers an inbox notification. Corresponds to
-    [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
-    notifications-trigger).
-
-    Args:
-        body (TriggerInboxNotificationRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )
@@ -71,23 +54,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: TriggerInboxNotificationRequestBody | Unset = UNSET,
 ) -> None:
-    """Trigger inbox notification
-
-     This endpoint triggers an inbox notification. Corresponds to
-    [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
-    notifications-trigger).
-
-    Args:
-        body (TriggerInboxNotificationRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )

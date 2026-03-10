@@ -45,24 +45,6 @@ def _sync(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetAiCopilotsResponse:
-    """Get AI copilots
-
-     This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
-    date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
-    reference/liveblocks-node#get-ai-copilots).
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetAiCopilotsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         starting_after=starting_after,
@@ -80,24 +62,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetAiCopilotsResponse:
-    """Get AI copilots
-
-     This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
-    date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
-    reference/liveblocks-node#get-ai-copilots).
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetAiCopilotsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         starting_after=starting_after,

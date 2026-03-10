@@ -45,23 +45,6 @@ def _sync(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementProjectsResponse:
-    """List projects
-
-     Returns a paginated list of projects. You can limit the number of projects returned per page and use
-    the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementProjectsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         cursor=cursor,
@@ -79,23 +62,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementProjectsResponse:
-    """List projects
-
-     Returns a paginated list of projects. You can limit the number of projects returned per page and use
-    the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementProjectsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         cursor=cursor,

@@ -3,7 +3,7 @@ name = "liveblocks"
 version = "0.1.0"
 description = "A client library for accessing API v2"
 authors = []
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
     "httpx>=0.23.0,<0.29.0",
@@ -54,6 +54,7 @@ build-backend = "uv_build"
 
 [tool.ruff]
 line-length = 120
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["F", "I", "UP"]

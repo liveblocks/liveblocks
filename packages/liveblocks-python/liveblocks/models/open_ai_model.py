@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class OpenAiModel(str, Enum):
+class OpenAiModel(StrEnum):
     GPT_4 = "gpt-4"
     GPT_4O = "gpt-4o"
     GPT_4O_MINI = "gpt-4o-mini"
@@ -21,6 +21,3 @@ class OpenAiModel(str, Enum):
     O3 = "o3"
     O3_MINI = "o3-mini"
     O4_MINI = "o4-mini"
-
-    def __str__(self) -> str:
-        return str(self.value)

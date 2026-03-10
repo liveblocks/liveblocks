@@ -35,21 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> CreateYjsVersionResponse:
-    """Create Yjs version snapshot
-
-     This endpoint creates a new version history snapshot for the room's Yjs document.
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateYjsVersionResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )
@@ -65,21 +50,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> CreateYjsVersionResponse:
-    """Create Yjs version snapshot
-
-     This endpoint creates a new version history snapshot for the room's Yjs document.
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateYjsVersionResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )

@@ -41,25 +41,6 @@ def _sync(
     client: httpx.Client,
     body: Any,
 ) -> None:
-    """Broadcast event to a room
-
-     This endpoint enables the broadcast of an event to a room without having to connect to it via the
-    `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
-    passed to event listeners is `-1` when using this API. Corresponds to
-    [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
-
-    Args:
-        room_id (str):
-        body (Any):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -77,25 +58,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: Any,
 ) -> None:
-    """Broadcast event to a room
-
-     This endpoint enables the broadcast of an event to a room without having to connect to it via the
-    `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
-    passed to event listeners is `-1` when using this API. Corresponds to
-    [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
-
-    Args:
-        room_id (str):
-        body (Any):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

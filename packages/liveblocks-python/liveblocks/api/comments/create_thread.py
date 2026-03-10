@@ -45,36 +45,6 @@ def _sync(
     client: httpx.Client,
     body: CreateThreadRequestBody,
 ) -> Thread:
-    r"""Create thread
-
-     This endpoint creates a new thread and the first comment in the thread. Corresponds to
-    [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
-
-    A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
-    construct a comment’s body, which can be submitted under `comment.body`.
-
-    ```json
-    \"version\": 1,
-    \"content\": [
-      {
-        \"type\": \"paragraph\",
-        \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-      }
-    ]
-    ```
-
-    Args:
-        room_id (str):
-        body (CreateThreadRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Thread
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -92,36 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: CreateThreadRequestBody,
 ) -> Thread:
-    r"""Create thread
-
-     This endpoint creates a new thread and the first comment in the thread. Corresponds to
-    [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
-
-    A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
-    construct a comment’s body, which can be submitted under `comment.body`.
-
-    ```json
-    \"version\": 1,
-    \"content\": [
-      {
-        \"type\": \"paragraph\",
-        \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-      }
-    ]
-    ```
-
-    Args:
-        room_id (str):
-        body (CreateThreadRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Thread
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

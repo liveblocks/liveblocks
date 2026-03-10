@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ManagementWebhookEvent(str, Enum):
+class ManagementWebhookEvent(StrEnum):
     COMMENTCREATED = "commentCreated"
     COMMENTDELETED = "commentDeleted"
     COMMENTEDITED = "commentEdited"
@@ -20,6 +20,3 @@ class ManagementWebhookEvent(str, Enum):
     USERENTERED = "userEntered"
     USERLEFT = "userLeft"
     YDOCUPDATED = "ydocUpdated"
-
-    def __str__(self) -> str:
-        return str(self.value)

@@ -58,27 +58,6 @@ def _sync(
     limit: int | Unset = 50,
     starting_after: str | Unset = UNSET,
 ) -> GetInboxNotificationsResponse:
-    """Get all inbox notifications
-
-     This endpoint returns all the user’s inbox notifications. Corresponds to
-    [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
-    inboxNotifications).
-
-    Args:
-        user_id (str):
-        organization_id (str | Unset):
-        query (str | Unset):
-        limit (int | Unset):  Default: 50.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetInboxNotificationsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         organization_id=organization_id,
@@ -102,27 +81,6 @@ async def _asyncio(
     limit: int | Unset = 50,
     starting_after: str | Unset = UNSET,
 ) -> GetInboxNotificationsResponse:
-    """Get all inbox notifications
-
-     This endpoint returns all the user’s inbox notifications. Corresponds to
-    [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
-    inboxNotifications).
-
-    Args:
-        user_id (str):
-        organization_id (str | Unset):
-        query (str | Unset):
-        limit (int | Unset):  Default: 50.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetInboxNotificationsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         organization_id=organization_id,

@@ -45,23 +45,6 @@ def _sync(
     client: httpx.Client,
     body: RemoveGroupMembersRequestBody,
 ) -> Group:
-    """Remove group members
-
-     This endpoint removes members from an existing group. Corresponds to
-    [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
-
-    Args:
-        group_id (str):
-        body (RemoveGroupMembersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
         body=body,
@@ -79,23 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: RemoveGroupMembersRequestBody,
 ) -> Group:
-    """Remove group members
-
-     This endpoint removes members from an existing group. Corresponds to
-    [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
-
-    Args:
-        group_id (str):
-        body (RemoveGroupMembersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
         body=body,

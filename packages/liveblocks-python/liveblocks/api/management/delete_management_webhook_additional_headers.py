@@ -48,26 +48,6 @@ def _sync(
     client: httpx.Client,
     body: DeleteManagementWebhookHeadersRequestBody,
 ) -> DeleteManagementWebhookHeadersResponse:
-    """Delete webhook headers
-
-     Remove selected additional headers from a webhook. Send header names in `headers` field; other
-    headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist.
-    This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise,
-    a 422 error response is returned.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (DeleteManagementWebhookHeadersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        DeleteManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -87,26 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: DeleteManagementWebhookHeadersRequestBody,
 ) -> DeleteManagementWebhookHeadersResponse:
-    """Delete webhook headers
-
-     Remove selected additional headers from a webhook. Send header names in `headers` field; other
-    headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist.
-    This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise,
-    a 422 error response is returned.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (DeleteManagementWebhookHeadersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        DeleteManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

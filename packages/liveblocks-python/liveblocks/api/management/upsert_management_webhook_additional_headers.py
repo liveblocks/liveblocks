@@ -48,25 +48,6 @@ def _sync(
     client: httpx.Client,
     body: UpsertManagementWebhookHeadersRequestBody,
 ) -> UpsertManagementWebhookHeadersResponse:
-    """Patch webhook headers
-
-     Upsert additional headers for a webhook. Provided headers are merged with existing headers, and
-    existing values are overwritten when names match. Returns updated headers, or `404` if the project
-    or webhook does not exist. This endpoint requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (UpsertManagementWebhookHeadersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        UpsertManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -86,25 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpsertManagementWebhookHeadersRequestBody,
 ) -> UpsertManagementWebhookHeadersResponse:
-    """Patch webhook headers
-
-     Upsert additional headers for a webhook. Provided headers are merged with existing headers, and
-    existing values are overwritten when names match. Returns updated headers, or `404` if the project
-    or webhook does not exist. This endpoint requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (UpsertManagementWebhookHeadersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        UpsertManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

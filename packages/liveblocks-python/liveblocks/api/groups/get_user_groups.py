@@ -50,24 +50,6 @@ def _sync(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetUserGroupsResponse:
-    """Get user groups
-
-     This endpoint returns all groups that a specific user is a member of. Corresponds to
-    [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
-
-    Args:
-        user_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetUserGroupsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         limit=limit,
@@ -87,24 +69,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetUserGroupsResponse:
-    """Get user groups
-
-     This endpoint returns all groups that a specific user is a member of. Corresponds to
-    [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
-
-    Args:
-        user_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetUserGroupsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         limit=limit,

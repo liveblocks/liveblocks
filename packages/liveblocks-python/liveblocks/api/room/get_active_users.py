@@ -35,25 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> ActiveUsersResponse:
-    """Get active users
-
-     This endpoint returns a list of users currently present in the requested room. Corresponds to
-    [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
-
-    For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
-    Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ActiveUsersResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )
@@ -69,25 +50,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> ActiveUsersResponse:
-    """Get active users
-
-     This endpoint returns a list of users currently present in the requested room. Corresponds to
-    [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
-
-    For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
-    Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ActiveUsersResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )

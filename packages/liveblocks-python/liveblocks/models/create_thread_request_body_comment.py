@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Self
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -12,9 +12,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.comment_body import CommentBody
     from ..models.comment_metadata import CommentMetadata
-
-
-T = TypeVar("T", bound="CreateThreadRequestBodyComment")
 
 
 @_attrs_define
@@ -61,7 +58,7 @@ class CreateThreadRequestBodyComment:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.comment_body import CommentBody
         from ..models.comment_metadata import CommentMetadata
 

@@ -89,36 +89,6 @@ def _sync(
         | TestJsonPatchOperation
     ],
 ) -> None:
-    """Apply JSON Patch to Storage
-
-     Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
-    room's Storage document, useful for modifying Storage. Operations are applied in order; if any
-    operation fails, the document is not changed and a 422 response with a helpful message is returned.
-
-    **Paths and data types:** Be as specific as possible with your target path. Every parent in the
-    chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-    `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
-
-    **Performance:** For large Storage documents, applying a patch can be expensive because the full
-    state is reconstructed on the server to apply the operations. Very large documents may not be
-    suitable for this endpoint.
-
-    For a **full guide with examples**, see [Modifying storage via REST API with JSON
-    Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
-
-    Args:
-        room_id (str):
-        body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
-            RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -143,36 +113,6 @@ async def _asyncio(
         | TestJsonPatchOperation
     ],
 ) -> None:
-    """Apply JSON Patch to Storage
-
-     Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the
-    room's Storage document, useful for modifying Storage. Operations are applied in order; if any
-    operation fails, the document is not changed and a 422 response with a helpful message is returned.
-
-    **Paths and data types:** Be as specific as possible with your target path. Every parent in the
-    chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in
-    `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.
-
-    **Performance:** For large Storage documents, applying a patch can be expensive because the full
-    state is reconstructed on the server to apply the operations. Very large documents may not be
-    suitable for this endpoint.
-
-    For a **full guide with examples**, see [Modifying storage via REST API with JSON
-    Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
-
-    Args:
-        room_id (str):
-        body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
-            RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

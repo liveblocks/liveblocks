@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RollProjectPublicApiKeyRequestBodyExpirationIn(str, Enum):
+class RollProjectPublicApiKeyRequestBodyExpirationIn(StrEnum):
     NOW = "now"
     VALUE_1 = "1h"
     VALUE_10 = "7d"
@@ -15,6 +15,3 @@ class RollProjectPublicApiKeyRequestBodyExpirationIn(str, Enum):
     VALUE_7 = "3d"
     VALUE_8 = "3days"
     VALUE_9 = "3 days"
-
-    def __str__(self) -> str:
-        return str(self.value)

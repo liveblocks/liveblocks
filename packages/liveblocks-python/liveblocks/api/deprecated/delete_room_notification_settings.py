@@ -35,27 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete room notification settings
-
-     **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
-    in our [migration guide](/docs/platform/upgrading/2.24).
-
-    This endpoint deletes a user’s notification settings for a specific room. Corresponds to
-    [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-    roomId-users-userId-notification-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,
@@ -73,27 +52,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete room notification settings
-
-     **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
-    in our [migration guide](/docs/platform/upgrading/2.24).
-
-    This endpoint deletes a user’s notification settings for a specific room. Corresponds to
-    [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-    roomId-users-userId-notification-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,

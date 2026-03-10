@@ -48,25 +48,6 @@ def _sync(
     client: httpx.Client,
     body: TestManagementWebhookRequestBody,
 ) -> TestManagementWebhookResponse:
-    """Send test webhook
-
-     Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be
-    one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the
-    project or webhook does not exist. This endpoint requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (TestManagementWebhookRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        TestManagementWebhookResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -86,25 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: TestManagementWebhookRequestBody,
 ) -> TestManagementWebhookResponse:
-    """Send test webhook
-
-     Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be
-    one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the
-    project or webhook does not exist. This endpoint requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (TestManagementWebhookRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        TestManagementWebhookResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

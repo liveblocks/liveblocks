@@ -50,28 +50,6 @@ def _sync(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementWebhooksResponse:
-    """List webhooks
-
-     Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
-    response includes an array of webhook objects associated with the specified project, as well as a
-    `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number
-    of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter
-    from the `nextCursor` value in the previous response to fetch subsequent pages. If the project
-    cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementWebhooksResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         limit=limit,
@@ -91,28 +69,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetManagementWebhooksResponse:
-    """List webhooks
-
-     Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The
-    response includes an array of webhook objects associated with the specified project, as well as a
-    `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number
-    of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter
-    from the `nextCursor` value in the previous response to fetch subsequent pages. If the project
-    cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementWebhooksResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         limit=limit,

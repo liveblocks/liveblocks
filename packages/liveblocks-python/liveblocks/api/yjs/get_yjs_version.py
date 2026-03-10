@@ -39,22 +39,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> File:
-    """Get Yjs document version
-
-     This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
-
-    Args:
-        room_id (str):
-        version_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        File
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         version_id=version_id,
@@ -72,22 +56,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> File:
-    """Get Yjs document version
-
-     This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
-
-    Args:
-        room_id (str):
-        version_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        File
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         version_id=version_id,

@@ -1,9 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserRoomSubscriptionSettingsTextMentions(str, Enum):
+class UserRoomSubscriptionSettingsTextMentions(StrEnum):
     MINE = "mine"
     NONE = "none"
-
-    def __str__(self) -> str:
-        return str(self.value)

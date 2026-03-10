@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -13,9 +13,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
     from ..models.google_provider_options import GoogleProviderOptions
-
-
-T = TypeVar("T", bound="AiCopilotGoogle")
 
 
 @_attrs_define
@@ -117,7 +114,7 @@ class AiCopilotGoogle:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
         from ..models.google_provider_options import GoogleProviderOptions
 

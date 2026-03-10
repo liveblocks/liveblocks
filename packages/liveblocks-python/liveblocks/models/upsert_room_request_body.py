@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Self
 
 from attrs import define as _attrs_define
 
@@ -10,9 +10,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.create_room_request_body import CreateRoomRequestBody
     from ..models.update_room_request_body import UpdateRoomRequestBody
-
-
-T = TypeVar("T", bound="UpsertRoomRequestBody")
 
 
 @_attrs_define
@@ -46,7 +43,7 @@ class UpsertRoomRequestBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.create_room_request_body import CreateRoomRequestBody
         from ..models.update_room_request_body import UpdateRoomRequestBody
 

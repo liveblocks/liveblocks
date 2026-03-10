@@ -51,27 +51,6 @@ def _sync(
     client: httpx.Client,
     body: EditCommentMetadataRequestBody,
 ) -> CommentMetadata:
-    """Edit comment metadata
-
-     This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
-    store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
-    property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
-    reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-        body (EditCommentMetadataRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CommentMetadata
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -93,27 +72,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: EditCommentMetadataRequestBody,
 ) -> CommentMetadata:
-    """Edit comment metadata
-
-     This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
-    store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
-    property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
-    reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-        body (EditCommentMetadataRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CommentMetadata
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

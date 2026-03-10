@@ -48,26 +48,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateRoomSubscriptionSettingsRequestBody,
 ) -> RoomSubscriptionSettings:
-    """Update room subscription settings
-
-     This endpoint updates a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-    users-userId-subscription-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-        body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
-            properties are optional
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RoomSubscriptionSettings
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,
@@ -87,26 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateRoomSubscriptionSettingsRequestBody,
 ) -> RoomSubscriptionSettings:
-    """Update room subscription settings
-
-     This endpoint updates a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-    users-userId-subscription-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-        body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
-            properties are optional
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RoomSubscriptionSettings
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,

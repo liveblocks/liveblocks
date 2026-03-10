@@ -84,28 +84,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateAiCopilotRequestBody,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    r"""Update AI copilot
-
-     This endpoint updates an existing AI copilot's configuration. Corresponds to
-    [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
-
-    This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
-    example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
-    model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422
-    response with an error message explaining where the validation failed.
-
-    Args:
-        copilot_id (str):
-        body (UpdateAiCopilotRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         body=body,
@@ -123,28 +101,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateAiCopilotRequestBody,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    r"""Update AI copilot
-
-     This endpoint updates an existing AI copilot's configuration. Corresponds to
-    [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
-
-    This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
-    example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
-    model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422
-    response with an error message explaining where the validation failed.
-
-    Args:
-        copilot_id (str):
-        body (UpdateAiCopilotRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         body=body,

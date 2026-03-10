@@ -35,22 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> Group:
-    """Get group
-
-     This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
-    reference/liveblocks-node#get-group).
-
-    Args:
-        group_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
     )
@@ -66,22 +50,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> Group:
-    """Get group
-
-     This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
-    reference/liveblocks-node#get-group).
-
-    Args:
-        group_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
     )

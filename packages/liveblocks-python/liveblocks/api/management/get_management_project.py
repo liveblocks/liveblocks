@@ -35,22 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> GetManagementProjectResponse:
-    """Get project
-
-     Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
-    project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
     )
@@ -66,22 +50,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> GetManagementProjectResponse:
-    """Get project
-
-     Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
-    project cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
     )

@@ -45,25 +45,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateNotificationSettingsRequestBody,
 ) -> NotificationSettings:
-    """Update notification settings
-
-     This endpoint updates a user's notification settings for the project. Corresponds to
-    [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
-    notification-settings).
-
-    Args:
-        user_id (str):
-        body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
-            properties are optional
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        NotificationSettings
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         body=body,
@@ -81,25 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateNotificationSettingsRequestBody,
 ) -> NotificationSettings:
-    """Update notification settings
-
-     This endpoint updates a user's notification settings for the project. Corresponds to
-    [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
-    notification-settings).
-
-    Args:
-        user_id (str):
-        body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
-            properties are optional
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        NotificationSettings
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         body=body,

@@ -38,24 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> RotateManagementWebhookSecretResponse:
-    """Roll webhook secret
-
-     Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
-    hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
-    `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RotateManagementWebhookSecretResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -73,24 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> RotateManagementWebhookSecretResponse:
-    """Roll webhook secret
-
-     Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24
-    hours. Returns `404` if the project or webhook does not exist. This endpoint requires the
-    `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RotateManagementWebhookSecretResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

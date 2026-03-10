@@ -1,9 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class GetStorageDocumentFormat(str, Enum):
+class GetStorageDocumentFormat(StrEnum):
     JSON = "json"
     PLAIN_LSON = "plain-lson"
-
-    def __str__(self) -> str:
-        return str(self.value)

@@ -45,23 +45,6 @@ def _sync(
     client: httpx.Client,
     body: AddGroupMembersRequestBody,
 ) -> Group:
-    """Add group members
-
-     This endpoint adds new members to an existing group. Corresponds to
-    [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
-
-    Args:
-        group_id (str):
-        body (AddGroupMembersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
         body=body,
@@ -79,23 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: AddGroupMembersRequestBody,
 ) -> Group:
-    """Add group members
-
-     This endpoint adds new members to an existing group. Corresponds to
-    [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
-
-    Args:
-        group_id (str):
-        body (AddGroupMembersRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Group
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
         body=body,

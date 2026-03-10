@@ -42,25 +42,6 @@ def _sync(
     client: httpx.Client,
     body: SetPresenceRequestBody,
 ) -> None:
-    """Set ephemeral presence
-
-     This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
-    The presence data will automatically expire after the specified TTL (time-to-live). This is useful
-    for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
-    connected users in the room.
-
-    Args:
-        room_id (str):
-        body (SetPresenceRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -78,25 +59,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: SetPresenceRequestBody,
 ) -> None:
-    """Set ephemeral presence
-
-     This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
-    The presence data will automatically expire after the specified TTL (time-to-live). This is useful
-    for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
-    connected users in the room.
-
-    Args:
-        room_id (str):
-        body (SetPresenceRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

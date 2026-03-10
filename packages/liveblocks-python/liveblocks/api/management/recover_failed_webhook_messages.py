@@ -47,25 +47,6 @@ def _sync(
     client: httpx.Client,
     body: RecoverManagementWebhookFailedMessagesRequestBody,
 ) -> None:
-    """Recover failed webhook messages
-
-     Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
-    empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint
-    requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (RecoverManagementWebhookFailedMessagesRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -85,25 +66,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: RecoverManagementWebhookFailedMessagesRequestBody,
 ) -> None:
-    """Recover failed webhook messages
-
-     Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an
-    empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint
-    requires the `write:all` scope.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-        body (RecoverManagementWebhookFailedMessagesRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

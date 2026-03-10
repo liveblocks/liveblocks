@@ -48,26 +48,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateThreadMetadataRequestBody,
 ) -> ThreadMetadata:
-    """Edit thread metadata
-
-     This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
-    store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
-    property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
-    reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        body (UpdateThreadMetadataRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ThreadMetadata
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -87,26 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateThreadMetadataRequestBody,
 ) -> ThreadMetadata:
-    """Edit thread metadata
-
-     This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
-    store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
-    property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
-    reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        body (UpdateThreadMetadataRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        ThreadMetadata
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

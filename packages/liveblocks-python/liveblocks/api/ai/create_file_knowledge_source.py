@@ -48,26 +48,6 @@ def _sync(
     client: httpx.Client,
     body: File,
 ) -> CreateFileKnowledgeSourceResponse200:
-    """Create file knowledge source
-
-     This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
-    then reference the content of the file when responding. Corresponds to
-    [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
-    source).
-
-    Args:
-        copilot_id (str):
-        name (str):
-        body (File):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateFileKnowledgeSourceResponse200
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         name=name,
@@ -87,26 +67,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: File,
 ) -> CreateFileKnowledgeSourceResponse200:
-    """Create file knowledge source
-
-     This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
-    then reference the content of the file when responding. Corresponds to
-    [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
-    source).
-
-    Args:
-        copilot_id (str):
-        name (str):
-        body (File):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateFileKnowledgeSourceResponse200
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         name=name,

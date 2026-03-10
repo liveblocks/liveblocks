@@ -32,22 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete group
-
-     This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
-    reference/liveblocks-node#delete-group).
-
-    Args:
-        group_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
     )
@@ -63,22 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete group
-
-     This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
-    reference/liveblocks-node#delete-group).
-
-    Args:
-        group_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         group_id=group_id,
     )

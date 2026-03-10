@@ -45,23 +45,6 @@ def _sync(
     client: httpx.Client,
     body: CreateManagementWebhookRequestBody,
 ) -> CreateManagementWebhookResponse:
-    """Create webhook
-
-     Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
-    cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        body (CreateManagementWebhookRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateManagementWebhookResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,
@@ -79,23 +62,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: CreateManagementWebhookRequestBody,
 ) -> CreateManagementWebhookResponse:
-    """Create webhook
-
-     Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
-    cannot be found, a 404 error response is returned.
-
-    Args:
-        project_id (str):
-        body (CreateManagementWebhookRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateManagementWebhookResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,

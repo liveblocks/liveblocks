@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -13,9 +13,6 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.knowledge_source_file_source_file import KnowledgeSourceFileSourceFile
-
-
-T = TypeVar("T", bound="KnowledgeSourceFileSource")
 
 
 @_attrs_define
@@ -78,7 +75,7 @@ class KnowledgeSourceFileSource:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.knowledge_source_file_source_file import KnowledgeSourceFileSourceFile
 
         d = dict(src_dict)

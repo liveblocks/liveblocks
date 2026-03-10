@@ -74,22 +74,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    """Get AI copilot
-
-     This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
-    reference/liveblocks-node#get-ai-copilot).
-
-    Args:
-        copilot_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
     )
@@ -105,22 +89,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
-    """Get AI copilot
-
-     This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
-    reference/liveblocks-node#get-ai-copilot).
-
-    Args:
-        copilot_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
     )

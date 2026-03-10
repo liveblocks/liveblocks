@@ -1,10 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class CreateWebKnowledgeSourceRequestBodyType(str, Enum):
+class CreateWebKnowledgeSourceRequestBodyType(StrEnum):
     CRAWL = "crawl"
     INDIVIDUAL_LINK = "individual_link"
     SITEMAP = "sitemap"
-
-    def __str__(self) -> str:
-        return str(self.value)

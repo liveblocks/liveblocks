@@ -45,23 +45,6 @@ def _sync(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetGroupsResponse:
-    """Get groups
-
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetGroupsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         starting_after=starting_after,
@@ -79,23 +62,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetGroupsResponse:
-    """Get groups
-
-     This endpoint returns a list of all groups in your project. Corresponds to
-    [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
-
-    Args:
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetGroupsResponse
-    """
-
     kwargs = _get_kwargs(
         limit=limit,
         starting_after=starting_after,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, Self
 
 from attrs import define as _attrs_define
 
@@ -9,8 +9,6 @@ from ..models.roll_project_secret_api_key_request_body_expiration_in import (
     RollProjectSecretApiKeyRequestBodyExpirationIn,
 )
 from ..types import UNSET, Unset
-
-T = TypeVar("T", bound="RollProjectSecretApiKeyRequestBody")
 
 
 @_attrs_define
@@ -39,7 +37,7 @@ class RollProjectSecretApiKeyRequestBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         _expiration_in = d.pop("expirationIn", UNSET)
         expiration_in: RollProjectSecretApiKeyRequestBodyExpirationIn | Unset

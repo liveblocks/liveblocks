@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -13,9 +13,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.management_webhook_additional_headers import ManagementWebhookAdditionalHeaders
     from ..models.management_webhook_secret import ManagementWebhookSecret
-
-
-T = TypeVar("T", bound="ManagementWebhook")
 
 
 @_attrs_define
@@ -104,7 +101,7 @@ class ManagementWebhook:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.management_webhook_additional_headers import ManagementWebhookAdditionalHeaders
         from ..models.management_webhook_secret import ManagementWebhookSecret
 

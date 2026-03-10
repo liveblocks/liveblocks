@@ -35,22 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete inbox notification
-
-     This endpoint deletes a user’s inbox notification by its ID.
-
-    Args:
-        user_id (str):
-        inbox_notification_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         inbox_notification_id=inbox_notification_id,
@@ -68,22 +52,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete inbox notification
-
-     This endpoint deletes a user’s inbox notification by its ID.
-
-    Args:
-        user_id (str):
-        inbox_notification_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         inbox_notification_id=inbox_notification_id,

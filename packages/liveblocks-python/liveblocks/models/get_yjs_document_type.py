@@ -1,12 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class GetYjsDocumentType(str, Enum):
+class GetYjsDocumentType(StrEnum):
     YARRAY = "yarray"
     YMAP = "ymap"
     YTEXT = "ytext"
     YXMLFRAGMENT = "yxmlfragment"
     YXMLTEXT = "yxmltext"
-
-    def __str__(self) -> str:
-        return str(self.value)

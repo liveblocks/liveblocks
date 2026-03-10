@@ -51,26 +51,6 @@ def _sync(
     client: httpx.Client,
     body: AddCommentReactionRequestBody,
 ) -> CommentReaction:
-    """Add comment reaction
-
-     This endpoint adds a reaction to a comment. Corresponds to
-    [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-    threadId-comments-commentId-add-reaction).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-        body (AddCommentReactionRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CommentReaction
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -92,26 +72,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: AddCommentReactionRequestBody,
 ) -> CommentReaction:
-    """Add comment reaction
-
-     This endpoint adds a reaction to a comment. Corresponds to
-    [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-    threadId-comments-commentId-add-reaction).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-        body (AddCommentReactionRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CommentReaction
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

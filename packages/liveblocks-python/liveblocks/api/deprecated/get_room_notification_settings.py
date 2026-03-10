@@ -38,27 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> RoomSubscriptionSettings:
-    """Get room notification settings
-
-     **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
-    our [migration guide](/docs/platform/upgrading/2.24).
-
-    This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-    users-userId-notification-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RoomSubscriptionSettings
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,
@@ -76,27 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> RoomSubscriptionSettings:
-    """Get room notification settings
-
-     **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
-    our [migration guide](/docs/platform/upgrading/2.24).
-
-    This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-    [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-    users-userId-notification-settings).
-
-    Args:
-        room_id (str):
-        user_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        RoomSubscriptionSettings
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         user_id=user_id,

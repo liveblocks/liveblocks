@@ -1,8 +1,5 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RoomType(str, Enum):
+class RoomType(StrEnum):
     ROOM = "room"
-
-    def __str__(self) -> str:
-        return str(self.value)

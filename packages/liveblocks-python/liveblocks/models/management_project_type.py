@@ -1,9 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ManagementProjectType(str, Enum):
+class ManagementProjectType(StrEnum):
     DEV = "dev"
     PROD = "prod"
-
-    def __str__(self) -> str:
-        return str(self.value)

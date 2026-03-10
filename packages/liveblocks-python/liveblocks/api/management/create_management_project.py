@@ -40,23 +40,6 @@ def _sync(
     client: httpx.Client,
     body: CreateManagementProjectRequestBody,
 ) -> CreateManagementProjectResponse:
-    """Create project
-
-     Creates a new project within your account. This endpoint requires the `write:all` scope. You can
-    specify the project type, name, and version creation timeout. Upon success, returns information
-    about the newly created project, including its ID, keys, region, and settings.
-
-    Args:
-        body (CreateManagementProjectRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )
@@ -72,23 +55,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: CreateManagementProjectRequestBody,
 ) -> CreateManagementProjectResponse:
-    """Create project
-
-     Creates a new project within your account. This endpoint requires the `write:all` scope. You can
-    specify the project type, name, and version creation timeout. Upon success, returns information
-    about the newly created project, including its ID, keys, region, and settings.
-
-    Args:
-        body (CreateManagementProjectRequestBody):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        CreateManagementProjectResponse
-    """
-
     kwargs = _get_kwargs(
         body=body,
     )

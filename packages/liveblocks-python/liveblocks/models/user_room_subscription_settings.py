@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, Self
 
 from attrs import define as _attrs_define
 
 from ..models.user_room_subscription_settings_text_mentions import UserRoomSubscriptionSettingsTextMentions
 from ..models.user_room_subscription_settings_threads import UserRoomSubscriptionSettingsThreads
-
-T = TypeVar("T", bound="UserRoomSubscriptionSettings")
 
 
 @_attrs_define
@@ -44,7 +42,7 @@ class UserRoomSubscriptionSettings:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
         threads = UserRoomSubscriptionSettingsThreads(d.pop("threads"))
 

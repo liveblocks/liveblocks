@@ -41,24 +41,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> Comment:
-    """Get comment
-
-     This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Comment
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -78,24 +60,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> Comment:
-    """Get comment
-
-     This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
-    reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-        comment_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Comment
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

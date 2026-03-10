@@ -38,24 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> GetThreadSubscriptionsResponse:
-    """Get thread subscriptions
-
-     This endpoint gets the list of subscriptions to a thread. Corresponds to
-    [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-    threadId-subscriptions).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetThreadSubscriptionsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -73,24 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> GetThreadSubscriptionsResponse:
-    """Get thread subscriptions
-
-     This endpoint gets the list of subscriptions to a thread. Corresponds to
-    [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-    threadId-subscriptions).
-
-    Args:
-        room_id (str):
-        thread_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetThreadSubscriptionsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,

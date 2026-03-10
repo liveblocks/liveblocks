@@ -54,26 +54,6 @@ def _sync(
     limit: int | Unset = 50,
     organization_id: str | Unset = UNSET,
 ) -> GetRoomSubscriptionSettingsResponse:
-    """Get user room subscription settings
-
-     This endpoint returns the list of a user's room subscription settings. Corresponds to
-    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-    room-subscription-settings).
-
-    Args:
-        user_id (str):
-        starting_after (str | Unset):
-        limit (int | Unset):  Default: 50.
-        organization_id (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetRoomSubscriptionSettingsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         starting_after=starting_after,
@@ -95,26 +75,6 @@ async def _asyncio(
     limit: int | Unset = 50,
     organization_id: str | Unset = UNSET,
 ) -> GetRoomSubscriptionSettingsResponse:
-    """Get user room subscription settings
-
-     This endpoint returns the list of a user's room subscription settings. Corresponds to
-    [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-    room-subscription-settings).
-
-    Args:
-        user_id (str):
-        starting_after (str | Unset):
-        limit (int | Unset):  Default: 50.
-        organization_id (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetRoomSubscriptionSettingsResponse
-    """
-
     kwargs = _get_kwargs(
         user_id=user_id,
         starting_after=starting_after,

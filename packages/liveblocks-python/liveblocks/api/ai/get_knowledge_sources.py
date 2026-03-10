@@ -50,24 +50,6 @@ def _sync(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetKnowledgeSourcesResponse:
-    """Get knowledge sources
-
-     This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-    to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
-
-    Args:
-        copilot_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetKnowledgeSourcesResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         limit=limit,
@@ -87,24 +69,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     starting_after: str | Unset = UNSET,
 ) -> GetKnowledgeSourcesResponse:
-    """Get knowledge sources
-
-     This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-    to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
-
-    Args:
-        copilot_id (str):
-        limit (int | Unset):  Default: 20.
-        starting_after (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetKnowledgeSourcesResponse
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         limit=limit,

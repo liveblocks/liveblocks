@@ -38,23 +38,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> GetManagementWebhookHeadersResponse:
-    """Get webhook headers
-
-     Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires
-    `read:all`.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -72,23 +55,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> GetManagementWebhookHeadersResponse:
-    """Get webhook headers
-
-     Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires
-    `read:all`.
-
-    Args:
-        project_id (str):
-        webhook_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetManagementWebhookHeadersResponse
-    """
-
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

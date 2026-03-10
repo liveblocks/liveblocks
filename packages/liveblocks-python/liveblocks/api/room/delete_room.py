@@ -32,23 +32,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete room
-
-     This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
-    and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
-    node#delete-rooms-roomid).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )
@@ -64,23 +47,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete room
-
-     This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
-    and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
-    node#delete-rooms-roomid).
-
-    Args:
-        room_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
     )

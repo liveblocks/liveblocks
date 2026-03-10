@@ -35,25 +35,6 @@ def _sync(
     *,
     client: httpx.Client,
 ) -> None:
-    """Delete file knowledge source
-
-     This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
-    access to the content from this file. Corresponds to
-    [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
-    source).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,
@@ -71,25 +52,6 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete file knowledge source
-
-     This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
-    access to the content from this file. Corresponds to
-    [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
-    source).
-
-    Args:
-        copilot_id (str):
-        knowledge_source_id (str):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         copilot_id=copilot_id,
         knowledge_source_id=knowledge_source_id,

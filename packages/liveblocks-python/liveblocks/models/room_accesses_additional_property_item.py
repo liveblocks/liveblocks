@@ -1,11 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RoomAccessesAdditionalPropertyItem(str, Enum):
+class RoomAccessesAdditionalPropertyItem(StrEnum):
     COMMENTSWRITE = "comments:write"
     ROOMPRESENCEWRITE = "room:presence:write"
     ROOMREAD = "room:read"
     ROOMWRITE = "room:write"
-
-    def __str__(self) -> str:
-        return str(self.value)

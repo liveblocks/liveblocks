@@ -47,22 +47,6 @@ def _sync(
     client: httpx.Client,
     body: UpdateRoomIdRequestBody | Unset = UNSET,
 ) -> Room:
-    """Update room ID
-
-     This endpoint permanently updates the room’s ID.
-
-    Args:
-        room_id (str):
-        body (UpdateRoomIdRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Room
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -80,22 +64,6 @@ async def _asyncio(
     client: httpx.AsyncClient,
     body: UpdateRoomIdRequestBody | Unset = UNSET,
 ) -> Room:
-    """Update room ID
-
-     This endpoint permanently updates the room’s ID.
-
-    Args:
-        room_id (str):
-        body (UpdateRoomIdRequestBody | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        Room
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

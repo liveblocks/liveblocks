@@ -1,11 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UpdateAiCopilotRequestBodyProvider(str, Enum):
+class UpdateAiCopilotRequestBodyProvider(StrEnum):
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
     OPENAI = "openai"
     OPENAI_COMPATIBLE = "openai-compatible"
-
-    def __str__(self) -> str:
-        return str(self.value)

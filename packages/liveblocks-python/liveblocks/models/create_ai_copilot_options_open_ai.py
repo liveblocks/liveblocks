@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
 from attrs import define as _attrs_define
 
@@ -11,9 +11,6 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
     from ..models.open_ai_provider_options import OpenAiProviderOptions
-
-
-T = TypeVar("T", bound="CreateAiCopilotOptionsOpenAi")
 
 
 @_attrs_define
@@ -93,7 +90,7 @@ class CreateAiCopilotOptionsOpenAi:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.ai_copilot_provider_settings import AiCopilotProviderSettings
         from ..models.open_ai_provider_options import OpenAiProviderOptions
 

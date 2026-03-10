@@ -51,32 +51,6 @@ def _sync(
     body: File,
     guid: str | Unset = UNSET,
 ) -> None:
-    """Send a binary Yjs update
-
-     This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
-    endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
-    to a subdocument instead of the main document, pass its `guid`. Corresponds to
-    [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
-
-    The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
-    documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
-    this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the
-    binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON,
-    unlike most other endpoints.
-
-    Args:
-        room_id (str):
-        guid (str | Unset):
-        body (File):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,
@@ -96,32 +70,6 @@ async def _asyncio(
     body: File,
     guid: str | Unset = UNSET,
 ) -> None:
-    """Send a binary Yjs update
-
-     This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
-    endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
-    to a subdocument instead of the main document, pass its `guid`. Corresponds to
-    [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
-
-    The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
-    documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
-    this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the
-    binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON,
-    unlike most other endpoints.
-
-    Args:
-        room_id (str):
-        guid (str | Unset):
-        body (File):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        None
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         body=body,

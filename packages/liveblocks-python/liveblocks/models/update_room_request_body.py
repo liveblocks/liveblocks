@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 
@@ -12,9 +12,6 @@ if TYPE_CHECKING:
     from ..models.update_room_request_body_groups_accesses import UpdateRoomRequestBodyGroupsAccesses
     from ..models.update_room_request_body_metadata import UpdateRoomRequestBodyMetadata
     from ..models.update_room_request_body_users_accesses import UpdateRoomRequestBodyUsersAccesses
-
-
-T = TypeVar("T", bound="UpdateRoomRequestBody")
 
 
 @_attrs_define
@@ -76,7 +73,7 @@ class UpdateRoomRequestBody:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.update_room_request_body_groups_accesses import UpdateRoomRequestBodyGroupsAccesses
         from ..models.update_room_request_body_metadata import UpdateRoomRequestBodyMetadata
         from ..models.update_room_request_body_users_accesses import UpdateRoomRequestBodyUsersAccesses

@@ -50,24 +50,6 @@ def _sync(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetYjsVersionsResponse:
-    """Get Yjs version history
-
-     This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
-    are returned sorted by creation date, from newest to oldest.
-
-    Args:
-        room_id (str):
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetYjsVersionsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         limit=limit,
@@ -87,24 +69,6 @@ async def _asyncio(
     limit: int | Unset = 20,
     cursor: str | Unset = UNSET,
 ) -> GetYjsVersionsResponse:
-    """Get Yjs version history
-
-     This endpoint returns a list of version history snapshots for the room's Yjs document. The versions
-    are returned sorted by creation date, from newest to oldest.
-
-    Args:
-        room_id (str):
-        limit (int | Unset):  Default: 20.
-        cursor (str | Unset):
-
-    Raises:
-        errors.LiveblocksError: If the server returns a response with non-2xx status code.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-    Returns:
-        GetYjsVersionsResponse
-    """
-
     kwargs = _get_kwargs(
         room_id=room_id,
         limit=limit,

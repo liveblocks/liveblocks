@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 
 if TYPE_CHECKING:
     from ..models.yjs_version import YjsVersion
-
-
-T = TypeVar("T", bound="GetYjsVersionsResponse")
 
 
 @_attrs_define
@@ -44,7 +41,7 @@ class GetYjsVersionsResponse:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.yjs_version import YjsVersion
 
         d = dict(src_dict)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -11,9 +11,6 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.inbox_notification_activity import InboxNotificationActivity
-
-
-T = TypeVar("T", bound="InboxNotificationCustomData")
 
 
 @_attrs_define
@@ -81,7 +78,7 @@ class InboxNotificationCustomData:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         from ..models.inbox_notification_activity import InboxNotificationActivity
 
         d = dict(src_dict)
