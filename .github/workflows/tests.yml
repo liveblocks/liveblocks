@@ -389,7 +389,7 @@ jobs:
         if:
           steps.filter.outputs.python_sdk == 'true' && github.event_name ==
           'pull_request'
-        uses: orgoro/coverage@v3.2
+        uses: orgoro/coverage@3f13a558c5af7376496aa4848bf0224aead366ac # v3.2
         with:
           coverageFile: packages/liveblocks-python/coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
