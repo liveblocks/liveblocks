@@ -795,7 +795,7 @@ class Liveblocks:
         *,
         body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
-        from .api.authentication import authorize_user
+        from .api.auth import authorize_user
 
         return authorize_user._sync(
             body=body,
@@ -807,7 +807,7 @@ class Liveblocks:
         *,
         body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
-        from .api.authentication import identify_user
+        from .api.auth import identify_user
 
         return identify_user._sync(
             body=body,
@@ -2187,7 +2187,7 @@ class AsyncLiveblocks:
         *,
         body: AuthorizeUserRequestBody,
     ) -> AuthorizeUserResponse:
-        from .api.authentication import authorize_user
+        from .api.auth import authorize_user
 
         return await authorize_user._asyncio(
             body=body,
@@ -2199,7 +2199,7 @@ class AsyncLiveblocks:
         *,
         body: IdentifyUserRequestBody,
     ) -> IdentifyUserResponse:
-        from .api.authentication import identify_user
+        from .api.auth import identify_user
 
         return await identify_user._asyncio(
             body=body,

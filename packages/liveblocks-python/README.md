@@ -1287,7 +1287,7 @@ result = client.delete_room_notification_settings(
 
 ---
 
-### authentication
+### auth
 
 #### `authorize_user`
 
