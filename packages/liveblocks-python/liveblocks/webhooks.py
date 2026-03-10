@@ -461,8 +461,13 @@ class WebhookHandler:
             parts[1] for raw_sig in raw_signatures.split(" ") if len(parts := raw_sig.split(",")) > 1
         ]
 
-        if signature not in expected_signatures:
-            raise ValueError(f"Invalid signature, expected one of {', '.join(expected_signatures)}, got {signature}")
+        if not any(hmac.compare_digest(signature, s) for s in expected_signatures):
+            raise ValueError(
+                f"Invalid signature for webhook {webhook_id}. "
+                "Make sure you are using the correct webhook secret "
+                "and that the raw request body is passed unchanged "
+                "(not parsed or re-serialized)."
+            )
 
         event: WebhookEvent = json.loads(raw_body)
 

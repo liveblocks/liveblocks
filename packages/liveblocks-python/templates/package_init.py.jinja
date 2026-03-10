@@ -3,9 +3,11 @@
 {{ safe_docstring(package_description) }}
 from .client import AsyncLiveblocks, Liveblocks
 from .webhooks import WebhookHandler
+from .errors import LiveblocksError
 
 __all__ = (
     "AsyncLiveblocks",
     "Liveblocks",
+    "LiveblocksError",
     "WebhookHandler",
 )
