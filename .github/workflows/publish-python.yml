@@ -55,8 +55,7 @@ jobs:
       - name: Create release tag
         env:
           VERSION: ${{ inputs.version }}
-          GIT_TAG: v${{ inputs.version }}
-          GITHUB_URL: "https://github.com/liveblocks/liveblocks"
+          GIT_TAG: python-v${{ inputs.version }}
         run: |
           if [ "$(git branch --show-current)" = "main" ]; then
             if ! git push origin main; then
@@ -64,5 +63,5 @@ jobs:
               exit 2
             fi
           fi
-          git tag "$GIT_TAG" -m "Release $GIT_TAG (python)"
+          git tag "$GIT_TAG" -m "Release liveblocks-python $VERSION"
           git push origin "$GIT_TAG"
