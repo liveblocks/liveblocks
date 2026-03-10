@@ -19,7 +19,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/management/projects/{project_id}/webhooks/{webhook_id}/recover-failed-messages".format(
+        "url": "/v2/management/projects/{project_id}/webhooks/{webhook_id}/recover-failed-messages".format(
             project_id=quote(str(project_id), safe=""),
             webhook_id=quote(str(webhook_id), safe=""),
         ),

@@ -12,7 +12,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/users/{user_id}/notification-settings".format(
+        "url": "/v2/users/{user_id}/notification-settings".format(
             user_id=quote(str(user_id), safe=""),
         ),
     }

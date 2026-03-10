@@ -15,7 +15,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/inbox-notifications/trigger",
+        "url": "/v2/inbox-notifications/trigger",
     }
 
     if not isinstance(body, Unset):

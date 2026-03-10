@@ -1,8 +1,7 @@
 """Contains some shared types for properties"""
 
-from collections.abc import Mapping, MutableMapping
-from http import HTTPStatus
-from typing import IO, BinaryIO, Generic, Literal, TypeVar
+from collections.abc import Mapping
+from typing import IO, BinaryIO, Literal
 
 from attrs import define
 
@@ -22,7 +21,6 @@ FileTypes = (
     # (filename, file (or bytes), content_type, headers)
     | tuple[str | None, FileContent, str | None, Mapping[str, str]]
 )
-RequestFiles = list[tuple[str, FileTypes]]
 
 
 @define
@@ -38,17 +36,4 @@ class File:
         return self.file_name, self.payload, self.mime_type
 
 
-T = TypeVar("T")
-
-
-@define
-class Response(Generic[T]):
-    """A response from an endpoint"""
-
-    status_code: HTTPStatus
-    content: bytes
-    headers: MutableMapping[str, str]
-    parsed: T | None
-
-
-__all__ = ["UNSET", "File", "FileTypes", "RequestFiles", "Response", "Unset"]
+__all__ = ["UNSET", "File", "FileTypes", "Unset"]

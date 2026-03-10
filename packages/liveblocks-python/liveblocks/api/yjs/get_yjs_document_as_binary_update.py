@@ -22,7 +22,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/rooms/{room_id}/ydoc-binary".format(
+        "url": "/v2/rooms/{room_id}/ydoc-binary".format(
             room_id=quote(str(room_id), safe=""),
         ),
         "params": params,

@@ -31,6 +31,18 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 fail_under = 0
+# Exclude the delegation boilerplate inside client.py methods.
+# Each public method on Liveblocks/AsyncLiveblocks just imports an
+# API module and forwards the call — the real logic lives in
+# liveblocks/api/* (already omitted above). These patterns skip:
+#   1. The local import line   (e.g. `from .api.room import get_rooms`)
+#   2. The sync return line    (e.g. `return get_rooms._sync(...)`)
+#   3. The async return line   (e.g. `return await get_rooms._asyncio(...)`)
+exclude_also = [
+    "from \\.api\\.",
+    "return .*\\._sync\\(",
+    "return await .*\\._asyncio\\(",
+]
 
 [tool.uv.build-backend]
 module-name = "liveblocks"

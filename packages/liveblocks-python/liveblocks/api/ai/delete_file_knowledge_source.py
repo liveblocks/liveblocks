@@ -13,7 +13,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
-        "url": "/ai/copilots/{copilot_id}/knowledge/file/{knowledge_source_id}".format(
+        "url": "/v2/ai/copilots/{copilot_id}/knowledge/file/{knowledge_source_id}".format(
             copilot_id=quote(str(copilot_id), safe=""),
             knowledge_source_id=quote(str(knowledge_source_id), safe=""),
         ),

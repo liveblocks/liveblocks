@@ -16,7 +16,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/groups",
+        "url": "/v2/groups",
     }
 
     if not isinstance(body, Unset):

@@ -12,7 +12,7 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "post",
-        "url": "/management/projects/{project_id}/api-keys/public/activate".format(
+        "url": "/v2/management/projects/{project_id}/api-keys/public/activate".format(
             project_id=quote(str(project_id), safe=""),
         ),
     }
