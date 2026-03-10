@@ -11,7 +11,7 @@ from ... import errors
 {% endfor %}
 
 {% from "endpoint_macros.py.jinja" import header_params, cookie_params, query_params,
-    arguments, client, kwargs, parse_response, docstring, body_to_kwarg, return_type %}
+    arguments, client, kwargs, parse_response, body_to_kwarg, return_type %}
 
 {% set ns = namespace(success_responses=[]) %}
 {% for response in endpoint.responses.patterns %}
@@ -86,8 +86,6 @@ def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
 def _sync(
     {{ arguments(endpoint, client_type="httpx.Client") | indent(4) }}
 ) -> {{ return_string }}:
-    {{ docstring(endpoint, return_string) | indent(4) }}
-
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
     )
@@ -100,8 +98,6 @@ def _sync(
 async def _asyncio(
     {{ arguments(endpoint, client_type="httpx.AsyncClient") | indent(4) }}
 ) -> {{ return_string }}:
-    {{ docstring(endpoint, return_string) | indent(4) }}
-
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
     )
