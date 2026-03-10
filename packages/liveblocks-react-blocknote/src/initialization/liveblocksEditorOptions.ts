@@ -1,7 +1,7 @@
 import {
   type BlockNoteEditorOptions,
   type BlockSchema,
-  createBlockNoteExtension,
+  createExtension,
   type DefaultBlockSchema,
   type DefaultInlineContentSchema,
   type DefaultStyleSchema,
@@ -37,7 +37,8 @@ export const withLiveblocksEditorOptions = <
 
     // add the liveblocks extension
     extensions: [
-      createBlockNoteExtension({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      createExtension({
         key: "liveblocksExtension",
         tiptapExtensions: [liveblocksExtension],
       }),

@@ -10,7 +10,7 @@ export function Presence() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="w-7 h-7 bg-neutral-100 aniamte-pulse rounded-full" />
+        <div className="w-7 h-7 bg-neutral-100 animate-pulse rounded-full" />
       }
     >
       <Avatars />

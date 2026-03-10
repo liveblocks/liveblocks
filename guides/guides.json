@@ -504,5 +504,12 @@
     "technologies": ["react", "nodejs"],
     "date": "2026-02-20",
     "featured": true
+  },
+  {
+    "title": "How to add users to Liveblocks presence components",
+    "path": "/how-to-add-users-to-liveblocks-presence-components",
+    "topics": ["presence", "tutorials", "data-fetching"],
+    "technologies": ["react-ui", "react"],
+    "date": "2026-03-04"
   }
 ]

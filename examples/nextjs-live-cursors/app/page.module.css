@@ -1,0 +1,17 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  touch-action: none;
+}
+
+.text {
+  max-width: 380px;
+  margin: 0 16px;
+  text-align: center;
+}

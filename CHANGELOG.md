@@ -1,5 +1,48 @@
 ## vNEXT (not yet released)
 
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Add `gap` prop to `AvatarStack` to control the `--lb-avatar-stack-gap` CSS
+  variable.
+- Add `padding` prop to `CommentPin` to control the `--lb-comment-pin-padding`
+  CSS variable.
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
+
+## v3.15.0
+
+### `@liveblocks/react-ui`
+
+- Add various new ways to customize `Thread` and `Comment`:
+  - Comments in `Thread` can now be overridden or customized via the
+    `components` prop.
+  - New parts of `Comment` (content, avatar, author, and date) can now be
+    overridden or customized via the `children`, `additionalContent`, `avatar`,
+    `author`, and `date` props.
+- Fix `commentDropdownItems` prop on `Thread` not working as expected in some
+  cases.
+
+### `@liveblocks/react`
+
+- Each `createRoomContext()` invocation now creates its own isolated context to
+  allow nesting independent room contexts and their `RoomProvider` components.
+
+### `@liveblocks/react-blocknote`
+
+- Support newer BlockNote versions and bump the minimum required version to
+  v0.43.0. (Thanks @nperez0111 for the contribution!)
+
+### `@liveblocks/react-ui`, `@liveblocks/react-tiptap`, and `@liveblocks/react-lexical`
+
+- Improve how inline components passed to `components={{ ... }}` props are
+  handled by keeping them stable instead of re-mounting them on every render.
+- Move `@radix-ui/*` dependencies to the `radix-ui` mono package.
+
 ## v3.14.1
 
 ### `@liveblocks/react`

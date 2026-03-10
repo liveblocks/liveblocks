@@ -1056,6 +1056,8 @@
   font-weight: 500;
   font-size: 35cqi;
   white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
 
   /**
    * Progressive enhancement: Only show the fallback when container queries are supported
@@ -1171,6 +1173,7 @@
   position: relative;
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
+  outline: none;
   transition-property: background;
 }
 
@@ -1346,6 +1349,7 @@
   padding: var(--lb-spacing);
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
+  outline: none;
   font-weight: 400;
   scroll-margin: var(--lb-spacing);
 
@@ -1371,7 +1375,7 @@
     --lb-dynamic-background: var(--lb-background-accent-faint);
   }
 
-  &:where([data-editing]) {
+  &:where([data-editing], :focus-visible) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
@@ -1649,6 +1653,243 @@
     pointer-events: none;
     transition-property: border;
   }
+}
+
+/*************************************
+ *          Floating Thread          *
+ *************************************/
+
+.lb-floating-thread {
+  --lb-floating-thread-size: 350px;
+
+  inline-size: var(--lb-floating-thread-size);
+}
+
+/*************************************
+ *       Floating Thread Composer    *
+ *************************************/
+
+.lb-floating-thread-composer {
+  --lb-floating-thread-composer-size: 350px;
+
+  inline-size: var(--lb-floating-thread-composer-size);
+
+  :where(.lb-thread, .lb-composer) {
+    inline-size: 100%;
+  }
+}
+
+/*************************************
+ *         Floating Composer         *
+ *************************************/
+
+.lb-floating-composer {
+  --lb-floating-composer-size: 350px;
+
+  inline-size: var(--lb-floating-composer-size);
+}
+
+/*************************************
+ *            Comment Pin            *
+ *************************************/
+
+.lb-comment-pin {
+  --lb-comment-pin-size: 32px;
+  --lb-comment-pin-padding: 4px;
+
+  @include button;
+
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--lb-comment-pin-size);
+  block-size: var(--lb-comment-pin-size);
+  padding: var(--lb-comment-pin-padding);
+  border-radius: $lb-radius-full;
+  background: var(--lb-background);
+  box-shadow: var(--lb-elevation-shadow);
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
+
+  &:where([data-corner="top-left"]) {
+    border-start-start-radius: 2px;
+    transform: translate(0, 0);
+  }
+
+  &:where([data-corner="top-right"]) {
+    border-start-end-radius: 2px;
+    transform: translate(-100%, 0);
+  }
+
+  &:where([data-corner="bottom-right"]) {
+    border-end-end-radius: 2px;
+    transform: translate(-100%, -100%);
+  }
+
+  &:where([data-corner="bottom-left"]) {
+    border-end-start-radius: 2px;
+    transform: translate(0, -100%);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-comment-pin-avatar {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/*************************************
+ *            Avatar Stack           *
+ *************************************/
+
+.lb-avatar-stack {
+  --lb-avatar-stack-size: 24px;
+  --lb-avatar-stack-gap: 2px;
+  --lb-avatar-stack-overlap: calc(0.25 * var(--lb-avatar-stack-size));
+
+  display: flex;
+  flex-direction: row;
+  isolation: isolate;
+}
+
+.lb-avatar-stack-avatar {
+  position: relative;
+  z-index: calc(
+    var(--lb-avatar-stack-count) - 1 - var(--lb-avatar-stack-avatar-index)
+  );
+  inline-size: var(--lb-avatar-stack-size);
+  block-size: var(--lb-avatar-stack-size);
+  margin-inline-end: calc(-1 * var(--lb-avatar-stack-overlap));
+  border-radius: $lb-radius-full;
+
+  &:where(:not(:first-child)) {
+    --lb-avatar-stack-mask-size: calc(
+      var(--lb-avatar-stack-size) / 2 + var(--lb-avatar-stack-gap)
+    );
+
+    mask-image: radial-gradient(
+      circle at
+        calc(var(--lb-avatar-stack-overlap) - var(--lb-avatar-stack-size) / 2)
+        50%,
+      transparent var(--lb-avatar-stack-mask-size),
+      black calc(var(--lb-avatar-stack-mask-size) + 0.375px)
+    );
+  }
+}
+
+/*************************************
+ *           Users Tooltip           *
+ *************************************/
+
+.lb-users-tooltip-list {
+  --lb-users-tooltip-avatar-size: 1rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.625 * var(--lb-spacing));
+  margin: 0;
+  padding-inline: 0;
+  padding-block: calc(0.75 * var(--lb-spacing));
+  list-style: none;
+}
+
+.lb-users-tooltip-list-item {
+  display: flex;
+  gap: calc(0.625 * var(--lb-spacing));
+  align-items: center;
+
+  :where(.lb-avatar) {
+    inline-size: var(--lb-users-tooltip-avatar-size);
+    block-size: var(--lb-users-tooltip-avatar-size);
+  }
+}
+
+/*************************************
+ *              Cursor               *
+ *************************************/
+
+.lb-cursor {
+  --lb-cursor-color: var(--lb-accent);
+  --lb-cursor-pointer-size: 1rem;
+
+  position: relative;
+  inline-size: 0;
+  block-size: 0;
+  color: var(--lb-cursor-color);
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 5%))
+    drop-shadow(0 8px 26px rgb(0 0 0 / 6%));
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.lb-cursor-pointer {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0;
+  inline-size: var(--lb-cursor-pointer-size);
+  block-size: var(--lb-cursor-pointer-size);
+}
+
+.lb-cursor-bubble {
+  position: absolute;
+  inset-inline-start: calc(0.8125 * var(--lb-cursor-pointer-size));
+  inset-block-start: calc(0.8125 * var(--lb-cursor-pointer-size));
+  padding: calc(0.375 * var(--lb-spacing)) calc(0.6875 * var(--lb-spacing));
+  border-radius: $lb-radius-full;
+  background: currentcolor;
+  font-size: 0.8125rem;
+  will-change: transform;
+}
+
+.lb-cursor-bubble-label {
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+
+  /* Use relative color to derive a text color legible against the background. */
+  @supports (color: oklch(from black l c h)) {
+    color: oklch(
+      from var(--lb-cursor-color) clamp(0, (l / 0.623 - 1) * -infinity, 1) 0 h
+    );
+  }
+
+  /* Use a filter trick if relative color is not supported. */
+  @supports not (color: oklch(from black l c h)) {
+    opacity: 0.95;
+    filter: invert(1) grayscale(1) brightness(1.3) contrast(9000);
+    mix-blend-mode: luminosity;
+  }
+}
+
+/*************************************
+ *              Cursors              *
+ *************************************/
+
+.lb-cursors {
+  position: relative;
+  overflow: clip;
+  isolation: isolate;
+}
+
+.lb-cursors-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  isolation: isolate;
 }
 
 /*************************************
@@ -2252,6 +2493,7 @@
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
   box-shadow: var(--lb-elevation-shadow);
+  isolation: isolate;
 
   &::after {
     content: "";
@@ -2332,7 +2574,10 @@
 .lb-composer-suggestions,
 .lb-composer-floating-toolbar,
 .lb-tooltip,
-.lb-emoji-picker {
+.lb-emoji-picker,
+.lb-floating-thread,
+.lb-floating-composer,
+.lb-floating-thread-composer {
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -2354,12 +2599,19 @@
   }
 }
 
+:is(.lb-floating-thread, .lb-floating-composer, .lb-floating-thread-composer) {
+  animation-name: lb-animation-appear;
+}
+
 :is(
   .lb-dropdown,
   .lb-emoji-picker,
   .lb-tooltip,
   .lb-composer-suggestions,
-  .lb-composer-floating-toolbar
+  .lb-composer-floating-toolbar,
+  .lb-floating-thread,
+  .lb-floating-composer,
+  .lb-floating-thread-composer
 ) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
@@ -2370,7 +2622,10 @@
   .lb-dropdown:where(:not([data-state="closed"])),
   .lb-emoji-picker:where(:not([data-state="closed"])),
   .lb-tooltip:where([data-state="delayed-open"]:not([data-state="closed"])),
-  .lb-composer-suggestions:where(:not([data-state="closed"])) {
+  .lb-composer-suggestions:where(:not([data-state="closed"])),
+  .lb-floating-thread:where(:not([data-state="closed"])),
+  .lb-floating-composer:where(:not([data-state="closed"])),
+  .lb-floating-thread-composer:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
   }
 }

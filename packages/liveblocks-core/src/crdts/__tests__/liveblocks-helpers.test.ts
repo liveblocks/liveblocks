@@ -6,7 +6,7 @@ import {
   FOURTH_POSITION,
   SECOND_POSITION,
   THIRD_POSITION,
-} from "../../__tests__/_utils";
+} from "../../__tests__/_MockWebSocketServer.setup";
 import { OpCode } from "../../protocol/Op";
 import type { NodeMap } from "../../protocol/StorageNode";
 import { CrdtType } from "../../protocol/StorageNode";
