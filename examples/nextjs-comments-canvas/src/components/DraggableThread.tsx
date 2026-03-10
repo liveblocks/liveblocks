@@ -23,9 +23,9 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
   const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
   const y = transform ? transform.y + thread.metadata.y : thread.metadata.y;
 
-  // Used to set z-index higher than other threads when dragging
-  const editThreadMetadata = useEditThreadMetadata();
+  // Used to set z-index higher than other threads when dragging or opening
   const maxZIndex = useMaxZIndex();
+  const editThreadMetadata = useEditThreadMetadata();
 
   return (
     <FloatingThread
@@ -33,21 +33,24 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
       defaultOpen={defaultOpen}
       side="right"
       style={{ pointerEvents: isDragging ? "none" : "auto" }}
-    >
-      <div
-        ref={setNodeRef}
-        onPointerDown={() =>
+      onOpenChange={(open) => {
+        // When clicking open a thread, raise its z-index if it's not already the highest
+        if (open && thread.metadata.zIndex !== maxZIndex) {
           editThreadMetadata({
             threadId: thread.id,
             metadata: { zIndex: maxZIndex + 1 },
-          })
+          });
         }
+      }}
+    >
+      <div
+        ref={setNodeRef}
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           transform: `translate3d(${x}px, ${y}px, 0)`,
-          zIndex: thread.metadata?.zIndex || 0,
+          zIndex: isDragging ? maxZIndex + 1 : thread.metadata?.zIndex || 0,
         }}
       >
         <CommentPin
