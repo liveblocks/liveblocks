@@ -1,4 +1,4 @@
-"""A client library for accessing API v2"""
+"""A client library for accessing Liveblocks API"""
 
 from .client import AsyncLiveblocks, Liveblocks
 from .errors import LiveblocksError

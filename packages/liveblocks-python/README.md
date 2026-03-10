@@ -1,6 +1,6 @@
 # liveblocks
 
-A client library for accessing API v2
+A client library for accessing Liveblocks API
 
 ## Installation
 
