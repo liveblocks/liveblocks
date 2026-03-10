@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, BinaryIO, TextIO, TYPE_CHECKING, Generator
+from typing import Any, Self, BinaryIO, TextIO, TYPE_CHECKING, Generator
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -32,8 +32,6 @@ if TYPE_CHECKING:
 {% set module_name = model.class_info.module_name %}
 
 {% from "helpers.jinja" import safe_docstring %}
-
-T = TypeVar("T", bound="{{ class_name }}")
 
 {% macro class_docstring_content(model) %}
     {% if model.title %}{{ model.title | wordwrap(116) }}
@@ -172,7 +170,7 @@ return field_dict
 {% endif %}
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
     {% for lazy_import in model.lazy_imports | sort %}
         {{ lazy_import }}
     {% endfor %}

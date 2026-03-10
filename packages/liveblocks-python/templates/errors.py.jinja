@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, override
+from typing import Any
 import httpx
 
 class LiveblocksError(Exception):
@@ -11,7 +11,6 @@ class LiveblocksError(Exception):
         self.status = status
         self.details = details
 
-    @override
     def __str__(self) -> str:
         msg = f"{self.args[0]} (status {self.status})"
         if self.details:

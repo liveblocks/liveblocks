@@ -15,14 +15,14 @@ class TestFromResponse:
         with patch.object(type(response), "text", new_callable=PropertyMock, side_effect=Exception("read boom")):
             err = LiveblocksError.from_response(response)
 
-        assert str(err) == FALLBACK
+        assert str(err) == f"{FALLBACK} (status 500)"
         assert err.status == 500
 
     def test_non_dict_json_uses_raw_text_as_message(self):
         response = httpx.Response(400, text='"just a string"')
         err = LiveblocksError.from_response(response)
 
-        assert str(err) == '"just a string"'
+        assert str(err) == '"just a string" (status 400)'
         assert err.status == 400
         assert err.details is None
 
@@ -30,7 +30,7 @@ class TestFromResponse:
         response = httpx.Response(502, text="not json at all")
         err = LiveblocksError.from_response(response)
 
-        assert str(err) == "not json at all"
+        assert str(err) == "not json at all (status 502)"
         assert err.status == 502
         assert err.details is None
 
@@ -38,7 +38,7 @@ class TestFromResponse:
         response = httpx.Response(503, json={"error": "oops"})
         err = LiveblocksError.from_response(response)
 
-        assert str(err) == FALLBACK
+        assert str(err) == f"{FALLBACK} (status 503)"
         assert err.status == 503
 
     def test_only_suggestion_no_docs(self):
