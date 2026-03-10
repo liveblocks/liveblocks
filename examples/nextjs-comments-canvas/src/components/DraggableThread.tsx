@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useEditThreadMetadata } from "@liveblocks/react/suspense";
 import { FloatingThread, CommentPin } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
@@ -11,6 +11,7 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
   const defaultOpen = useMemo(() => {
     return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
   }, [thread]);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Enable drag
   const { isDragging, attributes, listeners, setNodeRef, transform } =
@@ -23,31 +24,28 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
   const x = transform ? transform.x + thread.metadata.x : thread.metadata.x;
   const y = transform ? transform.y + thread.metadata.y : thread.metadata.y;
 
-  // Used to set z-index higher than other threads when dragging
-  const editThreadMetadata = useEditThreadMetadata();
+  // Used to set z-index higher than other threads when open or dragging
   const maxZIndex = useMaxZIndex();
+  const currentZIndex =
+    isOpen || isDragging ? maxZIndex + 1 : thread.metadata?.zIndex || 0;
 
   return (
     <FloatingThread
       thread={thread}
+      open={isOpen}
+      onOpenChange={setIsOpen}
       defaultOpen={defaultOpen}
       side="right"
       style={{ pointerEvents: isDragging ? "none" : "auto" }}
     >
       <div
         ref={setNodeRef}
-        onPointerDown={() =>
-          editThreadMetadata({
-            threadId: thread.id,
-            metadata: { zIndex: maxZIndex + 1 },
-          })
-        }
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           transform: `translate3d(${x}px, ${y}px, 0)`,
-          zIndex: thread.metadata?.zIndex || 0,
+          zIndex: currentZIndex,
         }}
       >
         <CommentPin
