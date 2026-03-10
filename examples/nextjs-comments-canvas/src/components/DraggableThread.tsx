@@ -26,6 +26,8 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
 
   // Used to set z-index higher than other threads when open or dragging
   const maxZIndex = useMaxZIndex();
+  const currentZIndex =
+    isOpen || isDragging ? maxZIndex + 1 : thread.metadata?.zIndex || 0;
 
   return (
     <FloatingThread
@@ -43,8 +45,7 @@ export function DraggableThread({ thread }: { thread: ThreadData }) {
           top: 0,
           left: 0,
           transform: `translate3d(${x}px, ${y}px, 0)`,
-          zIndex:
-            isOpen || isDragging ? maxZIndex + 1 : thread.metadata?.zIndex || 0,
+          zIndex: currentZIndex,
         }}
       >
         <CommentPin
