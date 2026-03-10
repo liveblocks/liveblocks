@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import json
 import time
-from typing import Any, Literal, TypedDict, TypeGuard, Union
+from typing import Any, Literal, TypedDict, TypeGuard
 
 _SECRET_PREFIX = "whsec_"
 _TOLERANCE_IN_SECONDS = 5 * 60  # 5 minutes
@@ -348,34 +348,30 @@ class CustomNotificationEvent(TypedDict):
     data: _CustomNotificationData
 
 
-NotificationEvent = Union[
-    ThreadNotificationEvent,
-    TextMentionNotificationEvent,
-    CustomNotificationEvent,
-]
+NotificationEvent = ThreadNotificationEvent | TextMentionNotificationEvent | CustomNotificationEvent
 
-WebhookEvent = Union[
-    StorageUpdatedEvent,
-    UserEnteredEvent,
-    UserLeftEvent,
-    RoomCreatedEvent,
-    RoomDeletedEvent,
-    CommentCreatedEvent,
-    CommentEditedEvent,
-    CommentDeletedEvent,
-    CommentReactionAddedEvent,
-    CommentReactionRemovedEvent,
-    CommentMetadataUpdatedEvent,
-    ThreadMetadataUpdatedEvent,
-    ThreadCreatedEvent,
-    ThreadDeletedEvent,
-    ThreadMarkedAsResolvedEvent,
-    ThreadMarkedAsUnresolvedEvent,
-    YDocUpdatedEvent,
-    ThreadNotificationEvent,
-    TextMentionNotificationEvent,
-    CustomNotificationEvent,
-]
+WebhookEvent = (
+    StorageUpdatedEvent
+    | UserEnteredEvent
+    | UserLeftEvent
+    | RoomCreatedEvent
+    | RoomDeletedEvent
+    | CommentCreatedEvent
+    | CommentEditedEvent
+    | CommentDeletedEvent
+    | CommentReactionAddedEvent
+    | CommentReactionRemovedEvent
+    | CommentMetadataUpdatedEvent
+    | ThreadMetadataUpdatedEvent
+    | ThreadCreatedEvent
+    | ThreadDeletedEvent
+    | ThreadMarkedAsResolvedEvent
+    | ThreadMarkedAsUnresolvedEvent
+    | YDocUpdatedEvent
+    | ThreadNotificationEvent
+    | TextMentionNotificationEvent
+    | CustomNotificationEvent
+)
 
 
 # ---------------------------------------------------------------------------
