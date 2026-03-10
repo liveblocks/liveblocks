@@ -12,10 +12,12 @@ import {
 import { useCallback } from "react";
 import { PlaceThreadButton } from "./PlaceThreadButton";
 import { DraggableThread } from "./DraggableThread";
+import { useMaxZIndex } from "../hooks";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
   const editThreadMetadata = useEditThreadMetadata();
+  const maxZIndex = useMaxZIndex();
 
   // Allow click event on avatar if thread moved less than 3px
   const sensors = useSensors(
@@ -31,7 +33,7 @@ export function CommentsCanvas() {
     })
   );
 
-  // On drag end, update thread metadata with new coords
+  // On drag end, update thread metadata with new coords and highest z-index
   const handleDragEnd = useCallback(
     ({ active, delta }: DragEndEvent) => {
       const thread = (active.data as DataRef<{ thread: ThreadData }>).current
@@ -44,10 +46,11 @@ export function CommentsCanvas() {
         metadata: {
           x: thread.metadata.x + delta.x,
           y: thread.metadata.y + delta.y,
+          zIndex: maxZIndex + 1,
         },
       });
     },
-    [editThreadMetadata]
+    [editThreadMetadata, maxZIndex]
   );
 
   return (

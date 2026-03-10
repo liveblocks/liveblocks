@@ -34,6 +34,8 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
+    "build:docker": "tsup",
+    "clean": "rm -rf dist/",
     "format": "(eslint --color --fix src/ test/ || true) && prettier --write src/ test/",
     "lint": "eslint --color src/ test/",
     "lint:package": "publint --strict && attw --pack",

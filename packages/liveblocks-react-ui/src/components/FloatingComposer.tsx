@@ -7,6 +7,7 @@ import {
   forwardRef,
   type ReactNode,
   type RefAttributes,
+  useRef,
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
@@ -17,6 +18,7 @@ import {
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
+import { useRefs } from "../utils/use-refs";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 
@@ -57,12 +59,15 @@ export const FloatingComposer = forwardRef(
       sideOffset = FLOATING_ELEMENT_SIDE_OFFSET,
       align = "start",
       alignOffset,
+      autoFocus = true,
       overrides,
       className,
       ...props
     }: FloatingComposerProps<TM, CM>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
+    const composerRef = useRef<HTMLFormElement>(null);
+    const mergedRefs = useRefs(forwardedRef, composerRef);
     const $ = useOverrides(overrides);
     const { portalContainer } = useLiveblocksUiConfig();
     const [isOpen, setIsOpen] = useControllableState(
@@ -83,6 +88,7 @@ export const FloatingComposer = forwardRef(
             dir={$.dir}
             side={side}
             sideOffset={sideOffset}
+            updatePositionStrategy="always"
             align={align}
             alignOffset={alignOffset}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
@@ -104,13 +110,20 @@ export const FloatingComposer = forwardRef(
                 event.preventDefault();
               }
             }}
+            onOpenAutoFocus={(event) => {
+              if (!autoFocus) {
+                event.preventDefault();
+                composerRef.current?.focus();
+              }
+            }}
             asChild
           >
             <Composer
-              ref={forwardedRef}
+              ref={mergedRefs}
               overrides={overrides}
-              autoFocus
+              autoFocus={autoFocus}
               collapsed={false}
+              tabIndex={-1}
               {...(props as ComposerProps<TM, CM>)}
             />
           </PopoverPrimitive.Content>

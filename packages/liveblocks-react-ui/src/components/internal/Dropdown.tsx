@@ -55,6 +55,7 @@ export function Dropdown({
           )}
           sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
           collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+          updatePositionStrategy="always"
           {...props}
         >
           {content}
