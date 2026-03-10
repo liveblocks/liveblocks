@@ -404,7 +404,7 @@ components from
       [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata) to update
       the thread’s metadata with the new X/Y coordinates.
 
-      ```tsx file="app/CollaborativeCanvas.tsx"
+      ```tsx file="app/CommentsCanvas.tsx"
       import { ThreadData } from "@liveblocks/client";
       import { useThreads, useEditThreadMetadata } from "@liveblocks/react/suspense";
       import {
@@ -494,12 +494,12 @@ components from
 
       ```tsx file="app/page.tsx" highlight="6-8"
       import { Room } from "./Room";
-      import { CollaborativeCanvas } from "./CollaborativeCanvas";
+      import { CommentsCanvas } from "./CommentsCanvas";
 
       export default function Page() {
         return (
           <Room>
-            <CollaborativeCanvas />
+            <CommentsCanvas />
           </Room>
         );
       }
