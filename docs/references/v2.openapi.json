@@ -2823,7 +2823,7 @@
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
-        "tags": ["Authentication"],
+        "tags": ["Auth"],
         "operationId": "authorize-user",
         "responses": {
           "200": {
@@ -2880,7 +2880,7 @@
     "/identify-user": {
       "post": {
         "summary": "Get ID token with secret key",
-        "tags": ["Authentication"],
+        "tags": ["Auth"],
         "operationId": "identify-user",
         "responses": {
           "200": {
@@ -7041,10 +7041,7 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
-            ],
+            "oneOf": [{ "type": "string" }, { "type": "null" }],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -7152,10 +7149,7 @@
             "type": "string"
           },
           "roomId": {
-            "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
-            ]
+            "oneOf": [{ "type": "string" }, { "type": "null" }]
           },
           "readAt": {
             "oneOf": [
@@ -7247,10 +7241,7 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [
-              { "type": "string" },
-              { "type": "null" }
-            ],
+            "oneOf": [{ "type": "string" }, { "type": "null" }],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -9192,7 +9183,7 @@
   },
   "tags": [
     {
-      "name": "Authentication"
+      "name": "Auth"
     },
     {
       "name": "Room"
