@@ -56,7 +56,6 @@ if TYPE_CHECKING:
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
-    from .models.get_thread_participants_response import GetThreadParticipantsResponse
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
@@ -76,6 +75,8 @@ if TYPE_CHECKING:
     from .models.management_project_roll_project_secret_api_key_response_secret_key_response import (
         ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
     )
+    from .models.mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
+    from .models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
     from .models.move_json_patch_operation import MoveJsonPatchOperation
     from .models.notification_settings import NotificationSettings
     from .models.recover_management_webhook_failed_messages_request_body import (
@@ -192,7 +193,8 @@ class Liveblocks:
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
         newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
+        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -208,12 +210,17 @@ class Liveblocks:
         Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
-            organization_id (str | Unset):
-            query (str | Unset):
-            user_id (str | Unset):
-            group_ids (str | Unset):
+            limit (int | Unset): A limit on the number of rooms to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
+            organization_id (str | Unset): A filter on organization ID.
+            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
+                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
+                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
+                filter-rooms-using-query-language).
+            user_id (str | Unset): A filter on users accesses.
+            group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -245,10 +252,11 @@ class Liveblocks:
 
          This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a
         `?idempotent` query argument, will not return a 409 when the room already exists, but instead return
-        the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-
-        node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-
+        the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#post-rooms), or to
+        [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -257,7 +265,10 @@ class Liveblocks:
         - `groupsAccesses` are optional fields.
 
         Args:
-            idempotent (bool | Unset):
+            idempotent (bool | Unset): When provided, will not return a 409 when the room already
+                exists, but instead return the existing room as-is. Corresponds to
+                [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
+                node#get-or-create-rooms-roomId).
             body (CreateRoomRequestBody):
 
         Raises:
@@ -282,11 +293,11 @@ class Liveblocks:
     ) -> Room:
         """Get room
 
-         This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomid).
+         This endpoint returns a room by its ID. Corresponds to
+        [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -312,7 +323,8 @@ class Liveblocks:
         r"""Update room
 
          This endpoint updates specific properties of a room. Corresponds to
-        [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid).
+        [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomid).
 
         It’s not necessary to provide the entire room’s information.
         Setting a property to `null` means to delete this property. For example, if you want to remove
@@ -322,9 +334,9 @@ class Liveblocks:
                 \"john\": null
             }
         }``
-        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+        `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -335,7 +347,7 @@ class Liveblocks:
         field.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (UpdateRoomRequestBody):
 
         Raises:
@@ -361,11 +373,11 @@ class Liveblocks:
         """Delete room
 
          This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
-        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
-        node#delete-rooms-roomid).
+        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#delete-rooms-roomid).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -389,12 +401,14 @@ class Liveblocks:
         """Prewarm room
 
          Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be
-        connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
-        [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the
-        room will load quicker.
+        connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-
+        react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
+        client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to
+        [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomid-prewarm).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -420,7 +434,8 @@ class Liveblocks:
         r"""Upsert (update or create) room
 
          This endpoint updates specific properties of a room. Corresponds to
-        [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+        [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-
+        roomId).
 
         It’s not necessary to provide the entire room’s information.
         Setting a property to `null` means to delete this property. For example, if you want to remove
@@ -430,9 +445,9 @@ class Liveblocks:
                 \"john\": null
             }
         }``
-        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+        `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -443,7 +458,7 @@ class Liveblocks:
         field.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (UpsertRoomRequestBody):
 
         Raises:
@@ -470,10 +485,13 @@ class Liveblocks:
     ) -> Room:
         """Update room ID
 
-         This endpoint permanently updates the room’s ID.
+         This endpoint permanently updates the room’s ID. All existing references to the old room ID will
+        need to be updated. Returns the updated room. Corresponds to
+        [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomid-update-room-id).
 
         Args:
-            room_id (str):
+            room_id (str): The new ID for the room
             body (UpdateRoomIdRequestBody | Unset):
 
         Raises:
@@ -499,13 +517,14 @@ class Liveblocks:
         """Get active users
 
          This endpoint returns a list of users currently present in the requested room. Corresponds to
-        [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
+        [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomid-active-users).
 
         For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
         Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -533,10 +552,12 @@ class Liveblocks:
          This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
         The presence data will automatically expire after the specified TTL (time-to-live). This is useful
         for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
-        connected users in the room.
+        connected users in the room. Corresponds to
+        [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-presence).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (SetPresenceRequestBody):
 
         Raises:
@@ -566,10 +587,11 @@ class Liveblocks:
          This endpoint enables the broadcast of an event to a room without having to connect to it via the
         `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
         passed to event listeners is `-1` when using this API. Corresponds to
-        [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
+        [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        broadcast-event).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (Any):
 
         Raises:
@@ -596,8 +618,9 @@ class Liveblocks:
     ) -> GetStorageDocumentResponse:
         r"""Get Storage document
 
-         Returns the contents of the room’s Storage tree.  Corresponds to
-        [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
+         Returns the contents of the room’s Storage tree. Corresponds to
+        [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        rooms-roomId-storage).
 
         The default outputted format is called “plain LSON”, which includes information on the Live data
         structures in the tree. These nodes show up in the output as objects with two properties, for
@@ -614,8 +637,12 @@ class Liveblocks:
         see below.
 
         Args:
-            room_id (str):
-            format_ (GetStorageDocumentFormat | Unset):
+            room_id (str): ID of the room
+            format_ (GetStorageDocumentFormat | Unset): Use `?format=json` to output a simplified JSON
+                representation of the Storage tree. In that format, each LiveObject and LiveMap will be
+                formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
+                array. This is a lossy format because information about the original data structures is
+                not retained, but it may be easier to work with.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -643,8 +670,8 @@ class Liveblocks:
 
          This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling
         this endpoint will disconnect all users from the room if there are any, triggering a reconnect.
-        Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-
-        rooms-roomId-storage).
+        Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-storage).
 
         The format of the request body is the same as what’s returned by the get Storage endpoint.
 
@@ -659,7 +686,7 @@ class Liveblocks:
         `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (InitializeStorageDocumentBody | Unset):
 
         Raises:
@@ -685,11 +712,12 @@ class Liveblocks:
         """Delete Storage document
 
          This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
-        users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
-        reference/liveblocks-node#delete-rooms-roomId-storage).
+        users from the room if there are any. Corresponds to
+        [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-rooms-roomId-storage).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -734,10 +762,10 @@ class Liveblocks:
         suitable for this endpoint.
 
         For a **full guide with examples**, see [Modifying storage via REST API with JSON
-        Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+        Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
                 RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
 
@@ -768,13 +796,15 @@ class Liveblocks:
         """Get Yjs document
 
          This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-        [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
+        [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomId-ydoc).
 
         Args:
-            room_id (str):
-            formatting (bool | Unset):
-            key (str | Unset):
-            type_ (GetYjsDocumentType | Unset):
+            room_id (str): ID of the room
+            formatting (bool | Unset): If present, YText will return formatting.
+            key (str | Unset): Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.
+            type_ (GetYjsDocumentType | Unset): Used with key to override the inferred type, i.e.
+                `"ymap"` will return `doc.get(key, Y.Map)`.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -806,7 +836,8 @@ class Liveblocks:
          This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
         endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
         to a subdocument instead of the main document, pass its `guid`. Corresponds to
-        [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+        [`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-
+        rooms-roomId-ydoc).
 
         The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
         documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
@@ -815,8 +846,8 @@ class Liveblocks:
         unlike most other endpoints.
 
         Args:
-            room_id (str):
-            guid (str | Unset):
+            room_id (str): ID of the room
+            guid (str | Unset): ID of the subdocument
             body (File):
 
         Raises:
@@ -848,12 +879,12 @@ class Liveblocks:
         `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
         documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
         updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
-        [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        ydoc-binary).
+        [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-rooms-roomId-ydoc-binary).
 
         Args:
-            room_id (str):
-            guid (str | Unset):
+            room_id (str): ID of the room
+            guid (str | Unset): ID of the subdocument
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -884,9 +915,11 @@ class Liveblocks:
         are returned sorted by creation date, from newest to oldest.
 
         Args:
-            room_id (str):
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            room_id (str): ID of the room
+            limit (int | Unset): A limit on the number of versions to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -915,8 +948,8 @@ class Liveblocks:
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
         Args:
-            room_id (str):
-            version_id (str):
+            room_id (str): ID of the room
+            version_id (str): ID of the version
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -943,7 +976,7 @@ class Liveblocks:
          This endpoint creates a new version history snapshot for the room's Yjs document.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -969,11 +1002,15 @@ class Liveblocks:
         """Get room threads
 
          This endpoint returns the threads in the requested room. Corresponds to
-        [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+        [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads).
 
         Args:
-            room_id (str):
-            query (str | Unset):
+            room_id (str): ID of the room
+            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
+                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
+                Learn more about [filtering threads with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1000,7 +1037,8 @@ class Liveblocks:
         r"""Create thread
 
          This endpoint creates a new thread and the first comment in the thread. Corresponds to
-        [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
+        [`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `comment.body`.
@@ -1016,7 +1054,7 @@ class Liveblocks:
         ```
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (CreateThreadRequestBody):
 
         Raises:
@@ -1042,12 +1080,13 @@ class Liveblocks:
     ) -> Thread:
         """Get thread
 
-         This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomId-threads-threadId).
+         This endpoint returns a thread by its ID. Corresponds to
+        [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads-threadId).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1072,12 +1111,13 @@ class Liveblocks:
     ) -> None:
         """Delete thread
 
-         This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-
-        reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
+         This endpoint deletes a thread by its ID. Corresponds to
+        [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-threads-threadId).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1106,12 +1146,13 @@ class Liveblocks:
 
          This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
         store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
-        property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+        property to `null` to remove it. Corresponds to
+        [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-metadata).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (UpdateThreadMetadataRequestBody):
 
         Raises:
@@ -1135,14 +1176,20 @@ class Liveblocks:
         self,
         room_id: str,
         thread_id: str,
+        *,
+        body: MarkThreadAsResolvedRequestBody,
     ) -> Thread:
         """Mark thread as resolved
 
-         This endpoint marks a thread as resolved.
+         This endpoint marks a thread as resolved. The request body must include a `userId` to identify who
+        resolved the thread. Returns the updated thread. Corresponds to
+        [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-mark-as-resolved).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            body (MarkThreadAsResolvedRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1157,6 +1204,7 @@ class Liveblocks:
         return mark_thread_as_resolved._sync(
             room_id=room_id,
             thread_id=thread_id,
+            body=body,
             client=self._client,
         )
 
@@ -1164,14 +1212,20 @@ class Liveblocks:
         self,
         room_id: str,
         thread_id: str,
+        *,
+        body: MarkThreadAsUnresolvedRequestBody,
     ) -> Thread:
         """Mark thread as unresolved
 
-         This endpoint marks a thread as unresolved.
+         This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who
+        unresolved the thread. Returns the updated thread. Corresponds to
+        [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-mark-as-unresolved).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            body (MarkThreadAsUnresolvedRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1186,6 +1240,7 @@ class Liveblocks:
         return mark_thread_as_unresolved._sync(
             room_id=room_id,
             thread_id=thread_id,
+            body=body,
             client=self._client,
         )
 
@@ -1198,12 +1253,13 @@ class Liveblocks:
     ) -> Subscription:
         """Subscribe to thread
 
-         This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
+         This endpoint subscribes to a thread. Corresponds to
+        [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-subscribe).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (SubscribeToThreadRequestBody):
 
         Raises:
@@ -1233,12 +1289,12 @@ class Liveblocks:
         """Unsubscribe from thread
 
          This endpoint unsubscribes from a thread. Corresponds to
-        [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-unsubscribe).
+        [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-unsubscribe).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (UnsubscribeFromThreadRequestBody):
 
         Raises:
@@ -1266,12 +1322,12 @@ class Liveblocks:
         """Get thread subscriptions
 
          This endpoint gets the list of subscriptions to a thread. Corresponds to
-        [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-        threadId-subscriptions).
+        [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        rooms-roomId-threads-threadId-subscriptions).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1299,8 +1355,8 @@ class Liveblocks:
         r"""Create comment
 
          This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to
-        [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-
-        comments).
+        [`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `body`.
@@ -1315,8 +1371,8 @@ class Liveblocks:
         ]
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (CreateCommentRequestBody):
 
         Raises:
@@ -1344,13 +1400,14 @@ class Liveblocks:
     ) -> Comment:
         """Get comment
 
-         This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
+         This endpoint returns a comment by its ID. Corresponds to
+        [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads-threadId-comments-commentId).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1379,8 +1436,9 @@ class Liveblocks:
     ) -> Comment:
         r"""Edit comment
 
-         This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+         This endpoint edits the specified comment. Corresponds to
+        [`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments-commentId).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `body`.
@@ -1395,9 +1453,9 @@ class Liveblocks:
         ]
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (EditCommentRequestBody):
 
         Raises:
@@ -1427,13 +1485,14 @@ class Liveblocks:
         """Delete comment
 
          This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the
-        dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+        dashboard and it cannot be restored. Corresponds to
+        [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments-commentId).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1463,13 +1522,13 @@ class Liveblocks:
         """Add comment reaction
 
          This endpoint adds a reaction to a comment. Corresponds to
-        [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-comments-commentId-add-reaction).
+        [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (AddCommentReactionRequestBody):
 
         Raises:
@@ -1502,13 +1561,13 @@ class Liveblocks:
 
          This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from
         the API or the dashboard and it cannot be restored. Corresponds to
-        [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-comments-commentId-add-reaction).
+        [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (RemoveCommentReactionRequestBody | Unset):
 
         Raises:
@@ -1541,13 +1600,14 @@ class Liveblocks:
 
          This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
         store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
-        property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
+        property to `null` to remove it. Corresponds to
+        [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-metadata).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (EditCommentMetadataRequestBody):
 
         Raises:
@@ -1565,148 +1625,6 @@ class Liveblocks:
             thread_id=thread_id,
             comment_id=comment_id,
             body=body,
-            client=self._client,
-        )
-
-    def get_thread_participants(
-        self,
-        room_id: str,
-        thread_id: str,
-    ) -> GetThreadParticipantsResponse:
-        """Get thread participants
-
-         **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
-        subscriptions) instead.
-
-        This endpoint returns the list of thread participants. It is a list of unique user IDs representing
-        all the thread comment authors and mentioned users in comments. Corresponds to
-        [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-        threadId-participants).
-
-        Args:
-            room_id (str):
-            thread_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            GetThreadParticipantsResponse
-        """
-
-        from .api.deprecated import get_thread_participants
-
-        return get_thread_participants._sync(
-            room_id=room_id,
-            thread_id=thread_id,
-            client=self._client,
-        )
-
-    def get_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-    ) -> RoomSubscriptionSettings:
-        """Get room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
-        our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            RoomSubscriptionSettings
-        """
-
-        from .api.deprecated import get_room_notification_settings
-
-        return get_room_notification_settings._sync(
-            room_id=room_id,
-            user_id=user_id,
-            client=self._client,
-        )
-
-    def update_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-        *,
-        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
-    ) -> RoomSubscriptionSettings:
-        """Update room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more
-        in our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint updates a user’s notification settings for a specific room. Corresponds to
-        [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-        users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-            body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
-                settings - all properties are optional
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            RoomSubscriptionSettings
-        """
-
-        from .api.deprecated import update_room_notification_settings
-
-        return update_room_notification_settings._sync(
-            room_id=room_id,
-            user_id=user_id,
-            body=body,
-            client=self._client,
-        )
-
-    def delete_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-    ) -> None:
-        """Delete room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
-        in our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint deletes a user’s notification settings for a specific room. Corresponds to
-        [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-        roomId-users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            None
-        """
-
-        from .api.deprecated import delete_room_notification_settings
-
-        return delete_room_notification_settings._sync(
-            room_id=room_id,
-            user_id=user_id,
             client=self._client,
         )
 
@@ -1728,8 +1646,8 @@ class Liveblocks:
         enter a room.
 
         **Note:** When using the `@liveblocks/node` package, you can use
-        [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to
-        build this request.
+        [`Liveblocks.prepareSession`](https://liveblocks.io/docs/api-reference/liveblocks-node#access-
+        tokens) in your back end to build this request.
 
         You can pass the property `userId` in the request’s body. This can be whatever internal identifier
         you use for your user accounts as long as it uniquely identifies an account. The property `userId`
@@ -1744,7 +1662,7 @@ class Liveblocks:
         is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
         list of permissions to assign the user for any room that matches that name exactly (or starts with
         the pattern’s prefix). For tips, see [Manage permissions with access
-        tokens](/docs/authentication/access-token).
+        tokens](https://liveblocks.io/docs/authentication/access-token).
 
         Args:
             body (AuthorizeUserRequestBody):
@@ -1775,7 +1693,7 @@ class Liveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](/docs/authentication/id-token) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -1784,8 +1702,8 @@ class Liveblocks:
         entirely.
 
         **Note:** When using the `@liveblocks/node` package, you can use
-        [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this
-        request.
+        [`Liveblocks.identifyUser`](https://liveblocks.io/docs/api-reference/liveblocks-node) in your back
+        end to build this request.
 
         You can pass the property `userId` in the request’s body. This can be whatever internal identifier
         you use for your user accounts as long as it uniquely identifies an account. The property `userId`
@@ -1795,7 +1713,7 @@ class Liveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](/docs/authentication/id-token)).
+        tokens](https://liveblocks.io/docs/authentication/id-token)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
@@ -1827,12 +1745,12 @@ class Liveblocks:
         """Get inbox notification
 
          This endpoint returns a user’s inbox notification by its ID. Corresponds to
-        [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-
-        inboxNotifications-inboxNotificationId).
+        [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-inboxNotifications-inboxNotificationId).
 
         Args:
-            user_id (str):
-            inbox_notification_id (str):
+            user_id (str): ID of the user
+            inbox_notification_id (str): ID of the inbox notification
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1857,11 +1775,13 @@ class Liveblocks:
     ) -> None:
         """Delete inbox notification
 
-         This endpoint deletes a user’s inbox notification by its ID.
+         This endpoint deletes a user’s inbox notification by its ID. Corresponds to
+        [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
         Args:
-            user_id (str):
-            inbox_notification_id (str):
+            user_id (str): ID of the user
+            inbox_notification_id (str): ID of the inbox notification
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1891,15 +1811,18 @@ class Liveblocks:
         """Get all inbox notifications
 
          This endpoint returns all the user’s inbox notifications. Corresponds to
-        [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
-        inboxNotifications).
+        [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-inboxNotifications).
 
         Args:
-            user_id (str):
-            organization_id (str | Unset):
-            query (str | Unset):
-            limit (int | Unset):  Default: 50.
-            starting_after (str | Unset):
+            user_id (str): ID of the user
+            organization_id (str | Unset): The organization ID to filter notifications for.
+            query (str | Unset): Query to filter notifications. You can filter by `unread`, for
+                example, `unread:true`.
+            limit (int | Unset): A limit on the number of inbox notifications to be returned. The
+                limit can range between 1 and 50, and defaults to 50. Default: 50.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1926,10 +1849,12 @@ class Liveblocks:
     ) -> None:
         """Delete all inbox notifications
 
-         This endpoint deletes all the user’s inbox notifications.
+         This endpoint deletes all the user’s inbox notifications. Corresponds to
+        [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-inbox-notifications).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1953,11 +1878,11 @@ class Liveblocks:
         """Get notification settings
 
          This endpoint returns a user's notification settings for the project. Corresponds to
-        [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-        notification-settings).
+        [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1983,11 +1908,11 @@ class Liveblocks:
         """Update notification settings
 
          This endpoint updates a user's notification settings for the project. Corresponds to
-        [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
-        notification-settings).
+        [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
             body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
                 properties are optional
 
@@ -2014,11 +1939,11 @@ class Liveblocks:
         """Delete notification settings
 
          This endpoint deletes a user's notification settings for the project. Corresponds to
-        [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
-        notification-settings).
+        [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2043,12 +1968,12 @@ class Liveblocks:
         """Get room subscription settings
 
          This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        users-userId-subscription-settings).
+        [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2076,12 +2001,12 @@ class Liveblocks:
         """Update room subscription settings
 
          This endpoint updates a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-        users-userId-subscription-settings).
+        [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
             body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
                 properties are optional
 
@@ -2110,12 +2035,12 @@ class Liveblocks:
         """Delete room subscription settings
 
          This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-        roomId-users-userId-subscription-settings).
+        [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2144,14 +2069,17 @@ class Liveblocks:
         """Get user room subscription settings
 
          This endpoint returns the list of a user's room subscription settings. Corresponds to
-        [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-        room-subscription-settings).
+        [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-users-userId-room-subscription-settings).
 
         Args:
-            user_id (str):
-            starting_after (str | Unset):
-            limit (int | Unset):  Default: 50.
-            organization_id (str | Unset):
+            user_id (str): ID of the user
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
+            limit (int | Unset): A limit on the number of elements to be returned. The limit can range
+                between 1 and 50, and defaults to 50. Default: 50.
+            organization_id (str | Unset): The organization ID to filter room subscription settings
+                for.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2179,8 +2107,8 @@ class Liveblocks:
         """Trigger inbox notification
 
          This endpoint triggers an inbox notification. Corresponds to
-        [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
-        notifications-trigger).
+        [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-inbox-notifications-trigger).
 
         Args:
             body (TriggerInboxNotificationRequestBody | Unset):
@@ -2209,11 +2137,13 @@ class Liveblocks:
         """Get groups
 
          This endpoint returns a list of all groups in your project. Corresponds to
-        [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+        [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            limit (int | Unset): A limit on the number of groups to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2238,8 +2168,8 @@ class Liveblocks:
     ) -> Group:
         """Create group
 
-         This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
-        reference/liveblocks-node#create-group).
+         This endpoint creates a new group. Corresponds to
+        [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
             body (CreateGroupRequestBody | Unset):
@@ -2265,11 +2195,11 @@ class Liveblocks:
     ) -> Group:
         """Get group
 
-         This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
-        reference/liveblocks-node#get-group).
+         This endpoint returns a specific group by ID. Corresponds to
+        [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to retrieve.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2292,11 +2222,11 @@ class Liveblocks:
     ) -> None:
         """Delete group
 
-         This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
-        reference/liveblocks-node#delete-group).
+         This endpoint deletes a group. Corresponds to
+        [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to delete.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2322,10 +2252,11 @@ class Liveblocks:
         """Add group members
 
          This endpoint adds new members to an existing group. Corresponds to
-        [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
+        [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-
+        members).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to add members to.
             body (AddGroupMembersRequestBody):
 
         Raises:
@@ -2353,10 +2284,11 @@ class Liveblocks:
         """Remove group members
 
          This endpoint removes members from an existing group. Corresponds to
-        [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
+        [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-
+        group-members).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to remove members from.
             body (RemoveGroupMembersRequestBody):
 
         Raises:
@@ -2385,12 +2317,15 @@ class Liveblocks:
         """Get user groups
 
          This endpoint returns all groups that a specific user is a member of. Corresponds to
-        [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
+        [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-
+        groups).
 
         Args:
-            user_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            user_id (str): The ID of the user to get groups for.
+            limit (int | Unset): A limit on the number of groups to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2418,12 +2353,15 @@ class Liveblocks:
         """Get AI copilots
 
          This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
-        date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
-        reference/liveblocks-node#get-ai-copilots).
+        date, from newest to oldest. Corresponds to
+        [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-
+        copilots).
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            limit (int | Unset): A limit on the number of copilots to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2452,7 +2390,8 @@ class Liveblocks:
         """Create AI copilot
 
          This endpoint creates a new AI copilot with the given configuration. Corresponds to
-        [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
+        [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-
+        copilot).
 
         Args:
             body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
@@ -2479,11 +2418,12 @@ class Liveblocks:
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         """Get AI copilot
 
-         This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
-        reference/liveblocks-node#get-ai-copilot).
+         This endpoint returns an AI copilot by its ID. Corresponds to
+        [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-
+        copilot).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2509,7 +2449,8 @@ class Liveblocks:
         r"""Update AI copilot
 
          This endpoint updates an existing AI copilot's configuration. Corresponds to
-        [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
+        [`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-
+        copilot).
 
         This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
         example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
@@ -2517,7 +2458,7 @@ class Liveblocks:
         response with an error message explaining where the validation failed.
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
             body (UpdateAiCopilotRequestBody):
 
         Raises:
@@ -2543,11 +2484,11 @@ class Liveblocks:
         """Delete AI copilot
 
          This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
-        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
-        node#delete-ai-copilot).
+        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#delete-ai-copilot).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2574,12 +2515,15 @@ class Liveblocks:
         """Get knowledge sources
 
          This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-        to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
+        to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        knowledge-sources).
 
         Args:
-            copilot_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            copilot_id (str): ID of the AI copilot
+            limit (int | Unset): A limit on the number of knowledge sources to be returned. The limit
+                can range between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2606,11 +2550,12 @@ class Liveblocks:
         """Get knowledge source
 
          This endpoint returns a specific knowledge source by its ID. Corresponds to
-        [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
+        [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2637,11 +2582,12 @@ class Liveblocks:
         """Create web knowledge source
 
          This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
-        and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
-        reference/liveblocks-node#create-web-knowledge-source).
+        and learn from web content. Corresponds to
+        [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-web-knowledge-source).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
             body (CreateWebKnowledgeSourceRequestBody):
 
         Raises:
@@ -2671,12 +2617,12 @@ class Liveblocks:
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
         then reference the content of the file when responding. Corresponds to
-        [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
-        source).
+        [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-file-knowledge-source).
 
         Args:
-            copilot_id (str):
-            name (str):
+            copilot_id (str): ID of the AI copilot
+            name (str): Name of the file
             body (File):
 
         Raises:
@@ -2705,12 +2651,12 @@ class Liveblocks:
 
          This endpoint returns the content of a file knowledge source as markdown. This allows you to see
         what content the AI copilot has access to from uploaded files. Corresponds to
-        [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
-        knowledge-source-markdown).
+        [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-file-knowledge-source-markdown).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2737,12 +2683,12 @@ class Liveblocks:
 
          This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
         access to the content from this file. Corresponds to
-        [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
-        source).
+        [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-file-knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2769,12 +2715,12 @@ class Liveblocks:
 
          This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have
         access to the content from this source. Corresponds to
-        [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-
-        source).
+        [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-web-knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2804,14 +2750,16 @@ class Liveblocks:
 
          This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
         is useful for understanding what content the AI copilot has access to from web sources. Corresponds
-        to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
-        source-links).
+        to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-web-knowledge-source-links).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
+            limit (int | Unset): A limit on the number of links to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2843,8 +2791,10 @@ class Liveblocks:
         the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
         Args:
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            limit (int | Unset): A limit on the number of projects to return. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2901,7 +2851,7 @@ class Liveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2934,7 +2884,7 @@ class Liveblocks:
         If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (UpdateManagementProjectRequestBody):
 
         Raises:
@@ -2963,7 +2913,7 @@ class Liveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2990,7 +2940,7 @@ class Liveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3017,7 +2967,7 @@ class Liveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3051,7 +3001,7 @@ class Liveblocks:
         be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (RollProjectPublicApiKeyRequestBody | Unset):
 
         Raises:
@@ -3086,7 +3036,7 @@ class Liveblocks:
         parameter can be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (RollProjectSecretApiKeyRequestBody | Unset):
 
         Raises:
@@ -3122,9 +3072,11 @@ class Liveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            project_id (str): ID of the project
+            limit (int | Unset): A limit on the number of webhooks to return. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3155,7 +3107,7 @@ class Liveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (CreateManagementWebhookRequestBody):
 
         Raises:
@@ -3186,8 +3138,8 @@ class Liveblocks:
         does not exist. This endpoint requires the `read:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3219,8 +3171,8 @@ class Liveblocks:
         errors. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (UpdateManagementWebhookRequestBody):
 
         Raises:
@@ -3251,8 +3203,8 @@ class Liveblocks:
         `404` if the project or webhook does not exist. Requires `write:all`.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3282,8 +3234,8 @@ class Liveblocks:
         `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3312,8 +3264,8 @@ class Liveblocks:
         `read:all`.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3345,8 +3297,8 @@ class Liveblocks:
         or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (UpsertManagementWebhookHeadersRequestBody):
 
         Raises:
@@ -3381,8 +3333,8 @@ class Liveblocks:
         a 422 error response is returned.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (DeleteManagementWebhookHeadersRequestBody):
 
         Raises:
@@ -3416,8 +3368,8 @@ class Liveblocks:
         requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (RecoverManagementWebhookFailedMessagesRequestBody):
 
         Raises:
@@ -3451,8 +3403,8 @@ class Liveblocks:
         project or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (TestManagementWebhookRequestBody):
 
         Raises:
@@ -3530,7 +3482,8 @@ class AsyncLiveblocks:
 
          This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from
         newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups
-        accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).
+        accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#get-rooms).
 
         There is a pagination system where the cursor to the next page is returned in the response as
         `nextCursor`, which can be combined with `startingAfter`.
@@ -3546,12 +3499,17 @@ class AsyncLiveblocks:
         Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
-            organization_id (str | Unset):
-            query (str | Unset):
-            user_id (str | Unset):
-            group_ids (str | Unset):
+            limit (int | Unset): A limit on the number of rooms to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
+            organization_id (str | Unset): A filter on organization ID.
+            query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
+                example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
+                more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
+                filter-rooms-using-query-language).
+            user_id (str | Unset): A filter on users accesses.
+            group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3583,10 +3541,11 @@ class AsyncLiveblocks:
 
          This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a
         `?idempotent` query argument, will not return a 409 when the room already exists, but instead return
-        the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-
-        node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-
+        the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#post-rooms), or to
+        [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-
         create-rooms-roomId) when `?idempotent` is provided.
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -3595,7 +3554,10 @@ class AsyncLiveblocks:
         - `groupsAccesses` are optional fields.
 
         Args:
-            idempotent (bool | Unset):
+            idempotent (bool | Unset): When provided, will not return a 409 when the room already
+                exists, but instead return the existing room as-is. Corresponds to
+                [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
+                node#get-or-create-rooms-roomId).
             body (CreateRoomRequestBody):
 
         Raises:
@@ -3620,11 +3582,11 @@ class AsyncLiveblocks:
     ) -> Room:
         """Get room
 
-         This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomid).
+         This endpoint returns a room by its ID. Corresponds to
+        [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3650,7 +3612,8 @@ class AsyncLiveblocks:
         r"""Update room
 
          This endpoint updates specific properties of a room. Corresponds to
-        [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid).
+        [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomid).
 
         It’s not necessary to provide the entire room’s information.
         Setting a property to `null` means to delete this property. For example, if you want to remove
@@ -3660,9 +3623,9 @@ class AsyncLiveblocks:
                 \"john\": null
             }
         }``
-        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+        `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -3673,7 +3636,7 @@ class AsyncLiveblocks:
         field.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (UpdateRoomRequestBody):
 
         Raises:
@@ -3699,11 +3662,11 @@ class AsyncLiveblocks:
         """Delete room
 
          This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard
-        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-
-        node#delete-rooms-roomid).
+        and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#delete-rooms-roomid).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3727,12 +3690,14 @@ class AsyncLiveblocks:
         """Prewarm room
 
          Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be
-        connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or
-        [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the
-        room will load quicker.
+        connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-
+        react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
+        client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to
+        [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomid-prewarm).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3758,7 +3723,8 @@ class AsyncLiveblocks:
         r"""Upsert (update or create) room
 
          This endpoint updates specific properties of a room. Corresponds to
-        [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+        [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-
+        roomId).
 
         It’s not necessary to provide the entire room’s information.
         Setting a property to `null` means to delete this property. For example, if you want to remove
@@ -3768,9 +3734,9 @@ class AsyncLiveblocks:
                 \"john\": null
             }
         }``
-        `defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
+        `defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.
 
-        - `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public).
+        - `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public).
         - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries.
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
@@ -3781,7 +3747,7 @@ class AsyncLiveblocks:
         field.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (UpsertRoomRequestBody):
 
         Raises:
@@ -3808,10 +3774,13 @@ class AsyncLiveblocks:
     ) -> Room:
         """Update room ID
 
-         This endpoint permanently updates the room’s ID.
+         This endpoint permanently updates the room’s ID. All existing references to the old room ID will
+        need to be updated. Returns the updated room. Corresponds to
+        [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomid-update-room-id).
 
         Args:
-            room_id (str):
+            room_id (str): The new ID for the room
             body (UpdateRoomIdRequestBody | Unset):
 
         Raises:
@@ -3837,13 +3806,14 @@ class AsyncLiveblocks:
         """Get active users
 
          This endpoint returns a list of users currently present in the requested room. Corresponds to
-        [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users).
+        [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomid-active-users).
 
         For optimal performance, we recommend calling this endpoint no more than once every 10 seconds.
         Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3871,10 +3841,12 @@ class AsyncLiveblocks:
          This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection.
         The presence data will automatically expire after the specified TTL (time-to-live). This is useful
         for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all
-        connected users in the room.
+        connected users in the room. Corresponds to
+        [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-presence).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (SetPresenceRequestBody):
 
         Raises:
@@ -3904,10 +3876,11 @@ class AsyncLiveblocks:
          This endpoint enables the broadcast of an event to a room without having to connect to it via the
         `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId`
         passed to event listeners is `-1` when using this API. Corresponds to
-        [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).
+        [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        broadcast-event).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (Any):
 
         Raises:
@@ -3934,8 +3907,9 @@ class AsyncLiveblocks:
     ) -> GetStorageDocumentResponse:
         r"""Get Storage document
 
-         Returns the contents of the room’s Storage tree.  Corresponds to
-        [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage).
+         Returns the contents of the room’s Storage tree. Corresponds to
+        [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        rooms-roomId-storage).
 
         The default outputted format is called “plain LSON”, which includes information on the Live data
         structures in the tree. These nodes show up in the output as objects with two properties, for
@@ -3952,8 +3926,12 @@ class AsyncLiveblocks:
         see below.
 
         Args:
-            room_id (str):
-            format_ (GetStorageDocumentFormat | Unset):
+            room_id (str): ID of the room
+            format_ (GetStorageDocumentFormat | Unset): Use `?format=json` to output a simplified JSON
+                representation of the Storage tree. In that format, each LiveObject and LiveMap will be
+                formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
+                array. This is a lossy format because information about the original data structures is
+                not retained, but it may be easier to work with.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3981,8 +3959,8 @@ class AsyncLiveblocks:
 
          This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling
         this endpoint will disconnect all users from the room if there are any, triggering a reconnect.
-        Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-
-        rooms-roomId-storage).
+        Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#post-rooms-roomId-storage).
 
         The format of the request body is the same as what’s returned by the get Storage endpoint.
 
@@ -3997,7 +3975,7 @@ class AsyncLiveblocks:
         `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (InitializeStorageDocumentBody | Unset):
 
         Raises:
@@ -4023,11 +4001,12 @@ class AsyncLiveblocks:
         """Delete Storage document
 
          This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all
-        users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-
-        reference/liveblocks-node#delete-rooms-roomId-storage).
+        users from the room if there are any. Corresponds to
+        [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-rooms-roomId-storage).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4072,10 +4051,10 @@ class AsyncLiveblocks:
         suitable for this endpoint.
 
         For a **full guide with examples**, see [Modifying storage via REST API with JSON
-        Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).
+        Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
                 RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
 
@@ -4106,13 +4085,15 @@ class AsyncLiveblocks:
         """Get Yjs document
 
          This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to
-        [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
+        [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-
+        roomId-ydoc).
 
         Args:
-            room_id (str):
-            formatting (bool | Unset):
-            key (str | Unset):
-            type_ (GetYjsDocumentType | Unset):
+            room_id (str): ID of the room
+            formatting (bool | Unset): If present, YText will return formatting.
+            key (str | Unset): Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.
+            type_ (GetYjsDocumentType | Unset): Used with key to override the inferred type, i.e.
+                `"ymap"` will return `doc.get(key, Y.Map)`.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4144,7 +4125,8 @@ class AsyncLiveblocks:
          This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this
         endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update
         to a subdocument instead of the main document, pass its `guid`. Corresponds to
-        [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
+        [`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-
+        rooms-roomId-ydoc).
 
         The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs
         documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making
@@ -4153,8 +4135,8 @@ class AsyncLiveblocks:
         unlike most other endpoints.
 
         Args:
-            room_id (str):
-            guid (str | Unset):
+            room_id (str): ID of the room
+            guid (str | Unset): ID of the subdocument
             body (File):
 
         Raises:
@@ -4186,12 +4168,12 @@ class AsyncLiveblocks:
         `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs
         documentation](https://docs.yjs.dev/api/document-updates) for more information on working with
         updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to
-        [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        ydoc-binary).
+        [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-rooms-roomId-ydoc-binary).
 
         Args:
-            room_id (str):
-            guid (str | Unset):
+            room_id (str): ID of the room
+            guid (str | Unset): ID of the subdocument
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4222,9 +4204,11 @@ class AsyncLiveblocks:
         are returned sorted by creation date, from newest to oldest.
 
         Args:
-            room_id (str):
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            room_id (str): ID of the room
+            limit (int | Unset): A limit on the number of versions to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4253,8 +4237,8 @@ class AsyncLiveblocks:
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
         Args:
-            room_id (str):
-            version_id (str):
+            room_id (str): ID of the room
+            version_id (str): ID of the version
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4281,7 +4265,7 @@ class AsyncLiveblocks:
          This endpoint creates a new version history snapshot for the room's Yjs document.
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4307,11 +4291,15 @@ class AsyncLiveblocks:
         """Get room threads
 
          This endpoint returns the threads in the requested room. Corresponds to
-        [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+        [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads).
 
         Args:
-            room_id (str):
-            query (str | Unset):
+            room_id (str): ID of the room
+            query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
+                for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
+                Learn more about [filtering threads with query
+                language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4338,7 +4326,8 @@ class AsyncLiveblocks:
         r"""Create thread
 
          This endpoint creates a new thread and the first comment in the thread. Corresponds to
-        [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
+        [`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `comment.body`.
@@ -4354,7 +4343,7 @@ class AsyncLiveblocks:
         ```
 
         Args:
-            room_id (str):
+            room_id (str): ID of the room
             body (CreateThreadRequestBody):
 
         Raises:
@@ -4380,12 +4369,13 @@ class AsyncLiveblocks:
     ) -> Thread:
         """Get thread
 
-         This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomId-threads-threadId).
+         This endpoint returns a thread by its ID. Corresponds to
+        [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads-threadId).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4410,12 +4400,13 @@ class AsyncLiveblocks:
     ) -> None:
         """Delete thread
 
-         This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-
-        reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
+         This endpoint deletes a thread by its ID. Corresponds to
+        [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-
+        roomId-threads-threadId).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4444,12 +4435,13 @@ class AsyncLiveblocks:
 
          This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to
         store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a
-        property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+        property to `null` to remove it. Corresponds to
+        [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-metadata).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (UpdateThreadMetadataRequestBody):
 
         Raises:
@@ -4473,14 +4465,20 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         thread_id: str,
+        *,
+        body: MarkThreadAsResolvedRequestBody,
     ) -> Thread:
         """Mark thread as resolved
 
-         This endpoint marks a thread as resolved.
+         This endpoint marks a thread as resolved. The request body must include a `userId` to identify who
+        resolved the thread. Returns the updated thread. Corresponds to
+        [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-mark-as-resolved).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            body (MarkThreadAsResolvedRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4495,6 +4493,7 @@ class AsyncLiveblocks:
         return await mark_thread_as_resolved._asyncio(
             room_id=room_id,
             thread_id=thread_id,
+            body=body,
             client=self._client,
         )
 
@@ -4502,14 +4501,20 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         thread_id: str,
+        *,
+        body: MarkThreadAsUnresolvedRequestBody,
     ) -> Thread:
         """Mark thread as unresolved
 
-         This endpoint marks a thread as unresolved.
+         This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who
+        unresolved the thread. Returns the updated thread. Corresponds to
+        [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-mark-as-unresolved).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            body (MarkThreadAsUnresolvedRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4524,6 +4529,7 @@ class AsyncLiveblocks:
         return await mark_thread_as_unresolved._asyncio(
             room_id=room_id,
             thread_id=thread_id,
+            body=body,
             client=self._client,
         )
 
@@ -4536,12 +4542,13 @@ class AsyncLiveblocks:
     ) -> Subscription:
         """Subscribe to thread
 
-         This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
+         This endpoint subscribes to a thread. Corresponds to
+        [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-subscribe).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (SubscribeToThreadRequestBody):
 
         Raises:
@@ -4571,12 +4578,12 @@ class AsyncLiveblocks:
         """Unsubscribe from thread
 
          This endpoint unsubscribes from a thread. Corresponds to
-        [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-unsubscribe).
+        [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-unsubscribe).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (UnsubscribeFromThreadRequestBody):
 
         Raises:
@@ -4604,12 +4611,12 @@ class AsyncLiveblocks:
         """Get thread subscriptions
 
          This endpoint gets the list of subscriptions to a thread. Corresponds to
-        [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-        threadId-subscriptions).
+        [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        rooms-roomId-threads-threadId-subscriptions).
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4637,8 +4644,8 @@ class AsyncLiveblocks:
         r"""Create comment
 
          This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to
-        [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-
-        comments).
+        [`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `body`.
@@ -4653,8 +4660,8 @@ class AsyncLiveblocks:
         ]
 
         Args:
-            room_id (str):
-            thread_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
             body (CreateCommentRequestBody):
 
         Raises:
@@ -4682,13 +4689,14 @@ class AsyncLiveblocks:
     ) -> Comment:
         """Get comment
 
-         This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-
-        reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
+         This endpoint returns a comment by its ID. Corresponds to
+        [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-
+        threads-threadId-comments-commentId).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4717,8 +4725,9 @@ class AsyncLiveblocks:
     ) -> Comment:
         r"""Edit comment
 
-         This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+         This endpoint edits the specified comment. Corresponds to
+        [`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments-commentId).
 
         A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to
         construct a comment’s body, which can be submitted under `body`.
@@ -4733,9 +4742,9 @@ class AsyncLiveblocks:
         ]
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (EditCommentRequestBody):
 
         Raises:
@@ -4765,13 +4774,14 @@ class AsyncLiveblocks:
         """Delete comment
 
          This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the
-        dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
+        dashboard and it cannot be restored. Corresponds to
+        [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-
+        roomId-threads-threadId-comments-commentId).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4801,13 +4811,13 @@ class AsyncLiveblocks:
         """Add comment reaction
 
          This endpoint adds a reaction to a comment. Corresponds to
-        [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-comments-commentId-add-reaction).
+        [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (AddCommentReactionRequestBody):
 
         Raises:
@@ -4840,13 +4850,13 @@ class AsyncLiveblocks:
 
          This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from
         the API or the dashboard and it cannot be restored. Corresponds to
-        [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-
-        threadId-comments-commentId-add-reaction).
+        [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (RemoveCommentReactionRequestBody | Unset):
 
         Raises:
@@ -4879,13 +4889,14 @@ class AsyncLiveblocks:
 
          This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to
         store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a
-        property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-
-        reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
+        property to `null` to remove it. Corresponds to
+        [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
+        rooms-roomId-threads-threadId-comments-commentId-metadata).
 
         Args:
-            room_id (str):
-            thread_id (str):
-            comment_id (str):
+            room_id (str): ID of the room
+            thread_id (str): ID of the thread
+            comment_id (str): ID of the comment
             body (EditCommentMetadataRequestBody):
 
         Raises:
@@ -4903,148 +4914,6 @@ class AsyncLiveblocks:
             thread_id=thread_id,
             comment_id=comment_id,
             body=body,
-            client=self._client,
-        )
-
-    async def get_thread_participants(
-        self,
-        room_id: str,
-        thread_id: str,
-    ) -> GetThreadParticipantsResponse:
-        """Get thread participants
-
-         **Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-
-        subscriptions) instead.
-
-        This endpoint returns the list of thread participants. It is a list of unique user IDs representing
-        all the thread comment authors and mentioned users in comments. Corresponds to
-        [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-
-        threadId-participants).
-
-        Args:
-            room_id (str):
-            thread_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            GetThreadParticipantsResponse
-        """
-
-        from .api.deprecated import get_thread_participants
-
-        return await get_thread_participants._asyncio(
-            room_id=room_id,
-            thread_id=thread_id,
-            client=self._client,
-        )
-
-    async def get_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-    ) -> RoomSubscriptionSettings:
-        """Get room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in
-        our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            RoomSubscriptionSettings
-        """
-
-        from .api.deprecated import get_room_notification_settings
-
-        return await get_room_notification_settings._asyncio(
-            room_id=room_id,
-            user_id=user_id,
-            client=self._client,
-        )
-
-    async def update_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-        *,
-        body: UpdateRoomSubscriptionSettingsRequestBody | Unset = UNSET,
-    ) -> RoomSubscriptionSettings:
-        """Update room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more
-        in our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint updates a user’s notification settings for a specific room. Corresponds to
-        [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-        users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-            body (UpdateRoomSubscriptionSettingsRequestBody | Unset): Partial room subscription
-                settings - all properties are optional
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            RoomSubscriptionSettings
-        """
-
-        from .api.deprecated import update_room_notification_settings
-
-        return await update_room_notification_settings._asyncio(
-            room_id=room_id,
-            user_id=user_id,
-            body=body,
-            client=self._client,
-        )
-
-    async def delete_room_notification_settings(
-        self,
-        room_id: str,
-        user_id: str,
-    ) -> None:
-        """Delete room notification settings
-
-         **Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more
-        in our [migration guide](/docs/platform/upgrading/2.24).
-
-        This endpoint deletes a user’s notification settings for a specific room. Corresponds to
-        [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-        roomId-users-userId-notification-settings).
-
-        Args:
-            room_id (str):
-            user_id (str):
-
-        Raises:
-            errors.LiveblocksError: If the server returns a response with non-2xx status code.
-            httpx.TimeoutException: If the request takes longer than Client.timeout.
-
-        Returns:
-            None
-        """
-
-        from .api.deprecated import delete_room_notification_settings
-
-        return await delete_room_notification_settings._asyncio(
-            room_id=room_id,
-            user_id=user_id,
             client=self._client,
         )
 
@@ -5066,8 +4935,8 @@ class AsyncLiveblocks:
         enter a room.
 
         **Note:** When using the `@liveblocks/node` package, you can use
-        [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to
-        build this request.
+        [`Liveblocks.prepareSession`](https://liveblocks.io/docs/api-reference/liveblocks-node#access-
+        tokens) in your back end to build this request.
 
         You can pass the property `userId` in the request’s body. This can be whatever internal identifier
         you use for your user accounts as long as it uniquely identifies an account. The property `userId`
@@ -5082,7 +4951,7 @@ class AsyncLiveblocks:
         is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a
         list of permissions to assign the user for any room that matches that name exactly (or starts with
         the pattern’s prefix). For tips, see [Manage permissions with access
-        tokens](/docs/authentication/access-token).
+        tokens](https://liveblocks.io/docs/authentication/access-token).
 
         Args:
             body (AuthorizeUserRequestBody):
@@ -5113,7 +4982,7 @@ class AsyncLiveblocks:
         (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own
         application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you
         should manage your permissions by assigning user and/or group permissions to rooms explicitly, see
-        our [Manage permissions with ID tokens](/docs/authentication/id-token) section.
+        our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
 
         **Important:** The difference with an [access token](#post-authorize-user) is that an ID token
         doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end
@@ -5122,8 +4991,8 @@ class AsyncLiveblocks:
         entirely.
 
         **Note:** When using the `@liveblocks/node` package, you can use
-        [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this
-        request.
+        [`Liveblocks.identifyUser`](https://liveblocks.io/docs/api-reference/liveblocks-node) in your back
+        end to build this request.
 
         You can pass the property `userId` in the request’s body. This can be whatever internal identifier
         you use for your user accounts as long as it uniquely identifies an account. The property `userId`
@@ -5133,7 +5002,7 @@ class AsyncLiveblocks:
         If you want to use group permissions, you can also declare which `groupIds` this user belongs to.
         The group ID values are yours, but they will have to match the group IDs you assign permissions to
         when assigning permissions to rooms, see [Manage permissions with ID
-        tokens](/docs/authentication/id-token)).
+        tokens](https://liveblocks.io/docs/authentication/id-token)).
 
         Additionally, you can set custom metadata to the token, which will be publicly accessible by other
         clients through the `user.info` property. This is useful for storing static data like avatar images
@@ -5165,12 +5034,12 @@ class AsyncLiveblocks:
         """Get inbox notification
 
          This endpoint returns a user’s inbox notification by its ID. Corresponds to
-        [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-
-        inboxNotifications-inboxNotificationId).
+        [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-inboxNotifications-inboxNotificationId).
 
         Args:
-            user_id (str):
-            inbox_notification_id (str):
+            user_id (str): ID of the user
+            inbox_notification_id (str): ID of the inbox notification
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5195,11 +5064,13 @@ class AsyncLiveblocks:
     ) -> None:
         """Delete inbox notification
 
-         This endpoint deletes a user’s inbox notification by its ID.
+         This endpoint deletes a user’s inbox notification by its ID. Corresponds to
+        [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
         Args:
-            user_id (str):
-            inbox_notification_id (str):
+            user_id (str): ID of the user
+            inbox_notification_id (str): ID of the inbox notification
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5229,15 +5100,18 @@ class AsyncLiveblocks:
         """Get all inbox notifications
 
          This endpoint returns all the user’s inbox notifications. Corresponds to
-        [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-
-        inboxNotifications).
+        [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-inboxNotifications).
 
         Args:
-            user_id (str):
-            organization_id (str | Unset):
-            query (str | Unset):
-            limit (int | Unset):  Default: 50.
-            starting_after (str | Unset):
+            user_id (str): ID of the user
+            organization_id (str | Unset): The organization ID to filter notifications for.
+            query (str | Unset): Query to filter notifications. You can filter by `unread`, for
+                example, `unread:true`.
+            limit (int | Unset): A limit on the number of inbox notifications to be returned. The
+                limit can range between 1 and 50, and defaults to 50. Default: 50.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5264,10 +5138,12 @@ class AsyncLiveblocks:
     ) -> None:
         """Delete all inbox notifications
 
-         This endpoint deletes all the user’s inbox notifications.
+         This endpoint deletes all the user’s inbox notifications. Corresponds to
+        [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-inbox-notifications).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5291,11 +5167,11 @@ class AsyncLiveblocks:
         """Get notification settings
 
          This endpoint returns a user's notification settings for the project. Corresponds to
-        [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-        notification-settings).
+        [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5321,11 +5197,11 @@ class AsyncLiveblocks:
         """Update notification settings
 
          This endpoint updates a user's notification settings for the project. Corresponds to
-        [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-
-        notification-settings).
+        [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
             body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
                 properties are optional
 
@@ -5352,11 +5228,11 @@ class AsyncLiveblocks:
         """Delete notification settings
 
          This endpoint deletes a user's notification settings for the project. Corresponds to
-        [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-
-        notification-settings).
+        [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-users-userId-notification-settings).
 
         Args:
-            user_id (str):
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5381,12 +5257,12 @@ class AsyncLiveblocks:
         """Get room subscription settings
 
          This endpoint returns a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-
-        users-userId-subscription-settings).
+        [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5414,12 +5290,12 @@ class AsyncLiveblocks:
         """Update room subscription settings
 
          This endpoint updates a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-
-        users-userId-subscription-settings).
+        [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
             body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
                 properties are optional
 
@@ -5448,12 +5324,12 @@ class AsyncLiveblocks:
         """Delete room subscription settings
 
          This endpoint deletes a user’s subscription settings for a specific room. Corresponds to
-        [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-
-        roomId-users-userId-subscription-settings).
+        [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str):
-            user_id (str):
+            room_id (str): ID of the room
+            user_id (str): ID of the user
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5482,14 +5358,17 @@ class AsyncLiveblocks:
         """Get user room subscription settings
 
          This endpoint returns the list of a user's room subscription settings. Corresponds to
-        [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-
-        room-subscription-settings).
+        [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-users-userId-room-subscription-settings).
 
         Args:
-            user_id (str):
-            starting_after (str | Unset):
-            limit (int | Unset):  Default: 50.
-            organization_id (str | Unset):
+            user_id (str): ID of the user
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
+            limit (int | Unset): A limit on the number of elements to be returned. The limit can range
+                between 1 and 50, and defaults to 50. Default: 50.
+            organization_id (str | Unset): The organization ID to filter room subscription settings
+                for.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5517,8 +5396,8 @@ class AsyncLiveblocks:
         """Trigger inbox notification
 
          This endpoint triggers an inbox notification. Corresponds to
-        [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-
-        notifications-trigger).
+        [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#post-inbox-notifications-trigger).
 
         Args:
             body (TriggerInboxNotificationRequestBody | Unset):
@@ -5547,11 +5426,13 @@ class AsyncLiveblocks:
         """Get groups
 
          This endpoint returns a list of all groups in your project. Corresponds to
-        [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).
+        [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            limit (int | Unset): A limit on the number of groups to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5576,8 +5457,8 @@ class AsyncLiveblocks:
     ) -> Group:
         """Create group
 
-         This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-
-        reference/liveblocks-node#create-group).
+         This endpoint creates a new group. Corresponds to
+        [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
             body (CreateGroupRequestBody | Unset):
@@ -5603,11 +5484,11 @@ class AsyncLiveblocks:
     ) -> Group:
         """Get group
 
-         This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-
-        reference/liveblocks-node#get-group).
+         This endpoint returns a specific group by ID. Corresponds to
+        [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to retrieve.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5630,11 +5511,11 @@ class AsyncLiveblocks:
     ) -> None:
         """Delete group
 
-         This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-
-        reference/liveblocks-node#delete-group).
+         This endpoint deletes a group. Corresponds to
+        [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to delete.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5660,10 +5541,11 @@ class AsyncLiveblocks:
         """Add group members
 
          This endpoint adds new members to an existing group. Corresponds to
-        [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).
+        [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-
+        members).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to add members to.
             body (AddGroupMembersRequestBody):
 
         Raises:
@@ -5691,10 +5573,11 @@ class AsyncLiveblocks:
         """Remove group members
 
          This endpoint removes members from an existing group. Corresponds to
-        [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).
+        [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-
+        group-members).
 
         Args:
-            group_id (str):
+            group_id (str): The ID of the group to remove members from.
             body (RemoveGroupMembersRequestBody):
 
         Raises:
@@ -5723,12 +5606,15 @@ class AsyncLiveblocks:
         """Get user groups
 
          This endpoint returns all groups that a specific user is a member of. Corresponds to
-        [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).
+        [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-
+        groups).
 
         Args:
-            user_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            user_id (str): The ID of the user to get groups for.
+            limit (int | Unset): A limit on the number of groups to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5756,12 +5642,15 @@ class AsyncLiveblocks:
         """Get AI copilots
 
          This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation
-        date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-
-        reference/liveblocks-node#get-ai-copilots).
+        date, from newest to oldest. Corresponds to
+        [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-
+        copilots).
 
         Args:
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            limit (int | Unset): A limit on the number of copilots to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5790,7 +5679,8 @@ class AsyncLiveblocks:
         """Create AI copilot
 
          This endpoint creates a new AI copilot with the given configuration. Corresponds to
-        [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).
+        [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-
+        copilot).
 
         Args:
             body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
@@ -5817,11 +5707,12 @@ class AsyncLiveblocks:
     ) -> AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible:
         """Get AI copilot
 
-         This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-
-        reference/liveblocks-node#get-ai-copilot).
+         This endpoint returns an AI copilot by its ID. Corresponds to
+        [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-
+        copilot).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5847,7 +5738,8 @@ class AsyncLiveblocks:
         r"""Update AI copilot
 
          This endpoint updates an existing AI copilot's configuration. Corresponds to
-        [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).
+        [`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-
+        copilot).
 
         This endpoint returns a 422 response if the update doesn't apply due to validation failures. For
         example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider
@@ -5855,7 +5747,7 @@ class AsyncLiveblocks:
         response with an error message explaining where the validation failed.
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
             body (UpdateAiCopilotRequestBody):
 
         Raises:
@@ -5881,11 +5773,11 @@ class AsyncLiveblocks:
         """Delete AI copilot
 
          This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot
-        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-
-        node#delete-ai-copilot).
+        be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-
+        reference/liveblocks-node#delete-ai-copilot).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5912,12 +5804,15 @@ class AsyncLiveblocks:
         """Get knowledge sources
 
          This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds
-        to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).
+        to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        knowledge-sources).
 
         Args:
-            copilot_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            copilot_id (str): ID of the AI copilot
+            limit (int | Unset): A limit on the number of knowledge sources to be returned. The limit
+                can range between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5944,11 +5839,12 @@ class AsyncLiveblocks:
         """Get knowledge source
 
          This endpoint returns a specific knowledge source by its ID. Corresponds to
-        [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).
+        [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-
+        knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5975,11 +5871,12 @@ class AsyncLiveblocks:
         """Create web knowledge source
 
          This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access
-        and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-
-        reference/liveblocks-node#create-web-knowledge-source).
+        and learn from web content. Corresponds to
+        [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-web-knowledge-source).
 
         Args:
-            copilot_id (str):
+            copilot_id (str): ID of the AI copilot
             body (CreateWebKnowledgeSourceRequestBody):
 
         Raises:
@@ -6009,12 +5906,12 @@ class AsyncLiveblocks:
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
         then reference the content of the file when responding. Corresponds to
-        [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-
-        source).
+        [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#create-file-knowledge-source).
 
         Args:
-            copilot_id (str):
-            name (str):
+            copilot_id (str): ID of the AI copilot
+            name (str): Name of the file
             body (File):
 
         Raises:
@@ -6043,12 +5940,12 @@ class AsyncLiveblocks:
 
          This endpoint returns the content of a file knowledge source as markdown. This allows you to see
         what content the AI copilot has access to from uploaded files. Corresponds to
-        [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-
-        knowledge-source-markdown).
+        [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-file-knowledge-source-markdown).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6075,12 +5972,12 @@ class AsyncLiveblocks:
 
          This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have
         access to the content from this file. Corresponds to
-        [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-
-        source).
+        [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-file-knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6107,12 +6004,12 @@ class AsyncLiveblocks:
 
          This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have
         access to the content from this source. Corresponds to
-        [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-
-        source).
+        [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#delete-web-knowledge-source).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6142,14 +6039,16 @@ class AsyncLiveblocks:
 
          This endpoint returns a paginated list of links that were indexed from a web knowledge source. This
         is useful for understanding what content the AI copilot has access to from web sources. Corresponds
-        to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-
-        source-links).
+        to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-
+        node#get-web-knowledge-source-links).
 
         Args:
-            copilot_id (str):
-            knowledge_source_id (str):
-            limit (int | Unset):  Default: 20.
-            starting_after (str | Unset):
+            copilot_id (str): ID of the AI copilot
+            knowledge_source_id (str): ID of the knowledge source
+            limit (int | Unset): A limit on the number of links to be returned. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            starting_after (str | Unset): A cursor used for pagination. Get the value from the
+                `nextCursor` response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6181,8 +6080,10 @@ class AsyncLiveblocks:
         the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
         Args:
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            limit (int | Unset): A limit on the number of projects to return. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6239,7 +6140,7 @@ class AsyncLiveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6272,7 +6173,7 @@ class AsyncLiveblocks:
         If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (UpdateManagementProjectRequestBody):
 
         Raises:
@@ -6301,7 +6202,7 @@ class AsyncLiveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6328,7 +6229,7 @@ class AsyncLiveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6355,7 +6256,7 @@ class AsyncLiveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6389,7 +6290,7 @@ class AsyncLiveblocks:
         be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (RollProjectPublicApiKeyRequestBody | Unset):
 
         Raises:
@@ -6424,7 +6325,7 @@ class AsyncLiveblocks:
         parameter can be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (RollProjectSecretApiKeyRequestBody | Unset):
 
         Raises:
@@ -6460,9 +6361,11 @@ class AsyncLiveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
-            limit (int | Unset):  Default: 20.
-            cursor (str | Unset):
+            project_id (str): ID of the project
+            limit (int | Unset): A limit on the number of webhooks to return. The limit can range
+                between 1 and 100, and defaults to 20. Default: 20.
+            cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
+                response of the previous page.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6493,7 +6396,7 @@ class AsyncLiveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str):
+            project_id (str): ID of the project
             body (CreateManagementWebhookRequestBody):
 
         Raises:
@@ -6524,8 +6427,8 @@ class AsyncLiveblocks:
         does not exist. This endpoint requires the `read:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6557,8 +6460,8 @@ class AsyncLiveblocks:
         errors. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (UpdateManagementWebhookRequestBody):
 
         Raises:
@@ -6589,8 +6492,8 @@ class AsyncLiveblocks:
         `404` if the project or webhook does not exist. Requires `write:all`.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6620,8 +6523,8 @@ class AsyncLiveblocks:
         `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6650,8 +6553,8 @@ class AsyncLiveblocks:
         `read:all`.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6683,8 +6586,8 @@ class AsyncLiveblocks:
         or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (UpsertManagementWebhookHeadersRequestBody):
 
         Raises:
@@ -6719,8 +6622,8 @@ class AsyncLiveblocks:
         a 422 error response is returned.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (DeleteManagementWebhookHeadersRequestBody):
 
         Raises:
@@ -6754,8 +6657,8 @@ class AsyncLiveblocks:
         requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (RecoverManagementWebhookFailedMessagesRequestBody):
 
         Raises:
@@ -6789,8 +6692,8 @@ class AsyncLiveblocks:
         project or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str):
-            webhook_id (str):
+            project_id (str): ID of the project
+            webhook_id (str): ID of the webhook
             body (TestManagementWebhookRequestBody):
 
         Raises:

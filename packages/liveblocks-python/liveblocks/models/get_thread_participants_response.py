@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Mapping
 from typing import Any, Self, cast
 
@@ -14,6 +15,13 @@ class GetThreadParticipantsResponse:
     """
 
     participant_ids: list[str]
+
+    def __attrs_post_init__(self) -> None:
+        warnings.warn(
+            "GetThreadParticipantsResponse is deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def to_dict(self) -> dict[str, Any]:
         participant_ids = self.participant_ids

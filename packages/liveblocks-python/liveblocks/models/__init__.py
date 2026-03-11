@@ -127,6 +127,8 @@ from .management_webhook_additional_headers import ManagementWebhookAdditionalHe
 from .management_webhook_event import ManagementWebhookEvent
 from .management_webhook_headers_delete import ManagementWebhookHeadersDelete
 from .management_webhook_secret import ManagementWebhookSecret
+from .mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
+from .mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
 from .move_json_patch_operation import MoveJsonPatchOperation
 from .notification_channel_settings import NotificationChannelSettings
 from .notification_settings import NotificationSettings
@@ -325,6 +327,8 @@ __all__ = (
     "ManagementWebhookEvent",
     "ManagementWebhookHeadersDelete",
     "ManagementWebhookSecret",
+    "MarkThreadAsResolvedRequestBody",
+    "MarkThreadAsUnresolvedRequestBody",
     "MoveJsonPatchOperation",
     "NotificationChannelSettings",
     "NotificationSettings",

@@ -4,13 +4,17 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
+from ...models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
 from ...models.thread import Thread
 
 
 def _get_kwargs(
     room_id: str,
     thread_id: str,
+    *,
+    body: MarkThreadAsUnresolvedRequestBody,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -20,6 +24,11 @@ def _get_kwargs(
         ),
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -37,10 +46,12 @@ def _sync(
     thread_id: str,
     *,
     client: httpx.Client,
+    body: MarkThreadAsUnresolvedRequestBody,
 ) -> Thread:
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
+        body=body,
     )
 
     response = client.request(
@@ -54,10 +65,12 @@ async def _asyncio(
     thread_id: str,
     *,
     client: httpx.AsyncClient,
+    body: MarkThreadAsUnresolvedRequestBody,
 ) -> Thread:
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
+        body=body,
     )
 
     response = await client.request(
