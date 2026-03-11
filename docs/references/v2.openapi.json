@@ -1837,7 +1837,8 @@
       "get": {
         "summary": "Get thread participants",
         "x-badge": "Deprecated",
-        "tags": ["Deprecated"],
+        "tags": ["Comments"],
+        "deprecated": true,
         "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "operationId": "get-thread-participants",
         "parameters": [
@@ -3614,7 +3615,8 @@
       "get": {
         "summary": "Get room notification settings",
         "operationId": "get-room-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": ["Notifications"],
+        "deprecated": true,
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -3662,7 +3664,8 @@
       "post": {
         "summary": "Update room notification settings",
         "operationId": "update-room-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": ["Notifications"],
+        "deprecated": true,
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -3722,7 +3725,8 @@
       "delete": {
         "summary": "Delete room notification settings",
         "operationId": "delete-room-notification-settings",
-        "tags": ["Deprecated"],
+        "tags": ["Notifications"],
+        "deprecated": true,
         "x-badge": "Deprecated",
         "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
@@ -9211,9 +9215,6 @@
     },
     {
       "name": "Management"
-    },
-    {
-      "name": "Deprecated"
     }
   ],
   "x-internal": true
