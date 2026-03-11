@@ -80,9 +80,10 @@ const { body, status } = await liveblocks.identifyUser(
 
 <Banner title="Don't cache tokens" type="warning">
 
-Is it not recommended to cache your access token authentication endpoint. The
-Liveblocks client will cache results for you, only making requests to the
-endpoint if necessary, such as when the the token has expired.
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
 
 </Banner>
 
@@ -333,9 +334,10 @@ const session = liveblocks.prepareSession(
 
 <Banner title="Don't cache tokens" type="warning">
 
-Is it not recommended to cache your access token authentication endpoint. The
-Liveblocks client will cache results for you, only making requests to the
-endpoint if necessary, such as when the the token has expired.
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
 
 </Banner>
 

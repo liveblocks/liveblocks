@@ -333,8 +333,8 @@ function App() {
     The URL of your back end’s [authentication endpoint](/docs/authentication)
     as a string, or an async callback function that returns a Liveblocks token
     result. The result is cached by the Liveblocks client, and called fresh only
-    when necessary, so it's not recommended to cache it yourself. Either
-    `authEndpoint` or `publicApiKey` are required. Learn more about [using a URL
+    when necessary, so never cache it yourself. Either `authEndpoint` or
+    `publicApiKey` are required. Learn more about [using a URL
     string](#LiveblocksProviderAuthEndpoint) and [using a
     callback](#LiveblocksProviderCallback).
   </PropertiesListItem>
@@ -479,9 +479,9 @@ function App() {
 
 <Banner title="Don't cache tokens" type="warning">
 
-Is it not recommended to cache your authentication endpoint. The Liveblocks
-client will cache results for you, only making requests to the endpoint if
-necessary, such as when the the token has expired.
+Never cache your authentication endpoint, as your client will not function
+correctly. The Liveblocks client will cache results for you, only making
+requests to the endpoint if necessary, such as when the token has expired.
 
 </Banner>
 
