@@ -1,21 +1,24 @@
-# liveblocks
 
-A client library for accessing Liveblocks API
+# @liveblocks/python
+
+`@liveblocks/python` provides you with a Python client for accessing the Liveblocks API. This library is only intended for use in your Python back end.
 
 ## Installation
+
+Install the Liveblocks package to get started.
 
 ```bash
 pip install liveblocks
 ```
 
-## Quick Start
+## Quickstart
 
 ### Synchronous
 
 ```python
 from liveblocks import Liveblocks
 
-client = Liveblocks(secret="sk_your_secret_key")
+client = Liveblocks(secret="{{SECRET_KEY}}")
 
 with client:
     rooms = client.get_rooms()
@@ -27,7 +30,7 @@ with client:
 ```python
 from liveblocks import AsyncLiveblocks
 
-client = AsyncLiveblocks(secret="sk_your_secret_key")
+client = AsyncLiveblocks(secret="{{SECRET_KEY}}")
 
 async with client:
     rooms = await client.get_rooms()
@@ -39,7 +42,7 @@ async with client:
 All API calls require a **secret key** starting with `sk_`. You can find your secret key in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys).
 
 ```python
-client = Liveblocks(secret="sk_your_secret_key")
+client = Liveblocks(secret="{{SECRET_KEY}}")
 ```
 
 ---
@@ -48,7 +51,7 @@ client = Liveblocks(secret="sk_your_secret_key")
 
 ### Room
 
-#### `get_rooms`
+#### get_rooms
 
 This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).
 
@@ -75,7 +78,7 @@ Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
 ---
 
-#### `create_room`
+#### create_room
 
 This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
 - `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
@@ -94,7 +97,7 @@ This endpoint creates a new room. `id` and `defaultAccesses` are required. When 
 
 ---
 
-#### `get_room`
+#### get_room
 
 This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
@@ -107,7 +110,7 @@ This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](ht
 
 ---
 
-#### `update_room`
+#### update_room
 
 This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). 
 
@@ -135,7 +138,7 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 ---
 
-#### `delete_room`
+#### delete_room
 
 This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomid).
 
@@ -148,7 +151,7 @@ This endpoint deletes a room. A deleted room is no longer accessible from the AP
 
 ---
 
-#### `prewarm_room`
+#### prewarm_room
 
 Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-prewarm).
 
@@ -161,7 +164,7 @@ Speeds up connecting to a room for the next 10 seconds. Use this when you know a
 
 ---
 
-#### `upsert_room`
+#### upsert_room
 
 This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). 
 
@@ -189,7 +192,7 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 ---
 
-#### `update_room_id`
+#### update_room_id
 
 This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).
 
@@ -203,7 +206,7 @@ This endpoint permanently updates the room’s ID. All existing references to th
 
 ---
 
-#### `get_active_users`
+#### get_active_users
 
 This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). 
 
@@ -219,7 +222,7 @@ Duplicates can occur if a user is in the requested room with multiple browser ta
 
 ---
 
-#### `set_presence`
+#### set_presence
 
 This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room. Corresponds to [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
 
@@ -233,7 +236,7 @@ This endpoint sets ephemeral presence for a user in a room without requiring a W
 
 ---
 
-#### `broadcast_event`
+#### broadcast_event
 
 This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).
 
@@ -249,7 +252,7 @@ This endpoint enables the broadcast of an event to a room without having to conn
 
 ### Storage
 
-#### `get_storage_document`
+#### get_storage_document
 
 Returns the contents of the room’s Storage tree. Corresponds to [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). 
 
@@ -274,7 +277,7 @@ If you’re not interested in this information, you can use the simpler `?format
 
 ---
 
-#### `initialize_storage_document`
+#### initialize_storage_document
 
 This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).
 
@@ -298,7 +301,7 @@ A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.
 
 ---
 
-#### `delete_storage_document`
+#### delete_storage_document
 
 This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).
 
@@ -312,7 +315,7 @@ This endpoint deletes all of the room’s Storage data. Calling this endpoint wi
 
 ---
 
-#### `patch_storage_document`
+#### patch_storage_document
 
 Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the room's Storage document, useful for modifying Storage. Operations are applied in order; if any operation fails, the document is not changed and a 422 response with a helpful message is returned.
 
@@ -334,7 +337,7 @@ For a **full guide with examples**, see [Modifying storage via REST API with JSO
 
 ### Yjs
 
-#### `get_yjs_document`
+#### get_yjs_document
 
 This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
 
@@ -350,7 +353,7 @@ This endpoint returns a JSON representation of the room’s Yjs document. Corres
 
 ---
 
-#### `send_yjs_binary_update`
+#### send_yjs_binary_update
 
 This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).
 
@@ -367,7 +370,7 @@ The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See th
 
 ---
 
-#### `get_yjs_document_as_binary_update`
+#### get_yjs_document_as_binary_update
 
 This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).
 
@@ -381,7 +384,7 @@ This endpoint returns the room's Yjs document encoded as a single binary update.
 
 ---
 
-#### `get_yjs_versions`
+#### get_yjs_versions
 
 This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
 
@@ -396,7 +399,7 @@ This endpoint returns a list of version history snapshots for the room's Yjs doc
 
 ---
 
-#### `get_yjs_version`
+#### get_yjs_version
 
 This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
@@ -410,7 +413,7 @@ This endpoint returns a specific version of the room's Yjs document encoded as a
 
 ---
 
-#### `create_yjs_version`
+#### create_yjs_version
 
 This endpoint creates a new version history snapshot for the room's Yjs document.
 
@@ -425,7 +428,7 @@ This endpoint creates a new version history snapshot for the room's Yjs document
 
 ### Comments
 
-#### `get_threads`
+#### get_threads
 
 This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
 
@@ -439,7 +442,7 @@ This endpoint returns the threads in the requested room. Corresponds to [`livebl
 
 ---
 
-#### `create_thread`
+#### create_thread
 
 This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).
 
@@ -467,7 +470,7 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 ---
 
-#### `get_thread`
+#### get_thread
 
 This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).
 
@@ -481,7 +484,7 @@ This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`
 
 ---
 
-#### `delete_thread`
+#### delete_thread
 
 This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
 
@@ -495,7 +498,23 @@ This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThre
 
 ---
 
-#### `edit_thread_metadata`
+#### get_thread_participants
+
+**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.
+
+This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `thread_id` | `str` | Yes | ID of the thread |
+
+
+---
+
+#### edit_thread_metadata
 
 This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
 
@@ -510,7 +529,7 @@ This endpoint edits the metadata of a thread. The metadata is a JSON object that
 
 ---
 
-#### `mark_thread_as_resolved`
+#### mark_thread_as_resolved
 
 This endpoint marks a thread as resolved. The request body must include a `userId` to identify who resolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved).
 
@@ -525,7 +544,7 @@ This endpoint marks a thread as resolved. The request body must include a `userI
 
 ---
 
-#### `mark_thread_as_unresolved`
+#### mark_thread_as_unresolved
 
 This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who unresolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
 
@@ -540,7 +559,7 @@ This endpoint marks a thread as unresolved. The request body must include a `use
 
 ---
 
-#### `subscribe_to_thread`
+#### subscribe_to_thread
 
 This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
 
@@ -555,7 +574,7 @@ This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThr
 
 ---
 
-#### `unsubscribe_from_thread`
+#### unsubscribe_from_thread
 
 This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).
 
@@ -570,7 +589,7 @@ This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscrib
 
 ---
 
-#### `get_thread_subscriptions`
+#### get_thread_subscriptions
 
 This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).
 
@@ -584,7 +603,7 @@ This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveb
 
 ---
 
-#### `create_comment`
+#### create_comment
 
 This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).
 
@@ -613,7 +632,7 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 ---
 
-#### `get_comment`
+#### get_comment
 
 This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
 
@@ -628,7 +647,7 @@ This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getCommen
 
 ---
 
-#### `edit_comment`
+#### edit_comment
 
 This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
 
@@ -658,7 +677,7 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 ---
 
-#### `delete_comment`
+#### delete_comment
 
 This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
 
@@ -673,7 +692,7 @@ This endpoint deletes a comment. A deleted comment is no longer accessible from 
 
 ---
 
-#### `add_comment_reaction`
+#### add_comment_reaction
 
 This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
@@ -689,7 +708,7 @@ This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addComme
 
 ---
 
-#### `remove_comment_reaction`
+#### remove_comment_reaction
 
 This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
@@ -705,7 +724,7 @@ This endpoint removes a comment reaction. A deleted comment reaction is no longe
 
 ---
 
-#### `edit_comment_metadata`
+#### edit_comment_metadata
 
 This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
 
@@ -723,7 +742,7 @@ This endpoint edits the metadata of a comment. The metadata is a JSON object tha
 
 ### Auth
 
-#### `authorize_user`
+#### authorize_user
 
 This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.
 
@@ -746,7 +765,7 @@ Lastly, you’ll specify the exact permissions to give to the user using the `pe
 
 ---
 
-#### `identify_user`
+#### identify_user
 
 This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.
 
@@ -771,7 +790,7 @@ Additionally, you can set custom metadata to the token, which will be publicly a
 
 ### Notifications
 
-#### `get_inbox_notification`
+#### get_inbox_notification
 
 This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).
 
@@ -785,7 +804,7 @@ This endpoint returns a user’s inbox notification by its ID. Corresponds to [`
 
 ---
 
-#### `delete_inbox_notification`
+#### delete_inbox_notification
 
 This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
@@ -799,7 +818,7 @@ This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`
 
 ---
 
-#### `get_inbox_notifications`
+#### get_inbox_notifications
 
 This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
 
@@ -816,7 +835,7 @@ This endpoint returns all the user’s inbox notifications. Corresponds to [`liv
 
 ---
 
-#### `delete_all_inbox_notifications`
+#### delete_all_inbox_notifications
 
 This endpoint deletes all the user’s inbox notifications. Corresponds to [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).
 
@@ -829,7 +848,7 @@ This endpoint deletes all the user’s inbox notifications. Corresponds to [`liv
 
 ---
 
-#### `get_notification_settings`
+#### get_notification_settings
 
 This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).
 
@@ -842,7 +861,7 @@ This endpoint returns a user's notification settings for the project. Correspond
 
 ---
 
-#### `update_notification_settings`
+#### update_notification_settings
 
 This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).
 
@@ -856,7 +875,7 @@ This endpoint updates a user's notification settings for the project. Correspond
 
 ---
 
-#### `delete_notification_settings`
+#### delete_notification_settings
 
 This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 
@@ -869,7 +888,7 @@ This endpoint deletes a user's notification settings for the project. Correspond
 
 ---
 
-#### `get_room_subscription_settings`
+#### get_room_subscription_settings
 
 This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).
 
@@ -883,7 +902,7 @@ This endpoint returns a user’s subscription settings for a specific room. Corr
 
 ---
 
-#### `update_room_subscription_settings`
+#### update_room_subscription_settings
 
 This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).
 
@@ -898,7 +917,7 @@ This endpoint updates a user’s subscription settings for a specific room. Corr
 
 ---
 
-#### `delete_room_subscription_settings`
+#### delete_room_subscription_settings
 
 This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).
 
@@ -912,7 +931,7 @@ This endpoint deletes a user’s subscription settings for a specific room. Corr
 
 ---
 
-#### `get_user_room_subscription_settings`
+#### get_user_room_subscription_settings
 
 This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).
 
@@ -928,7 +947,56 @@ This endpoint returns the list of a user's room subscription settings. Correspon
 
 ---
 
-#### `trigger_inbox_notification`
+#### get_room_notification_settings
+
+**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).
+
+This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `user_id` | `str` | Yes | ID of the user |
+
+
+---
+
+#### update_room_notification_settings
+
+**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).
+
+This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `user_id` | `str` | Yes | ID of the user |
+| `body` | `UpdateRoomSubscriptionSettingsRequestBody \| Unset` | No | Request body (application/json) |
+
+
+---
+
+#### delete_room_notification_settings
+
+**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).
+
+This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `user_id` | `str` | Yes | ID of the user |
+
+
+---
+
+#### trigger_inbox_notification
 
 This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 
@@ -943,7 +1011,7 @@ This endpoint triggers an inbox notification. Corresponds to [`liveblocks.trigge
 
 ### Groups
 
-#### `get_groups`
+#### get_groups
 
 This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
 
@@ -957,7 +1025,7 @@ This endpoint returns a list of all groups in your project. Corresponds to [`liv
 
 ---
 
-#### `create_group`
+#### create_group
 
 This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
@@ -970,7 +1038,7 @@ This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](htt
 
 ---
 
-#### `get_group`
+#### get_group
 
 This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
@@ -983,7 +1051,7 @@ This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGro
 
 ---
 
-#### `delete_group`
+#### delete_group
 
 This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
@@ -996,7 +1064,7 @@ This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https:/
 
 ---
 
-#### `add_group_members`
+#### add_group_members
 
 This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-members).
 
@@ -1010,7 +1078,7 @@ This endpoint adds new members to an existing group. Corresponds to [`liveblocks
 
 ---
 
-#### `remove_group_members`
+#### remove_group_members
 
 This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-group-members).
 
@@ -1024,7 +1092,7 @@ This endpoint removes members from an existing group. Corresponds to [`liveblock
 
 ---
 
-#### `get_user_groups`
+#### get_user_groups
 
 This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-groups).
 
@@ -1041,7 +1109,7 @@ This endpoint returns all groups that a specific user is a member of. Correspond
 
 ### Ai
 
-#### `get_ai_copilots`
+#### get_ai_copilots
 
 This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilots).
 
@@ -1055,7 +1123,7 @@ This endpoint returns a paginated list of AI copilots. The copilots are returned
 
 ---
 
-#### `create_ai_copilot`
+#### create_ai_copilot
 
 This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-copilot).
 
@@ -1068,7 +1136,7 @@ This endpoint creates a new AI copilot with the given configuration. Corresponds
 
 ---
 
-#### `get_ai_copilot`
+#### get_ai_copilot
 
 This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilot).
 
@@ -1081,7 +1149,7 @@ This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAi
 
 ---
 
-#### `update_ai_copilot`
+#### update_ai_copilot
 
 This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-copilot).
 
@@ -1097,7 +1165,7 @@ This endpoint returns a 422 response if the update doesn't apply due to validati
 
 ---
 
-#### `delete_ai_copilot`
+#### delete_ai_copilot
 
 This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-ai-copilot).
 
@@ -1110,7 +1178,7 @@ This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer ac
 
 ---
 
-#### `get_knowledge_sources`
+#### get_knowledge_sources
 
 This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-sources).
 
@@ -1125,7 +1193,7 @@ This endpoint returns a paginated list of knowledge sources for a specific AI co
 
 ---
 
-#### `get_knowledge_source`
+#### get_knowledge_source
 
 This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-source).
 
@@ -1139,7 +1207,7 @@ This endpoint returns a specific knowledge source by its ID. Corresponds to [`li
 
 ---
 
-#### `create_web_knowledge_source`
+#### create_web_knowledge_source
 
 This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-web-knowledge-source).
 
@@ -1153,7 +1221,7 @@ This endpoint creates a web knowledge source for an AI copilot. This allows the 
 
 ---
 
-#### `create_file_knowledge_source`
+#### create_file_knowledge_source
 
 This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-file-knowledge-source).
 
@@ -1168,7 +1236,7 @@ This endpoint creates a file knowledge source for an AI copilot by uploading a f
 
 ---
 
-#### `get_file_knowledge_source_markdown`
+#### get_file_knowledge_source_markdown
 
 This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).
 
@@ -1182,7 +1250,7 @@ This endpoint returns the content of a file knowledge source as markdown. This a
 
 ---
 
-#### `delete_file_knowledge_source`
+#### delete_file_knowledge_source
 
 This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-file-knowledge-source).
 
@@ -1196,7 +1264,7 @@ This endpoint deletes a file knowledge source from an AI copilot. The copilot wi
 
 ---
 
-#### `delete_web_knowledge_source`
+#### delete_web_knowledge_source
 
 This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-web-knowledge-source).
 
@@ -1210,7 +1278,7 @@ This endpoint deletes a web knowledge source from an AI copilot. The copilot wil
 
 ---
 
-#### `get_web_knowledge_source_links`
+#### get_web_knowledge_source_links
 
 This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).
 
@@ -1228,7 +1296,7 @@ This endpoint returns a paginated list of links that were indexed from a web kno
 
 ### Management
 
-#### `get_management_projects`
+#### get_management_projects
 
 Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
@@ -1242,7 +1310,7 @@ Returns a paginated list of projects. You can limit the number of projects retur
 
 ---
 
-#### `create_management_project`
+#### create_management_project
 
 Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.
 
@@ -1255,7 +1323,7 @@ Creates a new project within your account. This endpoint requires the `write:all
 
 ---
 
-#### `get_management_project`
+#### get_management_project
 
 Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.
 
@@ -1268,7 +1336,7 @@ Returns a single project specified by its ID. This endpoint requires the `read:a
 
 ---
 
-#### `update_management_project`
+#### update_management_project
 
 Updates an existing project specified by its ID. This endpoint allows you to modify project details such as the project name and the version creation timeout. The `versionCreationTimeout` can be set to `false` to disable the timeout or to a number of seconds between 30 and 300. Fields omitted from the request body will not be updated. Requires the `write:all` scope.
 
@@ -1284,7 +1352,7 @@ If the project cannot be found, a 404 error response is returned.
 
 ---
 
-#### `delete_management_project`
+#### delete_management_project
 
 Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
@@ -1297,7 +1365,7 @@ Soft deletes the project specified by its ID. This endpoint requires the `write:
 
 ---
 
-#### `activate_project_public_api_key`
+#### activate_project_public_api_key
 
 Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
@@ -1310,7 +1378,7 @@ Activates the public API key associated with the specified project. This endpoin
 
 ---
 
-#### `deactivate_project_public_api_key`
+#### deactivate_project_public_api_key
 
 Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
@@ -1323,7 +1391,7 @@ Deactivates the public API key associated with the specified project. This endpo
 
 ---
 
-#### `roll_project_public_api_key`
+#### roll_project_public_api_key
 
 Rolls (rotates) the public API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.
 
@@ -1339,7 +1407,7 @@ If the public key is not currently enabled for the project, a 403 error response
 
 ---
 
-#### `roll_project_secret_api_key`
+#### roll_project_secret_api_key
 
 Rolls (rotates) the secret API key associated with the specified project, generating a new key value while deprecating the previous one. The new key becomes immediately active. This endpoint requires the `write:all` scope.
 
@@ -1355,7 +1423,7 @@ If the project cannot be found, a 404 error response is returned. An optional `e
 
 ---
 
-#### `get_management_webhooks`
+#### get_management_webhooks
 
 Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The response includes an array of webhook objects associated with the specified project, as well as a `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter from the `nextCursor` value in the previous response to fetch subsequent pages. If the project cannot be found, a 404 error response is returned.
 
@@ -1370,7 +1438,7 @@ Returns a paginated list of webhooks for a project. This endpoint requires the `
 
 ---
 
-#### `create_management_webhook`
+#### create_management_webhook
 
 Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
@@ -1384,7 +1452,7 @@ Creates a new webhook for a project. This endpoint requires the `write:all` scop
 
 ---
 
-#### `get_management_webhook`
+#### get_management_webhook
 
 Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook does not exist. This endpoint requires the `read:all` scope.
 
@@ -1398,7 +1466,7 @@ Get one webhook by `webhookId` for a project. Returns webhook settings such as U
 
 ---
 
-#### `update_management_webhook`
+#### update_management_webhook
 
 Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation errors. This endpoint requires the `write:all` scope.
 
@@ -1413,7 +1481,7 @@ Update one webhook by `webhookId` for a project. Send only fields you want to ch
 
 ---
 
-#### `delete_management_webhook`
+#### delete_management_webhook
 
 Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or `404` if the project or webhook does not exist. Requires `write:all`.
 
@@ -1427,7 +1495,7 @@ Delete one webhook by `webhookId` for a project. Returns `200` with an empty bod
 
 ---
 
-#### `roll_management_webhook_secret`
+#### roll_management_webhook_secret
 
 Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24 hours. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
@@ -1441,7 +1509,7 @@ Rotate a webhook signing secret and return the new secret. The previous secret r
 
 ---
 
-#### `get_management_webhook_additional_headers`
+#### get_management_webhook_additional_headers
 
 Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires `read:all`.
 
@@ -1455,7 +1523,7 @@ Get a webhook's additional headers. Returns `404` if the project or webhook does
 
 ---
 
-#### `upsert_management_webhook_additional_headers`
+#### upsert_management_webhook_additional_headers
 
 Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
@@ -1470,7 +1538,7 @@ Upsert additional headers for a webhook. Provided headers are merged with existi
 
 ---
 
-#### `delete_management_webhook_additional_headers`
+#### delete_management_webhook_additional_headers
 
 Remove selected additional headers from a webhook. Send header names in `headers` field; other headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise, a 422 error response is returned.
 
@@ -1485,7 +1553,7 @@ Remove selected additional headers from a webhook. Send header names in `headers
 
 ---
 
-#### `recover_failed_webhook_messages`
+#### recover_failed_webhook_messages
 
 Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
@@ -1500,7 +1568,7 @@ Requeue failed deliveries for a webhook from the given `since` timestamp. Return
 
 ---
 
-#### `send_test_webhook`
+#### send_test_webhook
 
 Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
