@@ -345,9 +345,8 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
     autoConnect?: boolean;
 
     /**
-     * Preferred storage engine version to use when creating the room. Only
-     * takes effect if the room doesn't exist yet. Version 2 can support larger
-     * documents, is more performant, and will become the default in the future.
+     * @deprecated This flag no longer has any effect and will be removed in
+     * a future version. All rooms now use the v2 storage engine by default.
      */
     engine?: 1 | 2;
   }
