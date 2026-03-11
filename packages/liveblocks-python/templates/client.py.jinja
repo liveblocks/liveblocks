@@ -9,7 +9,7 @@ import httpx
 from .types import File, Response, UNSET, Unset
 
 {% from "endpoint_macros.py.jinja" import arguments, kwargs, return_type, docstring %}
-{% from "_shared.jinja" import hidden_endpoints, is_deprecated %}
+{% from "_shared.jinja" import hidden_endpoints %}
 
 {#
   Gather every model import needed across all endpoints, deduplicate them,
@@ -121,7 +121,7 @@ class Liveblocks:
         {{ arguments(endpoint, include_client=False) | indent(8) }}
     ) -> ({{ return_type(ns.success_responses) }}):
         {{ docstring(endpoint, return_type(ns.success_responses)) | indent(8) }}
-{% if is_deprecated(endpoint) %}
+{% if endpoint.description and "Deprecated" in endpoint.description %}
         warnings.warn(
             "{{ endpoint.name | snakecase }} is deprecated",
             DeprecationWarning,
@@ -199,7 +199,7 @@ class AsyncLiveblocks:
         {{ arguments(endpoint, include_client=False) | indent(8) }}
     ) -> ({{ return_type(ns.success_responses) }}):
         {{ docstring(endpoint, return_type(ns.success_responses)) | indent(8) }}
-{% if is_deprecated(endpoint) %}
+{% if endpoint.description and "Deprecated" in endpoint.description %}
         warnings.warn(
             "{{ endpoint.name | snakecase }} is deprecated",
             DeprecationWarning,

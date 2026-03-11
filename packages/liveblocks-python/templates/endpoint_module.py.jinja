@@ -1,4 +1,4 @@
-{% from "_shared.jinja" import hidden_endpoints, is_deprecated %}
+{% from "_shared.jinja" import hidden_endpoints %}
 {% if endpoint.name not in hidden_endpoints %}
 from typing import Any, cast
 from urllib.parse import quote
@@ -7,7 +7,15 @@ import httpx
 
 from ...types import UNSET
 from ... import errors
-{% if is_deprecated(endpoint) %}
+
+{#
+  The OpenAPI spec's `deprecated` flag on operations is parsed but never passed
+  to the Endpoint object that templates receive, so `endpoint.deprecated` does
+  not exist. As a workaround, we check for "Deprecated" in the endpoint
+  description, which the Liveblocks API consistently includes on deprecated
+  operations.
+#}
+{% if endpoint.description and "Deprecated" in endpoint.description %}
 import warnings
 {% endif %}
 
@@ -97,7 +105,7 @@ def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
 def _sync(
     {{ arguments(endpoint, client_type="httpx.Client") | indent(4) }}
 ) -> {{ return_string }}:
-{% if is_deprecated(endpoint) %}
+{% if endpoint.description and "Deprecated" in endpoint.description %}
     warnings.warn(
         "{{ endpoint.name | snakecase }} is deprecated",
         DeprecationWarning,
@@ -116,7 +124,7 @@ def _sync(
 async def _asyncio(
     {{ arguments(endpoint, client_type="httpx.AsyncClient") | indent(4) }}
 ) -> {{ return_string }}:
-{% if is_deprecated(endpoint) %}
+{% if endpoint.description and "Deprecated" in endpoint.description %}
     warnings.warn(
         "{{ endpoint.name | snakecase }} is deprecated",
         DeprecationWarning,
