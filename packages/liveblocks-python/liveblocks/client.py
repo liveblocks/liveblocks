@@ -1044,13 +1044,15 @@ class Liveblocks:
         construct a comment’s body, which can be submitted under `comment.body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
         ```
 
         Args:
@@ -1362,13 +1364,16 @@ class Liveblocks:
         construct a comment’s body, which can be submitted under `body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
+        ```
 
         Args:
             room_id (str): ID of the room
@@ -1444,13 +1449,16 @@ class Liveblocks:
         construct a comment’s body, which can be submitted under `body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
+        ```
 
         Args:
             room_id (str): ID of the room
@@ -4333,13 +4341,15 @@ class AsyncLiveblocks:
         construct a comment’s body, which can be submitted under `comment.body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
         ```
 
         Args:
@@ -4651,13 +4661,16 @@ class AsyncLiveblocks:
         construct a comment’s body, which can be submitted under `body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
+        ```
 
         Args:
             room_id (str): ID of the room
@@ -4733,13 +4746,16 @@ class AsyncLiveblocks:
         construct a comment’s body, which can be submitted under `body`.
 
         ```json
-        \"version\": 1,
-        \"content\": [
-          {
-            \"type\": \"paragraph\",
-            \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-          }
-        ]
+        {
+          \"version\": 1,
+          \"content\": [
+            {
+              \"type\": \"paragraph\",
+              \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+            }
+          ]
+        }
+        ```
 
         Args:
             room_id (str): ID of the room

@@ -446,13 +446,15 @@ This endpoint creates a new thread and the first comment in the thread. Correspo
 A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.
 
 ```json
-\"version\": 1,
-\"content\": [
-  {
-    \"type\": \"paragraph\",
-    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-  }
-]
+{
+  \"version\": 1,
+  \"content\": [
+    {
+      \"type\": \"paragraph\",
+      \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+    }
+  ]
+}
 ```
 
 **Parameters:**
@@ -589,14 +591,16 @@ This endpoint creates a new comment, adding it as a reply to a thread. Correspon
 A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.
 
 ```json
-\"version\": 1,
-\"content\": [
-  {
-    \"type\": \"paragraph\",
-    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-  }
-]
-
+{
+  \"version\": 1,
+  \"content\": [
+    {
+      \"type\": \"paragraph\",
+      \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+    }
+  ]
+}
+```
 
 **Parameters:**
 
@@ -631,14 +635,16 @@ This endpoint edits the specified comment. Corresponds to [`liveblocks.editComme
 A comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.
 
 ```json
-\"version\": 1,
-\"content\": [
-  {
-    \"type\": \"paragraph\",
-    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
-  }
-]
-
+{
+  \"version\": 1,
+  \"content\": [
+    {
+      \"type\": \"paragraph\",
+      \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]
+    }
+  ]
+}
+```
 
 **Parameters:**
 

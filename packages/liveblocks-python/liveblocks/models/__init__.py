@@ -81,7 +81,6 @@ from .get_room_subscription_settings_response import GetRoomSubscriptionSettings
 from .get_rooms_response import GetRoomsResponse
 from .get_storage_document_format import GetStorageDocumentFormat
 from .get_storage_document_response import GetStorageDocumentResponse
-from .get_thread_participants_response import GetThreadParticipantsResponse
 from .get_thread_subscriptions_response import GetThreadSubscriptionsResponse
 from .get_threads_response import GetThreadsResponse
 from .get_user_groups_response import GetUserGroupsResponse
@@ -283,7 +282,6 @@ __all__ = (
     "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
     "GetStorageDocumentResponse",
-    "GetThreadParticipantsResponse",
     "GetThreadsResponse",
     "GetThreadSubscriptionsResponse",
     "GetUserGroupsResponse",
