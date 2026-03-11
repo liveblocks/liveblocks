@@ -13,7 +13,7 @@
     "/rooms": {
       "get": {
         "summary": "Get rooms",
-        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "This endpoint returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by room ID prefixes, metadata, users accesses, and groups accesses. Corresponds to [`liveblocks.getRooms`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms).\n\nThere is a pagination system where the cursor to the next page is returned in the response as `nextCursor`, which can be combined with `startingAfter`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -49,7 +49,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
+            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language)."
           },
           {
             "schema": {
@@ -122,7 +122,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
         "parameters": [
           {
@@ -131,7 +131,7 @@
             },
             "in": "query",
             "name": "idempotent",
-            "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
+            "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
           }
         ],
         "responses": {
@@ -270,7 +270,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid)."
+        "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid)."
       },
       "post": {
         "summary": "Update room",
@@ -335,7 +335,7 @@
           }
         },
         "operationId": "update-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "required": true,
           "content": {
@@ -468,7 +468,7 @@
           }
         ],
         "operationId": "delete-room",
-        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
+        "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
       }
     },
     "/rooms/{roomId}/prewarm": {
@@ -501,7 +501,7 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker."
+        "description": "Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-prewarm)."
       }
     },
     "/rooms/{roomId}/upsert": {
@@ -565,7 +565,7 @@
           }
         },
         "operationId": "upsert-room",
-        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccesses`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccesses` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "required": true,
           "content": {
@@ -663,7 +663,7 @@
           }
         },
         "operationId": "update-room-id",
-        "description": "This endpoint permanently updates the room’s ID.",
+        "description": "This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -687,7 +687,7 @@
         "summary": "Get active users",
         "tags": ["Room"],
         "operationId": "get-active-users",
-        "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
+        "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
         "parameters": [
           {
             "schema": {
@@ -745,7 +745,7 @@
     "/rooms/{roomId}/presence": {
       "post": {
         "summary": "Set ephemeral presence",
-        "description": "This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room.",
+        "description": "This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room. Corresponds to [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).",
         "tags": ["Room"],
         "operationId": "set-presence",
         "parameters": [
@@ -810,7 +810,7 @@
     "/rooms/{roomId}/broadcast_event": {
       "post": {
         "summary": "Broadcast event to a room",
-        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).",
+        "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).",
         "tags": ["Room"],
         "parameters": [
           {
@@ -863,7 +863,7 @@
     "/rooms/{roomId}/storage": {
       "get": {
         "summary": "Get Storage document",
-        "description": "Returns the contents of the room’s Storage tree.  Corresponds to [`liveblocks.getStorageDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
+        "description": "Returns the contents of the room’s Storage tree.  Corresponds to [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
         "tags": ["Storage"],
         "parameters": [
           {
@@ -1017,7 +1017,7 @@
             }
           }
         },
-        "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
+        "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1093,13 +1093,13 @@
             "$ref": "#/components/responses/404"
           }
         },
-        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n"
+        "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n"
       }
     },
     "/rooms/{roomId}/storage/json-patch": {
       "patch": {
         "summary": "Apply JSON Patch to Storage",
-        "description": "Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the room's Storage document, useful for modifying Storage. Operations are applied in order; if any operation fails, the document is not changed and a 422 response with a helpful message is returned.\n\n**Paths and data types:** Be as specific as possible with your target path. Every parent in the chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.\n\n**Performance:** For large Storage documents, applying a patch can be expensive because the full state is reconstructed on the server to apply the operations. Very large documents may not be suitable for this endpoint.\n\nFor a **full guide with examples**, see [Modifying storage via REST API with JSON Patch](/docs/guides/modifying-storage-via-rest-api-with-json-patch).",
+        "description": "Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to the room's Storage document, useful for modifying Storage. Operations are applied in order; if any operation fails, the document is not changed and a 422 response with a helpful message is returned.\n\n**Paths and data types:** Be as specific as possible with your target path. Every parent in the chain of path segments must be a LiveObject, LiveList, or LiveMap. Complex nested objects passed in `add` or `replace` operations are automatically converted to LiveObjects and LiveLists.\n\n**Performance:** For large Storage documents, applying a patch can be expensive because the full state is reconstructed on the server to apply the operations. Very large documents may not be suitable for this endpoint.\n\nFor a **full guide with examples**, see [Modifying storage via REST API with JSON Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).",
         "tags": ["Storage"],
         "operationId": "patch-storage-document",
         "parameters": [
@@ -1185,7 +1185,7 @@
     "/rooms/{roomId}/ydoc": {
       "get": {
         "summary": "Get Yjs document",
-        "description": "This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
+        "description": "This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -1295,7 +1295,7 @@
           }
         },
         "operationId": "send-yjs-binary-update",
-        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
+        "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1312,7 +1312,7 @@
     "/rooms/{roomId}/ydoc-binary": {
       "get": {
         "summary": "Get Yjs document encoded as a binary Yjs update",
-        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
+        "description": "This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).",
         "tags": ["Yjs"],
         "parameters": [
           {
@@ -1543,7 +1543,7 @@
     "/rooms/{roomId}/threads": {
       "get": {
         "summary": "Get room threads",
-        "description": "This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).",
+        "description": "This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).",
         "tags": ["Comments"],
         "parameters": [
           {
@@ -1561,7 +1561,7 @@
             },
             "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language)."
           }
         ],
         "operationId": "get-threads",
@@ -1621,7 +1621,7 @@
       },
       "post": {
         "summary": "Create thread",
-        "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
+        "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
         "tags": ["Comments"],
         "operationId": "create-thread",
         "parameters": [
@@ -1720,7 +1720,7 @@
       "get": {
         "summary": "Get thread",
         "tags": ["Comments"],
-        "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
+        "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
         "operationId": "get-thread",
         "parameters": [
           {
@@ -1795,7 +1795,7 @@
       "delete": {
         "summary": "Delete thread",
         "tags": ["Comments"],
-        "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
+        "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
         "operationId": "delete-thread",
         "parameters": [
           {
@@ -1839,7 +1839,7 @@
         "x-badge": "Deprecated",
         "tags": ["Comments"],
         "deprecated": true,
-        "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
+        "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "operationId": "get-thread-participants",
         "parameters": [
           {
@@ -1895,7 +1895,7 @@
       "post": {
         "summary": "Edit thread metadata",
         "tags": ["Comments"],
-        "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
+        "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
         "operationId": "edit-thread-metadata",
         "parameters": [
           {
@@ -1969,7 +1969,7 @@
       "post": {
         "summary": "Mark thread as resolved",
         "tags": ["Comments"],
-        "description": "This endpoint marks a thread as resolved.",
+        "description": "This endpoint marks a thread as resolved. The request body must include a `userId` to identify who resolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved).",
         "operationId": "mark-thread-as-resolved",
         "parameters": [
           {
@@ -1991,6 +1991,16 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkThreadAsResolvedRequestBody"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the updated thread.",
@@ -2015,7 +2025,7 @@
       "post": {
         "summary": "Mark thread as unresolved",
         "tags": ["Comments"],
-        "description": "This endpoint marks a thread as unresolved.",
+        "description": "This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who unresolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).",
         "operationId": "mark-thread-as-unresolved",
         "parameters": [
           {
@@ -2037,6 +2047,16 @@
             "description": "ID of the thread"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkThreadAsUnresolvedRequestBody"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Success. Returns the updated thread.",
@@ -2061,7 +2081,7 @@
       "post": {
         "summary": "Subscribe to thread",
         "tags": ["Comments"],
-        "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
+        "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
         "operationId": "subscribe-to-thread",
         "parameters": [
           {
@@ -2135,7 +2155,7 @@
       "post": {
         "summary": "Unsubscribe from thread",
         "tags": ["Comments"],
-        "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
+        "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
         "operationId": "unsubscribe-from-thread",
         "parameters": [
           {
@@ -2202,7 +2222,7 @@
       "get": {
         "summary": "Get thread subscriptions",
         "tags": ["Comments"],
-        "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
+        "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
         "operationId": "get-thread-subscriptions",
         "parameters": [
           {
@@ -2266,7 +2286,7 @@
     "/rooms/{roomId}/threads/{threadId}/comments": {
       "post": {
         "summary": "Create comment",
-        "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
+        "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
         "operationId": "create-comment",
         "parameters": [
@@ -2361,7 +2381,7 @@
       "get": {
         "summary": "Get comment",
         "tags": ["Comments"],
-        "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
+        "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
         "operationId": "get-comment",
         "parameters": [
           {
@@ -2434,7 +2454,7 @@
       },
       "post": {
         "summary": "Edit comment",
-        "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
+        "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
         "operationId": "edit-comment",
         "parameters": [
@@ -2575,13 +2595,13 @@
           }
         },
         "operationId": "delete-comment",
-        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)."
+        "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)."
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
       "post": {
         "summary": "Add comment reaction",
-        "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
+        "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
         "operationId": "add-comment-reaction",
         "parameters": [
@@ -2670,7 +2690,7 @@
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
       "post": {
         "summary": "Remove comment reaction",
-        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
+        "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
         "operationId": "remove-comment-reaction",
         "parameters": [
@@ -2740,7 +2760,7 @@
       "post": {
         "summary": "Edit comment metadata",
         "tags": ["Comments"],
-        "description": "This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).",
+        "description": "This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).",
         "operationId": "edit-comment-metadata",
         "parameters": [
           {
@@ -2875,7 +2895,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](/docs/api-reference/liveblocks-node#access-tokens) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](/docs/authentication/access-token)."
+        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\n**Important:** The difference with an [ID token](#post-identify-user) is that an access token holds all the permissions, and is the source of truth. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.prepareSession`](https://liveblocks.io/docs/api-reference/liveblocks-node#access-tokens) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.\n\nLastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](https://liveblocks.io/docs/authentication/access-token)."
       }
     },
     "/identify-user": {
@@ -2928,7 +2948,7 @@
             }
           }
         },
-        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](/docs/authentication/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](/docs/api-reference/liveblocks-node) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](/docs/authentication/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
+        "description": "This endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When using this endpoint to obtain ID tokens, you should manage your permissions by assigning user and/or group permissions to rooms explicitly, see our [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token) section.\n\n**Important:** The difference with an [access token](#post-authorize-user) is that an ID token doesn’t hold any permissions itself. With ID tokens, permissions are set in the Liveblocks back end (through REST API calls) and \"checked at the door\" every time they are used to enter a room. With access tokens, all permissions are set in the token itself, and thus controlled from your back end entirely.\n\n**Note:** When using the `@liveblocks/node` package, you can use [`Liveblocks.identifyUser`](https://liveblocks.io/docs/api-reference/liveblocks-node) in your back end to build this request.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. The property `userId` is used by Liveblocks to calculate your account’s Monthly Active Users. One unique `userId` corresponds to one MAU.\n\nIf you want to use group permissions, you can also declare which `groupIds` this user belongs to. The group ID values are yours, but they will have to match the group IDs you assign permissions to when assigning permissions to rooms, see [Manage permissions with ID tokens](https://liveblocks.io/docs/authentication/id-token)).\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name."
       }
     },
     "/users/{userId}/inbox-notifications/{inboxNotificationId}": {
@@ -2974,7 +2994,7 @@
           }
         ],
         "operationId": "get-inbox-notification",
-        "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
+        "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
         "responses": {
           "200": {
             "description": "",
@@ -3028,7 +3048,7 @@
           }
         ],
         "operationId": "delete-inbox-notification",
-        "description": "This endpoint deletes a user’s inbox notification by its ID.",
+        "description": "This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).",
         "responses": {
           "204": {
             "description": ""
@@ -3071,7 +3091,7 @@
           }
         ],
         "operationId": "delete-all-inbox-notifications",
-        "description": "This endpoint deletes all the user’s inbox notifications.",
+        "description": "This endpoint deletes all the user’s inbox notifications. Corresponds to [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).",
         "responses": {
           "204": {
             "description": ""
@@ -3137,7 +3157,7 @@
           }
         ],
         "operationId": "get-inbox-notifications",
-        "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
+        "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
         "responses": {
           "200": {
             "description": "",
@@ -3173,7 +3193,7 @@
         "summary": "Get notification settings",
         "tags": ["Notifications"],
         "operationId": "get-notification-settings",
-        "description": "This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).",
+        "description": "This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3234,7 +3254,7 @@
         "summary": "Update notification settings",
         "tags": ["Notifications"],
         "operationId": "update-notification-settings",
-        "description": "This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).",
+        "description": "This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3324,7 +3344,7 @@
         "summary": "Delete notification settings",
         "tags": ["Notifications"],
         "operationId": "delete-notification-settings",
-        "description": "This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).",
+        "description": "This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3372,7 +3392,7 @@
         "summary": "Get room subscription settings",
         "tags": ["Notifications"],
         "operationId": "get-room-subscription-settings",
-        "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
+        "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3419,7 +3439,7 @@
         "summary": "Update room subscription settings",
         "tags": ["Notifications"],
         "operationId": "update-room-subscription-settings",
-        "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
+        "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3479,7 +3499,7 @@
         "summary": "Delete room subscription settings",
         "tags": ["Notifications"],
         "operationId": "delete-room-subscription-settings",
-        "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
+        "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3531,7 +3551,7 @@
         "summary": "Get user room subscription settings",
         "tags": ["Notifications"],
         "operationId": "get-user-room-subscription-settings",
-        "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
+        "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3618,7 +3638,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3667,7 +3687,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](update-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3728,7 +3748,7 @@
         "tags": ["Notifications"],
         "deprecated": true,
         "x-badge": "Deprecated",
-        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-room-subscription-settings). Read more in our [migration guide](https://liveblocks.io/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3771,7 +3791,7 @@
         "summary": "Trigger inbox notification",
         "tags": ["Notifications"],
         "operationId": "trigger-inbox-notification",
-        "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
+        "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
         "responses": {
           "200": {
             "description": "No Content"
@@ -3803,7 +3823,7 @@
     "/groups": {
       "post": {
         "summary": "Create group",
-        "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).",
+        "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).",
         "tags": ["Groups"],
         "operationId": "create-group",
         "requestBody": {
@@ -3842,7 +3862,7 @@
       },
       "get": {
         "summary": "Get groups",
-        "description": "This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).",
+        "description": "This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).",
         "tags": ["Groups"],
         "operationId": "get-groups",
         "parameters": [
@@ -3889,7 +3909,7 @@
     "/groups/{groupId}": {
       "get": {
         "summary": "Get group",
-        "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-reference/liveblocks-node#get-group).",
+        "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).",
         "tags": ["Groups"],
         "operationId": "get-group",
         "parameters": [
@@ -3927,7 +3947,7 @@
       },
       "delete": {
         "summary": "Delete group",
-        "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-reference/liveblocks-node#delete-group).",
+        "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).",
         "tags": ["Groups"],
         "operationId": "delete-group",
         "parameters": [
@@ -3960,7 +3980,7 @@
     "/groups/{groupId}/add-members": {
       "post": {
         "summary": "Add group members",
-        "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).",
+        "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-members).",
         "tags": ["Groups"],
         "operationId": "add-group-members",
         "parameters": [
@@ -4013,7 +4033,7 @@
     "/groups/{groupId}/remove-members": {
       "post": {
         "summary": "Remove group members",
-        "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).",
+        "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-group-members).",
         "tags": ["Groups"],
         "operationId": "remove-group-members",
         "parameters": [
@@ -4066,7 +4086,7 @@
     "/users/{userId}/groups": {
       "get": {
         "summary": "Get user groups",
-        "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).",
+        "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-groups).",
         "tags": ["Groups"],
         "operationId": "get-user-groups",
         "parameters": [
@@ -4125,7 +4145,7 @@
     "/ai/copilots": {
       "get": {
         "summary": "Get AI copilots",
-        "description": "This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-reference/liveblocks-node#get-ai-copilots).",
+        "description": "This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilots).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4170,7 +4190,7 @@
       },
       "post": {
         "summary": "Create AI copilot",
-        "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
+        "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-copilot).",
         "tags": ["AI"],
         "responses": {
           "201": {
@@ -4209,7 +4229,7 @@
     "/ai/copilots/{copilotId}": {
       "get": {
         "summary": "Get AI copilot",
-        "description": "This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-reference/liveblocks-node#get-ai-copilot).",
+        "description": "This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilot).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4247,7 +4267,7 @@
       },
       "post": {
         "summary": "Update AI copilot",
-        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
+        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4298,7 +4318,7 @@
       },
       "delete": {
         "summary": "Delete AI copilot",
-        "description": "This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-node#delete-ai-copilot).",
+        "description": "This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-ai-copilot).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4331,7 +4351,7 @@
     "/ai/copilots/{copilotId}/knowledge": {
       "get": {
         "summary": "Get knowledge sources",
-        "description": "This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).",
+        "description": "This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-sources).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4390,7 +4410,7 @@
     "/ai/copilots/{copilotId}/knowledge/{knowledgeSourceId}": {
       "get": {
         "summary": "Get knowledge source",
-        "description": "This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).",
+        "description": "This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-source).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4439,7 +4459,7 @@
     "/ai/copilots/{copilotId}/knowledge/web": {
       "post": {
         "summary": "Create web knowledge source",
-        "description": "This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-reference/liveblocks-node#create-web-knowledge-source).",
+        "description": "This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-web-knowledge-source).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4489,7 +4509,7 @@
     "/ai/copilots/{copilotId}/knowledge/file/{name}": {
       "put": {
         "summary": "Create file knowledge source",
-        "description": "This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-source).",
+        "description": "This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-file-knowledge-source).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4554,7 +4574,7 @@
     "/ai/copilots/{copilotId}/knowledge/file/{knowledgeSourceId}": {
       "get": {
         "summary": "Get file knowledge source content",
-        "description": "This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
+        "description": "This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4601,7 +4621,7 @@
       },
       "delete": {
         "summary": "Delete file knowledge source",
-        "description": "This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source).",
+        "description": "This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-file-knowledge-source).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4643,7 +4663,7 @@
     "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}": {
       "delete": {
         "summary": "Delete web knowledge source",
-        "description": "This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source).",
+        "description": "This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-web-knowledge-source).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -4685,7 +4705,7 @@
     "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}/links": {
       "get": {
         "summary": "Get web knowledge source links",
-        "description": "This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).",
+        "description": "This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).",
         "tags": ["AI"],
         "parameters": [
           {
@@ -6905,6 +6925,30 @@
             }
           }
         ]
+      },
+      "MarkThreadAsResolvedRequestBody": {
+        "type": "object",
+        "title": "MarkThreadAsResolvedRequestBody",
+        "required": ["userId"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The user ID of the user who marked the thread as resolved."
+          }
+        },
+        "additionalProperties": false
+      },
+      "MarkThreadAsUnresolvedRequestBody": {
+        "type": "object",
+        "title": "MarkThreadAsUnresolvedRequestBody",
+        "required": ["userId"],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "The user ID of the user who marked the thread as unresolved."
+          }
+        },
+        "additionalProperties": false
       },
       "SubscribeToThreadRequestBody": {
         "type": "object",
