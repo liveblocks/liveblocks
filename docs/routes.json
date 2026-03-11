@@ -845,6 +845,10 @@
         "path": "/api-reference/liveblocks-emails"
       },
       {
+        "title": "@liveblocks/python",
+        "path": "/api-reference/liveblocks-python"
+      },
+      {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
       },
