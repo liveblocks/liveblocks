@@ -1,3 +1,5 @@
+{% from "_shared.jinja" import hidden_endpoints, is_deprecated %}
+{% if endpoint.name not in hidden_endpoints %}
 from typing import Any, cast
 from urllib.parse import quote
 
@@ -5,6 +7,9 @@ import httpx
 
 from ...types import UNSET
 from ... import errors
+{% if is_deprecated(endpoint) %}
+import warnings
+{% endif %}
 
 {% for relative in endpoint.relative_imports | sort %}
 {{ relative }}
@@ -13,6 +18,11 @@ from ... import errors
 {% from "endpoint_macros.py.jinja" import header_params, cookie_params, query_params,
     arguments, client, kwargs, parse_response, body_to_kwarg, return_type %}
 
+{#
+  Collect only 2xx success responses -- these determine the function's return type
+  and which branches _parse_response will generate. We use namespace() because
+  Jinja scoping doesn't allow inner loops to mutate outer variables directly.
+#}
 {% set ns = namespace(success_responses=[]) %}
 {% for response in endpoint.responses.patterns %}
   {% set code_range = response.status_code.range %}
@@ -70,6 +80,7 @@ def _get_kwargs(
 {% endif %}
     return _kwargs
 
+{# Match each 2xx status code and deserialize the body; anything else is an error. #}
 def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
     {% for response in ns.success_responses %}
     {% set code_range = response.status_code.range %}
@@ -86,6 +97,13 @@ def _parse_response(*, response: httpx.Response) -> {{ return_string }}:
 def _sync(
     {{ arguments(endpoint, client_type="httpx.Client") | indent(4) }}
 ) -> {{ return_string }}:
+{% if is_deprecated(endpoint) %}
+    warnings.warn(
+        "{{ endpoint.name | snakecase }} is deprecated",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+{% endif %}
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
     )
@@ -98,6 +116,13 @@ def _sync(
 async def _asyncio(
     {{ arguments(endpoint, client_type="httpx.AsyncClient") | indent(4) }}
 ) -> {{ return_string }}:
+{% if is_deprecated(endpoint) %}
+    warnings.warn(
+        "{{ endpoint.name | snakecase }} is deprecated",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+{% endif %}
     kwargs = _get_kwargs(
         {{ kwargs(endpoint, include_client=False) }}
     )
@@ -107,3 +132,4 @@ async def _asyncio(
     )
 
     return _parse_response(response=response)
+{% endif %}

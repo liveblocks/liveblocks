@@ -1,7 +1,12 @@
+{% from "_shared.jinja" import hidden_models %}
+{% if model.class_info.name not in hidden_models %}
 from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any, Self, BinaryIO, TextIO, TYPE_CHECKING, Generator
+{% if model.data.deprecated %}
+import warnings
+{% endif %}
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -82,6 +87,15 @@ class {{ class_name }}:
     {% if model.additional_properties %}
     additional_properties: dict[str, {{ additional_property_type }}] = _attrs_field(init=False, factory=dict)
     {% endif %}
+
+{% if model.data.deprecated %}
+    def __attrs_post_init__(self) -> None:
+        warnings.warn(
+            "{{ class_name }} is deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+{% endif %}
 
 {% macro _transform_property(property, content) %}
 {% import "property_templates/" + property.template as prop_template %}
@@ -239,3 +253,4 @@ return field_dict
     def __contains__(self, key: str) -> bool:
         return key in self.additional_properties
     {% endif %}
+{% endif %}

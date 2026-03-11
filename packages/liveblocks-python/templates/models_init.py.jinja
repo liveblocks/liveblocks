@@ -1,13 +1,26 @@
 """ Contains all the data models used in inputs/outputs """
 
+{% from "_shared.jinja" import hidden_models %}
+
+{# Emit all model imports except those listed in hidden_models (see _shared.jinja). #}
 {% for import in imports | sort %}
+{% set ns = namespace(is_hidden=false) %}
+{% for hidden in hidden_models %}
+{% if hidden in import %}
+{% set ns.is_hidden = true %}
+{% endif %}
+{% endfor %}
+{% if not ns.is_hidden %}
 {{ import }}
+{% endif %}
 {% endfor %}
 
 {% if imports %}
 __all__ = (
     {% for all in alls | sort %}
+    {% if all not in hidden_models %}
     "{{ all }}",
+    {% endif %}
     {% endfor %}
 )
 {% endif %}

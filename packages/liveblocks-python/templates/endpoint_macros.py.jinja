@@ -101,12 +101,17 @@ if not isinstance({{property.python_name}}, Unset):
 {% endif %}
 {% endmacro %}
 
-{# The all the kwargs passed into an endpoint (and variants thereof)) #}
+{# Build the full argument list for an endpoint function. #}
 {% macro arguments(endpoint, include_client=True, client_type="httpx.Client") %}
-{# path parameters #}
+{# Path parameters come first as positional args. #}
 {% for parameter in endpoint.path_parameters %}
 {{ parameter.to_string() }},
 {% endfor %}
+{#
+  Insert the keyword-only separator (*,) when there's a client arg or any
+  non-path parameters, so path params stay positional while everything
+  else must be passed by name.
+#}
 {% if include_client or ((endpoint.list_all_parameters() | length) > (endpoint.path_parameters | length)) %}
 *,
 {% endif %}
@@ -189,6 +194,13 @@ Returns:
 {{ safe_docstring(docstring_content(endpoint, return_string)) }}
 {% endmacro %}
 
+{#
+  Deserialize a single response body. Three strategies:
+    1. construct: the property template has a custom constructor (e.g. from_dict for models)
+    2. direct assignment: source type already matches the declared return type
+    3. cast: types differ at the type-checker level, so wrap in cast()
+  When parsed_responses is false (return type is None), just return None.
+#}
 {% macro parse_response(parsed_responses, response) %}
 {% if parsed_responses %}{% import "property_templates/" + response.prop.template as prop_template %}
 {% if prop_template.construct %}
@@ -204,6 +216,14 @@ return None
 {% endif %}
 {% endmacro %}
 
+{#
+  Derive the Python return-type annotation from the set of success responses.
+  - No responses → None
+  - Single "Any" response (e.g. 204 No Content) → None, since there's nothing
+    meaningful to return and None gives callers a cleaner API
+  - Single typed response → that type
+  - Multiple distinct types → union (T1 | T2)
+#}
 {% macro return_type(responses) %}
 {% set ns = namespace(return_types=[]) %}
 {% for response in responses %}

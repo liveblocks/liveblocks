@@ -1,4 +1,5 @@
 {% from "endpoint_macros.py.jinja" import return_type, arguments %}
+{% from "_shared.jinja" import hidden_endpoints %}
 {# Build a tag description lookup from the raw OpenAPI tags array #}
 {% set tag_descriptions = {} %}
 {% if openapi.description %}
@@ -58,9 +59,10 @@ client = Liveblocks(secret="sk_your_secret_key")
 ## API Reference
 
 {% for tag, collection in endpoint_collections_by_tag.items() %}
-### {{ collection.tag }}
+### {{ collection.tag | capitalize }}
 
 {% for endpoint in collection.endpoints %}
+{% if endpoint.name not in hidden_endpoints %}
 {% set ns = namespace(success_responses=[]) %}
 {% for response in endpoint.responses.patterns %}
 {% set code_range = response.status_code.range %}
@@ -73,15 +75,9 @@ client = Liveblocks(secret="sk_your_secret_key")
 {% set all_params = endpoint.list_all_parameters() %}
 #### `{{ method_name }}`
 
-{% if endpoint.summary %}**{{ endpoint.summary }}**{% endif %}
-
 {% if endpoint.description %}
-{{ endpoint.description.split('\n')[0] }}
+{{ endpoint.description }}
 {% endif %}
-
-- **HTTP:** `{{ endpoint.method | upper }}` `{{ endpoint.path }}`
-- **Returns:** `{{ ret_type }}`
-{% if endpoint.requires_security %}- **Auth required**{% endif %}
 
 {% if endpoint.path_parameters or endpoint.query_parameters or endpoint.bodies %}
 **Parameters:**
@@ -99,45 +95,11 @@ client = Liveblocks(secret="sk_your_secret_key")
 {% endfor %}
 
 {% endif %}
-<details>
-<summary>Example</summary>
-
-```python
-{% if endpoint.path_parameters or (endpoint.query_parameters | selectattr("required") | list) or (endpoint.bodies | selectattr("prop.required") | list) %}
-result = client.{{ method_name }}(
-{% for param in endpoint.path_parameters %}
-    {{ param.python_name }}="...",
-{% endfor %}
-{% for param in endpoint.query_parameters %}
-{% if param.required %}
-    {{ param.python_name }}={{ param.example or '"..."' }},
-{% endif %}
-{% endfor %}
-{% for body in endpoint.bodies %}
-{% if body.prop.required %}
-    body=...,
-{% endif %}
-{% endfor %}
-)
-{% else %}
-result = client.{{ method_name }}()
-{% endif %}
-```
-
-</details>
 
 ---
 
+{% endif %}
 {% endfor %}
-{% endfor %}
-
-## Models
-
-The following data models are available in `{{ package_name }}.models`:
-
-{% for model in openapi.models | sort(attribute='name') %}
-- `{{ model.class_info.name }}`{% if model.description %} — {{ model.description.split('\n')[0] }}{% endif %}
-
 {% endfor %}
 
 ## Error Handling

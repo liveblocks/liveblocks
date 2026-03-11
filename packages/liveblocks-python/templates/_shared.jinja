@@ -1,0 +1,27 @@
+{#
+  Endpoints and models listed here by operationId / class name are completely
+  suppressed from the generated SDK (empty files, no exports, no client methods,
+  no README entries). We have to hardcode these because the generator does not
+  expose a way to skip code generation from within templates.
+#}
+{% set hidden_endpoints = [
+    "get-room-notification-settings",
+    "update-room-notification-settings",
+    "delete-room-notification-settings",
+    "get-thread-participants",
+] %}
+
+{% set hidden_models = [
+    "GetThreadParticipantsResponse",
+] %}
+
+{#
+  The OpenAPI spec's `deprecated` flag on operations is parsed but never passed
+  to the Endpoint object that templates receive, so `endpoint.deprecated` does
+  not exist. As a workaround, we check for "Deprecated" in the endpoint
+  description, which the Liveblocks API consistently includes on deprecated
+  operations.
+#}
+{% macro is_deprecated(endpoint) -%}
+{%- if endpoint.description and "Deprecated" in endpoint.description -%}true{%- endif -%}
+{%- endmacro %}

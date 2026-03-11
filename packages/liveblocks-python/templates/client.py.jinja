@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import warnings
 from typing import Any, TYPE_CHECKING
 
 import httpx
@@ -8,11 +9,19 @@ import httpx
 from .types import File, Response, UNSET, Unset
 
 {% from "endpoint_macros.py.jinja" import arguments, kwargs, return_type, docstring %}
+{% from "_shared.jinja" import hidden_endpoints, is_deprecated %}
 
+{#
+  Gather every model import needed across all endpoints, deduplicate them,
+  rewrite the relative path (from ... → from .), filter out hidden models,
+  and emit them under TYPE_CHECKING so they're available for type hints
+  without creating circular imports at runtime.
+#}
 if TYPE_CHECKING:
 {% set ns = namespace(imports=[]) %}
 {% for tag, collection in endpoint_collections_by_tag.items() %}
 {% for endpoint in collection.endpoints %}
+{% if endpoint.name not in hidden_endpoints %}
 {% for _import in endpoint.relative_imports | sort %}
 {% set import = _import | replace("from ...", "from .") %}
 {% if import not in ns.imports and "from .models." in import %}
@@ -20,6 +29,7 @@ if TYPE_CHECKING:
 {% set ns.imports = ns.imports + [import] %}
 {% endif %}
 {% endfor %}
+{% endif %}
 {% endfor %}
 {% endfor %}
 
@@ -87,9 +97,17 @@ class Liveblocks:
             organization_id=organization_id,
         )
 
+    {#
+      Generate one public method per non-hidden endpoint. Each method:
+        1. Collects 2xx responses to derive the return type
+        2. Emits a deprecation warning when the spec marks the operation deprecated
+        3. Lazily imports the corresponding api module and delegates to its _sync helper
+    #}
     {% for tag, collection in endpoint_collections_by_tag.items() %}
     {% for endpoint in collection.endpoints %}
+    {% if endpoint.name not in hidden_endpoints %}
 
+    {# Filter to only 2xx success responses -- these determine the return type. #}
     {% set ns = namespace(success_responses=[]) %}
     {% for response in endpoint.responses.patterns %}
     {% set code_range = response.status_code.range %}
@@ -103,11 +121,19 @@ class Liveblocks:
         {{ arguments(endpoint, include_client=False) | indent(8) }}
     ) -> ({{ return_type(ns.success_responses) }}):
         {{ docstring(endpoint, return_type(ns.success_responses)) | indent(8) }}
+{% if is_deprecated(endpoint) %}
+        warnings.warn(
+            "{{ endpoint.name | snakecase }} is deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+{% endif %}
         from .api.{{ tag }} import {{ endpoint.name | snakecase }}
 
         return {{ endpoint.name | snakecase }}._sync(
             {{ kwargs(endpoint, include_client=False) | indent(12) }}client=self._client,
         )
+    {% endif %}
     {% endfor %}
     {% endfor %}
 
@@ -155,8 +181,10 @@ class AsyncLiveblocks:
             organization_id=organization_id,
         )
 
+    {# Same pattern as Liveblocks above, but delegates to _asyncio instead of _sync. #}
     {% for tag, collection in endpoint_collections_by_tag.items() %}
     {% for endpoint in collection.endpoints %}
+    {% if endpoint.name not in hidden_endpoints %}
 
     {% set ns = namespace(success_responses=[]) %}
     {% for response in endpoint.responses.patterns %}
@@ -171,10 +199,18 @@ class AsyncLiveblocks:
         {{ arguments(endpoint, include_client=False) | indent(8) }}
     ) -> ({{ return_type(ns.success_responses) }}):
         {{ docstring(endpoint, return_type(ns.success_responses)) | indent(8) }}
+{% if is_deprecated(endpoint) %}
+        warnings.warn(
+            "{{ endpoint.name | snakecase }} is deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+{% endif %}
         from .api.{{ tag }} import {{ endpoint.name | snakecase }}
 
         return await {{ endpoint.name | snakecase }}._asyncio(
             {{ kwargs(endpoint, include_client=False) | indent(12) }}client=self._client,
         )
+    {% endif %}
     {% endfor %}
     {% endfor %}
