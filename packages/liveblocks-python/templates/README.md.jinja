@@ -76,7 +76,7 @@ client = Liveblocks(secret="sk_your_secret_key")
 #### `{{ method_name }}`
 
 {% if endpoint.description %}
-{{ endpoint.description }}
+{{ endpoint.description | replace('\\"', '"') }}
 {% endif %}
 
 {% if endpoint.path_parameters or endpoint.query_parameters or endpoint.bodies %}
@@ -85,10 +85,10 @@ client = Liveblocks(secret="sk_your_secret_key")
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 {% for param in endpoint.path_parameters %}
-| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | Yes | {{ param.description or "" }} |
+| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | Yes | {{ (param.description or "") | replace('\\"', '"') }} |
 {% endfor %}
 {% for param in endpoint.query_parameters %}
-| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | {{ "Yes" if param.required else "No" }} | {{ param.description or "" }}{% if param.default %} *(default: `{{ param.default.python_code }}`)*{% endif %} |
+| `{{ param.python_name }}` | `{{ param.get_type_string() | replace("|", "\\|") }}` | {{ "Yes" if param.required else "No" }} | {{ (param.description or "") | replace('\\"', '"') }}{% if param.default %} *(default: `{{ param.default.python_code }}`)*{% endif %} |
 {% endfor %}
 {% for body in endpoint.bodies %}
 | `body` | `{{ body.prop.get_type_string() | replace("|", "\\|") }}` | {{ "Yes" if body.prop.required else "No" }} | Request body ({{ body.content_type }}) |
