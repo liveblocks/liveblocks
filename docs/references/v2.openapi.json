@@ -21,53 +21,53 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "organizationId",
-            "description": "A filter on organization ID."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "query",
-            "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language)."
+            "name": "limit"
           },
           {
             "schema": {
               "type": "string",
-              "examples": ["userId=user1"]
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "userId",
-            "description": "A filter on users accesses."
+            "name": "startingAfter"
           },
           {
             "schema": {
               "type": "string",
-              "examples": ["groupIds=group1,group2"]
+              "description": "A filter on organization ID."
             },
             "in": "query",
-            "name": "groupIds",
-            "description": "A filter on groups accesses. Multiple groups can be used."
+            "name": "organizationId"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language)."
+            },
+            "in": "query",
+            "name": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "examples": ["userId=user1"],
+              "description": "A filter on users accesses."
+            },
+            "in": "query",
+            "name": "userId"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "examples": ["groupIds=group1,group2"],
+              "description": "A filter on groups accesses. Multiple groups can be used."
+            },
+            "in": "query",
+            "name": "groupIds"
           }
         ],
         "responses": {
@@ -127,11 +127,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
             },
             "in": "query",
-            "name": "idempotent",
-            "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
+            "name": "idempotent"
           }
         ],
         "responses": {
@@ -217,12 +217,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -278,12 +278,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -459,12 +459,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "operationId": "delete-room",
@@ -479,12 +479,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -511,12 +511,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -606,12 +606,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The new ID for the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "The new ID for the room"
+            "required": true
           }
         ],
         "responses": {
@@ -691,12 +691,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -751,12 +751,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "requestBody": {
@@ -815,12 +815,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "operationId": "broadcast-event",
@@ -863,27 +863,27 @@
     "/rooms/{roomId}/storage": {
       "get": {
         "summary": "Get Storage document",
-        "description": "Returns the contents of the room’s Storage tree.  Corresponds to [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
+        "description": "Returns the contents of the room’s Storage tree. Corresponds to [`liveblocks.getStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-storage). \n\nThe default outputted format is called “plain LSON”, which includes information on the Live data structures in the tree. These nodes show up in the output as objects with two properties, for example:\n\n```json\n{\n  \"liveblocksType\": \"LiveObject\",\n  \"data\": ...\n}\n```\n\nIf you’re not interested in this information, you can use the simpler `?format=json` query param, see below.",
         "tags": ["Storage"],
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
               "type": "string",
-              "enum": ["plain-lson", "json"]
+              "enum": ["plain-lson", "json"],
+              "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with."
             },
             "name": "format",
             "in": "query",
-            "required": false,
-            "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with."
+            "required": false
           }
         ],
         "responses": {
@@ -942,12 +942,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -1071,12 +1071,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "responses": {
@@ -1105,12 +1105,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           }
         ],
         "requestBody": {
@@ -1124,14 +1124,25 @@
                 "addAndRemove": {
                   "summary": "Add and remove",
                   "value": [
-                    { "op": "add", "path": "/score", "value": 42 },
-                    { "op": "remove", "path": "/oldKey" }
+                    {
+                      "op": "add",
+                      "path": "/score",
+                      "value": 42
+                    },
+                    {
+                      "op": "remove",
+                      "path": "/oldKey"
+                    }
                   ]
                 },
                 "appendToList": {
                   "summary": "Append to LiveList",
                   "value": [
-                    { "op": "add", "path": "/layers/-", "value": "newLayer" }
+                    {
+                      "op": "add",
+                      "path": "/layers/-",
+                      "value": "newLayer"
+                    }
                   ]
                 }
               }
@@ -1193,38 +1204,38 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "If present, YText will return formatting."
             },
             "name": "formatting",
             "in": "query",
             "allowEmptyValue": true,
-            "required": false,
-            "description": "If present, YText will return formatting."
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "key",
-            "in": "query",
-            "required": false,
-            "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`."
+            "required": false
           },
           {
             "schema": {
               "type": "string",
-              "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"]
+              "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`."
+            },
+            "name": "key",
+            "in": "query",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"],
+              "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`."
             },
             "name": "type",
             "in": "query",
-            "required": false,
-            "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`."
+            "required": false
           }
         ],
         "responses": {
@@ -1263,21 +1274,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "name": "guid",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the subdocument"
+              "type": "string",
+              "description": "ID of the subdocument"
+            }
           }
         ],
         "responses": {
@@ -1320,18 +1331,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "guid",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the subdocument"
+              "type": "string",
+              "description": "ID of the subdocument"
+            }
           }
         ],
         "responses": {
@@ -1371,28 +1382,28 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "cursor",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "cursor"
           }
         ],
         "responses": {
@@ -1453,18 +1464,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "versionId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the version"
+              "type": "string",
+              "description": "ID of the version"
+            }
           }
         ],
         "responses": {
@@ -1503,9 +1514,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           }
         ],
         "responses": {
@@ -1551,17 +1562,17 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language)."
             },
             "in": "query",
-            "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language)."
+            "name": "query"
           }
         ],
         "operationId": "get-threads",
@@ -1630,9 +1641,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           }
         ],
         "responses": {
@@ -1728,18 +1739,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -1803,18 +1814,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -1847,18 +1858,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -1903,18 +1914,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -1977,18 +1988,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "requestBody": {
@@ -2033,18 +2044,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "requestBody": {
@@ -2089,18 +2100,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "requestBody": {
@@ -2163,18 +2174,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "requestBody": {
@@ -2230,18 +2241,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -2295,18 +2306,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           }
         ],
         "responses": {
@@ -2389,27 +2400,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2463,27 +2474,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2557,27 +2568,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2610,27 +2621,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2699,27 +2710,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2768,27 +2779,27 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the room"
+              "type": "string",
+              "description": "ID of the room"
+            }
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the thread"
+              "type": "string",
+              "description": "ID of the thread"
+            }
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the comment"
+              "type": "string",
+              "description": "ID of the comment"
+            }
           }
         ],
         "responses": {
@@ -2979,25 +2990,25 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the user"
+              "type": "string",
+              "description": "ID of the user"
+            }
           },
           {
             "name": "inboxNotificationId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the inbox notification"
+              "type": "string",
+              "description": "ID of the inbox notification"
+            }
           }
         ],
         "operationId": "get-inbox-notification",
         "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the inbox notification.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3033,25 +3044,25 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the user"
+              "type": "string",
+              "description": "ID of the user"
+            }
           },
           {
             "name": "inboxNotificationId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the inbox notification"
+              "type": "string",
+              "description": "ID of the inbox notification"
+            }
           }
         ],
         "operationId": "delete-inbox-notification",
         "description": "This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).",
         "responses": {
           "204": {
-            "description": ""
+            "description": "Success. The inbox notification has been deleted."
           },
           "401": {
             "description": "Unauthorized"
@@ -3085,16 +3096,16 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the user"
+              "type": "string",
+              "description": "ID of the user"
+            }
           }
         ],
         "operationId": "delete-all-inbox-notifications",
         "description": "This endpoint deletes all the user’s inbox notifications. Corresponds to [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).",
         "responses": {
           "204": {
-            "description": ""
+            "description": "Success. All inbox notifications for the user have been deleted."
           },
           "401": {
             "description": "Unauthorized"
@@ -3116,51 +3127,51 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the user"
+              "type": "string",
+              "description": "ID of the user"
+            }
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The organization ID to filter notifications for."
             },
             "in": "query",
-            "name": "organizationId",
-            "description": "The organization ID to filter notifications for."
+            "name": "organizationId"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
             },
             "in": "query",
-            "name": "query",
-            "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
+            "name": "query"
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 50,
-              "default": 50
+              "default": 50,
+              "description": "A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "operationId": "get-inbox-notifications",
         "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the list of inbox notifications for the user.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3197,17 +3208,17 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the user's notification settings for the project.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3258,12 +3269,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "requestBody": {
@@ -3294,7 +3305,7 @@
         },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the updated notification settings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3348,12 +3359,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
@@ -3396,26 +3407,26 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the user's subscription settings for the specified room.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3443,26 +3454,26 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the updated room subscription settings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3503,21 +3514,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
@@ -3555,44 +3566,44 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 50,
-              "default": 50
+              "default": 50,
+              "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The organization ID to filter room subscription settings for."
             },
             "in": "query",
-            "name": "organizationId",
-            "description": "The organization ID to filter room subscription settings for."
+            "name": "organizationId"
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the list of the user's room subscription settings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3642,26 +3653,26 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the user's notification settings for the specified room.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3691,26 +3702,26 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Success. Returns the updated room notification settings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3752,21 +3763,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the room"
             },
             "name": "roomId",
             "in": "path",
-            "required": true,
-            "description": "ID of the room"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the user"
             },
             "name": "userId",
             "in": "path",
-            "required": true,
-            "description": "ID of the user"
+            "required": true
           }
         ],
         "responses": {
@@ -3871,19 +3882,19 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "responses": {
@@ -3915,11 +3926,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The ID of the group to retrieve."
             },
             "in": "path",
             "name": "groupId",
-            "description": "The ID of the group to retrieve.",
             "required": true
           }
         ],
@@ -3953,11 +3964,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The ID of the group to delete."
             },
             "in": "path",
             "name": "groupId",
-            "description": "The ID of the group to delete.",
             "required": true
           }
         ],
@@ -3986,11 +3997,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The ID of the group to add members to."
             },
             "in": "path",
             "name": "groupId",
-            "description": "The ID of the group to add members to.",
             "required": true
           }
         ],
@@ -4039,11 +4050,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The ID of the group to remove members from."
             },
             "in": "path",
             "name": "groupId",
-            "description": "The ID of the group to remove members from.",
             "required": true
           }
         ],
@@ -4092,11 +4103,11 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "The ID of the user to get groups for."
             },
             "in": "path",
             "name": "userId",
-            "description": "The ID of the user to get groups for.",
             "required": true
           },
           {
@@ -4104,19 +4115,19 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "responses": {
@@ -4153,19 +4164,19 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "responses": {
@@ -4234,12 +4245,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           }
         ],
         "responses": {
@@ -4272,12 +4283,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           }
         ],
         "responses": {
@@ -4323,12 +4334,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           }
         ],
         "responses": {
@@ -4356,31 +4367,31 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "responses": {
@@ -4415,21 +4426,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the knowledge source"
             },
             "name": "knowledgeSourceId",
             "in": "path",
-            "required": true,
-            "description": "ID of the knowledge source"
+            "required": true
           }
         ],
         "responses": {
@@ -4464,12 +4475,12 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           }
         ],
         "responses": {
@@ -4514,21 +4525,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Name of the file"
             },
             "name": "name",
             "in": "path",
-            "required": true,
-            "description": "Name of the file"
+            "required": true
           }
         ],
         "responses": {
@@ -4579,21 +4590,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the knowledge source"
             },
             "name": "knowledgeSourceId",
             "in": "path",
-            "required": true,
-            "description": "ID of the knowledge source"
+            "required": true
           }
         ],
         "responses": {
@@ -4626,21 +4637,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the knowledge source"
             },
             "name": "knowledgeSourceId",
             "in": "path",
-            "required": true,
-            "description": "ID of the knowledge source"
+            "required": true
           }
         ],
         "responses": {
@@ -4668,21 +4679,21 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the knowledge source"
             },
             "name": "knowledgeSourceId",
             "in": "path",
-            "required": true,
-            "description": "ID of the knowledge source"
+            "required": true
           }
         ],
         "responses": {
@@ -4710,40 +4721,40 @@
         "parameters": [
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the AI copilot"
             },
             "name": "copilotId",
             "in": "path",
-            "required": true,
-            "description": "ID of the AI copilot"
+            "required": true
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "ID of the knowledge source"
             },
             "name": "knowledgeSourceId",
             "in": "path",
-            "required": true,
-            "description": "ID of the knowledge source"
+            "required": true
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "startingAfter",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "startingAfter"
           }
         ],
         "responses": {
@@ -4782,19 +4793,19 @@
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "cursor",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "cursor"
           }
         ],
         "responses": {
@@ -4933,9 +4944,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -4975,9 +4986,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5035,9 +5046,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5069,9 +5080,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5103,9 +5114,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5137,9 +5148,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5198,9 +5209,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5259,28 +5270,28 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "schema": {
               "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "description": "A limit on the number of webhooks to return. The limit can range between 1 and 100, and defaults to 20."
             },
             "in": "query",
-            "name": "limit",
-            "description": "A limit on the number of webhooks to return. The limit can range between 1 and 100, and defaults to 20."
+            "name": "limit"
           },
           {
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
             },
             "in": "query",
-            "name": "cursor",
-            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+            "name": "cursor"
           }
         ],
         "responses": {
@@ -5320,9 +5331,9 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           }
         ],
         "responses": {
@@ -5388,18 +5399,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5436,18 +5447,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5509,18 +5520,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5552,18 +5563,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5602,18 +5613,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5672,18 +5683,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5722,18 +5733,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5792,18 +5803,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5855,18 +5866,18 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the project"
+              "type": "string",
+              "description": "ID of the project"
+            }
           },
           {
             "name": "webhookId",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
-            },
-            "description": "ID of the webhook"
+              "type": "string",
+              "description": "ID of the webhook"
+            }
           }
         ],
         "responses": {
@@ -5968,8 +5979,15 @@
         "type": "object",
         "additionalProperties": {
           "oneOf": [
-            { "type": "string" },
-            { "type": "array", "items": { "type": "string" } }
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           ]
         }
       },
@@ -6064,8 +6082,12 @@
         "properties": {
           "defaultAccesses": {
             "oneOf": [
-              { "$ref": "#/components/schemas/RoomPermission" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/RoomPermission"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "usersAccesses": {
@@ -6085,7 +6107,9 @@
                     ]
                   }
                 },
-                { "type": "null" }
+                {
+                  "type": "null"
+                }
               ]
             }
           },
@@ -6106,7 +6130,9 @@
                     ]
                   }
                 },
-                { "type": "null" }
+                {
+                  "type": "null"
+                }
               ]
             }
           },
@@ -6114,9 +6140,18 @@
             "type": "object",
             "additionalProperties": {
               "oneOf": [
-                { "type": "string" },
-                { "type": "array", "items": { "type": "string" } },
-                { "type": "null" }
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
               ]
             }
           }
@@ -7089,7 +7124,14 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }],
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -7197,7 +7239,14 @@
             "type": "string"
           },
           "roomId": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "readAt": {
             "oneOf": [
@@ -7289,7 +7338,14 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }],
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "description": "A cursor to use for pagination. Pass this value as `startingAfter` to get the next page of results. `null` if there are no more results."
           },
           "data": {
@@ -7430,16 +7486,40 @@
           "updatedAt"
         ],
         "properties": {
-          "type": { "type": "string", "const": "copilot" },
-          "id": { "type": "string" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "systemPrompt": { "type": "string" },
-          "knowledgePrompt": { "type": "string" },
-          "alwaysUseKnowledge": { "type": "boolean" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "lastUsedAt": { "type": "string", "format": "date-time" },
+          "type": {
+            "type": "string",
+            "const": "copilot"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string"
+          },
+          "alwaysUseKnowledge": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "settings": {
             "$ref": "#/components/schemas/AiCopilotProviderSettings"
           }
@@ -7533,10 +7613,19 @@
               "providerBaseUrl"
             ],
             "properties": {
-              "provider": { "type": "string", "const": "openai-compatible" },
-              "providerModel": { "type": "string" },
-              "compatibleProviderName": { "type": "string" },
-              "providerBaseUrl": { "type": "string" }
+              "provider": {
+                "type": "string",
+                "const": "openai-compatible"
+              },
+              "providerModel": {
+                "type": "string"
+              },
+              "compatibleProviderName": {
+                "type": "string"
+              },
+              "providerBaseUrl": {
+                "type": "string"
+              }
             }
           }
         ],
@@ -7573,27 +7662,46 @@
         "type": "object",
         "required": ["name", "systemPrompt", "providerApiKey"],
         "properties": {
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "systemPrompt": { "type": "string" },
-          "knowledgePrompt": { "type": "string" },
-          "alwaysUseKnowledge": { "type": "boolean" },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string"
+          },
+          "alwaysUseKnowledge": {
+            "type": "boolean"
+          },
           "settings": {
             "$ref": "#/components/schemas/AiCopilotProviderSettings"
           },
-          "providerApiKey": { "type": "string" }
+          "providerApiKey": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       },
       "CreateAiCopilotOptionsOpenAi": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsBase"
+          },
           {
             "type": "object",
             "required": ["provider", "providerModel"],
             "properties": {
-              "provider": { "type": "string", "const": "openai" },
-              "providerModel": { "$ref": "#/components/schemas/OpenAiModel" },
+              "provider": {
+                "type": "string",
+                "const": "openai"
+              },
+              "providerModel": {
+                "$ref": "#/components/schemas/OpenAiModel"
+              },
               "providerOptions": {
                 "$ref": "#/components/schemas/OpenAiProviderOptions"
               }
@@ -7605,12 +7713,17 @@
       },
       "CreateAiCopilotOptionsAnthropic": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsBase"
+          },
           {
             "type": "object",
             "required": ["provider", "providerModel"],
             "properties": {
-              "provider": { "type": "string", "const": "anthropic" },
+              "provider": {
+                "type": "string",
+                "const": "anthropic"
+              },
               "providerModel": {
                 "$ref": "#/components/schemas/AnthropicModel"
               },
@@ -7621,16 +7734,22 @@
           }
         ]
       },
-
       "CreateAiCopilotOptionsGoogle": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsBase"
+          },
           {
             "type": "object",
             "required": ["provider", "providerModel"],
             "properties": {
-              "provider": { "type": "string", "const": "google" },
-              "providerModel": { "$ref": "#/components/schemas/GoogleModel" },
+              "provider": {
+                "type": "string",
+                "const": "google"
+              },
+              "providerModel": {
+                "$ref": "#/components/schemas/GoogleModel"
+              },
               "providerOptions": {
                 "$ref": "#/components/schemas/GoogleProviderOptions"
               }
@@ -7640,7 +7759,9 @@
       },
       "CreateAiCopilotOptionsOpenAiCompatible": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsBase" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsBase"
+          },
           {
             "type": "object",
             "required": [
@@ -7650,19 +7771,34 @@
               "providerBaseUrl"
             ],
             "properties": {
-              "provider": { "type": "string", "const": "openai-compatible" },
-              "providerModel": { "type": "string" },
-              "compatibleProviderName": { "type": "string" },
-              "providerBaseUrl": { "type": "string" }
+              "provider": {
+                "type": "string",
+                "const": "openai-compatible"
+              },
+              "providerModel": {
+                "type": "string"
+              },
+              "compatibleProviderName": {
+                "type": "string"
+              },
+              "providerBaseUrl": {
+                "type": "string"
+              }
             }
           }
         ]
       },
       "CreateAiCopilotRequestBody": {
         "oneOf": [
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsOpenAi" },
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsAnthropic" },
-          { "$ref": "#/components/schemas/CreateAiCopilotOptionsGoogle" },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsOpenAi"
+          },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsAnthropic"
+          },
+          {
+            "$ref": "#/components/schemas/CreateAiCopilotOptionsGoogle"
+          },
           {
             "$ref": "#/components/schemas/CreateAiCopilotOptionsOpenAiCompatible"
           }
@@ -7685,21 +7821,39 @@
             "type": "string"
           },
           "description": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "systemPrompt": {
             "type": "string"
           },
           "knowledgePrompt": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "alwaysUseKnowledge": {
             "type": "boolean"
           },
           "settings": {
             "oneOf": [
-              { "$ref": "#/components/schemas/AiCopilotProviderSettings" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/AiCopilotProviderSettings"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "providerApiKey": {
@@ -7714,10 +7868,18 @@
           },
           "providerOptions": {
             "oneOf": [
-              { "$ref": "#/components/schemas/OpenAiProviderOptions" },
-              { "$ref": "#/components/schemas/AnthropicProviderOptions" },
-              { "$ref": "#/components/schemas/GoogleProviderOptions" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/OpenAiProviderOptions"
+              },
+              {
+                "$ref": "#/components/schemas/AnthropicProviderOptions"
+              },
+              {
+                "$ref": "#/components/schemas/GoogleProviderOptions"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "compatibleProviderName": {
@@ -7734,18 +7896,36 @@
         "title": "AiCopilotProviderSettings",
         "type": "object",
         "properties": {
-          "maxTokens": { "type": "integer" },
-          "temperature": { "type": "number" },
-          "topP": { "type": "number" },
-          "topK": { "type": "number" },
-          "frequencyPenalty": { "type": "number" },
-          "presencePenalty": { "type": "number" },
+          "maxTokens": {
+            "type": "integer"
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "topP": {
+            "type": "number"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "frequencyPenalty": {
+            "type": "number"
+          },
+          "presencePenalty": {
+            "type": "number"
+          },
           "stopSequences": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
-          "seed": { "type": "integer" },
-          "maxRetries": { "type": "integer" }
+          "seed": {
+            "type": "integer"
+          },
+          "maxRetries": {
+            "type": "integer"
+          }
         },
         "additionalProperties": false
       },
@@ -7816,7 +7996,9 @@
                 "properties": {
                   "allowedDomains": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
                 "additionalProperties": false
@@ -7841,8 +8023,13 @@
                     "type": "object",
                     "required": ["type", "budgetTokens"],
                     "properties": {
-                      "type": { "type": "string", "const": "enabled" },
-                      "budgetTokens": { "type": "integer" }
+                      "type": {
+                        "type": "string",
+                        "const": "enabled"
+                      },
+                      "budgetTokens": {
+                        "type": "integer"
+                      }
                     },
                     "additionalProperties": false
                   },
@@ -7851,7 +8038,10 @@
                     "type": "object",
                     "required": ["type"],
                     "properties": {
-                      "type": { "type": "string", "const": "disabled" }
+                      "type": {
+                        "type": "string",
+                        "const": "disabled"
+                      }
                     },
                     "additionalProperties": false
                   }
@@ -7863,7 +8053,9 @@
                 "properties": {
                   "allowedDomains": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -7884,7 +8076,9 @@
               "thinkingConfig": {
                 "type": "object",
                 "properties": {
-                  "thinkingBudget": { "type": "integer" }
+                  "thinkingBudget": {
+                    "type": "integer"
+                  }
                 }
               }
             }
@@ -7897,7 +8091,14 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "data": {
             "type": "array",
@@ -7913,31 +8114,51 @@
         "type": "object",
         "required": ["id", "createdAt", "updatedAt", "lastIndexedAt", "status"],
         "properties": {
-          "id": { "type": "string" },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "lastIndexedAt": { "type": "string", "format": "date-time" },
+          "id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastIndexedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "status": {
             "type": "string",
             "enum": ["ingesting", "ready", "error"]
           },
-          "errorMessage": { "type": "string" }
+          "errorMessage": {
+            "type": "string"
+          }
         },
         "additionalProperties": false
       },
       "KnowledgeSourceWebSource": {
         "allOf": [
-          { "$ref": "#/components/schemas/KnowledgeSourceBase" },
+          {
+            "$ref": "#/components/schemas/KnowledgeSourceBase"
+          },
           {
             "type": "object",
             "required": ["type", "link", "status"],
             "properties": {
-              "type": { "type": "string", "const": "ai-knowledge-web-source" },
+              "type": {
+                "type": "string",
+                "const": "ai-knowledge-web-source"
+              },
               "link": {
                 "type": "object",
                 "required": ["url", "type"],
                 "properties": {
-                  "url": { "type": "string" },
+                  "url": {
+                    "type": "string"
+                  },
                   "type": {
                     "type": "string",
                     "enum": ["individual_link", "crawl", "sitemap"]
@@ -7951,18 +8172,27 @@
       },
       "KnowledgeSourceFileSource": {
         "allOf": [
-          { "$ref": "#/components/schemas/KnowledgeSourceBase" },
+          {
+            "$ref": "#/components/schemas/KnowledgeSourceBase"
+          },
           {
             "type": "object",
             "required": ["type", "file"],
             "properties": {
-              "type": { "type": "string", "const": "ai-knowledge-file-source" },
+              "type": {
+                "type": "string",
+                "const": "ai-knowledge-file-source"
+              },
               "file": {
                 "type": "object",
                 "required": ["name", "mimeType"],
                 "properties": {
-                  "name": { "type": "string" },
-                  "mimeType": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "mimeType": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -7973,8 +8203,12 @@
         "type": "object",
         "title": "KnowledgeSource",
         "oneOf": [
-          { "$ref": "#/components/schemas/KnowledgeSourceWebSource" },
-          { "$ref": "#/components/schemas/KnowledgeSourceFileSource" }
+          {
+            "$ref": "#/components/schemas/KnowledgeSourceWebSource"
+          },
+          {
+            "$ref": "#/components/schemas/KnowledgeSourceFileSource"
+          }
         ],
         "discriminator": {
           "propertyName": "type"
@@ -7986,7 +8220,14 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "data": {
             "type": "array",
@@ -8020,7 +8261,9 @@
         "title": "CreateWebKnowledgeSourceResponse",
         "type": "object",
         "properties": {
-          "id": { "type": "string" }
+          "id": {
+            "type": "string"
+          }
         },
         "required": ["id"],
         "additionalProperties": false
@@ -8029,8 +8272,12 @@
         "title": "GetFileKnowledgeSourceMarkdownResponse",
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "content": { "type": "string" }
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
         },
         "required": ["id", "content"],
         "additionalProperties": false
@@ -8066,7 +8313,14 @@
         "type": "object",
         "properties": {
           "nextCursor": {
-            "oneOf": [{ "type": "string" }, { "type": "null" }]
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "data": {
             "type": "array",
@@ -8326,8 +8580,12 @@
           },
           "secretKey": {
             "oneOf": [
-              { "$ref": "#/components/schemas/ManagementProjectSecretKey" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/ManagementProjectSecretKey"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "region": {
@@ -8860,8 +9118,13 @@
               },
               "deliveredAt": {
                 "oneOf": [
-                  { "type": "string", "format": "date-time" },
-                  { "type": "null" }
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               }
             },
