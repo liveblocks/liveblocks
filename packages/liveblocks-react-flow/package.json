@@ -1,0 +1,100 @@
+{
+  "name": "@liveblocks/react-flow",
+  "version": "3.15.1",
+  "description": "An integration of React Flow to enable collaboration, comments, live cursors, and more with Liveblocks.",
+  "license": "Apache-2.0",
+  "author": "Liveblocks Inc.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./suspense": {
+      "import": {
+        "types": "./dist/suspense.d.ts",
+        "default": "./dist/suspense.js"
+      },
+      "require": {
+        "types": "./dist/suspense.d.cts",
+        "module": "./dist/suspense.js",
+        "default": "./dist/suspense.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist/**",
+    "suspense/**",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "start": "tsup --watch",
+    "format": "(eslint --fix src/ || true) && prettier --write src/",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@liveblocks/client": "3.15.1",
+    "@liveblocks/core": "3.15.1",
+    "@liveblocks/react": "3.15.1"
+  },
+  "peerDependencies": {
+    "@xyflow/react": "^12",
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    },
+    "@types/react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@xyflow/react": "^12.10.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-react-flow"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "xyflow",
+    "react-flow",
+    "react",
+    "comments",
+    "threads",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}
