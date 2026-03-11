@@ -4,5 +4,6 @@ package_name_override: liveblocks
 package_version_override: 0.1.0
 
 post_hooks:
+  - "uv run python generate_readme_mdx.py"
   - "uvx ruff check --fix-only ."
   - "uvx ruff format ."

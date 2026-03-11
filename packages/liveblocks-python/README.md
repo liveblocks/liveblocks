@@ -1,4 +1,3 @@
-
 # @liveblocks/python
 
 `@liveblocks/python` provides you with a Python client for accessing the Liveblocks API. This library is only intended for use in your Python back end.
