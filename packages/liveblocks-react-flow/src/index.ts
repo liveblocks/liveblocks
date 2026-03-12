@@ -3,4 +3,10 @@ import { detectDupes } from "@liveblocks/core";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export { createLiveblocksFlowStorage, useLiveblocksFlow } from "./flow";
+export type {
+  LiveblocksEdge,
+  LiveblocksFlow,
+  LiveblocksFlowRoot,
+  LiveblocksNode,
+} from "./flow";
+export { createLiveblocksFlowInitialStorage, useLiveblocksFlow } from "./flow";

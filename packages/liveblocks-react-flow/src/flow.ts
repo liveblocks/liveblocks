@@ -3,6 +3,7 @@ import {
   LiveMap,
   LiveObject,
   type LsonObject,
+  type Resolve,
   shallow,
   type ToImmutable,
 } from "@liveblocks/core";
@@ -17,6 +18,8 @@ import {
 } from "@xyflow/react";
 import { useRef } from "react";
 
+import { omit, pick, type UnwrapLiveObject } from "./utils";
+
 const NODE_LOCAL_KEYS = [
   "selected",
   "dragging",
@@ -30,13 +33,17 @@ const EDGE_LOCAL_KEYS = [
   "domAttributes",
 ] satisfies (keyof Edge)[number][];
 
-type LiveblocksNode<_NodeData extends JsonObject = JsonObject> =
-  LiveObject<LsonObject>;
+export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
+  LiveObject<
+    Omit<Node<NodeData>, (typeof NODE_LOCAL_KEYS)[number]> & LsonObject
+  >;
 
-type LiveblocksEdge<_EdgeData extends JsonObject = JsonObject> =
-  LiveObject<LsonObject>;
+export type LiveblocksEdge<EdgeData extends JsonObject = JsonObject> =
+  LiveObject<
+    Omit<Edge<EdgeData>, (typeof EDGE_LOCAL_KEYS)[number]> & LsonObject
+  >;
 
-type LiveblocksFlow<
+export type LiveblocksFlow<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
 > = LiveObject<{
@@ -44,12 +51,15 @@ type LiveblocksFlow<
   edges: LiveMap<string, LiveblocksEdge<EdgeData>>;
 }>;
 
-type StorageRoot<
-  NodeData extends JsonObject,
-  EdgeData extends JsonObject,
-> = LiveObject<{
-  flow: LiveblocksFlow<NodeData, EdgeData>;
-}>;
+export type LiveblocksFlowRoot<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+  StorageRoot extends LsonObject = LsonObject,
+> = LiveObject<
+  StorageRoot & {
+    flow: LiveblocksFlow<NodeData, EdgeData>;
+  }
+>;
 
 type NodeLocalState = Partial<
   Record<(typeof NODE_LOCAL_KEYS)[number], unknown>
@@ -58,57 +68,16 @@ type EdgeLocalState = Partial<
   Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>
 >;
 
-type ImmutableStorageRoot<
-  NodeData extends JsonObject,
-  EdgeData extends JsonObject,
-> = ToImmutable<StorageRoot<NodeData, EdgeData>>;
-
-function getFlow<NodeData extends JsonObject, EdgeData extends JsonObject>(
-  storage: StorageRoot<NodeData, EdgeData>
-) {
-  return storage.get("flow");
-}
-
-function omitKeys<T extends object, K extends PropertyKey>(
-  source: T,
-  keys: readonly K[]
-): Omit<T, Extract<K, keyof T>> {
-  const result = { ...source } as Partial<T>;
-
-  for (const key of keys) {
-    delete (result as Record<PropertyKey, unknown>)[key];
-  }
-
-  return result as Omit<T, Extract<K, keyof T>>;
-}
-
-function pickDefined<T extends object, K extends PropertyKey>(
-  source: T,
-  keys: readonly K[]
-): Partial<Record<K, unknown>> {
-  const result: Partial<Record<K, unknown>> = {};
-  const sourceObject = source as Record<PropertyKey, unknown>;
-
-  for (const key of keys) {
-    const value = sourceObject[key];
-    if (value !== undefined) {
-      result[key] = value;
-    }
-  }
-
-  return result;
-}
-
 function getNodeLocalState<NodeData extends JsonObject>(
   node: Node<NodeData>
 ): Partial<NodeLocalState> {
-  return pickDefined(node, NODE_LOCAL_KEYS);
+  return pick(node, NODE_LOCAL_KEYS);
 }
 
 function getEdgeLocalState<EdgeData extends JsonObject>(
   edge: Edge<EdgeData>
 ): Partial<EdgeLocalState> {
-  return pickDefined(edge, EDGE_LOCAL_KEYS);
+  return pick(edge, EDGE_LOCAL_KEYS);
 }
 
 function hasOwnEntries(value: object): boolean {
@@ -137,10 +106,10 @@ function updateLocalState<T extends object>(
     return;
   }
 
-  const prev = cache.get(id);
-  const merged = { ...prev, ...next };
+  const previous = cache.get(id);
+  const merged = { ...previous, ...next };
 
-  if (prev && shallow(prev, merged)) {
+  if (previous && shallow(previous, merged)) {
     return;
   }
 
@@ -156,6 +125,7 @@ function mergeLocalState<T extends { id: string }, L extends object>(
   cache: Map<string, L>
 ): T {
   const local = cache.get(value.id);
+
   if (!local) {
     return value;
   }
@@ -170,27 +140,27 @@ function nodeToStorage<NodeData extends JsonObject>(
   node: Node<NodeData>
 ): LiveblocksNode<NodeData> {
   return new LiveObject(
-    omitKeys(node, NODE_LOCAL_KEYS) as unknown as LsonObject
+    omit(node, NODE_LOCAL_KEYS) as unknown as LsonObject
   ) as LiveblocksNode<NodeData>;
 }
 
 function edgeToStorage<EdgeData extends JsonObject>(
   edge: Edge<EdgeData>
 ): LiveblocksEdge<EdgeData> {
-  return new LiveObject({
-    ...omitKeys(edge, EDGE_LOCAL_KEYS),
-    data: (edge.data ?? {}) as EdgeData,
-  } as unknown as LsonObject) as LiveblocksEdge<EdgeData>;
+  return new LiveObject(
+    omit(edge, EDGE_LOCAL_KEYS) as unknown as LsonObject
+  ) as LiveblocksEdge<EdgeData>;
 }
 
 function reconcile<T extends { id: string }>(next: T, cache: Map<string, T>) {
-  const prev = cache.get(next.id);
+  const previous = cache.get(next.id);
 
-  if (prev && shallow(prev, next)) {
-    return prev;
+  if (previous && shallow(previous, next)) {
+    return previous;
   }
 
   cache.set(next.id, next);
+
   return next;
 }
 
@@ -198,8 +168,12 @@ export function useLiveblocksFlow<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
 >() {
-  const nodeCache = useRef<Map<string, Node<NodeData>>>(new Map());
-  const edgeCache = useRef<Map<string, Edge<EdgeData>>>(new Map());
+  type TStorageRoot = LiveblocksFlowRoot<NodeData, EdgeData>;
+  type TNode = Node<NodeData>;
+  type TEdge = Edge<EdgeData>;
+
+  const nodeCache = useRef<Map<string, TNode>>(new Map());
+  const edgeCache = useRef<Map<string, TEdge>>(new Map());
   const nodeLocalStateCache = useRef<Map<string, Partial<NodeLocalState>>>(
     new Map()
   );
@@ -209,17 +183,18 @@ export function useLiveblocksFlow<
 
   const nodes =
     useStorage((root) => {
-      const flow = (root as ImmutableStorageRoot<NodeData, EdgeData> | null)
-        ?.flow;
-      const map = flow?.nodes;
+      const flow = (root as ToImmutable<TStorageRoot> | null)?.flow;
+      const nodes = flow?.nodes;
 
-      if (!map) return [];
+      if (!nodes) {
+        return [];
+      }
 
-      const result: Node<NodeData>[] = [];
+      const result: TNode[] = [];
 
-      for (const immutableNode of map.values()) {
+      for (const node of nodes.values()) {
         const merged = mergeLocalState(
-          immutableNode as unknown as Node<NodeData>,
+          node as unknown as TNode,
           nodeLocalStateCache.current
         );
 
@@ -231,17 +206,18 @@ export function useLiveblocksFlow<
 
   const edges =
     useStorage((root) => {
-      const flow = (root as ImmutableStorageRoot<NodeData, EdgeData> | null)
-        ?.flow;
-      const map = flow?.edges;
+      const flow = (root as ToImmutable<TStorageRoot> | null)?.flow;
+      const edges = flow?.edges;
 
-      if (!map) return [];
+      if (!edges) {
+        return [];
+      }
 
-      const result: Edge<EdgeData>[] = [];
+      const result: TEdge[] = [];
 
-      for (const immutableEdge of map.values()) {
+      for (const edge of edges.values()) {
         const merged = mergeLocalState(
-          immutableEdge as unknown as Edge<EdgeData>,
+          edge as unknown as TEdge,
           edgeLocalStateCache.current
         );
 
@@ -252,10 +228,11 @@ export function useLiveblocksFlow<
     }) ?? [];
 
   const onNodesChange = useMutation(
-    ({ storage }, changes: NodeChange<Node<NodeData>>[]) => {
-      const root = storage as StorageRoot<NodeData, EdgeData>;
-      const nodes = getFlow(root).get("nodes");
-      const upsertNode = (node: Node<NodeData>) => {
+    ({ storage }, changes: NodeChange<TNode>[]) => {
+      const root = storage as TStorageRoot;
+      const nodes = root.get("flow").get("nodes");
+
+      const upsertNode = (node: TNode) => {
         nodes.set(node.id, nodeToStorage(node));
         updateLocalState(
           nodeLocalStateCache.current,
@@ -279,15 +256,18 @@ export function useLiveblocksFlow<
 
           case "position": {
             const node = nodes.get(change.id);
-            if (!node || !change.position) break;
 
-            const prev = node.get("position") as
-              | Node<NodeData>["position"]
+            if (!node || !change.position) {
+              break;
+            }
+
+            const previous = node.get("position") as
+              | TNode["position"]
               | undefined;
 
             if (
-              prev?.x !== change.position.x ||
-              prev?.y !== change.position.y
+              previous?.x !== change.position.x ||
+              previous?.y !== change.position.y
             ) {
               node.set("position", change.position);
             }
@@ -350,10 +330,11 @@ export function useLiveblocksFlow<
   );
 
   const onEdgesChange = useMutation(
-    ({ storage }, changes: EdgeChange<Edge<EdgeData>>[]) => {
-      const root = storage as StorageRoot<NodeData, EdgeData>;
-      const edges = getFlow(root).get("edges");
-      const upsertEdge = (edge: Edge<EdgeData>) => {
+    ({ storage }, changes: EdgeChange<TEdge>[]) => {
+      const root = storage as TStorageRoot;
+      const edges = root.get("flow").get("edges");
+
+      const upsertEdge = (edge: TEdge) => {
         edges.set(edge.id, edgeToStorage(edge));
         updateLocalState(
           edgeLocalStateCache.current,
@@ -399,12 +380,12 @@ export function useLiveblocksFlow<
   );
 
   const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const root = storage as StorageRoot<NodeData, EdgeData>;
-    const edges = getFlow(root).get("edges");
+    const root = storage as TStorageRoot;
+    const edges = root.get("flow").get("edges");
 
     const current = Array.from(
       edges.values(),
-      (edge) => edge.toObject() as unknown as Edge<EdgeData>
+      (edge) => edge.toObject() as unknown as TEdge
     );
 
     const next = addEdge(connection, current);
@@ -426,7 +407,7 @@ export function useLiveblocksFlow<
   };
 }
 
-export function createLiveblocksFlowStorage<
+export function createLiveblocksFlowInitialStorage<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
 >({
@@ -435,7 +416,7 @@ export function createLiveblocksFlowStorage<
 }: {
   nodes?: Node<NodeData>[];
   edges?: Edge<EdgeData>[];
-} = {}) {
+} = {}): Resolve<UnwrapLiveObject<LiveblocksFlowRoot<NodeData, EdgeData>>> {
   return {
     flow: new LiveObject({
       nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
