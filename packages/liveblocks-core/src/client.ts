@@ -129,9 +129,8 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
     autoConnect?: boolean;
 
     /**
-     * Preferred storage engine version to use when creating the room. Only
-     * takes effect if the room doesn't exist yet. Version 2 can support larger
-     * documents, is more performant, and will become the default in the future.
+     * @deprecated This flag no longer has any effect and will be removed in
+     * a future version. All rooms now use the v2 storage engine by default.
      */
     engine?: 1 | 2;
   }
@@ -514,10 +513,9 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   /**
-   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
-   * Storage engine have native support for streaming. This flag will be
-   * removed in a future version, but will continue to work for existing engine
-   * v1 rooms for now.
+   * @deprecated All rooms will be migrated to the v2 storage engine in the
+   * future, which has native support for streaming. After that migration, this
+   * flag will no longer have any effect and will be removed in a future version.
    */
   unstable_streamData?: boolean;
   /**
@@ -777,8 +775,7 @@ export function createClient<U extends BaseUserMeta = DU>(
           createSocket: makeCreateSocketDelegateForRoom(
             roomId,
             baseUrl,
-            clientOptions.polyfills?.WebSocket,
-            options.engine
+            clientOptions.polyfills?.WebSocket
           ),
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
