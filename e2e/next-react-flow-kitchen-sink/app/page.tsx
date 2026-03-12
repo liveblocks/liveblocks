@@ -32,7 +32,7 @@ function Flow() {
 export default function Page() {
   return (
     <RoomProvider
-      id="liveblocks:examples:next-react-flow-kitchen-sink-5"
+      id="liveblocks:examples:next-react-flow-kitchen-sink-7"
       initialStorage={createLiveblocksFlowStorage({
         nodes: [
           {
