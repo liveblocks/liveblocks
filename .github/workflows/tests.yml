@@ -319,9 +319,9 @@ jobs:
           filters: |
             python_sdk:
               - 'docs/references/v2.openapi.json'
-              - 'packages/liveblocks-python/templates/**'
-              - 'packages/liveblocks-python/config.yaml'
-              - 'packages/liveblocks-python/generate.sh'
+              - 'packages/liveblocks-python-codegen/templates/**'
+              - 'packages/liveblocks-python-codegen/config.yaml'
+              - 'packages/liveblocks-python-codegen/generate.py'
 
       - name: Checkout
         if: steps.filter.outputs.python_sdk == 'true'
@@ -333,15 +333,15 @@ jobs:
 
       - name: Regenerate Python SDK
         if: steps.filter.outputs.python_sdk == 'true'
-        run: bash generate.sh
-        working-directory: packages/liveblocks-python
+        run: uv run python generate.py
+        working-directory: packages/liveblocks-python-codegen
 
       - name: Check for uncommitted changes
         if: steps.filter.outputs.python_sdk == 'true'
         run: |
           CHANGED=$(git status --porcelain packages/liveblocks-python)
           if [ -n "$CHANGED" ]; then
-            echo "The generated Python SDK is out of date. Please run 'bash generate.sh' in packages/liveblocks-python and commit the changes."
+            echo "The generated Python SDK is out of date. Please run 'uv run python generate.py' in packages/liveblocks-python-codegen and commit the changes."
             echo ""
             echo "Changed files:"
             echo "$CHANGED"
@@ -364,6 +364,7 @@ jobs:
           filters: |
             python_sdk:
               - 'packages/liveblocks-python/**'
+              - 'packages/liveblocks-python-codegen/**'
 
       - name: Checkout
         if: steps.filter.outputs.python_sdk == 'true'

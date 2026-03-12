@@ -69,20 +69,25 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
 
-      - name: Set version
+      - name: Set version in pyproject.toml
         working-directory: packages/liveblocks-python
         env:
           VERSION: ${{ inputs.version }}
         run: |
           sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-          sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
 
-      - name: Commit and push version bump
-        working-directory: packages/liveblocks-python
+      - name: Set version in codegen config
+        working-directory: packages/liveblocks-python-codegen
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          git add pyproject.toml config.yaml
+          sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
+
+      - name: Commit and push version bump
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git add packages/liveblocks-python/pyproject.toml packages/liveblocks-python-codegen/config.yaml
           git commit -m "Bump liveblocks-python to $VERSION"
           git push origin HEAD
 
