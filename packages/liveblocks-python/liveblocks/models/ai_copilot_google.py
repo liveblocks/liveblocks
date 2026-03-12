@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class AiCopilotGoogle:
     """
+    Example:
+        {'type': 'copilot', 'id': 'cp_abc789', 'name': 'My Google Copilot', 'systemPrompt': 'You are a helpful
+            assistant.', 'alwaysUseKnowledge': False, 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'provider': 'google', 'providerModel': 'gemini-2.5-flash'}
+
     Attributes:
         type_ (Literal['copilot']):
         id (str):
@@ -27,12 +32,13 @@ class AiCopilotGoogle:
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
         provider (Literal['google']):
-        provider_model (GoogleModel):
+        provider_model (GoogleModel):  Example: gemini-2.5-flash.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         last_used_at (datetime.datetime | Unset):
-        settings (AiCopilotProviderSettings | Unset):
-        provider_options (GoogleProviderOptions | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
+        provider_options (GoogleProviderOptions | Unset):  Example: {'google': {'thinkingConfig': {'thinkingBudget':
+            10000}}}.
     """
 
     type_: Literal["copilot"]

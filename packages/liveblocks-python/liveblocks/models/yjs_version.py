@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class YjsVersion:
     """
+    Example:
+        {'id': 'vh_abc123', 'type': 'historyVersion', 'createdAt': '2024-10-15T10:30:00.000Z', 'authors': [{'id':
+            'user-123'}, {'id': 'user-456'}], 'kind': 'yjs'}
+
     Attributes:
         id (str): Unique identifier for the version
         type_ (Literal['historyVersion']):

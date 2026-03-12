@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class UnsubscribeFromThreadRequestBody:
     """
+    Example:
+        {'userId': 'alice'}
+
     Attributes:
         user_id (str):
     """

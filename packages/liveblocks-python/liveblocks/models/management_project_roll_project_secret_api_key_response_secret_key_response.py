@@ -12,8 +12,12 @@ if TYPE_CHECKING:
 @_attrs_define
 class ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse:
     """
+    Example:
+        {'secretKey': {'createdAt': '2024-09-03T12:34:56.000Z', 'value': 'sk_dev_123'}}
+
     Attributes:
-        secret_key (ManagementProjectSecretKey):
+        secret_key (ManagementProjectSecretKey):  Example: {'createdAt': '2024-09-03T12:34:56.000Z', 'value':
+            'sk_dev_123'}.
     """
 
     secret_key: ManagementProjectSecretKey

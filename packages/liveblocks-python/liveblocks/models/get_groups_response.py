@@ -12,6 +12,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetGroupsResponse:
     """
+    Example:
+        {'data': [{'type': 'group', 'id': 'engineering', 'organizationId': 'org_123456789', 'createdAt':
+            '2024-01-15T10:30:00.000Z', 'updatedAt': '2024-01-15T10:30:00.000Z', 'scopes': {'mention': True}, 'members':
+            [{'id': 'alice', 'addedAt': '2024-01-15T10:30:00.000Z'}]}], 'nextCursor': None}
+
     Attributes:
         data (list[Group]):
         next_cursor (None | str):

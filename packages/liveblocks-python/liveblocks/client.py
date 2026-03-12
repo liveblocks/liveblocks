@@ -30,9 +30,7 @@ if TYPE_CHECKING:
     from .models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
     from .models.create_group_request_body import CreateGroupRequestBody
     from .models.create_management_project_request_body import CreateManagementProjectRequestBody
-    from .models.create_management_project_response import CreateManagementProjectResponse
     from .models.create_management_webhook_request_body import CreateManagementWebhookRequestBody
-    from .models.create_management_webhook_response import CreateManagementWebhookResponse
     from .models.create_room_request_body import CreateRoomRequestBody
     from .models.create_thread_request_body import CreateThreadRequestBody
     from .models.create_web_knowledge_source_request_body import CreateWebKnowledgeSourceRequestBody
@@ -42,15 +40,14 @@ if TYPE_CHECKING:
     from .models.delete_management_webhook_headers_response import DeleteManagementWebhookHeadersResponse
     from .models.edit_comment_metadata_request_body import EditCommentMetadataRequestBody
     from .models.edit_comment_request_body import EditCommentRequestBody
+    from .models.edit_thread_metadata_request_body import EditThreadMetadataRequestBody
     from .models.get_ai_copilots_response import GetAiCopilotsResponse
     from .models.get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceMarkdownResponse
     from .models.get_groups_response import GetGroupsResponse
     from .models.get_inbox_notifications_response import GetInboxNotificationsResponse
     from .models.get_knowledge_sources_response import GetKnowledgeSourcesResponse
-    from .models.get_management_project_response import GetManagementProjectResponse
     from .models.get_management_projects_response import GetManagementProjectsResponse
     from .models.get_management_webhook_headers_response import GetManagementWebhookHeadersResponse
-    from .models.get_management_webhook_response import GetManagementWebhookResponse
     from .models.get_management_webhooks_response import GetManagementWebhooksResponse
     from .models.get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
     from .models.get_rooms_response import GetRoomsResponse
@@ -72,9 +69,11 @@ if TYPE_CHECKING:
     from .models.initialize_storage_document_response import InitializeStorageDocumentResponse
     from .models.knowledge_source_file_source import KnowledgeSourceFileSource
     from .models.knowledge_source_web_source import KnowledgeSourceWebSource
+    from .models.management_project import ManagementProject
     from .models.management_project_roll_project_secret_api_key_response_secret_key_response import (
         ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
     )
+    from .models.management_webhook import ManagementWebhook
     from .models.mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
     from .models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
     from .models.move_json_patch_operation import MoveJsonPatchOperation
@@ -104,14 +103,11 @@ if TYPE_CHECKING:
     from .models.unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
     from .models.update_ai_copilot_request_body import UpdateAiCopilotRequestBody
     from .models.update_management_project_request_body import UpdateManagementProjectRequestBody
-    from .models.update_management_project_response import UpdateManagementProjectResponse
     from .models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
-    from .models.update_management_webhook_response import UpdateManagementWebhookResponse
     from .models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
     from .models.update_room_request_body import UpdateRoomRequestBody
     from .models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
-    from .models.update_thread_metadata_request_body import UpdateThreadMetadataRequestBody
     from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
     from .models.upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
     from .models.upsert_room_request_body import UpsertRoomRequestBody
@@ -211,16 +207,17 @@ class Liveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of rooms to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
-            organization_id (str | Unset): A filter on organization ID.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
                 example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
                 more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language).
-            user_id (str | Unset): A filter on users accesses.
+                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
+                Example: group1,group2.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -268,8 +265,10 @@ class Liveblocks:
             idempotent (bool | Unset): When provided, will not return a 409 when the room already
                 exists, but instead return the existing room as-is. Corresponds to
                 [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
-                node#get-or-create-rooms-roomId).
-            body (CreateRoomRequestBody):
+                node#get-or-create-rooms-roomId). Example: True.
+            body (CreateRoomRequestBody):  Example: {'id': 'my-room-id', 'defaultAccesses':
+                ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']},
+                'groupsAccesses': {'product': ['room:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -297,7 +296,7 @@ class Liveblocks:
         [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -347,8 +346,10 @@ class Liveblocks:
         field.
 
         Args:
-            room_id (str): ID of the room
-            body (UpdateRoomRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'],
+                'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
+                ['room:write']}, 'metadata': {'color': 'blue'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -377,7 +378,7 @@ class Liveblocks:
         reference/liveblocks-node#delete-rooms-roomid).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -408,7 +409,7 @@ class Liveblocks:
         roomid-prewarm).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -458,8 +459,10 @@ class Liveblocks:
         field.
 
         Args:
-            room_id (str): ID of the room
-            body (UpsertRoomRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (UpsertRoomRequestBody):  Example: {'update': {'usersAccesses': {'alice':
+                ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color':
+                'blue'}}, 'create': {'defaultAccesses': ['room:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -491,8 +494,8 @@ class Liveblocks:
         roomid-update-room-id).
 
         Args:
-            room_id (str): The new ID for the room
-            body (UpdateRoomIdRequestBody | Unset):
+            room_id (str): The new ID for the room Example: my-room-id.
+            body (UpdateRoomIdRequestBody | Unset):  Example: {'newRoomId': 'new-room-id'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -524,7 +527,7 @@ class Liveblocks:
         Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -557,8 +560,10 @@ class Liveblocks:
         roomId-presence).
 
         Args:
-            room_id (str): ID of the room
-            body (SetPresenceRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (SetPresenceRequestBody):  Example: {'userId': 'agent-123', 'data': {'status':
+                'active', 'cursor': {'x': 100, 'y': 200}}, 'userInfo': {'name': 'AI Assistant', 'avatar':
+                'https://example.org/images/agent123.jpg'}, 'ttl': 60}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -591,7 +596,7 @@ class Liveblocks:
         broadcast-event).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (Any):
 
         Raises:
@@ -637,12 +642,12 @@ class Liveblocks:
         see below.
 
         Args:
-            room_id (str): ID of the room
-            format_ (GetStorageDocumentFormat | Unset): Use `?format=json` to output a simplified JSON
-                representation of the Storage tree. In that format, each LiveObject and LiveMap will be
-                formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
+            room_id (str): ID of the room Example: my-room-id.
+            format_ (GetStorageDocumentFormat | Unset): Use the `json` format to output a simplified
+                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will
+                be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
                 array. This is a lossy format because information about the original data structures is
-                not retained, but it may be easier to work with.
+                not retained, but it may be easier to work with. Example: json.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -686,7 +691,7 @@ class Liveblocks:
         `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (InitializeStorageDocumentBody | Unset):
 
         Raises:
@@ -717,7 +722,7 @@ class Liveblocks:
         node#delete-rooms-roomId-storage).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -765,9 +770,10 @@ class Liveblocks:
         Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
-                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
+                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):  Example:
+                [{'op': 'add', 'path': '/score', 'value': 42}, {'op': 'remove', 'path': '/oldKey'}].
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -800,11 +806,12 @@ class Liveblocks:
         roomId-ydoc).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             formatting (bool | Unset): If present, YText will return formatting.
             key (str | Unset): Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.
+                Example: root.
             type_ (GetYjsDocumentType | Unset): Used with key to override the inferred type, i.e.
-                `"ymap"` will return `doc.get(key, Y.Map)`.
+                `"ymap"` will return `doc.get(key, Y.Map)`. Example: ymap.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -846,8 +853,8 @@ class Liveblocks:
         unlike most other endpoints.
 
         Args:
-            room_id (str): ID of the room
-            guid (str | Unset): ID of the subdocument
+            room_id (str): ID of the room Example: my-room-id.
+            guid (str | Unset): ID of the subdocument Example: subdoc-guid-123.
             body (File):
 
         Raises:
@@ -883,8 +890,8 @@ class Liveblocks:
         node#get-rooms-roomId-ydoc-binary).
 
         Args:
-            room_id (str): ID of the room
-            guid (str | Unset): ID of the subdocument
+            room_id (str): ID of the room Example: my-room-id.
+            guid (str | Unset): ID of the subdocument Example: subdoc-guid-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -915,11 +922,11 @@ class Liveblocks:
         are returned sorted by creation date, from newest to oldest.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             limit (int | Unset): A limit on the number of versions to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -948,8 +955,8 @@ class Liveblocks:
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
         Args:
-            room_id (str): ID of the room
-            version_id (str): ID of the version
+            room_id (str): ID of the room Example: my-room-id.
+            version_id (str): ID of the version Example: vh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -976,7 +983,7 @@ class Liveblocks:
          This endpoint creates a new version history snapshot for the room's Yjs document.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1006,11 +1013,12 @@ class Liveblocks:
         threads).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
                 for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
                 Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
+                Example: metadata["color"]:"blue".
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1056,7 +1064,7 @@ class Liveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (CreateThreadRequestBody):
 
         Raises:
@@ -1087,8 +1095,8 @@ class Liveblocks:
         threads-threadId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1118,8 +1126,8 @@ class Liveblocks:
         roomId-threads-threadId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1142,7 +1150,7 @@ class Liveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataRequestBody,
+        body: EditThreadMetadataRequestBody,
     ) -> ThreadMetadata:
         """Edit thread metadata
 
@@ -1153,9 +1161,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-metadata).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (UpdateThreadMetadataRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (EditThreadMetadataRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1189,9 +1197,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-mark-as-resolved).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (MarkThreadAsResolvedRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (MarkThreadAsResolvedRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1225,9 +1233,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-mark-as-unresolved).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (MarkThreadAsUnresolvedRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (MarkThreadAsUnresolvedRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1260,9 +1268,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-subscribe).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (SubscribeToThreadRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (SubscribeToThreadRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1295,9 +1303,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-unsubscribe).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (UnsubscribeFromThreadRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (UnsubscribeFromThreadRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1328,8 +1336,8 @@ class Liveblocks:
         rooms-roomId-threads-threadId-subscriptions).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1376,8 +1384,8 @@ class Liveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
             body (CreateCommentRequestBody):
 
         Raises:
@@ -1410,9 +1418,9 @@ class Liveblocks:
         threads-threadId-comments-commentId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1461,9 +1469,9 @@ class Liveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (EditCommentRequestBody):
 
         Raises:
@@ -1498,9 +1506,9 @@ class Liveblocks:
         roomId-threads-threadId-comments-commentId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1534,9 +1542,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (AddCommentReactionRequestBody):
 
         Raises:
@@ -1573,9 +1581,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (RemoveCommentReactionRequestBody | Unset):
 
         Raises:
@@ -1613,9 +1621,9 @@ class Liveblocks:
         rooms-roomId-threads-threadId-comments-commentId-metadata).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (EditCommentMetadataRequestBody):
 
         Raises:
@@ -1673,7 +1681,10 @@ class Liveblocks:
         tokens](https://liveblocks.io/docs/authentication/access-token).
 
         Args:
-            body (AuthorizeUserRequestBody):
+            body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
+                'bob', 'avatar': 'https://example.org/images/user123.jpg'}, 'organizationId': 'acme-corp',
+                'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-room-*':
+                ['room:read']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1728,7 +1739,9 @@ class Liveblocks:
         or the user’s display name.
 
         Args:
-            body (IdentifyUserRequestBody):
+            body (IdentifyUserRequestBody):  Example: {'userId': 'user-123', 'organizationId': 'acme-
+                corp', 'groupIds': ['marketing', 'engineering'], 'userInfo': {'name': 'bob', 'avatar':
+                'https://example.org/images/user123.jpg'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1757,8 +1770,8 @@ class Liveblocks:
         users-userId-inboxNotifications-inboxNotificationId).
 
         Args:
-            user_id (str): ID of the user
-            inbox_notification_id (str): ID of the inbox notification
+            user_id (str): ID of the user Example: user-123.
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1788,8 +1801,8 @@ class Liveblocks:
         node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
         Args:
-            user_id (str): ID of the user
-            inbox_notification_id (str): ID of the inbox notification
+            user_id (str): ID of the user Example: user-123.
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1823,14 +1836,15 @@ class Liveblocks:
         users-userId-inboxNotifications).
 
         Args:
-            user_id (str): ID of the user
-            organization_id (str | Unset): The organization ID to filter notifications for.
+            user_id (str): ID of the user Example: user-123.
+            organization_id (str | Unset): The organization ID to filter notifications for. Example:
+                org_123456789.
             query (str | Unset): Query to filter notifications. You can filter by `unread`, for
-                example, `unread:true`.
+                example, `unread:true`. Example: metadata["color"]:"blue".
             limit (int | Unset): A limit on the number of inbox notifications to be returned. The
-                limit can range between 1 and 50, and defaults to 50. Default: 50.
+                limit can range between 1 and 50, and defaults to 50. Default: 50. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1862,7 +1876,7 @@ class Liveblocks:
         node#delete-users-userId-inbox-notifications).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1890,7 +1904,7 @@ class Liveblocks:
         users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1920,9 +1934,10 @@ class Liveblocks:
         node#post-users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
             body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
-                properties are optional
+                properties are optional Example: {'email': {'thread': True, 'textMention': False},
+                'slack': {'textMention': False}, 'webPush': {'thread': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1951,7 +1966,7 @@ class Liveblocks:
         node#delete-users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1980,8 +1995,8 @@ class Liveblocks:
         node#get-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2013,10 +2028,11 @@ class Liveblocks:
         node#post-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
             body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
-                properties are optional
+                properties are optional Example: {'threads': 'replies_and_mentions', 'textMentions':
+                'none'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2047,8 +2063,8 @@ class Liveblocks:
         node#delete-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2081,13 +2097,13 @@ class Liveblocks:
         node#get-users-userId-room-subscription-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             limit (int | Unset): A limit on the number of elements to be returned. The limit can range
-                between 1 and 50, and defaults to 50. Default: 50.
+                between 1 and 50, and defaults to 50. Default: 50. Example: 20.
             organization_id (str | Unset): The organization ID to filter room subscription settings
-                for.
+                for. Example: org_123456789.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2119,7 +2135,8 @@ class Liveblocks:
         node#post-inbox-notifications-trigger).
 
         Args:
-            body (TriggerInboxNotificationRequestBody | Unset):
+            body (TriggerInboxNotificationRequestBody | Unset):  Example: {'userId': 'alice', 'kind':
+                'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2149,9 +2166,9 @@ class Liveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of groups to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2180,7 +2197,8 @@ class Liveblocks:
         [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
-            body (CreateGroupRequestBody | Unset):
+            body (CreateGroupRequestBody | Unset):  Example: {'id': 'engineering', 'memberIds':
+                ['alice', 'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2207,7 +2225,7 @@ class Liveblocks:
         [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
         Args:
-            group_id (str): The ID of the group to retrieve.
+            group_id (str): The ID of the group to retrieve. Example: engineering.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2234,7 +2252,7 @@ class Liveblocks:
         [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
         Args:
-            group_id (str): The ID of the group to delete.
+            group_id (str): The ID of the group to delete. Example: engineering.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2264,8 +2282,8 @@ class Liveblocks:
         members).
 
         Args:
-            group_id (str): The ID of the group to add members to.
-            body (AddGroupMembersRequestBody):
+            group_id (str): The ID of the group to add members to. Example: engineering.
+            body (AddGroupMembersRequestBody):  Example: {'memberIds': ['charlie', 'dave']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2296,8 +2314,8 @@ class Liveblocks:
         group-members).
 
         Args:
-            group_id (str): The ID of the group to remove members from.
-            body (RemoveGroupMembersRequestBody):
+            group_id (str): The ID of the group to remove members from. Example: engineering.
+            body (RemoveGroupMembersRequestBody):  Example: {'memberIds': ['charlie']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2329,11 +2347,11 @@ class Liveblocks:
         groups).
 
         Args:
-            user_id (str): The ID of the user to get groups for.
+            user_id (str): The ID of the user to get groups for. Example: user-123.
             limit (int | Unset): A limit on the number of groups to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2367,9 +2385,9 @@ class Liveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of copilots to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2403,7 +2421,9 @@ class Liveblocks:
 
         Args:
             body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
+                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):  Example: {'name':
+                'My Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-...',
+                'provider': 'openai', 'providerModel': 'gpt-4o'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2431,7 +2451,7 @@ class Liveblocks:
         copilot).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2466,8 +2486,10 @@ class Liveblocks:
         response with an error message explaining where the validation failed.
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            body (UpdateAiCopilotRequestBody):
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            body (UpdateAiCopilotRequestBody):  Example: {'name': 'Updated Copilot', 'systemPrompt':
+                'You are an updated helpful assistant.', 'providerModel': 'gpt-4o', 'settings':
+                {'maxTokens': 8192}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2496,7 +2518,7 @@ class Liveblocks:
         reference/liveblocks-node#delete-ai-copilot).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2527,11 +2549,11 @@ class Liveblocks:
         knowledge-sources).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
             limit (int | Unset): A limit on the number of knowledge sources to be returned. The limit
-                can range between 1 and 100, and defaults to 20. Default: 20.
+                can range between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2562,8 +2584,8 @@ class Liveblocks:
         knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2595,8 +2617,9 @@ class Liveblocks:
         node#create-web-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            body (CreateWebKnowledgeSourceRequestBody):
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            body (CreateWebKnowledgeSourceRequestBody):  Example: {'copilotId': 'cp_abc123', 'url':
+                'https://docs.example.com', 'type': 'crawl'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2629,8 +2652,8 @@ class Liveblocks:
         node#create-file-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            name (str): Name of the file
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            name (str): Name of the file Example: document.pdf.
             body (File):
 
         Raises:
@@ -2663,8 +2686,8 @@ class Liveblocks:
         node#get-file-knowledge-source-markdown).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2695,8 +2718,8 @@ class Liveblocks:
         node#delete-file-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2727,8 +2750,8 @@ class Liveblocks:
         node#delete-web-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2762,12 +2785,12 @@ class Liveblocks:
         node#get-web-knowledge-source-links).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
             limit (int | Unset): A limit on the number of links to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2800,9 +2823,9 @@ class Liveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of projects to return. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2824,7 +2847,7 @@ class Liveblocks:
         self,
         *,
         body: CreateManagementProjectRequestBody,
-    ) -> CreateManagementProjectResponse:
+    ) -> ManagementProject:
         """Create project
 
          Creates a new project within your account. This endpoint requires the `write:all` scope. You can
@@ -2832,14 +2855,15 @@ class Liveblocks:
         about the newly created project, including its ID, keys, region, and settings.
 
         Args:
-            body (CreateManagementProjectRequestBody):
+            body (CreateManagementProjectRequestBody):  Example: {'name': 'My Project', 'type': 'dev',
+                'versionCreationTimeout': False}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import create_management_project
@@ -2852,21 +2876,21 @@ class Liveblocks:
     def get_management_project(
         self,
         project_id: str,
-    ) -> GetManagementProjectResponse:
+    ) -> ManagementProject:
         """Get project
 
          Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import get_management_project
@@ -2881,7 +2905,7 @@ class Liveblocks:
         project_id: str,
         *,
         body: UpdateManagementProjectRequestBody,
-    ) -> UpdateManagementProjectResponse:
+    ) -> ManagementProject:
         """Update project
 
          Updates an existing project specified by its ID. This endpoint allows you to modify project details
@@ -2892,15 +2916,16 @@ class Liveblocks:
         If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            body (UpdateManagementProjectRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (UpdateManagementProjectRequestBody):  Example: {'name': 'Updated Project Name',
+                'versionCreationTimeout': 60}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            UpdateManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import update_management_project
@@ -2921,7 +2946,7 @@ class Liveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2948,7 +2973,7 @@ class Liveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2975,7 +3000,7 @@ class Liveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3009,8 +3034,8 @@ class Liveblocks:
         be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str): ID of the project
-            body (RollProjectPublicApiKeyRequestBody | Unset):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (RollProjectPublicApiKeyRequestBody | Unset):  Example: {'expirationIn': '1 hour'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3044,8 +3069,8 @@ class Liveblocks:
         parameter can be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str): ID of the project
-            body (RollProjectSecretApiKeyRequestBody | Unset):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (RollProjectSecretApiKeyRequestBody | Unset):  Example: {'expirationIn': '3 days'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3080,11 +3105,11 @@ class Liveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
             limit (int | Unset): A limit on the number of webhooks to return. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3108,22 +3133,24 @@ class Liveblocks:
         project_id: str,
         *,
         body: CreateManagementWebhookRequestBody,
-    ) -> CreateManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Create webhook
 
          Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            body (CreateManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (CreateManagementWebhookRequestBody):  Example: {'url':
+                'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'],
+                'rateLimit': 100, 'storageUpdatedThrottleSeconds': 10, 'yDocUpdatedThrottleSeconds': 10}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import create_management_webhook
@@ -3138,7 +3165,7 @@ class Liveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> GetManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Get webhook
 
          Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
@@ -3146,15 +3173,15 @@ class Liveblocks:
         does not exist. This endpoint requires the `read:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import get_management_webhook
@@ -3171,7 +3198,7 @@ class Liveblocks:
         webhook_id: str,
         *,
         body: UpdateManagementWebhookRequestBody,
-    ) -> UpdateManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Update webhook
 
          Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
@@ -3179,16 +3206,18 @@ class Liveblocks:
         errors. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (UpdateManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (UpdateManagementWebhookRequestBody):  Example: {'url':
+                'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'],
+                'rateLimit': 100, 'disabled': False}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            UpdateManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import update_management_webhook
@@ -3211,8 +3240,8 @@ class Liveblocks:
         `404` if the project or webhook does not exist. Requires `write:all`.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3242,8 +3271,8 @@ class Liveblocks:
         `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3272,8 +3301,8 @@ class Liveblocks:
         `read:all`.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3305,9 +3334,10 @@ class Liveblocks:
         or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (UpsertManagementWebhookHeadersRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (UpsertManagementWebhookHeadersRequestBody):  Example: {'headers': {'X-Custom-
+                Header': 'value'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3341,9 +3371,10 @@ class Liveblocks:
         a 422 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (DeleteManagementWebhookHeadersRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (DeleteManagementWebhookHeadersRequestBody):  Example: {'headers': ['X-Custom-
+                Header', 'X-Another-Header']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3376,9 +3407,10 @@ class Liveblocks:
         requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (RecoverManagementWebhookFailedMessagesRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (RecoverManagementWebhookFailedMessagesRequestBody):  Example: {'since':
+                '2026-01-21T00:00:00.000Z'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3411,9 +3443,9 @@ class Liveblocks:
         project or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (TestManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (TestManagementWebhookRequestBody):  Example: {'subscribedEvent': 'storageUpdated'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3508,16 +3540,17 @@ class AsyncLiveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of rooms to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
-            organization_id (str | Unset): A filter on organization ID.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
+            organization_id (str | Unset): A filter on organization ID. Example: org_123456789.
             query (str | Unset): Query to filter rooms. You can filter by `roomId` and `metadata`, for
                 example, `metadata["roomType"]:"whiteboard" AND roomId^"liveblocks:engineering"`. Learn
                 more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-
-                filter-rooms-using-query-language).
-            user_id (str | Unset): A filter on users accesses.
+                filter-rooms-using-query-language). Example: metadata["color"]:"blue".
+            user_id (str | Unset): A filter on users accesses. Example: user-123.
             group_ids (str | Unset): A filter on groups accesses. Multiple groups can be used.
+                Example: group1,group2.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3565,8 +3598,10 @@ class AsyncLiveblocks:
             idempotent (bool | Unset): When provided, will not return a 409 when the room already
                 exists, but instead return the existing room as-is. Corresponds to
                 [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-
-                node#get-or-create-rooms-roomId).
-            body (CreateRoomRequestBody):
+                node#get-or-create-rooms-roomId). Example: True.
+            body (CreateRoomRequestBody):  Example: {'id': 'my-room-id', 'defaultAccesses':
+                ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']},
+                'groupsAccesses': {'product': ['room:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3594,7 +3629,7 @@ class AsyncLiveblocks:
         [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3644,8 +3679,10 @@ class AsyncLiveblocks:
         field.
 
         Args:
-            room_id (str): ID of the room
-            body (UpdateRoomRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'],
+                'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
+                ['room:write']}, 'metadata': {'color': 'blue'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3674,7 +3711,7 @@ class AsyncLiveblocks:
         reference/liveblocks-node#delete-rooms-roomid).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3705,7 +3742,7 @@ class AsyncLiveblocks:
         roomid-prewarm).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3755,8 +3792,10 @@ class AsyncLiveblocks:
         field.
 
         Args:
-            room_id (str): ID of the room
-            body (UpsertRoomRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (UpsertRoomRequestBody):  Example: {'update': {'usersAccesses': {'alice':
+                ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color':
+                'blue'}}, 'create': {'defaultAccesses': ['room:write']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3788,8 +3827,8 @@ class AsyncLiveblocks:
         roomid-update-room-id).
 
         Args:
-            room_id (str): The new ID for the room
-            body (UpdateRoomIdRequestBody | Unset):
+            room_id (str): The new ID for the room Example: my-room-id.
+            body (UpdateRoomIdRequestBody | Unset):  Example: {'newRoomId': 'new-room-id'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3821,7 +3860,7 @@ class AsyncLiveblocks:
         Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3854,8 +3893,10 @@ class AsyncLiveblocks:
         roomId-presence).
 
         Args:
-            room_id (str): ID of the room
-            body (SetPresenceRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            body (SetPresenceRequestBody):  Example: {'userId': 'agent-123', 'data': {'status':
+                'active', 'cursor': {'x': 100, 'y': 200}}, 'userInfo': {'name': 'AI Assistant', 'avatar':
+                'https://example.org/images/agent123.jpg'}, 'ttl': 60}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3888,7 +3929,7 @@ class AsyncLiveblocks:
         broadcast-event).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (Any):
 
         Raises:
@@ -3934,12 +3975,12 @@ class AsyncLiveblocks:
         see below.
 
         Args:
-            room_id (str): ID of the room
-            format_ (GetStorageDocumentFormat | Unset): Use `?format=json` to output a simplified JSON
-                representation of the Storage tree. In that format, each LiveObject and LiveMap will be
-                formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
+            room_id (str): ID of the room Example: my-room-id.
+            format_ (GetStorageDocumentFormat | Unset): Use the `json` format to output a simplified
+                JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will
+                be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON
                 array. This is a lossy format because information about the original data structures is
-                not retained, but it may be easier to work with.
+                not retained, but it may be easier to work with. Example: json.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3983,7 +4024,7 @@ class AsyncLiveblocks:
         `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (InitializeStorageDocumentBody | Unset):
 
         Raises:
@@ -4014,7 +4055,7 @@ class AsyncLiveblocks:
         node#delete-rooms-roomId-storage).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4062,9 +4103,10 @@ class AsyncLiveblocks:
         Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (list[AddJsonPatchOperation | CopyJsonPatchOperation | MoveJsonPatchOperation |
-                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):
+                RemoveJsonPatchOperation | ReplaceJsonPatchOperation | TestJsonPatchOperation]):  Example:
+                [{'op': 'add', 'path': '/score', 'value': 42}, {'op': 'remove', 'path': '/oldKey'}].
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4097,11 +4139,12 @@ class AsyncLiveblocks:
         roomId-ydoc).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             formatting (bool | Unset): If present, YText will return formatting.
             key (str | Unset): Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.
+                Example: root.
             type_ (GetYjsDocumentType | Unset): Used with key to override the inferred type, i.e.
-                `"ymap"` will return `doc.get(key, Y.Map)`.
+                `"ymap"` will return `doc.get(key, Y.Map)`. Example: ymap.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4143,8 +4186,8 @@ class AsyncLiveblocks:
         unlike most other endpoints.
 
         Args:
-            room_id (str): ID of the room
-            guid (str | Unset): ID of the subdocument
+            room_id (str): ID of the room Example: my-room-id.
+            guid (str | Unset): ID of the subdocument Example: subdoc-guid-123.
             body (File):
 
         Raises:
@@ -4180,8 +4223,8 @@ class AsyncLiveblocks:
         node#get-rooms-roomId-ydoc-binary).
 
         Args:
-            room_id (str): ID of the room
-            guid (str | Unset): ID of the subdocument
+            room_id (str): ID of the room Example: my-room-id.
+            guid (str | Unset): ID of the subdocument Example: subdoc-guid-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4212,11 +4255,11 @@ class AsyncLiveblocks:
         are returned sorted by creation date, from newest to oldest.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             limit (int | Unset): A limit on the number of versions to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4245,8 +4288,8 @@ class AsyncLiveblocks:
          This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
         Args:
-            room_id (str): ID of the room
-            version_id (str): ID of the version
+            room_id (str): ID of the room Example: my-room-id.
+            version_id (str): ID of the version Example: vh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4273,7 +4316,7 @@ class AsyncLiveblocks:
          This endpoint creates a new version history snapshot for the room's Yjs document.
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4303,11 +4346,12 @@ class AsyncLiveblocks:
         threads).
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             query (str | Unset): Query to filter threads. You can filter by `metadata` and `resolved`,
                 for example, `metadata["status"]:"open" AND metadata["color"]:"red" AND resolved:true`.
                 Learn more about [filtering threads with query
                 language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).
+                Example: metadata["color"]:"blue".
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4353,7 +4397,7 @@ class AsyncLiveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
+            room_id (str): ID of the room Example: my-room-id.
             body (CreateThreadRequestBody):
 
         Raises:
@@ -4384,8 +4428,8 @@ class AsyncLiveblocks:
         threads-threadId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4415,8 +4459,8 @@ class AsyncLiveblocks:
         roomId-threads-threadId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4439,7 +4483,7 @@ class AsyncLiveblocks:
         room_id: str,
         thread_id: str,
         *,
-        body: UpdateThreadMetadataRequestBody,
+        body: EditThreadMetadataRequestBody,
     ) -> ThreadMetadata:
         """Edit thread metadata
 
@@ -4450,9 +4494,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-metadata).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (UpdateThreadMetadataRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (EditThreadMetadataRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4486,9 +4530,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-mark-as-resolved).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (MarkThreadAsResolvedRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (MarkThreadAsResolvedRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4522,9 +4566,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-mark-as-unresolved).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (MarkThreadAsUnresolvedRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (MarkThreadAsUnresolvedRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4557,9 +4601,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-subscribe).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (SubscribeToThreadRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (SubscribeToThreadRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4592,9 +4636,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-unsubscribe).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            body (UnsubscribeFromThreadRequestBody):
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            body (UnsubscribeFromThreadRequestBody):  Example: {'userId': 'alice'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4625,8 +4669,8 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-subscriptions).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4673,8 +4717,8 @@ class AsyncLiveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
             body (CreateCommentRequestBody):
 
         Raises:
@@ -4707,9 +4751,9 @@ class AsyncLiveblocks:
         threads-threadId-comments-commentId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4758,9 +4802,9 @@ class AsyncLiveblocks:
         ```
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (EditCommentRequestBody):
 
         Raises:
@@ -4795,9 +4839,9 @@ class AsyncLiveblocks:
         roomId-threads-threadId-comments-commentId).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4831,9 +4875,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (AddCommentReactionRequestBody):
 
         Raises:
@@ -4870,9 +4914,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (RemoveCommentReactionRequestBody | Unset):
 
         Raises:
@@ -4910,9 +4954,9 @@ class AsyncLiveblocks:
         rooms-roomId-threads-threadId-comments-commentId-metadata).
 
         Args:
-            room_id (str): ID of the room
-            thread_id (str): ID of the thread
-            comment_id (str): ID of the comment
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+            comment_id (str): ID of the comment Example: cm_abc123.
             body (EditCommentMetadataRequestBody):
 
         Raises:
@@ -4970,7 +5014,10 @@ class AsyncLiveblocks:
         tokens](https://liveblocks.io/docs/authentication/access-token).
 
         Args:
-            body (AuthorizeUserRequestBody):
+            body (AuthorizeUserRequestBody):  Example: {'userId': 'user-123', 'userInfo': {'name':
+                'bob', 'avatar': 'https://example.org/images/user123.jpg'}, 'organizationId': 'acme-corp',
+                'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-room-*':
+                ['room:read']}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5025,7 +5072,9 @@ class AsyncLiveblocks:
         or the user’s display name.
 
         Args:
-            body (IdentifyUserRequestBody):
+            body (IdentifyUserRequestBody):  Example: {'userId': 'user-123', 'organizationId': 'acme-
+                corp', 'groupIds': ['marketing', 'engineering'], 'userInfo': {'name': 'bob', 'avatar':
+                'https://example.org/images/user123.jpg'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5054,8 +5103,8 @@ class AsyncLiveblocks:
         users-userId-inboxNotifications-inboxNotificationId).
 
         Args:
-            user_id (str): ID of the user
-            inbox_notification_id (str): ID of the inbox notification
+            user_id (str): ID of the user Example: user-123.
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5085,8 +5134,8 @@ class AsyncLiveblocks:
         node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
         Args:
-            user_id (str): ID of the user
-            inbox_notification_id (str): ID of the inbox notification
+            user_id (str): ID of the user Example: user-123.
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5120,14 +5169,15 @@ class AsyncLiveblocks:
         users-userId-inboxNotifications).
 
         Args:
-            user_id (str): ID of the user
-            organization_id (str | Unset): The organization ID to filter notifications for.
+            user_id (str): ID of the user Example: user-123.
+            organization_id (str | Unset): The organization ID to filter notifications for. Example:
+                org_123456789.
             query (str | Unset): Query to filter notifications. You can filter by `unread`, for
-                example, `unread:true`.
+                example, `unread:true`. Example: metadata["color"]:"blue".
             limit (int | Unset): A limit on the number of inbox notifications to be returned. The
-                limit can range between 1 and 50, and defaults to 50. Default: 50.
+                limit can range between 1 and 50, and defaults to 50. Default: 50. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5159,7 +5209,7 @@ class AsyncLiveblocks:
         node#delete-users-userId-inbox-notifications).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5187,7 +5237,7 @@ class AsyncLiveblocks:
         users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5217,9 +5267,10 @@ class AsyncLiveblocks:
         node#post-users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
             body (UpdateNotificationSettingsRequestBody): Partial notification settings - all
-                properties are optional
+                properties are optional Example: {'email': {'thread': True, 'textMention': False},
+                'slack': {'textMention': False}, 'webPush': {'thread': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5248,7 +5299,7 @@ class AsyncLiveblocks:
         node#delete-users-userId-notification-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5277,8 +5328,8 @@ class AsyncLiveblocks:
         node#get-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5310,10 +5361,11 @@ class AsyncLiveblocks:
         node#post-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
             body (UpdateRoomSubscriptionSettingsRequestBody): Partial room subscription settings - all
-                properties are optional
+                properties are optional Example: {'threads': 'replies_and_mentions', 'textMentions':
+                'none'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5344,8 +5396,8 @@ class AsyncLiveblocks:
         node#delete-rooms-roomId-users-userId-subscription-settings).
 
         Args:
-            room_id (str): ID of the room
-            user_id (str): ID of the user
+            room_id (str): ID of the room Example: my-room-id.
+            user_id (str): ID of the user Example: user-123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5378,13 +5430,13 @@ class AsyncLiveblocks:
         node#get-users-userId-room-subscription-settings).
 
         Args:
-            user_id (str): ID of the user
+            user_id (str): ID of the user Example: user-123.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
             limit (int | Unset): A limit on the number of elements to be returned. The limit can range
-                between 1 and 50, and defaults to 50. Default: 50.
+                between 1 and 50, and defaults to 50. Default: 50. Example: 20.
             organization_id (str | Unset): The organization ID to filter room subscription settings
-                for.
+                for. Example: org_123456789.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5416,7 +5468,8 @@ class AsyncLiveblocks:
         node#post-inbox-notifications-trigger).
 
         Args:
-            body (TriggerInboxNotificationRequestBody | Unset):
+            body (TriggerInboxNotificationRequestBody | Unset):  Example: {'userId': 'alice', 'kind':
+                'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5446,9 +5499,9 @@ class AsyncLiveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of groups to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5477,7 +5530,8 @@ class AsyncLiveblocks:
         [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
-            body (CreateGroupRequestBody | Unset):
+            body (CreateGroupRequestBody | Unset):  Example: {'id': 'engineering', 'memberIds':
+                ['alice', 'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5504,7 +5558,7 @@ class AsyncLiveblocks:
         [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
         Args:
-            group_id (str): The ID of the group to retrieve.
+            group_id (str): The ID of the group to retrieve. Example: engineering.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5531,7 +5585,7 @@ class AsyncLiveblocks:
         [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
         Args:
-            group_id (str): The ID of the group to delete.
+            group_id (str): The ID of the group to delete. Example: engineering.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5561,8 +5615,8 @@ class AsyncLiveblocks:
         members).
 
         Args:
-            group_id (str): The ID of the group to add members to.
-            body (AddGroupMembersRequestBody):
+            group_id (str): The ID of the group to add members to. Example: engineering.
+            body (AddGroupMembersRequestBody):  Example: {'memberIds': ['charlie', 'dave']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5593,8 +5647,8 @@ class AsyncLiveblocks:
         group-members).
 
         Args:
-            group_id (str): The ID of the group to remove members from.
-            body (RemoveGroupMembersRequestBody):
+            group_id (str): The ID of the group to remove members from. Example: engineering.
+            body (RemoveGroupMembersRequestBody):  Example: {'memberIds': ['charlie']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5626,11 +5680,11 @@ class AsyncLiveblocks:
         groups).
 
         Args:
-            user_id (str): The ID of the user to get groups for.
+            user_id (str): The ID of the user to get groups for. Example: user-123.
             limit (int | Unset): A limit on the number of groups to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5664,9 +5718,9 @@ class AsyncLiveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of copilots to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5700,7 +5754,9 @@ class AsyncLiveblocks:
 
         Args:
             body (CreateAiCopilotOptionsAnthropic | CreateAiCopilotOptionsGoogle |
-                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):
+                CreateAiCopilotOptionsOpenAi | CreateAiCopilotOptionsOpenAiCompatible):  Example: {'name':
+                'My Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-...',
+                'provider': 'openai', 'providerModel': 'gpt-4o'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5728,7 +5784,7 @@ class AsyncLiveblocks:
         copilot).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5763,8 +5819,10 @@ class AsyncLiveblocks:
         response with an error message explaining where the validation failed.
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            body (UpdateAiCopilotRequestBody):
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            body (UpdateAiCopilotRequestBody):  Example: {'name': 'Updated Copilot', 'systemPrompt':
+                'You are an updated helpful assistant.', 'providerModel': 'gpt-4o', 'settings':
+                {'maxTokens': 8192}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5793,7 +5851,7 @@ class AsyncLiveblocks:
         reference/liveblocks-node#delete-ai-copilot).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5824,11 +5882,11 @@ class AsyncLiveblocks:
         knowledge-sources).
 
         Args:
-            copilot_id (str): ID of the AI copilot
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
             limit (int | Unset): A limit on the number of knowledge sources to be returned. The limit
-                can range between 1 and 100, and defaults to 20. Default: 20.
+                can range between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5859,8 +5917,8 @@ class AsyncLiveblocks:
         knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5892,8 +5950,9 @@ class AsyncLiveblocks:
         node#create-web-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            body (CreateWebKnowledgeSourceRequestBody):
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            body (CreateWebKnowledgeSourceRequestBody):  Example: {'copilotId': 'cp_abc123', 'url':
+                'https://docs.example.com', 'type': 'crawl'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5926,8 +5985,8 @@ class AsyncLiveblocks:
         node#create-file-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            name (str): Name of the file
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            name (str): Name of the file Example: document.pdf.
             body (File):
 
         Raises:
@@ -5960,8 +6019,8 @@ class AsyncLiveblocks:
         node#get-file-knowledge-source-markdown).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5992,8 +6051,8 @@ class AsyncLiveblocks:
         node#delete-file-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6024,8 +6083,8 @@ class AsyncLiveblocks:
         node#delete-web-knowledge-source).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6059,12 +6118,12 @@ class AsyncLiveblocks:
         node#get-web-knowledge-source-links).
 
         Args:
-            copilot_id (str): ID of the AI copilot
-            knowledge_source_id (str): ID of the knowledge source
+            copilot_id (str): ID of the AI copilot Example: cp_abc123.
+            knowledge_source_id (str): ID of the knowledge source Example: ks_abc123.
             limit (int | Unset): A limit on the number of links to be returned. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             starting_after (str | Unset): A cursor used for pagination. Get the value from the
-                `nextCursor` response of the previous page.
+                `nextCursor` response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6097,9 +6156,9 @@ class AsyncLiveblocks:
 
         Args:
             limit (int | Unset): A limit on the number of projects to return. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6121,7 +6180,7 @@ class AsyncLiveblocks:
         self,
         *,
         body: CreateManagementProjectRequestBody,
-    ) -> CreateManagementProjectResponse:
+    ) -> ManagementProject:
         """Create project
 
          Creates a new project within your account. This endpoint requires the `write:all` scope. You can
@@ -6129,14 +6188,15 @@ class AsyncLiveblocks:
         about the newly created project, including its ID, keys, region, and settings.
 
         Args:
-            body (CreateManagementProjectRequestBody):
+            body (CreateManagementProjectRequestBody):  Example: {'name': 'My Project', 'type': 'dev',
+                'versionCreationTimeout': False}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import create_management_project
@@ -6149,21 +6209,21 @@ class AsyncLiveblocks:
     async def get_management_project(
         self,
         project_id: str,
-    ) -> GetManagementProjectResponse:
+    ) -> ManagementProject:
         """Get project
 
          Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import get_management_project
@@ -6178,7 +6238,7 @@ class AsyncLiveblocks:
         project_id: str,
         *,
         body: UpdateManagementProjectRequestBody,
-    ) -> UpdateManagementProjectResponse:
+    ) -> ManagementProject:
         """Update project
 
          Updates an existing project specified by its ID. This endpoint allows you to modify project details
@@ -6189,15 +6249,16 @@ class AsyncLiveblocks:
         If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            body (UpdateManagementProjectRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (UpdateManagementProjectRequestBody):  Example: {'name': 'Updated Project Name',
+                'versionCreationTimeout': 60}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            UpdateManagementProjectResponse
+            ManagementProject
         """
 
         from .api.management import update_management_project
@@ -6218,7 +6279,7 @@ class AsyncLiveblocks:
         project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6245,7 +6306,7 @@ class AsyncLiveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6272,7 +6333,7 @@ class AsyncLiveblocks:
         `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6306,8 +6367,8 @@ class AsyncLiveblocks:
         be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str): ID of the project
-            body (RollProjectPublicApiKeyRequestBody | Unset):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (RollProjectPublicApiKeyRequestBody | Unset):  Example: {'expirationIn': '1 hour'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6341,8 +6402,8 @@ class AsyncLiveblocks:
         parameter can be provided in the request body to set when the previous key should expire.
 
         Args:
-            project_id (str): ID of the project
-            body (RollProjectSecretApiKeyRequestBody | Unset):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (RollProjectSecretApiKeyRequestBody | Unset):  Example: {'expirationIn': '3 days'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6377,11 +6438,11 @@ class AsyncLiveblocks:
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
             limit (int | Unset): A limit on the number of webhooks to return. The limit can range
-                between 1 and 100, and defaults to 20. Default: 20.
+                between 1 and 100, and defaults to 20. Default: 20. Example: 20.
             cursor (str | Unset): A cursor used for pagination. Get the value from the `nextCursor`
-                response of the previous page.
+                response of the previous page. Example: eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6405,22 +6466,24 @@ class AsyncLiveblocks:
         project_id: str,
         *,
         body: CreateManagementWebhookRequestBody,
-    ) -> CreateManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Create webhook
 
          Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project
         cannot be found, a 404 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            body (CreateManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            body (CreateManagementWebhookRequestBody):  Example: {'url':
+                'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'],
+                'rateLimit': 100, 'storageUpdatedThrottleSeconds': 10, 'yDocUpdatedThrottleSeconds': 10}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import create_management_webhook
@@ -6435,7 +6498,7 @@ class AsyncLiveblocks:
         self,
         project_id: str,
         webhook_id: str,
-    ) -> GetManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Get webhook
 
          Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed
@@ -6443,15 +6506,15 @@ class AsyncLiveblocks:
         does not exist. This endpoint requires the `read:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import get_management_webhook
@@ -6468,7 +6531,7 @@ class AsyncLiveblocks:
         webhook_id: str,
         *,
         body: UpdateManagementWebhookRequestBody,
-    ) -> UpdateManagementWebhookResponse:
+    ) -> ManagementWebhook:
         """Update webhook
 
          Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields
@@ -6476,16 +6539,18 @@ class AsyncLiveblocks:
         errors. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (UpdateManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (UpdateManagementWebhookRequestBody):  Example: {'url':
+                'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'],
+                'rateLimit': 100, 'disabled': False}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            UpdateManagementWebhookResponse
+            ManagementWebhook
         """
 
         from .api.management import update_management_webhook
@@ -6508,8 +6573,8 @@ class AsyncLiveblocks:
         `404` if the project or webhook does not exist. Requires `write:all`.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6539,8 +6604,8 @@ class AsyncLiveblocks:
         `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6569,8 +6634,8 @@ class AsyncLiveblocks:
         `read:all`.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6602,9 +6667,10 @@ class AsyncLiveblocks:
         or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (UpsertManagementWebhookHeadersRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (UpsertManagementWebhookHeadersRequestBody):  Example: {'headers': {'X-Custom-
+                Header': 'value'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6638,9 +6704,10 @@ class AsyncLiveblocks:
         a 422 error response is returned.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (DeleteManagementWebhookHeadersRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (DeleteManagementWebhookHeadersRequestBody):  Example: {'headers': ['X-Custom-
+                Header', 'X-Another-Header']}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6673,9 +6740,10 @@ class AsyncLiveblocks:
         requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (RecoverManagementWebhookFailedMessagesRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (RecoverManagementWebhookFailedMessagesRequestBody):  Example: {'since':
+                '2026-01-21T00:00:00.000Z'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -6708,9 +6776,9 @@ class AsyncLiveblocks:
         project or webhook does not exist. This endpoint requires the `write:all` scope.
 
         Args:
-            project_id (str): ID of the project
-            webhook_id (str): ID of the webhook
-            body (TestManagementWebhookRequestBody):
+            project_id (str): ID of the project Example: 683d49ed6b4d1cec5a597b13.
+            webhook_id (str): ID of the webhook Example: wh_abc123.
+            body (TestManagementWebhookRequestBody):  Example: {'subscribedEvent': 'storageUpdated'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.

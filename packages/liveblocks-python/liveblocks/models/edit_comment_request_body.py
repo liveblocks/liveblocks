@@ -18,7 +18,8 @@ if TYPE_CHECKING:
 class EditCommentRequestBody:
     """
     Attributes:
-        body (CommentBody):
+        body (CommentBody):  Example: {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text': 'Hello '},
+            {'text': 'world', 'bold': True}]}]}.
         edited_at (datetime.datetime | Unset):
         metadata (CommentMetadata | Unset):
         attachment_ids (list[str] | Unset):

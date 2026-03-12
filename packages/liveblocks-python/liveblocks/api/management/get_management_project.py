@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_management_project_response import GetManagementProjectResponse
+from ...models.management_project import ManagementProject
 
 
 def _get_kwargs(
@@ -21,9 +21,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetManagementProjectResponse:
+def _parse_response(*, response: httpx.Response) -> ManagementProject:
     if response.status_code == 200:
-        response_200 = GetManagementProjectResponse.from_dict(response.json())
+        response_200 = ManagementProject.from_dict(response.json())
 
         return response_200
 
@@ -34,7 +34,7 @@ def _sync(
     project_id: str,
     *,
     client: httpx.Client,
-) -> GetManagementProjectResponse:
+) -> ManagementProject:
     kwargs = _get_kwargs(
         project_id=project_id,
     )
@@ -49,7 +49,7 @@ async def _asyncio(
     project_id: str,
     *,
     client: httpx.AsyncClient,
-) -> GetManagementProjectResponse:
+) -> ManagementProject:
     kwargs = _get_kwargs(
         project_id=project_id,
     )

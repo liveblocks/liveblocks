@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class IdentifyUserResponse:
     """
+    Example:
+        {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi...'}
+
     Attributes:
         token (str):
     """

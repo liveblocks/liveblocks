@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetYjsVersionsResponse:
     """
+    Example:
+        {'data': [{'type': 'historyVersion', 'id': 'vh_abc123', 'createdAt': '2024-10-15T10:30:00.000Z', 'authors':
+            [{'id': 'user-123'}], 'kind': 'yjs'}], 'nextCursor': 'eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=='}
+
     Attributes:
         next_cursor (None | str): Cursor for pagination to get the next page of results
         data (list[YjsVersion]):

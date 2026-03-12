@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class SubscribeToThreadRequestBody:
     """
+    Example:
+        {'userId': 'alice'}
+
     Attributes:
         user_id (str):
     """

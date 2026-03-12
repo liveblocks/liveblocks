@@ -4,15 +4,15 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
+from ...models.edit_thread_metadata_request_body import EditThreadMetadataRequestBody
 from ...models.thread_metadata import ThreadMetadata
-from ...models.update_thread_metadata_request_body import UpdateThreadMetadataRequestBody
 
 
 def _get_kwargs(
     room_id: str,
     thread_id: str,
     *,
-    body: UpdateThreadMetadataRequestBody,
+    body: EditThreadMetadataRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -46,7 +46,7 @@ def _sync(
     thread_id: str,
     *,
     client: httpx.Client,
-    body: UpdateThreadMetadataRequestBody,
+    body: EditThreadMetadataRequestBody,
 ) -> ThreadMetadata:
     kwargs = _get_kwargs(
         room_id=room_id,
@@ -65,7 +65,7 @@ async def _asyncio(
     thread_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateThreadMetadataRequestBody,
+    body: EditThreadMetadataRequestBody,
 ) -> ThreadMetadata:
     kwargs = _get_kwargs(
         room_id=room_id,

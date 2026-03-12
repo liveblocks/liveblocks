@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class IdentifyUserRequestBody:
     """
+    Example:
+        {'userId': 'user-123', 'organizationId': 'acme-corp', 'groupIds': ['marketing', 'engineering'], 'userInfo':
+            {'name': 'bob', 'avatar': 'https://example.org/images/user123.jpg'}}
+
     Attributes:
         user_id (str):
         organization_id (str | Unset):

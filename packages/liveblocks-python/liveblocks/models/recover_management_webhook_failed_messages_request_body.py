@@ -11,6 +11,9 @@ from dateutil.parser import isoparse
 @_attrs_define
 class RecoverManagementWebhookFailedMessagesRequestBody:
     """
+    Example:
+        {'since': '2026-01-21T00:00:00.000Z'}
+
     Attributes:
         since (datetime.datetime):
     """

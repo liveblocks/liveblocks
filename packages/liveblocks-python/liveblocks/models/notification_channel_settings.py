@@ -12,6 +12,9 @@ from ..types import UNSET, Unset
 @_attrs_define
 class NotificationChannelSettings:
     """
+    Example:
+        {'thread': True, 'textMention': False, '$customNotification': True}
+
     Attributes:
         thread (bool | Unset):
         text_mention (bool | Unset):

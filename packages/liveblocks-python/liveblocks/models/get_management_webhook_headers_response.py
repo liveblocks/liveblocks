@@ -12,8 +12,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetManagementWebhookHeadersResponse:
     """
+    Example:
+        {'headers': {'X-Custom-Header': 'value'}}
+
     Attributes:
-        headers (ManagementWebhookAdditionalHeaders):
+        headers (ManagementWebhookAdditionalHeaders):  Example: {'X-Custom-Header': 'value'}.
     """
 
     headers: ManagementWebhookAdditionalHeaders

@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class UpdateRoomRequestBody:
     """
+    Example:
+        {'defaultAccesses': ['room:write'], 'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing':
+            ['room:write']}, 'metadata': {'color': 'blue'}}
+
     Attributes:
         default_accesses (list[RoomPermissionItem] | None | Unset):
         users_accesses (UpdateRoomRequestBodyUsersAccesses | Unset): A map of user identifiers to permissions list.

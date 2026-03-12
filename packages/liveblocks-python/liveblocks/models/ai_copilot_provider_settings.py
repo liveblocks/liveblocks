@@ -11,6 +11,9 @@ from ..types import UNSET, Unset
 @_attrs_define
 class AiCopilotProviderSettings:
     """
+    Example:
+        {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}
+
     Attributes:
         max_tokens (int | Unset):
         temperature (float | Unset):

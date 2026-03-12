@@ -15,6 +15,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class AuthorizeUserRequestBody:
     """
+    Example:
+        {'userId': 'user-123', 'userInfo': {'name': 'bob', 'avatar': 'https://example.org/images/user123.jpg'},
+            'organizationId': 'acme-corp', 'permissions': {'my-room-1': ['room:write'], 'my-room-2': ['room:write'], 'my-
+            room-*': ['room:read']}}
+
     Attributes:
         user_id (str):
         permissions (AuthorizeUserRequestBodyPermissions):

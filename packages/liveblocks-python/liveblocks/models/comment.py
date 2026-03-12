@@ -32,7 +32,8 @@ class Comment:
         attachments (list[CommentAttachment]):
         edited_at (datetime.datetime | Unset):
         deleted_at (datetime.datetime | Unset):
-        body (CommentBody | Unset):
+        body (CommentBody | Unset):  Example: {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text':
+            'Hello '}, {'text': 'world', 'bold': True}]}]}.
     """
 
     type_: Literal["comment"]

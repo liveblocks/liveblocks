@@ -9,7 +9,11 @@ from attrs import field as _attrs_field
 
 @_attrs_define
 class ManagementWebhookAdditionalHeaders:
-    """ """
+    """
+    Example:
+        {'X-Custom-Header': 'value'}
+
+    """
 
     additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
 

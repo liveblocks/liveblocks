@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class GoogleProviderOptions:
     """
+    Example:
+        {'google': {'thinkingConfig': {'thinkingBudget': 10000}}}
+
     Attributes:
         google (GoogleProviderOptionsGoogle):
     """

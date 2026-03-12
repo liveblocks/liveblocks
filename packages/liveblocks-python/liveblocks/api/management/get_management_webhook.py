@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_management_webhook_response import GetManagementWebhookResponse
+from ...models.management_webhook import ManagementWebhook
 
 
 def _get_kwargs(
@@ -23,9 +23,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetManagementWebhookResponse:
+def _parse_response(*, response: httpx.Response) -> ManagementWebhook:
     if response.status_code == 200:
-        response_200 = GetManagementWebhookResponse.from_dict(response.json())
+        response_200 = ManagementWebhook.from_dict(response.json())
 
         return response_200
 
@@ -37,7 +37,7 @@ def _sync(
     webhook_id: str,
     *,
     client: httpx.Client,
-) -> GetManagementWebhookResponse:
+) -> ManagementWebhook:
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,
@@ -54,7 +54,7 @@ async def _asyncio(
     webhook_id: str,
     *,
     client: httpx.AsyncClient,
-) -> GetManagementWebhookResponse:
+) -> ManagementWebhook:
     kwargs = _get_kwargs(
         project_id=project_id,
         webhook_id=webhook_id,

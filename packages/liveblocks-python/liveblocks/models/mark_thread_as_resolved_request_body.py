@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class MarkThreadAsResolvedRequestBody:
     """
+    Example:
+        {'userId': 'alice'}
+
     Attributes:
         user_id (str): The user ID of the user who marked the thread as resolved.
     """

@@ -13,6 +13,10 @@ from ..models.web_knowledge_source_link_status import WebKnowledgeSourceLinkStat
 @_attrs_define
 class WebKnowledgeSourceLink:
     """
+    Example:
+        {'id': 'ksl_abc123', 'url': 'https://docs.example.com/getting-started', 'status': 'ready', 'createdAt':
+            '2024-06-01T12:00:00.000Z', 'lastIndexedAt': '2024-06-01T12:00:00.000Z'}
+
     Attributes:
         id (str):
         url (str):

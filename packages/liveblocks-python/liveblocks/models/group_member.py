@@ -12,6 +12,9 @@ from dateutil.parser import isoparse
 @_attrs_define
 class GroupMember:
     """
+    Example:
+        {'id': 'alice', 'addedAt': '2024-01-15T10:30:00.000Z'}
+
     Attributes:
         id (str):
         added_at (datetime.datetime):

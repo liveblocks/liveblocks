@@ -14,6 +14,9 @@ from ..types import UNSET, Unset
 @_attrs_define
 class UserSubscription:
     """
+    Example:
+        {'kind': 'thread', 'subjectId': 'th_abc123', 'createdAt': '2022-07-13T14:32:50.697Z', 'userId': 'alice'}
+
     Attributes:
         kind (str):
         subject_id (str):

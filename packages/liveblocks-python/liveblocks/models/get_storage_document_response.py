@@ -9,7 +9,13 @@ from attrs import field as _attrs_field
 
 @_attrs_define
 class GetStorageDocumentResponse:
-    """ """
+    """
+    Example:
+        {'liveblocksType': 'LiveObject', 'data': {'aLiveObject': {'liveblocksType': 'LiveObject', 'data': {'a': 1}},
+            'aLiveList': {'liveblocksType': 'LiveList', 'data': ['a', 'b']}, 'aLiveMap': {'liveblocksType': 'LiveMap',
+            'data': {'a': 1, 'b': 2}}}}
+
+    """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 

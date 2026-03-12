@@ -11,7 +11,11 @@ from ..models.room_accesses_additional_property_item import RoomAccessesAddition
 
 @_attrs_define
 class RoomAccesses:
-    """ """
+    """
+    Example:
+        {'alice': ['room:write'], 'bob': ['room:read', 'room:presence:write']}
+
+    """
 
     additional_properties: dict[str, list[RoomAccessesAdditionalPropertyItem]] = _attrs_field(init=False, factory=dict)
 

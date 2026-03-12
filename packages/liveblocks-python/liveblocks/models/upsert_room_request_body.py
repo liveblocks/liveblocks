@@ -15,9 +15,16 @@ if TYPE_CHECKING:
 @_attrs_define
 class UpsertRoomRequestBody:
     """
+    Example:
+        {'update': {'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']},
+            'metadata': {'color': 'blue'}}, 'create': {'defaultAccesses': ['room:write']}}
+
     Attributes:
-        update (UpdateRoomRequestBody):
-        create (CreateRoomRequestBody | Unset):
+        update (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'], 'usersAccesses': {'alice':
+            ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color': 'blue'}}.
+        create (CreateRoomRequestBody | Unset):  Example: {'id': 'my-room-id', 'defaultAccesses': ['room:write'],
+            'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'product':
+            ['room:write']}}.
     """
 
     update: UpdateRoomRequestBody

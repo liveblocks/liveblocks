@@ -11,6 +11,10 @@ from dateutil.parser import isoparse
 @_attrs_define
 class InboxNotificationThreadData:
     """
+    Example:
+        {'kind': 'thread', 'id': 'in_abc123', 'roomId': 'my-room-id', 'threadId': 'th_abc123', 'notifiedAt':
+            '2024-01-15T10:30:00.000Z', 'readAt': None}
+
     Attributes:
         id (str):
         kind (str):

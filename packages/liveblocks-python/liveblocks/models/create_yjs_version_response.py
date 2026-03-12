@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateYjsVersionResponse:
     """
+    Example:
+        {'data': {'id': 'vh_abc123'}}
+
     Attributes:
         data (CreateYjsVersionResponseData):
     """

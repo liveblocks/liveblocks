@@ -9,7 +9,11 @@ from attrs import field as _attrs_field
 
 @_attrs_define
 class GetYjsDocumentResponse:
-    """ """
+    """
+    Example:
+        {'someYText': 'Contents of YText'}
+
+    """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 

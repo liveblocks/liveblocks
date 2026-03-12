@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateAiCopilotOptionsBase:
     """
+    Example:
+        {'name': 'My Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-...',
+            'alwaysUseKnowledge': True, 'settings': {'maxTokens': 4096, 'temperature': 0.7}}
+
     Attributes:
         name (str):
         system_prompt (str):
@@ -21,7 +25,7 @@ class CreateAiCopilotOptionsBase:
         description (str | Unset):
         knowledge_prompt (str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (AiCopilotProviderSettings | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
     """
 
     name: str

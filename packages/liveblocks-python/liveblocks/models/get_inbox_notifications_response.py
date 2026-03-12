@@ -13,6 +13,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetInboxNotificationsResponse:
     """
+    Example:
+        {'nextCursor': None, 'data': [{'kind': 'thread', 'id': 'in_abc123', 'roomId': 'my-room-id', 'threadId':
+            'th_abc123', 'notifiedAt': '2024-01-15T10:30:00.000Z', 'readAt': None}]}
+
     Attributes:
         next_cursor (None | str): A cursor to use for pagination. Pass this value as `startingAfter` to get the next
             page of results. `null` if there are no more results.

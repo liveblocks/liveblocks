@@ -4,7 +4,7 @@ import httpx
 
 from ... import errors
 from ...models.create_management_project_request_body import CreateManagementProjectRequestBody
-from ...models.create_management_project_response import CreateManagementProjectResponse
+from ...models.management_project import ManagementProject
 
 
 def _get_kwargs(
@@ -26,9 +26,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> CreateManagementProjectResponse:
+def _parse_response(*, response: httpx.Response) -> ManagementProject:
     if response.status_code == 200:
-        response_200 = CreateManagementProjectResponse.from_dict(response.json())
+        response_200 = ManagementProject.from_dict(response.json())
 
         return response_200
 
@@ -39,7 +39,7 @@ def _sync(
     *,
     client: httpx.Client,
     body: CreateManagementProjectRequestBody,
-) -> CreateManagementProjectResponse:
+) -> ManagementProject:
     kwargs = _get_kwargs(
         body=body,
     )
@@ -54,7 +54,7 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
     body: CreateManagementProjectRequestBody,
-) -> CreateManagementProjectResponse:
+) -> ManagementProject:
     kwargs = _get_kwargs(
         body=body,
     )

@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class AnthropicProviderOptions:
     """
+    Example:
+        {'anthropic': {'thinking': {'type': 'enabled', 'budgetTokens': 10000}}}
+
     Attributes:
         anthropic (AnthropicProviderOptionsAnthropic):
     """

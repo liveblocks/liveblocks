@@ -10,6 +10,9 @@ from attrs import field as _attrs_field
 @_attrs_define
 class ManagementWebhookSecret:
     """
+    Example:
+        {'value': 'whsec_abc123'}
+
     Attributes:
         value (str):
     """

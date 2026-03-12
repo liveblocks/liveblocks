@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class CreateWebKnowledgeSourceResponse:
     """
+    Example:
+        {'id': 'ks_abc123'}
+
     Attributes:
         id (str):
     """

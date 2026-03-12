@@ -18,6 +18,9 @@ from ..types import UNSET, Unset
 class UpdateRoomSubscriptionSettingsRequestBody:
     """Partial room subscription settings - all properties are optional
 
+    Example:
+        {'threads': 'replies_and_mentions', 'textMentions': 'none'}
+
     Attributes:
         threads (UpdateRoomSubscriptionSettingsRequestBodyThreads | Unset):
         text_mentions (UpdateRoomSubscriptionSettingsRequestBodyTextMentions | Unset):

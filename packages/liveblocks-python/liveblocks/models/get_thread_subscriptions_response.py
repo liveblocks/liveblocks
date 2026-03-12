@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetThreadSubscriptionsResponse:
     """
+    Example:
+        {'data': [{'kind': 'thread', 'subjectId': 'th_abc123', 'createdAt': '2022-07-13T14:32:50.697Z', 'userId':
+            'alice'}]}
+
     Attributes:
         data (list[UserSubscription]):
     """

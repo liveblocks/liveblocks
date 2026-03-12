@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class OpenAiProviderOptions:
     """
+    Example:
+        {'openai': {'reasoningEffort': 'medium'}}
+
     Attributes:
         openai (OpenAiProviderOptionsOpenai):
     """

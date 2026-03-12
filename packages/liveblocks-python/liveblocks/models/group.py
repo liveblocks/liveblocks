@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class Group:
     """
+    Example:
+        {'type': 'group', 'id': 'engineering', 'organizationId': 'org_123456789', 'createdAt':
+            '2024-01-15T10:30:00.000Z', 'updatedAt': '2024-01-15T10:30:00.000Z', 'scopes': {'mention': True}, 'members':
+            [{'id': 'alice', 'addedAt': '2024-01-15T10:30:00.000Z'}, {'id': 'bob', 'addedAt': '2024-01-16T09:00:00.000Z'}]}
+
     Attributes:
         type_ (Literal['group']):
         id (str):

@@ -17,12 +17,18 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateRoomRequestBody:
     """
+    Example:
+        {'id': 'my-room-id', 'defaultAccesses': ['room:write'], 'metadata': {'color': 'blue'}, 'usersAccesses':
+            {'alice': ['room:write']}, 'groupsAccesses': {'product': ['room:write']}}
+
     Attributes:
         id (str):
         default_accesses (list[RoomPermissionItem]):  Example: ['room:read', 'room:presence:write'].
-        users_accesses (RoomAccesses | Unset):
-        groups_accesses (RoomAccesses | Unset):
-        metadata (RoomMetadata | Unset):
+        users_accesses (RoomAccesses | Unset):  Example: {'alice': ['room:write'], 'bob': ['room:read',
+            'room:presence:write']}.
+        groups_accesses (RoomAccesses | Unset):  Example: {'alice': ['room:write'], 'bob': ['room:read',
+            'room:presence:write']}.
+        metadata (RoomMetadata | Unset):  Example: {'color': 'blue', 'type': 'whiteboard'}.
         engine (CreateRoomRequestBodyEngine | Unset): Preferred storage engine version to use when creating new rooms.
             The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will
             become the default in the future.

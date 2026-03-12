@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class SetPresenceRequestBody:
     """
+    Example:
+        {'userId': 'agent-123', 'data': {'status': 'active', 'cursor': {'x': 100, 'y': 200}}, 'userInfo': {'name': 'AI
+            Assistant', 'avatar': 'https://example.org/images/agent123.jpg'}, 'ttl': 60}
+
     Attributes:
         user_id (str): ID of the user to set presence for
         data (SetPresenceRequestBodyData): Presence data as a JSON object

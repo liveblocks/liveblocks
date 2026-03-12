@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class UpdateAiCopilotRequestBody:
     """
+    Example:
+        {'name': 'Updated Copilot', 'systemPrompt': 'You are an updated helpful assistant.', 'providerModel': 'gpt-4o',
+            'settings': {'maxTokens': 8192}}
+
     Attributes:
         name (str | Unset):
         description (None | str | Unset):

@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetWebKnowledgeSourceLinksResponse:
     """
+    Example:
+        {'nextCursor': None, 'data': [{'id': 'ksl_abc123', 'url': 'https://docs.example.com/getting-started', 'status':
+            'ready', 'createdAt': '2024-06-01T12:00:00.000Z', 'lastIndexedAt': '2024-06-01T12:00:00.000Z'}]}
+
     Attributes:
         next_cursor (None | str):
         data (list[WebKnowledgeSourceLink]):

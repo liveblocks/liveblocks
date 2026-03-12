@@ -19,14 +19,21 @@ if TYPE_CHECKING:
 @_attrs_define
 class Room:
     """
+    Example:
+        {'type': 'room', 'id': 'my-room-id', 'lastConnectionAt': '2022-08-04T21:07:09.380Z', 'createdAt':
+            '2022-07-13T14:32:50.697Z', 'organizationId': 'org_123456789', 'metadata': {'color': 'blue', 'type':
+            'whiteboard'}, 'defaultAccesses': ['room:write'], 'groupsAccesses': {'marketing': ['room:write']},
+            'usersAccesses': {'alice': ['room:write']}}
+
     Attributes:
         id (str):
         type_ (RoomType):
         created_at (datetime.datetime):
         default_accesses (list[RoomPermissionItem]):  Example: ['room:read', 'room:presence:write'].
-        users_accesses (RoomAccesses):
-        groups_accesses (RoomAccesses):
-        metadata (RoomMetadata):
+        users_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read', 'room:presence:write']}.
+        groups_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read',
+            'room:presence:write']}.
+        metadata (RoomMetadata):  Example: {'color': 'blue', 'type': 'whiteboard'}.
         organization_id (str):
         last_connection_at (datetime.datetime | Unset):
     """

@@ -12,6 +12,9 @@ from ..types import UNSET, Unset
 @_attrs_define
 class Authorization:
     """
+    Example:
+        {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi...'}
+
     Attributes:
         token (str | Unset):
     """

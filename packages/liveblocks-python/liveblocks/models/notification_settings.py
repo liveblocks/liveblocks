@@ -15,11 +15,20 @@ if TYPE_CHECKING:
 class NotificationSettings:
     """Notification settings for each supported channel
 
+    Example:
+        {'email': {'thread': True, 'textMention': False, '$customNotification': True}, 'slack': {'thread': True,
+            'textMention': True, '$customNotification': False}, 'teams': {'thread': False, 'textMention': True,
+            '$customNotification': True}, 'webPush': {'thread': True, 'textMention': True, '$customNotification': False}}
+
     Attributes:
-        email (NotificationChannelSettings | Unset):
-        slack (NotificationChannelSettings | Unset):
-        teams (NotificationChannelSettings | Unset):
-        web_push (NotificationChannelSettings | Unset):
+        email (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        slack (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        teams (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        web_push (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
     """
 
     email: NotificationChannelSettings | Unset = UNSET

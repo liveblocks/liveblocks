@@ -12,6 +12,9 @@ from dateutil.parser import isoparse
 @_attrs_define
 class ManagementProjectSecretKey:
     """
+    Example:
+        {'createdAt': '2024-09-03T12:34:56.000Z', 'value': 'sk_dev_123'}
+
     Attributes:
         created_at (datetime.datetime):
         value (str):

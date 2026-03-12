@@ -8,7 +8,10 @@ from attrs import define as _attrs_define
 
 @_attrs_define
 class GetFileKnowledgeSourceMarkdownResponse:
-    """
+    r"""
+    Example:
+        {'id': 'ks_abc123', 'content': '# Document Title\n\nThis is the content of the uploaded file.'}
+
     Attributes:
         id (str):
         content (str):

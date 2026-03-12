@@ -10,6 +10,9 @@ from attrs import field as _attrs_field
 @_attrs_define
 class RemoveGroupMembersRequestBody:
     """
+    Example:
+        {'memberIds': ['charlie']}
+
     Attributes:
         member_ids (list[str]):
     """

@@ -17,17 +17,22 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateAiCopilotOptionsGoogle:
     """
+    Example:
+        {'name': 'My Google Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'AIza...',
+            'provider': 'google', 'providerModel': 'gemini-2.5-flash'}
+
     Attributes:
         name (str):
         system_prompt (str):
         provider_api_key (str):
         provider (Literal['google']):
-        provider_model (GoogleModel):
+        provider_model (GoogleModel):  Example: gemini-2.5-flash.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (AiCopilotProviderSettings | Unset):
-        provider_options (GoogleProviderOptions | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
+        provider_options (GoogleProviderOptions | Unset):  Example: {'google': {'thinkingConfig': {'thinkingBudget':
+            10000}}}.
     """
 
     name: str

@@ -14,6 +14,9 @@ from ..types import UNSET, Unset
 @_attrs_define
 class RollProjectSecretApiKeyRequestBody:
     """
+    Example:
+        {'expirationIn': '3 days'}
+
     Attributes:
         expiration_in (RollProjectSecretApiKeyRequestBodyExpirationIn | Unset):  Default:
             RollProjectSecretApiKeyRequestBodyExpirationIn.NOW.

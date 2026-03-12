@@ -17,6 +17,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class TriggerInboxNotificationRequestBody:
     """
+    Example:
+        {'userId': 'alice', 'kind': 'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}
+
     Attributes:
         user_id (str):
         kind (str):

@@ -265,7 +265,7 @@ If you’re not interested in this information, you can use the simpler `?format
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
-| `format_` | `GetStorageDocumentFormat \| Unset` | No | Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
+| `format_` | `GetStorageDocumentFormat \| Unset` | No | Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with. |
 
 
 ---
@@ -517,7 +517,7 @@ This endpoint edits the metadata of a thread. The metadata is a JSON object that
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
 | `thread_id` | `str` | Yes | ID of the thread |
-| `body` | `UpdateThreadMetadataRequestBody` | Yes | Request body (application/json) |
+| `body` | `EditThreadMetadataRequestBody` | Yes | Request body (application/json) |
 
 
 ---

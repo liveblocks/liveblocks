@@ -16,17 +16,21 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateAiCopilotOptionsOpenAi:
     """
+    Example:
+        {'name': 'My Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-...', 'provider':
+            'openai', 'providerModel': 'gpt-4o'}
+
     Attributes:
         name (str):
         system_prompt (str):
         provider_api_key (str):
         provider (Literal['openai']):
-        provider_model (OpenAiModel):
+        provider_model (OpenAiModel):  Example: gpt-4o.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (AiCopilotProviderSettings | Unset):
-        provider_options (OpenAiProviderOptions | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
+        provider_options (OpenAiProviderOptions | Unset):  Example: {'openai': {'reasoningEffort': 'medium'}}.
     """
 
     name: str

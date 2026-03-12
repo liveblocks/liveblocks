@@ -12,6 +12,9 @@ from ..models.user_room_subscription_settings_threads import UserRoomSubscriptio
 @_attrs_define
 class UserRoomSubscriptionSettings:
     """
+    Example:
+        {'threads': 'all', 'textMentions': 'mine', 'roomId': 'my-room-id'}
+
     Attributes:
         threads (UserRoomSubscriptionSettingsThreads):
         text_mentions (UserRoomSubscriptionSettingsTextMentions):

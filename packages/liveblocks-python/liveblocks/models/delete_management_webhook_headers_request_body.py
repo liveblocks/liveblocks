@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class DeleteManagementWebhookHeadersRequestBody:
     """
+    Example:
+        {'headers': ['X-Custom-Header', 'X-Another-Header']}
+
     Attributes:
         headers (list[str]):
     """

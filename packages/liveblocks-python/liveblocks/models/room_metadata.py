@@ -9,7 +9,11 @@ from attrs import field as _attrs_field
 
 @_attrs_define
 class RoomMetadata:
-    """ """
+    """
+    Example:
+        {'color': 'blue', 'type': 'whiteboard'}
+
+    """
 
     additional_properties: dict[str, list[str] | str] = _attrs_field(init=False, factory=dict)
 

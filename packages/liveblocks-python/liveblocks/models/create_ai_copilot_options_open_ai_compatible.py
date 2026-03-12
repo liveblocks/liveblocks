@@ -15,6 +15,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateAiCopilotOptionsOpenAiCompatible:
     """
+    Example:
+        {'name': 'My Compatible Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-...',
+            'provider': 'openai-compatible', 'providerModel': 'my-custom-model', 'compatibleProviderName': 'my-provider',
+            'providerBaseUrl': 'https://api.my-provider.com/v1'}
+
     Attributes:
         name (str):
         system_prompt (str):
@@ -26,7 +31,7 @@ class CreateAiCopilotOptionsOpenAiCompatible:
         description (str | Unset):
         knowledge_prompt (str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (AiCopilotProviderSettings | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
     """
 
     name: str

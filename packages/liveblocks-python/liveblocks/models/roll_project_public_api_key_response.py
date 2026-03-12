@@ -12,8 +12,12 @@ if TYPE_CHECKING:
 @_attrs_define
 class RollProjectPublicApiKeyResponse:
     """
+    Example:
+        {'publicKey': {'activated': True, 'createdAt': '2024-09-03T12:34:56.000Z', 'value': 'pk_dev_123'}}
+
     Attributes:
-        public_key (ManagementProjectPublicKey):
+        public_key (ManagementProjectPublicKey):  Example: {'activated': True, 'createdAt': '2024-09-03T12:34:56.000Z',
+            'value': 'pk_dev_123'}.
     """
 
     public_key: ManagementProjectPublicKey

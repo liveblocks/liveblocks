@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class TestManagementWebhookResponse:
     """
+    Example:
+        {'message': {'id': 'msg_abc123', 'deliveredAt': '2024-09-03T12:34:56.000Z'}}
+
     Attributes:
         message (TestManagementWebhookResponseMessage):
     """

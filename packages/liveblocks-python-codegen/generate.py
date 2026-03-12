@@ -45,6 +45,7 @@ def main() -> None:
     errors = project.build()
     for error in errors:
         print(f"  {error.level.name}: {error.header}: {error.detail}")
+    print(f"Generated {SDK_DIR}")
 
     mdx_template = project.env.get_template("README.mdx.jinja")
     mdx_path = SDK_DIR / "README.mdx"

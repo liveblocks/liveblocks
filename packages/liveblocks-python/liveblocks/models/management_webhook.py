@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class ManagementWebhook:
     """
+    Example:
+        {'id': 'wh_abc123', 'createdAt': '2024-09-03T12:34:56.000Z', 'updatedAt': '2024-09-03T12:34:56.000Z', 'url':
+            'https://example.com/webhooks', 'disabled': False, 'subscribedEvents': ['storageUpdated', 'userEntered'],
+            'secret': {'value': 'whsec_abc123'}, 'storageUpdatedThrottleSeconds': 10, 'yDocUpdatedThrottleSeconds': 10}
+
     Attributes:
         id (str):
         created_at (datetime.datetime):
@@ -29,7 +34,7 @@ class ManagementWebhook:
         storage_updated_throttle_seconds (int):
         y_doc_updated_throttle_seconds (int):
         rate_limit (int | Unset):
-        additional_headers (ManagementWebhookAdditionalHeaders | Unset):
+        additional_headers (ManagementWebhookAdditionalHeaders | Unset):  Example: {'X-Custom-Header': 'value'}.
     """
 
     id: str

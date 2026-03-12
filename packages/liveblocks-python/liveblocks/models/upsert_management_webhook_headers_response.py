@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class UpsertManagementWebhookHeadersResponse:
     """
+    Example:
+        {'headers': {'X-Custom-Header': 'value'}}
+
     Attributes:
         headers (UpsertManagementWebhookHeadersResponseHeaders):
     """

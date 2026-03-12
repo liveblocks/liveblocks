@@ -12,6 +12,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class CommentBody:
     """
+    Example:
+        {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text': 'Hello '}, {'text': 'world', 'bold':
+            True}]}]}
+
     Attributes:
         version (int):
         content (list[CommentBodyContentItem]):

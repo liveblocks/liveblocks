@@ -13,6 +13,10 @@ from ..types import UNSET, Unset
 @_attrs_define
 class UpdateManagementWebhookRequestBody:
     """
+    Example:
+        {'url': 'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'], 'rateLimit': 100,
+            'disabled': False}
+
     Attributes:
         url (str | Unset):
         subscribed_events (list[ManagementWebhookEvent] | Unset):

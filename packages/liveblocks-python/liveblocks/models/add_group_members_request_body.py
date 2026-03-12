@@ -10,6 +10,9 @@ from attrs import field as _attrs_field
 @_attrs_define
 class AddGroupMembersRequestBody:
     """
+    Example:
+        {'memberIds': ['charlie', 'dave']}
+
     Attributes:
         member_ids (list[str]):
     """

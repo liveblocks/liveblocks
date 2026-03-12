@@ -12,8 +12,11 @@ from ..models.management_webhook_event import ManagementWebhookEvent
 @_attrs_define
 class TestManagementWebhookRequestBody:
     """
+    Example:
+        {'subscribedEvent': 'storageUpdated'}
+
     Attributes:
-        subscribed_event (ManagementWebhookEvent):
+        subscribed_event (ManagementWebhookEvent):  Example: storageUpdated.
     """
 
     subscribed_event: ManagementWebhookEvent

@@ -13,8 +13,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class RotateManagementWebhookSecretResponse:
     """
+    Example:
+        {'secret': {'value': 'whsec_new_abc123'}, 'message': 'Previous secret remains valid for 24 hours.'}
+
     Attributes:
-        secret (ManagementWebhookSecret):
+        secret (ManagementWebhookSecret):  Example: {'value': 'whsec_abc123'}.
         message (str):
     """
 

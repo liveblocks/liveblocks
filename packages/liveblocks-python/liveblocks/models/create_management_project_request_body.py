@@ -13,8 +13,11 @@ from ..types import UNSET, Unset
 @_attrs_define
 class CreateManagementProjectRequestBody:
     """
+    Example:
+        {'name': 'My Project', 'type': 'dev', 'versionCreationTimeout': False}
+
     Attributes:
-        type_ (ManagementProjectType):
+        type_ (ManagementProjectType):  Example: dev.
         name (str | Unset):
         version_creation_timeout (bool | int | Unset): False to disable timeout or number of seconds between 30 and 300.
     """

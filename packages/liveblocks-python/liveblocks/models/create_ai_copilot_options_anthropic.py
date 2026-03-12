@@ -17,17 +17,22 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateAiCopilotOptionsAnthropic:
     """
+    Example:
+        {'name': 'My Anthropic Copilot', 'systemPrompt': 'You are a helpful assistant.', 'providerApiKey': 'sk-ant-...',
+            'provider': 'anthropic', 'providerModel': 'claude-3-5-sonnet-latest'}
+
     Attributes:
         name (str):
         system_prompt (str):
         provider_api_key (str):
         provider (Literal['anthropic']):
-        provider_model (AnthropicModel):
+        provider_model (AnthropicModel):  Example: claude-3-5-sonnet-latest.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         always_use_knowledge (bool | Unset):
-        settings (AiCopilotProviderSettings | Unset):
-        provider_options (AnthropicProviderOptions | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
+        provider_options (AnthropicProviderOptions | Unset):  Example: {'anthropic': {'thinking': {'type': 'enabled',
+            'budgetTokens': 10000}}}.
     """
 
     name: str

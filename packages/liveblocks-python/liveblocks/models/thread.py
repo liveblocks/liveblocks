@@ -16,6 +16,13 @@ if TYPE_CHECKING:
 @_attrs_define
 class Thread:
     """
+    Example:
+        {'type': 'thread', 'id': 'th_abc123', 'roomId': 'my-room-id', 'comments': [{'type': 'comment', 'threadId':
+            'th_abc123', 'roomId': 'my-room-id', 'id': 'cm_abc123', 'userId': 'alice', 'createdAt':
+            '2022-07-13T14:32:50.697Z', 'body': {'version': 1, 'content': []}, 'metadata': {}, 'reactions': [],
+            'attachments': []}], 'createdAt': '2022-07-13T14:32:50.697Z', 'updatedAt': '2022-07-13T14:32:50.697Z',
+            'metadata': {'color': 'blue'}, 'resolved': False}
+
     Attributes:
         type_ (Literal['thread']):
         id (str):

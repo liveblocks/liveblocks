@@ -15,11 +15,18 @@ if TYPE_CHECKING:
 class UpdateNotificationSettingsRequestBody:
     """Partial notification settings - all properties are optional
 
+    Example:
+        {'email': {'thread': True, 'textMention': False}, 'slack': {'textMention': False}, 'webPush': {'thread': True}}
+
     Attributes:
-        email (NotificationChannelSettings | Unset):
-        slack (NotificationChannelSettings | Unset):
-        teams (NotificationChannelSettings | Unset):
-        web_push (NotificationChannelSettings | Unset):
+        email (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        slack (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        teams (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
+        web_push (NotificationChannelSettings | Unset):  Example: {'thread': True, 'textMention': False,
+            '$customNotification': True}.
     """
 
     email: NotificationChannelSettings | Unset = UNSET

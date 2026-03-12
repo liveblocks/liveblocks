@@ -12,6 +12,9 @@ from ..models.create_web_knowledge_source_request_body_type import CreateWebKnow
 @_attrs_define
 class CreateWebKnowledgeSourceRequestBody:
     """
+    Example:
+        {'copilotId': 'cp_abc123', 'url': 'https://docs.example.com', 'type': 'crawl'}
+
     Attributes:
         copilot_id (str):
         url (str):

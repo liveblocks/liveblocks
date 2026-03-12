@@ -17,6 +17,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class KnowledgeSourceWebSource:
     """
+    Example:
+        {'id': 'ks_web123', 'type': 'ai-knowledge-web-source', 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'lastIndexedAt': '2024-06-01T12:00:00.000Z', 'status': 'ready', 'link': {'url':
+            'https://docs.example.com', 'type': 'crawl'}}
+
     Attributes:
         id (str):
         created_at (datetime.datetime):

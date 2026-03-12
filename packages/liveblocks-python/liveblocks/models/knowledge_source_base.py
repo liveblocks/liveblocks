@@ -14,6 +14,10 @@ from ..types import UNSET, Unset
 @_attrs_define
 class KnowledgeSourceBase:
     """
+    Example:
+        {'id': 'ks_abc123', 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt': '2024-06-01T12:00:00.000Z',
+            'lastIndexedAt': '2024-06-01T12:00:00.000Z', 'status': 'ready'}
+
     Attributes:
         id (str):
         created_at (datetime.datetime):

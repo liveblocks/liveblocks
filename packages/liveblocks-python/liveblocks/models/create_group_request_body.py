@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateGroupRequestBody:
     """
+    Example:
+        {'id': 'engineering', 'memberIds': ['alice', 'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention':
+            True}}
+
     Attributes:
         id (str):
         member_ids (list[str] | Unset):

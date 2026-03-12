@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class InboxNotificationCustomData:
     """
+    Example:
+        {'kind': 'custom', 'id': 'in_xyz789', 'subjectId': 'file123', 'roomId': None, 'notifiedAt':
+            '2024-01-15T10:30:00.000Z', 'readAt': None, 'activities': [{'id': 'act_abc123', 'createdAt':
+            '2024-01-15T10:30:00.000Z', 'data': {'url': 'url-to-file'}}]}
+
     Attributes:
         id (str):
         kind (Literal['custom']):

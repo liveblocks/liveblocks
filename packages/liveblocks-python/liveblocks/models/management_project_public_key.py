@@ -12,6 +12,9 @@ from dateutil.parser import isoparse
 @_attrs_define
 class ManagementProjectPublicKey:
     """
+    Example:
+        {'activated': True, 'createdAt': '2024-09-03T12:34:56.000Z', 'value': 'pk_dev_123'}
+
     Attributes:
         activated (bool):
         created_at (datetime.datetime):

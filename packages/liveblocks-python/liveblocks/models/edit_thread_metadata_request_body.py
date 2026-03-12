@@ -11,19 +11,19 @@ from dateutil.parser import isoparse
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.update_thread_metadata_request_body_metadata import UpdateThreadMetadataRequestBodyMetadata
+    from ..models.edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
 
 
 @_attrs_define
-class UpdateThreadMetadataRequestBody:
+class EditThreadMetadataRequestBody:
     """
     Attributes:
-        metadata (UpdateThreadMetadataRequestBodyMetadata):
+        metadata (EditThreadMetadataRequestBodyMetadata):
         user_id (str):
         updated_at (datetime.datetime | Unset):
     """
 
-    metadata: UpdateThreadMetadataRequestBodyMetadata
+    metadata: EditThreadMetadataRequestBodyMetadata
     user_id: str
     updated_at: datetime.datetime | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -52,10 +52,10 @@ class UpdateThreadMetadataRequestBody:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.update_thread_metadata_request_body_metadata import UpdateThreadMetadataRequestBodyMetadata
+        from ..models.edit_thread_metadata_request_body_metadata import EditThreadMetadataRequestBodyMetadata
 
         d = dict(src_dict)
-        metadata = UpdateThreadMetadataRequestBodyMetadata.from_dict(d.pop("metadata"))
+        metadata = EditThreadMetadataRequestBodyMetadata.from_dict(d.pop("metadata"))
 
         user_id = d.pop("userId")
 
@@ -66,14 +66,14 @@ class UpdateThreadMetadataRequestBody:
         else:
             updated_at = isoparse(_updated_at)
 
-        update_thread_metadata_request_body = cls(
+        edit_thread_metadata_request_body = cls(
             metadata=metadata,
             user_id=user_id,
             updated_at=updated_at,
         )
 
-        update_thread_metadata_request_body.additional_properties = d
-        return update_thread_metadata_request_body
+        edit_thread_metadata_request_body.additional_properties = d
+        return edit_thread_metadata_request_body
 
     @property
     def additional_keys(self) -> list[str]:

@@ -17,6 +17,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class AiCopilotOpenAi:
     """
+    Example:
+        {'type': 'copilot', 'id': 'cp_abc123', 'name': 'My Copilot', 'systemPrompt': 'You are a helpful assistant.',
+            'alwaysUseKnowledge': True, 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt': '2024-06-01T12:00:00.000Z',
+            'provider': 'openai', 'providerModel': 'gpt-4o', 'settings': {'maxTokens': 4096, 'temperature': 0.7}}
+
     Attributes:
         type_ (Literal['copilot']):
         id (str):
@@ -26,11 +31,11 @@ class AiCopilotOpenAi:
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
         provider (Literal['openai']):
-        provider_model (OpenAiModel):
+        provider_model (OpenAiModel):  Example: gpt-4o.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         last_used_at (datetime.datetime | Unset):
-        settings (AiCopilotProviderSettings | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
     """
 
     type_: Literal["copilot"]

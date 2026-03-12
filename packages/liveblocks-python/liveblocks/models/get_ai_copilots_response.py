@@ -15,6 +15,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetAiCopilotsResponse:
     """
+    Example:
+        {'nextCursor': None, 'data': [{'type': 'copilot', 'id': 'cp_abc123', 'name': 'My Copilot', 'systemPrompt': 'You
+            are a helpful assistant.', 'alwaysUseKnowledge': True, 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'provider': 'openai', 'providerModel': 'gpt-4o'}]}
+
     Attributes:
         next_cursor (None | str):
         data (list[AiCopilotAnthropic | AiCopilotGoogle | AiCopilotOpenAi | AiCopilotOpenAiCompatible]):

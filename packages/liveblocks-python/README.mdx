@@ -351,7 +351,7 @@ If you’re not interested in this information, you can use the simpler `?format
     name="format_"
     type="GetStorageDocumentFormat | Unset"
   >
-    Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
+    Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -730,7 +730,7 @@ This endpoint edits the metadata of a thread. The metadata is a JSON object that
   </PropertiesListItem>
   <PropertiesListItem
     name="body"
-    type="UpdateThreadMetadataRequestBody"
+    type="EditThreadMetadataRequestBody"
   >
     Request body (application/json).
 

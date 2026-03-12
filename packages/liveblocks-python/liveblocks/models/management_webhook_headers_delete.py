@@ -10,6 +10,9 @@ from attrs import field as _attrs_field
 @_attrs_define
 class ManagementWebhookHeadersDelete:
     """
+    Example:
+        {'headers': ['X-Custom-Header']}
+
     Attributes:
         headers (list[str]):
     """

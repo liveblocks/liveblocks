@@ -13,6 +13,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class ActiveUsersResponse:
     """
+    Example:
+        {'data': [{'type': 'user', 'connectionId': 16, 'id': 'alice', 'info': {}}, {'type': 'user', 'connectionId': 20,
+            'id': 'bob', 'info': {}}]}
+
     Attributes:
         data (list[ActiveUsersResponseDataItem]):
     """

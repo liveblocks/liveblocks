@@ -11,6 +11,9 @@ from dateutil.parser import isoparse
 @_attrs_define
 class Subscription:
     """
+    Example:
+        {'kind': 'thread', 'subjectId': 'th_abc123', 'createdAt': '2022-07-13T14:32:50.697Z'}
+
     Attributes:
         kind (str):
         subject_id (str):

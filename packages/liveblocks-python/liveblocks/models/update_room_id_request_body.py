@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class UpdateRoomIdRequestBody:
     """
+    Example:
+        {'newRoomId': 'new-room-id'}
+
     Attributes:
         new_room_id (str): The new room ID
     """

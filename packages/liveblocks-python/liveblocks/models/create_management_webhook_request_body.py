@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class CreateManagementWebhookRequestBody:
     """
+    Example:
+        {'url': 'https://example.com/webhooks', 'subscribedEvents': ['storageUpdated', 'userEntered'], 'rateLimit': 100,
+            'storageUpdatedThrottleSeconds': 10, 'yDocUpdatedThrottleSeconds': 10}
+
     Attributes:
         url (str):
         subscribed_events (list[ManagementWebhookEvent]):

@@ -9,6 +9,9 @@ from attrs import define as _attrs_define
 @_attrs_define
 class CommentAttachment:
     """
+    Example:
+        {'type': 'attachment', 'id': 'at_abc123', 'mimeType': 'image/png', 'name': 'screenshot.png', 'size': 12345}
+
     Attributes:
         type_ (Literal['attachment']):
         id (str):

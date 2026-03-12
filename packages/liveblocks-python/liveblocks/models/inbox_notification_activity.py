@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class InboxNotificationActivity:
     """
+    Example:
+        {'id': 'act_abc123', 'createdAt': '2024-01-15T10:30:00.000Z', 'data': {'url': 'url-to-file'}}
+
     Attributes:
         id (str):
         created_at (datetime.datetime):

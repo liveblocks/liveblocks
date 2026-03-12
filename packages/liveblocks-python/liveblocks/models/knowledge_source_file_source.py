@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class KnowledgeSourceFileSource:
     """
+    Example:
+        {'id': 'ks_file123', 'type': 'ai-knowledge-file-source', 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'lastIndexedAt': '2024-06-01T12:00:00.000Z', 'status': 'ready', 'file': {'name':
+            'document.pdf', 'mimeType': 'application/pdf'}}
+
     Attributes:
         id (str):
         created_at (datetime.datetime):

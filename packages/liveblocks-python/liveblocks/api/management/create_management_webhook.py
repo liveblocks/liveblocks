@@ -5,7 +5,7 @@ import httpx
 
 from ... import errors
 from ...models.create_management_webhook_request_body import CreateManagementWebhookRequestBody
-from ...models.create_management_webhook_response import CreateManagementWebhookResponse
+from ...models.management_webhook import ManagementWebhook
 
 
 def _get_kwargs(
@@ -30,9 +30,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> CreateManagementWebhookResponse:
+def _parse_response(*, response: httpx.Response) -> ManagementWebhook:
     if response.status_code == 200:
-        response_200 = CreateManagementWebhookResponse.from_dict(response.json())
+        response_200 = ManagementWebhook.from_dict(response.json())
 
         return response_200
 
@@ -44,7 +44,7 @@ def _sync(
     *,
     client: httpx.Client,
     body: CreateManagementWebhookRequestBody,
-) -> CreateManagementWebhookResponse:
+) -> ManagementWebhook:
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,
@@ -61,7 +61,7 @@ async def _asyncio(
     *,
     client: httpx.AsyncClient,
     body: CreateManagementWebhookRequestBody,
-) -> CreateManagementWebhookResponse:
+) -> ManagementWebhook:
     kwargs = _get_kwargs(
         project_id=project_id,
         body=body,

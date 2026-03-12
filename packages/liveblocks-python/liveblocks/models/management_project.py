@@ -19,16 +19,23 @@ if TYPE_CHECKING:
 @_attrs_define
 class ManagementProject:
     """
+    Example:
+        {'id': '683d49ed6b4d1cec5a597b13', 'teamId': 'team_123', 'type': 'dev', 'name': 'My Project', 'createdAt':
+            '2024-09-03T12:34:56.000Z', 'updatedAt': '2024-09-03T12:34:56.000Z', 'publicKey': {'activated': True,
+            'createdAt': '2024-09-03T12:34:56.000Z', 'value': 'pk_dev_123'}, 'secretKey': {'createdAt':
+            '2024-09-03T12:34:56.000Z', 'value': 'sk_dev_123'}, 'region': 'earth', 'versionCreationTimeout': False}
+
     Attributes:
         id (str):
         team_id (str):
-        type_ (ManagementProjectType):
+        type_ (ManagementProjectType):  Example: dev.
         name (str):
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
-        public_key (ManagementProjectPublicKey):
+        public_key (ManagementProjectPublicKey):  Example: {'activated': True, 'createdAt': '2024-09-03T12:34:56.000Z',
+            'value': 'pk_dev_123'}.
         secret_key (ManagementProjectSecretKey | None):
-        region (ManagementProjectRegion):
+        region (ManagementProjectRegion):  Example: earth.
         version_creation_timeout (bool | int): False to disable timeout or number of seconds between 30 and 300.
     """
 

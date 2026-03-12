@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 @_attrs_define
 class InitializeStorageDocumentResponse:
     """
+    Example:
+        {'liveblocksType': 'LiveObject', 'data': {'aLiveObject': {'liveblocksType': 'LiveObject', 'data': {'a': 1}},
+            'aLiveList': {'liveblocksType': 'LiveList', 'data': ['a', 'b']}}}
+
     Attributes:
         liveblocks_type (Literal['LiveObject'] | Unset):
         data (InitializeStorageDocumentResponseData | Unset):

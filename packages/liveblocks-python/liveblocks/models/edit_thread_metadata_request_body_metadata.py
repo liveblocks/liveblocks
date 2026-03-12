@@ -8,7 +8,7 @@ from attrs import field as _attrs_field
 
 
 @_attrs_define
-class EditCommentMetadataRequestBodyMetadata:
+class EditThreadMetadataRequestBodyMetadata:
     """ """
 
     additional_properties: dict[str, bool | float | None | str] = _attrs_field(init=False, factory=dict)
@@ -24,7 +24,7 @@ class EditCommentMetadataRequestBodyMetadata:
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
         d = dict(src_dict)
-        edit_comment_metadata_request_body_metadata = cls()
+        edit_thread_metadata_request_body_metadata = cls()
 
         additional_properties = {}
         for prop_name, prop_dict in d.items():
@@ -38,8 +38,8 @@ class EditCommentMetadataRequestBodyMetadata:
 
             additional_properties[prop_name] = additional_property
 
-        edit_comment_metadata_request_body_metadata.additional_properties = additional_properties
-        return edit_comment_metadata_request_body_metadata
+        edit_thread_metadata_request_body_metadata.additional_properties = additional_properties
+        return edit_thread_metadata_request_body_metadata
 
     @property
     def additional_keys(self) -> list[str]:

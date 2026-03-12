@@ -18,6 +18,11 @@ if TYPE_CHECKING:
 @_attrs_define
 class AiCopilotAnthropic:
     """
+    Example:
+        {'type': 'copilot', 'id': 'cp_abc456', 'name': 'My Anthropic Copilot', 'systemPrompt': 'You are a helpful
+            assistant.', 'alwaysUseKnowledge': True, 'createdAt': '2024-06-01T12:00:00.000Z', 'updatedAt':
+            '2024-06-01T12:00:00.000Z', 'provider': 'anthropic', 'providerModel': 'claude-3-5-sonnet-latest'}
+
     Attributes:
         type_ (Literal['copilot']):
         id (str):
@@ -27,12 +32,13 @@ class AiCopilotAnthropic:
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
         provider (Literal['anthropic']):
-        provider_model (AnthropicModel):
+        provider_model (AnthropicModel):  Example: claude-3-5-sonnet-latest.
         description (str | Unset):
         knowledge_prompt (str | Unset):
         last_used_at (datetime.datetime | Unset):
-        settings (AiCopilotProviderSettings | Unset):
-        provider_options (AnthropicProviderOptions | Unset):
+        settings (AiCopilotProviderSettings | Unset):  Example: {'maxTokens': 4096, 'temperature': 0.7, 'topP': 0.9}.
+        provider_options (AnthropicProviderOptions | Unset):  Example: {'anthropic': {'thinking': {'type': 'enabled',
+            'budgetTokens': 10000}}}.
     """
 
     type_: Literal["copilot"]

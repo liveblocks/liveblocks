@@ -19,7 +19,8 @@ class CreateThreadRequestBodyComment:
     """
     Attributes:
         user_id (str):
-        body (CommentBody):
+        body (CommentBody):  Example: {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text': 'Hello '},
+            {'text': 'world', 'bold': True}]}]}.
         created_at (datetime.datetime | Unset):
         metadata (CommentMetadata | Unset):
     """

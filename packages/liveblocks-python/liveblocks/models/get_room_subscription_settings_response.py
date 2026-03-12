@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 @_attrs_define
 class GetRoomSubscriptionSettingsResponse:
     """
+    Example:
+        {'nextCursor': None, 'data': [{'threads': 'all', 'textMentions': 'mine', 'roomId': 'my-room-id'}]}
+
     Attributes:
         next_cursor (None | str): A cursor to use for pagination. Pass this value as `startingAfter` to get the next
             page of results. `null` if there are no more results.
