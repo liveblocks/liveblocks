@@ -9,7 +9,10 @@ from attrs import field as _attrs_field
 
 @_attrs_define
 class CommentMetadata:
-    """ """
+    """Custom metadata attached to a comment. Supports maximum 50 entries. Key length has a limit of 40 characters maximum.
+    Value length has a limit of 4000 characters maximum for strings.
+
+    """
 
     additional_properties: dict[str, bool | float | str] = _attrs_field(init=False, factory=dict)
 

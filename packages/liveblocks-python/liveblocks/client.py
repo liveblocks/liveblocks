@@ -258,7 +258,7 @@ class Liveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` are optional fields.
 
         Args:
@@ -340,9 +340,9 @@ class Liveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
         field.
 
         Args:
@@ -453,9 +453,9 @@ class Liveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
         field.
 
         Args:
@@ -1063,6 +1063,9 @@ class Liveblocks:
         }
         ```
 
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
+
         Args:
             room_id (str): ID of the room Example: my-room-id.
             body (CreateThreadRequestBody):
@@ -1159,6 +1162,9 @@ class Liveblocks:
         property to `null` to remove it. Corresponds to
         [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
         rooms-roomId-threads-threadId-metadata).
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -1382,6 +1388,9 @@ class Liveblocks:
           ]
         }
         ```
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -1619,6 +1628,9 @@ class Liveblocks:
         property to `null` to remove it. Corresponds to
         [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
         rooms-roomId-threads-threadId-comments-commentId-metadata).
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -3591,7 +3603,7 @@ class AsyncLiveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` are optional fields.
 
         Args:
@@ -3673,9 +3685,9 @@ class AsyncLiveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
         field.
 
         Args:
@@ -3786,9 +3798,9 @@ class AsyncLiveblocks:
         Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum.
         `metadata` is optional field.
         - `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain
-        100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+        1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
         - `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can
-        contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
+        contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional
         field.
 
         Args:
@@ -4396,6 +4408,9 @@ class AsyncLiveblocks:
         }
         ```
 
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
+
         Args:
             room_id (str): ID of the room Example: my-room-id.
             body (CreateThreadRequestBody):
@@ -4492,6 +4507,9 @@ class AsyncLiveblocks:
         property to `null` to remove it. Corresponds to
         [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
         rooms-roomId-threads-threadId-metadata).
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4715,6 +4733,9 @@ class AsyncLiveblocks:
           ]
         }
         ```
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
@@ -4952,6 +4973,9 @@ class AsyncLiveblocks:
         property to `null` to remove it. Corresponds to
         [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-
         rooms-roomId-threads-threadId-comments-commentId-metadata).
+
+        `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value
+        length has a limit of 4000 characters maximum for strings.
 
         Args:
             room_id (str): ID of the room Example: my-room-id.

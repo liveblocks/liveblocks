@@ -29,7 +29,8 @@ class Thread:
         room_id (str):
         comments (list[Comment]):
         created_at (datetime.datetime):
-        metadata (ThreadMetadata):
+        metadata (ThreadMetadata): Custom metadata attached to a thread. Supports maximum 50 entries. Key length has a
+            limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
         resolved (bool):
         updated_at (datetime.datetime):
     """

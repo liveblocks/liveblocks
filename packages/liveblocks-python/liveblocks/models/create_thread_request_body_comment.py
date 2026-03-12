@@ -22,7 +22,8 @@ class CreateThreadRequestBodyComment:
         body (CommentBody):  Example: {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text': 'Hello '},
             {'text': 'world', 'bold': True}]}]}.
         created_at (datetime.datetime | Unset):
-        metadata (CommentMetadata | Unset):
+        metadata (CommentMetadata | Unset): Custom metadata attached to a comment. Supports maximum 50 entries. Key
+            length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
     """
 
     user_id: str

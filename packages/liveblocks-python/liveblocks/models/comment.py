@@ -27,7 +27,8 @@ class Comment:
         id (str):
         user_id (str):
         created_at (datetime.datetime):
-        metadata (CommentMetadata):
+        metadata (CommentMetadata): Custom metadata attached to a comment. Supports maximum 50 entries. Key length has a
+            limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
         reactions (list[CommentReaction]):
         attachments (list[CommentAttachment]):
         edited_at (datetime.datetime | Unset):

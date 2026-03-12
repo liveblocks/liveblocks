@@ -57,6 +57,18 @@ Filtering by groups or userId works by giving a list of groups like `groupIds=ma
 Notice here the operator OR is applied between each `groupIds` and the `userId`.
 
 
+**Example**
+```python
+result = client.get_rooms(
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+    # organization_id="org_123456789",
+    # query="metadata[\"color\"]:\"blue\"",
+    # user_id="user-123",
+    # group_ids="group1,group2",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -76,10 +88,26 @@ Notice here the operator OR is applied between each `groupIds` and the `userId`.
 This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. 
 - `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
 - `groupsAccesses` are optional fields.
 
 
+**Example**
+```python
+from liveblocks.models import CreateRoomRequestBody
+
+result = client.create_room(
+    body=CreateRoomRequestBody(
+        id="...",
+        default_accesses=[],
+        # users_accesses=...,
+        # groups_accesses=...,
+        # metadata=...,
+    ),
+    # idempotent=True,
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -94,6 +122,13 @@ This endpoint creates a new room. `id` and `defaultAccesses` are required. When 
 
 This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid).
 
+**Example**
+```python
+result = client.get_room(
+    room_id="my-room-id",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -118,9 +153,23 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 - `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
+**Example**
+```python
+from liveblocks.models import UpdateRoomRequestBody
+
+result = client.update_room(
+    room_id="my-room-id",
+    body=UpdateRoomRequestBody(
+        # default_accesses=[],
+        # users_accesses=...,
+        # groups_accesses=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -135,6 +184,12 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomid).
 
+**Example**
+```python
+client.delete_room(
+    room_id="my-room-id",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -148,6 +203,12 @@ This endpoint deletes a room. A deleted room is no longer accessible from the AP
 
 Speeds up connecting to a room for the next 10 seconds. Use this when you know a user will be connecting to a room with [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider) or [`enterRoom`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.enterRoom) within 10 seconds, and the room will load quicker. Corresponds to [`liveblocks.prewarmRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-prewarm).
 
+**Example**
+```python
+client.prewarm_room(
+    room_id="my-room-id",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -172,9 +233,22 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 - `defaultAccesses` could be `[]` or `["room:write"]` (private or public). 
 - `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.
-- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
-- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
+- `usersAccesses` could be `[]` or `["room:write"]` for every records. `usersAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.
+- `groupsAccesses` could be `[]` or `["room:write"]` for every records. `groupsAccesses` can contain 1000 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.
 
+**Example**
+```python
+from liveblocks.models import UpsertRoomRequestBody
+
+result = client.upsert_room(
+    room_id="my-room-id",
+    body=UpsertRoomRequestBody(
+        update=...,
+        # create=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -189,6 +263,13 @@ Setting a property to `null` means to delete this property. For example, if you 
 
 This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).
 
+**Example**
+```python
+result = client.update_room_id(
+    room_id="my-room-id",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -206,6 +287,13 @@ This endpoint returns a list of users currently present in the requested room. C
 For optimal performance, we recommend calling this endpoint no more than once every 10 seconds. 
 Duplicates can occur if a user is in the requested room with multiple browser tabs opened.
 
+**Example**
+```python
+result = client.get_active_users(
+    room_id="my-room-id",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -219,6 +307,20 @@ Duplicates can occur if a user is in the requested room with multiple browser ta
 
 This endpoint sets ephemeral presence for a user in a room without requiring a WebSocket connection. The presence data will automatically expire after the specified TTL (time-to-live). This is useful for scenarios like showing an AI agent's presence in a room. The presence will be broadcast to all connected users in the room. Corresponds to [`liveblocks.setPresence`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-presence).
 
+**Example**
+```python
+from liveblocks.models import SetPresenceRequestBody
+
+client.set_presence(
+    room_id="my-room-id",
+    body=SetPresenceRequestBody(
+        user_id="...",
+        data=...,
+        # user_info=...,
+        # ttl=0,
+    ),
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -233,6 +335,13 @@ This endpoint sets ephemeral presence for a user in a room without requiring a W
 
 This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-broadcast-event).
 
+**Example**
+```python
+client.broadcast_event(
+    room_id="my-room-id",
+    body=...,
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -260,6 +369,14 @@ The default outputted format is called “plain LSON”, which includes informat
 
 If you’re not interested in this information, you can use the simpler `?format=json` query param, see below.
 
+**Example**
+```python
+result = client.get_storage_document(
+    room_id="my-room-id",
+    # format_=...,
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -284,6 +401,13 @@ The root’s type can only be LiveObject.
 
 A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
+**Example**
+```python
+result = client.initialize_storage_document(
+    room_id="my-room-id",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -299,6 +423,12 @@ A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.
 This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).
 
 
+**Example**
+```python
+client.delete_storage_document(
+    room_id="my-room-id",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -318,6 +448,13 @@ Applies a sequence of [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902
 
 For a **full guide with examples**, see [Modifying storage via REST API with JSON Patch](https://liveblocks.io/docs/guides/modifying-storage-via-rest-api-with-json-patch).
 
+**Example**
+```python
+client.patch_storage_document(
+    room_id="my-room-id",
+    body=...,
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -334,6 +471,16 @@ For a **full guide with examples**, see [Modifying storage via REST API with JSO
 
 This endpoint returns a JSON representation of the room’s Yjs document. Corresponds to [`liveblocks.getYjsDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc).
 
+**Example**
+```python
+result = client.get_yjs_document(
+    room_id="my-room-id",
+    # formatting=True,
+    # key="root",
+    # type_=...,
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -352,6 +499,14 @@ This endpoint is used to send a Yjs binary update to the room’s Yjs document. 
 
 The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.
 
+**Example**
+```python
+client.send_yjs_binary_update(
+    room_id="my-room-id",
+    body=...,
+    # guid="subdoc-guid-123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -367,6 +522,14 @@ The update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See th
 
 This endpoint returns the room's Yjs document encoded as a single binary update. This can be used by `Y.applyUpdate(responseBody)` to get a copy of the document in your back end. See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates. To return a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.getYjsDocumentAsBinaryUpdate`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary).
 
+**Example**
+```python
+result = client.get_yjs_document_as_binary_update(
+    room_id="my-room-id",
+    # guid="subdoc-guid-123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -381,6 +544,15 @@ This endpoint returns the room's Yjs document encoded as a single binary update.
 
 This endpoint returns a list of version history snapshots for the room's Yjs document. The versions are returned sorted by creation date, from newest to oldest.
 
+**Example**
+```python
+result = client.get_yjs_versions(
+    room_id="my-room-id",
+    # limit=20,
+    # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -396,6 +568,14 @@ This endpoint returns a list of version history snapshots for the room's Yjs doc
 
 This endpoint returns a specific version of the room's Yjs document encoded as a binary Yjs update.
 
+**Example**
+```python
+result = client.get_yjs_version(
+    room_id="my-room-id",
+    version_id="vh_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -410,6 +590,13 @@ This endpoint returns a specific version of the room's Yjs document encoded as a
 
 This endpoint creates a new version history snapshot for the room's Yjs document.
 
+**Example**
+```python
+result = client.create_yjs_version(
+    room_id="my-room-id",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -425,6 +612,14 @@ This endpoint creates a new version history snapshot for the room's Yjs document
 
 This endpoint returns the threads in the requested room. Corresponds to [`liveblocks.getThreads`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
 
+**Example**
+```python
+result = client.get_threads(
+    room_id="my-room-id",
+    # query="metadata[\"color\"]:\"blue\"",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -453,6 +648,21 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 }
 ```
 
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+
+**Example**
+```python
+from liveblocks.models import CreateThreadRequestBody
+
+result = client.create_thread(
+    room_id="my-room-id",
+    body=CreateThreadRequestBody(
+        comment=...,
+        # metadata=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -467,6 +677,14 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).
 
+**Example**
+```python
+result = client.get_thread(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -481,6 +699,13 @@ This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`
 
 This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).
 
+**Example**
+```python
+client.delete_thread(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -497,6 +722,14 @@ This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThre
 
 This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).
 
+**Example**
+```python
+result = client.get_thread_participants(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -511,6 +744,23 @@ This endpoint returns the list of thread participants. It is a list of unique us
 
 This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
 
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+
+**Example**
+```python
+from liveblocks.models import EditThreadMetadataRequestBody
+
+result = client.edit_thread_metadata(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=EditThreadMetadataRequestBody(
+        metadata=...,
+        user_id="...",
+        # updated_at=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -526,6 +776,19 @@ This endpoint edits the metadata of a thread. The metadata is a JSON object that
 
 This endpoint marks a thread as resolved. The request body must include a `userId` to identify who resolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved).
 
+**Example**
+```python
+from liveblocks.models import MarkThreadAsResolvedRequestBody
+
+result = client.mark_thread_as_resolved(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=MarkThreadAsResolvedRequestBody(
+        user_id="...",
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -541,6 +804,19 @@ This endpoint marks a thread as resolved. The request body must include a `userI
 
 This endpoint marks a thread as unresolved. The request body must include a `userId` to identify who unresolved the thread. Returns the updated thread. Corresponds to [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
 
+**Example**
+```python
+from liveblocks.models import MarkThreadAsUnresolvedRequestBody
+
+result = client.mark_thread_as_unresolved(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=MarkThreadAsUnresolvedRequestBody(
+        user_id="...",
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -556,6 +832,19 @@ This endpoint marks a thread as unresolved. The request body must include a `use
 
 This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).
 
+**Example**
+```python
+from liveblocks.models import SubscribeToThreadRequestBody
+
+result = client.subscribe_to_thread(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=SubscribeToThreadRequestBody(
+        user_id="...",
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -571,6 +860,18 @@ This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThr
 
 This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).
 
+**Example**
+```python
+from liveblocks.models import UnsubscribeFromThreadRequestBody
+
+client.unsubscribe_from_thread(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=UnsubscribeFromThreadRequestBody(
+        user_id="...",
+    ),
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -586,6 +887,14 @@ This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscrib
 
 This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).
 
+**Example**
+```python
+result = client.get_thread_subscriptions(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -614,6 +923,25 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 }
 ```
 
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+
+**Example**
+```python
+from liveblocks.models import CreateCommentRequestBody
+
+result = client.create_comment(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    body=CreateCommentRequestBody(
+        user_id="...",
+        body=...,
+        # created_at=...,
+        # metadata=...,
+        # attachment_ids=[],
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -629,6 +957,15 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).
 
+**Example**
+```python
+result = client.get_comment(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -658,6 +995,23 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 }
 ```
 
+**Example**
+```python
+from liveblocks.models import EditCommentRequestBody
+
+result = client.edit_comment(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+    body=EditCommentRequestBody(
+        body=...,
+        # edited_at=...,
+        # metadata=...,
+        # attachment_ids=[],
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -674,6 +1028,14 @@ A comment’s body is an array of paragraphs, each containing child nodes. Here�
 
 This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).
 
+**Example**
+```python
+client.delete_comment(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -689,6 +1051,22 @@ This endpoint deletes a comment. A deleted comment is no longer accessible from 
 
 This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
+**Example**
+```python
+from liveblocks.models import AddCommentReactionRequestBody
+
+result = client.add_comment_reaction(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+    body=AddCommentReactionRequestBody(
+        user_id="...",
+        emoji="...",
+        # created_at=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -705,6 +1083,14 @@ This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addComme
 
 This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
+**Example**
+```python
+client.remove_comment_reaction(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -721,6 +1107,24 @@ This endpoint removes a comment reaction. A deleted comment reaction is no longe
 
 This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).
 
+`metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+
+**Example**
+```python
+from liveblocks.models import EditCommentMetadataRequestBody
+
+result = client.edit_comment_metadata(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+    comment_id="cm_abc123",
+    body=EditCommentMetadataRequestBody(
+        metadata=...,
+        user_id="...",
+        # updated_at=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -749,6 +1153,20 @@ Additionally, you can set custom metadata to the token, which will be publicly a
 
 Lastly, you’ll specify the exact permissions to give to the user using the `permissions` field. This is done in an object where the keys are room names, or room name patterns (ending in a `*`), and a list of permissions to assign the user for any room that matches that name exactly (or starts with the pattern’s prefix). For tips, see [Manage permissions with access tokens](https://liveblocks.io/docs/authentication/access-token).
 
+**Example**
+```python
+from liveblocks.models import AuthorizeUserRequestBody
+
+result = client.authorize_user(
+    body=AuthorizeUserRequestBody(
+        user_id="...",
+        permissions=...,
+        # user_info=...,
+        # organization_id="...",
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -772,6 +1190,20 @@ If you want to use group permissions, you can also declare which `groupIds` this
 
 Additionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.
 
+**Example**
+```python
+from liveblocks.models import IdentifyUserRequestBody
+
+result = client.identify_user(
+    body=IdentifyUserRequestBody(
+        user_id="...",
+        # organization_id="...",
+        # group_ids=[],
+        # user_info=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -787,6 +1219,14 @@ Additionally, you can set custom metadata to the token, which will be publicly a
 
 This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).
 
+**Example**
+```python
+result = client.get_inbox_notification(
+    user_id="user-123",
+    inbox_notification_id="in_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -801,6 +1241,13 @@ This endpoint returns a user’s inbox notification by its ID. Corresponds to [`
 
 This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`liveblocks.deleteInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications-inboxNotificationId).
 
+**Example**
+```python
+client.delete_inbox_notification(
+    user_id="user-123",
+    inbox_notification_id="in_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -815,6 +1262,17 @@ This endpoint deletes a user’s inbox notification by its ID. Corresponds to [`
 
 This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
 
+**Example**
+```python
+result = client.get_inbox_notifications(
+    user_id="user-123",
+    # organization_id="org_123456789",
+    # query="metadata[\"color\"]:\"blue\"",
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -832,6 +1290,12 @@ This endpoint returns all the user’s inbox notifications. Corresponds to [`liv
 
 This endpoint deletes all the user’s inbox notifications. Corresponds to [`liveblocks.deleteAllInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-inbox-notifications).
 
+**Example**
+```python
+client.delete_all_inbox_notifications(
+    user_id="user-123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -845,6 +1309,13 @@ This endpoint deletes all the user’s inbox notifications. Corresponds to [`liv
 
 This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).
 
+**Example**
+```python
+result = client.get_notification_settings(
+    user_id="user-123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -858,6 +1329,20 @@ This endpoint returns a user's notification settings for the project. Correspond
 
 This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).
 
+**Example**
+```python
+from liveblocks.models import UpdateNotificationSettingsRequestBody
+
+result = client.update_notification_settings(
+    user_id="user-123",
+    body=UpdateNotificationSettingsRequestBody(
+        # email=...,
+        # slack=...,
+        # teams=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -872,6 +1357,12 @@ This endpoint updates a user's notification settings for the project. Correspond
 
 This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 
+**Example**
+```python
+client.delete_notification_settings(
+    user_id="user-123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -885,6 +1376,14 @@ This endpoint deletes a user's notification settings for the project. Correspond
 
 This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).
 
+**Example**
+```python
+result = client.get_room_subscription_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -899,6 +1398,20 @@ This endpoint returns a user’s subscription settings for a specific room. Corr
 
 This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).
 
+**Example**
+```python
+from liveblocks.models import UpdateRoomSubscriptionSettingsRequestBody
+
+result = client.update_room_subscription_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+    body=UpdateRoomSubscriptionSettingsRequestBody(
+        # threads=...,
+        # text_mentions=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -914,6 +1427,13 @@ This endpoint updates a user’s subscription settings for a specific room. Corr
 
 This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).
 
+**Example**
+```python
+client.delete_room_subscription_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -928,6 +1448,16 @@ This endpoint deletes a user’s subscription settings for a specific room. Corr
 
 This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).
 
+**Example**
+```python
+result = client.get_user_room_subscription_settings(
+    user_id="user-123",
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+    # limit=20,
+    # organization_id="org_123456789",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -946,6 +1476,14 @@ This endpoint returns the list of a user's room subscription settings. Correspon
 
 This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).
 
+**Example**
+```python
+result = client.get_room_notification_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -962,6 +1500,14 @@ This endpoint returns a user’s subscription settings for a specific room. Corr
 
 This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).
 
+**Example**
+```python
+result = client.update_room_notification_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -979,6 +1525,13 @@ This endpoint updates a user’s notification settings for a specific room. Corr
 
 This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).
 
+**Example**
+```python
+client.delete_room_notification_settings(
+    room_id="my-room-id",
+    user_id="user-123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -993,6 +1546,10 @@ This endpoint deletes a user’s notification settings for a specific room. Corr
 
 This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 
+**Example**
+```python
+client.trigger_inbox_notification()
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1008,6 +1565,14 @@ This endpoint triggers an inbox notification. Corresponds to [`liveblocks.trigge
 
 This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-groups).
 
+**Example**
+```python
+result = client.get_groups(
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1022,6 +1587,11 @@ This endpoint returns a list of all groups in your project. Corresponds to [`liv
 
 This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
+**Example**
+```python
+result = client.create_group()
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1035,6 +1605,13 @@ This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](htt
 
 This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-group).
 
+**Example**
+```python
+result = client.get_group(
+    group_id="engineering",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1048,6 +1625,12 @@ This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGro
 
 This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-group).
 
+**Example**
+```python
+client.delete_group(
+    group_id="engineering",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1061,6 +1644,18 @@ This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](https:/
 
 This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#add-group-members).
 
+**Example**
+```python
+from liveblocks.models import AddGroupMembersRequestBody
+
+result = client.add_group_members(
+    group_id="engineering",
+    body=AddGroupMembersRequestBody(
+        member_ids=[],
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1075,6 +1670,18 @@ This endpoint adds new members to an existing group. Corresponds to [`liveblocks
 
 This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](https://liveblocks.io/docs/api-reference/liveblocks-node#remove-group-members).
 
+**Example**
+```python
+from liveblocks.models import RemoveGroupMembersRequestBody
+
+result = client.remove_group_members(
+    group_id="engineering",
+    body=RemoveGroupMembersRequestBody(
+        member_ids=[],
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1089,6 +1696,15 @@ This endpoint removes members from an existing group. Corresponds to [`liveblock
 
 This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-user-groups).
 
+**Example**
+```python
+result = client.get_user_groups(
+    user_id="user-123",
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1106,6 +1722,14 @@ This endpoint returns all groups that a specific user is a member of. Correspond
 
 This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilots).
 
+**Example**
+```python
+result = client.get_ai_copilots(
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1120,6 +1744,13 @@ This endpoint returns a paginated list of AI copilots. The copilots are returned
 
 This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-ai-copilot).
 
+**Example**
+```python
+result = client.create_ai_copilot(
+    body=...,
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1133,6 +1764,13 @@ This endpoint creates a new AI copilot with the given configuration. Corresponds
 
 This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-ai-copilot).
 
+**Example**
+```python
+result = client.get_ai_copilot(
+    copilot_id="cp_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1148,6 +1786,20 @@ This endpoint updates an existing AI copilot's configuration. Corresponds to [`l
 
 This endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the "openai" provider and you attempt to update the provider model to an incompatible value for the provider, like "gemini-2.5-pro", you'll receive a 422 response with an error message explaining where the validation failed.
 
+**Example**
+```python
+from liveblocks.models import UpdateAiCopilotRequestBody
+
+result = client.update_ai_copilot(
+    copilot_id="cp_abc123",
+    body=UpdateAiCopilotRequestBody(
+        # name="...",
+        # description="...",
+        # system_prompt="...",
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1162,6 +1814,12 @@ This endpoint returns a 422 response if the update doesn't apply due to validati
 
 This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-ai-copilot).
 
+**Example**
+```python
+client.delete_ai_copilot(
+    copilot_id="cp_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1175,6 +1833,15 @@ This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer ac
 
 This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-sources).
 
+**Example**
+```python
+result = client.get_knowledge_sources(
+    copilot_id="cp_abc123",
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1190,6 +1857,14 @@ This endpoint returns a paginated list of knowledge sources for a specific AI co
 
 This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-knowledge-source).
 
+**Example**
+```python
+result = client.get_knowledge_source(
+    copilot_id="cp_abc123",
+    knowledge_source_id="ks_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1204,6 +1879,20 @@ This endpoint returns a specific knowledge source by its ID. Corresponds to [`li
 
 This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-web-knowledge-source).
 
+**Example**
+```python
+from liveblocks.models import CreateWebKnowledgeSourceRequestBody
+
+result = client.create_web_knowledge_source(
+    copilot_id="cp_abc123",
+    body=CreateWebKnowledgeSourceRequestBody(
+        copilot_id="...",
+        url="...",
+        type_=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1218,6 +1907,15 @@ This endpoint creates a web knowledge source for an AI copilot. This allows the 
 
 This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-file-knowledge-source).
 
+**Example**
+```python
+result = client.create_file_knowledge_source(
+    copilot_id="cp_abc123",
+    name="document.pdf",
+    body=...,
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1233,6 +1931,14 @@ This endpoint creates a file knowledge source for an AI copilot by uploading a f
 
 This endpoint returns the content of a file knowledge source as markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).
 
+**Example**
+```python
+result = client.get_file_knowledge_source_markdown(
+    copilot_id="cp_abc123",
+    knowledge_source_id="ks_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1247,6 +1953,13 @@ This endpoint returns the content of a file knowledge source as markdown. This a
 
 This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-file-knowledge-source).
 
+**Example**
+```python
+client.delete_file_knowledge_source(
+    copilot_id="cp_abc123",
+    knowledge_source_id="ks_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1261,6 +1974,13 @@ This endpoint deletes a file knowledge source from an AI copilot. The copilot wi
 
 This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-web-knowledge-source).
 
+**Example**
+```python
+client.delete_web_knowledge_source(
+    copilot_id="cp_abc123",
+    knowledge_source_id="ks_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1275,6 +1995,16 @@ This endpoint deletes a web knowledge source from an AI copilot. The copilot wil
 
 This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).
 
+**Example**
+```python
+result = client.get_web_knowledge_source_links(
+    copilot_id="cp_abc123",
+    knowledge_source_id="ks_abc123",
+    # limit=20,
+    # starting_after="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1293,6 +2023,14 @@ This endpoint returns a paginated list of links that were indexed from a web kno
 
 Returns a paginated list of projects. You can limit the number of projects returned per page and use the provided `nextCursor` for pagination. This endpoint requires the `read:all` scope.
 
+**Example**
+```python
+result = client.get_management_projects(
+    # limit=20,
+    # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1307,6 +2045,19 @@ Returns a paginated list of projects. You can limit the number of projects retur
 
 Creates a new project within your account. This endpoint requires the `write:all` scope. You can specify the project type, name, and version creation timeout. Upon success, returns information about the newly created project, including its ID, keys, region, and settings.
 
+**Example**
+```python
+from liveblocks.models import CreateManagementProjectRequestBody
+
+result = client.create_management_project(
+    body=CreateManagementProjectRequestBody(
+        type_=...,
+        # name="...",
+        # version_creation_timeout=False,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1320,6 +2071,13 @@ Creates a new project within your account. This endpoint requires the `write:all
 
 Returns a single project specified by its ID. This endpoint requires the `read:all` scope. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+result = client.get_management_project(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1335,6 +2093,19 @@ Updates an existing project specified by its ID. This endpoint allows you to mod
 
 If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+from liveblocks.models import UpdateManagementProjectRequestBody
+
+result = client.update_management_project(
+    project_id="683d49ed6b4d1cec5a597b13",
+    body=UpdateManagementProjectRequestBody(
+        # name="...",
+        # version_creation_timeout=False,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1349,6 +2120,12 @@ If the project cannot be found, a 404 error response is returned.
 
 Soft deletes the project specified by its ID. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+client.delete_management_project(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1362,6 +2139,12 @@ Soft deletes the project specified by its ID. This endpoint requires the `write:
 
 Activates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+client.activate_project_public_api_key(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1375,6 +2158,12 @@ Activates the public API key associated with the specified project. This endpoin
 
 Deactivates the public API key associated with the specified project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+client.deactivate_project_public_api_key(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1390,6 +2179,13 @@ Rolls (rotates) the public API key associated with the specified project, genera
 
 If the public key is not currently enabled for the project, a 403 error response is returned. If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.
 
+**Example**
+```python
+result = client.roll_project_public_api_key(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1406,6 +2202,13 @@ Rolls (rotates) the secret API key associated with the specified project, genera
 
 If the project cannot be found, a 404 error response is returned. An optional `expirationIn` parameter can be provided in the request body to set when the previous key should expire.
 
+**Example**
+```python
+result = client.roll_project_secret_api_key(
+    project_id="683d49ed6b4d1cec5a597b13",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1420,6 +2223,15 @@ If the project cannot be found, a 404 error response is returned. An optional `e
 
 Returns a paginated list of webhooks for a project. This endpoint requires the `read:all` scope. The response includes an array of webhook objects associated with the specified project, as well as a `nextCursor` property for pagination. Use the `limit` query parameter to specify the maximum number of webhooks to return (1-100, default 20). If the result is paginated, use the `cursor` parameter from the `nextCursor` value in the previous response to fetch subsequent pages. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+result = client.get_management_webhooks(
+    project_id="683d49ed6b4d1cec5a597b13",
+    # limit=20,
+    # cursor="eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1435,6 +2247,22 @@ Returns a paginated list of webhooks for a project. This endpoint requires the `
 
 Creates a new webhook for a project. This endpoint requires the `write:all` scope. If the project cannot be found, a 404 error response is returned.
 
+**Example**
+```python
+from liveblocks.models import CreateManagementWebhookRequestBody
+
+result = client.create_management_webhook(
+    project_id="683d49ed6b4d1cec5a597b13",
+    body=CreateManagementWebhookRequestBody(
+        url="...",
+        subscribed_events=[],
+        # rate_limit=0,
+        # additional_headers=...,
+        # storage_updated_throttle_seconds=0,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1449,6 +2277,14 @@ Creates a new webhook for a project. This endpoint requires the `write:all` scop
 
 Get one webhook by `webhookId` for a project. Returns webhook settings such as URL, subscribed events, disabled state, throttling, and additional headers. Returns `404` if the project or webhook does not exist. This endpoint requires the `read:all` scope.
 
+**Example**
+```python
+result = client.get_management_webhook(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1463,6 +2299,21 @@ Get one webhook by `webhookId` for a project. Returns webhook settings such as U
 
 Update one webhook by `webhookId` for a project. Send only fields you want to change; omitted fields stay unchanged. Returns `404` if the project or webhook does not exist and `422` for validation errors. This endpoint requires the `write:all` scope.
 
+**Example**
+```python
+from liveblocks.models import UpdateManagementWebhookRequestBody
+
+result = client.update_management_webhook(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+    body=UpdateManagementWebhookRequestBody(
+        # url="...",
+        # subscribed_events=[],
+        # rate_limit=0,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1478,6 +2329,13 @@ Update one webhook by `webhookId` for a project. Send only fields you want to ch
 
 Delete one webhook by `webhookId` for a project. Returns `200` with an empty body on success, or `404` if the project or webhook does not exist. Requires `write:all`.
 
+**Example**
+```python
+client.delete_management_webhook(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1492,6 +2350,14 @@ Delete one webhook by `webhookId` for a project. Returns `200` with an empty bod
 
 Rotate a webhook signing secret and return the new secret. The previous secret remains valid for 24 hours. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
+**Example**
+```python
+result = client.roll_management_webhook_secret(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1506,6 +2372,14 @@ Rotate a webhook signing secret and return the new secret. The previous secret r
 
 Get a webhook's additional headers. Returns `404` if the project or webhook does not exist. Requires `read:all`.
 
+**Example**
+```python
+result = client.get_management_webhook_additional_headers(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1520,6 +2394,19 @@ Get a webhook's additional headers. Returns `404` if the project or webhook does
 
 Upsert additional headers for a webhook. Provided headers are merged with existing headers, and existing values are overwritten when names match. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
+**Example**
+```python
+from liveblocks.models import UpsertManagementWebhookHeadersRequestBody
+
+result = client.upsert_management_webhook_additional_headers(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+    body=UpsertManagementWebhookHeadersRequestBody(
+        headers=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1535,6 +2422,19 @@ Upsert additional headers for a webhook. Provided headers are merged with existi
 
 Remove selected additional headers from a webhook. Send header names in `headers` field; other headers are unchanged. Returns updated headers, or `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope. At least one header name must be provided; otherwise, a 422 error response is returned.
 
+**Example**
+```python
+from liveblocks.models import DeleteManagementWebhookHeadersRequestBody
+
+result = client.delete_management_webhook_additional_headers(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+    body=DeleteManagementWebhookHeadersRequestBody(
+        headers=[],
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1550,6 +2450,18 @@ Remove selected additional headers from a webhook. Send header names in `headers
 
 Requeue failed deliveries for a webhook from the given `since` timestamp. Returns `200` with an empty body when recovery starts, an `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
+**Example**
+```python
+from liveblocks.models import RecoverManagementWebhookFailedMessagesRequestBody
+
+client.recover_failed_webhook_messages(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+    body=RecoverManagementWebhookFailedMessagesRequestBody(
+        since=...,
+    ),
+)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |
@@ -1565,6 +2477,19 @@ Requeue failed deliveries for a webhook from the given `since` timestamp. Return
 
 Send a test event to a webhook and return the created message metadata. `subscribedEvent` must be one of the webhook's subscribed events, otherwise the endpoint returns `422`. Returns `404` if the project or webhook does not exist. This endpoint requires the `write:all` scope.
 
+**Example**
+```python
+from liveblocks.models import TestManagementWebhookRequestBody
+
+result = client.send_test_webhook(
+    project_id="683d49ed6b4d1cec5a597b13",
+    webhook_id="wh_abc123",
+    body=TestManagementWebhookRequestBody(
+        subscribed_event=...,
+    ),
+)
+print(result)
+```
 **Parameters:**
 
 | Name | Type | Required | Description |

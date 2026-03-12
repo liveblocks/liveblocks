@@ -18,7 +18,8 @@ class CreateThreadRequestBody:
     """
     Attributes:
         comment (CreateThreadRequestBodyComment):
-        metadata (ThreadMetadata | Unset):
+        metadata (ThreadMetadata | Unset): Custom metadata attached to a thread. Supports maximum 50 entries. Key length
+            has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
     """
 
     comment: CreateThreadRequestBodyComment
