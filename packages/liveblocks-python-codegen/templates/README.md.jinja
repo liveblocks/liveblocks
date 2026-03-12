@@ -89,7 +89,7 @@ async with client:
 {% endfor %}
 {% set method_name = endpoint.name | snakecase %}
 {% set ret_type = return_type(ns.success_responses) %}
-#### {{ method_name }}
+#### `{{ method_name }}`
 
 {% if endpoint.description %}
 {{ endpoint.description | replace('\\"', '"') }}
