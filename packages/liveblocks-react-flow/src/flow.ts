@@ -1,5 +1,5 @@
 import { type Json, LiveMap, LiveObject } from "@liveblocks/core";
-import { useMutation, useStorage, useStorageRoot } from "@liveblocks/react";
+import { useMutation, useStorage } from "@liveblocks/react";
 import {
   addEdge,
   applyEdgeChanges,
@@ -12,18 +12,13 @@ import {
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { LiveblocksEdge, LiveblocksNode } from "./types";
 
 const FLOW_STORAGE_KEY = "flow";
 const NODES_STORAGE_KEY = "nodes";
 const EDGES_STORAGE_KEY = "edges";
-
-type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
-  initialNodes?: N[];
-  initialEdges?: E[];
-};
 
 type UseLiveblocksFlowResult<N extends Node, E extends Edge> = {
   nodes: N[];
@@ -115,7 +110,8 @@ function getEdgesMap(storage: unknown): MutableValueMap<LiveblocksEdge<Json>> {
 }
 
 function serializeNode<N extends Node>(node: N): LiveblocksNode<Json> {
-  const { id, type, parentId, extent, position, width, height, data } = node;
+  const { id, type, parentId, extent, position, width, height, data, style } =
+    node;
 
   return {
     id,
@@ -126,11 +122,23 @@ function serializeNode<N extends Node>(node: N): LiveblocksNode<Json> {
     width,
     height,
     data: data as Json,
+    style,
   };
 }
 
 function serializeEdge<E extends Edge>(edge: E): LiveblocksEdge<Json> {
-  const { id, type, source, target, sourceHandle, targetHandle, data } = edge;
+  const {
+    id,
+    type,
+    source,
+    target,
+    sourceHandle,
+    targetHandle,
+    data,
+    label,
+    animated,
+    style,
+  } = edge;
 
   return {
     id,
@@ -140,6 +148,9 @@ function serializeEdge<E extends Edge>(edge: E): LiveblocksEdge<Json> {
     sourceHandle,
     targetHandle,
     data: (data ?? null) as Json,
+    label,
+    animated,
+    style,
   };
 }
 
@@ -243,21 +254,38 @@ function syncMap<T extends { id: string }, S>(
   }
 }
 
+export function createLiveblocksFlowStorage<
+  NodeType extends Node = Node,
+  EdgeType extends Edge = Edge,
+>({
+  nodes = [],
+  edges = [],
+}: {
+  nodes?: NodeType[];
+  edges?: EdgeType[];
+} = {}) {
+  return {
+    [FLOW_STORAGE_KEY]: new LiveObject({
+      [NODES_STORAGE_KEY]: new LiveMap(
+        nodes.map((node) => [node.id, serializeNode(node)]) as unknown as [
+          string,
+          never,
+        ][]
+      ),
+      [EDGES_STORAGE_KEY]: new LiveMap(
+        edges.map((edge) => [edge.id, serializeEdge(edge)]) as unknown as [
+          string,
+          never,
+        ][]
+      ),
+    }),
+  };
+}
+
 export function useLiveblocksFlow<
   NodeType extends Node = Node,
   EdgeType extends Edge = Edge,
->(
-  options: UseLiveblocksFlowOptions<NodeType, EdgeType> = {}
-): UseLiveblocksFlowResult<NodeType, EdgeType> {
-  const initialNodes = useMemo(
-    () => options.initialNodes ?? [],
-    [options.initialNodes]
-  );
-  const initialEdges = useMemo(
-    () => options.initialEdges ?? [],
-    [options.initialEdges]
-  );
-  const [storageRoot] = useStorageRoot();
+>(): UseLiveblocksFlowResult<NodeType, EdgeType> {
   const remoteNodesMap = useStorage(
     (root) => (root as FlowStorageSnapshot).flow?.nodes
   );
@@ -288,28 +316,6 @@ export function useLiveblocksFlow<
   const edges = useMemo(
     () => applySelectionState(remoteEdges, selectedEdgeIds),
     [remoteEdges, selectedEdgeIds]
-  );
-
-  const initializedRef = useRef(false);
-
-  const initializeStorage = useMutation(
-    (
-      { storage },
-      nextInitialNodes: NodeType[],
-      nextInitialEdges: EdgeType[]
-    ) => {
-      const nodesMap = getNodesMap(storage);
-      const edgesMap = getEdgesMap(storage);
-      if (nodesMap.size === 0) {
-        for (const node of nextInitialNodes)
-          nodesMap.set(node.id, serializeNode(node));
-      }
-      if (edgesMap.size === 0) {
-        for (const edge of nextInitialEdges)
-          edgesMap.set(edge.id, serializeEdge(edge));
-      }
-    },
-    []
   );
 
   const applyPersistentNodeChanges = useMutation(
@@ -447,16 +453,6 @@ export function useLiveblocksFlow<
     },
     []
   );
-
-  useEffect(() => {
-    if (initializedRef.current || storageRoot === null) {
-      return;
-    }
-
-    initializedRef.current = true;
-
-    initializeStorage(initialNodes, initialEdges);
-  }, [storageRoot, initializeStorage, initialNodes, initialEdges]);
 
   useEffect(() => {
     setSelectedNodeIds((previous) => pruneSelection(previous, remoteNodes));

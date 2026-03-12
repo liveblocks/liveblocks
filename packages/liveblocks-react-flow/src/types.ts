@@ -10,6 +10,7 @@ export type LiveblocksNode<T extends Json> = {
   width: Node["width"];
   height: Node["height"];
   data: T;
+  style?: Node["style"];
 };
 
 export type LiveblocksEdge<T extends Json> = {
@@ -20,4 +21,7 @@ export type LiveblocksEdge<T extends Json> = {
   sourceHandle: Edge["sourceHandle"];
   targetHandle: Edge["targetHandle"];
   data: T;
+  label?: Edge["label"];
+  animated?: Edge["animated"];
+  style?: Edge["style"];
 };
