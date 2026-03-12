@@ -22,7 +22,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -30,7 +31,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -38,7 +40,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A filter on organization ID."
+              "description": "A filter on organization ID.",
+              "example": "org_123456789"
             },
             "in": "query",
             "name": "organizationId"
@@ -46,7 +49,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language)."
+              "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](https://liveblocks.io/docs/guides/how-to-filter-rooms-using-query-language).",
+              "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
             "name": "query"
@@ -54,8 +58,8 @@
           {
             "schema": {
               "type": "string",
-              "examples": ["userId=user1"],
-              "description": "A filter on users accesses."
+              "description": "A filter on users accesses.",
+              "example": "user-123"
             },
             "in": "query",
             "name": "userId"
@@ -63,8 +67,8 @@
           {
             "schema": {
               "type": "string",
-              "examples": ["groupIds=group1,group2"],
-              "description": "A filter on groups accesses. Multiple groups can be used."
+              "description": "A filter on groups accesses. Multiple groups can be used.",
+              "example": "group1,group2"
             },
             "in": "query",
             "name": "groupIds"
@@ -128,7 +132,8 @@
           {
             "schema": {
               "type": "boolean",
-              "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId)."
+              "description": "When provided, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.getOrCreateRoom`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).",
+              "example": true
             },
             "in": "query",
             "name": "idempotent"
@@ -218,7 +223,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -279,7 +285,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -460,7 +467,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -480,7 +488,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -512,7 +521,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -607,7 +617,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The new ID for the room"
+              "description": "The new ID for the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -692,7 +703,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -752,7 +764,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -816,7 +829,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -869,7 +883,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -879,7 +894,8 @@
             "schema": {
               "type": "string",
               "enum": ["plain-lson", "json"],
-              "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with."
+              "description": "Use the `json` format to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.",
+              "example": "json"
             },
             "name": "format",
             "in": "query",
@@ -943,7 +959,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -1072,7 +1089,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -1106,7 +1124,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -1205,7 +1224,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1221,7 +1241,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`."
+              "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.",
+              "example": "root"
             },
             "name": "key",
             "in": "query",
@@ -1231,7 +1252,8 @@
             "schema": {
               "type": "string",
               "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"],
-              "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`."
+              "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`.",
+              "example": "ymap"
             },
             "name": "type",
             "in": "query",
@@ -1275,7 +1297,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -1287,7 +1310,8 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "ID of the subdocument"
+              "description": "ID of the subdocument",
+              "example": "subdoc-guid-123"
             }
           }
         ],
@@ -1332,7 +1356,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1341,7 +1366,8 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "ID of the subdocument"
+              "description": "ID of the subdocument",
+              "example": "subdoc-guid-123"
             }
           }
         ],
@@ -1383,7 +1409,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1392,7 +1419,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of versions to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -1400,7 +1428,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "cursor"
@@ -1465,7 +1494,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1474,7 +1504,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the version"
+              "description": "ID of the version",
+              "example": "vh_abc123"
             }
           }
         ],
@@ -1515,7 +1546,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           }
         ],
@@ -1563,13 +1595,15 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language)."
+              "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](https://liveblocks.io/docs/guides/how-to-filter-threads-using-query-language).",
+              "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
             "name": "query"
@@ -1642,7 +1676,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           }
         ],
@@ -1740,7 +1775,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1749,7 +1785,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -1815,7 +1852,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1824,7 +1862,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -1859,7 +1898,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1868,7 +1908,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -1915,7 +1956,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1924,7 +1966,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -1958,7 +2001,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateThreadMetadataRequestBody"
+                "$ref": "#/components/schemas/EditThreadMetadataRequestBody"
               },
               "examples": {
                 "example": {
@@ -1989,7 +2032,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -1998,7 +2042,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2045,7 +2090,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2054,7 +2100,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2101,7 +2148,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2110,7 +2158,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2146,7 +2195,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "my-room-id"
           },
           "name": "roomId",
           "in": "path",
@@ -2154,7 +2204,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "th_abc123"
           },
           "name": "threadId",
           "in": "path",
@@ -2175,7 +2226,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2184,7 +2236,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2213,7 +2266,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "my-room-id"
           },
           "name": "roomId",
           "in": "path",
@@ -2221,7 +2275,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "th_abc123"
           },
           "name": "threadId",
           "in": "path",
@@ -2242,7 +2297,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2251,7 +2307,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2278,7 +2335,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "my-room-id"
           },
           "name": "roomId",
           "in": "path",
@@ -2286,7 +2344,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "th_abc123"
           },
           "name": "threadId",
           "in": "path",
@@ -2307,7 +2366,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2316,7 +2376,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           }
         ],
@@ -2401,7 +2462,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2410,7 +2472,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2419,7 +2482,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2475,7 +2539,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2484,7 +2549,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2493,7 +2559,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2569,7 +2636,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2578,7 +2646,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2587,7 +2656,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2622,7 +2692,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2631,7 +2702,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2640,7 +2712,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2711,7 +2784,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2720,7 +2794,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2729,7 +2804,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2780,7 +2856,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             }
           },
           {
@@ -2789,7 +2866,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the thread"
+              "description": "ID of the thread",
+              "example": "th_abc123"
             }
           },
           {
@@ -2798,7 +2876,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the comment"
+              "description": "ID of the comment",
+              "example": "cm_abc123"
             }
           }
         ],
@@ -2966,7 +3045,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -2974,7 +3054,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "in_abc123"
           },
           "name": "inboxNotificationId",
           "in": "path",
@@ -2991,7 +3072,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             }
           },
           {
@@ -3000,7 +3082,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the inbox notification"
+              "description": "ID of the inbox notification",
+              "example": "in_abc123"
             }
           }
         ],
@@ -3045,7 +3128,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             }
           },
           {
@@ -3054,7 +3138,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the inbox notification"
+              "description": "ID of the inbox notification",
+              "example": "in_abc123"
             }
           }
         ],
@@ -3080,7 +3165,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -3097,7 +3183,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             }
           }
         ],
@@ -3128,13 +3215,15 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             }
           },
           {
             "schema": {
               "type": "string",
-              "description": "The organization ID to filter notifications for."
+              "description": "The organization ID to filter notifications for.",
+              "example": "org_123456789"
             },
             "in": "query",
             "name": "organizationId"
@@ -3142,7 +3231,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
+              "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`.",
+              "example": "metadata[\"color\"]:\"blue\""
             },
             "in": "query",
             "name": "query"
@@ -3153,7 +3243,8 @@
               "minimum": 1,
               "maximum": 50,
               "default": 50,
-              "description": "A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50."
+              "description": "A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -3161,7 +3252,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -3193,7 +3285,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -3209,7 +3302,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3270,7 +3364,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3360,7 +3455,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3384,7 +3480,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "my-room-id"
           },
           "name": "roomId",
           "in": "path",
@@ -3392,7 +3489,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -3408,7 +3506,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3417,7 +3516,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3455,7 +3555,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3464,7 +3565,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3515,7 +3617,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3524,7 +3627,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3551,7 +3655,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -3567,7 +3672,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3576,7 +3682,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -3587,7 +3694,8 @@
               "minimum": 1,
               "maximum": 50,
               "default": 50,
-              "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
+              "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -3595,7 +3703,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The organization ID to filter room subscription settings for."
+              "description": "The organization ID to filter room subscription settings for.",
+              "example": "org_123456789"
             },
             "in": "query",
             "name": "organizationId"
@@ -3628,7 +3737,8 @@
       "parameters": [
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "my-room-id"
           },
           "name": "roomId",
           "in": "path",
@@ -3636,7 +3746,8 @@
         },
         {
           "schema": {
-            "type": "string"
+            "type": "string",
+            "example": "user-123"
           },
           "name": "userId",
           "in": "path",
@@ -3654,7 +3765,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3663,7 +3775,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3703,7 +3816,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3712,7 +3826,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3764,7 +3879,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the room"
+              "description": "ID of the room",
+              "example": "my-room-id"
             },
             "name": "roomId",
             "in": "path",
@@ -3773,7 +3889,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the user"
+              "description": "ID of the user",
+              "example": "user-123"
             },
             "name": "userId",
             "in": "path",
@@ -3883,7 +4000,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -3891,7 +4009,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -3927,7 +4046,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The ID of the group to retrieve."
+              "description": "The ID of the group to retrieve.",
+              "example": "engineering"
             },
             "in": "path",
             "name": "groupId",
@@ -3965,7 +4085,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The ID of the group to delete."
+              "description": "The ID of the group to delete.",
+              "example": "engineering"
             },
             "in": "path",
             "name": "groupId",
@@ -3998,7 +4119,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The ID of the group to add members to."
+              "description": "The ID of the group to add members to.",
+              "example": "engineering"
             },
             "in": "path",
             "name": "groupId",
@@ -4051,7 +4173,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The ID of the group to remove members from."
+              "description": "The ID of the group to remove members from.",
+              "example": "engineering"
             },
             "in": "path",
             "name": "groupId",
@@ -4104,7 +4227,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "The ID of the user to get groups for."
+              "description": "The ID of the user to get groups for.",
+              "example": "user-123"
             },
             "in": "path",
             "name": "userId",
@@ -4116,7 +4240,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -4124,7 +4249,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -4165,7 +4291,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -4173,7 +4300,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -4246,7 +4374,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4284,7 +4413,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4335,7 +4465,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4368,7 +4499,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4380,7 +4512,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -4388,7 +4521,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -4427,7 +4561,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4436,7 +4571,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the knowledge source"
+              "description": "ID of the knowledge source",
+              "example": "ks_abc123"
             },
             "name": "knowledgeSourceId",
             "in": "path",
@@ -4476,7 +4612,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4526,7 +4663,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4535,7 +4673,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "Name of the file"
+              "description": "Name of the file",
+              "example": "document.pdf"
             },
             "name": "name",
             "in": "path",
@@ -4591,7 +4730,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4600,7 +4740,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the knowledge source"
+              "description": "ID of the knowledge source",
+              "example": "ks_abc123"
             },
             "name": "knowledgeSourceId",
             "in": "path",
@@ -4638,7 +4779,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4647,7 +4789,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the knowledge source"
+              "description": "ID of the knowledge source",
+              "example": "ks_abc123"
             },
             "name": "knowledgeSourceId",
             "in": "path",
@@ -4680,7 +4823,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4689,7 +4833,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the knowledge source"
+              "description": "ID of the knowledge source",
+              "example": "ks_abc123"
             },
             "name": "knowledgeSourceId",
             "in": "path",
@@ -4722,7 +4867,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the AI copilot"
+              "description": "ID of the AI copilot",
+              "example": "cp_abc123"
             },
             "name": "copilotId",
             "in": "path",
@@ -4731,7 +4877,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "ID of the knowledge source"
+              "description": "ID of the knowledge source",
+              "example": "ks_abc123"
             },
             "name": "knowledgeSourceId",
             "in": "path",
@@ -4743,7 +4890,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -4751,7 +4899,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "startingAfter"
@@ -4794,7 +4943,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of projects to return. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -4802,7 +4952,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "cursor"
@@ -4870,7 +5021,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateManagementProjectResponse"
+                  "$ref": "#/components/schemas/ManagementProject"
                 },
                 "examples": {
                   "example": {
@@ -4945,7 +5096,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -4955,7 +5107,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetManagementProjectResponse"
+                  "$ref": "#/components/schemas/ManagementProject"
                 }
               }
             }
@@ -4987,7 +5139,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -4997,7 +5150,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdateManagementProjectResponse"
+                  "$ref": "#/components/schemas/ManagementProject"
                 }
               }
             }
@@ -5047,7 +5200,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5081,7 +5235,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5115,7 +5270,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5149,7 +5305,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5210,7 +5367,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5271,7 +5429,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5280,7 +5439,8 @@
               "minimum": 1,
               "maximum": 100,
               "default": 20,
-              "description": "A limit on the number of webhooks to return. The limit can range between 1 and 100, and defaults to 20."
+              "description": "A limit on the number of webhooks to return. The limit can range between 1 and 100, and defaults to 20.",
+              "example": 20
             },
             "in": "query",
             "name": "limit"
@@ -5288,7 +5448,8 @@
           {
             "schema": {
               "type": "string",
-              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+              "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+              "example": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9"
             },
             "in": "query",
             "name": "cursor"
@@ -5332,7 +5493,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           }
         ],
@@ -5342,7 +5504,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateManagementWebhookResponse"
+                  "$ref": "#/components/schemas/ManagementWebhook"
                 }
               }
             }
@@ -5400,7 +5562,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5409,7 +5572,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5419,7 +5583,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetManagementWebhookResponse"
+                  "$ref": "#/components/schemas/ManagementWebhook"
                 }
               }
             }
@@ -5448,7 +5612,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5457,7 +5622,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5467,7 +5633,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdateManagementWebhookResponse"
+                  "$ref": "#/components/schemas/ManagementWebhook"
                 }
               }
             }
@@ -5521,7 +5687,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5530,7 +5697,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5564,7 +5732,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5573,7 +5742,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5614,7 +5784,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5623,7 +5794,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5684,7 +5856,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5693,7 +5866,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5734,7 +5908,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5743,7 +5918,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5804,7 +5980,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5813,7 +5990,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5867,7 +6045,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the project"
+              "description": "ID of the project",
+              "example": "683d49ed6b4d1cec5a597b13"
             }
           },
           {
@@ -5876,7 +6055,8 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "ID of the webhook"
+              "description": "ID of the webhook",
+              "example": "wh_abc123"
             }
           }
         ],
@@ -5972,7 +6152,25 @@
           "groupsAccesses",
           "metadata",
           "organizationId"
-        ]
+        ],
+        "example": {
+          "type": "room",
+          "id": "my-room-id",
+          "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+          "createdAt": "2022-07-13T14:32:50.697Z",
+          "organizationId": "org_123456789",
+          "metadata": {
+            "color": "blue",
+            "type": "whiteboard"
+          },
+          "defaultAccesses": ["room:write"],
+          "groupsAccesses": {
+            "marketing": ["room:write"]
+          },
+          "usersAccesses": {
+            "alice": ["room:write"]
+          }
+        }
       },
       "RoomMetadata": {
         "title": "RoomMetadata",
@@ -5989,6 +6187,10 @@
               }
             }
           ]
+        },
+        "example": {
+          "color": "blue",
+          "type": "whiteboard"
         }
       },
       "RoomPermission": {
@@ -6018,6 +6220,10 @@
               "comments:write"
             ]
           }
+        },
+        "example": {
+          "alice": ["room:write"],
+          "bob": ["room:read", "room:presence:write"]
         }
       },
       "GetRoomsResponse": {
@@ -6042,6 +6248,28 @@
               "$ref": "#/components/schemas/Room"
             }
           }
+        },
+        "example": {
+          "nextCursor": "eyJjcmVhdGVkQXQiOjE2NjAwMDA5ODgxMzd9",
+          "data": [
+            {
+              "type": "room",
+              "id": "my-room-id",
+              "lastConnectionAt": "2022-08-08T23:23:15.281Z",
+              "createdAt": "2022-08-08T23:23:15.281Z",
+              "organizationId": "org_123456789",
+              "metadata": {
+                "color": "blue"
+              },
+              "defaultAccesses": ["room:write"],
+              "groupsAccesses": {
+                "product": ["room:write"]
+              },
+              "usersAccesses": {
+                "alice": ["room:write"]
+              }
+            }
+          ]
         }
       },
       "CreateRoomRequestBody": {
@@ -6073,7 +6301,20 @@
           }
         },
         "required": ["id", "defaultAccesses"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "my-room-id",
+          "defaultAccesses": ["room:write"],
+          "metadata": {
+            "color": "blue"
+          },
+          "usersAccesses": {
+            "alice": ["room:write"]
+          },
+          "groupsAccesses": {
+            "product": ["room:write"]
+          }
+        }
       },
       "UpdateRoomRequestBody": {
         "type": "object",
@@ -6155,6 +6396,18 @@
               ]
             }
           }
+        },
+        "example": {
+          "defaultAccesses": ["room:write"],
+          "usersAccesses": {
+            "alice": ["room:write"]
+          },
+          "groupsAccesses": {
+            "marketing": ["room:write"]
+          },
+          "metadata": {
+            "color": "blue"
+          }
         }
       },
       "UpsertRoomRequestBody": {
@@ -6169,7 +6422,23 @@
           }
         },
         "required": ["update"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "update": {
+            "usersAccesses": {
+              "alice": ["room:write"]
+            },
+            "groupsAccesses": {
+              "marketing": ["room:write"]
+            },
+            "metadata": {
+              "color": "blue"
+            }
+          },
+          "create": {
+            "defaultAccesses": ["room:write"]
+          }
+        }
       },
       "UpdateRoomIdRequestBody": {
         "type": "object",
@@ -6181,7 +6450,10 @@
             "description": "The new room ID"
           }
         },
-        "required": ["newRoomId"]
+        "required": ["newRoomId"],
+        "example": {
+          "newRoomId": "new-room-id"
+        }
       },
       "ActiveUsersResponse": {
         "title": "ActiveUsersResponse",
@@ -6218,7 +6490,23 @@
             }
           }
         },
-        "required": ["data"]
+        "required": ["data"],
+        "example": {
+          "data": [
+            {
+              "type": "user",
+              "connectionId": 16,
+              "id": "alice",
+              "info": {}
+            },
+            {
+              "type": "user",
+              "connectionId": 20,
+              "id": "bob",
+              "info": {}
+            }
+          ]
+        }
       },
       "SetPresenceRequestBody": {
         "title": "SetPresenceRequestBody",
@@ -6262,12 +6550,49 @@
           }
         },
         "required": ["userId", "data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "agent-123",
+          "data": {
+            "status": "active",
+            "cursor": {
+              "x": 100,
+              "y": 200
+            }
+          },
+          "userInfo": {
+            "name": "AI Assistant",
+            "avatar": "https://example.org/images/agent123.jpg"
+          },
+          "ttl": 60
+        }
       },
       "GetStorageDocumentResponse": {
         "title": "GetStorageDocumentResponse",
         "type": "object",
-        "additionalProperties": true
+        "additionalProperties": true,
+        "example": {
+          "liveblocksType": "LiveObject",
+          "data": {
+            "aLiveObject": {
+              "liveblocksType": "LiveObject",
+              "data": {
+                "a": 1
+              }
+            },
+            "aLiveList": {
+              "liveblocksType": "LiveList",
+              "data": ["a", "b"]
+            },
+            "aLiveMap": {
+              "liveblocksType": "LiveMap",
+              "data": {
+                "a": 1,
+                "b": 2
+              }
+            }
+          }
+        }
       },
       "InitializeStorageDocumentResponse": {
         "title": "InitializeStorageDocumentResponse",
@@ -6280,6 +6605,21 @@
           "data": {
             "type": "object",
             "additionalProperties": true
+          }
+        },
+        "example": {
+          "liveblocksType": "LiveObject",
+          "data": {
+            "aLiveObject": {
+              "liveblocksType": "LiveObject",
+              "data": {
+                "a": 1
+              }
+            },
+            "aLiveList": {
+              "liveblocksType": "LiveList",
+              "data": ["a", "b"]
+            }
           }
         }
       },
@@ -6394,12 +6734,26 @@
               "additionalProperties": false
             }
           ]
-        }
+        },
+        "example": [
+          {
+            "op": "add",
+            "path": "/score",
+            "value": 42
+          },
+          {
+            "op": "remove",
+            "path": "/oldKey"
+          }
+        ]
       },
       "GetYjsDocumentResponse": {
         "title": "GetYjsDocumentResponse",
         "type": "object",
-        "additionalProperties": true
+        "additionalProperties": true,
+        "example": {
+          "someYText": "Contents of YText"
+        }
       },
       "Error": {
         "title": "Error",
@@ -6430,6 +6784,9 @@
           "token": {
             "type": "string"
           }
+        },
+        "example": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
         }
       },
       "AuthorizeUserResponse": {
@@ -6441,7 +6798,10 @@
           }
         },
         "required": ["token"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+        }
       },
       "IdentifyUserResponse": {
         "title": "IdentifyUserResponse",
@@ -6452,7 +6812,10 @@
           }
         },
         "required": ["token"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
+        }
       },
       "AuthorizeUserRequestBody": {
         "title": "AuthorizeUserRequestBody",
@@ -6478,7 +6841,20 @@
           }
         },
         "required": ["userId", "permissions"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "user-123",
+          "userInfo": {
+            "name": "bob",
+            "avatar": "https://example.org/images/user123.jpg"
+          },
+          "organizationId": "acme-corp",
+          "permissions": {
+            "my-room-1": ["room:write"],
+            "my-room-2": ["room:write"],
+            "my-room-*": ["room:read"]
+          }
+        }
       },
       "IdentifyUserRequestBody": {
         "title": "IdentifyUserRequestBody",
@@ -6501,7 +6877,16 @@
           }
         },
         "required": ["userId"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "user-123",
+          "organizationId": "acme-corp",
+          "groupIds": ["marketing", "engineering"],
+          "userInfo": {
+            "name": "bob",
+            "avatar": "https://example.org/images/user123.jpg"
+          }
+        }
       },
       "YjsVersion": {
         "title": "YjsVersion",
@@ -6538,7 +6923,21 @@
             "const": "yjs"
           }
         },
-        "required": ["id", "type", "createdAt", "kind"]
+        "required": ["id", "type", "createdAt", "kind"],
+        "example": {
+          "id": "vh_abc123",
+          "type": "historyVersion",
+          "createdAt": "2024-10-15T10:30:00.000Z",
+          "authors": [
+            {
+              "id": "user-123"
+            },
+            {
+              "id": "user-456"
+            }
+          ],
+          "kind": "yjs"
+        }
       },
       "GetYjsVersionsResponse": {
         "title": "GetYjsVersionsResponse",
@@ -6563,7 +6962,23 @@
           }
         },
         "required": ["data", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "type": "historyVersion",
+              "id": "vh_abc123",
+              "createdAt": "2024-10-15T10:30:00.000Z",
+              "authors": [
+                {
+                  "id": "user-123"
+                }
+              ],
+              "kind": "yjs"
+            }
+          ],
+          "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI0LTEwLTE1VDEwOjMwOjAwLjAwMFoifQ=="
+        }
       },
       "CreateYjsVersionResponse": {
         "title": "CreateYjsVersionResponse",
@@ -6582,7 +6997,12 @@
           }
         },
         "required": ["data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": {
+            "id": "vh_abc123"
+          }
+        }
       },
       "GetThreadsResponse": {
         "title": "GetThreadsResponse",
@@ -6596,7 +7016,37 @@
           }
         },
         "required": ["data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "type": "thread",
+              "id": "th_abc123",
+              "roomId": "my-room-id",
+              "comments": [
+                {
+                  "type": "comment",
+                  "threadId": "th_abc123",
+                  "roomId": "my-room-id",
+                  "id": "cm_abc123",
+                  "userId": "alice",
+                  "createdAt": "2022-07-13T14:32:50.697Z",
+                  "body": {
+                    "version": 1,
+                    "content": []
+                  },
+                  "metadata": {},
+                  "reactions": [],
+                  "attachments": []
+                }
+              ],
+              "createdAt": "2022-07-13T14:32:50.697Z",
+              "updatedAt": "2022-07-13T14:32:50.697Z",
+              "metadata": {},
+              "resolved": false
+            }
+          ]
+        }
       },
       "Thread": {
         "type": "object",
@@ -6641,7 +7091,35 @@
           "updatedAt",
           "metadata",
           "resolved"
-        ]
+        ],
+        "example": {
+          "type": "thread",
+          "id": "th_abc123",
+          "roomId": "my-room-id",
+          "comments": [
+            {
+              "type": "comment",
+              "threadId": "th_abc123",
+              "roomId": "my-room-id",
+              "id": "cm_abc123",
+              "userId": "alice",
+              "createdAt": "2022-07-13T14:32:50.697Z",
+              "body": {
+                "version": 1,
+                "content": []
+              },
+              "metadata": {},
+              "reactions": [],
+              "attachments": []
+            }
+          ],
+          "createdAt": "2022-07-13T14:32:50.697Z",
+          "updatedAt": "2022-07-13T14:32:50.697Z",
+          "metadata": {
+            "color": "blue"
+          },
+          "resolved": false
+        }
       },
       "CreateThreadRequestBody": {
         "title": "CreateThreadRequestBody",
@@ -6704,15 +7182,33 @@
           }
         },
         "required": ["participantIds"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "participantIds": ["user-1", "user-2"]
+        }
       },
-      "UpdateThreadMetadataRequestBody": {
-        "title": "UpdateThreadMetadataRequestBody",
+      "EditThreadMetadataRequestBody": {
+        "title": "EditThreadMetadataRequestBody",
         "type": "object",
         "properties": {
           "metadata": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
           "userId": {
             "type": "string"
@@ -6736,7 +7232,19 @@
       "ThreadMetadata": {
         "type": "object",
         "title": "ThreadMetadata",
-        "additionalProperties": true,
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
         "required": [],
         "examples": [
           {
@@ -6761,12 +7269,41 @@
           }
         },
         "required": ["version", "content"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "version": 1,
+          "content": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "Hello "
+                },
+                {
+                  "text": "world",
+                  "bold": true
+                }
+              ]
+            }
+          ]
+        }
       },
       "CommentMetadata": {
         "type": "object",
         "title": "CommentMetadata",
-        "additionalProperties": true,
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
         "required": [],
         "examples": [
           {
@@ -6781,7 +7318,22 @@
         "properties": {
           "metadata": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
           "userId": {
             "type": "string"
@@ -6971,7 +7523,10 @@
             "description": "The user ID of the user who marked the thread as resolved."
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "alice"
+        }
       },
       "MarkThreadAsUnresolvedRequestBody": {
         "type": "object",
@@ -6983,7 +7538,10 @@
             "description": "The user ID of the user who marked the thread as unresolved."
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "alice"
+        }
       },
       "SubscribeToThreadRequestBody": {
         "type": "object",
@@ -6994,7 +7552,10 @@
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "alice"
+        }
       },
       "UnsubscribeFromThreadRequestBody": {
         "type": "object",
@@ -7005,7 +7566,10 @@
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "userId": "alice"
+        }
       },
       "GetThreadSubscriptionsResponse": {
         "type": "object",
@@ -7019,7 +7583,17 @@
           }
         },
         "required": ["data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "kind": "thread",
+              "subjectId": "th_abc123",
+              "createdAt": "2022-07-13T14:32:50.697Z",
+              "userId": "alice"
+            }
+          ]
+        }
       },
       "CommentReaction": {
         "type": "object",
@@ -7068,7 +7642,14 @@
           }
         },
         "required": ["type", "id", "mimeType", "name", "size"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "attachment",
+          "id": "at_abc123",
+          "mimeType": "image/png",
+          "name": "screenshot.png",
+          "size": 12345
+        }
       },
       "AddCommentReactionRequestBody": {
         "type": "object",
@@ -7149,7 +7730,20 @@
           }
         },
         "required": ["data", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "nextCursor": null,
+          "data": [
+            {
+              "kind": "thread",
+              "id": "in_abc123",
+              "roomId": "my-room-id",
+              "threadId": "th_abc123",
+              "notifiedAt": "2024-01-15T10:30:00.000Z",
+              "readAt": null
+            }
+          ]
+        }
       },
       "InboxNotificationThreadData": {
         "title": "InboxNotificationThreadData",
@@ -7191,7 +7785,15 @@
           "notifiedAt",
           "readAt"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "kind": "thread",
+          "id": "in_abc123",
+          "roomId": "my-room-id",
+          "threadId": "th_abc123",
+          "notifiedAt": "2024-01-15T10:30:00.000Z",
+          "readAt": null
+        }
       },
       "InboxNotificationActivity": {
         "title": "InboxNotificationActivity",
@@ -7222,7 +7824,14 @@
           }
         },
         "required": ["id", "createdAt", "data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "act_abc123",
+          "createdAt": "2024-01-15T10:30:00.000Z",
+          "data": {
+            "url": "url-to-file"
+          }
+        }
       },
       "InboxNotificationCustomData": {
         "title": "InboxNotificationCustomData",
@@ -7278,7 +7887,24 @@
           "readAt",
           "activities"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "kind": "custom",
+          "id": "in_xyz789",
+          "subjectId": "file123",
+          "roomId": null,
+          "notifiedAt": "2024-01-15T10:30:00.000Z",
+          "readAt": null,
+          "activities": [
+            {
+              "id": "act_abc123",
+              "createdAt": "2024-01-15T10:30:00.000Z",
+              "data": {
+                "url": "url-to-file"
+              }
+            }
+          ]
+        }
       },
       "NotificationChannelSettings": {
         "type": "object",
@@ -7293,6 +7919,11 @@
         "additionalProperties": {
           "type": "boolean",
           "description": "Custom notification kinds prefixed by a '$'"
+        },
+        "example": {
+          "thread": true,
+          "textMention": false,
+          "$customNotification": true
         }
       },
       "NotificationSettings": {
@@ -7312,7 +7943,29 @@
           }
         },
         "additionalProperties": false,
-        "description": "Notification settings for each supported channel"
+        "description": "Notification settings for each supported channel",
+        "example": {
+          "email": {
+            "thread": true,
+            "textMention": false,
+            "$customNotification": true
+          },
+          "slack": {
+            "thread": true,
+            "textMention": true,
+            "$customNotification": false
+          },
+          "teams": {
+            "thread": false,
+            "textMention": true,
+            "$customNotification": true
+          },
+          "webPush": {
+            "thread": true,
+            "textMention": true,
+            "$customNotification": false
+          }
+        }
       },
       "UpdateNotificationSettingsRequestBody": {
         "title": "UpdateNotificationSettingsRequestBody",
@@ -7332,7 +7985,19 @@
           }
         },
         "additionalProperties": false,
-        "description": "Partial notification settings - all properties are optional"
+        "description": "Partial notification settings - all properties are optional",
+        "example": {
+          "email": {
+            "thread": true,
+            "textMention": false
+          },
+          "slack": {
+            "textMention": false
+          },
+          "webPush": {
+            "thread": true
+          }
+        }
       },
       "GetRoomSubscriptionSettingsResponse": {
         "type": "object",
@@ -7356,7 +8021,17 @@
           }
         },
         "required": ["data", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "nextCursor": null,
+          "data": [
+            {
+              "threads": "all",
+              "textMentions": "mine",
+              "roomId": "my-room-id"
+            }
+          ]
+        }
       },
       "RoomSubscriptionSettings": {
         "title": "RoomSubscriptionSettings",
@@ -7370,7 +8045,11 @@
           }
         },
         "required": ["threads", "textMentions"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "threads": "all",
+          "textMentions": "mine"
+        }
       },
       "UpdateRoomSubscriptionSettingsRequestBody": {
         "title": "UpdateRoomSubscriptionSettingsRequestBody",
@@ -7384,7 +8063,11 @@
           }
         },
         "additionalProperties": false,
-        "description": "Partial room subscription settings - all properties are optional"
+        "description": "Partial room subscription settings - all properties are optional",
+        "example": {
+          "threads": "replies_and_mentions",
+          "textMentions": "none"
+        }
       },
       "UserRoomSubscriptionSettings": {
         "title": "UserRoomSubscriptionSettings",
@@ -7402,7 +8085,12 @@
           }
         },
         "required": ["threads", "textMentions", "roomId"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "threads": "all",
+          "textMentions": "mine",
+          "roomId": "my-room-id"
+        }
       },
       "TriggerInboxNotificationRequestBody": {
         "title": "TriggerInboxNotificationRequestBody",
@@ -7422,23 +8110,33 @@
           },
           "activityData": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
           },
           "organizationId": {
             "type": "string"
           }
         },
         "required": ["userId", "kind", "subjectId", "activityData"],
-        "examples": [
-          {
-            "userId": "alice",
-            "kind": "file-uploaded",
-            "subjectId": "file123",
-            "activityData": {
-              "url": "url-to-file"
-            }
+        "example": {
+          "userId": "alice",
+          "kind": "file-uploaded",
+          "subjectId": "file123",
+          "activityData": {
+            "url": "url-to-file"
           }
-        ]
+        }
       },
       "Subscription": {
         "title": "Subscription",
@@ -7456,7 +8154,12 @@
           }
         },
         "required": ["kind", "subjectId", "createdAt"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "kind": "thread",
+          "subjectId": "th_abc123",
+          "createdAt": "2022-07-13T14:32:50.697Z"
+        }
       },
       "UserSubscription": {
         "title": "UserSubscription",
@@ -7472,7 +8175,13 @@
               }
             }
           }
-        ]
+        ],
+        "example": {
+          "kind": "thread",
+          "subjectId": "th_abc123",
+          "createdAt": "2022-07-13T14:32:50.697Z",
+          "userId": "alice"
+        }
       },
       "AiCopilotBase": {
         "type": "object",
@@ -7524,7 +8233,20 @@
             "$ref": "#/components/schemas/AiCopilotProviderSettings"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_abc123",
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": true,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "settings": {
+            "maxTokens": 4096,
+            "temperature": 0.7
+          }
+        }
       },
       "AiCopilotOpenAi": {
         "title": "AiCopilotOpenAi",
@@ -7546,7 +8268,22 @@
             "required": ["provider", "providerModel"]
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_abc123",
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": true,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "provider": "openai",
+          "providerModel": "gpt-4o",
+          "settings": {
+            "maxTokens": 4096,
+            "temperature": 0.7
+          }
+        }
       },
       "AiCopilotAnthropic": {
         "title": "AiCopilotAnthropic",
@@ -7571,7 +8308,18 @@
             "required": ["provider", "providerModel"]
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_abc456",
+          "name": "My Anthropic Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": true,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "provider": "anthropic",
+          "providerModel": "claude-3-5-sonnet-latest"
+        }
       },
       "AiCopilotGoogle": {
         "title": "AiCopilotGoogle",
@@ -7596,7 +8344,18 @@
             "required": ["provider", "providerModel"]
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_abc789",
+          "name": "My Google Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": false,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "provider": "google",
+          "providerModel": "gemini-2.5-flash"
+        }
       },
       "AiCopilotOpenAiCompatible": {
         "title": "AiCopilotOpenAiCompatible",
@@ -7629,7 +8388,20 @@
             }
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_compat1",
+          "name": "My Compatible Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": false,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "provider": "openai-compatible",
+          "providerModel": "my-custom-model",
+          "compatibleProviderName": "my-provider",
+          "providerBaseUrl": "https://api.my-provider.com/v1"
+        }
       },
       "AiCopilot": {
         "title": "AiCopilot",
@@ -7656,7 +8428,22 @@
             "openai-compatible": "#/components/schemas/AiCopilotOpenAiCompatible"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "type": "copilot",
+          "id": "cp_abc123",
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "alwaysUseKnowledge": true,
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "provider": "openai",
+          "providerModel": "gpt-4o",
+          "settings": {
+            "maxTokens": 4096,
+            "temperature": 0.7
+          }
+        }
       },
       "CreateAiCopilotOptionsBase": {
         "type": "object",
@@ -7684,7 +8471,17 @@
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "sk-...",
+          "alwaysUseKnowledge": true,
+          "settings": {
+            "maxTokens": 4096,
+            "temperature": 0.7
+          }
+        }
       },
       "CreateAiCopilotOptionsOpenAi": {
         "allOf": [
@@ -7709,7 +8506,14 @@
             "additionalProperties": false
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "sk-...",
+          "provider": "openai",
+          "providerModel": "gpt-4o"
+        }
       },
       "CreateAiCopilotOptionsAnthropic": {
         "allOf": [
@@ -7732,7 +8536,14 @@
               }
             }
           }
-        ]
+        ],
+        "example": {
+          "name": "My Anthropic Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "sk-ant-...",
+          "provider": "anthropic",
+          "providerModel": "claude-3-5-sonnet-latest"
+        }
       },
       "CreateAiCopilotOptionsGoogle": {
         "allOf": [
@@ -7755,7 +8566,14 @@
               }
             }
           }
-        ]
+        ],
+        "example": {
+          "name": "My Google Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "AIza...",
+          "provider": "google",
+          "providerModel": "gemini-2.5-flash"
+        }
       },
       "CreateAiCopilotOptionsOpenAiCompatible": {
         "allOf": [
@@ -7786,7 +8604,16 @@
               }
             }
           }
-        ]
+        ],
+        "example": {
+          "name": "My Compatible Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "sk-...",
+          "provider": "openai-compatible",
+          "providerModel": "my-custom-model",
+          "compatibleProviderName": "my-provider",
+          "providerBaseUrl": "https://api.my-provider.com/v1"
+        }
       },
       "CreateAiCopilotRequestBody": {
         "oneOf": [
@@ -7811,6 +8638,13 @@
             "google": "#/components/schemas/CreateAiCopilotOptionsGoogle",
             "openai-compatible": "#/components/schemas/CreateAiCopilotOptionsOpenAiCompatible"
           }
+        },
+        "example": {
+          "name": "My Copilot",
+          "systemPrompt": "You are a helpful assistant.",
+          "providerApiKey": "sk-...",
+          "provider": "openai",
+          "providerModel": "gpt-4o"
         }
       },
       "UpdateAiCopilotRequestBody": {
@@ -7890,7 +8724,15 @@
             "format": "uri"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "name": "Updated Copilot",
+          "systemPrompt": "You are an updated helpful assistant.",
+          "providerModel": "gpt-4o",
+          "settings": {
+            "maxTokens": 8192
+          }
+        }
       },
       "AiCopilotProviderSettings": {
         "title": "AiCopilotProviderSettings",
@@ -7927,7 +8769,12 @@
             "type": "integer"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "maxTokens": 4096,
+          "temperature": 0.7,
+          "topP": 0.9
+        }
       },
       "OpenAiModel": {
         "title": "OpenAiModel",
@@ -7952,7 +8799,8 @@
           "gpt-5.1",
           "gpt-5.1-mini",
           "gpt-5.1-chat-latest"
-        ]
+        ],
+        "example": "gpt-4o"
       },
       "AnthropicModel": {
         "title": "AnthropicModel",
@@ -7967,7 +8815,8 @@
           "claude-3-5-sonnet-latest",
           "claude-3-5-haiku-latest",
           "claude-3-opus-latest"
-        ]
+        ],
+        "example": "claude-3-5-sonnet-latest"
       },
       "GoogleModel": {
         "title": "GoogleModel",
@@ -7978,7 +8827,8 @@
           "gemini-2.0-flash-001",
           "gemini-1.5-flash",
           "gemini-1.5-pro"
-        ]
+        ],
+        "example": "gemini-2.5-flash"
       },
       "OpenAiProviderOptions": {
         "type": "object",
@@ -8007,7 +8857,12 @@
             "additionalProperties": false
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "openai": {
+            "reasoningEffort": "medium"
+          }
+        }
       },
       "AnthropicProviderOptions": {
         "type": "object",
@@ -8063,7 +8918,15 @@
             "additionalProperties": false
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "anthropic": {
+            "thinking": {
+              "type": "enabled",
+              "budgetTokens": 10000
+            }
+          }
+        }
       },
       "GoogleProviderOptions": {
         "title": "GoogleProviderOptions",
@@ -8084,7 +8947,14 @@
             }
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "google": {
+            "thinkingConfig": {
+              "thinkingBudget": 10000
+            }
+          }
+        }
       },
       "GetAiCopilotsResponse": {
         "title": "GetAiCopilotsResponse",
@@ -8108,7 +8978,23 @@
           }
         },
         "required": ["nextCursor", "data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "nextCursor": null,
+          "data": [
+            {
+              "type": "copilot",
+              "id": "cp_abc123",
+              "name": "My Copilot",
+              "systemPrompt": "You are a helpful assistant.",
+              "alwaysUseKnowledge": true,
+              "createdAt": "2024-06-01T12:00:00.000Z",
+              "updatedAt": "2024-06-01T12:00:00.000Z",
+              "provider": "openai",
+              "providerModel": "gpt-4o"
+            }
+          ]
+        }
       },
       "KnowledgeSourceBase": {
         "type": "object",
@@ -8137,7 +9023,14 @@
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ks_abc123",
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "lastIndexedAt": "2024-06-01T12:00:00.000Z",
+          "status": "ready"
+        }
       },
       "KnowledgeSourceWebSource": {
         "allOf": [
@@ -8168,7 +9061,19 @@
             }
           }
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ks_web123",
+          "type": "ai-knowledge-web-source",
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "lastIndexedAt": "2024-06-01T12:00:00.000Z",
+          "status": "ready",
+          "link": {
+            "url": "https://docs.example.com",
+            "type": "crawl"
+          }
+        }
       },
       "KnowledgeSourceFileSource": {
         "allOf": [
@@ -8197,7 +9102,19 @@
               }
             }
           }
-        ]
+        ],
+        "example": {
+          "id": "ks_file123",
+          "type": "ai-knowledge-file-source",
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "lastIndexedAt": "2024-06-01T12:00:00.000Z",
+          "status": "ready",
+          "file": {
+            "name": "document.pdf",
+            "mimeType": "application/pdf"
+          }
+        }
       },
       "KnowledgeSource": {
         "type": "object",
@@ -8213,7 +9130,19 @@
         "discriminator": {
           "propertyName": "type"
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ks_web123",
+          "type": "ai-knowledge-web-source",
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "updatedAt": "2024-06-01T12:00:00.000Z",
+          "lastIndexedAt": "2024-06-01T12:00:00.000Z",
+          "status": "ready",
+          "link": {
+            "url": "https://docs.example.com",
+            "type": "crawl"
+          }
+        }
       },
       "GetKnowledgeSourcesResponse": {
         "title": "GetKnowledgeSourcesResponse",
@@ -8237,7 +9166,24 @@
           }
         },
         "required": ["nextCursor", "data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "nextCursor": null,
+          "data": [
+            {
+              "id": "ks_abc123",
+              "type": "ai-knowledge-web-source",
+              "createdAt": "2024-06-01T12:00:00.000Z",
+              "updatedAt": "2024-06-01T12:00:00.000Z",
+              "lastIndexedAt": "2024-06-01T12:00:00.000Z",
+              "status": "ready",
+              "link": {
+                "url": "https://docs.example.com",
+                "type": "crawl"
+              }
+            }
+          ]
+        }
       },
       "CreateWebKnowledgeSourceRequestBody": {
         "title": "CreateWebKnowledgeSourceRequestBody",
@@ -8255,7 +9201,12 @@
             "enum": ["individual_link", "crawl", "sitemap"]
           }
         },
-        "required": ["copilotId", "url", "type"]
+        "required": ["copilotId", "url", "type"],
+        "example": {
+          "copilotId": "cp_abc123",
+          "url": "https://docs.example.com",
+          "type": "crawl"
+        }
       },
       "CreateWebKnowledgeSourceResponse": {
         "title": "CreateWebKnowledgeSourceResponse",
@@ -8266,7 +9217,10 @@
           }
         },
         "required": ["id"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ks_abc123"
+        }
       },
       "GetFileKnowledgeSourceMarkdownResponse": {
         "title": "GetFileKnowledgeSourceMarkdownResponse",
@@ -8280,7 +9234,11 @@
           }
         },
         "required": ["id", "content"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ks_abc123",
+          "content": "# Document Title\n\nThis is the content of the uploaded file."
+        }
       },
       "WebKnowledgeSourceLink": {
         "title": "WebKnowledgeSourceLink",
@@ -8306,7 +9264,14 @@
           }
         },
         "required": ["id", "url", "status", "createdAt", "lastIndexedAt"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "ksl_abc123",
+          "url": "https://docs.example.com/getting-started",
+          "status": "ready",
+          "createdAt": "2024-06-01T12:00:00.000Z",
+          "lastIndexedAt": "2024-06-01T12:00:00.000Z"
+        }
       },
       "GetWebKnowledgeSourceLinksResponse": {
         "title": "GetWebKnowledgeSourceLinksResponse",
@@ -8330,7 +9295,19 @@
           }
         },
         "required": ["nextCursor", "data"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "nextCursor": null,
+          "data": [
+            {
+              "id": "ksl_abc123",
+              "url": "https://docs.example.com/getting-started",
+              "status": "ready",
+              "createdAt": "2024-06-01T12:00:00.000Z",
+              "lastIndexedAt": "2024-06-01T12:00:00.000Z"
+            }
+          ]
+        }
       },
       "Group": {
         "title": "Group",
@@ -8377,7 +9354,27 @@
           "updatedAt",
           "scopes",
           "members"
-        ]
+        ],
+        "example": {
+          "type": "group",
+          "id": "engineering",
+          "organizationId": "org_123456789",
+          "createdAt": "2024-01-15T10:30:00.000Z",
+          "updatedAt": "2024-01-15T10:30:00.000Z",
+          "scopes": {
+            "mention": true
+          },
+          "members": [
+            {
+              "id": "alice",
+              "addedAt": "2024-01-15T10:30:00.000Z"
+            },
+            {
+              "id": "bob",
+              "addedAt": "2024-01-16T09:00:00.000Z"
+            }
+          ]
+        }
       },
       "GroupMember": {
         "title": "GroupMember",
@@ -8391,7 +9388,11 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "addedAt"]
+        "required": ["id", "addedAt"],
+        "example": {
+          "id": "alice",
+          "addedAt": "2024-01-15T10:30:00.000Z"
+        }
       },
       "CreateGroupRequestBody": {
         "title": "CreateGroupRequestBody",
@@ -8419,7 +9420,15 @@
           }
         },
         "required": ["id"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "engineering",
+          "memberIds": ["alice", "bob"],
+          "organizationId": "org_123456789",
+          "scopes": {
+            "mention": true
+          }
+        }
       },
       "AddGroupMembersRequestBody": {
         "title": "AddGroupMembersRequestBody",
@@ -8432,7 +9441,10 @@
             }
           }
         },
-        "required": ["memberIds"]
+        "required": ["memberIds"],
+        "example": {
+          "memberIds": ["charlie", "dave"]
+        }
       },
       "RemoveGroupMembersRequestBody": {
         "title": "RemoveGroupMembersRequestBody",
@@ -8445,7 +9457,10 @@
             }
           }
         },
-        "required": ["memberIds"]
+        "required": ["memberIds"],
+        "example": {
+          "memberIds": ["charlie"]
+        }
       },
       "GetGroupsResponse": {
         "title": "GetGroupsResponse",
@@ -8469,7 +9484,28 @@
           }
         },
         "required": ["data", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "type": "group",
+              "id": "engineering",
+              "organizationId": "org_123456789",
+              "createdAt": "2024-01-15T10:30:00.000Z",
+              "updatedAt": "2024-01-15T10:30:00.000Z",
+              "scopes": {
+                "mention": true
+              },
+              "members": [
+                {
+                  "id": "alice",
+                  "addedAt": "2024-01-15T10:30:00.000Z"
+                }
+              ]
+            }
+          ],
+          "nextCursor": null
+        }
       },
       "GetUserGroupsResponse": {
         "title": "GetUserGroupsResponse",
@@ -8493,17 +9529,40 @@
           }
         },
         "required": ["data", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "type": "group",
+              "id": "engineering",
+              "organizationId": "org_123456789",
+              "createdAt": "2024-01-15T10:30:00.000Z",
+              "updatedAt": "2024-01-15T10:30:00.000Z",
+              "scopes": {
+                "mention": true
+              },
+              "members": [
+                {
+                  "id": "alice",
+                  "addedAt": "2024-01-15T10:30:00.000Z"
+                }
+              ]
+            }
+          ],
+          "nextCursor": null
+        }
       },
       "ManagementProjectType": {
         "title": "ManagementProjectType",
         "type": "string",
-        "enum": ["dev", "prod"]
+        "enum": ["dev", "prod"],
+        "example": "dev"
       },
       "ManagementProjectRegion": {
         "title": "ManagementProjectRegion",
         "type": "string",
-        "enum": ["earth", "eu", "fedramp"]
+        "enum": ["earth", "eu", "fedramp"],
+        "example": "earth"
       },
       "ManagementProjectVersionCreationTimeout": {
         "title": "ManagementProjectVersionCreationTimeout",
@@ -8518,7 +9577,8 @@
             "minimum": 30,
             "maximum": 300
           }
-        ]
+        ],
+        "example": false
       },
       "ManagementProjectPublicKey": {
         "title": "ManagementProjectPublicKey",
@@ -8535,7 +9595,12 @@
             "type": "string"
           }
         },
-        "required": ["activated", "createdAt", "value"]
+        "required": ["activated", "createdAt", "value"],
+        "example": {
+          "activated": true,
+          "createdAt": "2024-09-03T12:34:56.000Z",
+          "value": "pk_dev_123"
+        }
       },
       "ManagementProjectSecretKey": {
         "title": "ManagementProjectSecretKey",
@@ -8549,7 +9614,11 @@
             "type": "string"
           }
         },
-        "required": ["createdAt", "value"]
+        "required": ["createdAt", "value"],
+        "example": {
+          "createdAt": "2024-09-03T12:34:56.000Z",
+          "value": "sk_dev_123"
+        }
       },
       "ManagementProject": {
         "title": "ManagementProject",
@@ -8606,13 +9675,32 @@
           "secretKey",
           "region",
           "versionCreationTimeout"
-        ]
+        ],
+        "example": {
+          "id": "683d49ed6b4d1cec5a597b13",
+          "teamId": "team_123",
+          "type": "dev",
+          "name": "My Project",
+          "createdAt": "2024-09-03T12:34:56.000Z",
+          "updatedAt": "2024-09-03T12:34:56.000Z",
+          "publicKey": {
+            "activated": true,
+            "createdAt": "2024-09-03T12:34:56.000Z",
+            "value": "pk_dev_123"
+          },
+          "secretKey": {
+            "createdAt": "2024-09-03T12:34:56.000Z",
+            "value": "sk_dev_123"
+          },
+          "region": "earth",
+          "versionCreationTimeout": false
+        }
       },
       "GetManagementProjectsResponse": {
         "title": "GetManagementProjectsResponse",
         "type": "object",
         "properties": {
-          "projects": {
+          "data": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ManagementProject"
@@ -8630,7 +9718,31 @@
           }
         },
         "required": ["projects", "nextCursor"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "id": "683d49ed6b4d1cec5a597b13",
+              "teamId": "team_123",
+              "type": "dev",
+              "name": "My Project",
+              "createdAt": "2024-09-03T12:34:56.000Z",
+              "updatedAt": "2024-09-03T12:34:56.000Z",
+              "publicKey": {
+                "activated": true,
+                "createdAt": "2024-09-03T12:34:56.000Z",
+                "value": "pk_dev_123"
+              },
+              "secretKey": {
+                "createdAt": "2024-09-03T12:34:56.000Z",
+                "value": "sk_dev_123"
+              },
+              "region": "earth",
+              "versionCreationTimeout": false
+            }
+          ],
+          "nextCursor": null
+        }
       },
       "CreateManagementProjectRequestBody": {
         "title": "CreateManagementProjectRequestBody",
@@ -8647,18 +9759,12 @@
             "default": false
           }
         },
-        "required": ["type"]
-      },
-      "CreateManagementProjectResponse": {
-        "title": "CreateManagementProjectResponse",
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/components/schemas/ManagementProject"
-          }
-        },
-        "required": ["project"],
-        "additionalProperties": false
+        "required": ["type"],
+        "example": {
+          "name": "My Project",
+          "type": "dev",
+          "versionCreationTimeout": false
+        }
       },
       "UpdateManagementProjectRequestBody": {
         "title": "UpdateManagementProjectRequestBody",
@@ -8670,29 +9776,11 @@
           "versionCreationTimeout": {
             "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
           }
+        },
+        "example": {
+          "name": "Updated Project Name",
+          "versionCreationTimeout": 60
         }
-      },
-      "UpdateManagementProjectResponse": {
-        "title": "UpdateManagementProjectResponse",
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/components/schemas/ManagementProject"
-          }
-        },
-        "required": ["project"],
-        "additionalProperties": false
-      },
-      "GetManagementProjectResponse": {
-        "title": "GetManagementProjectResponse",
-        "type": "object",
-        "properties": {
-          "project": {
-            "$ref": "#/components/schemas/ManagementProject"
-          }
-        },
-        "required": ["project"],
-        "additionalProperties": false
       },
       "RollProjectPublicApiKeyResponse": {
         "title": "RollProjectPublicApiKeyResponse",
@@ -8703,7 +9791,14 @@
           }
         },
         "required": ["publicKey"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "publicKey": {
+            "activated": true,
+            "createdAt": "2024-09-03T12:34:56.000Z",
+            "value": "pk_dev_123"
+          }
+        }
       },
       "RollProjectPublicApiKeyRequestBody": {
         "title": "RollProjectPublicApiKeyRequestBody",
@@ -8729,7 +9824,10 @@
             "default": "now"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "expirationIn": "1 hour"
+        }
       },
       "RollProjectSecretApiKeyRequestBody": {
         "title": "RollProjectSecretApiKeyRequestBody",
@@ -8755,7 +9853,10 @@
             "default": "now"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "expirationIn": "3 days"
+        }
       },
       "RollProjectSecretApiKeyResponse": {
         "title": "ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse",
@@ -8766,7 +9867,13 @@
           }
         },
         "required": ["secretKey"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "secretKey": {
+            "createdAt": "2024-09-03T12:34:56.000Z",
+            "value": "sk_dev_123"
+          }
+        }
       },
       "ManagementWebhookEvent": {
         "title": "ManagementWebhookEvent",
@@ -8790,7 +9897,8 @@
           "notification",
           "threadMarkedAsResolved",
           "threadMarkedAsUnresolved"
-        ]
+        ],
+        "example": "storageUpdated"
       },
       "ManagementWebhookSecret": {
         "title": "ManagementWebhookSecret",
@@ -8800,7 +9908,10 @@
             "type": "string"
           }
         },
-        "required": ["value"]
+        "required": ["value"],
+        "example": {
+          "value": "whsec_abc123"
+        }
       },
       "ManagementWebhook": {
         "title": "ManagementWebhook",
@@ -8866,7 +9977,20 @@
           "storageUpdatedThrottleSeconds",
           "yDocUpdatedThrottleSeconds"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "id": "wh_abc123",
+          "createdAt": "2024-09-03T12:34:56.000Z",
+          "updatedAt": "2024-09-03T12:34:56.000Z",
+          "url": "https://example.com/webhooks",
+          "disabled": false,
+          "subscribedEvents": ["storageUpdated", "userEntered"],
+          "secret": {
+            "value": "whsec_abc123"
+          },
+          "storageUpdatedThrottleSeconds": 10,
+          "yDocUpdatedThrottleSeconds": 10
+        }
       },
       "CreateManagementWebhookRequestBody": {
         "title": "CreateManagementWebhookRequestBody",
@@ -8900,7 +10024,14 @@
             "type": "integer"
           }
         },
-        "required": ["url", "subscribedEvents"]
+        "required": ["url", "subscribedEvents"],
+        "example": {
+          "url": "https://example.com/webhooks",
+          "subscribedEvents": ["storageUpdated", "userEntered"],
+          "rateLimit": 100,
+          "storageUpdatedThrottleSeconds": 10,
+          "yDocUpdatedThrottleSeconds": 10
+        }
       },
       "UpdateManagementWebhookRequestBody": {
         "title": "UpdateManagementWebhookRequestBody",
@@ -8930,6 +10061,12 @@
           "disabled": {
             "type": "boolean"
           }
+        },
+        "example": {
+          "url": "https://example.com/webhooks",
+          "subscribedEvents": ["storageUpdated", "userEntered"],
+          "rateLimit": 100,
+          "disabled": false
         }
       },
       "ManagementWebhookAdditionalHeaders": {
@@ -8937,6 +10074,9 @@
         "type": "object",
         "additionalProperties": {
           "type": "string"
+        },
+        "example": {
+          "X-Custom-Header": "value"
         }
       },
       "UpsertManagementWebhookHeadersRequestBody": {
@@ -8948,7 +10088,12 @@
           }
         },
         "required": ["headers"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "headers": {
+            "X-Custom-Header": "value"
+          }
+        }
       },
       "GetManagementWebhookHeadersResponse": {
         "title": "GetManagementWebhookHeadersResponse",
@@ -8959,7 +10104,12 @@
           }
         },
         "required": ["headers"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "headers": {
+            "X-Custom-Header": "value"
+          }
+        }
       },
       "DeleteManagementWebhookHeadersRequestBody": {
         "title": "DeleteManagementWebhookHeadersRequestBody",
@@ -8974,7 +10124,10 @@
           }
         },
         "required": ["headers"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "headers": ["X-Custom-Header", "X-Another-Header"]
+        }
       },
       "DeleteManagementWebhookHeadersResponse": {
         "title": "DeleteManagementWebhookHeadersResponse",
@@ -8985,7 +10138,12 @@
           }
         },
         "required": ["headers"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "headers": {
+            "X-Remaining-Header": "value"
+          }
+        }
       },
       "ManagementWebhookHeadersDelete": {
         "title": "ManagementWebhookHeadersDelete",
@@ -8998,7 +10156,10 @@
             }
           }
         },
-        "required": ["headers"]
+        "required": ["headers"],
+        "example": {
+          "headers": ["X-Custom-Header"]
+        }
       },
       "UpsertManagementWebhookHeadersResponse": {
         "title": "UpsertManagementWebhookHeadersResponse",
@@ -9012,13 +10173,18 @@
           }
         },
         "required": ["headers"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "headers": {
+            "X-Custom-Header": "value"
+          }
+        }
       },
       "GetManagementWebhooksResponse": {
         "title": "GetManagementWebhooksResponse",
         "type": "object",
         "properties": {
-          "webhooks": {
+          "data": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ManagementWebhook"
@@ -9036,40 +10202,25 @@
           }
         },
         "required": ["webhooks", "nextCursor"],
-        "additionalProperties": false
-      },
-      "CreateManagementWebhookResponse": {
-        "title": "CreateManagementWebhookResponse",
-        "type": "object",
-        "properties": {
-          "webhook": {
-            "$ref": "#/components/schemas/ManagementWebhook"
-          }
-        },
-        "required": ["webhook"],
-        "additionalProperties": false
-      },
-      "GetManagementWebhookResponse": {
-        "title": "GetManagementWebhookResponse",
-        "type": "object",
-        "properties": {
-          "webhook": {
-            "$ref": "#/components/schemas/ManagementWebhook"
-          }
-        },
-        "required": ["webhook"],
-        "additionalProperties": false
-      },
-      "UpdateManagementWebhookResponse": {
-        "title": "UpdateManagementWebhookResponse",
-        "type": "object",
-        "properties": {
-          "webhook": {
-            "$ref": "#/components/schemas/ManagementWebhook"
-          }
-        },
-        "required": ["webhook"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "data": [
+            {
+              "id": "wh_abc123",
+              "createdAt": "2024-09-03T12:34:56.000Z",
+              "updatedAt": "2024-09-03T12:34:56.000Z",
+              "url": "https://example.com/webhooks",
+              "disabled": false,
+              "subscribedEvents": ["storageUpdated", "userEntered"],
+              "secret": {
+                "value": "whsec_abc123"
+              },
+              "storageUpdatedThrottleSeconds": 10,
+              "yDocUpdatedThrottleSeconds": 10
+            }
+          ],
+          "nextCursor": null
+        }
       },
       "RotateManagementWebhookSecretResponse": {
         "title": "RotateManagementWebhookSecretResponse",
@@ -9082,7 +10233,13 @@
             "type": "string"
           }
         },
-        "required": ["secret", "message"]
+        "required": ["secret", "message"],
+        "example": {
+          "secret": {
+            "value": "whsec_new_abc123"
+          },
+          "message": "Previous secret remains valid for 24 hours."
+        }
       },
       "RecoverManagementWebhookFailedMessagesRequestBody": {
         "title": "RecoverManagementWebhookFailedMessagesRequestBody",
@@ -9094,7 +10251,10 @@
           }
         },
         "required": ["since"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "since": "2026-01-21T00:00:00.000Z"
+        }
       },
       "TestManagementWebhookRequestBody": {
         "title": "TestManagementWebhookRequestBody",
@@ -9104,7 +10264,10 @@
             "$ref": "#/components/schemas/ManagementWebhookEvent"
           }
         },
-        "required": ["subscribedEvent"]
+        "required": ["subscribedEvent"],
+        "example": {
+          "subscribedEvent": "storageUpdated"
+        }
       },
       "TestManagementWebhookResponse": {
         "title": "TestManagementWebhookResponse",
@@ -9133,7 +10296,13 @@
           }
         },
         "required": ["message"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "example": {
+          "message": {
+            "id": "msg_abc123",
+            "deliveredAt": "2024-09-03T12:34:56.000Z"
+          }
+        }
       }
     },
     "securitySchemes": {
