@@ -47,6 +47,7 @@ exclude_also = [
 [tool.uv.build-backend]
 module-name = "liveblocks"
 module-root = ""
+exclude = ["README.mdx"]
 
 [build-system]
 requires = ["uv_build>=0.10.0,<0.11.0"]
