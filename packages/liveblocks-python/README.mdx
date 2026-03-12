@@ -18,11 +18,9 @@ pip install liveblocks
 
 ## Quickstart
 
-All API calls require a Liveblocks client set up with your secret key. Find your key in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys).
+All API calls require a Liveblocks client configured with your secret key, found in the [Liveblocks Dashboard](https://liveblocks.io/dashboard/apikeys). Methods can be called synchronously or asynchronously.
 
-### Synchronous
-
-```python
+```python title="Synchronous"
 from liveblocks import Liveblocks
 
 client = Liveblocks(secret="{{SECRET_KEY}}")
@@ -32,9 +30,7 @@ with client:
     print(rooms)
 ```
 
-### Asynchronous
-
-```python
+```python title="Asynchronous"
 from liveblocks import AsyncLiveblocks
 
 client = AsyncLiveblocks(secret="{{SECRET_KEY}}")
