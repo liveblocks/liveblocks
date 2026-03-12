@@ -1,6 +1,36 @@
 {% from "endpoint_macros.py.jinja" import return_type, arguments %}
-{# Build a tag description lookup from the raw OpenAPI tags array #}
-{% set tag_descriptions = {} %}
+{#
+  Render a property as a valid Python literal for use in examples.
+
+  | Type       | With example            | Without example |
+  |------------|-------------------------|-----------------|
+  | str        | "<escaped example>"     | "..."           |
+  | int        | <example>               | 0               |
+  | float      | <example>               | 0.0             |
+  | bool       | <example>               | True            |
+  | list[...]  | []                      | []              |
+  | dict[...]  | {}                      | {}              |
+  | other      | ...                     | ...             |
+#}
+{% macro example_value(prop) -%}
+{%- set _base = prop.get_base_type_string() -%}
+{%- set _types = _base.split(" | ") -%}
+{%- if "str" in _types -%}
+{%- if prop.example is string -%}"{{ prop.example | replace('\\', '\\\\') | replace('"', '\\"') }}"{%- else -%}"..."{%- endif -%}
+{%- elif "int" in _types -%}
+{{ prop.example if prop.example is number else 0 }}
+{%- elif "float" in _types -%}
+{{ prop.example if prop.example is number else 0.0 }}
+{%- elif "bool" in _types -%}
+{{ prop.example if prop.example in [true, false] else "True" }}
+{%- elif _base.startswith("list[") -%}
+[]
+{%- elif _base.startswith("dict[") -%}
+{}
+{%- else -%}
+...
+{%- endif -%}
+{%- endmacro %}
 # @liveblocks/python
 
 `@liveblocks/python` provides you with a Python client for accessing the Liveblocks API. This library is only intended for use in your Python back end.
@@ -57,15 +87,62 @@ async with client:
 {% set ns.success_responses = ns.success_responses + [response] %}
 {% endif %}
 {% endfor %}
-{% set ret_type = return_type(ns.success_responses) %}
 {% set method_name = endpoint.name | snakecase %}
-{% set all_params = endpoint.list_all_parameters() %}
+{% set ret_type = return_type(ns.success_responses) %}
 #### {{ method_name }}
 
 {% if endpoint.description %}
 {{ endpoint.description | replace('\\"', '"') }}
 {% endif %}
 
+{% set body_prop = (endpoint.bodies | selectattr("prop.required") | first).prop if endpoint.bodies | selectattr("prop.required") | list else None %}
+{% if body_prop %}
+{% set body_type = body_prop.get_type_string() %}
+{% set body_is_simple = "|" in body_type or "list[" in body_type or body_type in ["File", "Any"] %}
+{% set body_required = (body_prop.required_properties | selectattr("default", "none") | list) if body_prop.required_properties else [] %}
+{% set body_optional = (body_prop.optional_properties or [])[:3] %}
+{% endif %}
+**Example**
+```python
+{% if body_prop and not body_is_simple %}
+from {{ package_name }}.models import {{ body_type }}
+
+{% endif %}
+{% if endpoint.path_parameters or endpoint.query_parameters or body_prop %}
+{% if ret_type != "None" %}result = {% endif %}client.{{ method_name }}(
+{% for p in endpoint.path_parameters %}
+    {{ p.python_name }}={{ example_value(p) }},
+{% endfor %}
+{% for p in endpoint.query_parameters | selectattr("required") %}
+    {{ p.python_name }}={{ example_value(p) }},
+{% endfor %}
+{% if body_prop %}
+{% if body_is_simple %}
+    body=...,
+{% elif body_required or body_optional %}
+    body={{ body_type }}(
+{% for f in body_required %}
+        {{ f.python_name }}={{ example_value(f) }},
+{% endfor %}
+{% for f in body_optional %}
+        # {{ f.python_name }}={{ example_value(f) }},
+{% endfor %}
+    ),
+{% else %}
+    body={{ body_type }}(...),
+{% endif %}
+{% endif %}
+{% for p in endpoint.query_parameters | rejectattr("required") %}
+    # {{ p.python_name }}={{ example_value(p) }},
+{% endfor %}
+)
+{% else %}
+{% if ret_type != "None" %}result = {% endif %}client.{{ method_name }}()
+{% endif %}
+{% if ret_type != "None" %}
+print(result)
+{% endif %}
+```
 {% if endpoint.path_parameters or endpoint.query_parameters or endpoint.bodies %}
 **Parameters:**
 
