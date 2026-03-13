@@ -18,7 +18,7 @@ import {
   type Node,
   type NodeChange,
 } from "@xyflow/react";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { omit, pick, type UnwrapLiveObject } from "./utils";
 
@@ -78,6 +78,28 @@ function edgeToStorage<EdgeData extends JsonObject>(
   ) as LiveblocksEdge<EdgeData>;
 }
 
+function setOrDelete<T extends object>(
+  map: Map<string, T>,
+  id: string,
+  entries: T
+): void {
+  const next: Record<string, unknown> = {};
+
+  for (const key in entries) {
+    const value = (entries as Record<string, unknown>)[key];
+
+    if (value) {
+      next[key] = value;
+    }
+  }
+
+  if (Object.keys(next).length > 0) {
+    map.set(id, next as T);
+  } else {
+    map.delete(id);
+  }
+}
+
 function reconcile<T extends { id: string }>(next: T, cache: Map<string, T>) {
   const previous = cache.get(next.id);
 
@@ -101,16 +123,14 @@ export function useLiveblocksFlow<
   const nodeCache = useRef<Map<string, TNode>>(new Map());
   const edgeCache = useRef<Map<string, TEdge>>(new Map());
 
-  const nodeLocalΣ = useMemo(
-    () => new Signal(new Map<string, Partial<LocalNodes>>()),
-    []
+  const [localNodesΣ] = useState(
+    () => new Signal(new Map<string, Partial<LocalNodes>>())
   );
-  const edgeLocalΣ = useMemo(
-    () => new Signal(new Map<string, Partial<LocalEdges>>()),
-    []
+  const [localEdgesΣ] = useState(
+    () => new Signal(new Map<string, Partial<LocalEdges>>())
   );
-  const nodeLocal = useSignal(nodeLocalΣ);
-  const edgeLocal = useSignal(edgeLocalΣ);
+  const localNodes = useSignal(localNodesΣ);
+  const localEdges = useSignal(localEdgesΣ);
 
   const remoteNodes =
     useStorage((root) => {
@@ -128,21 +148,21 @@ export function useLiveblocksFlow<
 
   const nodes = useMemo(() => {
     return remoteNodes.map((node) => {
-      const local = nodeLocal.get(node.id);
+      const local = localNodes.get(node.id);
       const merged = local ? { ...node, ...local } : node;
 
       return reconcile(merged, nodeCache.current);
     });
-  }, [remoteNodes, nodeLocal]);
+  }, [remoteNodes, localNodes]);
 
   const edges = useMemo(() => {
     return remoteEdges.map((edge) => {
-      const local = edgeLocal.get(edge.id);
+      const local = localEdges.get(edge.id);
       const merged = local ? { ...edge, ...local } : edge;
 
       return reconcile(merged, edgeCache.current);
     });
-  }, [remoteEdges, edgeLocal]);
+  }, [remoteEdges, localEdges]);
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
@@ -150,26 +170,19 @@ export function useLiveblocksFlow<
       const nodes = root.get("flow").get("nodes");
 
       let localChanged = false;
-      const nextLocal = new Map(nodeLocalΣ.get());
-
-      const upsertLocal = (node: TNode) => {
-        const localState = pick(node, NODE_LOCAL_KEYS);
-
-        if (Object.keys(localState).length > 0) {
-          nextLocal.set(node.id, localState);
-        } else {
-          nextLocal.delete(node.id);
-        }
-
-        localChanged = true;
-      };
+      const nextLocal = new Map(localNodesΣ.get());
 
       for (const change of changes) {
         switch (change.type) {
           case "add":
           case "replace":
             nodes.set(change.item.id, nodeToStorage(change.item));
-            upsertLocal(change.item);
+            setOrDelete(
+              nextLocal,
+              change.item.id,
+              pick(change.item, NODE_LOCAL_KEYS)
+            );
+            localChanged = true;
             break;
 
           case "remove":
@@ -198,7 +211,7 @@ export function useLiveblocksFlow<
             }
 
             if (change.dragging !== undefined) {
-              nextLocal.set(change.id, {
+              setOrDelete(nextLocal, change.id, {
                 ...nextLocal.get(change.id),
                 dragging: change.dragging,
               });
@@ -209,8 +222,9 @@ export function useLiveblocksFlow<
           }
 
           case "dimensions": {
-            const existing = nextLocal.get(change.id);
-            const patch: Partial<LocalNodes> = { ...existing };
+            const patch: Partial<LocalNodes> = {
+              ...nextLocal.get(change.id),
+            };
 
             if (change.dimensions !== undefined) {
               patch.measured = change.dimensions;
@@ -220,16 +234,13 @@ export function useLiveblocksFlow<
               patch.resizing = change.resizing;
             }
 
-            if (patch !== existing) {
-              nextLocal.set(change.id, patch);
-              localChanged = true;
-            }
-
+            setOrDelete(nextLocal, change.id, patch);
+            localChanged = true;
             break;
           }
 
           case "select":
-            nextLocal.set(change.id, {
+            setOrDelete(nextLocal, change.id, {
               ...nextLocal.get(change.id),
               selected: change.selected,
             });
@@ -242,7 +253,7 @@ export function useLiveblocksFlow<
       }
 
       if (localChanged) {
-        nodeLocalΣ.set(nextLocal);
+        localNodesΣ.set(nextLocal);
       }
     },
     []
@@ -254,26 +265,19 @@ export function useLiveblocksFlow<
       const edges = root.get("flow").get("edges");
 
       let localChanged = false;
-      const nextLocal = new Map(edgeLocalΣ.get());
-
-      const upsertLocal = (edge: TEdge) => {
-        const localState = pick(edge, EDGE_LOCAL_KEYS);
-
-        if (Object.keys(localState).length > 0) {
-          nextLocal.set(edge.id, localState);
-        } else {
-          nextLocal.delete(edge.id);
-        }
-
-        localChanged = true;
-      };
+      const nextLocal = new Map(localEdgesΣ.get());
 
       for (const change of changes) {
         switch (change.type) {
           case "add":
           case "replace":
             edges.set(change.item.id, edgeToStorage(change.item));
-            upsertLocal(change.item);
+            setOrDelete(
+              nextLocal,
+              change.item.id,
+              pick(change.item, EDGE_LOCAL_KEYS)
+            );
+            localChanged = true;
             break;
 
           case "remove":
@@ -284,7 +288,7 @@ export function useLiveblocksFlow<
             break;
 
           case "select":
-            nextLocal.set(change.id, {
+            setOrDelete(nextLocal, change.id, {
               ...nextLocal.get(change.id),
               selected: change.selected,
             });
@@ -297,7 +301,7 @@ export function useLiveblocksFlow<
       }
 
       if (localChanged) {
-        edgeLocalΣ.set(nextLocal);
+        localEdgesΣ.set(nextLocal);
       }
     },
     []
