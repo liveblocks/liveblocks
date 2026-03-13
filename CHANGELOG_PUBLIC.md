@@ -52,9 +52,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Improve avatars’ ordering and `max` logic in `AvatarStack`.
 - Support `children` prop on `CommentPin`.
 
+## Documentation
+
+- Mention how token caching is never recommended.
+
+## Examples
+
+- Improve canvas comments example to prevent a conflict after moving a comment pin twice in rapid succession.
+
 ## Contributors
 
-nvie, marcbouchenoire
+nvie, marcbouchenoire, ctnicholas
 
 # Week 10 (2026-03-06)
 
