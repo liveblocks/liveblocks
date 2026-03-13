@@ -15,7 +15,7 @@ import {
   useSuspendUntilStorageReady,
 } from "@liveblocks/react/_private";
 import {
-  addEdge,
+  addEdge as defaultAddEdge,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -88,6 +88,22 @@ type UseLiveblocksFlowResult<
     onNodesChange: OnNodesChange<Node<NodeData>>;
     onEdgesChange: OnEdgesChange<Edge<EdgeData>>;
     onConnect: OnConnect;
+    addNode: (node: Node<NodeData>) => void;
+    removeNode: (id: string) => void;
+    updateNode: (
+      id: string,
+      update:
+        | Partial<Node<NodeData>>
+        | ((node: Node<NodeData>) => Node<NodeData> | Partial<Node<NodeData>>)
+    ) => void;
+    addEdge: (edge: Edge<EdgeData>) => void;
+    removeEdge: (id: string) => void;
+    updateEdge: (
+      id: string,
+      update:
+        | Partial<Edge<EdgeData>>
+        | ((edge: Edge<EdgeData>) => Edge<EdgeData> | Partial<Edge<EdgeData>>)
+    ) => void;
   }
 >;
 
@@ -377,7 +393,7 @@ export function useLiveblocksFlow<
     const edges = root.get("flow").get("edges");
 
     const current = Array.from(edges.values(), (edge) => edge.toObject());
-    const next = addEdge(connection, current);
+    const next = defaultAddEdge(connection, current);
     const edge = next[next.length - 1];
 
     if (!edge) {
@@ -386,6 +402,116 @@ export function useLiveblocksFlow<
 
     edges.set(edge.id, edgeToStorage(edge));
   }, []);
+
+  const addNode = useMutation(({ storage }, node: TNode) => {
+    const root = storage as TStorageRoot;
+    const nodes = root.get("flow").get("nodes");
+
+    nodes.set(node.id, nodeToStorage(node));
+
+    const nextLocal = new Map(localNodesΣ.get());
+    setOrDelete(nextLocal, node.id, pick(node, NODE_LOCAL_KEYS));
+    localNodesΣ.set(nextLocal);
+  }, []);
+
+  const removeNode = useMutation(({ storage }, id: string) => {
+    const root = storage as TStorageRoot;
+    const nodes = root.get("flow").get("nodes");
+
+    nodes.delete(id);
+    nodeCache.current.delete(id);
+
+    const nextLocal = new Map(localNodesΣ.get());
+    nextLocal.delete(id);
+    localNodesΣ.set(nextLocal);
+  }, []);
+
+  const updateNode = useMutation(
+    (
+      { storage },
+      id: string,
+      update: Partial<TNode> | ((node: TNode) => TNode | Partial<TNode>)
+    ) => {
+      const root = storage as TStorageRoot;
+      const nodes = root.get("flow").get("nodes");
+      const storedNode = nodes.get(id);
+
+      if (!storedNode) {
+        return;
+      }
+
+      const stored = storedNode.toObject() as unknown as Omit<
+        TNode,
+        (typeof NODE_LOCAL_KEYS)[number]
+      >;
+      const local = localNodesΣ.get().get(id);
+      const current = { ...stored, ...local } as TNode;
+      const patch = typeof update === "function" ? update(current) : update;
+      const updated = { ...current, ...patch } as TNode;
+
+      nodes.set(id, nodeToStorage(updated));
+
+      const nextLocal = new Map(localNodesΣ.get());
+      setOrDelete(nextLocal, id, pick(updated, NODE_LOCAL_KEYS));
+      localNodesΣ.set(nextLocal);
+    },
+    []
+  );
+
+  const addEdge = useMutation(({ storage }, edge: TEdge) => {
+    const root = storage as TStorageRoot;
+    const edges = root.get("flow").get("edges");
+
+    edges.set(edge.id, edgeToStorage(edge));
+
+    const nextLocal = new Map(localEdgesΣ.get());
+    setOrDelete(nextLocal, edge.id, pick(edge, EDGE_LOCAL_KEYS));
+    localEdgesΣ.set(nextLocal);
+  }, []);
+
+  const removeEdge = useMutation(({ storage }, id: string) => {
+    const root = storage as TStorageRoot;
+    const edges = root.get("flow").get("edges");
+
+    edges.delete(id);
+    edgeCache.current.delete(id);
+
+    const nextLocal = new Map(localEdgesΣ.get());
+    nextLocal.delete(id);
+    localEdgesΣ.set(nextLocal);
+  }, []);
+
+  const updateEdge = useMutation(
+    (
+      { storage },
+      id: string,
+      update: Partial<TEdge> | ((edge: TEdge) => TEdge | Partial<TEdge>)
+    ) => {
+      const root = storage as TStorageRoot;
+      const edges = root.get("flow").get("edges");
+      const storedEdge = edges.get(id);
+
+      if (!storedEdge) {
+        return;
+      }
+
+      const stored = storedEdge.toObject() as unknown as Omit<
+        TEdge,
+        (typeof EDGE_LOCAL_KEYS)[number]
+      >;
+      const local = localEdgesΣ.get().get(id);
+      const current = { ...stored, ...local } as TEdge;
+      const patch = typeof update === "function" ? update(current) : update;
+      const updated = { ...current, ...patch } as TEdge;
+
+      edges.set(id, edgeToStorage(updated));
+
+      const nextLocal = new Map(localEdgesΣ.get());
+      setOrDelete(nextLocal, id, pick(updated, EDGE_LOCAL_KEYS));
+      localEdgesΣ.set(nextLocal);
+    },
+    []
+  );
 
   const setInitialStorage = useMutation(({ storage }) => {
     const root = storage as TStorageRoot;
@@ -423,6 +549,12 @@ export function useLiveblocksFlow<
     onNodesChange,
     onEdgesChange,
     onConnect,
+    addNode,
+    removeNode,
+    updateNode,
+    addEdge,
+    removeEdge,
+    updateEdge,
   } as UseLiveblocksFlowResult<NodeData, EdgeData>;
 }
 
