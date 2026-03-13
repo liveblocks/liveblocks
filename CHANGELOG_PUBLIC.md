@@ -20,7 +20,41 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 11 (2026-03-13)
 
+## v3.15.2
+
+### `@liveblocks/client`
+
+- Deprecate the `engine` option on `enterRoom()`. This flag no longer has any
+  effect.
+
+### `@liveblocks/react`
+
+- Deprecate the `engine` prop on `RoomProvider`. This flag no longer has any
+  effect.
+
+### `@liveblocks/node`
+
+- Deprecate the `engine` option on `createRoom()`. This flag no longer has any
+  effect.
+- Stop sending the `engine` field in the room creation request body.
+
+## v3.15.1
+
+### `@liveblocks/react-ui`
+
+- Add `gap` prop to `AvatarStack` to control the `--lb-avatar-stack-gap` CSS
+  variable.
+- Add `padding` prop to `CommentPin` to control the `--lb-comment-pin-padding`
+  CSS variable.
+- Fix `size` props on `AvatarStack` and `CommentPin` not working as expected
+  when passing numbers.
+- Fix `autoFocus` prop on `FloatingComposer`.
+- Improve avatars’ ordering and `max` logic in `AvatarStack`.
+- Support `children` prop on `CommentPin`.
+
 ## Contributors
+
+nvie, marcbouchenoire
 
 # Week 10 (2026-03-06)
 
