@@ -29,7 +29,12 @@ const ColorSelectorNode = memo(
       <div>
         Custom Color Picker Node: <strong>{data.color}</strong>
       </div>
-      <input type="color" onChange={data.onChange} value={data.color} />
+      <input
+        className="nodrag"
+        type="color"
+        onChange={data.onChange}
+        value={data.color}
+      />
       <Handle
         type="source"
         position={Position.Right}
@@ -38,10 +43,6 @@ const ColorSelectorNode = memo(
     </>
   )
 );
-
-const nodeTypes = {
-  selectorNode: ColorSelectorNode,
-};
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, updateNode } =
@@ -124,7 +125,9 @@ function Flow() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         style={{ background: color }}
-        nodeTypes={nodeTypes}
+        nodeTypes={{
+          selectorNode: ColorSelectorNode,
+        }}
         snapToGrid={true}
         snapGrid={DEFAULT_SNAP_GRID}
         defaultViewport={DEFAULT_VIEWPORT}

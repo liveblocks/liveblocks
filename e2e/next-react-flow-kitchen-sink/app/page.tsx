@@ -11,6 +11,9 @@ export default function Home() {
         <Link href="/basic" className="underline">
           Basic
         </Link>
+        <Link href="/feature-overview" className="underline">
+          Feature overview
+        </Link>
         <Link href="/custom-nodes" className="underline">
           Custom nodes
         </Link>
