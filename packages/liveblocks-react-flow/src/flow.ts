@@ -115,7 +115,7 @@ type UseLiveblocksFlowOptions<
    * The initial React Flow nodes and edges.
    *
    * @example
-   * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, isLoading } = useLiveblocksFlow({
+   * const { ... } = useLiveblocksFlow({
    *   initial: {
    *     nodes: [
    *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
@@ -131,6 +131,18 @@ type UseLiveblocksFlowOptions<
     nodes?: Node<NodeData>[];
     edges?: Edge<EdgeData>[];
   };
+
+  /**
+   * The key used to store the React Flow diagram in Liveblocks Storage.
+   *
+   * Defaults to `"flow"`.
+   *
+   * @example
+   * const { ... } = useLiveblocksFlow({
+   *   storageKey: "myDiagram",
+   * });
+   */
+  storageKey?: string;
 };
 
 // Converts a React Flow `Node` into a Liveblocks Storage version, omitting
@@ -172,7 +184,7 @@ export function useLiveblocksFlow<
   options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
 ): Resolve<UseLiveblocksFlowResult<NodeData, EdgeData>> {
   type TStorageRoot = LiveObject<{
-    flow: LiveblocksFlow<NodeData, EdgeData>;
+    [key: string]: LiveblocksFlow<NodeData, EdgeData> | undefined;
   }>;
   type TNode = Node<NodeData>;
   type TEdge = Edge<EdgeData>;
@@ -181,6 +193,7 @@ export function useLiveblocksFlow<
   const EMPTY_EDGES = EMPTY as TEdge[];
 
   const latestInitial = useLatest(options.initial);
+  const latestStorageKey = useLatest(options.storageKey ?? "flow");
 
   // Used to reconcile state changes with stable object references when the changes
   // are shallowly equal, preventing React Flow from re-rendering unchanged nodes and edges.
@@ -197,9 +210,12 @@ export function useLiveblocksFlow<
   const localNodes = useSignal(localNodesΣ);
   const localEdges = useSignal(localEdgesΣ);
 
+  const storageKey = latestStorageKey.current;
+
   // Remote state lives in Liveblocks Storage.
   const remoteNodes = useStorage((root) => {
-    const nodes = (root as ToImmutable<TStorageRoot> | null)?.flow?.nodes;
+    const nodes = (root as ToImmutable<TStorageRoot> | null)?.[storageKey]
+      ?.nodes;
 
     if (!nodes) {
       return EMPTY_NODES;
@@ -208,7 +224,8 @@ export function useLiveblocksFlow<
     return [...nodes.values()];
   });
   const remoteEdges = useStorage((root) => {
-    const edges = (root as ToImmutable<TStorageRoot> | null)?.flow?.edges;
+    const edges = (root as ToImmutable<TStorageRoot> | null)?.[storageKey]
+      ?.edges;
 
     if (!edges) {
       return EMPTY_EDGES;
@@ -247,8 +264,13 @@ export function useLiveblocksFlow<
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
-      const root = storage as TStorageRoot;
-      const nodes = root.get("flow").get("nodes");
+      const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+
+      if (!flow) {
+        return;
+      }
+
+      const nodes = flow.get("nodes");
 
       let localChanged = false;
       const nextLocal = new Map(localNodesΣ.get());
@@ -346,8 +368,13 @@ export function useLiveblocksFlow<
 
   const onEdgesChange = useMutation(
     ({ storage }, changes: EdgeChange<TEdge>[]) => {
-      const root = storage as TStorageRoot;
-      const edges = root.get("flow").get("edges");
+      const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+
+      if (!flow) {
+        return;
+      }
+
+      const edges = flow.get("edges");
 
       let localChanged = false;
       const nextLocal = new Map(localEdgesΣ.get());
@@ -393,8 +420,13 @@ export function useLiveblocksFlow<
   );
 
   const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const root = storage as TStorageRoot;
-    const edges = root.get("flow").get("edges");
+    const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+
+    if (!flow) {
+      return;
+    }
+
+    const edges = flow.get("edges");
 
     // Delegate to React Flow's own `addEdge` helper to get consistent default
     // edge IDs and de-duplication behavior, then persist the result.
@@ -411,10 +443,11 @@ export function useLiveblocksFlow<
 
   const setInitialStorage = useMutation(({ storage }) => {
     const root = storage as TStorageRoot;
+    const key = latestStorageKey.current;
 
     // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
     // initialize Storage if it doesn't already exist.
-    if (root.get("flow") !== undefined) {
+    if (root.get(key) !== undefined) {
       return;
     }
 
@@ -422,7 +455,7 @@ export function useLiveblocksFlow<
       latestInitial.current ?? {};
 
     root.set(
-      "flow",
+      key,
       new LiveObject({
         nodes: new LiveMap(
           initialNodes.map((node) => [node.id, nodeToStorage(node)])
