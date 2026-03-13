@@ -24,6 +24,8 @@ export {
   useRoomAttachmentUrl,
   useRoomPermissions,
   useRoomThreadSubscription,
+  useSuspendUntilPresenceReady,
+  useSuspendUntilStorageReady,
   useYjsProvider,
 } from "./room";
 export { useGroup } from "./use-group";

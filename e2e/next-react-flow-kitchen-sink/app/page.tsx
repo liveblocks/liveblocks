@@ -4,7 +4,7 @@ import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 import {
   createLiveblocksFlowInitialStorage,
   useLiveblocksFlow,
-} from "@liveblocks/react-flow";
+} from "@liveblocks/react-flow/suspense";
 import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -32,7 +32,7 @@ function Flow() {
 export default function Page() {
   return (
     <RoomProvider
-      id="liveblocks:examples:next-react-flow-kitchen-sink-9"
+      id="liveblocks:examples:next-react-flow-kitchen-sink-10"
       initialStorage={createLiveblocksFlowInitialStorage({
         nodes: [
           {

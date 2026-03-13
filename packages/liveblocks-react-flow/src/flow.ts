@@ -9,7 +9,10 @@ import {
   type ToImmutable,
 } from "@liveblocks/core";
 import { useMutation, useStorage } from "@liveblocks/react";
-import { useSignal } from "@liveblocks/react/_private";
+import {
+  useSignal,
+  useSuspendUntilStorageReady,
+} from "@liveblocks/react/_private";
 import {
   addEdge,
   type Connection,
@@ -17,6 +20,9 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  type OnConnect,
+  type OnEdgesChange,
+  type OnNodesChange,
 } from "@xyflow/react";
 import { useMemo, useRef, useState } from "react";
 
@@ -30,6 +36,33 @@ const NODE_LOCAL_KEYS = [
 ] as const satisfies (keyof Node)[number][];
 const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 const EMPTY: [] = [];
+
+export type UseLiveblocksFlowResult<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+> = Resolve<
+  (
+    | {
+        nodes: null;
+        edges: null;
+        isLoading: true;
+      }
+    | {
+        nodes: Node<NodeData>[];
+        edges: Edge<EdgeData>[];
+        isLoading: false;
+      }
+  ) & {
+    onNodesChange: OnNodesChange<Node<NodeData>>;
+    onEdgesChange: OnEdgesChange<Edge<EdgeData>>;
+    onConnect: OnConnect;
+  }
+>;
+
+type LiveblocksFlowSuspenseResult<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+> = Extract<UseLiveblocksFlowResult<NodeData, EdgeData>, { isLoading: false }>;
 
 export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
   LiveObject<
@@ -115,7 +148,7 @@ function reconcile<T extends { id: string }>(next: T, cache: Map<string, T>) {
 export function useLiveblocksFlow<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
->() {
+>(): Resolve<UseLiveblocksFlowResult<NodeData, EdgeData>> {
   type TStorageRoot = LiveblocksFlowRoot<NodeData, EdgeData>;
   type TNode = Node<NodeData>;
   type TEdge = Edge<EdgeData>;
@@ -135,29 +168,31 @@ export function useLiveblocksFlow<
   const localNodes = useSignal(localNodesΣ);
   const localEdges = useSignal(localEdgesΣ);
 
-  const remoteNodes =
-    useStorage((root) => {
-      const nodes = (root as ToImmutable<TStorageRoot> | null)?.flow?.nodes;
+  const remoteNodes = useStorage((root) => {
+    const nodes = (root as ToImmutable<TStorageRoot> | null)?.flow?.nodes;
 
-      if (!nodes) {
-        return EMPTY_NODES;
-      }
+    if (!nodes) {
+      return EMPTY_NODES;
+    }
 
-      return [...nodes.values()];
-    }) ?? EMPTY_NODES;
+    return [...nodes.values()];
+  });
 
-  const remoteEdges =
-    useStorage((root) => {
-      const edges = (root as ToImmutable<TStorageRoot> | null)?.flow?.edges;
+  const remoteEdges = useStorage((root) => {
+    const edges = (root as ToImmutable<TStorageRoot> | null)?.flow?.edges;
 
-      if (!edges) {
-        return EMPTY_EDGES;
-      }
+    if (!edges) {
+      return EMPTY_EDGES;
+    }
 
-      return [...edges.values()];
-    }) ?? EMPTY_EDGES;
+    return [...edges.values()];
+  });
 
   const nodes = useMemo(() => {
+    if (remoteNodes === null) {
+      return null;
+    }
+
     return remoteNodes.map((node) => {
       const local = localNodes.get(node.id);
       const merged = local ? { ...node, ...local } : node;
@@ -167,6 +202,10 @@ export function useLiveblocksFlow<
   }, [remoteNodes, localNodes]);
 
   const edges = useMemo(() => {
+    if (remoteEdges === null) {
+      return null;
+    }
+
     return remoteEdges.map((edge) => {
       const local = localEdges.get(edge.id);
       const merged = local ? { ...edge, ...local } : edge;
@@ -336,10 +375,22 @@ export function useLiveblocksFlow<
   return {
     nodes,
     edges,
+    isLoading: remoteNodes === null || remoteEdges === null,
     onNodesChange,
     onEdgesChange,
     onConnect,
-  };
+  } as UseLiveblocksFlowResult<NodeData, EdgeData>;
+}
+
+export function useLiveblocksFlowSuspense<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+>(): Resolve<LiveblocksFlowSuspenseResult<NodeData, EdgeData>> {
+  useSuspendUntilStorageReady();
+
+  const result = useLiveblocksFlow<NodeData, EdgeData>();
+
+  return result as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
 }
 
 export function createLiveblocksFlowInitialStorage<
