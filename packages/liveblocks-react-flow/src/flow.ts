@@ -10,6 +10,7 @@ import {
 } from "@liveblocks/core";
 import { useMutation, useStorage } from "@liveblocks/react";
 import {
+  useLatest,
   useSignal,
   useSuspendUntilStorageReady,
 } from "@liveblocks/react/_private";
@@ -168,7 +169,7 @@ export function useLiveblocksFlow<
   const EMPTY_NODES = EMPTY as TNode[];
   const EMPTY_EDGES = EMPTY as TEdge[];
 
-  const initialRef = useRef(options.initial);
+  const latestInitial = useLatest(options.initial);
 
   const nodeCache = useRef<Map<string, TNode>>(new Map());
   const edgeCache = useRef<Map<string, TEdge>>(new Map());
@@ -394,7 +395,7 @@ export function useLiveblocksFlow<
     }
 
     const { nodes: initialNodes = [], edges: initialEdges = [] } =
-      initialRef.current ?? {};
+      latestInitial.current ?? {};
 
     root.set(
       "flow",
@@ -410,7 +411,7 @@ export function useLiveblocksFlow<
   }, []);
 
   useEffect(() => {
-    if (!isLoading && initialRef.current !== undefined) {
+    if (!isLoading) {
       setInitialStorage();
     }
   }, [isLoading, setInitialStorage]);
