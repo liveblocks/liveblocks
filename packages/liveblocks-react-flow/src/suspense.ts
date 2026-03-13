@@ -10,7 +10,4 @@ export type {
   LiveblocksFlowRoot,
   LiveblocksNode,
 } from "./flow";
-export {
-  createLiveblocksFlowInitialStorage,
-  useLiveblocksFlowSuspense as useLiveblocksFlow,
-} from "./flow";
+export { useLiveblocksFlowSuspense as useLiveblocksFlow } from "./flow";

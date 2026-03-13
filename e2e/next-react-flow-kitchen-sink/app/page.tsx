@@ -1,39 +1,14 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import {
-  createLiveblocksFlowInitialStorage,
-  useLiveblocksFlow,
-} from "@liveblocks/react-flow/suspense";
+import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow();
-
-  return (
-    <div className="h-screen w-screen">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        fitView
-      >
-        <MiniMap />
-        <Controls />
-      </ReactFlow>
-    </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <RoomProvider
-      id="liveblocks:examples:next-react-flow-kitchen-sink-10"
-      initialStorage={createLiveblocksFlowInitialStorage({
+    useLiveblocksFlow({
+      initial: {
         nodes: [
           {
             id: "1",
@@ -71,8 +46,29 @@ export default function Page() {
             animated: true,
           },
         ],
-      })}
-    >
+      },
+    });
+
+  return (
+    <div className="h-screen w-screen">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        fitView
+      >
+        <MiniMap />
+        <Controls />
+      </ReactFlow>
+    </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <RoomProvider id="liveblocks:examples:next-react-flow-kitchen-sink-12">
       <ClientSideSuspense fallback={null}>
         <Flow />
       </ClientSideSuspense>

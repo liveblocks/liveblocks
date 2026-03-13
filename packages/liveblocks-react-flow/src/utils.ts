@@ -1,7 +1,3 @@
-import type { LiveObject } from "@liveblocks/core";
-
-export type UnwrapLiveObject<T> = T extends LiveObject<infer U> ? U : never;
-
 export function pick<T extends object, K extends PropertyKey>(
   from: T,
   keys: readonly K[]

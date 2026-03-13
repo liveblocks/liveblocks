@@ -24,9 +24,9 @@ import {
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { omit, pick, type UnwrapLiveObject } from "./utils";
+import { omit, pick } from "./utils";
 
 const NODE_LOCAL_KEYS = [
   "selected",
@@ -36,33 +36,6 @@ const NODE_LOCAL_KEYS = [
 ] as const satisfies (keyof Node)[number][];
 const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 const EMPTY: [] = [];
-
-export type UseLiveblocksFlowResult<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
-> = Resolve<
-  (
-    | {
-        nodes: null;
-        edges: null;
-        isLoading: true;
-      }
-    | {
-        nodes: Node<NodeData>[];
-        edges: Edge<EdgeData>[];
-        isLoading: false;
-      }
-  ) & {
-    onNodesChange: OnNodesChange<Node<NodeData>>;
-    onEdgesChange: OnEdgesChange<Edge<EdgeData>>;
-    onConnect: OnConnect;
-  }
->;
-
-type LiveblocksFlowSuspenseResult<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
-> = Extract<UseLiveblocksFlowResult<NodeData, EdgeData>, { isLoading: false }>;
 
 export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
   LiveObject<
@@ -94,6 +67,43 @@ export type LiveblocksFlowRoot<
 
 type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
 type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
+
+type UseLiveblocksFlowResult<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+> = Resolve<
+  (
+    | {
+        nodes: null;
+        edges: null;
+        isLoading: true;
+      }
+    | {
+        nodes: Node<NodeData>[];
+        edges: Edge<EdgeData>[];
+        isLoading: false;
+      }
+  ) & {
+    onNodesChange: OnNodesChange<Node<NodeData>>;
+    onEdgesChange: OnEdgesChange<Edge<EdgeData>>;
+    onConnect: OnConnect;
+  }
+>;
+
+type LiveblocksFlowSuspenseResult<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+> = Extract<UseLiveblocksFlowResult<NodeData, EdgeData>, { isLoading: false }>;
+
+type UseLiveblocksFlowOptions<
+  NodeData extends JsonObject,
+  EdgeData extends JsonObject,
+> = {
+  initial?: {
+    nodes?: Node<NodeData>[];
+    edges?: Edge<EdgeData>[];
+  };
+};
 
 function nodeToStorage<NodeData extends JsonObject>(
   node: Node<NodeData>
@@ -148,13 +158,17 @@ function reconcile<T extends { id: string }>(next: T, cache: Map<string, T>) {
 export function useLiveblocksFlow<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
->(): Resolve<UseLiveblocksFlowResult<NodeData, EdgeData>> {
+>(
+  options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
+): Resolve<UseLiveblocksFlowResult<NodeData, EdgeData>> {
   type TStorageRoot = LiveblocksFlowRoot<NodeData, EdgeData>;
   type TNode = Node<NodeData>;
   type TEdge = Edge<EdgeData>;
 
   const EMPTY_NODES = EMPTY as TNode[];
   const EMPTY_EDGES = EMPTY as TEdge[];
+
+  const initialRef = useRef(options.initial);
 
   const nodeCache = useRef<Map<string, TNode>>(new Map());
   const edgeCache = useRef<Map<string, TEdge>>(new Map());
@@ -177,7 +191,6 @@ export function useLiveblocksFlow<
 
     return [...nodes.values()];
   });
-
   const remoteEdges = useStorage((root) => {
     const edges = (root as ToImmutable<TStorageRoot> | null)?.flow?.edges;
 
@@ -200,7 +213,6 @@ export function useLiveblocksFlow<
       return reconcile(merged, nodeCache.current);
     });
   }, [remoteNodes, localNodes]);
-
   const edges = useMemo(() => {
     if (remoteEdges === null) {
       return null;
@@ -213,6 +225,8 @@ export function useLiveblocksFlow<
       return reconcile(merged, edgeCache.current);
     });
   }, [remoteEdges, localEdges]);
+
+  const isLoading = remoteNodes === null || remoteEdges === null;
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
@@ -372,10 +386,39 @@ export function useLiveblocksFlow<
     edges.set(edge.id, edgeToStorage(edge));
   }, []);
 
+  const setInitialStorage = useMutation(({ storage }) => {
+    const root = storage as TStorageRoot;
+
+    if (root.get("flow") !== undefined) {
+      return;
+    }
+
+    const { nodes: initialNodes = [], edges: initialEdges = [] } =
+      initialRef.current ?? {};
+
+    root.set(
+      "flow",
+      new LiveObject({
+        nodes: new LiveMap(
+          initialNodes.map((node) => [node.id, nodeToStorage(node)])
+        ),
+        edges: new LiveMap(
+          initialEdges.map((edge) => [edge.id, edgeToStorage(edge)])
+        ),
+      }) as LiveblocksFlow<NodeData, EdgeData>
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && initialRef.current !== undefined) {
+      setInitialStorage();
+    }
+  }, [isLoading, setInitialStorage]);
+
   return {
     nodes,
     edges,
-    isLoading: remoteNodes === null || remoteEdges === null,
+    isLoading,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -385,28 +428,12 @@ export function useLiveblocksFlow<
 export function useLiveblocksFlowSuspense<
   NodeData extends JsonObject = JsonObject,
   EdgeData extends JsonObject = JsonObject,
->(): Resolve<LiveblocksFlowSuspenseResult<NodeData, EdgeData>> {
+>(
+  options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
+): Resolve<LiveblocksFlowSuspenseResult<NodeData, EdgeData>> {
   useSuspendUntilStorageReady();
 
-  const result = useLiveblocksFlow<NodeData, EdgeData>();
-
-  return result as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
-}
-
-export function createLiveblocksFlowInitialStorage<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
->({
-  nodes = [],
-  edges = [],
-}: {
-  nodes?: Node<NodeData>[];
-  edges?: Edge<EdgeData>[];
-} = {}): Resolve<UnwrapLiveObject<LiveblocksFlowRoot<NodeData, EdgeData>>> {
-  return {
-    flow: new LiveObject({
-      nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
-      edges: new LiveMap(edges.map((edge) => [edge.id, edgeToStorage(edge)])),
-    }),
-  };
+  return useLiveblocksFlow<NodeData, EdgeData>(
+    options
+  ) as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
 }
