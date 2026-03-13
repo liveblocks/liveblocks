@@ -27,8 +27,8 @@ const NODE_LOCAL_KEYS = [
   "dragging",
   "measured",
   "resizing",
-] satisfies (keyof Node)[number][];
-const EDGE_LOCAL_KEYS = ["selected"] satisfies (keyof Edge)[number][];
+] as const satisfies (keyof Node)[number][];
+const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 const EMPTY: [] = [];
 
 export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
@@ -120,6 +120,9 @@ export function useLiveblocksFlow<
   type TNode = Node<NodeData>;
   type TEdge = Edge<EdgeData>;
 
+  const EMPTY_NODES = EMPTY as TNode[];
+  const EMPTY_EDGES = EMPTY as TEdge[];
+
   const nodeCache = useRef<Map<string, TNode>>(new Map());
   const edgeCache = useRef<Map<string, TEdge>>(new Map());
 
@@ -135,16 +138,24 @@ export function useLiveblocksFlow<
   const remoteNodes =
     useStorage((root) => {
       const nodes = (root as ToImmutable<TStorageRoot> | null)?.flow?.nodes;
-      if (!nodes) return EMPTY as unknown as TNode[];
-      return [...nodes.values()] as unknown as TNode[];
-    }) ?? (EMPTY as unknown as TNode[]);
+
+      if (!nodes) {
+        return EMPTY_NODES;
+      }
+
+      return [...nodes.values()];
+    }) ?? EMPTY_NODES;
 
   const remoteEdges =
     useStorage((root) => {
       const edges = (root as ToImmutable<TStorageRoot> | null)?.flow?.edges;
-      if (!edges) return EMPTY as unknown as TEdge[];
-      return [...edges.values()] as unknown as TEdge[];
-    }) ?? (EMPTY as unknown as TEdge[]);
+
+      if (!edges) {
+        return EMPTY_EDGES;
+      }
+
+      return [...edges.values()];
+    }) ?? EMPTY_EDGES;
 
   const nodes = useMemo(() => {
     return remoteNodes.map((node) => {
@@ -311,11 +322,7 @@ export function useLiveblocksFlow<
     const root = storage as TStorageRoot;
     const edges = root.get("flow").get("edges");
 
-    const current = Array.from(
-      edges.values(),
-      (edge) => edge.toObject() as unknown as TEdge
-    );
-
+    const current = Array.from(edges.values(), (edge) => edge.toObject());
     const next = addEdge(connection, current);
     const edge = next[next.length - 1];
 
