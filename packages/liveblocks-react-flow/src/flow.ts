@@ -115,6 +115,7 @@ type UseLiveblocksFlowOptions<
    * The initial React Flow nodes and edges.
    *
    * @example
+   * ```tsx
    * const { ... } = useLiveblocksFlow({
    *   initial: {
    *     nodes: [
@@ -126,6 +127,23 @@ type UseLiveblocksFlowOptions<
    *     ],
    *   },
    * });
+   * ```
+   *
+   * This is equivalent to setting `initialStorage` on `RoomProvider`.
+   *
+   * @example
+   * ```tsx
+   * <RoomProvider
+   *   initialStorage={{
+   *     flow: createLiveblocksFlow([
+   *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
+   *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
+   *     ], [
+   *       { id: "1-2", source: "1", target: "2" },
+   *     ]),
+   *   }}
+   * />
+   * ```
    */
   initial?: {
     nodes?: Node<NodeData>[];
@@ -138,9 +156,11 @@ type UseLiveblocksFlowOptions<
    * Defaults to `"flow"`.
    *
    * @example
+   * ```tsx
    * const { ... } = useLiveblocksFlow({
    *   storageKey: "myDiagram",
    * });
+   * ```
    */
   storageKey?: string;
 };
@@ -166,9 +186,35 @@ function edgeToStorage<EdgeData extends JsonObject>(
 }
 
 /**
+ * Creates a Liveblocks Storage representation of a React Flow diagram from nodes and edges.
+ *
+ * @example
+ * ```tsx
+ * <RoomProvider
+ *   initialStorage={{
+ *     flow: createLiveblocksFlow(initialNodes, initialEdges),
+ *   }}
+ * />
+ * ```
+ */
+export function createLiveblocksFlow<
+  NodeData extends JsonObject = JsonObject,
+  EdgeData extends JsonObject = JsonObject,
+>(
+  nodes: Node<NodeData>[] = [],
+  edges: Edge<EdgeData>[] = []
+): LiveblocksFlow<NodeData, EdgeData> {
+  return new LiveObject({
+    nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
+    edges: new LiveMap(edges.map((edge) => [edge.id, edgeToStorage(edge)])),
+  }) as LiveblocksFlow<NodeData, EdgeData>;
+}
+
+/**
  * Returns a controlled React Flow state backed by Liveblocks Storage.
  *
  * @example
+ * ```tsx
  * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, isLoading } = useLiveblocksFlow();
  *
  * if (isLoading) {
@@ -176,6 +222,7 @@ function edgeToStorage<EdgeData extends JsonObject>(
  * }
  *
  * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * ```
  */
 export function useLiveblocksFlow<
   NodeData extends JsonObject = JsonObject,
@@ -192,8 +239,9 @@ export function useLiveblocksFlow<
   const EMPTY_NODES = EMPTY as TNode[];
   const EMPTY_EDGES = EMPTY as TEdge[];
 
-  const latestInitial = useLatest(options.initial);
-  const latestStorageKey = useLatest(options.storageKey ?? "flow");
+  // Refs to access the latest values for each option.
+  const initial = useLatest(options.initial);
+  const storageKey = useLatest(options.storageKey ?? "flow");
 
   // Used to reconcile state changes with stable object references when the changes
   // are shallowly equal, preventing React Flow from re-rendering unchanged nodes and edges.
@@ -210,12 +258,11 @@ export function useLiveblocksFlow<
   const localNodes = useSignal(localNodesΣ);
   const localEdges = useSignal(localEdgesΣ);
 
-  const storageKey = latestStorageKey.current;
-
   // Remote state lives in Liveblocks Storage.
   const remoteNodes = useStorage((root) => {
-    const nodes = (root as ToImmutable<TStorageRoot> | null)?.[storageKey]
-      ?.nodes;
+    const nodes = (root as ToImmutable<TStorageRoot> | null)?.[
+      storageKey.current
+    ]?.nodes;
 
     if (!nodes) {
       return EMPTY_NODES;
@@ -224,8 +271,9 @@ export function useLiveblocksFlow<
     return [...nodes.values()];
   });
   const remoteEdges = useStorage((root) => {
-    const edges = (root as ToImmutable<TStorageRoot> | null)?.[storageKey]
-      ?.edges;
+    const edges = (root as ToImmutable<TStorageRoot> | null)?.[
+      storageKey.current
+    ]?.edges;
 
     if (!edges) {
       return EMPTY_EDGES;
@@ -264,7 +312,7 @@ export function useLiveblocksFlow<
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
-      const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+      const flow = (storage as TStorageRoot).get(storageKey.current);
 
       if (!flow) {
         return;
@@ -368,7 +416,7 @@ export function useLiveblocksFlow<
 
   const onEdgesChange = useMutation(
     ({ storage }, changes: EdgeChange<TEdge>[]) => {
-      const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+      const flow = (storage as TStorageRoot).get(storageKey.current);
 
       if (!flow) {
         return;
@@ -420,7 +468,7 @@ export function useLiveblocksFlow<
   );
 
   const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const flow = (storage as TStorageRoot).get(latestStorageKey.current);
+    const flow = (storage as TStorageRoot).get(storageKey.current);
 
     if (!flow) {
       return;
@@ -443,7 +491,7 @@ export function useLiveblocksFlow<
 
   const setInitialStorage = useMutation(({ storage }) => {
     const root = storage as TStorageRoot;
-    const key = latestStorageKey.current;
+    const key = storageKey.current;
 
     // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
     // initialize Storage if it doesn't already exist.
@@ -452,19 +500,9 @@ export function useLiveblocksFlow<
     }
 
     const { nodes: initialNodes = [], edges: initialEdges = [] } =
-      latestInitial.current ?? {};
+      initial.current ?? {};
 
-    root.set(
-      key,
-      new LiveObject({
-        nodes: new LiveMap(
-          initialNodes.map((node) => [node.id, nodeToStorage(node)])
-        ),
-        edges: new LiveMap(
-          initialEdges.map((edge) => [edge.id, edgeToStorage(edge)])
-        ),
-      }) as LiveblocksFlow<NodeData, EdgeData>
-    );
+    root.set(key, createLiveblocksFlow(initialNodes, initialEdges));
   }, []);
 
   useEffect(() => {
@@ -487,9 +525,11 @@ export function useLiveblocksFlow<
  * Returns a controlled React Flow state backed by Liveblocks Storage.
  *
  * @example
+ * ```tsx
  * const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useLiveblocksFlow();
  *
  * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * ```
  */
 export function useLiveblocksFlowSuspense<
   NodeData extends JsonObject = JsonObject,

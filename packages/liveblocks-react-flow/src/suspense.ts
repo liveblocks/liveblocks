@@ -5,4 +5,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./flow";
-export { useLiveblocksFlowSuspense as useLiveblocksFlow } from "./flow";
+export {
+  createLiveblocksFlow,
+  useLiveblocksFlowSuspense as useLiveblocksFlow,
+} from "./flow";
