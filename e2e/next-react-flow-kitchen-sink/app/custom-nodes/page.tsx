@@ -2,8 +2,15 @@
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
-import { Controls, Handle, MiniMap, Position, ReactFlow } from "@xyflow/react";
-import { ChangeEvent, memo, useCallback, useMemo } from "react";
+import {
+  Controls,
+  Handle,
+  MiniMap,
+  Position,
+  ReactFlow,
+  useReactFlow,
+} from "@xyflow/react";
+import { type ChangeEvent, memo, useCallback } from "react";
 
 const DEFAULT_BACKGROUND_COLOR = "#c9f1dd";
 const DEFAULT_SNAP_GRID: [number, number] = [20, 20];
@@ -11,41 +18,52 @@ const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1.5 } as const;
 
 const ColorSelectorNode = memo(
   ({
+    id,
     data,
     isConnectable,
   }: {
-    data: {
-      color: string;
-      onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
-    };
+    id: string;
+    data: { color: string };
     isConnectable?: boolean;
-  }) => (
-    <>
-      <Handle
-        type="target"
-        position={Position.Left}
-        isConnectable={isConnectable}
-      />
-      <div>
-        Custom Color Picker Node: <strong>{data.color}</strong>
-      </div>
-      <input
-        className="nodrag"
-        type="color"
-        onChange={data.onChange}
-        value={data.color}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        isConnectable={isConnectable}
-      />
-    </>
-  )
+  }) => {
+    const { updateNode } = useReactFlow();
+
+    const handleColorChange = useCallback(
+      (event: ChangeEvent<HTMLInputElement>) => {
+        const color = event.target.value;
+        updateNode(id, (node) => ({ ...node, data: { ...node.data, color } }));
+      },
+      [id, updateNode]
+    );
+
+    return (
+      <>
+        <Handle
+          type="target"
+          position={Position.Left}
+          isConnectable={isConnectable}
+        />
+        <div>
+          Custom Color Picker Node: <strong>{data.color}</strong>
+        </div>
+        <input
+          className="nodrag"
+          type="color"
+          onChange={handleColorChange}
+          value={data.color}
+        />
+        <Handle
+          type="source"
+          position={Position.Right}
+          isConnectable={isConnectable}
+        />
+      </>
+    );
+  }
 );
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, updateNode } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useLiveblocksFlow<{ label?: string; color?: string }>({
       initial: {
         nodes: [
@@ -85,33 +103,6 @@ function Flow() {
       },
     });
 
-  const handleColorChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const color = event.target.value;
-
-      updateNode("2", (node) => ({ ...node, data: { ...node.data, color } }));
-    },
-    [updateNode]
-  );
-
-  const nodesWithCallbacks = useMemo(
-    () =>
-      nodes.map((node) => {
-        if (node.id !== "2") {
-          return node;
-        }
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            onChange: handleColorChange,
-          },
-        };
-      }),
-    [nodes, handleColorChange]
-  );
-
   const color =
     nodes.find((node) => node.id === "2")?.data?.color ??
     DEFAULT_BACKGROUND_COLOR;
@@ -119,7 +110,7 @@ function Flow() {
   return (
     <div className="h-screen w-screen">
       <ReactFlow
-        nodes={nodesWithCallbacks}
+        nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
