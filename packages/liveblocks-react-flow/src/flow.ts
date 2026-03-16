@@ -27,7 +27,7 @@ import {
 } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const EMPTY_ARRAY = [] as unknown[];
+const DEFAULT_STORAGE_KEY = "flow";
 
 // React Flow `Node` properties that are purely ephemeral and local to each client
 // instead of being written to Liveblocks Storage.
@@ -42,14 +42,19 @@ const NODE_LOCAL_KEYS = [
 // instead of being written to Liveblocks Storage.
 const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 
+const EMPTY_ARRAY = [] as unknown[];
+
+type SerializableNode = Node<JsonObject>;
+type SerializableEdge = Edge<JsonObject>;
+
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
  *
  * It doesn't include local-only properties and is stored as a `LiveObject`.
  */
-export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
+export type LiveblocksNode<TNode extends SerializableNode = SerializableNode> =
   LiveObject<
-    Omit<Node<NodeData>, (typeof NODE_LOCAL_KEYS)[number]> & LsonObject
+    Omit<Node<TNode["data"]>, (typeof NODE_LOCAL_KEYS)[number]> & LsonObject
   >;
 
 /**
@@ -57,9 +62,10 @@ export type LiveblocksNode<NodeData extends JsonObject = JsonObject> =
  *
  * It doesn't include local-only properties and is stored as a `LiveObject`.
  */
-export type LiveblocksEdge<EdgeData extends JsonObject = JsonObject> =
+export type LiveblocksEdge<TEdge extends SerializableEdge = SerializableEdge> =
   LiveObject<
-    Omit<Edge<EdgeData>, (typeof EDGE_LOCAL_KEYS)[number]> & LsonObject
+    Omit<Edge<NonNullable<TEdge["data"]>>, (typeof EDGE_LOCAL_KEYS)[number]> &
+      LsonObject
   >;
 
 /**
@@ -69,19 +75,19 @@ export type LiveblocksEdge<EdgeData extends JsonObject = JsonObject> =
  * fine-grained conflict-free updates from multiple clients simultaneously.
  */
 export type LiveblocksFlow<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
 > = LiveObject<{
-  nodes: LiveMap<string, LiveblocksNode<NodeData>>;
-  edges: LiveMap<string, LiveblocksEdge<EdgeData>>;
+  nodes: LiveMap<string, LiveblocksNode<TNode>>;
+  edges: LiveMap<string, LiveblocksEdge<TEdge>>;
 }>;
 
 type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
 type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
 
 type UseLiveblocksFlowResult<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
 > = Resolve<
   (
     | {
@@ -90,25 +96,25 @@ type UseLiveblocksFlowResult<
         isLoading: true;
       }
     | {
-        nodes: Node<NodeData>[];
-        edges: Edge<EdgeData>[];
+        nodes: TNode[];
+        edges: TEdge[];
         isLoading: false;
       }
   ) & {
-    onNodesChange: OnNodesChange<Node<NodeData>>;
-    onEdgesChange: OnEdgesChange<Edge<EdgeData>>;
+    onNodesChange: OnNodesChange<TNode>;
+    onEdgesChange: OnEdgesChange<TEdge>;
     onConnect: OnConnect;
   }
 >;
 
 type LiveblocksFlowSuspenseResult<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
-> = Extract<UseLiveblocksFlowResult<NodeData, EdgeData>, { isLoading: false }>;
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+> = Extract<UseLiveblocksFlowResult<TNode, TEdge>, { isLoading: false }>;
 
 type UseLiveblocksFlowOptions<
-  NodeData extends JsonObject,
-  EdgeData extends JsonObject,
+  TNode extends SerializableNode,
+  TEdge extends SerializableEdge,
 > = {
   /**
    * The initial React Flow nodes and edges.
@@ -145,8 +151,8 @@ type UseLiveblocksFlowOptions<
    * ```
    */
   initial?: {
-    nodes?: Node<NodeData>[];
-    edges?: Edge<EdgeData>[];
+    nodes?: TNode[];
+    edges?: TEdge[];
   };
 
   /**
@@ -163,6 +169,13 @@ type UseLiveblocksFlowOptions<
    */
   storageKey?: string;
 };
+
+type StorageRoot<
+  TNode extends SerializableNode,
+  TEdge extends SerializableEdge,
+> = LiveObject<{
+  [key: string]: LiveblocksFlow<TNode, TEdge> | undefined;
+}>;
 
 function pick<T extends object, K extends PropertyKey>(
   from: T,
@@ -208,7 +221,7 @@ function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
 
 function prune<T extends { id: string }>(
   cache: Map<string, T>,
-  items: T[]
+  items: readonly T[]
 ): void {
   const nextIds = new Set(items.map((item) => item.id));
 
@@ -244,32 +257,32 @@ function setOrDelete<T extends object>(
 
 // Converts a React Flow `Node` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-function nodeToStorage<NodeData extends JsonObject>(
-  node: Node<NodeData>
-): LiveblocksNode<NodeData> {
+function nodeToStorage<TNode extends SerializableNode>(
+  node: TNode
+): LiveblocksNode<TNode> {
   return new LiveObject(
     omit(node, NODE_LOCAL_KEYS) as unknown as LsonObject
-  ) as LiveblocksNode<NodeData>;
+  ) as LiveblocksNode<TNode>;
 }
 
 // Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-function edgeToStorage<EdgeData extends JsonObject>(
-  edge: Edge<EdgeData>
-): LiveblocksEdge<EdgeData> {
+function edgeToStorage<TEdge extends SerializableEdge>(
+  edge: TEdge
+): LiveblocksEdge<TEdge> {
   return new LiveObject(
     omit(edge, EDGE_LOCAL_KEYS) as unknown as LsonObject
-  ) as LiveblocksEdge<EdgeData>;
+  ) as LiveblocksEdge<TEdge>;
 }
 
 // Similar to React Flow's `applyNodeChanges()`, but with a split between local
 // and remote changes.
 // https://reactflow.dev/api-reference/utils/apply-node-changes
-function applyNodeChanges<NodeData extends JsonObject>(args: {
-  changes: NodeChange<Node<NodeData>>[];
-  nodes: LiveMap<string, LiveblocksNode<NodeData>>;
+function applyNodeChanges<TNode extends SerializableNode>(args: {
+  changes: NodeChange<TNode>[];
+  nodes: LiveMap<string, LiveblocksNode<TNode>>;
   nextLocal: Map<string, Partial<LocalNodes>>;
-  nodeCache: Map<string, Node<NodeData>>;
+  nodeCache: Map<string, TNode>;
 }): boolean {
   const { changes, nodes, nextLocal, nodeCache } = args;
 
@@ -302,9 +315,7 @@ function applyNodeChanges<NodeData extends JsonObject>(args: {
           break;
         }
 
-        const previous = node.get("position") as
-          | Node<NodeData>["position"]
-          | undefined;
+        const previous = node.get("position") as TNode["position"] | undefined;
 
         if (
           previous?.x !== change.position.x ||
@@ -379,11 +390,11 @@ function applyNodeChanges<NodeData extends JsonObject>(args: {
 // Similar to React Flow's `applyEdgeChanges()`, but with a split between local
 // and remote changes.
 // https://reactflow.dev/api-reference/utils/apply-edge-changes
-function applyEdgeChanges<EdgeData extends JsonObject>(args: {
-  changes: EdgeChange<Edge<EdgeData>>[];
-  edges: LiveMap<string, LiveblocksEdge<EdgeData>>;
+function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
+  changes: EdgeChange<TEdge>[];
+  edges: LiveMap<string, LiveblocksEdge<TEdge>>;
   nextLocal: Map<string, Partial<LocalEdges>>;
-  edgeCache: Map<string, Edge<EdgeData>>;
+  edgeCache: Map<string, TEdge>;
 }): boolean {
   const { changes, edges, nextLocal, edgeCache } = args;
 
@@ -435,16 +446,13 @@ function applyEdgeChanges<EdgeData extends JsonObject>(args: {
  * ```
  */
 export function createLiveblocksFlow<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
->(
-  nodes: Node<NodeData>[] = [],
-  edges: Edge<EdgeData>[] = []
-): LiveblocksFlow<NodeData, EdgeData> {
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+>(nodes: TNode[] = [], edges: TEdge[] = []): LiveblocksFlow<TNode, TEdge> {
   return new LiveObject({
     nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
     edges: new LiveMap(edges.map((edge) => [edge.id, edgeToStorage(edge)])),
-  }) as LiveblocksFlow<NodeData, EdgeData>;
+  }) as LiveblocksFlow<TNode, TEdge>;
 }
 
 /**
@@ -462,23 +470,19 @@ export function createLiveblocksFlow<
  * ```
  */
 export function useLiveblocksFlow<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
 >(
-  options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
-): Resolve<UseLiveblocksFlowResult<NodeData, EdgeData>> {
-  type TStorageRoot = LiveObject<{
-    [key: string]: LiveblocksFlow<NodeData, EdgeData> | undefined;
-  }>;
-  type TNode = Node<NodeData>;
-  type TEdge = Edge<EdgeData>;
+  options: UseLiveblocksFlowOptions<TNode, TEdge> = {}
+): Resolve<UseLiveblocksFlowResult<TNode, TEdge>> {
+  type TStorageRoot = StorageRoot<TNode, TEdge>;
 
   const isStorageLoaded = useStorage(() => true) ?? false;
 
   // These options are not reactive, only their initial values are used.
   const frozenOptions = useInitial({
     initial: options.initial,
-    storageKey: options.storageKey ?? "flow",
+    storageKey: options.storageKey ?? DEFAULT_STORAGE_KEY,
   });
 
   // Used to reconcile state changes with stable object references when the changes
@@ -499,11 +503,11 @@ export function useLiveblocksFlow<
   // Remote state lives in Liveblocks Storage.
   const remoteNodes = useStorage((root) => {
     const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return flow ? ([...flow.nodes.values()] as TNode[]) : null;
+    return flow ? ([...flow.nodes.values()] as unknown as TNode[]) : null;
   });
   const remoteEdges = useStorage((root) => {
     const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return flow ? ([...flow.edges.values()] as TEdge[]) : null;
+    return flow ? ([...flow.edges.values()] as unknown as TEdge[]) : null;
   });
 
   // Merge remote and local layers to get the final state.
@@ -647,7 +651,7 @@ export function useLiveblocksFlow<
     onNodesChange,
     onEdgesChange,
     onConnect,
-  } as UseLiveblocksFlowResult<NodeData, EdgeData>;
+  } as UseLiveblocksFlowResult<TNode, TEdge>;
 }
 
 /**
@@ -661,19 +665,19 @@ export function useLiveblocksFlow<
  * ```
  */
 export function useLiveblocksFlowSuspense<
-  NodeData extends JsonObject = JsonObject,
-  EdgeData extends JsonObject = JsonObject,
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
 >(
-  options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
-): Resolve<LiveblocksFlowSuspenseResult<NodeData, EdgeData>> {
-  const result = useLiveblocksFlow<NodeData, EdgeData>(options);
+  options: UseLiveblocksFlowOptions<TNode, TEdge> = {}
+): Resolve<LiveblocksFlowSuspenseResult<TNode, TEdge>> {
+  const result = useLiveblocksFlow<TNode, TEdge>(options);
 
   useSuspendUntilStorageReady();
 
   return {
     ...result,
-    nodes: result.nodes ?? (EMPTY_ARRAY as Node<NodeData>[]),
-    edges: result.edges ?? (EMPTY_ARRAY as Edge<EdgeData>[]),
+    nodes: result.nodes ?? (EMPTY_ARRAY as TNode[]),
+    edges: result.edges ?? (EMPTY_ARRAY as TEdge[]),
     isLoading: false,
   };
 }

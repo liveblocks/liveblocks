@@ -1,6 +1,10 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  JsonObject,
+  RoomProvider,
+} from "@liveblocks/react";
 import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Background,
@@ -28,113 +32,120 @@ import "./feature-overview.css";
 const EMOJIS = ["🚀", "🔥", "✨"] as const;
 const DIMENSION_ATTRIBUTES = ["width", "height"] as const;
 
-type FeatureOverviewNodeData = {
-  label?: string;
-  level?: number;
-  arrowStyle?: Record<string, string | number>;
-  emoji?: string;
-};
+type AnnotationNode = Node<{
+  level: number;
+  label: string;
+  arrowStyle: Record<string, string | number>;
+}>;
 
-const AnnotationNode = memo(
-  ({ data }: NodeProps<Node<FeatureOverviewNodeData>>) => {
-    const { level, label, arrowStyle } = data;
+type ToolbarNode = Node<{
+  emoji: string;
+}>;
 
-    return (
-      <>
-        <div className="annotation-content">
-          <div className="annotation-level">{level}.</div>
-          <div>{label}</div>
-        </div>
-        {arrowStyle && (
-          <div className="annotation-arrow" style={arrowStyle}>
-            ⤹
-          </div>
-        )}
-      </>
-    );
-  }
-);
+type ResizerNode = Node<{
+  label: string;
+}>;
 
-const ToolbarNode = memo(
-  ({ id, data }: NodeProps<Node<FeatureOverviewNodeData>>) => {
-    const { emoji = "🚀" } = data;
-    const { updateNode } = useReactFlow();
+type FeatureOverviewNode =
+  | Node<JsonObject>
+  | AnnotationNode
+  | ToolbarNode
+  | ResizerNode;
 
-    const handleEmojiSelect = useCallback(
-      (selected: string) => {
-        updateNode(id, (node) => ({
-          ...node,
-          data: { ...node.data, emoji: selected },
-        }));
-      },
-      [id, updateNode]
-    );
+const AnnotationNode = memo(({ data }: NodeProps<AnnotationNode>) => {
+  const { level, label, arrowStyle } = data;
 
-    return (
-      <>
-        <NodeToolbar isVisible>
-          {EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => handleEmojiSelect(emoji)}
-              aria-label={`Select emoji ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
-        </NodeToolbar>
-        <div>
-          <div>{emoji}</div>
-        </div>
-        <Handle type="target" position={Position.Left} />
-        <Handle type="source" position={Position.Right} />
-      </>
-    );
-  }
-);
-
-const ResizerNode = memo(
-  ({ id, data }: NodeProps<Node<FeatureOverviewNodeData>>) => {
-    const { label } = data;
-    const { updateNode } = useReactFlow();
-
-    const handleResize = useCallback<OnResize>(
-      (_, { width, height }) => {
-        updateNode(id, (node) => ({
-          ...node,
-          style: { ...node.style, width, height },
-        }));
-      },
-      [id, updateNode]
-    );
-
-    return (
-      <>
-        <NodeResizer minWidth={1} minHeight={1} onResize={handleResize} />
-        <Handle
-          type="target"
-          position={Position.Left}
-          className="custom-handle"
-        />
+  return (
+    <>
+      <div className="annotation-content">
+        <div className="annotation-level">{level}.</div>
         <div>{label}</div>
-        <div className="resizer-node__handles">
-          <Handle
-            className="resizer-node__handle custom-handle"
-            id="a"
-            type="source"
-            position={Position.Bottom}
-          />
-          <Handle
-            className="resizer-node__handle custom-handle"
-            id="b"
-            type="source"
-            position={Position.Bottom}
-          />
+      </div>
+      {arrowStyle && (
+        <div className="annotation-arrow" style={arrowStyle}>
+          ⤹
         </div>
-      </>
-    );
-  }
-);
+      )}
+    </>
+  );
+});
+
+const ToolbarNode = memo(({ id, data }: NodeProps<ToolbarNode>) => {
+  const { emoji = "🚀" } = data;
+  const { updateNode } = useReactFlow();
+
+  const handleEmojiSelect = useCallback(
+    (selected: string) => {
+      updateNode(id, (node) => ({
+        ...node,
+        data: { ...node.data, emoji: selected },
+      }));
+    },
+    [id, updateNode]
+  );
+
+  return (
+    <>
+      <NodeToolbar isVisible>
+        {EMOJIS.map((emoji) => (
+          <button
+            key={emoji}
+            onClick={() => handleEmojiSelect(emoji)}
+            aria-label={`Select emoji ${emoji}`}
+          >
+            {emoji}
+          </button>
+        ))}
+      </NodeToolbar>
+      <div>
+        <div>{emoji}</div>
+      </div>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+    </>
+  );
+});
+
+const ResizerNode = memo(({ id, data }: NodeProps<ResizerNode>) => {
+  const { label } = data;
+  const { updateNode } = useReactFlow();
+
+  const handleResize = useCallback<OnResize>(
+    (_, { width, height }) => {
+      updateNode(id, (node) => ({
+        ...node,
+        style: { ...node.style, width, height },
+      }));
+    },
+    [id, updateNode]
+  );
+
+  return (
+    <>
+      <NodeResizer minWidth={1} minHeight={1} onResize={handleResize} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="custom-handle"
+      />
+      <div>{label}</div>
+      <div className="resizer-node__handles">
+        <Handle
+          className="resizer-node__handle custom-handle"
+          id="a"
+          type="source"
+          position={Position.Bottom}
+        />
+        <Handle
+          className="resizer-node__handle custom-handle"
+          id="b"
+          type="source"
+          position={Position.Bottom}
+        />
+      </div>
+    </>
+  );
+});
 
 const CircleNode = memo(
   ({ positionAbsoluteX, positionAbsoluteY }: NodeProps) => (
@@ -245,7 +256,7 @@ function ButtonEdge({
   );
 }
 
-const INITIAL_NODES: Node<FeatureOverviewNodeData>[] = [
+const INITIAL_NODES: FeatureOverviewNode[] = [
   {
     id: "annotation-1",
     type: "annotation",
@@ -425,7 +436,7 @@ const INITIAL_EDGES = [
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow<FeatureOverviewNodeData>({
+    useLiveblocksFlow<FeatureOverviewNode>({
       initial: { nodes: INITIAL_NODES, edges: INITIAL_EDGES },
     });
 
