@@ -4,6 +4,7 @@ import {
   LiveObject,
   type LsonObject,
   type Resolve,
+  shallow,
   Signal,
   type ToImmutable,
 } from "@liveblocks/core";
@@ -25,8 +26,6 @@ import {
   type OnNodesChange,
 } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-import { omit, pick, reconcile, setOrDelete } from "./utils";
 
 const EMPTY_ARRAY = [] as unknown[];
 
@@ -164,6 +163,84 @@ type UseLiveblocksFlowOptions<
    */
   storageKey?: string;
 };
+
+function pick<T extends object, K extends PropertyKey>(
+  from: T,
+  keys: readonly K[]
+): Partial<Record<K, unknown>> {
+  const result: Partial<Record<K, unknown>> = {};
+
+  for (const key of keys) {
+    const value = (from as Record<PropertyKey, unknown>)[key];
+
+    if (value !== undefined && value !== null) {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
+function omit<T extends object, K extends PropertyKey>(
+  from: T,
+  keys: readonly K[]
+): Omit<T, Extract<K, keyof T>> {
+  const result = { ...from } as Partial<T>;
+
+  for (const key of keys) {
+    delete (result as Record<PropertyKey, unknown>)[key];
+  }
+
+  return result as Omit<T, Extract<K, keyof T>>;
+}
+
+function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
+  const previous = cache.get(next.id);
+
+  if (previous && shallow(previous, next)) {
+    return previous;
+  }
+
+  cache.set(next.id, next);
+
+  return next;
+}
+
+function prune<T extends { id: string }>(
+  cache: Map<string, T>,
+  items: T[]
+): void {
+  const nextIds = new Set(items.map((item) => item.id));
+
+  for (const id of cache.keys()) {
+    if (!nextIds.has(id)) {
+      cache.delete(id);
+    }
+  }
+}
+
+function setOrDelete<T extends object>(
+  map: Map<string, T>,
+  key: string,
+  changes: T
+): void {
+  const next: Record<string, unknown> = {};
+
+  for (const change in changes) {
+    const value = (changes as Record<string, unknown>)[change];
+
+    // Falsy values are deleted from the map.
+    if (value) {
+      next[change] = value;
+    }
+  }
+
+  if (Object.keys(next).length > 0) {
+    map.set(key, next as T);
+  } else {
+    map.delete(key);
+  }
+}
 
 // Converts a React Flow `Node` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
@@ -435,11 +512,13 @@ export function useLiveblocksFlow<
       return null;
     }
 
+    prune(nodeCache.current, remoteNodes);
+
     return remoteNodes.map((node) => {
       const local = localNodes.get(node.id);
       const merged = local ? { ...node, ...local } : node;
 
-      return reconcile(nodeCache.current, merged, node.id);
+      return reconcile(nodeCache.current, merged);
     });
   }, [remoteNodes, localNodes]);
   const edges = useMemo(() => {
@@ -447,11 +526,13 @@ export function useLiveblocksFlow<
       return null;
     }
 
+    prune(edgeCache.current, remoteEdges);
+
     return remoteEdges.map((edge) => {
       const local = localEdges.get(edge.id);
       const merged = local ? { ...edge, ...local } : edge;
 
-      return reconcile(edgeCache.current, merged, edge.id);
+      return reconcile(edgeCache.current, merged);
     });
   }, [remoteEdges, localEdges]);
 
