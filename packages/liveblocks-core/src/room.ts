@@ -1382,10 +1382,9 @@ export type RoomConfig<TM extends BaseMetadata, CM extends BaseMetadata> = {
   backgroundKeepAliveTimeout?: number;
 
   /**
-   * @deprecated For new rooms, use `engine: 2` instead. Rooms on the v2
-   * Storage engine have native support for streaming. This flag will be
-   * removed in a future version, but will continue to work for existing engine
-   * v1 rooms for now.
+   * @deprecated All rooms will be migrated to the v2 storage engine in the
+   * future, which has native support for streaming. After that migration, this
+   * flag will no longer have any effect and will be removed in a future version.
    */
   unstable_streamData?: boolean;
 
@@ -3714,8 +3713,7 @@ export function makeAuthDelegateForRoom(
 export function makeCreateSocketDelegateForRoom(
   roomId: string,
   baseUrl: string,
-  WebSocketPolyfill?: IWebSocket,
-  engine?: 1 | 2
+  WebSocketPolyfill?: IWebSocket
 ) {
   return (authValue: AuthValue): IWebSocketInstance => {
     const ws: IWebSocket | undefined =
@@ -3740,9 +3738,6 @@ export function makeCreateSocketDelegateForRoom(
       return assertNever(authValue, "Unhandled case");
     }
     url.searchParams.set("version", PKG_VERSION || "dev");
-    if (engine !== undefined) {
-      url.searchParams.set("e", String(engine));
-    }
     return new ws(url.toString());
   };
 }

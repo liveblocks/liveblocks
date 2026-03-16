@@ -468,9 +468,8 @@ export type CreateRoomOptions = {
   organizationId?: string;
 
   /**
-   * Preferred storage engine version to use when creating the room. Only takes
-   * effect if the room doesn't exist yet. Version 2 can support larger
-   * documents, is more performant, and will become the default in the future.
+   * @deprecated This flag no longer has any effect and will be removed in
+   * a future version. All rooms now use the v2 storage engine by default.
    */
   engine?: 1 | 2;
 };
@@ -1108,7 +1107,6 @@ export class Liveblocks {
       metadata,
       tenantId,
       organizationId,
-      engine,
     } = params;
 
     const body: {
@@ -1118,14 +1116,12 @@ export class Liveblocks {
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
       organizationId?: string;
-      engine?: 1 | 2;
     } = {
       id: roomId,
       defaultAccesses,
       groupsAccesses,
       usersAccesses,
       metadata,
-      engine,
     };
 
     if (organizationId !== undefined) {
