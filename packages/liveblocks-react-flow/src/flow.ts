@@ -28,6 +28,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { omit, pick, reconcile, setOrDelete } from "./utils";
 
+const EMPTY_ARRAY = [] as unknown[];
+
 // React Flow `Node` properties that are purely ephemeral and local to each client
 // instead of being written to Liveblocks Storage.
 const NODE_LOCAL_KEYS = [
@@ -587,5 +589,10 @@ export function useLiveblocksFlowSuspense<
 
   useSuspendUntilStorageReady();
 
-  return result as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
+  return {
+    ...result,
+    nodes: result.nodes ?? (EMPTY_ARRAY as Node<NodeData>[]),
+    edges: result.edges ?? (EMPTY_ARRAY as Edge<EdgeData>[]),
+    isLoading: false,
+  };
 }
