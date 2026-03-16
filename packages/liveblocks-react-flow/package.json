@@ -19,6 +19,10 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./styles.css": {
+      "types": "./styles.css.d.cts",
+      "default": "./styles.css"
+    },
     "./suspense": {
       "import": {
         "types": "./dist/suspense.d.ts",
@@ -33,15 +37,19 @@
   },
   "files": [
     "dist/**",
+    "**/*.css",
+    "**/*.css.d.cts",
+    "**/*.css.d.ts",
+    "**/*.css.map",
     "suspense/**",
     "README.md"
   ],
   "scripts": {
-    "dev": "tsup --watch",
-    "build": "tsup",
-    "start": "tsup --watch",
-    "format": "(eslint --fix src/ || true) && prettier --write src/",
-    "lint": "eslint src/"
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
+    "start": "npm run dev",
+    "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
+    "lint": "eslint src/ && stylelint src/styles/"
   },
   "dependencies": {
     "@liveblocks/client": "3.15.1",
@@ -63,9 +71,14 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
+    "@liveblocks/rollup-config": "*",
     "@xyflow/react": "^12.10.1",
     "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0"
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3",
+    "stylelint-plugin-logical-css": "^0.13.2"
   },
   "sideEffects": false,
   "bugs": {
