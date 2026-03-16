@@ -52,7 +52,8 @@ export function setOrDelete<T extends object>(
   for (const change in changes) {
     const value = (changes as Record<string, unknown>)[change];
 
-    if (value !== undefined && value !== null) {
+    // Falsy values are deleted from the map.
+    if (value) {
       next[change] = value;
     }
   }

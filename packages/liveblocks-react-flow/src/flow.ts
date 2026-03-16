@@ -28,6 +28,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { omit, pick, reconcile, setOrDelete } from "./utils";
 
+const EMPTY_ARRAY: never[] = [];
+
 // React Flow `Node` properties that are purely ephemeral and local to each client
 // instead of being written to Liveblocks Storage.
 const NODE_LOCAL_KEYS = [
@@ -40,8 +42,6 @@ const NODE_LOCAL_KEYS = [
 // React Flow `Edge` properties that are purely ephemeral and local to each client
 // instead of being written to Liveblocks Storage.
 const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
-
-const EMPTY: [] = [];
 
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
@@ -236,8 +236,7 @@ export function useLiveblocksFlow<
   type TNode = Node<NodeData>;
   type TEdge = Edge<EdgeData>;
 
-  const EMPTY_NODES = EMPTY as TNode[];
-  const EMPTY_EDGES = EMPTY as TEdge[];
+  const isStorageLoaded = useStorage(() => true) ?? false;
 
   // Refs to access the latest values for each option.
   const initial = useLatest(options.initial);
@@ -260,23 +259,21 @@ export function useLiveblocksFlow<
 
   // Remote state lives in Liveblocks Storage.
   const remoteNodes = useStorage((root) => {
-    const nodes = (root as ToImmutable<TStorageRoot> | null)?.[
-      storageKey.current
-    ]?.nodes;
+    const nodes = (root as ToImmutable<TStorageRoot>)[storageKey.current]
+      ?.nodes;
 
     if (!nodes) {
-      return EMPTY_NODES;
+      return EMPTY_ARRAY as Node<NodeData>[];
     }
 
     return [...nodes.values()];
   });
   const remoteEdges = useStorage((root) => {
-    const edges = (root as ToImmutable<TStorageRoot> | null)?.[
-      storageKey.current
-    ]?.edges;
+    const edges = (root as ToImmutable<TStorageRoot>)[storageKey.current]
+      ?.edges;
 
     if (!edges) {
-      return EMPTY_EDGES;
+      return EMPTY_ARRAY as Edge<EdgeData>[];
     }
 
     return [...edges.values()];
@@ -307,8 +304,6 @@ export function useLiveblocksFlow<
       return reconcile(edgeCache.current, merged, edge.id);
     });
   }, [remoteEdges, localEdges]);
-
-  const isLoading = remoteNodes === null || remoteEdges === null;
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
@@ -506,15 +501,15 @@ export function useLiveblocksFlow<
   }, []);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (isStorageLoaded) {
       setInitialStorage();
     }
-  }, [isLoading, setInitialStorage]);
+  }, [isStorageLoaded, setInitialStorage]);
 
   return {
     nodes,
     edges,
-    isLoading,
+    isLoading: !isStorageLoaded,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -537,9 +532,9 @@ export function useLiveblocksFlowSuspense<
 >(
   options: UseLiveblocksFlowOptions<NodeData, EdgeData> = {}
 ): Resolve<LiveblocksFlowSuspenseResult<NodeData, EdgeData>> {
+  const result = useLiveblocksFlow<NodeData, EdgeData>(options);
+
   useSuspendUntilStorageReady();
 
-  return useLiveblocksFlow<NodeData, EdgeData>(
-    options
-  ) as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
+  return result as LiveblocksFlowSuspenseResult<NodeData, EdgeData>;
 }
