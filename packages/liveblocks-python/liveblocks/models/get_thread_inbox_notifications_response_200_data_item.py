@@ -12,12 +12,8 @@ from ..types import UNSET, Unset
 
 
 @_attrs_define
-class InboxNotificationThreadData:
+class GetThreadInboxNotificationsResponse200DataItem:
     """
-    Example:
-        {'kind': 'thread', 'id': 'in_abc123', 'roomId': 'my-room-id', 'organizationId': 'org_123456789', 'threadId':
-            'th_abc123', 'notifiedAt': '2024-01-15T10:30:00.000Z', 'readAt': None}
-
     Attributes:
         id (str):
         kind (str):
@@ -25,6 +21,7 @@ class InboxNotificationThreadData:
         room_id (str):
         read_at (datetime.datetime | None):
         notified_at (datetime.datetime):
+        user_id (str): The user ID this notification belongs to.
         organization_id (str | Unset):
     """
 
@@ -34,6 +31,7 @@ class InboxNotificationThreadData:
     room_id: str
     read_at: datetime.datetime | None
     notified_at: datetime.datetime
+    user_id: str
     organization_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -54,6 +52,8 @@ class InboxNotificationThreadData:
 
         notified_at = self.notified_at.isoformat()
 
+        user_id = self.user_id
+
         organization_id = self.organization_id
 
         field_dict: dict[str, Any] = {}
@@ -66,6 +66,7 @@ class InboxNotificationThreadData:
                 "roomId": room_id,
                 "readAt": read_at,
                 "notifiedAt": notified_at,
+                "userId": user_id,
             }
         )
         if organization_id is not UNSET:
@@ -101,20 +102,23 @@ class InboxNotificationThreadData:
 
         notified_at = isoparse(d.pop("notifiedAt"))
 
+        user_id = d.pop("userId")
+
         organization_id = d.pop("organizationId", UNSET)
 
-        inbox_notification_thread_data = cls(
+        get_thread_inbox_notifications_response_200_data_item = cls(
             id=id,
             kind=kind,
             thread_id=thread_id,
             room_id=room_id,
             read_at=read_at,
             notified_at=notified_at,
+            user_id=user_id,
             organization_id=organization_id,
         )
 
-        inbox_notification_thread_data.additional_properties = d
-        return inbox_notification_thread_data
+        get_thread_inbox_notifications_response_200_data_item.additional_properties = d
+        return get_thread_inbox_notifications_response_200_data_item
 
     @property
     def additional_keys(self) -> list[str]:

@@ -53,6 +53,7 @@ if TYPE_CHECKING:
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
+    from .models.get_thread_inbox_notifications_response_200 import GetThreadInboxNotificationsResponse200
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
@@ -74,6 +75,7 @@ if TYPE_CHECKING:
         ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
     )
     from .models.management_webhook import ManagementWebhook
+    from .models.mark_inbox_notification_as_read_response_200 import MarkInboxNotificationAsReadResponse200
     from .models.mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
     from .models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
     from .models.move_json_patch_operation import MoveJsonPatchOperation
@@ -106,6 +108,7 @@ if TYPE_CHECKING:
     from .models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
     from .models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
+    from .models.update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
     from .models.update_room_request_body import UpdateRoomRequestBody
     from .models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
     from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
@@ -508,6 +511,38 @@ class Liveblocks:
         from .api.room import update_room_id
 
         return update_room_id._sync(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    def update_room_organization_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        """Update room organization ID
+
+         This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's
+        current organization ID. Returns the updated room.
+
+        Args:
+            room_id (str): The ID of the room Example: my-room-id.
+            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+                'org_123456789', 'toOrganizationId': 'org_987654321'}.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
+        from .api.room import update_room_organization_id
+
+        return update_room_organization_id._sync(
             room_id=room_id,
             body=body,
             client=self._client,
@@ -1656,6 +1691,37 @@ class Liveblocks:
             client=self._client,
         )
 
+    def get_thread_inbox_notifications(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> GetThreadInboxNotificationsResponse200:
+        """Get thread inbox notifications
+
+         This endpoint returns the inbox notifications associated with a specific thread. Because this
+        endpoint is not user-scoped, each notification includes a `userId` field identifying which user the
+        notification belongs to. Only thread-kind notifications are returned.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadInboxNotificationsResponse200
+        """
+
+        from .api.comments import get_thread_inbox_notifications
+
+        return get_thread_inbox_notifications._sync(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
     def authorize_user(
         self,
         *,
@@ -2162,6 +2228,32 @@ class Liveblocks:
 
         return trigger_inbox_notification._sync(
             body=body,
+            client=self._client,
+        )
+
+    def mark_inbox_notification_as_read(
+        self,
+        inbox_notification_id: str,
+    ) -> MarkInboxNotificationAsReadResponse200:
+        """Mark inbox notification as read
+
+         This endpoint marks a specific inbox notification as read.
+
+        Args:
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            MarkInboxNotificationAsReadResponse200
+        """
+
+        from .api.notifications import mark_inbox_notification_as_read
+
+        return mark_inbox_notification_as_read._sync(
+            inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 
@@ -3858,6 +3950,38 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
+    async def update_room_organization_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        """Update room organization ID
+
+         This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's
+        current organization ID. Returns the updated room.
+
+        Args:
+            room_id (str): The ID of the room Example: my-room-id.
+            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+                'org_123456789', 'toOrganizationId': 'org_987654321'}.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
+        from .api.room import update_room_organization_id
+
+        return await update_room_organization_id._asyncio(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
     async def get_active_users(
         self,
         room_id: str,
@@ -5001,6 +5125,37 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
+    async def get_thread_inbox_notifications(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> GetThreadInboxNotificationsResponse200:
+        """Get thread inbox notifications
+
+         This endpoint returns the inbox notifications associated with a specific thread. Because this
+        endpoint is not user-scoped, each notification includes a `userId` field identifying which user the
+        notification belongs to. Only thread-kind notifications are returned.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadInboxNotificationsResponse200
+        """
+
+        from .api.comments import get_thread_inbox_notifications
+
+        return await get_thread_inbox_notifications._asyncio(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
     async def authorize_user(
         self,
         *,
@@ -5507,6 +5662,32 @@ class AsyncLiveblocks:
 
         return await trigger_inbox_notification._asyncio(
             body=body,
+            client=self._client,
+        )
+
+    async def mark_inbox_notification_as_read(
+        self,
+        inbox_notification_id: str,
+    ) -> MarkInboxNotificationAsReadResponse200:
+        """Mark inbox notification as read
+
+         This endpoint marks a specific inbox notification as read.
+
+        Args:
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            MarkInboxNotificationAsReadResponse200
+        """
+
+        from .api.notifications import mark_inbox_notification_as_read
+
+        return await mark_inbox_notification_as_read._asyncio(
+            inbox_notification_id=inbox_notification_id,
             client=self._client,
         )
 

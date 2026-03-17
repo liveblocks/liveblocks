@@ -79,6 +79,8 @@ from .get_room_subscription_settings_response import GetRoomSubscriptionSettings
 from .get_rooms_response import GetRoomsResponse
 from .get_storage_document_format import GetStorageDocumentFormat
 from .get_storage_document_response import GetStorageDocumentResponse
+from .get_thread_inbox_notifications_response_200 import GetThreadInboxNotificationsResponse200
+from .get_thread_inbox_notifications_response_200_data_item import GetThreadInboxNotificationsResponse200DataItem
 from .get_thread_subscriptions_response import GetThreadSubscriptionsResponse
 from .get_threads_response import GetThreadsResponse
 from .get_user_groups_response import GetUserGroupsResponse
@@ -124,6 +126,7 @@ from .management_webhook_additional_headers import ManagementWebhookAdditionalHe
 from .management_webhook_event import ManagementWebhookEvent
 from .management_webhook_headers_delete import ManagementWebhookHeadersDelete
 from .management_webhook_secret import ManagementWebhookSecret
+from .mark_inbox_notification_as_read_response_200 import MarkInboxNotificationAsReadResponse200
 from .mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
 from .mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
 from .move_json_patch_operation import MoveJsonPatchOperation
@@ -174,6 +177,7 @@ from .update_management_project_request_body import UpdateManagementProjectReque
 from .update_management_webhook_request_body import UpdateManagementWebhookRequestBody
 from .update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
 from .update_room_id_request_body import UpdateRoomIdRequestBody
+from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
 from .update_room_request_body import UpdateRoomRequestBody
 from .update_room_request_body_groups_accesses import UpdateRoomRequestBodyGroupsAccesses
 from .update_room_request_body_groups_accesses_additional_property_type_0_item import (
@@ -274,6 +278,8 @@ __all__ = (
     "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
     "GetStorageDocumentResponse",
+    "GetThreadInboxNotificationsResponse200",
+    "GetThreadInboxNotificationsResponse200DataItem",
     "GetThreadsResponse",
     "GetThreadSubscriptionsResponse",
     "GetUserGroupsResponse",
@@ -317,6 +323,7 @@ __all__ = (
     "ManagementWebhookEvent",
     "ManagementWebhookHeadersDelete",
     "ManagementWebhookSecret",
+    "MarkInboxNotificationAsReadResponse200",
     "MarkThreadAsResolvedRequestBody",
     "MarkThreadAsUnresolvedRequestBody",
     "MoveJsonPatchOperation",
@@ -367,6 +374,7 @@ __all__ = (
     "UpdateManagementWebhookRequestBody",
     "UpdateNotificationSettingsRequestBody",
     "UpdateRoomIdRequestBody",
+    "UpdateRoomOrganizationIdRequestBody",
     "UpdateRoomRequestBody",
     "UpdateRoomRequestBodyGroupsAccesses",
     "UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item",
