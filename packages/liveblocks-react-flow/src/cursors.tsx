@@ -1,5 +1,4 @@
-import type { EventSource } from "@liveblocks/core";
-import { isPlainObject, makeEventSource } from "@liveblocks/core";
+import { isPlainObject } from "@liveblocks/core";
 import {
   useOther,
   useOthersConnectionIds,
@@ -10,13 +9,9 @@ import {
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import { Cursor } from "@liveblocks/react-ui";
 import { cn, makeCursorSpring } from "@liveblocks/react-ui/_private";
-import {
-  type Transform as ReactFlowTransform,
-  useReactFlow,
-  useStore,
-} from "@xyflow/react";
-import type { ComponentPropsWithoutRef, MutableRefObject } from "react";
-import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { useReactFlow, useStore, useStoreApi } from "@xyflow/react";
+import type { ComponentPropsWithoutRef } from "react";
+import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_PRESENCE_KEY = "cursor";
 
@@ -53,16 +48,13 @@ function $coordinates(value: unknown): Coordinates | undefined {
 function PresenceCursor({
   connectionId,
   presenceKey,
-  reactFlowTransformRef,
-  reactFlowTransformEvents,
 }: {
   connectionId: number;
   presenceKey: string;
-  reactFlowTransformRef: MutableRefObject<ReactFlowTransform>;
-  reactFlowTransformEvents: EventSource<void>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
+  const reactFlowStoreApi = useStoreApi();
   const userId = useOther(connectionId, (other) => $string(other.id));
   const { user, isLoading } = useUser(userId ?? "");
   const hasUserInfo = userId !== undefined && !isLoading;
@@ -75,7 +67,7 @@ function PresenceCursor({
     function update() {
       const element = cursorRef.current;
       const coordinates = spring.get();
-      const [panX, panY, zoom] = reactFlowTransformRef.current;
+      const [panX, panY, zoom] = reactFlowStoreApi.getState().transform;
 
       if (!element) {
         return;
@@ -91,10 +83,17 @@ function PresenceCursor({
       element.style.display = "";
     }
 
-    const unsubscribeSpring = spring.subscribe(update);
-    const unsubscribeTransform = reactFlowTransformEvents.subscribe(update);
     update();
 
+    const unsubscribeSpring = spring.subscribe(update);
+    const unsubscribeTransform = reactFlowStoreApi.subscribe(
+      (state, previousState) => {
+        // Update positions whenever the canvas is panned or zoomed.
+        if (state.transform !== previousState.transform) {
+          update();
+        }
+      }
+    );
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
       const other = others.find((other) => other.connectionId === connectionId);
       const cursor = $coordinates(other?.presence[presenceKey]);
@@ -108,14 +107,7 @@ function PresenceCursor({
       unsubscribeTransform();
       unsubscribeOther();
     };
-  }, [
-    room,
-    connectionId,
-    presenceKey,
-    reactFlowTransformRef,
-    reactFlowTransformEvents,
-    hasUserInfo,
-  ]);
+  }, [room, connectionId, presenceKey, hasUserInfo, reactFlowStoreApi]);
 
   return (
     <Cursor
@@ -143,18 +135,16 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
     const reactFlowDomNode = useStore((state) => state.domNode);
-    const reactFlowTransform = useStore((state) => state.transform);
-    const reactFlowTransformRef =
-      useRef<ReactFlowTransform>(reactFlowTransform);
-    const [reactFlowTransformEvents] = useState(() => makeEventSource<void>());
-
-    useEffect(() => {
-      reactFlowTransformRef.current = reactFlowTransform;
-      reactFlowTransformEvents.notify();
-    }, [reactFlowTransform, reactFlowTransformEvents]);
+    const reactFlowStoreApi = useStoreApi();
 
     const handlePointerMove = useCallback(
       (event: PointerEvent) => {
+        const isPanning = reactFlowStoreApi.getState().paneDragging;
+
+        if (isPanning) {
+          return;
+        }
+
         updateMyPresence({
           [presenceKey]: reactFlow.screenToFlowPosition({
             x: event.clientX,
@@ -162,7 +152,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
           }),
         });
       },
-      [updateMyPresence, presenceKey, reactFlow]
+      [updateMyPresence, presenceKey, reactFlow, reactFlowStoreApi]
     );
 
     const handlePointerLeave = useCallback(() => {
@@ -201,8 +191,6 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
             key={connectionId}
             connectionId={connectionId}
             presenceKey={presenceKey}
-            reactFlowTransformRef={reactFlowTransformRef}
-            reactFlowTransformEvents={reactFlowTransformEvents}
           />
         ))}
 
