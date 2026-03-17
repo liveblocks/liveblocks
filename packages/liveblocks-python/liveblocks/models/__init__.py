@@ -42,7 +42,7 @@ from .create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
 from .create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
 from .create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
 from .create_comment_request_body import CreateCommentRequestBody
-from .create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
+from .create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
 from .create_group_request_body import CreateGroupRequestBody
 from .create_group_request_body_scopes import CreateGroupRequestBodyScopes
 from .create_management_project_request_body import CreateManagementProjectRequestBody
@@ -79,6 +79,8 @@ from .get_room_subscription_settings_response import GetRoomSubscriptionSettings
 from .get_rooms_response import GetRoomsResponse
 from .get_storage_document_format import GetStorageDocumentFormat
 from .get_storage_document_response import GetStorageDocumentResponse
+from .get_thread_inbox_notifications_response import GetThreadInboxNotificationsResponse
+from .get_thread_inbox_notifications_response_data_item import GetThreadInboxNotificationsResponseDataItem
 from .get_thread_subscriptions_response import GetThreadSubscriptionsResponse
 from .get_threads_response import GetThreadsResponse
 from .get_user_groups_response import GetUserGroupsResponse
@@ -174,6 +176,7 @@ from .update_management_project_request_body import UpdateManagementProjectReque
 from .update_management_webhook_request_body import UpdateManagementWebhookRequestBody
 from .update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
 from .update_room_id_request_body import UpdateRoomIdRequestBody
+from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
 from .update_room_request_body import UpdateRoomRequestBody
 from .update_room_request_body_groups_accesses import UpdateRoomRequestBodyGroupsAccesses
 from .update_room_request_body_groups_accesses_additional_property_type_0_item import (
@@ -239,7 +242,7 @@ __all__ = (
     "CreateAiCopilotOptionsOpenAi",
     "CreateAiCopilotOptionsOpenAiCompatible",
     "CreateCommentRequestBody",
-    "CreateFileKnowledgeSourceResponse200",
+    "CreateFileKnowledgeSourceResponse",
     "CreateGroupRequestBody",
     "CreateGroupRequestBodyScopes",
     "CreateManagementProjectRequestBody",
@@ -274,6 +277,8 @@ __all__ = (
     "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
     "GetStorageDocumentResponse",
+    "GetThreadInboxNotificationsResponse",
+    "GetThreadInboxNotificationsResponseDataItem",
     "GetThreadsResponse",
     "GetThreadSubscriptionsResponse",
     "GetUserGroupsResponse",
@@ -367,6 +372,7 @@ __all__ = (
     "UpdateManagementWebhookRequestBody",
     "UpdateNotificationSettingsRequestBody",
     "UpdateRoomIdRequestBody",
+    "UpdateRoomOrganizationIdRequestBody",
     "UpdateRoomRequestBody",
     "UpdateRoomRequestBodyGroupsAccesses",
     "UpdateRoomRequestBodyGroupsAccessesAdditionalPropertyType0Item",

@@ -341,6 +341,35 @@ print(result)
 </PropertiesList>
 
 
+### update_room_organization_id
+
+This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.
+
+```python
+result = client.update_room_organization_id(
+    room_id="my-room-id",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    The ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="body"
+    type="UpdateRoomOrganizationIdRequestBody | Unset"
+  >
+    Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ### get_active_users
 
 This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). 
@@ -1539,6 +1568,36 @@ print(result)
 </PropertiesList>
 
 
+### get_thread_inbox_notifications
+
+This endpoint returns the inbox notifications associated with a specific thread. Because this endpoint is not user-scoped, each notification includes a `userId` field identifying which user the notification belongs to. Only thread-kind notifications are returned.
+
+```python
+result = client.get_thread_inbox_notifications(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="thread_id"
+    type="str"
+  >
+    ID of the thread
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ## Auth
 
 ### authorize_user
@@ -2091,6 +2150,27 @@ client.trigger_inbox_notification()
     type="TriggerInboxNotificationRequestBody | Unset"
   >
     Request body (application/json).
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
+### mark_inbox_notification_as_read
+
+This endpoint marks a specific inbox notification as read.
+
+```python
+client.mark_inbox_notification_as_read(
+    inbox_notification_id="in_abc123",
+)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="inbox_notification_id"
+    type="str"
+  >
+    ID of the inbox notification
 
   </PropertiesListItem>
 </PropertiesList>
