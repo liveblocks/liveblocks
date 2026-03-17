@@ -4158,15 +4158,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. The inbox notification has been marked as read.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false
-                }
-              }
-            }
+            "description": "Success. The inbox notification has been marked as read. This endpoint does not return any content."
           },
           "401": {
             "description": "Unauthorized"
