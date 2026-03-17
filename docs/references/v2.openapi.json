@@ -3051,6 +3051,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "title": "Response",
                   "properties": {
                     "data": {
                       "type": "array",
