@@ -16,6 +16,7 @@ jobs:
 
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
@@ -93,11 +94,9 @@ jobs:
 
       - name: Build and publish
         working-directory: packages/liveblocks-python
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: |
           uv build
-          uv publish
+          uv publish --trusted-publishing always
 
       - name: Create release tag
         env:
