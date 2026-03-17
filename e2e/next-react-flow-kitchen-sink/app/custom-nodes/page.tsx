@@ -1,7 +1,7 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Controls,
   Handle,
@@ -124,6 +124,7 @@ function Flow() {
         defaultViewport={DEFAULT_VIEWPORT}
         fitView
       >
+        <Cursors />
         <MiniMap
           nodeStrokeColor={(node) => {
             if (node.type === "input") return "#0041d0";

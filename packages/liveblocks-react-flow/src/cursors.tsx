@@ -8,25 +8,21 @@ import {
   useUser,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
-import type {
-  ComponentPropsWithoutRef,
-  MutableRefObject,
-  PointerEvent,
-} from "react";
+import { Cursor } from "@liveblocks/react-ui";
+import { cn, makeCursorSpring } from "@liveblocks/react-ui/_private";
+import {
+  type Transform as ReactFlowTransform,
+  useReactFlow,
+  useStore,
+} from "@xyflow/react";
+import type { ComponentPropsWithoutRef, MutableRefObject } from "react";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-
-import { cn } from "../utils/cn";
-import { makeCursorSpring } from "../utils/cursor-spring";
-import { useRefs } from "../utils/use-refs";
-import { useWindowFocus } from "../utils/use-window-focus";
-import { Cursor } from "./Cursor";
 
 const DEFAULT_PRESENCE_KEY = "cursor";
 
 export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The key used to store the cursors in users' Presence.
-   * This can be used to have multiple `Cursors` in a single room.
    *
    * Defaults to `"cursor"`.
    */
@@ -36,11 +32,6 @@ export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
 type Coordinates = {
   x: number;
   y: number;
-};
-
-type Size = {
-  width: number;
-  height: number;
 };
 
 function $string(value: unknown): string | undefined {
@@ -62,13 +53,13 @@ function $coordinates(value: unknown): Coordinates | undefined {
 function PresenceCursor({
   connectionId,
   presenceKey,
-  sizeRef,
-  sizeEvents,
+  reactFlowTransformRef,
+  reactFlowTransformEvents,
 }: {
   connectionId: number;
   presenceKey: string;
-  sizeRef: MutableRefObject<Size | null>;
-  sizeEvents: EventSource<void>;
+  reactFlowTransformRef: MutableRefObject<ReactFlowTransform>;
+  reactFlowTransformEvents: EventSource<void>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -84,6 +75,7 @@ function PresenceCursor({
     function update() {
       const element = cursorRef.current;
       const coordinates = spring.get();
+      const [panX, panY, zoom] = reactFlowTransformRef.current;
 
       if (!element) {
         return;
@@ -95,15 +87,12 @@ function PresenceCursor({
         return;
       }
 
-      if (sizeRef.current) {
-        element.style.transform = `translate3d(${coordinates.x * sizeRef.current.width}px, ${coordinates.y * sizeRef.current.height}px, 0)`;
-      }
-
+      element.style.transform = `translate3d(${coordinates.x * zoom + panX}px, ${coordinates.y * zoom + panY}px, 0)`;
       element.style.display = "";
     }
 
     const unsubscribeSpring = spring.subscribe(update);
-    const unsubscribeSize = sizeEvents.subscribe(update);
+    const unsubscribeTransform = reactFlowTransformEvents.subscribe(update);
     update();
 
     const unsubscribeOther = room.events.others.subscribe(({ others }) => {
@@ -116,10 +105,17 @@ function PresenceCursor({
     return () => {
       spring.dispose();
       unsubscribeSpring();
-      unsubscribeSize();
+      unsubscribeTransform();
       unsubscribeOther();
     };
-  }, [room, connectionId, presenceKey, sizeRef, sizeEvents, hasUserInfo]);
+  }, [
+    room,
+    connectionId,
+    presenceKey,
+    reactFlowTransformRef,
+    reactFlowTransformEvents,
+    hasUserInfo,
+  ]);
 
   return (
     <Cursor
@@ -132,113 +128,83 @@ function PresenceCursor({
 }
 
 /**
- * Displays multiplayer cursors.
+ * Displays other users' cursors inside a React Flow canvas and stores the
+ * current user's cursor in Presence as `{ cursor: { x, y } }`.
+ *
+ * Cursor coordinates are kept in React Flow canvas space, so panning moves
+ * them correctly while zooming only affects their position, not their size.
  */
 export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
   (
     { className, children, presenceKey = DEFAULT_PRESENCE_KEY, ...props },
     forwardedRef
   ) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const mergedRefs = useRefs(forwardedRef, containerRef);
+    const reactFlow = useReactFlow();
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
-    const sizeRef = useRef<Size | null>(null);
-    const [sizeEvents] = useState(() => makeEventSource<void>());
-    const isWindowFocused = useWindowFocus();
+    const reactFlowDomNode = useStore((state) => state.domNode);
+    const reactFlowTransform = useStore((state) => state.transform);
+    const reactFlowTransformRef =
+      useRef<ReactFlowTransform>(reactFlowTransform);
+    const [reactFlowTransformEvents] = useState(() => makeEventSource<void>());
 
     useEffect(() => {
-      const container = containerRef.current;
-
-      if (!container) {
-        return;
-      }
-
-      function setSize(size: Size) {
-        sizeRef.current = size;
-        sizeEvents.notify();
-      }
-
-      const observer = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.target === container) {
-            setSize({
-              width: entry.contentRect.width,
-              height: entry.contentRect.height,
-            });
-          }
-        }
-      });
-
-      setSize({
-        width: container.clientWidth,
-        height: container.clientHeight,
-      });
-
-      observer.observe(container);
-
-      return () => {
-        observer.disconnect();
-      };
-    }, [sizeEvents]);
+      reactFlowTransformRef.current = reactFlowTransform;
+      reactFlowTransformEvents.notify();
+    }, [reactFlowTransform, reactFlowTransformEvents]);
 
     const handlePointerMove = useCallback(
       (event: PointerEvent) => {
-        const container = containerRef.current;
-
-        if (!container) {
-          return;
-        }
-
-        const bounds = container.getBoundingClientRect();
-
-        if (bounds.width === 0 || bounds.height === 0) {
-          return;
-        }
-
         updateMyPresence({
-          [presenceKey]: {
-            x: (event.clientX - bounds.left) / bounds.width,
-            y: (event.clientY - bounds.top) / bounds.height,
-          },
+          [presenceKey]: reactFlow.screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          }),
         });
       },
-      [updateMyPresence, presenceKey]
+      [updateMyPresence, presenceKey, reactFlow]
     );
 
     const handlePointerLeave = useCallback(() => {
-      updateMyPresence({
-        [presenceKey]: null,
-      });
+      updateMyPresence({ [presenceKey]: null });
     }, [updateMyPresence, presenceKey]);
 
     useEffect(() => {
-      if (!isWindowFocused) {
-        updateMyPresence({
-          [presenceKey]: null,
-        });
+      if (!reactFlowDomNode) {
+        return;
       }
-    }, [isWindowFocused, updateMyPresence, presenceKey]);
+
+      reactFlowDomNode.addEventListener("pointermove", handlePointerMove);
+      reactFlowDomNode.addEventListener("pointerleave", handlePointerLeave);
+      window.addEventListener("blur", handlePointerLeave);
+
+      return () => {
+        reactFlowDomNode.removeEventListener("pointermove", handlePointerMove);
+        reactFlowDomNode.removeEventListener(
+          "pointerleave",
+          handlePointerLeave
+        );
+        window.removeEventListener("blur", handlePointerLeave);
+        handlePointerLeave();
+      };
+    }, [reactFlowDomNode, handlePointerMove, handlePointerLeave]);
 
     return (
       <div
-        className={cn("lb-root lb-cursors", className)}
+        aria-hidden
+        className={cn("lb-root lb-react-flow-cursors", className)}
         {...props}
-        onPointerMove={handlePointerMove}
-        onPointerLeave={handlePointerLeave}
-        ref={mergedRefs}
+        ref={forwardedRef}
       >
-        <div className="lb-cursors-container">
-          {othersConnectionIds.map((connectionId) => (
-            <PresenceCursor
-              key={connectionId}
-              connectionId={connectionId}
-              presenceKey={presenceKey}
-              sizeRef={sizeRef}
-              sizeEvents={sizeEvents}
-            />
-          ))}
-        </div>
+        {othersConnectionIds.map((connectionId) => (
+          <PresenceCursor
+            key={connectionId}
+            connectionId={connectionId}
+            presenceKey={presenceKey}
+            reactFlowTransformRef={reactFlowTransformRef}
+            reactFlowTransformEvents={reactFlowTransformEvents}
+          />
+        ))}
 
         {children}
       </div>

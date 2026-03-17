@@ -1,7 +1,7 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
 
 function Flow() {
@@ -58,6 +58,7 @@ function Flow() {
         onConnect={onConnect}
         fitView
       >
+        <Cursors />
         <MiniMap />
         <Controls />
       </ReactFlow>

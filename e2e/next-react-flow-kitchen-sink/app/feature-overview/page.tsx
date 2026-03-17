@@ -5,7 +5,7 @@ import {
   JsonObject,
   RoomProvider,
 } from "@liveblocks/react";
-import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Background,
   BaseEdge,
@@ -461,6 +461,7 @@ function Flow() {
           button: ButtonEdge,
         }}
       >
+        <Cursors />
         <MiniMap zoomable pannable nodeClassName={(node) => node.type ?? ""} />
         <Controls />
         <Background />

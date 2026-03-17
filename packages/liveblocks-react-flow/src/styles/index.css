@@ -1,1 +1,12 @@
+.lb-react-flow-cursors {
+  position: absolute;
+  inset: 0;
 
+  /**
+   * Same z-index as `.react-flow__panel` (panels, `MiniMap`, `Controls`, etc.)
+   * https://github.com/xyflow/xyflow/blob/main/packages/system/src/styles/init.css
+   */
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
