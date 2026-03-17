@@ -6118,6 +6118,10 @@
             "type": "string",
             "enum": ["room"]
           },
+          "organizationId": {
+            "type": "string",
+            "description": "The organization ID associated with this room."
+          },
           "lastConnectionAt": {
             "type": "string",
             "format": "date-time"
@@ -6278,6 +6282,10 @@
         "properties": {
           "id": {
             "type": "string"
+          },
+          "organizationId": {
+            "type": "string",
+            "description": "The organization ID to associate with the room. Defaults to \"default\" if not provided."
           },
           "defaultAccesses": {
             "$ref": "#/components/schemas/RoomPermission"
