@@ -1,0 +1,206 @@
+from __future__ import annotations
+
+import datetime
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Literal, Self, cast
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+from dateutil.parser import isoparse
+
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.comment_attachment import CommentAttachment
+    from ..models.comment_body import CommentBody
+    from ..models.comment_metadata import CommentMetadata
+    from ..models.comment_reaction import CommentReaction
+
+
+@_attrs_define
+class Comment:
+    """
+    Attributes:
+        type_ (Literal['comment']):
+        thread_id (str):
+        room_id (str):
+        id (str):
+        user_id (str):
+        created_at (datetime.datetime):
+        metadata (CommentMetadata): Custom metadata attached to a comment. Supports maximum 50 entries. Key length has a
+            limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+        reactions (list[CommentReaction]):
+        attachments (list[CommentAttachment]):
+        edited_at (datetime.datetime | Unset):
+        deleted_at (datetime.datetime | Unset):
+        body (CommentBody | Unset):  Example: {'version': 1, 'content': [{'type': 'paragraph', 'children': [{'text':
+            'Hello '}, {'text': 'world', 'bold': True}]}]}.
+    """
+
+    type_: Literal["comment"]
+    thread_id: str
+    room_id: str
+    id: str
+    user_id: str
+    created_at: datetime.datetime
+    metadata: CommentMetadata
+    reactions: list[CommentReaction]
+    attachments: list[CommentAttachment]
+    edited_at: datetime.datetime | Unset = UNSET
+    deleted_at: datetime.datetime | Unset = UNSET
+    body: CommentBody | Unset = UNSET
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        type_ = self.type_
+
+        thread_id = self.thread_id
+
+        room_id = self.room_id
+
+        id = self.id
+
+        user_id = self.user_id
+
+        created_at = self.created_at.isoformat()
+
+        metadata = self.metadata.to_dict()
+
+        reactions = []
+        for reactions_item_data in self.reactions:
+            reactions_item = reactions_item_data.to_dict()
+            reactions.append(reactions_item)
+
+        attachments = []
+        for attachments_item_data in self.attachments:
+            attachments_item = attachments_item_data.to_dict()
+            attachments.append(attachments_item)
+
+        edited_at: str | Unset = UNSET
+        if not isinstance(self.edited_at, Unset):
+            edited_at = self.edited_at.isoformat()
+
+        deleted_at: str | Unset = UNSET
+        if not isinstance(self.deleted_at, Unset):
+            deleted_at = self.deleted_at.isoformat()
+
+        body: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.body, Unset):
+            body = self.body.to_dict()
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "type": type_,
+                "threadId": thread_id,
+                "roomId": room_id,
+                "id": id,
+                "userId": user_id,
+                "createdAt": created_at,
+                "metadata": metadata,
+                "reactions": reactions,
+                "attachments": attachments,
+            }
+        )
+        if edited_at is not UNSET:
+            field_dict["editedAt"] = edited_at
+        if deleted_at is not UNSET:
+            field_dict["deletedAt"] = deleted_at
+        if body is not UNSET:
+            field_dict["body"] = body
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+        from ..models.comment_attachment import CommentAttachment
+        from ..models.comment_body import CommentBody
+        from ..models.comment_metadata import CommentMetadata
+        from ..models.comment_reaction import CommentReaction
+
+        d = dict(src_dict)
+        type_ = cast(Literal["comment"], d.pop("type"))
+        if type_ != "comment":
+            raise ValueError(f"type must match const 'comment', got '{type_}'")
+
+        thread_id = d.pop("threadId")
+
+        room_id = d.pop("roomId")
+
+        id = d.pop("id")
+
+        user_id = d.pop("userId")
+
+        created_at = isoparse(d.pop("createdAt"))
+
+        metadata = CommentMetadata.from_dict(d.pop("metadata"))
+
+        reactions = []
+        _reactions = d.pop("reactions")
+        for reactions_item_data in _reactions:
+            reactions_item = CommentReaction.from_dict(reactions_item_data)
+
+            reactions.append(reactions_item)
+
+        attachments = []
+        _attachments = d.pop("attachments")
+        for attachments_item_data in _attachments:
+            attachments_item = CommentAttachment.from_dict(attachments_item_data)
+
+            attachments.append(attachments_item)
+
+        _edited_at = d.pop("editedAt", UNSET)
+        edited_at: datetime.datetime | Unset
+        if isinstance(_edited_at, Unset):
+            edited_at = UNSET
+        else:
+            edited_at = isoparse(_edited_at)
+
+        _deleted_at = d.pop("deletedAt", UNSET)
+        deleted_at: datetime.datetime | Unset
+        if isinstance(_deleted_at, Unset):
+            deleted_at = UNSET
+        else:
+            deleted_at = isoparse(_deleted_at)
+
+        _body = d.pop("body", UNSET)
+        body: CommentBody | Unset
+        if isinstance(_body, Unset):
+            body = UNSET
+        else:
+            body = CommentBody.from_dict(_body)
+
+        comment = cls(
+            type_=type_,
+            thread_id=thread_id,
+            room_id=room_id,
+            id=id,
+            user_id=user_id,
+            created_at=created_at,
+            metadata=metadata,
+            reactions=reactions,
+            attachments=attachments,
+            edited_at=edited_at,
+            deleted_at=deleted_at,
+            body=body,
+        )
+
+        comment.additional_properties = d
+        return comment
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties

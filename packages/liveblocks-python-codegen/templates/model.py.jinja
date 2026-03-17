@@ -1,0 +1,256 @@
+{% from "_shared.jinja" import hidden_models %}
+{% if model.class_info.name not in hidden_models %}
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, Self, BinaryIO, TextIO, TYPE_CHECKING, Generator
+{% if model.data.deprecated %}
+import warnings
+{% endif %}
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+{% if model.is_multipart_body %}
+import json
+from .. import types
+{% endif %}
+
+from ..types import UNSET, Unset
+
+{% for relative in model.relative_imports | sort %}
+{{ relative }}
+{% endfor %}
+
+{% for lazy_import in model.lazy_imports | sort %}
+{% if loop.first %}
+if TYPE_CHECKING:
+{% endif %}
+  {{ lazy_import }}
+{% endfor %}
+
+
+{% if model.additional_properties %}
+{% set additional_property_type = 'Any' if model.additional_properties == True else model.additional_properties.get_type_string() %}
+{% endif %}
+
+{% set class_name = model.class_info.name %}
+{% set module_name = model.class_info.module_name %}
+
+{% from "helpers.jinja" import safe_docstring %}
+
+{% macro class_docstring_content(model) %}
+    {% if model.title %}{{ model.title | wordwrap(116) }}
+
+    {% endif -%}
+    {%- if model.description %}{{ model.description | wordwrap(116) }}
+
+    {% endif %}
+    {% if not model.title and not model.description %}
+    {# Leave extra space so that a section doesn't start on the first line #}
+
+    {% endif %}
+    {% if model.example %}
+    Example:
+        {{ model.example | string | wordwrap(112) | indent(12) }}
+
+    {% endif %}
+    {% if (not config.docstrings_on_attributes) and (model.required_properties or model.optional_properties) %}
+    Attributes:
+    {% for property in model.required_properties + model.optional_properties %}
+        {{ property.to_docstring() | wordwrap(112) | indent(12) }}
+    {% endfor %}{% endif %}
+{% endmacro %}
+
+{% macro declare_property(property) %}
+{%- if config.docstrings_on_attributes and property.description -%}
+{{ property.to_string() }}
+{{ safe_docstring(property.description, omit_if_empty=True) | wordwrap(112) }}
+{%- else -%}
+{{ property.to_string() }}
+{%- endif -%}
+{% endmacro %}
+
+@_attrs_define
+class {{ class_name }}:
+    {{ safe_docstring(class_docstring_content(model), omit_if_empty=config.docstrings_on_attributes) | indent(4) }}
+
+    {% for property in model.required_properties + model.optional_properties %}
+    {% if property.default is none and property.required %}
+    {{ declare_property(property) | indent(4) }}
+    {% endif %}
+    {% endfor %}
+    {% for property in model.required_properties + model.optional_properties %}
+    {% if property.default is not none or not property.required %}
+    {{ declare_property(property) | indent(4) }}
+    {% endif %}
+    {% endfor %}
+    {% if model.additional_properties %}
+    additional_properties: dict[str, {{ additional_property_type }}] = _attrs_field(init=False, factory=dict)
+    {% endif %}
+
+{% if model.data.deprecated %}
+    def __attrs_post_init__(self) -> None:
+        warnings.warn(
+            "{{ class_name }} is deprecated",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+{% endif %}
+
+{% macro _transform_property(property, content) %}
+{% import "property_templates/" + property.template as prop_template %}
+{%- if prop_template.transform -%}
+{{ prop_template.transform(property=property, source=content, destination=property.python_name) }}
+{%- else -%}
+{{ property.python_name }} = {{ content }}
+{%- endif -%}
+{% endmacro %}
+
+{% macro multipart(property, source, destination) %}
+{% import "property_templates/" + property.template as prop_template %}
+{% if not property.required %}
+if not isinstance({{source}}, Unset):
+    {{ prop_template.multipart(property, source, destination) | indent(4) }}
+{% else %}
+{{ prop_template.multipart(property, source, destination) }}
+{% endif %}
+{% endmacro %}
+
+{% macro _prepare_field_dict() %}
+field_dict: dict[str, Any] = {}
+{% if model.additional_properties %}
+{% import "property_templates/" + model.additional_properties.template as prop_template %}
+{% if prop_template.transform %}
+for prop_name, prop in self.additional_properties.items():
+    {{ prop_template.transform(model.additional_properties, "prop", "field_dict[prop_name]", declare_type=false) | indent(4) }}
+{% else %}
+field_dict.update(self.additional_properties)
+{%- endif -%}
+{%- endif -%}
+{% endmacro %}
+
+{% macro _to_dict() %}
+{% for property in model.required_properties + model.optional_properties -%}
+{{ _transform_property(property, "self." + property.python_name) }}
+
+{% endfor %}
+
+{{ _prepare_field_dict() }}
+{% if model.required_properties | length > 0 or model.optional_properties | length > 0 %}
+field_dict.update({
+    {% for property in model.required_properties + model.optional_properties %}
+    {% if property.required %}
+    "{{ property.name }}": {{ property.python_name }},
+    {% endif %}
+    {% endfor %}
+})
+{% endif %}
+{% for property in model.optional_properties %}
+{% if not property.required %}
+if {{ property.python_name }} is not UNSET:
+    field_dict["{{ property.name }}"] = {{ property.python_name }}
+{% endif %}
+{% endfor %}
+
+return field_dict
+{% endmacro %}
+
+    def to_dict(self) -> dict[str, Any]:
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }}
+    {% endfor %}
+        {{ _to_dict() | indent(8) }}
+
+{% if model.is_multipart_body %}
+    def to_multipart(self) -> types.RequestFiles:
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }}
+    {% endfor %}
+        files: types.RequestFiles = []
+
+        {% for property in model.required_properties + model.optional_properties %}
+        {% set destination = "\"" + property.name + "\"" %}
+        {{ multipart(property, "self." + property.python_name, destination) | indent(8) }}
+
+        {% endfor %}
+
+        {% if model.additional_properties %}
+        for prop_name, prop in self.additional_properties.items():
+            {{ multipart(model.additional_properties, "prop", "prop_name") | indent(4) }}
+        {% endif %}
+
+        return files
+
+{% endif %}
+
+    @classmethod
+    def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
+    {% for lazy_import in model.lazy_imports | sort %}
+        {{ lazy_import }}
+    {% endfor %}
+{% if (model.required_properties or model.optional_properties or model.additional_properties) %}
+        d = dict(src_dict)
+{% for property in model.required_properties + model.optional_properties %}
+    {% if property.required %}
+        {% set property_source = 'd.pop("' + property.name + '")' %}
+    {% else %}
+        {% set property_source = 'd.pop("' + property.name + '", UNSET)' %}
+    {% endif %}
+    {% import "property_templates/" + property.template as prop_template %}
+    {% if prop_template.construct %}
+        {{ prop_template.construct(property, property_source) | indent(8) }}
+    {% else %}
+        {{ property.python_name }} = {{ property_source }}
+    {% endif %}
+
+{% endfor %}
+{% endif %}
+        {{ module_name }} = cls(
+{% for property in model.required_properties + model.optional_properties %}
+            {{ property.python_name }}={{ property.python_name }},
+{% endfor %}
+        )
+
+{% if model.additional_properties %}
+    {% if model.additional_properties.template %}{# Can be a bool instead of an object #}
+        {% import "property_templates/" + model.additional_properties.template as prop_template %}
+
+{% if model.additional_properties.lazy_imports %}
+    {% for lazy_import in model.additional_properties.lazy_imports | sort %}
+        {{ lazy_import }}
+    {% endfor %}
+{% endif %}
+    {% else %}
+        {% set prop_template = None %}
+    {% endif %}
+    {% if prop_template and prop_template.construct %}
+        additional_properties = {}
+        for prop_name, prop_dict in d.items():
+            {{ prop_template.construct(model.additional_properties, "prop_dict") | indent(12) }}
+            additional_properties[prop_name] = {{ model.additional_properties.python_name }}
+
+        {{ module_name }}.additional_properties = additional_properties
+    {% else %}
+        {{ module_name }}.additional_properties = d
+    {% endif %}
+{% endif %}
+        return {{ module_name }}
+
+    {% if model.additional_properties %}
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> {{ additional_property_type }}:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: {{ additional_property_type }}) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties
+    {% endif %}
+{% endif %}

@@ -1,0 +1,8 @@
+project_name_override: liveblocks
+package_name_override: liveblocks
+
+package_version_override: 0.1.0
+
+post_hooks:
+  - "uvx ruff check --fix-only ."
+  - "uvx ruff format ."
