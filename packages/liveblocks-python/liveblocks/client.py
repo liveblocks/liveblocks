@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .models.ai_copilot_google import AiCopilotGoogle
     from .models.ai_copilot_open_ai import AiCopilotOpenAi
     from .models.ai_copilot_open_ai_compatible import AiCopilotOpenAiCompatible
+    from .models.attachment_with_url import AttachmentWithUrl
     from .models.authorize_user_request_body import AuthorizeUserRequestBody
     from .models.authorize_user_response import AuthorizeUserResponse
     from .models.comment import Comment
@@ -1610,6 +1611,35 @@ class Liveblocks:
             thread_id=thread_id,
             comment_id=comment_id,
             body=body,
+            client=self._client,
+        )
+
+    def get_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+    ) -> AttachmentWithUrl:
+        """Get attachment
+
+         Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentWithUrl
+        """
+
+        from .api.comments import get_attachment
+
+        return get_attachment._sync(
+            room_id=room_id,
+            attachment_id=attachment_id,
             client=self._client,
         )
 
@@ -4955,6 +4985,35 @@ class AsyncLiveblocks:
             thread_id=thread_id,
             comment_id=comment_id,
             body=body,
+            client=self._client,
+        )
+
+    async def get_attachment(
+        self,
+        room_id: str,
+        attachment_id: str,
+    ) -> AttachmentWithUrl:
+        """Get attachment
+
+         Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            attachment_id (str): ID of the attachment Example: at_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            AttachmentWithUrl
+        """
+
+        from .api.comments import get_attachment
+
+        return await get_attachment._asyncio(
+            room_id=room_id,
+            attachment_id=attachment_id,
             client=self._client,
         )
 

@@ -1485,6 +1485,36 @@ client.remove_comment_reaction(
 </PropertiesList>
 
 
+### get_attachment
+
+Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.
+
+```python
+result = client.get_attachment(
+    room_id="my-room-id",
+    attachment_id="at_abc123",
+)
+print(result)
+```
+
+<PropertiesList title="Parameters">
+  <PropertiesListItem
+    name="room_id"
+    type="str"
+  >
+    ID of the room
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachment_id"
+    type="str"
+  >
+    ID of the attachment
+
+  </PropertiesListItem>
+</PropertiesList>
+
+
 ### edit_comment_metadata
 
 This endpoint edits the metadata of a comment. The metadata is a JSON object that can be used to store any information you want about the comment, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editCommentMetadata`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-metadata).

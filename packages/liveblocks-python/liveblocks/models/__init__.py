@@ -24,6 +24,7 @@ from .anthropic_provider_options_anthropic_anthropic_thinking_enabled import (
 from .anthropic_provider_options_anthropic_anthropic_web_search import (
     AnthropicProviderOptionsAnthropicAnthropicWebSearch,
 )
+from .attachment_with_url import AttachmentWithUrl
 from .authorization import Authorization
 from .authorize_user_request_body import AuthorizeUserRequestBody
 from .authorize_user_request_body_permissions import AuthorizeUserRequestBodyPermissions
@@ -221,6 +222,7 @@ __all__ = (
     "AnthropicProviderOptionsAnthropicAnthropicThinkingDisabled",
     "AnthropicProviderOptionsAnthropicAnthropicThinkingEnabled",
     "AnthropicProviderOptionsAnthropicAnthropicWebSearch",
+    "AttachmentWithUrl",
     "Authorization",
     "AuthorizeUserRequestBody",
     "AuthorizeUserRequestBodyPermissions",
