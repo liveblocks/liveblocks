@@ -1608,10 +1608,9 @@ This endpoint marks a specific inbox notification as read.
 
 **Example**
 ```python
-result = client.mark_inbox_notification_as_read(
+client.mark_inbox_notification_as_read(
     inbox_notification_id="in_abc123",
 )
-print(result)
 ```
 **Parameters:**
 

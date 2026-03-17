@@ -75,7 +75,6 @@ if TYPE_CHECKING:
         ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
     )
     from .models.management_webhook import ManagementWebhook
-    from .models.mark_inbox_notification_as_read_response_200 import MarkInboxNotificationAsReadResponse200
     from .models.mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
     from .models.mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
     from .models.move_json_patch_operation import MoveJsonPatchOperation
@@ -2234,7 +2233,7 @@ class Liveblocks:
     def mark_inbox_notification_as_read(
         self,
         inbox_notification_id: str,
-    ) -> MarkInboxNotificationAsReadResponse200:
+    ) -> None:
         """Mark inbox notification as read
 
          This endpoint marks a specific inbox notification as read.
@@ -2247,7 +2246,7 @@ class Liveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            MarkInboxNotificationAsReadResponse200
+            None
         """
 
         from .api.notifications import mark_inbox_notification_as_read
@@ -5668,7 +5667,7 @@ class AsyncLiveblocks:
     async def mark_inbox_notification_as_read(
         self,
         inbox_notification_id: str,
-    ) -> MarkInboxNotificationAsReadResponse200:
+    ) -> None:
         """Mark inbox notification as read
 
          This endpoint marks a specific inbox notification as read.
@@ -5681,7 +5680,7 @@ class AsyncLiveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            MarkInboxNotificationAsReadResponse200
+            None
         """
 
         from .api.notifications import mark_inbox_notification_as_read

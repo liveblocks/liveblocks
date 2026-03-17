@@ -4,7 +4,6 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.mark_inbox_notification_as_read_response_200 import MarkInboxNotificationAsReadResponse200
 
 
 def _get_kwargs(
@@ -21,11 +20,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> MarkInboxNotificationAsReadResponse200:
+def _parse_response(*, response: httpx.Response) -> None:
     if response.status_code == 200:
-        response_200 = MarkInboxNotificationAsReadResponse200.from_dict(response.json())
-
-        return response_200
+        return None
 
     raise errors.LiveblocksError.from_response(response)
 
@@ -34,7 +31,7 @@ def _sync(
     inbox_notification_id: str,
     *,
     client: httpx.Client,
-) -> MarkInboxNotificationAsReadResponse200:
+) -> None:
     kwargs = _get_kwargs(
         inbox_notification_id=inbox_notification_id,
     )
@@ -49,7 +46,7 @@ async def _asyncio(
     inbox_notification_id: str,
     *,
     client: httpx.AsyncClient,
-) -> MarkInboxNotificationAsReadResponse200:
+) -> None:
     kwargs = _get_kwargs(
         inbox_notification_id=inbox_notification_id,
     )
