@@ -28,30 +28,32 @@ class Room:
     Attributes:
         id (str):
         type_ (RoomType):
+        organization_id (str):
         created_at (datetime.datetime):
         default_accesses (list[RoomPermissionItem]):  Example: ['room:read', 'room:presence:write'].
         users_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read', 'room:presence:write']}.
         groups_accesses (RoomAccesses):  Example: {'alice': ['room:write'], 'bob': ['room:read',
             'room:presence:write']}.
         metadata (RoomMetadata):  Example: {'color': 'blue', 'type': 'whiteboard'}.
-        organization_id (str):
         last_connection_at (datetime.datetime | Unset):
     """
 
     id: str
     type_: RoomType
+    organization_id: str
     created_at: datetime.datetime
     default_accesses: list[RoomPermissionItem]
     users_accesses: RoomAccesses
     groups_accesses: RoomAccesses
     metadata: RoomMetadata
-    organization_id: str
     last_connection_at: datetime.datetime | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
 
         type_ = self.type_.value
+
+        organization_id = self.organization_id
 
         created_at = self.created_at.isoformat()
 
@@ -66,8 +68,6 @@ class Room:
 
         metadata = self.metadata.to_dict()
 
-        organization_id = self.organization_id
-
         last_connection_at: str | Unset = UNSET
         if not isinstance(self.last_connection_at, Unset):
             last_connection_at = self.last_connection_at.isoformat()
@@ -78,12 +78,12 @@ class Room:
             {
                 "id": id,
                 "type": type_,
+                "organizationId": organization_id,
                 "createdAt": created_at,
                 "defaultAccesses": default_accesses,
                 "usersAccesses": users_accesses,
                 "groupsAccesses": groups_accesses,
                 "metadata": metadata,
-                "organizationId": organization_id,
             }
         )
         if last_connection_at is not UNSET:
@@ -101,6 +101,8 @@ class Room:
 
         type_ = RoomType(d.pop("type"))
 
+        organization_id = d.pop("organizationId")
+
         created_at = isoparse(d.pop("createdAt"))
 
         default_accesses = []
@@ -116,8 +118,6 @@ class Room:
 
         metadata = RoomMetadata.from_dict(d.pop("metadata"))
 
-        organization_id = d.pop("organizationId")
-
         _last_connection_at = d.pop("lastConnectionAt", UNSET)
         last_connection_at: datetime.datetime | Unset
         if isinstance(_last_connection_at, Unset):
@@ -128,12 +128,12 @@ class Room:
         room = cls(
             id=id,
             type_=type_,
+            organization_id=organization_id,
             created_at=created_at,
             default_accesses=default_accesses,
             users_accesses=users_accesses,
             groups_accesses=groups_accesses,
             metadata=metadata,
-            organization_id=organization_id,
             last_connection_at=last_connection_at,
         )
 

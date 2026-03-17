@@ -100,9 +100,9 @@ result = client.create_room(
     body=CreateRoomRequestBody(
         id="...",
         default_accesses=[],
+        # organization_id="...",
         # users_accesses=...,
         # groups_accesses=...,
-        # metadata=...,
     ),
     # idempotent=True,
 )
