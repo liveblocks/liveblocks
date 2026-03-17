@@ -15,17 +15,56 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type { IUserInfo, JsonObject, Permission } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import type { DistributiveOmit } from "@liveblocks/core";
+import { nanoid, Permission, tryParseJson } from "@liveblocks/core";
+import type { DecoderType } from "decoders";
+import {
+  array,
+  constant,
+  enum_,
+  number,
+  object,
+  optional,
+  record,
+  string,
+  taggedUnion,
+} from "decoders";
 
-// Local dev only (lite version of) access token
-export type LiteAccessToken = {
-  k: "acc";
-  pid: "localdev";
-  uid: string; // user id
-  ui?: IUserInfo; // user info
-  perms: Record<string, Permission[]>; // permissions by room ID or room pattern
-};
+import { userInfo } from "./decoders";
+
+const unsignedJwtHeader = object({
+  alg: constant("none"),
+});
+
+const liteAccessToken = object({
+  k: constant("acc"),
+  pid: constant("localdev"),
+  uid: string,
+  ui: optional(userInfo),
+  perms: record(array(enum_(Permission))),
+  exp: number,
+});
+
+const liteIdToken = object({
+  k: constant("id"),
+  pid: constant("localdev"),
+  uid: string,
+  ui: optional(userInfo),
+  gids: optional(array(string)),
+  exp: number,
+});
+
+const liteToken = taggedUnion("k", {
+  acc: liteAccessToken,
+  id: liteIdToken,
+});
+
+export type LiteAccessToken = DecoderType<typeof liteAccessToken>;
+export type LiteIdToken = DecoderType<typeof liteIdToken>;
+export type LiteToken = DecoderType<typeof liteToken>;
+
+// Input type for createJwtLite (exp is added automatically)
+export type LiteTokenInput = DistributiveOmit<LiteToken, "exp">;
 
 // Simple base64url encoding (no padding)
 function base64Encode(str: string): string {
@@ -45,7 +84,7 @@ function base64Decode(str: string): string {
  * "alg: none" (no cryptographic signature). For local development only.
  * Always sets pid to 'localdev'.
  */
-export function createJwtLite(info: LiteAccessToken): string {
+export function createJwtLite(info: LiteTokenInput): string {
   const nowSecs = Math.floor(Date.now() / 1000);
   const payload = {
     ...info,
@@ -65,39 +104,25 @@ export function createJwtLite(info: LiteAccessToken): string {
  * Only accepts tokens with pid 'localdev'.
  * Returns the payload if valid, null otherwise.
  */
-export function verifyJwtLite(token: string): LiteAccessToken | null {
+export function verifyJwtLite(token: string): LiteToken | null {
   const parts = token.split(".");
   if (parts.length !== 3) return null;
 
   const [headerB64, payloadB64, signature] = parts;
 
   // Verify it's an unsigned token (alg: none)
-  try {
-    const header = JSON.parse(base64Decode(headerB64)) as JsonObject;
-    if (header.alg !== "none") return null;
-  } catch {
+  if (signature !== "") return null; // Signature must be empty for alg: none
+  if (!unsignedJwtHeader.value(tryParseJson(base64Decode(headerB64))))
     return null;
-  }
 
-  // Decode payload
-  let payload: Record<string, unknown>;
-  try {
-    payload = JSON.parse(base64Decode(payloadB64)) as JsonObject;
-  } catch {
-    return null;
-  }
-
-  // Signature must be empty for alg: none
-  if (signature !== "") return null;
-
-  // Only accept tokens for localdev project
-  if (payload.pid !== "localdev") return null;
+  // Decode and validate payload using the decoder
+  const payload = liteToken.value(tryParseJson(base64Decode(payloadB64)));
+  if (!payload) return null;
 
   // Check expiration
-  const exp = payload.exp;
-  if (typeof exp === "number" && exp < Math.floor(Date.now() / 1000)) {
+  if (payload.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
 
-  return payload as LiteAccessToken;
+  return payload;
 }
