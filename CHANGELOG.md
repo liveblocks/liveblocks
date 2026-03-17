@@ -1,5 +1,12 @@
 ## vNEXT (not yet released)
 
+## v3.15.3 (not yet released)
+
+### `@liveblocks/react-ui`
+
+- Add `showSubscription` prop to `Thread` to control whether to show the
+  thread’s subscription status.
+
 ## v3.15.2
 
 ### `@liveblocks/client`
