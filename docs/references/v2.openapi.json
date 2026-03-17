@@ -4912,6 +4912,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "title": "Response",
                   "properties": {
                     "id": {
                       "type": "string"

@@ -10,7 +10,7 @@ from ..types import UNSET, Unset
 
 
 @_attrs_define
-class CreateFileKnowledgeSourceResponse200:
+class CreateFileKnowledgeSourceResponse:
     """
     Attributes:
         id (str | Unset):
@@ -35,12 +35,12 @@ class CreateFileKnowledgeSourceResponse200:
         d = dict(src_dict)
         id = d.pop("id", UNSET)
 
-        create_file_knowledge_source_response_200 = cls(
+        create_file_knowledge_source_response = cls(
             id=id,
         )
 
-        create_file_knowledge_source_response_200.additional_properties = d
-        return create_file_knowledge_source_response_200
+        create_file_knowledge_source_response.additional_properties = d
+        return create_file_knowledge_source_response
 
     @property
     def additional_keys(self) -> list[str]:

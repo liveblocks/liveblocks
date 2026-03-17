@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from .models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
     from .models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
     from .models.create_comment_request_body import CreateCommentRequestBody
-    from .models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
+    from .models.create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
     from .models.create_group_request_body import CreateGroupRequestBody
     from .models.create_management_project_request_body import CreateManagementProjectRequestBody
     from .models.create_management_webhook_request_body import CreateManagementWebhookRequestBody
@@ -2746,7 +2746,7 @@ class Liveblocks:
         name: str,
         *,
         body: File,
-    ) -> CreateFileKnowledgeSourceResponse200:
+    ) -> CreateFileKnowledgeSourceResponse:
         """Create file knowledge source
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
@@ -2764,7 +2764,7 @@ class Liveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateFileKnowledgeSourceResponse200
+            CreateFileKnowledgeSourceResponse
         """
 
         from .api.ai import create_file_knowledge_source
@@ -6180,7 +6180,7 @@ class AsyncLiveblocks:
         name: str,
         *,
         body: File,
-    ) -> CreateFileKnowledgeSourceResponse200:
+    ) -> CreateFileKnowledgeSourceResponse:
         """Create file knowledge source
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
@@ -6198,7 +6198,7 @@ class AsyncLiveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateFileKnowledgeSourceResponse200
+            CreateFileKnowledgeSourceResponse
         """
 
         from .api.ai import create_file_knowledge_source

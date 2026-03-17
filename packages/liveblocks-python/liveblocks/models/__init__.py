@@ -42,7 +42,7 @@ from .create_ai_copilot_options_google import CreateAiCopilotOptionsGoogle
 from .create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
 from .create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
 from .create_comment_request_body import CreateCommentRequestBody
-from .create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
+from .create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
 from .create_group_request_body import CreateGroupRequestBody
 from .create_group_request_body_scopes import CreateGroupRequestBodyScopes
 from .create_management_project_request_body import CreateManagementProjectRequestBody
@@ -242,7 +242,7 @@ __all__ = (
     "CreateAiCopilotOptionsOpenAi",
     "CreateAiCopilotOptionsOpenAiCompatible",
     "CreateCommentRequestBody",
-    "CreateFileKnowledgeSourceResponse200",
+    "CreateFileKnowledgeSourceResponse",
     "CreateGroupRequestBody",
     "CreateGroupRequestBodyScopes",
     "CreateManagementProjectRequestBody",
