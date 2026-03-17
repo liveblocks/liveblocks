@@ -151,6 +151,16 @@ export type ThreadParticipants = {
   participantIds: string[];
 };
 
+export type AttachmentWithUrl = {
+  type: "attachment";
+  id: string;
+  mimeType: string;
+  name: string;
+  size: number;
+  url: string;
+  expiresAt: string;
+};
+
 export type CreateThreadOptions<
   TM extends BaseMetadata,
   CM extends BaseMetadata,
@@ -1827,6 +1837,31 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+  }
+
+  /**
+   * Gets an attachment's metadata and a presigned download URL.
+   *
+   * @param params.roomId The room ID the attachment belongs to.
+   * @param params.attachmentId The attachment ID (starts with "at_").
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The attachment metadata including a presigned download URL.
+   */
+  public async getAttachment(
+    params: { roomId: string; attachmentId: string },
+    options?: RequestOptions
+  ): Promise<AttachmentWithUrl> {
+    const { roomId, attachmentId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/attachments/${attachmentId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as AttachmentWithUrl;
   }
 
   /**
