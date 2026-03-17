@@ -1,4 +1,4 @@
-https://user-images.githubusercontent.com/33033422/216776250-04ef297b-f61a-42ec-a7b9-b08e46dddf8f.mp4
+https://github.com/user-attachments/assets/ee616092-f5a8-484c-b134-860ce9481e3a
 
 # [Next.js Starter Kit](https://liveblocks.io/starter-kit)
 
@@ -14,12 +14,15 @@ Kickstart start your collaborative Next.js app with this starter kit.
 
 ## Features
 
-- Documents dashboard with pagination, drafts, groups, auto-revalidation
-- Collaborative whiteboard app with a fully-featured share menu
-- Authentication compatible with GitHub, Google, Auth0, and more
-- Document permissions can be scoped to users, groups, and the public
+- Documents dashboard with pagination, organizations, auto-revalidation.
+- Collaborative apps including a whiteboard, text documents, note editor, drawing canvas.
+- Realtime presence with avatars, cursors, carets.
+- Fully-featured share menu with users, organizations, public permissions.
+- Authentication compatible with GitHub, Google, Auth0, and more.
+
+https://github.com/user-attachments/assets/0f40f748-0900-49bb-85d1-793836dd3472
 
 ## Get started
 
-[Read the guide](http://liveblocks.io/docs/guides/nextjs-starter-kit) to get
+[Read the guide](https://liveblocks.io/docs/tools/nextjs-starter-kit) to get
 started.
