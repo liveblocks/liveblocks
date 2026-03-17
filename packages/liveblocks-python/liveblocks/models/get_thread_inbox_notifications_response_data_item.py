@@ -12,7 +12,7 @@ from ..types import UNSET, Unset
 
 
 @_attrs_define
-class GetThreadInboxNotificationsResponse200DataItem:
+class GetThreadInboxNotificationsResponseDataItem:
     """
     Attributes:
         id (str):
@@ -106,7 +106,7 @@ class GetThreadInboxNotificationsResponse200DataItem:
 
         organization_id = d.pop("organizationId", UNSET)
 
-        get_thread_inbox_notifications_response_200_data_item = cls(
+        get_thread_inbox_notifications_response_data_item = cls(
             id=id,
             kind=kind,
             thread_id=thread_id,
@@ -117,8 +117,8 @@ class GetThreadInboxNotificationsResponse200DataItem:
             organization_id=organization_id,
         )
 
-        get_thread_inbox_notifications_response_200_data_item.additional_properties = d
-        return get_thread_inbox_notifications_response_200_data_item
+        get_thread_inbox_notifications_response_data_item.additional_properties = d
+        return get_thread_inbox_notifications_response_data_item
 
     @property
     def additional_keys(self) -> list[str]:

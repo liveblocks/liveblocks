@@ -9,19 +9,17 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.get_thread_inbox_notifications_response_200_data_item import (
-        GetThreadInboxNotificationsResponse200DataItem,
-    )
+    from ..models.get_thread_inbox_notifications_response_data_item import GetThreadInboxNotificationsResponseDataItem
 
 
 @_attrs_define
-class GetThreadInboxNotificationsResponse200:
+class GetThreadInboxNotificationsResponse:
     """
     Attributes:
-        data (list[GetThreadInboxNotificationsResponse200DataItem] | Unset):
+        data (list[GetThreadInboxNotificationsResponseDataItem] | Unset):
     """
 
-    data: list[GetThreadInboxNotificationsResponse200DataItem] | Unset = UNSET
+    data: list[GetThreadInboxNotificationsResponseDataItem] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -42,26 +40,26 @@ class GetThreadInboxNotificationsResponse200:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.get_thread_inbox_notifications_response_200_data_item import (
-            GetThreadInboxNotificationsResponse200DataItem,
+        from ..models.get_thread_inbox_notifications_response_data_item import (
+            GetThreadInboxNotificationsResponseDataItem,
         )
 
         d = dict(src_dict)
         _data = d.pop("data", UNSET)
-        data: list[GetThreadInboxNotificationsResponse200DataItem] | Unset = UNSET
+        data: list[GetThreadInboxNotificationsResponseDataItem] | Unset = UNSET
         if _data is not UNSET:
             data = []
             for data_item_data in _data:
-                data_item = GetThreadInboxNotificationsResponse200DataItem.from_dict(data_item_data)
+                data_item = GetThreadInboxNotificationsResponseDataItem.from_dict(data_item_data)
 
                 data.append(data_item)
 
-        get_thread_inbox_notifications_response_200 = cls(
+        get_thread_inbox_notifications_response = cls(
             data=data,
         )
 
-        get_thread_inbox_notifications_response_200.additional_properties = d
-        return get_thread_inbox_notifications_response_200
+        get_thread_inbox_notifications_response.additional_properties = d
+        return get_thread_inbox_notifications_response
 
     @property
     def additional_keys(self) -> list[str]:

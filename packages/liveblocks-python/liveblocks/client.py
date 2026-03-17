@@ -53,7 +53,7 @@ if TYPE_CHECKING:
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
-    from .models.get_thread_inbox_notifications_response_200 import GetThreadInboxNotificationsResponse200
+    from .models.get_thread_inbox_notifications_response import GetThreadInboxNotificationsResponse
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
@@ -1695,7 +1695,7 @@ class Liveblocks:
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetThreadInboxNotificationsResponse200:
+    ) -> GetThreadInboxNotificationsResponse:
         """Get thread inbox notifications
 
          This endpoint returns the inbox notifications associated with a specific thread. Because this
@@ -1711,7 +1711,7 @@ class Liveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetThreadInboxNotificationsResponse200
+            GetThreadInboxNotificationsResponse
         """
 
         from .api.comments import get_thread_inbox_notifications
@@ -5129,7 +5129,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         thread_id: str,
-    ) -> GetThreadInboxNotificationsResponse200:
+    ) -> GetThreadInboxNotificationsResponse:
         """Get thread inbox notifications
 
          This endpoint returns the inbox notifications associated with a specific thread. Because this
@@ -5145,7 +5145,7 @@ class AsyncLiveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            GetThreadInboxNotificationsResponse200
+            GetThreadInboxNotificationsResponse
         """
 
         from .api.comments import get_thread_inbox_notifications

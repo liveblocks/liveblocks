@@ -4,7 +4,7 @@ from urllib.parse import quote
 import httpx
 
 from ... import errors
-from ...models.get_thread_inbox_notifications_response_200 import GetThreadInboxNotificationsResponse200
+from ...models.get_thread_inbox_notifications_response import GetThreadInboxNotificationsResponse
 
 
 def _get_kwargs(
@@ -23,9 +23,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, response: httpx.Response) -> GetThreadInboxNotificationsResponse200:
+def _parse_response(*, response: httpx.Response) -> GetThreadInboxNotificationsResponse:
     if response.status_code == 200:
-        response_200 = GetThreadInboxNotificationsResponse200.from_dict(response.json())
+        response_200 = GetThreadInboxNotificationsResponse.from_dict(response.json())
 
         return response_200
 
@@ -37,7 +37,7 @@ def _sync(
     thread_id: str,
     *,
     client: httpx.Client,
-) -> GetThreadInboxNotificationsResponse200:
+) -> GetThreadInboxNotificationsResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
@@ -54,7 +54,7 @@ async def _asyncio(
     thread_id: str,
     *,
     client: httpx.AsyncClient,
-) -> GetThreadInboxNotificationsResponse200:
+) -> GetThreadInboxNotificationsResponse:
     kwargs = _get_kwargs(
         room_id=room_id,
         thread_id=thread_id,
