@@ -1,4 +1,4 @@
-https://github.com/user-attachments/assets/ee616092-f5a8-484c-b134-860ce9481e3a
+https://github.com/user-attachments/assets/26f6ca5f-0675-4968-957c-6d99b240b7ea
 
 # [Next.js Starter Kit](https://liveblocks.io/starter-kit)
 
@@ -20,7 +20,7 @@ Kickstart start your collaborative Next.js app with this starter kit.
 - Fully-featured share menu with users, organizations, public permissions.
 - Authentication compatible with GitHub, Google, Auth0, and more.
 
-https://github.com/user-attachments/assets/0f40f748-0900-49bb-85d1-793836dd3472
+https://github.com/user-attachments/assets/fd6d1a2d-bbdc-4677-b697-589c3dfcb63d
 
 ## Get started
 
