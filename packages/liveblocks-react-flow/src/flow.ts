@@ -222,16 +222,23 @@ function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
 function merge<T extends { id: string }, L extends object>(
   cache: Map<string, T>,
   remote: ReadonlyMap<string, T>,
-  local: ReadonlyMap<string, L>
+  local: Map<string, L>
 ): T[] {
-  // Prune items that are no longer present remotely.
+  // Prune cached items that were deleted remotely.
   for (const id of cache.keys()) {
     if (!remote.has(id)) {
       cache.delete(id);
     }
   }
 
-  // Merge remote and local items.
+  // Prune local items that were deleted remotely.
+  for (const id of local.keys()) {
+    if (!remote.has(id)) {
+      local.delete(id);
+    }
+  }
+
+  // Reconcile remote and local items.
   return Array.from(remote.values(), (item) => {
     const localItem = local.get(item.id);
 
@@ -242,26 +249,31 @@ function merge<T extends { id: string }, L extends object>(
   });
 }
 
-function setOrDelete<T extends object>(
+function updateLocalState<T extends object>(
   map: Map<string, T>,
   key: string,
   changes: T
-): void {
+): boolean {
   const next: Record<string, unknown> = {};
 
   for (const change in changes) {
     const value = (changes as Record<string, unknown>)[change];
 
-    // Falsy values are deleted from the map.
-    if (value) {
+    // `false` values aren't stored.
+    if (value !== undefined && value !== false) {
       next[change] = value;
     }
   }
 
   if (Object.keys(next).length > 0) {
     map.set(key, next as T);
+
+    return true;
   } else {
+    const hasItem = map.has(key);
     map.delete(key);
+
+    return hasItem;
   }
 }
 
@@ -303,12 +315,15 @@ function applyNodeChanges<TNode extends SerializableNode>(args: {
       case "add":
       case "replace":
         nodes.set(change.item.id, nodeToStorage(change.item));
-        setOrDelete(
-          nextLocal,
-          change.item.id,
-          pick(change.item, NODE_LOCAL_KEYS)
-        );
-        hasLocalChanged = true;
+        if (
+          updateLocalState(
+            nextLocal,
+            change.item.id,
+            pick(change.item, NODE_LOCAL_KEYS)
+          )
+        ) {
+          hasLocalChanged = true;
+        }
         break;
 
       case "remove":
@@ -335,7 +350,7 @@ function applyNodeChanges<TNode extends SerializableNode>(args: {
         }
 
         if (change.dragging !== undefined) {
-          setOrDelete(nextLocal, change.id, {
+          updateLocalState(nextLocal, change.id, {
             ...nextLocal.get(change.id),
             dragging: change.dragging,
           });
@@ -379,13 +394,13 @@ function applyNodeChanges<TNode extends SerializableNode>(args: {
           patch.resizing = change.resizing;
         }
 
-        setOrDelete(nextLocal, change.id, patch);
+        updateLocalState(nextLocal, change.id, patch);
         hasLocalChanged = true;
         break;
       }
 
       case "select":
-        setOrDelete(nextLocal, change.id, {
+        updateLocalState(nextLocal, change.id, {
           ...nextLocal.get(change.id),
           selected: change.selected,
         });
@@ -415,12 +430,15 @@ function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
       case "add":
       case "replace":
         edges.set(change.item.id, edgeToStorage(change.item));
-        setOrDelete(
-          nextLocal,
-          change.item.id,
-          pick(change.item, EDGE_LOCAL_KEYS)
-        );
-        hasLocalChanged = true;
+        if (
+          updateLocalState(
+            nextLocal,
+            change.item.id,
+            pick(change.item, EDGE_LOCAL_KEYS)
+          )
+        ) {
+          hasLocalChanged = true;
+        }
         break;
 
       case "remove":
@@ -431,7 +449,7 @@ function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
         break;
 
       case "select":
-        setOrDelete(nextLocal, change.id, {
+        updateLocalState(nextLocal, change.id, {
           ...nextLocal.get(change.id),
           selected: change.selected,
         });
