@@ -219,17 +219,27 @@ function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
   return next;
 }
 
-function prune<T extends { id: string }>(
+function merge<T extends { id: string }, L extends object>(
   cache: Map<string, T>,
-  items: readonly T[]
-): void {
-  const nextIds = new Set(items.map((item) => item.id));
-
+  remote: ReadonlyMap<string, T>,
+  local: ReadonlyMap<string, L>
+): T[] {
+  // Prune items that are no longer present remotely.
   for (const id of cache.keys()) {
-    if (!nextIds.has(id)) {
+    if (!remote.has(id)) {
       cache.delete(id);
     }
   }
+
+  // Merge remote and local items.
+  return Array.from(remote.values(), (item) => {
+    const localItem = local.get(item.id);
+
+    return reconcile(
+      cache,
+      localItem ? (Object.assign({}, item, localItem) as T) : item
+    );
+  });
 }
 
 function setOrDelete<T extends object>(
@@ -501,44 +511,36 @@ export function useLiveblocksFlow<
   const localEdges = useSignal(localEdgesΣ);
 
   // Remote state lives in Liveblocks Storage.
-  const remoteNodes = useStorage((root) => {
+  const remoteNodesMap = useStorage((root) => {
     const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return flow ? ([...flow.nodes.values()] as unknown as TNode[]) : null;
+    return (flow?.nodes ?? null) as unknown as ReadonlyMap<
+      string,
+      TNode
+    > | null;
   });
-  const remoteEdges = useStorage((root) => {
+  const remoteEdgesMap = useStorage((root) => {
     const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return flow ? ([...flow.edges.values()] as unknown as TEdge[]) : null;
+    return (flow?.edges ?? null) as unknown as ReadonlyMap<
+      string,
+      TEdge
+    > | null;
   });
 
   // Merge remote and local layers to get the final state.
-  const nodes = useMemo(() => {
-    if (remoteNodes === null) {
-      return null;
-    }
-
-    prune(nodeCache.current, remoteNodes);
-
-    return remoteNodes.map((node) => {
-      const local = localNodes.get(node.id);
-      const merged = local ? { ...node, ...local } : node;
-
-      return reconcile(nodeCache.current, merged);
-    });
-  }, [remoteNodes, localNodes]);
-  const edges = useMemo(() => {
-    if (remoteEdges === null) {
-      return null;
-    }
-
-    prune(edgeCache.current, remoteEdges);
-
-    return remoteEdges.map((edge) => {
-      const local = localEdges.get(edge.id);
-      const merged = local ? { ...edge, ...local } : edge;
-
-      return reconcile(edgeCache.current, merged);
-    });
-  }, [remoteEdges, localEdges]);
+  const nodes = useMemo(
+    () =>
+      remoteNodesMap
+        ? merge(nodeCache.current, remoteNodesMap, localNodes)
+        : null,
+    [remoteNodesMap, localNodes]
+  );
+  const edges = useMemo(
+    () =>
+      remoteEdgesMap
+        ? merge(edgeCache.current, remoteEdgesMap, localEdges)
+        : null,
+    [remoteEdgesMap, localEdges]
+  );
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
