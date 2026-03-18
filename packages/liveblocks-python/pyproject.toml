@@ -1,0 +1,61 @@
+[project]
+name = "liveblocks"
+version = "3.15.3"
+description = "A client library for accessing Liveblocks API"
+authors = []
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "httpx>=0.23.0,<0.29.0",
+    "attrs>=22.2.0",
+    "python-dateutil>=2.8.0,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "respx>=0.22.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["liveblocks"]
+omit = [
+    "liveblocks/models/*",
+    "liveblocks/api/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
+# Exclude the delegation boilerplate inside client.py methods.
+# Each public method on Liveblocks/AsyncLiveblocks just imports an
+# API module and forwards the call — the real logic lives in
+# liveblocks/api/* (already omitted above). These patterns skip:
+#   1. The local import line   (e.g. `from .api.room import get_rooms`)
+#   2. The sync return line    (e.g. `return get_rooms._sync(...)`)
+#   3. The async return line   (e.g. `return await get_rooms._asyncio(...)`)
+exclude_also = [
+    "from \\.api\\.",
+    "return .*\\._sync\\(",
+    "return await .*\\._asyncio\\(",
+]
+
+[tool.uv.build-backend]
+module-name = "liveblocks"
+module-root = ""
+exclude = ["README.mdx"]
+
+[build-system]
+requires = ["uv_build>=0.10.0,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "I", "UP"]

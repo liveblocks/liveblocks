@@ -27,7 +27,7 @@ import { bold, dim, green, red, yellow } from "~/lib/term-colors";
 
 import { authorizeWebSocket } from "./auth";
 import type { ClientMeta, RoomMeta, SessionMeta } from "./db/rooms";
-import * as RoomsDB from "./db/rooms";
+import * as Rooms from "./db/rooms";
 import {
   buildFixPrompt,
   checkLiveblocksSetup,
@@ -165,7 +165,7 @@ const dev: SubCommand = {
     const hostname =
       options.host || process.env.LIVEBLOCKS_DEVSERVER_HOST || "localhost";
 
-    const ephemeralPath = ephemeral ? RoomsDB.useEphemeralStorage() : null;
+    const ephemeralPath = ephemeral ? Rooms.useEphemeralStorage() : null;
 
     if (await isPortInUse(port, hostname)) {
       console.error(
@@ -199,7 +199,7 @@ const dev: SubCommand = {
             const { roomId, ticketData } = authResult;
 
             // Look up or create the room for the requested room ID
-            const room = RoomsDB.getOrCreate(roomId);
+            const room = Rooms.getRoomInstance(roomId);
             await room.load();
 
             const ticket = await room.createTicket(ticketData);
@@ -301,7 +301,7 @@ const dev: SubCommand = {
     server = createServer();
 
     async function reboot() {
-      RoomsDB.unloadAll();
+      Rooms.unloadAll();
       await server.stop(true);
       server = createServer();
       console.log("Crash \uD83D\uDCA5");
@@ -356,7 +356,7 @@ const dev: SubCommand = {
       } finally {
         void logFile.end();
         await server.stop();
-        RoomsDB.cleanup();
+        Rooms.cleanup();
         stderr(dim("Liveblocks dev server shut down"));
       }
       process.exit(code);
@@ -384,7 +384,7 @@ const dev: SubCommand = {
         const ch = data.toString();
         if (ch === "q" || ch === "\x03" /* Ctrl-C */) {
           void server.stop(true).then(() => {
-            RoomsDB.cleanup();
+            Rooms.cleanup();
             process.exit(0);
           });
         } else if (ch === "!") {

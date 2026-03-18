@@ -176,6 +176,11 @@ export interface ThreadProps<
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
+   * Whether to show the thread's subscription status.
+   */
+  showSubscription?: boolean;
+
+  /**
    * Whether to show attachments.
    */
   showAttachments?: boolean;
@@ -261,6 +266,7 @@ export const Thread = forwardRef(
       showReactions = true,
       showComposer = "collapsed",
       showAttachments = true,
+      showSubscription = true,
       showComposerFormattingControls = true,
       maxVisibleComments,
       commentDropdownItems,
@@ -604,7 +610,7 @@ export const Thread = forwardRef(
                     ) : null
                   }
                   internalDropdownItems={
-                    isFirstComment ? (
+                    isFirstComment && showSubscription ? (
                       <DefaultComment.DropdownItem
                         onSelect={handleSubscribeChange}
                         icon={

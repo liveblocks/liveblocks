@@ -20,8 +20,8 @@ import { resolve } from "node:path";
 
 import { beforeAll, describe, expect, test } from "bun:test";
 
-const CLI = resolve(import.meta.dir, "../dist/index.js");
-const CWD = resolve(import.meta.dir, "..");
+const CLI = resolve(import.meta.dir, "../../dist/index.js");
+const CWD = resolve(import.meta.dir, "../..");
 
 /**
  * Runs the equivalent of `npx liveblocks <subArgs>` (but on the local build

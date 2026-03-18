@@ -1,0 +1,8 @@
+[project]
+name = "liveblocks-python-codegen"
+version = "0.1.0"
+description = "Code generator for the Liveblocks Python SDK"
+requires-python = ">=3.12"
+dependencies = [
+    "openapi-python-client==0.28.2",
+]

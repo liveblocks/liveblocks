@@ -304,3 +304,94 @@ jobs:
         if: needs.check_for_code_changes.outputs.changes == 'true'
         run: npm run test:e2e
         working-directory: packages/liveblocks-core
+
+  # Check that the generated Python SDK is up to date with the OpenAPI spec
+  python-sdk-sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            python_sdk:
+              - 'docs/references/v2.openapi.json'
+              - 'packages/liveblocks-python-codegen/templates/**'
+              - 'packages/liveblocks-python-codegen/config.yaml'
+              - 'packages/liveblocks-python-codegen/generate.py'
+
+      - name: Checkout
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+
+      - name: Regenerate Python SDK
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: uv run python generate.py
+        working-directory: packages/liveblocks-python-codegen
+
+      - name: Check for uncommitted changes
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: |
+          CHANGED=$(git status --porcelain packages/liveblocks-python)
+          if [ -n "$CHANGED" ]; then
+            echo "The generated Python SDK is out of date. Please run 'uv run python generate.py' in packages/liveblocks-python-codegen and commit the changes."
+            echo ""
+            echo "Changed files:"
+            echo "$CHANGED"
+            echo ""
+            git diff packages/liveblocks-python
+            exit 1
+          fi
+
+  # Python lint + tests with coverage
+  test-python:
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            python_sdk:
+              - 'packages/liveblocks-python/**'
+              - 'packages/liveblocks-python-codegen/**'
+
+      - name: Checkout
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        if: steps.filter.outputs.python_sdk == 'true'
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+
+      - name: Lint
+        if: steps.filter.outputs.python_sdk == 'true'
+        run: uvx ruff check .
+        working-directory: packages/liveblocks-python
+
+      - name: Run Python tests with coverage
+        if: steps.filter.outputs.python_sdk == 'true'
+        run:
+          uv run pytest --cov --cov-report=term-missing
+          --cov-report=xml:coverage.xml
+        working-directory: packages/liveblocks-python
+
+      - name: Post coverage report as PR comment
+        if:
+          steps.filter.outputs.python_sdk == 'true' && github.event_name ==
+          'pull_request'
+        uses: orgoro/coverage@3f13a558c5af7376496aa4848bf0224aead366ac # v3.2
+        with:
+          coverageFile: packages/liveblocks-python/coverage.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          thresholdAll: 0.0
