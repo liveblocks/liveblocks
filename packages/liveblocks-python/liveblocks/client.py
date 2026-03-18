@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from .models.create_ai_copilot_options_open_ai import CreateAiCopilotOptionsOpenAi
     from .models.create_ai_copilot_options_open_ai_compatible import CreateAiCopilotOptionsOpenAiCompatible
     from .models.create_comment_request_body import CreateCommentRequestBody
-    from .models.create_file_knowledge_source_response_200 import CreateFileKnowledgeSourceResponse200
+    from .models.create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
     from .models.create_group_request_body import CreateGroupRequestBody
     from .models.create_management_project_request_body import CreateManagementProjectRequestBody
     from .models.create_management_webhook_request_body import CreateManagementWebhookRequestBody
@@ -54,6 +54,7 @@ if TYPE_CHECKING:
     from .models.get_rooms_response import GetRoomsResponse
     from .models.get_storage_document_format import GetStorageDocumentFormat
     from .models.get_storage_document_response import GetStorageDocumentResponse
+    from .models.get_thread_inbox_notifications_response import GetThreadInboxNotificationsResponse
     from .models.get_thread_subscriptions_response import GetThreadSubscriptionsResponse
     from .models.get_threads_response import GetThreadsResponse
     from .models.get_user_groups_response import GetUserGroupsResponse
@@ -107,6 +108,7 @@ if TYPE_CHECKING:
     from .models.update_management_webhook_request_body import UpdateManagementWebhookRequestBody
     from .models.update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
     from .models.update_room_id_request_body import UpdateRoomIdRequestBody
+    from .models.update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
     from .models.update_room_request_body import UpdateRoomRequestBody
     from .models.update_room_subscription_settings_request_body import UpdateRoomSubscriptionSettingsRequestBody
     from .models.upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
@@ -509,6 +511,38 @@ class Liveblocks:
         from .api.room import update_room_id
 
         return update_room_id._sync(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
+    def update_room_organization_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        """Update room organization ID
+
+         This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's
+        current organization ID. Returns the updated room.
+
+        Args:
+            room_id (str): The ID of the room Example: my-room-id.
+            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+                'org_123456789', 'toOrganizationId': 'org_987654321'}.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
+        from .api.room import update_room_organization_id
+
+        return update_room_organization_id._sync(
             room_id=room_id,
             body=body,
             client=self._client,
@@ -1686,6 +1720,37 @@ class Liveblocks:
             client=self._client,
         )
 
+    def get_thread_inbox_notifications(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> GetThreadInboxNotificationsResponse:
+        """Get thread inbox notifications
+
+         This endpoint returns the inbox notifications associated with a specific thread. Because this
+        endpoint is not user-scoped, each notification includes a `userId` field identifying which user the
+        notification belongs to. Only thread-kind notifications are returned.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadInboxNotificationsResponse
+        """
+
+        from .api.comments import get_thread_inbox_notifications
+
+        return get_thread_inbox_notifications._sync(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
     def authorize_user(
         self,
         *,
@@ -2195,6 +2260,32 @@ class Liveblocks:
             client=self._client,
         )
 
+    def mark_inbox_notification_as_read(
+        self,
+        inbox_notification_id: str,
+    ) -> None:
+        """Mark inbox notification as read
+
+         This endpoint marks a specific inbox notification as read.
+
+        Args:
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.notifications import mark_inbox_notification_as_read
+
+        return mark_inbox_notification_as_read._sync(
+            inbox_notification_id=inbox_notification_id,
+            client=self._client,
+        )
+
     def get_groups(
         self,
         *,
@@ -2685,7 +2776,7 @@ class Liveblocks:
         name: str,
         *,
         body: File,
-    ) -> CreateFileKnowledgeSourceResponse200:
+    ) -> CreateFileKnowledgeSourceResponse:
         """Create file knowledge source
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
@@ -2703,7 +2794,7 @@ class Liveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateFileKnowledgeSourceResponse200
+            CreateFileKnowledgeSourceResponse
         """
 
         from .api.ai import create_file_knowledge_source
@@ -3888,6 +3979,38 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
+    async def update_room_organization_id(
+        self,
+        room_id: str,
+        *,
+        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+    ) -> Room:
+        """Update room organization ID
+
+         This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's
+        current organization ID. Returns the updated room.
+
+        Args:
+            room_id (str): The ID of the room Example: my-room-id.
+            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+                'org_123456789', 'toOrganizationId': 'org_987654321'}.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            Room
+        """
+
+        from .api.room import update_room_organization_id
+
+        return await update_room_organization_id._asyncio(
+            room_id=room_id,
+            body=body,
+            client=self._client,
+        )
+
     async def get_active_users(
         self,
         room_id: str,
@@ -5060,6 +5183,37 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
+    async def get_thread_inbox_notifications(
+        self,
+        room_id: str,
+        thread_id: str,
+    ) -> GetThreadInboxNotificationsResponse:
+        """Get thread inbox notifications
+
+         This endpoint returns the inbox notifications associated with a specific thread. Because this
+        endpoint is not user-scoped, each notification includes a `userId` field identifying which user the
+        notification belongs to. Only thread-kind notifications are returned.
+
+        Args:
+            room_id (str): ID of the room Example: my-room-id.
+            thread_id (str): ID of the thread Example: th_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            GetThreadInboxNotificationsResponse
+        """
+
+        from .api.comments import get_thread_inbox_notifications
+
+        return await get_thread_inbox_notifications._asyncio(
+            room_id=room_id,
+            thread_id=thread_id,
+            client=self._client,
+        )
+
     async def authorize_user(
         self,
         *,
@@ -5569,6 +5723,32 @@ class AsyncLiveblocks:
             client=self._client,
         )
 
+    async def mark_inbox_notification_as_read(
+        self,
+        inbox_notification_id: str,
+    ) -> None:
+        """Mark inbox notification as read
+
+         This endpoint marks a specific inbox notification as read.
+
+        Args:
+            inbox_notification_id (str): ID of the inbox notification Example: in_abc123.
+
+        Raises:
+            errors.LiveblocksError: If the server returns a response with non-2xx status code.
+            httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+        Returns:
+            None
+        """
+
+        from .api.notifications import mark_inbox_notification_as_read
+
+        return await mark_inbox_notification_as_read._asyncio(
+            inbox_notification_id=inbox_notification_id,
+            client=self._client,
+        )
+
     async def get_groups(
         self,
         *,
@@ -6059,7 +6239,7 @@ class AsyncLiveblocks:
         name: str,
         *,
         body: File,
-    ) -> CreateFileKnowledgeSourceResponse200:
+    ) -> CreateFileKnowledgeSourceResponse:
         """Create file knowledge source
 
          This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can
@@ -6077,7 +6257,7 @@ class AsyncLiveblocks:
             httpx.TimeoutException: If the request takes longer than Client.timeout.
 
         Returns:
-            CreateFileKnowledgeSourceResponse200
+            CreateFileKnowledgeSourceResponse
         """
 
         from .api.ai import create_file_knowledge_source

@@ -280,6 +280,27 @@ print(result)
 
 ---
 
+#### `update_room_organization_id`
+
+This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.
+
+**Example**
+```python
+result = client.update_room_organization_id(
+    room_id="my-room-id",
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | The ID of the room |
+| `body` | `UpdateRoomOrganizationIdRequestBody \| Unset` | No | Request body (application/json) |
+
+
+---
+
 #### `get_active_users`
 
 This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). 
@@ -1159,6 +1180,28 @@ print(result)
 
 ---
 
+#### `get_thread_inbox_notifications`
+
+This endpoint returns the inbox notifications associated with a specific thread. Because this endpoint is not user-scoped, each notification includes a `userId` field identifying which user the notification belongs to. Only thread-kind notifications are returned.
+
+**Example**
+```python
+result = client.get_thread_inbox_notifications(
+    room_id="my-room-id",
+    thread_id="th_abc123",
+)
+print(result)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `room_id` | `str` | Yes | ID of the room |
+| `thread_id` | `str` | Yes | ID of the thread |
+
+
+---
+
 ### Auth
 
 #### `authorize_user`
@@ -1577,6 +1620,25 @@ client.trigger_inbox_notification()
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `body` | `TriggerInboxNotificationRequestBody \| Unset` | No | Request body (application/json) |
+
+
+---
+
+#### `mark_inbox_notification_as_read`
+
+This endpoint marks a specific inbox notification as read.
+
+**Example**
+```python
+client.mark_inbox_notification_as_read(
+    inbox_notification_id="in_abc123",
+)
+```
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `inbox_notification_id` | `str` | Yes | ID of the inbox notification |
 
 
 ---

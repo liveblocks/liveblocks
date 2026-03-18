@@ -693,6 +693,91 @@
         }
       }
     },
+    "/rooms/{roomId}/update-organization-id": {
+      "post": {
+        "summary": "Update room organization ID",
+        "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "The ID of the room",
+              "example": "my-room-id"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated room with the new organization ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "room",
+                      "id": "react-todo-list",
+                      "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "organizationId": "org_987654321",
+                      "metadata": {
+                        "color": "blue",
+                        "size": "10",
+                        "target": ["abc", "def"]
+                      },
+                      "defaultAccesses": ["room:write"],
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "usersAccesses": {
+                        "alice": ["room:write"],
+                        "vinod": ["room:write"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "update-room-organization-id",
+        "description": "This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomOrganizationIdRequestBody"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "fromOrganizationId": "org_123456789",
+                    "toOrganizationId": "org_987654321"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/active_users": {
       "get": {
         "summary": "Get active users",
@@ -2992,6 +3077,100 @@
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/inbox-notifications": {
+      "get": {
+        "summary": "Get thread inbox notifications",
+        "tags": ["Comments"],
+        "description": "This endpoint returns the inbox notifications associated with a specific thread. Because this endpoint is not user-scoped, each notification includes a `userId` field identifying which user the notification belongs to. Only thread-kind notifications are returned.",
+        "operationId": "get-thread-inbox-notifications",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the thread",
+              "example": "th_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the inbox notifications for the thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/InboxNotificationThreadData"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "userId": {
+                                "type": "string",
+                                "description": "The user ID this notification belongs to."
+                              }
+                            },
+                            "required": ["userId"]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string",
+            "example": "my-room-id"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string",
+            "example": "th_abc123"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
     "/authorize-user": {
       "post": {
         "summary": "Get access token with secret key",
@@ -4009,6 +4188,51 @@
         }
       }
     },
+    "/inbox-notifications/{inboxNotificationId}/read": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string",
+            "example": "in_abc123"
+          },
+          "name": "inboxNotificationId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "post": {
+        "summary": "Mark inbox notification as read",
+        "tags": ["Notifications"],
+        "operationId": "mark-inbox-notification-as-read",
+        "description": "This endpoint marks a specific inbox notification as read.",
+        "parameters": [
+          {
+            "name": "inboxNotificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the inbox notification",
+              "example": "in_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. The inbox notification has been marked as read. This endpoint does not return any content."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/groups": {
       "post": {
         "summary": "Create group",
@@ -4749,6 +4973,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "title": "Response",
                   "properties": {
                     "id": {
                       "type": "string"
@@ -6202,9 +6427,6 @@
           },
           "metadata": {
             "$ref": "#/components/schemas/RoomMetadata"
-          },
-          "organizationId": {
-            "type": "string"
           }
         },
         "additionalProperties": false,
@@ -6364,9 +6586,6 @@
             "type": "integer",
             "enum": [1, 2],
             "description": "Preferred storage engine version to use when creating new rooms. The v2 Storage engine supports larger documents, is more performant, has native streaming support, and will become the default in the future."
-          },
-          "organizationId": {
-            "type": "string"
           }
         },
         "required": ["id", "defaultAccesses"],
@@ -6522,6 +6741,26 @@
         "required": ["newRoomId"],
         "example": {
           "newRoomId": "new-room-id"
+        }
+      },
+      "UpdateRoomOrganizationIdRequestBody": {
+        "type": "object",
+        "title": "UpdateRoomOrganizationIdRequestBody",
+        "additionalProperties": false,
+        "properties": {
+          "fromOrganizationId": {
+            "type": "string",
+            "description": "The current organization ID of the room. Must match the room's current organization ID."
+          },
+          "toOrganizationId": {
+            "type": "string",
+            "description": "The new organization ID to assign to the room."
+          }
+        },
+        "required": ["fromOrganizationId", "toOrganizationId"],
+        "example": {
+          "fromOrganizationId": "org_123456789",
+          "toOrganizationId": "org_987654321"
         }
       },
       "ActiveUsersResponse": {
@@ -7892,6 +8131,9 @@
           "roomId": {
             "type": "string"
           },
+          "organizationId": {
+            "type": "string"
+          },
           "readAt": {
             "oneOf": [
               {
@@ -7916,11 +8158,11 @@
           "notifiedAt",
           "readAt"
         ],
-        "additionalProperties": false,
         "example": {
           "kind": "thread",
           "id": "in_abc123",
           "roomId": "my-room-id",
+          "organizationId": "org_123456789",
           "threadId": "th_abc123",
           "notifiedAt": "2024-01-15T10:30:00.000Z",
           "readAt": null
