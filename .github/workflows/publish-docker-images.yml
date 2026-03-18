@@ -30,7 +30,6 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       is_release: ${{ steps.v.outputs.is_release }}
-      cli_tag: ${{ steps.v.outputs.cli_tag }}
       # Non-empty only for workflow_dispatch triggers. Passed to docker-image.yml
       # so it can apply explicit version tags (type=raw) since there is no git tag
       # for docker/metadata-action's type=semver to derive versions from.
@@ -46,7 +45,6 @@ jobs:
             VERSION="${{ inputs.version }}"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
-            echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "release_version=${VERSION}" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_type }}" == "tag" ]]; then
             # Tag push (e.g. v1.0.6). docker/metadata-action derives semver tags
@@ -54,37 +52,22 @@ jobs:
             VERSION="${GITHUB_REF_NAME#v}"
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=true" >> "$GITHUB_OUTPUT"
-            echo "cli_tag=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "release_version=" >> "$GITHUB_OUTPUT"
           else
             # Non-release build (branch push, PR). No version tags applied.
             VERSION=$(npm view liveblocks version)
             echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             echo "is_release=false" >> "$GITHUB_OUTPUT"
-            echo "cli_tag=sha-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
             echo "release_version=" >> "$GITHUB_OUTPUT"
           fi
 
-  publish-cli-image:
+  publish:
     needs: version
     uses: ./.github/workflows/docker-image.yml
     with:
-      image: liveblocks/cli
+      image: liveblocks/dev-server
       is_release: ${{ needs.version.outputs.is_release }}
       release_version: ${{ needs.version.outputs.release_version }}
-      scan: true
       build-args: |
         CLI_VERSION=${{ needs.version.outputs.version }}
         VERSION=${{ needs.version.outputs.version }}
-
-  publish-dev-server-image:
-    needs: [version, publish-cli-image]
-    uses: ./.github/workflows/docker-image.yml
-    with:
-      image: liveblocks/dev-server
-      dockerfile: Dockerfile.dev-server
-      is_release: ${{ needs.version.outputs.is_release }}
-      release_version: ${{ needs.version.outputs.release_version }}
-      scan: true
-      build-args: |
-        CLI_TAG=${{ needs.version.outputs.cli_tag }}
