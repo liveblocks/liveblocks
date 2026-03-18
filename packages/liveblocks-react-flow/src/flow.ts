@@ -1,4 +1,5 @@
 import {
+  type Json,
   type JsonObject,
   LiveMap,
   LiveObject,
@@ -53,15 +54,70 @@ type SerializableEdge = Edge<JsonObject>;
  */
 type KeysOfUnion<T> = T extends unknown ? keyof T : never;
 
+/** Custom serializer for non-Json data (e.g. functions). */
+export type DataSyncSerializer<T = unknown> = {
+  serialize: (value: T) => Json;
+  deserialize: (value: Json) => T;
+};
+
 /**
- * Flat config: keys set to `true` are synced for all nodes/edges.
- * Per-type config: keys are node/edge types, values are key sets for that type.
+ * Per-key config value. Use `true` for Json-serializable data; use
+ * `{ serialize, deserialize }` for non-storable types (e.g. functions).
+ */
+export type DataSyncValue<T> = true | DataSyncSerializer<T>;
+
+/** Runtime type for a key's sync config (true or custom serializer). */
+type DataSyncKeyConfig = true | DataSyncSerializer;
+
+/**
+ * Flat config: keys set to `true` or `{ serialize, deserialize }` for all nodes.
+ * Per-type config: keys are node/edge types, values are key configs for that type.
  */
 type DataSyncConfig<TData> =
-  | Partial<Record<Extract<KeysOfUnion<TData>, string>, true>>
-  | Partial<
-      Record<string, Partial<Record<Extract<KeysOfUnion<TData>, string>, true>>>
-    >;
+  | Partial<Record<Extract<KeysOfUnion<TData>, string>, DataSyncKeyConfig>>
+  | Partial<Record<string, Partial<Record<Extract<KeysOfUnion<TData>, string>, DataSyncKeyConfig>>>>;
+
+function isCustomSerializer(value: unknown): value is DataSyncSerializer {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    "serialize" in value &&
+    "deserialize" in value
+  );
+}
+
+function isPerTypeConfig(config: object): boolean {
+  return Object.values(config).some(
+    (v) =>
+      typeof v === "object" &&
+      v !== null &&
+      !Array.isArray(v) &&
+      !isCustomSerializer(v)
+  );
+}
+
+/**
+ * Returns the full type config for a given type (flat or per-type).
+ */
+function getTypeConfig(
+  config: object | undefined,
+  type: string | undefined
+): Record<string, DataSyncKeyConfig> | undefined {
+  if (!config) return undefined;
+  const configRecord = config as Record<string, unknown>;
+  if (isPerTypeConfig(config)) {
+    const typeKey = type ?? "default";
+    if (!(typeKey in configRecord)) {
+      return undefined;
+    }
+    const typeConfig = configRecord[typeKey];
+    return typeConfig && typeof typeConfig === "object" && !Array.isArray(typeConfig)
+      ? (typeConfig as Record<string, DataSyncKeyConfig>)
+      : undefined;
+  }
+  return configRecord as Record<string, DataSyncKeyConfig>;
+}
 
 /**
  * Resolves sync keys from config. Flat config applies to all; per-type config
@@ -71,24 +127,12 @@ function getDataSyncedKeys(
   config: object | undefined,
   type: string | undefined
 ): readonly string[] | undefined {
-  if (!config) return undefined;
-  const isPerType = Object.values(config).some(
-    (v) => typeof v === "object" && v !== null && !Array.isArray(v)
-  );
-  if (isPerType) {
-    const configRecord = config as Record<string, object>;
-    const typeKey = type ?? "default";
-    // If the type is not in config, sync everything (no key filtering).
-    if (!(typeKey in configRecord)) {
-      return undefined;
-    }
-    const typeConfig = configRecord[typeKey] ?? {};
-    return Object.keys(typeConfig).filter(
-      (k) => (typeConfig as Record<string, unknown>)[k] === true
-    );
-  }
-  return Object.keys(config).filter(
-    (k) => (config as Record<string, unknown>)[k] === true
+  const typeConfig = getTypeConfig(config, type);
+  if (!typeConfig) return undefined;
+  return Object.keys(typeConfig).filter(
+    (k) =>
+      (typeConfig as Record<string, unknown>)[k] === true ||
+      isCustomSerializer((typeConfig as Record<string, unknown>)[k])
   );
 }
 
@@ -284,11 +328,12 @@ function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
   return next;
 }
 
-function merge<T extends { id: string }, L extends object>(
+function merge<T extends { id: string; type?: string }, L extends object>(
   cache: Map<string, T>,
   remote: ReadonlyMap<string, T>,
   local: ReadonlyMap<string, L>,
-  localData?: ReadonlyMap<string, Record<string, unknown>>
+  localData?: ReadonlyMap<string, Record<string, unknown>>,
+  syncConfig?: object
 ): T[] {
   // Prune items that are no longer present remotely.
   for (const id of cache.keys()) {
@@ -299,15 +344,42 @@ function merge<T extends { id: string }, L extends object>(
 
   // Merge remote and local items.
   return Array.from(remote.values(), (item) => {
+    const typeConfig = getTypeConfig(syncConfig, item.type);
+    let itemWithData = item;
+
+    // Deserialize remote data for keys with custom deserializers.
+    if (typeConfig && "data" in item && (item as { data?: object }).data) {
+      const remoteData = (item as { data: Record<string, unknown> }).data;
+      const deserializedData: Record<string, unknown> = {};
+      for (const key of Object.keys(remoteData)) {
+        const config = typeConfig[key];
+        const value = remoteData[key];
+        if (isCustomSerializer(config)) {
+          deserializedData[key] = config.deserialize(value as Json);
+        } else {
+          deserializedData[key] = value;
+        }
+      }
+      itemWithData = {
+        ...item,
+        data: deserializedData,
+      } as T;
+    }
+
     const localItem = local.get(item.id);
     const localDataItem = localData?.get(item.id);
 
-    let merged = localItem ? (Object.assign({}, item, localItem) as T) : item;
+    let merged = localItem
+      ? (Object.assign({}, itemWithData, localItem) as T)
+      : itemWithData;
 
     if (localDataItem && "data" in merged) {
       merged = {
         ...merged,
-        data: { ...(merged as { data?: object }).data, ...localDataItem },
+        data: {
+          ...(merged as { data?: object }).data,
+          ...localDataItem,
+        },
       } as T;
     }
 
@@ -340,14 +412,26 @@ function setOrDelete<T extends object>(
 
 // Converts a React Flow `Node` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-// When dataSyncedKeys is provided, only those data keys are stored.
+// When typeConfig is provided, only those data keys are stored (with serialize if custom).
 function nodeToStorage<TNode extends SerializableNode>(
   node: TNode,
-  dataSyncedKeys?: readonly string[]
+  typeConfig?: Record<string, DataSyncKeyConfig>
 ): LiveblocksNode<TNode> {
   const stored = omit(node, NODE_LOCAL_KEYS) as Record<string, unknown>;
-  if (dataSyncedKeys) {
-    stored.data = pick(node.data as object, dataSyncedKeys);
+  if (typeConfig && node.data) {
+    const data = node.data as Record<string, unknown>;
+    const storedData: Record<string, unknown> = {};
+    for (const key of Object.keys(typeConfig)) {
+      const value = data[key];
+      if (value === undefined) continue;
+      const config = typeConfig[key];
+      if (config === true) {
+        storedData[key] = value;
+      } else if (isCustomSerializer(config)) {
+        storedData[key] = config.serialize(value);
+      }
+    }
+    stored.data = storedData;
   }
   return new LiveObject(
     stored as unknown as LsonObject
@@ -356,14 +440,26 @@ function nodeToStorage<TNode extends SerializableNode>(
 
 // Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-// When dataSyncedKeys is provided, only those data keys are stored.
+// When typeConfig is provided, only those data keys are stored (with serialize if custom).
 function edgeToStorage<TEdge extends SerializableEdge>(
   edge: TEdge,
-  dataSyncedKeys?: readonly string[]
+  typeConfig?: Record<string, DataSyncKeyConfig>
 ): LiveblocksEdge<TEdge> {
   const stored = omit(edge, EDGE_LOCAL_KEYS) as Record<string, unknown>;
-  if (dataSyncedKeys && edge.data) {
-    stored.data = pick(edge.data as object, dataSyncedKeys);
+  if (typeConfig && edge.data) {
+    const data = edge.data as Record<string, unknown>;
+    const storedData: Record<string, unknown> = {};
+    for (const key of Object.keys(typeConfig)) {
+      const value = data[key];
+      if (value === undefined) continue;
+      const config = typeConfig[key];
+      if (config === true) {
+        storedData[key] = value;
+      } else if (isCustomSerializer(config)) {
+        storedData[key] = config.serialize(value);
+      }
+    }
+    stored.data = storedData;
   }
   return new LiveObject(
     stored as unknown as LsonObject
@@ -396,11 +492,15 @@ function applyNodeChanges<TNode extends SerializableNode>(args: {
     switch (change.type) {
       case "add":
       case "replace": {
+        const typeConfig = getTypeConfig(
+          nodeDataSyncConfig,
+          change.item.type
+        );
         const dataSyncedKeys = getDataSyncedKeys(
           nodeDataSyncConfig,
           change.item.type
         );
-        nodes.set(change.item.id, nodeToStorage(change.item, dataSyncedKeys));
+        nodes.set(change.item.id, nodeToStorage(change.item, typeConfig));
         setOrDelete(
           nextLocal,
           change.item.id,
@@ -538,11 +638,15 @@ function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
     switch (change.type) {
       case "add":
       case "replace": {
+        const typeConfig = getTypeConfig(
+          edgeDataSyncConfig,
+          change.item.type
+        );
         const dataSyncedKeys = getDataSyncedKeys(
           edgeDataSyncConfig,
           change.item.type
         );
-        edges.set(change.item.id, edgeToStorage(change.item, dataSyncedKeys));
+        edges.set(change.item.id, edgeToStorage(change.item, typeConfig));
         setOrDelete(
           nextLocal,
           change.item.id,
@@ -632,13 +736,13 @@ export function createLiveblocksFlow<
     nodes: new LiveMap(
       nodes.map((node) => [
         node.id,
-        nodeToStorage(node, getDataSyncedKeys(nodeDataSyncConfig, node.type)),
+        nodeToStorage(node, getTypeConfig(nodeDataSyncConfig, node.type)),
       ])
     ),
     edges: new LiveMap(
       edges.map((edge) => [
         edge.id,
-        edgeToStorage(edge, getDataSyncedKeys(edgeDataSyncConfig, edge.type)),
+        edgeToStorage(edge, getTypeConfig(edgeDataSyncConfig, edge.type)),
       ])
     ),
   });
@@ -749,7 +853,8 @@ export function useLiveblocksFlow<
             nodeCache.current,
             remoteNodesMap,
             localNodes,
-            frozenOptions.nodes?.sync?.data ? localNodeData : undefined
+            frozenOptions.nodes?.sync?.data ? localNodeData : undefined,
+            frozenOptions.nodes?.sync?.data
           )
         : null,
     [remoteNodesMap, localNodes, localNodeData, frozenOptions.nodes?.sync?.data]
@@ -761,7 +866,8 @@ export function useLiveblocksFlow<
             edgeCache.current,
             remoteEdgesMap,
             localEdges,
-            frozenOptions.edges?.sync?.data ? localEdgeData : undefined
+            frozenOptions.edges?.sync?.data ? localEdgeData : undefined,
+            frozenOptions.edges?.sync?.data
           )
         : null,
     [remoteEdgesMap, localEdges, localEdgeData, frozenOptions.edges?.sync?.data]
@@ -860,13 +966,10 @@ export function useLiveblocksFlow<
 
       // Type assertion: edgeToStorage returns the correct shape at runtime;
       // the variance between Pick<data, subset> and Pick<data, all> causes TS errors.
-      edges.set(
-        newEdge.id,
-        edgeToStorage(
-          newEdge,
-          getDataSyncedKeys(edgeDataSyncConfig, newEdge.type)
-        ) as never
-      );
+    edges.set(
+      newEdge.id,
+      edgeToStorage(newEdge, getTypeConfig(edgeDataSyncConfig, newEdge.type)) as never
+    );
     },
     [edgeDataSyncConfig]
   );

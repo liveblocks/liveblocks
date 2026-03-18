@@ -2,6 +2,7 @@
 
 import {
   ClientSideSuspense,
+  type Json,
   JsonObject,
   RoomProvider,
 } from "@liveblocks/react";
@@ -441,7 +442,20 @@ function Flow() {
         initial: INITIAL_NODES,
         sync: {
           data: {
-            annotation: { label: true, level: true, arrowStyle: true },
+            annotation: {
+              label: true,
+              level: true,
+              arrowStyle: {
+                serialize: (v: unknown) =>
+                  v && typeof v === "object" && !Array.isArray(v)
+                    ? { ...(v as Record<string, string | number>) }
+                    : ({} as JsonObject),
+                deserialize: (v: Json) =>
+                  (v && typeof v === "object" && !Array.isArray(v)
+                    ? v
+                    : {}) as Record<string, string | number>,
+              },
+            },
             tools: { emoji: true },
             default: { label: true },
           },
