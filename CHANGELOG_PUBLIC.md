@@ -20,7 +20,21 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 12 (2026-03-20)
 
+## Liveblocks dev server (v1.1.0)
+
+New dev server features:
+
+- ID token authentication support
+- Read-only rooms support
+- Room permissions and room metadata
+- Room filtering support
+- Room Node.js methods and REST APIs are now fully supported
+
+See https://liveblocks.io/docs/tools/dev-server for the updated feature matrix.
+
 ## Contributors
+
+nvie
 
 # Week 11 (2026-03-13)
 
