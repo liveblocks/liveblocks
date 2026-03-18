@@ -36,6 +36,7 @@ const DIMENSION_ATTRIBUTES = ["width", "height"] as const;
 type AnnotationNode = Node<{
   level: number;
   label: string;
+  color: string;
   arrowStyle: Record<string, string | number>;
 }>;
 
@@ -53,12 +54,43 @@ type FeatureOverviewNode =
   | ToolbarNode
   | ResizerNode;
 
-const AnnotationNode = memo(({ data }: NodeProps<AnnotationNode>) => {
-  const { level, label, arrowStyle } = data;
+const COLORS = [
+  "red",
+  "blue",
+  "green",
+  "purple",
+  "orange",
+  "teal",
+  "crimson",
+  "darkviolet",
+];
+
+const AnnotationNode = memo(({ id, data }: NodeProps<AnnotationNode>) => {
+  const { level, label, arrowStyle, color } = data;
+  const { updateNode } = useReactFlow();
+
+  const handleColorClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+      updateNode(id, (node) => ({
+        ...node,
+        data: { ...node.data, color: randomColor },
+      }));
+    },
+    [id, updateNode]
+  );
 
   return (
     <>
-      <div className="annotation-content">
+      <NodeToolbar isVisible>
+        <button onClick={handleColorClick} className="change-color">
+          Change color
+        </button>
+      </NodeToolbar>
+      <div className="annotation-content nodrag" style={{ color }}>
         <div className="annotation-level">{level}.</div>
         <div>{label}</div>
       </div>
@@ -265,6 +297,7 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
     selectable: false,
     data: {
       level: 1,
+      color: "red",
       label:
         "Built-in node and edge types. Draggable, deletable and connectable!",
       arrowStyle: {
@@ -306,6 +339,7 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
     selectable: false,
     data: {
       level: 2,
+      color: "blue",
       label: "Sub flows, toolbars and resizable nodes!",
       arrowStyle: {
         left: 0,
@@ -456,8 +490,6 @@ function Flow() {
                     : {}) as Record<string, string | number>,
               },
             },
-            tools: { emoji: true },
-            default: { label: true },
           },
         },
       },

@@ -64,6 +64,15 @@
   background: #4d4d4d;
 }
 
+.react-flow__node-toolbar button.change-color {
+  color: white;
+  border-radius: 12px;
+}
+
+.react-flow__node-toolbar button.change-color:hover {
+  background: #252323;
+}
+
 .resizer-node__handles {
   display: flex;
   position: absolute;
