@@ -845,7 +845,7 @@
         "path": "/api-reference/liveblocks-emails"
       },
       {
-        "title": "@liveblocks/python",
+        "title": "Python SDK",
         "path": "/api-reference/liveblocks-python"
       },
       {
