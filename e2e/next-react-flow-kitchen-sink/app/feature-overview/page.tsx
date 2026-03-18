@@ -396,6 +396,7 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
     data: {
       level: 3,
       label: "Nodes and edges can be anything and are fully customizable!",
+      color: "green",
       arrowStyle: {
         right: 0,
         bottom: 0,
