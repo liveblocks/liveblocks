@@ -685,6 +685,8 @@ export function useLiveblocksFlow<
   });
 
   // Merge remote and local layers to get the final state.
+  // Only use key-filtered local data overlay when sync.data is defined;
+  // otherwise we sync everything and local data lives in storage.
   const nodes = useMemo(
     () =>
       remoteNodesMap
@@ -692,10 +694,10 @@ export function useLiveblocksFlow<
             nodeCache.current,
             remoteNodesMap,
             localNodes,
-            nodeDataSyncedKeys ? localNodeData : undefined
+            frozenOptions.nodes?.sync?.data ? localNodeData : undefined
           )
         : null,
-    [remoteNodesMap, localNodes, localNodeData, nodeDataSyncedKeys]
+    [remoteNodesMap, localNodes, localNodeData, frozenOptions.nodes?.sync?.data]
   );
   const edges = useMemo(
     () =>
@@ -704,10 +706,10 @@ export function useLiveblocksFlow<
             edgeCache.current,
             remoteEdgesMap,
             localEdges,
-            edgeDataSyncedKeys ? localEdgeData : undefined
+            frozenOptions.edges?.sync?.data ? localEdgeData : undefined
           )
         : null,
-    [remoteEdgesMap, localEdges, localEdgeData, edgeDataSyncedKeys]
+    [remoteEdgesMap, localEdges, localEdgeData, frozenOptions.edges?.sync?.data]
   );
 
   const onNodesChange = useMutation(
