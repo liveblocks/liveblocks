@@ -1,4 +1,5 @@
 import {
+  type DistributiveOmit,
   type JsonObject,
   LiveMap,
   LiveObject,
@@ -50,22 +51,27 @@ type SerializableEdge = Edge<JsonObject>;
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
  *
- * It doesn't include local-only properties and is stored as a `LiveObject`.
+ * It doesn't include local-only properties.
+ * The entire node and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksNode<TNode extends SerializableNode = SerializableNode> =
   LiveObject<
-    Omit<Node<TNode["data"]>, (typeof NODE_LOCAL_KEYS)[number]> & LsonObject
+    DistributiveOmit<TNode, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
+      data: LiveObject<TNode["data"]>;
+    } & LsonObject
   >;
 
 /**
  * The Liveblocks Storage representation of a React Flow `Edge`.
  *
- * It doesn't include local-only properties and is stored as a `LiveObject`.
+ * It doesn't include local-only properties.
+ * The entire edge and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksEdge<TEdge extends SerializableEdge = SerializableEdge> =
   LiveObject<
-    Omit<Edge<NonNullable<TEdge["data"]>>, (typeof EDGE_LOCAL_KEYS)[number]> &
-      LsonObject
+    DistributiveOmit<TEdge, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
+      data?: LiveObject<NonNullable<TEdge["data"]>>;
+    } & LsonObject
   >;
 
 /**
@@ -169,13 +175,6 @@ type UseLiveblocksFlowOptions<
    */
   storageKey?: string;
 };
-
-type StorageRoot<
-  TNode extends SerializableNode,
-  TEdge extends SerializableEdge,
-> = LiveObject<{
-  [key: string]: LiveblocksFlow<TNode, TEdge> | undefined;
-}>;
 
 function pick<T extends object, K extends PropertyKey>(
   from: T,
@@ -282,9 +281,12 @@ function updateLocalState<T extends object>(
 function nodeToStorage<TNode extends SerializableNode>(
   node: TNode
 ): LiveblocksNode<TNode> {
-  return new LiveObject(
-    omit(node, NODE_LOCAL_KEYS) as unknown as LsonObject
-  ) as LiveblocksNode<TNode>;
+  const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as TNode;
+
+  return new LiveObject({
+    ...(rest as LsonObject),
+    data: new LiveObject(data as LsonObject),
+  }) as LiveblocksNode<TNode>;
 }
 
 // Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
@@ -292,9 +294,14 @@ function nodeToStorage<TNode extends SerializableNode>(
 function edgeToStorage<TEdge extends SerializableEdge>(
   edge: TEdge
 ): LiveblocksEdge<TEdge> {
-  return new LiveObject(
-    omit(edge, EDGE_LOCAL_KEYS) as unknown as LsonObject
-  ) as LiveblocksEdge<TEdge>;
+  const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as TEdge;
+
+  return new LiveObject({
+    ...(rest as LsonObject),
+
+    // `data` is optional on edges.
+    data: data === undefined ? undefined : new LiveObject(data as LsonObject),
+  }) as LiveblocksEdge<TEdge>;
 }
 
 // Similar to React Flow's `applyNodeChanges()`, but with a split between local
@@ -503,7 +510,8 @@ export function useLiveblocksFlow<
 >(
   options: UseLiveblocksFlowOptions<TNode, TEdge> = {}
 ): Resolve<UseLiveblocksFlowResult<TNode, TEdge>> {
-  type TStorageRoot = StorageRoot<TNode, TEdge>;
+  type TFlow = LiveblocksFlow<TNode, TEdge>;
+  type TImmutableFlow = ToImmutable<LiveblocksFlow<TNode, TEdge>>;
 
   const isStorageLoaded = useStorage(() => true) ?? false;
 
@@ -529,19 +537,19 @@ export function useLiveblocksFlow<
   const localEdges = useSignal(localEdgesΣ);
 
   // Remote state lives in Liveblocks Storage.
-  const remoteNodesMap = useStorage((root) => {
-    const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return (flow?.nodes ?? null) as unknown as ReadonlyMap<
-      string,
-      TNode
-    > | null;
+  const remoteNodesMap = useStorage((storage) => {
+    const flow = storage[frozenOptions.storageKey] as
+      | TImmutableFlow
+      | undefined;
+
+    return (flow?.nodes ?? null) as ReadonlyMap<string, TNode> | null;
   });
-  const remoteEdgesMap = useStorage((root) => {
-    const flow = (root as ToImmutable<TStorageRoot>)[frozenOptions.storageKey];
-    return (flow?.edges ?? null) as unknown as ReadonlyMap<
-      string,
-      TEdge
-    > | null;
+  const remoteEdgesMap = useStorage((storage) => {
+    const flow = storage[frozenOptions.storageKey] as
+      | TImmutableFlow
+      | undefined;
+
+    return (flow?.edges ?? null) as ReadonlyMap<string, TEdge> | null;
   });
 
   // Merge remote and local layers to get the final state.
@@ -562,7 +570,7 @@ export function useLiveblocksFlow<
 
   const onNodesChange = useMutation(
     ({ storage }, changes: NodeChange<TNode>[]) => {
-      const flow = (storage as TStorageRoot).get(frozenOptions.storageKey);
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
 
       if (!flow) {
         return;
@@ -585,7 +593,7 @@ export function useLiveblocksFlow<
 
   const onEdgesChange = useMutation(
     ({ storage }, changes: EdgeChange<TEdge>[]) => {
-      const flow = (storage as TStorageRoot).get(frozenOptions.storageKey);
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
 
       if (!flow) {
         return;
@@ -607,7 +615,7 @@ export function useLiveblocksFlow<
   );
 
   const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const flow = (storage as TStorageRoot).get(frozenOptions.storageKey);
+    const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
 
     if (!flow) {
       return;
@@ -641,18 +649,16 @@ export function useLiveblocksFlow<
   }, []);
 
   const setInitialStorage = useMutation(({ storage }) => {
-    const root = storage as TStorageRoot;
-
     // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
     // initialize Storage if it doesn't already exist.
-    if (root.get(frozenOptions.storageKey) !== undefined) {
+    if (storage.get(frozenOptions.storageKey) !== undefined) {
       return;
     }
 
     const { nodes: initialNodes = [], edges: initialEdges = [] } =
       frozenOptions.initial ?? {};
 
-    root.set(
+    storage.set(
       frozenOptions.storageKey,
       createLiveblocksFlow(initialNodes, initialEdges)
     );
