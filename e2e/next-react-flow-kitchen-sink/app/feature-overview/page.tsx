@@ -441,10 +441,9 @@ function Flow() {
         initial: INITIAL_NODES,
         sync: {
           data: {
-            label: true,
-            emoji: true,
-            level: true,
-            arrowStyle: true,
+            annotation: { label: true, level: true, arrowStyle: true },
+            tools: { emoji: true },
+            default: { label: true },
           },
         },
       },
