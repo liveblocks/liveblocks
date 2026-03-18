@@ -30,7 +30,7 @@ New dev server features:
 - Room filtering support
 - Room Node.js methods and REST APIs are now fully supported
 
-See https://liveblocks.io/docs/tools/dev-server for the updated feature matrix.
+See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for the updated feature matrix.
 
 ## Contributors
 
