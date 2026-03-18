@@ -9,6 +9,7 @@ import {
   Position,
   ReactFlow,
   useReactFlow,
+  type Node,
 } from "@xyflow/react";
 import { type ChangeEvent, memo, useCallback } from "react";
 
@@ -64,9 +65,9 @@ const ColorSelectorNode = memo(
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow<{ label?: string; color?: string }>({
-      initial: {
-        nodes: [
+    useLiveblocksFlow<Node<{ label?: string; color?: string }>>({
+      nodes: {
+        initial: [
           {
             id: "1",
             type: "input",
@@ -95,7 +96,10 @@ function Flow() {
             targetPosition: Position.Left,
           },
         ],
-        edges: [
+        sync: { data: { label: true, color: true } },
+      },
+      edges: {
+        initial: [
           { id: "e1-2", source: "1", target: "2", animated: true },
           { id: "e2a-3", source: "2", target: "3", animated: true },
           { id: "e2b-4", source: "2", target: "4", animated: true },

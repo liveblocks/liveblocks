@@ -7,8 +7,8 @@ import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useLiveblocksFlow({
-      initial: {
-        nodes: [
+      nodes: {
+        initial: [
           {
             id: "1",
             type: "input",
@@ -34,7 +34,9 @@ function Flow() {
             style: { borderColor: "#944DFA" },
           },
         ],
-        edges: [
+      },
+      edges: {
+        initial: [
           { id: "e1-2", source: "1", target: "2", type: "smoothstep" },
           { id: "e2-3", source: "2", target: "3", label: "with" },
           {
