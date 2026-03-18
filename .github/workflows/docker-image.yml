@@ -1,4 +1,4 @@
-# Reusable workflow: build, scan, sign and publish a Docker image to GHCR.
+# Reusable workflow: build and publish a Docker image to GHCR.
 name: "[reusable] Build Docker image"
 
 on:
