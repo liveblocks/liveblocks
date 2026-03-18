@@ -3520,6 +3520,7 @@ export class Liveblocks {
    * @param params.feedId The feed ID to update the message in.
    * @param params.messageId The message ID to update.
    * @param params.data The message data.
+   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used. If provided and less than the current time, the message update will be ignored.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async updateFeedMessage<FMD extends Json = Json>(
@@ -3527,13 +3528,14 @@ export class Liveblocks {
       roomId: string;
       feedId: string;
       messageId: string;
+      timestamp?: number;
     } & UpdateFeedMessageOptions<FMD>,
     options?: RequestOptions
   ): Promise<void> {
-    const { roomId, feedId, messageId, data } = params;
+    const { roomId, feedId, messageId, data, timestamp } = params;
     const res = await this.#patch(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
-      { data },
+      { data, timestamp },
       options
     );
     if (!res.ok) {

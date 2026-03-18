@@ -7920,6 +7920,9 @@
         "properties": {
           "data": {
             "type": "object"
+          },
+          "timestamp": {
+            "type": "number"
           }
         },
         "required": ["data"]

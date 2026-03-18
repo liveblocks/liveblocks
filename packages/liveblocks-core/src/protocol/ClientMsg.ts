@@ -182,6 +182,7 @@ export type UpdateFeedMessageClientMsg = {
   readonly feedId: string;
   readonly messageId: string;
   readonly data: JsonObject;
+  readonly timestamp?: number;
 };
 
 export type DeleteFeedMessageClientMsg = {
