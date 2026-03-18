@@ -60,10 +60,7 @@ type KeysOfUnion<T> = T extends unknown ? keyof T : never;
 type DataSyncConfig<TData> =
   | Partial<Record<Extract<KeysOfUnion<TData>, string>, true>>
   | Partial<
-      Record<
-        string,
-        Partial<Record<Extract<KeysOfUnion<TData>, string>, true>>
-      >
+      Record<string, Partial<Record<Extract<KeysOfUnion<TData>, string>, true>>>
     >;
 
 /**
@@ -241,12 +238,7 @@ type StorageRoot<
   >,
 > = LiveObject<{
   [key: string]:
-    | LiveblocksFlow<
-        TNode,
-        TEdge,
-        TNodeDataSyncedKeys,
-        TEdgeDataSyncedKeys
-      >
+    | LiveblocksFlow<TNode, TEdge, TNodeDataSyncedKeys, TEdgeDataSyncedKeys>
     | undefined;
 }>;
 
@@ -357,7 +349,9 @@ function nodeToStorage<TNode extends SerializableNode>(
   if (dataSyncedKeys) {
     stored.data = pick(node.data as object, dataSyncedKeys);
   }
-  return new LiveObject(stored as unknown as LsonObject) as LiveblocksNode<TNode>;
+  return new LiveObject(
+    stored as unknown as LsonObject
+  ) as LiveblocksNode<TNode>;
 }
 
 // Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
@@ -371,7 +365,9 @@ function edgeToStorage<TEdge extends SerializableEdge>(
   if (dataSyncedKeys && edge.data) {
     stored.data = pick(edge.data as object, dataSyncedKeys);
   }
-  return new LiveObject(stored as unknown as LsonObject) as LiveblocksEdge<TEdge>;
+  return new LiveObject(
+    stored as unknown as LsonObject
+  ) as LiveblocksEdge<TEdge>;
 }
 
 // Similar to React Flow's `applyNodeChanges()`, but with a split between local
@@ -410,10 +406,17 @@ function applyNodeChanges<TNode extends SerializableNode>(args: {
           change.item.id,
           pick(change.item, NODE_LOCAL_KEYS)
         );
-        if (nodeDataSyncConfig && nextLocalData && dataSyncedKeys !== undefined) {
+        if (
+          nodeDataSyncConfig &&
+          nextLocalData &&
+          dataSyncedKeys !== undefined
+        ) {
           const localData = omit(change.item.data as object, dataSyncedKeys);
           if (Object.keys(localData).length > 0) {
-            nextLocalData.set(change.item.id, localData as Record<string, unknown>);
+            nextLocalData.set(
+              change.item.id,
+              localData as Record<string, unknown>
+            );
           } else {
             nextLocalData.delete(change.item.id);
           }
@@ -553,7 +556,10 @@ function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
         ) {
           const localData = omit(change.item.data as object, dataSyncedKeys);
           if (Object.keys(localData).length > 0) {
-            nextLocalData.set(change.item.id, localData as Record<string, unknown>);
+            nextLocalData.set(
+              change.item.id,
+              localData as Record<string, unknown>
+            );
           } else {
             nextLocalData.delete(change.item.id);
           }
@@ -608,8 +614,10 @@ export function createLiveblocksFlow<
   nodes: TNode[] = [],
   edges: TEdge[] = [],
   options?: {
-    nodeDataSync?: TNodeDataSync;
-    edgeDataSync?: TEdgeDataSync;
+    sync?: {
+      nodes?: TNodeDataSync;
+      edges?: TEdgeDataSync;
+    };
   }
 ): LiveblocksFlow<
   TNode,
@@ -617,17 +625,14 @@ export function createLiveblocksFlow<
   Extract<keyof TNodeDataSync, string>,
   Extract<keyof TEdgeDataSync, string>
 > {
-  const nodeDataSyncConfig = options?.nodeDataSync;
-  const edgeDataSyncConfig = options?.edgeDataSync;
+  const nodeDataSyncConfig = options?.sync?.nodes;
+  const edgeDataSyncConfig = options?.sync?.edges;
 
   const flow = new LiveObject({
     nodes: new LiveMap(
       nodes.map((node) => [
         node.id,
-        nodeToStorage(
-          node,
-          getDataSyncedKeys(nodeDataSyncConfig, node.type)
-        ),
+        nodeToStorage(node, getDataSyncedKeys(nodeDataSyncConfig, node.type)),
       ])
     ),
     edges: new LiveMap(
@@ -820,47 +825,51 @@ export function useLiveblocksFlow<
     [edgeDataSyncConfig]
   );
 
-  const onConnect = useMutation(({ storage }, connection: Connection) => {
-    const flow = (storage as TStorageRoot).get(frozenOptions.storageKey);
+  const onConnect = useMutation(
+    ({ storage }, connection: Connection) => {
+      const flow = (storage as TStorageRoot).get(frozenOptions.storageKey);
 
-    if (!flow) {
-      return;
-    }
-
-    const edges = flow.get("edges");
-
-    // Check for duplicate connections.
-    for (const edge of edges.values()) {
-      if (
-        edge.get("source") === connection.source &&
-        edge.get("target") === connection.target &&
-        (edge.get("sourceHandle") ?? null) ===
-          (connection.sourceHandle ?? null) &&
-        (edge.get("targetHandle") ?? null) === (connection.targetHandle ?? null)
-      ) {
+      if (!flow) {
         return;
       }
-    }
 
-    // Delegate to React Flow's own `addEdge` helper for consistent default
-    // edge ID generation, passing an empty array since de-duplication is
-    // already handled above.
-    const [newEdge] = defaultAddEdge(connection, [] as TEdge[]);
+      const edges = flow.get("edges");
 
-    if (!newEdge) {
-      return;
-    }
+      // Check for duplicate connections.
+      for (const edge of edges.values()) {
+        if (
+          edge.get("source") === connection.source &&
+          edge.get("target") === connection.target &&
+          (edge.get("sourceHandle") ?? null) ===
+            (connection.sourceHandle ?? null) &&
+          (edge.get("targetHandle") ?? null) ===
+            (connection.targetHandle ?? null)
+        ) {
+          return;
+        }
+      }
 
-    // Type assertion: edgeToStorage returns the correct shape at runtime;
-    // the variance between Pick<data, subset> and Pick<data, all> causes TS errors.
-    edges.set(
-      newEdge.id,
-      edgeToStorage(
-        newEdge,
-        getDataSyncedKeys(edgeDataSyncConfig, newEdge.type)
-      ) as never
-    );
-  }, [edgeDataSyncConfig]);
+      // Delegate to React Flow's own `addEdge` helper for consistent default
+      // edge ID generation, passing an empty array since de-duplication is
+      // already handled above.
+      const [newEdge] = defaultAddEdge(connection, [] as TEdge[]);
+
+      if (!newEdge) {
+        return;
+      }
+
+      // Type assertion: edgeToStorage returns the correct shape at runtime;
+      // the variance between Pick<data, subset> and Pick<data, all> causes TS errors.
+      edges.set(
+        newEdge.id,
+        edgeToStorage(
+          newEdge,
+          getDataSyncedKeys(edgeDataSyncConfig, newEdge.type)
+        ) as never
+      );
+    },
+    [edgeDataSyncConfig]
+  );
 
   const setInitialStorage = useMutation(({ storage }) => {
     const root = storage as TStorageRoot;
@@ -875,8 +884,10 @@ export function useLiveblocksFlow<
     const initialEdges = frozenOptions.edges?.initial ?? [];
 
     const flow = createLiveblocksFlow(initialNodes, initialEdges, {
-      nodeDataSync: frozenOptions.nodes?.sync?.data,
-      edgeDataSync: frozenOptions.edges?.sync?.data,
+      sync: {
+        nodes: frozenOptions.nodes?.sync?.data,
+        edges: frozenOptions.edges?.sync?.data,
+      },
     });
     root.set(frozenOptions.storageKey, flow as Parameters<typeof root.set>[1]);
   }, []);
