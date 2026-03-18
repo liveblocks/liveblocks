@@ -2,6 +2,12 @@
 
 ## v3.15.3
 
+### `Python SDK`
+
+- Introduce the Python package. Install with `pip install liveblocks`. Provides
+  sync and async clients for the full Liveblocks API (rooms, storage, threads,
+  comments, etc.) for backend use.
+
 ### `@liveblocks/react-ui`
 
 - Add `showSubscription` prop to `Thread` to control whether to show the
