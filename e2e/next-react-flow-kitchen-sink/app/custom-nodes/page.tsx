@@ -17,6 +17,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { type ChangeEvent, memo, useCallback } from "react";
+import { EXAMPLES } from "../examples";
 
 const DEFAULT_BACKGROUND_COLOR = "#c9f1dd";
 const DEFAULT_SNAP_GRID: [number, number] = [20, 20];
@@ -145,7 +146,7 @@ function Flow() {
 
 export default function Page() {
   return (
-    <RoomProvider id="liveblocks:examples:next-react-flow-kitchen-sink:custom-nodes">
+    <RoomProvider id={EXAMPLES["custom-nodes"].roomId}>
       <ClientSideSuspense fallback={null}>
         <Flow />
       </ClientSideSuspense>

@@ -3,6 +3,7 @@
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
+import { EXAMPLES } from "../examples";
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
@@ -68,7 +69,7 @@ function Flow() {
 
 export default function Page() {
   return (
-    <RoomProvider id="liveblocks:examples:next-react-flow-kitchen-sink:basic">
+    <RoomProvider id={EXAMPLES.basic.roomId}>
       <ClientSideSuspense fallback={null}>
         <Flow />
       </ClientSideSuspense>

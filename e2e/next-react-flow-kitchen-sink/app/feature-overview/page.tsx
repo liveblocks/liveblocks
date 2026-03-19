@@ -28,6 +28,7 @@ import {
 } from "@xyflow/react";
 import { type ChangeEvent, Fragment, memo, useCallback } from "react";
 import "./feature-overview.css";
+import { EXAMPLES } from "../examples";
 
 const EMOJIS = ["🚀", "🔥", "✨"] as const;
 const DIMENSION_ATTRIBUTES = ["width", "height"] as const;
@@ -472,7 +473,7 @@ function Flow() {
 
 export default function Page() {
   return (
-    <RoomProvider id="liveblocks:examples:next-react-flow-kitchen-sink:feature-overview">
+    <RoomProvider id={EXAMPLES["feature-overview"].roomId}>
       <ClientSideSuspense fallback={null}>
         <Flow />
       </ClientSideSuspense>

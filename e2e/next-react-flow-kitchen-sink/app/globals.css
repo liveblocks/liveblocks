@@ -19,4 +19,8 @@
   .dark html {
     color-scheme: dark;
   }
+
+  button {
+    cursor: pointer;
+  }
 }

@@ -1,6 +1,7 @@
-"use client";
-
 import Link from "next/link";
+import { deleteStorage } from "./delete-storage";
+import { EXAMPLES } from "./examples";
+import { ActionButton } from "./action-button";
 
 export default function Home() {
   return (
@@ -8,15 +9,17 @@ export default function Home() {
       <h1 className="text-2xl font-bold mb-4">Examples</h1>
 
       <div className="flex flex-col gap-4">
-        <Link href="/basic" className="underline">
-          Basic
-        </Link>
-        <Link href="/feature-overview" className="underline">
-          Feature overview
-        </Link>
-        <Link href="/custom-nodes" className="underline">
-          Custom nodes
-        </Link>
+        {Object.entries(EXAMPLES).map(([name, example]) => (
+          <div key={name} className="flex items-center gap-3">
+            <Link href={`/${name}`} className="underline">
+              {example.label}
+            </Link>
+            <form action={deleteStorage} className="inline">
+              <input type="hidden" name="roomId" value={example.roomId} />
+              <ActionButton>Reset</ActionButton>
+            </form>
+          </div>
+        ))}
       </div>
     </main>
   );
