@@ -1,4 +1,14 @@
-## vNEXT (not yet released)
+## v3.15.4
+
+### `@liveblocks/node`
+
+- Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
+  presigned download URL.
+
+### `Python SDK`
+
+- Add `get_attachment()` method to get an attachment's metadata and a presigned
+  download URL.
 
 ## v3.15.3
 
