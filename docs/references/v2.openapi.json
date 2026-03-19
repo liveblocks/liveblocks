@@ -2928,6 +2928,67 @@
         }
       }
     },
+    "/rooms/{roomId}/attachments/{attachmentId}": {
+      "get": {
+        "summary": "Get attachment",
+        "description": "Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.",
+        "tags": ["Comments"],
+        "operationId": "get-attachment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the attachment",
+              "example": "at_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the attachment metadata with a presigned download URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentWithUrl"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "attachment",
+                      "id": "at_abc123",
+                      "mimeType": "image/png",
+                      "name": "screenshot.png",
+                      "size": 12345,
+                      "url": "https://example.com/at_abc123?X-Amz-Expires=3600&X-Amz-Signature=...",
+                      "expiresAt": "2026-03-16T14:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "description": "Attachment not found"
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/metadata": {
       "post": {
         "summary": "Edit comment metadata",
@@ -7911,6 +7972,56 @@
           "mimeType": "image/png",
           "name": "screenshot.png",
           "size": 12345
+        }
+      },
+      "AttachmentWithUrl": {
+        "type": "object",
+        "title": "AttachmentWithUrl",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "attachment"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned download URL for the attachment"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the presigned URL expires"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "mimeType",
+          "name",
+          "size",
+          "url",
+          "expiresAt"
+        ],
+        "additionalProperties": false,
+        "example": {
+          "type": "attachment",
+          "id": "at_abc123",
+          "mimeType": "image/png",
+          "name": "screenshot.png",
+          "size": 12345,
+          "url": "https://example.com/at_abc123?X-Amz-Expires=3600&X-Amz-Signature=...",
+          "expiresAt": "2026-03-16T14:00:00.000Z"
         }
       },
       "AddCommentReactionRequestBody": {
