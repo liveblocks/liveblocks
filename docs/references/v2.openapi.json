@@ -10055,6 +10055,7 @@
           "teamId",
           "type",
           "name",
+          "description",
           "createdAt",
           "updatedAt",
           "publicKey",
