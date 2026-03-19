@@ -1,20 +1,24 @@
 import type { PlainLsonObject } from "@liveblocks/core";
+import { useMutation } from "@liveblocks/react";
 import { act, screen, waitFor } from "@testing-library/react";
+import type { Edge, Node } from "@xyflow/react";
 import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
-import type { SerializableEdge, SerializableNode } from "../flow";
+import type {
+  LiveblocksFlow,
+  SerializableEdge,
+  SerializableNode,
+} from "../flow";
 import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
 import { useLiveblocksFlow as useLiveblocksFlowSuspense } from "../suspense";
 import { render, renderHook } from "./_utils";
 
-const NODES = [
+const NODES: Node<{ label: string }>[] = [
   { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
   { id: "2", position: { x: 100, y: 100 }, data: { label: "Node 2" } },
-] satisfies SerializableNode[];
-const EDGES = [
-  { id: "e1-2", source: "1", target: "2" },
-] satisfies SerializableEdge[];
+];
+const EDGES: Edge<never>[] = [{ id: "e1-2", source: "1", target: "2" }];
 
 describe("createLiveblocksFlow", () => {
   test("should initialize a flow with nodes and edges", () => {
@@ -35,7 +39,7 @@ describe("createLiveblocksFlow", () => {
 });
 
 describe("useLiveblocksFlow", () => {
-  test("should return nodes: null, edges: null, isLoading: true before storage is ready", async () => {
+  test("should return loading state before storage is ready", async () => {
     const { result } = await renderHook(() => useLiveblocksFlow());
 
     expect(result.current.nodes).toBeNull();
@@ -46,25 +50,27 @@ describe("useLiveblocksFlow", () => {
     expect(typeof result.current.onConnect).toBe("function");
   });
 
-  test("should write options.initial into empty storage and expose nodes/edges after load", async () => {
+  test("should load initial nodes and edges from options.initial", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(2);
     expect(result.current.edges).toHaveLength(1);
-    expect(result.current.nodes![0]!.id).toBe("1");
-    expect(result.current.nodes![0]!.data.label).toBe("Node 1");
-    expect(result.current.edges![0]!.id).toBe("e1-2");
-    expect(result.current.edges![0]!.source).toBe("1");
-    expect(result.current.edges![0]!.target).toBe("2");
+    expect(result.current.nodes?.[0]).toMatchObject({
+      id: "1",
+      data: { label: "Node 1" },
+    });
+    expect(result.current.edges?.[0]).toMatchObject({
+      id: "e1-2",
+      source: "1",
+      target: "2",
+    });
   });
 
-  test("should resolve empty storage with no initial to empty arrays", async () => {
+  test("should return empty arrays when storage is empty and no initial provided", async () => {
     const { result } = await renderHook(() => useLiveblocksFlow());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -73,7 +79,7 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.edges).toEqual([]);
   });
 
-  test("should prefer existing server-side storage over options.initial", async () => {
+  test("should use server storage when it exists over options.initial", async () => {
     const serverStorage: PlainLsonObject = {
       liveblocksType: "LiveObject",
       data: {
@@ -113,12 +119,14 @@ describe("useLiveblocksFlow", () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.nodes).toHaveLength(1);
-    expect(result.current.nodes![0]!.id).toBe("server-1");
-    expect(result.current.nodes![0]!.data.label).toBe("From Server");
+    expect(result.current.nodes?.[0]).toMatchObject({
+      id: "server-1",
+      data: { label: "From Server" },
+    });
     expect(result.current.edges).toHaveLength(0);
   });
 
-  test("should write node to storage when onNodesChange add is called", async () => {
+  test("should add node to flow when onNodesChange add is called", async () => {
     const { result } = await renderHook(() => useLiveblocksFlow());
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -135,19 +143,17 @@ describe("useLiveblocksFlow", () => {
     });
 
     await waitFor(() => expect(result.current.nodes).toHaveLength(1));
-
-    const node = result.current.nodes![0];
-    expect(node!.id).toBe("n1");
-    expect(node!.position).toEqual({ x: 10, y: 20 });
-    expect((node!.data as { label: string }).label).toBe("New");
-    expect(node!.selected).toBe(true);
+    expect(result.current.nodes?.[0]).toMatchObject({
+      id: "n1",
+      position: { x: 10, y: 20 },
+      data: { label: "New" },
+      selected: true,
+    });
   });
 
-  test("should write edge to storage when onEdgesChange add is called", async () => {
+  test("should add edge to flow when onEdgesChange add is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -156,6 +162,7 @@ describe("useLiveblocksFlow", () => {
       id: "e1-2",
       source: "1",
       target: "2",
+      selected: true,
     };
 
     act(() => {
@@ -163,16 +170,16 @@ describe("useLiveblocksFlow", () => {
     });
 
     await waitFor(() => expect(result.current.edges).toHaveLength(1));
-
-    expect(result.current.edges![0]!.source).toBe("1");
-    expect(result.current.edges![0]!.target).toBe("2");
+    expect(result.current.edges?.[0]).toMatchObject({
+      source: "1",
+      target: "2",
+      selected: true,
+    });
   });
 
-  test("should delete edge from storage when onEdgesChange remove is called", async () => {
+  test("should remove edge from flow when onEdgesChange remove is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -186,11 +193,9 @@ describe("useLiveblocksFlow", () => {
     await waitFor(() => expect(result.current.edges).toHaveLength(0));
   });
 
-  test("should delete node from storage when onNodesChange remove is called", async () => {
+  test("should remove node from flow when onNodesChange remove is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -203,14 +208,45 @@ describe("useLiveblocksFlow", () => {
 
     await waitFor(() => expect(result.current.nodes).toHaveLength(1));
 
-    expect(result.current.nodes![0]!.id).toBe("2");
+    expect(result.current.nodes?.[0]).toMatchObject({ id: "2" });
+  });
+
+  test("should remove node from flow when another client deletes it", async () => {
+    function useFlowWithDelete() {
+      const flow = useLiveblocksFlow({
+        initial: { nodes: NODES, edges: EDGES },
+      });
+      const deleteNodeFromStorage = useMutation(({ storage }) => {
+        const flow = storage.get("flow") as LiveblocksFlow;
+
+        if (flow) {
+          flow.get("nodes").delete("1");
+        }
+      }, []);
+      return { ...flow, deleteNodeFromStorage };
+    }
+
+    const { result } = await renderHook(() => useFlowWithDelete());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        { type: "select", id: "1", selected: true },
+      ]);
+    });
+
+    act(() => {
+      result.current.deleteNodeFromStorage();
+    });
+
+    await waitFor(() => expect(result.current.nodes).toHaveLength(1));
+    expect(result.current.nodes?.[0]).toMatchObject({ id: "2" });
   });
 
   test("should persist node position when onNodesChange position is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -222,15 +258,56 @@ describe("useLiveblocksFlow", () => {
     });
 
     await waitFor(() =>
-      expect(result.current.nodes![0]!.position).toEqual({ x: 50, y: 75 })
+      expect(result.current.nodes?.[0]?.position).toEqual({ x: 50, y: 75 })
     );
+  });
+
+  test("should merge local dragging state when onNodesChange position includes dragging", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({ initial: { nodes: NODES } })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        {
+          type: "position",
+          id: "1",
+          position: { x: 50, y: 75 },
+          dragging: true,
+        },
+      ]);
+    });
+
+    await waitFor(() =>
+      expect(result.current.nodes?.[0]).toMatchObject({ dragging: true })
+    );
+  });
+
+  test("should leave flow unchanged when position update targets non-existent node", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({ initial: { nodes: NODES } })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        {
+          type: "position",
+          id: "nonexistent",
+          position: { x: 100, y: 100 },
+        },
+      ]);
+    });
+
+    expect(result.current.nodes).toHaveLength(2);
   });
 
   test("should persist node dimensions when onNodesChange dimensions is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -242,25 +319,23 @@ describe("useLiveblocksFlow", () => {
           id: "1",
           dimensions: { width: 200, height: 100 },
           setAttributes: true,
+          resizing: true,
         },
       ]);
     });
 
-    await waitFor(() => {
-      const node = result.current.nodes![0] as {
-        width?: number;
-        height?: number;
-      };
-      expect(node.width).toBe(200);
-      expect(node.height).toBe(100);
-    });
+    await waitFor(() =>
+      expect(result.current.nodes?.[0]).toMatchObject({
+        width: 200,
+        height: 100,
+        resizing: true,
+      })
+    );
   });
 
-  test("should merge local selection state when onNodesChange select is called", async () => {
+  test("should show node as selected when selected", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -272,17 +347,37 @@ describe("useLiveblocksFlow", () => {
     });
 
     await waitFor(() =>
-      expect(
-        (result.current.nodes![0] as { selected?: boolean }).selected
-      ).toBe(true)
+      expect(result.current.nodes?.[0]).toMatchObject({ selected: true })
     );
   });
 
-  test("should merge local selection state when onEdgesChange select is called", async () => {
+  test("should deselect node when selection is cleared", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        { type: "select", id: "1", selected: true },
+      ]);
+    });
+
+    act(() => {
+      result.current.onNodesChange([
+        { type: "select", id: "1", selected: false },
+      ]);
+    });
+
+    await waitFor(() => {
+      expect(result.current.nodes?.[0]?.selected).toBeFalsy();
+    });
+  });
+
+  test("should show edge as selected when selected", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -294,17 +389,13 @@ describe("useLiveblocksFlow", () => {
     });
 
     await waitFor(() =>
-      expect(
-        (result.current.edges![0] as { selected?: boolean }).selected
-      ).toBe(true)
+      expect(result.current.edges?.[0]).toMatchObject({ selected: true })
     );
   });
 
-  test("should add new edge on onConnect and skip duplicate connections", async () => {
+  test("should add edge on onConnect and skip duplicate connections", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -332,11 +423,9 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.edges).toHaveLength(1);
   });
 
-  test("should create separate edges when onConnect uses different sourceHandle or targetHandle", async () => {
+  test("should add multiple edges between same nodes when using different handles", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -363,56 +452,47 @@ describe("useLiveblocksFlow", () => {
 
     await waitFor(() => expect(result.current.edges).toHaveLength(2));
 
-    const handles = result.current.edges!.map((e) => e.sourceHandle);
+    const handles = result.current.edges?.map((e) => e.sourceHandle) ?? [];
     expect(handles).toContain("a");
     expect(handles).toContain("b");
   });
 
   test("should keep stable references for unchanged nodes across rerenders", async () => {
     const { result, rerender } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const nodes1 = result.current.nodes!;
+    const nodes1 = result.current.nodes;
 
     rerender();
 
-    const nodes2 = result.current.nodes!;
-
-    expect(nodes1).toEqual(nodes2);
-    expect(nodes1[0]).toBe(nodes2[0]);
-    expect(nodes1[1]).toBe(nodes2[1]);
+    const nodes2 = result.current.nodes;
+    expect(nodes2).toEqual(nodes1);
+    expect(nodes2?.[0]).toBe(nodes1?.[0]);
+    expect(nodes2?.[1]).toBe(nodes1?.[1]);
   });
 
   test("should keep stable references for unchanged edges across rerenders", async () => {
     const { result, rerender } = await renderHook(() =>
-      useLiveblocksFlow({
-        initial: { nodes: NODES, edges: EDGES },
-      })
+      useLiveblocksFlow({ initial: { nodes: NODES, edges: EDGES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const edges1 = result.current.edges!;
+    const edges1 = result.current.edges;
 
     rerender();
 
-    const edges2 = result.current.edges!;
-
-    expect(edges1).toEqual(edges2);
-    expect(edges1[0]).toBe(edges2[0]);
+    const edges2 = result.current.edges;
+    expect(edges2).toEqual(edges1);
+    expect(edges2?.[0]).toBe(edges1?.[0]);
   });
 
-  test("should respect custom storageKey", async () => {
+  test("should use custom storage key when provided", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow({
-        storageKey: "myFlow",
-        initial: { nodes: NODES },
-      })
+      useLiveblocksFlow({ storageKey: "myFlow", initial: { nodes: NODES } })
     );
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -422,7 +502,7 @@ describe("useLiveblocksFlow", () => {
 });
 
 describe("useLiveblocksFlow (Suspense)", () => {
-  test("should suspend until storage is ready, then return isLoading: false and arrays", async () => {
+  test("should suspend until storage is ready, then return nodes and edges", async () => {
     function Flow() {
       const { nodes, edges, isLoading } = useLiveblocksFlowSuspense({
         initial: { nodes: NODES, edges: EDGES },
@@ -452,7 +532,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
     expect(screen.getByTestId("edge-count").textContent).toBe("1");
   });
 
-  test("should resolve empty storage to empty arrays with isLoading: false", async () => {
+  test("should render with empty arrays when storage is empty", async () => {
     function Flow() {
       const { nodes, edges, isLoading } = useLiveblocksFlowSuspense();
 

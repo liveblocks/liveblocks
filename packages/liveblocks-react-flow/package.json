@@ -50,7 +50,7 @@
     "start": "npm run dev",
     "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
     "lint": "eslint src/ && stylelint src/styles/",
-    "test": "npx liveblocks dev -p 1154 -c 'vitest run'",
+    "test": "npx liveblocks dev -p 1154 -c 'vitest run --coverage'",
     "test:ci": "vitest run",
     "test:watch": "vitest"
   },
