@@ -1,11 +1,17 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  JsonObject,
+  RoomProvider,
+} from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Controls,
   Handle,
   MiniMap,
+  Node,
+  NodeProps,
   Position,
   ReactFlow,
   useReactFlow,
@@ -16,16 +22,10 @@ const DEFAULT_BACKGROUND_COLOR = "#c9f1dd";
 const DEFAULT_SNAP_GRID: [number, number] = [20, 20];
 const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1.5 } as const;
 
+type ColorSelectorNode = Node<{ color: string }>;
+
 const ColorSelectorNode = memo(
-  ({
-    id,
-    data,
-    isConnectable,
-  }: {
-    id: string;
-    data: { color: string };
-    isConnectable?: boolean;
-  }) => {
+  ({ id, data, isConnectable }: NodeProps<ColorSelectorNode>) => {
     const { updateNode } = useReactFlow();
 
     const handleColorChange = useCallback(
@@ -64,7 +64,7 @@ const ColorSelectorNode = memo(
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow<{ label?: string; color?: string }>({
+    useLiveblocksFlow<Node<JsonObject> | ColorSelectorNode>({
       initial: {
         nodes: [
           {
@@ -104,7 +104,7 @@ function Flow() {
     });
 
   const color =
-    nodes.find((node) => node.id === "2")?.data?.color ??
+    (nodes.find((node) => node.id === "2") as ColorSelectorNode)?.data?.color ??
     DEFAULT_BACKGROUND_COLOR;
 
   return (
