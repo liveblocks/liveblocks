@@ -10,6 +10,7 @@ import {
   useFeedMessages,
   useFeeds,
   useUpdateFeedMetadata,
+  useUpdateFeedMessage,
 } from "@liveblocks/react/suspense";
 import { Suspense, useState } from "react";
 
@@ -51,6 +52,8 @@ function FeedMessages({
   onMessageTextChange,
   onCreateMessage,
   onCreateMessageHttp,
+  onUpdateMessage,
+  onUpdateMessageHttp,
   onDeleteMessage,
   onDeleteMessageHttp,
 }: {
@@ -59,6 +62,8 @@ function FeedMessages({
   onMessageTextChange: (text: string) => void;
   onCreateMessage: () => void;
   onCreateMessageHttp: () => void;
+  onUpdateMessage: (messageId: string) => void;
+  onUpdateMessageHttp: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onDeleteMessageHttp: (messageId: string) => void;
 }) {
@@ -114,6 +119,18 @@ function FeedMessages({
               </div>
               <div className="flex gap-2 ml-2">
                 <button
+                  onClick={() => onUpdateMessage(message.id)}
+                  className="px-2 py-1 text-xs bg-yellow-100 rounded hover:bg-yellow-200"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() => onUpdateMessageHttp(message.id)}
+                  className="px-2 py-1 text-xs bg-yellow-200 rounded hover:bg-yellow-300"
+                >
+                  Update (http)
+                </button>
+                <button
                   onClick={() => onDeleteMessage(message.id)}
                   className="px-2 py-1 text-xs bg-red-100 rounded hover:bg-red-200"
                 >
@@ -143,6 +160,7 @@ function Sample() {
   const deleteFeedFn = useDeleteFeed();
   const updateFeedMetadataFn = useUpdateFeedMetadata();
   const createFeedMessageFn = useCreateFeedMessage();
+  const updateFeedMessageFn = useUpdateFeedMessage();
   const deleteFeedMessageFn = useDeleteFeedMessage();
 
   const createFeed = () => {
@@ -245,6 +263,37 @@ function Sample() {
       setNewMessageText((prev) => ({ ...prev, [feedId]: "" }));
     } catch (error) {
       console.error("Error creating message:", error);
+    }
+  };
+
+  const updateMessage = (feedId: string, messageId: string) => {
+    updateFeedMessageFn(feedId, messageId, {
+      content: `(updated via ws at ${new Date().toISOString()})`,
+      role: "user",
+    });
+  };
+
+  const updateMessageHttp = async (feedId: string, messageId: string) => {
+    try {
+      const response = await fetch(
+        `/api/feeds/${feedId}/messages/${messageId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId: ROOM_ID,
+            data: {
+              content: `(updated via http at ${new Date().toISOString()})`,
+              role: "user",
+            },
+          }),
+        }
+      );
+      if (response.ok) {
+        console.log("Updated message (http):", messageId);
+      }
+    } catch (error) {
+      console.error("Error updating message:", error);
     }
   };
 
@@ -371,6 +420,12 @@ function Sample() {
                     }
                     onCreateMessage={() => createMessage(feed.feedId)}
                     onCreateMessageHttp={() => createMessageHttp(feed.feedId)}
+                    onUpdateMessage={(messageId) =>
+                      updateMessage(feed.feedId, messageId)
+                    }
+                    onUpdateMessageHttp={(messageId) =>
+                      updateMessageHttp(feed.feedId, messageId)
+                    }
                     onDeleteMessage={(messageId) =>
                       deleteMessage(feed.feedId, messageId)
                     }
