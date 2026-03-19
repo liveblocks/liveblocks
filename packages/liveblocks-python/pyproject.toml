@@ -1,6 +1,6 @@
 [project]
 name = "liveblocks"
-version = "0.1.0"
+version = "3.15.3"
 description = "A client library for accessing Liveblocks API"
 authors = []
 requires-python = ">=3.11"

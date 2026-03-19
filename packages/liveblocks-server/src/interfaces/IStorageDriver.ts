@@ -295,4 +295,10 @@ export interface IStorageDriver {
    * Delete a leased session by session ID.
    */
   delete_leased_session(sessionId: string): Awaitable<void>;
+
+  /**
+   * Return the number of storage rows written since last call to this method,
+   * and reset the counter.
+   */
+  takeRowsWritten?(): number;
 }
