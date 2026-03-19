@@ -1,4 +1,5 @@
 {% from "endpoint_macros.py.jinja" import return_type, arguments %}
+{% from "_shared.jinja" import hidden_endpoints %}
 {#
   Render a property as a valid Python literal for use in examples.
 
@@ -76,6 +77,13 @@ async with client:
 ## API Reference
 
 {% for tag, collection in endpoint_collections_by_tag.items() %}
+{% set ns_tag = namespace(has_visible=false) %}
+{% for endpoint in collection.endpoints %}
+{% if endpoint.name not in hidden_endpoints %}
+{% set ns_tag.has_visible = true %}
+{% endif %}
+{% endfor %}
+{% if ns_tag.has_visible %}
 ### {{ collection.tag | capitalize }}
 
 {% for endpoint in collection.endpoints %}
@@ -164,6 +172,7 @@ print(result)
 
 {% endif %}
 {% endfor %}
+{% endif %}
 {% endfor %}
 
 ## Error Handling
