@@ -49,7 +49,10 @@
     "build": "rollup --config rollup.config.js",
     "start": "npm run dev",
     "format": "(eslint --fix src/ || true) && stylelint --fix src/styles/ && prettier --write src/",
-    "lint": "eslint src/ && stylelint src/styles/"
+    "lint": "eslint src/ && stylelint src/styles/",
+    "test": "npx liveblocks dev -p 1154 -c 'vitest run'",
+    "test:ci": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@liveblocks/client": "3.15.1",
@@ -73,6 +76,9 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/rollup-config": "*",
+    "@liveblocks/vitest-config": "*",
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^13.1.1",
     "@xyflow/react": "^12.10.1",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",

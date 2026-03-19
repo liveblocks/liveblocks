@@ -45,8 +45,8 @@ const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 
 const EMPTY_ARRAY = [] as unknown[];
 
-type SerializableNode = Node<JsonObject>;
-type SerializableEdge = Edge<JsonObject>;
+export type SerializableNode = Node<JsonObject>;
+export type SerializableEdge = Edge<JsonObject>;
 
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
