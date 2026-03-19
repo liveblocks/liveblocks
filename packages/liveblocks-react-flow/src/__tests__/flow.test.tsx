@@ -145,8 +145,8 @@ describe("useLiveblocksFlow", () => {
 
   test("should write edge to storage when onEdgesChange add is called", async () => {
     const { result } = await renderHook(() =>
-      useLiveblocksFlow<SerializableNode, SerializableEdge>({
-        initial: { nodes: NODES, edges: [] },
+      useLiveblocksFlow({
+        initial: { nodes: NODES },
       })
     );
 
@@ -206,10 +206,104 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.nodes![0]!.id).toBe("2");
   });
 
+  test("should persist node position when onNodesChange position is called", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        { type: "position", id: "1", position: { x: 50, y: 75 } },
+      ]);
+    });
+
+    await waitFor(() =>
+      expect(result.current.nodes![0]!.position).toEqual({ x: 50, y: 75 })
+    );
+  });
+
+  test("should persist node dimensions when onNodesChange dimensions is called", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        {
+          type: "dimensions",
+          id: "1",
+          dimensions: { width: 200, height: 100 },
+          setAttributes: true,
+        },
+      ]);
+    });
+
+    await waitFor(() => {
+      const node = result.current.nodes![0] as {
+        width?: number;
+        height?: number;
+      };
+      expect(node.width).toBe(200);
+      expect(node.height).toBe(100);
+    });
+  });
+
+  test("should merge local selection state when onNodesChange select is called", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onNodesChange([
+        { type: "select", id: "1", selected: true },
+      ]);
+    });
+
+    await waitFor(() =>
+      expect(
+        (result.current.nodes![0] as { selected?: boolean }).selected
+      ).toBe(true)
+    );
+  });
+
+  test("should merge local selection state when onEdgesChange select is called", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES, edges: EDGES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onEdgesChange([
+        { type: "select", id: "e1-2", selected: true },
+      ]);
+    });
+
+    await waitFor(() =>
+      expect(
+        (result.current.edges![0] as { selected?: boolean }).selected
+      ).toBe(true)
+    );
+  });
+
   test("should add new edge on onConnect and skip duplicate connections", async () => {
     const { result } = await renderHook(() =>
       useLiveblocksFlow({
-        initial: { nodes: NODES, edges: [] },
+        initial: { nodes: NODES },
       })
     );
 
@@ -238,6 +332,42 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.edges).toHaveLength(1);
   });
 
+  test("should create separate edges when onConnect uses different sourceHandle or targetHandle", async () => {
+    const { result } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onConnect({
+        source: "1",
+        target: "2",
+        sourceHandle: "a",
+        targetHandle: null,
+      });
+    });
+
+    await waitFor(() => expect(result.current.edges).toHaveLength(1));
+
+    act(() => {
+      result.current.onConnect({
+        source: "1",
+        target: "2",
+        sourceHandle: "b",
+        targetHandle: null,
+      });
+    });
+
+    await waitFor(() => expect(result.current.edges).toHaveLength(2));
+
+    const handles = result.current.edges!.map((e) => e.sourceHandle);
+    expect(handles).toContain("a");
+    expect(handles).toContain("b");
+  });
+
   test("should keep stable references for unchanged nodes across rerenders", async () => {
     const { result, rerender } = await renderHook(() =>
       useLiveblocksFlow({
@@ -258,11 +388,30 @@ describe("useLiveblocksFlow", () => {
     expect(nodes1[1]).toBe(nodes2[1]);
   });
 
+  test("should keep stable references for unchanged edges across rerenders", async () => {
+    const { result, rerender } = await renderHook(() =>
+      useLiveblocksFlow({
+        initial: { nodes: NODES, edges: EDGES },
+      })
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const edges1 = result.current.edges!;
+
+    rerender();
+
+    const edges2 = result.current.edges!;
+
+    expect(edges1).toEqual(edges2);
+    expect(edges1[0]).toBe(edges2[0]);
+  });
+
   test("should respect custom storageKey", async () => {
     const { result } = await renderHook(() =>
       useLiveblocksFlow({
         storageKey: "myFlow",
-        initial: { nodes: NODES, edges: [] },
+        initial: { nodes: NODES },
       })
     );
 
@@ -280,7 +429,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
       });
 
       return (
-        <div data-testid="flow-content">
+        <div data-testid="flow">
           <span data-testid="loading">{String(isLoading)}</span>
           <span data-testid="node-count">{nodes.length}</span>
           <span data-testid="edge-count">{edges.length}</span>
@@ -296,9 +445,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
 
     expect(screen.getByTestId("fallback")).toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(screen.getByTestId("flow-content")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
 
     expect(screen.getByTestId("loading").textContent).toBe("false");
     expect(screen.getByTestId("node-count").textContent).toBe("2");
@@ -310,7 +457,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
       const { nodes, edges, isLoading } = useLiveblocksFlowSuspense();
 
       return (
-        <div data-testid="flow-content">
+        <div data-testid="flow">
           <span data-testid="loading">{String(isLoading)}</span>
           <span data-testid="node-count">{nodes.length}</span>
           <span data-testid="edge-count">{edges.length}</span>
@@ -324,9 +471,7 @@ describe("useLiveblocksFlow (Suspense)", () => {
       </Suspense>
     );
 
-    await waitFor(() =>
-      expect(screen.getByTestId("flow-content")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
 
     expect(screen.getByTestId("loading").textContent).toBe("false");
     expect(screen.getByTestId("node-count").textContent).toBe("0");
@@ -340,9 +485,9 @@ describe("useLiveblocksFlow (Suspense)", () => {
       });
 
       return (
-        <div data-testid="flow-content">
-          {nodes[0]?.data.label}
-          {edges[0]?.id}
+        <div data-testid="flow">
+          <span data-testid="node-label">{nodes[0]?.data.label}</span>
+          <span data-testid="edge-id">{edges[0]?.id}</span>
         </div>
       );
     }
@@ -353,11 +498,9 @@ describe("useLiveblocksFlow (Suspense)", () => {
       </Suspense>
     );
 
-    await waitFor(() =>
-      expect(screen.getByTestId("flow-content")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("flow")).toBeInTheDocument());
 
-    expect(screen.getByTestId("flow-content").textContent).toContain("Node 1");
-    expect(screen.getByTestId("flow-content").textContent).toContain("e1-2");
+    expect(screen.getByTestId("node-label").textContent).toBe("Node 1");
+    expect(screen.getByTestId("edge-id").textContent).toBe("e1-2");
   });
 });
