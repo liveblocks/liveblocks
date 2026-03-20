@@ -55,10 +55,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.15.1",
-    "@liveblocks/core": "3.15.1",
-    "@liveblocks/react": "3.15.1",
-    "@liveblocks/react-ui": "3.15.1"
+    "@liveblocks/client": "3.15.4",
+    "@liveblocks/core": "3.15.4",
+    "@liveblocks/react": "3.15.4",
+    "@liveblocks/react-ui": "3.15.4"
   },
   "peerDependencies": {
     "@xyflow/react": "^12",
