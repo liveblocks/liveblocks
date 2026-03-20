@@ -1123,6 +1123,7 @@
         },
         "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -1136,7 +1137,8 @@
                     "type": "object",
                     "additionalProperties": true
                   }
-                }
+                },
+                "required": ["liveblocksType", "data"]
               },
               "examples": {
                 "example": {
@@ -4102,6 +4104,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -6711,7 +6714,28 @@
             "$ref": "#/components/schemas/UpdateRoomRequestBody"
           },
           "create": {
-            "$ref": "#/components/schemas/CreateRoomRequestBody"
+            "type": "object",
+            "description": "Fields to use when creating the room if it does not exist. Unlike the create-room endpoint, `id` is not included here because it is provided in the URL path.",
+            "properties": {
+              "organizationId": {
+                "type": "string",
+                "description": "The organization ID to associate with the room. Defaults to \"default\" if not provided."
+              },
+              "defaultAccesses": {
+                "$ref": "#/components/schemas/RoomPermission"
+              },
+              "usersAccesses": {
+                "$ref": "#/components/schemas/RoomAccesses"
+              },
+              "groupsAccesses": {
+                "$ref": "#/components/schemas/RoomAccesses"
+              },
+              "metadata": {
+                "$ref": "#/components/schemas/RoomMetadata"
+              }
+            },
+            "required": ["defaultAccesses"],
+            "additionalProperties": false
           }
         },
         "required": ["update"],
@@ -6862,7 +6886,7 @@
             "description": "Time-to-live in seconds (minimum: 2, maximum: 3599). After this duration, the presence will automatically expire."
           }
         },
-        "required": ["userId", "data"],
+        "required": ["userId", "data", "userInfo"],
         "additionalProperties": false,
         "example": {
           "userId": "agent-123",
@@ -7453,6 +7477,13 @@
               },
               "metadata": {
                 "$ref": "#/components/schemas/CommentMetadata"
+              },
+              "attachmentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 10
               }
             },
             "required": ["userId", "body"],
@@ -8478,7 +8509,9 @@
             "type": "string"
           },
           "kind": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^\\$[a-zA-Z_]{1,128}$",
+            "description": "A custom notification kind. Must start with '$' and contain only letters and underscores (max 128 characters)."
           },
           "subjectId": {
             "type": "string"
@@ -8509,7 +8542,7 @@
         "required": ["userId", "kind", "subjectId", "activityData"],
         "example": {
           "userId": "alice",
-          "kind": "file-uploaded",
+          "kind": "$fileUploaded",
           "subjectId": "file123",
           "activityData": {
             "url": "url-to-file"
