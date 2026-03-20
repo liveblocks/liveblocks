@@ -57,9 +57,18 @@ New dev server features:
 
 See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for the updated feature matrix.
 
+## Dashboard
+
+- We added support for setting description on projects for better documentation and organization
+- Fixed a bug preventing inviting new members correctly
+- Internal refactoring of dashboard components to improve performance and efficiency
+
+## Mangement API
+- We added support for setting description on projects for better documentation and organization
+
 ## Contributors
 
-nvie
+nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire
 
 # Week 11 (2026-03-13)
 
