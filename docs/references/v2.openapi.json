@@ -2928,6 +2928,67 @@
         }
       }
     },
+    "/rooms/{roomId}/attachments/{attachmentId}": {
+      "get": {
+        "summary": "Get attachment",
+        "description": "Gets an attachment's metadata and a presigned download URL. The URL expires after 1 hour.",
+        "tags": ["Comments"],
+        "operationId": "get-attachment",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the room",
+              "example": "my-room-id"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID of the attachment",
+              "example": "at_abc123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the attachment metadata with a presigned download URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentWithUrl"
+                },
+                "examples": {
+                  "Success": {
+                    "value": {
+                      "type": "attachment",
+                      "id": "at_abc123",
+                      "mimeType": "image/png",
+                      "name": "screenshot.png",
+                      "size": 12345,
+                      "url": "https://example.com/at_abc123?X-Amz-Expires=3600&X-Amz-Signature=...",
+                      "expiresAt": "2026-03-16T14:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "404": {
+            "description": "Attachment not found"
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/metadata": {
       "post": {
         "summary": "Edit comment metadata",
@@ -5673,6 +5734,7 @@
                           "teamId": "team_123",
                           "type": "dev",
                           "name": "Frimousse",
+                          "description": "A lightweight, unstyled, and composable emoji picker for React.",
                           "createdAt": "2024-09-03T12:34:56.000Z",
                           "updatedAt": "2024-09-03T12:34:56.000Z",
                           "publicKey": {
@@ -5770,6 +5832,7 @@
                 "example": {
                   "value": {
                     "name": "Frimousse",
+                    "description": "A lightweight, unstyled, and composable emoji picker for React.",
                     "type": "dev",
                     "versionCreationTimeout": false
                   }
@@ -5877,6 +5940,7 @@
                 "example": {
                   "value": {
                     "name": "Valleys",
+                    "description": "A lightweight TypeScript library for assertion-based runtime data validation.",
                     "versionCreationTimeout": false
                   }
                 }
@@ -8469,6 +8533,56 @@
           "size": 12345
         }
       },
+      "AttachmentWithUrl": {
+        "type": "object",
+        "title": "AttachmentWithUrl",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "attachment"
+          },
+          "id": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "url": {
+            "type": "string",
+            "description": "Presigned download URL for the attachment"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when the presigned URL expires"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "mimeType",
+          "name",
+          "size",
+          "url",
+          "expiresAt"
+        ],
+        "additionalProperties": false,
+        "example": {
+          "type": "attachment",
+          "id": "at_abc123",
+          "mimeType": "image/png",
+          "name": "screenshot.png",
+          "size": 12345,
+          "url": "https://example.com/at_abc123?X-Amz-Expires=3600&X-Amz-Signature=...",
+          "expiresAt": "2026-03-16T14:00:00.000Z"
+        }
+      },
       "AddCommentReactionRequestBody": {
         "type": "object",
         "title": "AddCommentReactionRequestBody",
@@ -10457,6 +10571,16 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -10490,6 +10614,7 @@
           "teamId",
           "type",
           "name",
+          "description",
           "createdAt",
           "updatedAt",
           "publicKey",
@@ -10572,6 +10697,9 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "type": {
             "$ref": "#/components/schemas/ManagementProjectType"
           },
@@ -10583,6 +10711,7 @@
         "required": ["type"],
         "example": {
           "name": "My Project",
+          "description": "Project description",
           "type": "dev",
           "versionCreationTimeout": false
         }
@@ -10594,12 +10723,16 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "versionCreationTimeout": {
             "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
           }
         },
         "example": {
           "name": "Updated Project Name",
+          "description": "Updated project description",
           "versionCreationTimeout": 60
         }
       },

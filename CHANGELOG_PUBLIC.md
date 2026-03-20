@@ -18,6 +18,68 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 12 (2026-03-20)
+
+## v3.15.4
+
+### `@liveblocks/node`
+
+- Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
+  presigned download URL.
+
+### `Python SDK`
+
+- Add `get_attachment()` method to get an attachment's metadata and a presigned
+  download URL.
+
+## v3.15.3
+
+### `Python SDK`
+
+- Introduce the Python package. Install with `pip install liveblocks`. Provides
+  sync and async clients for the full Liveblocks API (rooms, storage, threads,
+  comments, etc.) for backend use.
+
+### `@liveblocks/react-ui`
+
+- Add `showSubscription` prop to `Thread` to control whether to show the
+  thread’s subscription status.
+
+## Liveblocks dev server (v1.1.0)
+
+New dev server features:
+
+- ID token authentication support
+- Read-only rooms support
+- Room permissions and room metadata
+- Room filtering support
+- Room Node.js methods and REST APIs are now fully supported
+
+See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for the updated feature matrix.
+
+## Dashboard
+
+- We added support for setting description on projects for better documentation and organization
+- Fixed a bug preventing inviting new members correctly
+- Internal refactoring of dashboard components to improve performance and efficiency
+
+## Infrastructure
+
+- Mangement API: We added support for setting description on projects for better documentation and organization.
+
+## Documentation
+
+- New API reference: [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python).
+
+## Website
+
+- New blog post: [What's new in Liveblocks: February 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2026).
+- New blog post: [New React components for adding realtime presence and contextual commenting to your app](https://liveblocks.io/blog/new-react-components-for-adding-realtime-presence-and-contextual-commenting-to-your-app).
+
+## Contributors
+
+nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire, ctnicholas
+
 # Week 11 (2026-03-13)
 
 ## v3.15.2

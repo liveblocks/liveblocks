@@ -24,6 +24,7 @@ from .anthropic_provider_options_anthropic_anthropic_thinking_enabled import (
 from .anthropic_provider_options_anthropic_anthropic_web_search import (
     AnthropicProviderOptionsAnthropicAnthropicWebSearch,
 )
+from .attachment_with_url import AttachmentWithUrl
 from .authorization import Authorization
 from .authorize_user_request_body import AuthorizeUserRequestBody
 from .authorize_user_request_body_permissions import AuthorizeUserRequestBodyPermissions
@@ -45,11 +46,6 @@ from .create_comment_request_body import CreateCommentRequestBody
 from .create_file_knowledge_source_response import CreateFileKnowledgeSourceResponse
 from .create_group_request_body import CreateGroupRequestBody
 from .create_group_request_body_scopes import CreateGroupRequestBodyScopes
-from .create_management_project_request_body import CreateManagementProjectRequestBody
-from .create_management_webhook_request_body import CreateManagementWebhookRequestBody
-from .create_management_webhook_request_body_additional_headers import (
-    CreateManagementWebhookRequestBodyAdditionalHeaders,
-)
 from .create_room_request_body import CreateRoomRequestBody
 from .create_room_request_body_engine import CreateRoomRequestBodyEngine
 from .create_thread_request_body import CreateThreadRequestBody
@@ -59,8 +55,6 @@ from .create_web_knowledge_source_request_body_type import CreateWebKnowledgeSou
 from .create_web_knowledge_source_response import CreateWebKnowledgeSourceResponse
 from .create_yjs_version_response import CreateYjsVersionResponse
 from .create_yjs_version_response_data import CreateYjsVersionResponseData
-from .delete_management_webhook_headers_request_body import DeleteManagementWebhookHeadersRequestBody
-from .delete_management_webhook_headers_response import DeleteManagementWebhookHeadersResponse
 from .edit_comment_metadata_request_body import EditCommentMetadataRequestBody
 from .edit_comment_metadata_request_body_metadata import EditCommentMetadataRequestBodyMetadata
 from .edit_comment_request_body import EditCommentRequestBody
@@ -72,9 +66,6 @@ from .get_file_knowledge_source_markdown_response import GetFileKnowledgeSourceM
 from .get_groups_response import GetGroupsResponse
 from .get_inbox_notifications_response import GetInboxNotificationsResponse
 from .get_knowledge_sources_response import GetKnowledgeSourcesResponse
-from .get_management_projects_response import GetManagementProjectsResponse
-from .get_management_webhook_headers_response import GetManagementWebhookHeadersResponse
-from .get_management_webhooks_response import GetManagementWebhooksResponse
 from .get_room_subscription_settings_response import GetRoomSubscriptionSettingsResponse
 from .get_rooms_response import GetRoomsResponse
 from .get_storage_document_format import GetStorageDocumentFormat
@@ -113,19 +104,6 @@ from .knowledge_source_file_source_file import KnowledgeSourceFileSourceFile
 from .knowledge_source_web_source import KnowledgeSourceWebSource
 from .knowledge_source_web_source_link import KnowledgeSourceWebSourceLink
 from .knowledge_source_web_source_link_type import KnowledgeSourceWebSourceLinkType
-from .management_project import ManagementProject
-from .management_project_public_key import ManagementProjectPublicKey
-from .management_project_region import ManagementProjectRegion
-from .management_project_roll_project_secret_api_key_response_secret_key_response import (
-    ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse,
-)
-from .management_project_secret_key import ManagementProjectSecretKey
-from .management_project_type import ManagementProjectType
-from .management_webhook import ManagementWebhook
-from .management_webhook_additional_headers import ManagementWebhookAdditionalHeaders
-from .management_webhook_event import ManagementWebhookEvent
-from .management_webhook_headers_delete import ManagementWebhookHeadersDelete
-from .management_webhook_secret import ManagementWebhookSecret
 from .mark_thread_as_resolved_request_body import MarkThreadAsResolvedRequestBody
 from .mark_thread_as_unresolved_request_body import MarkThreadAsUnresolvedRequestBody
 from .move_json_patch_operation import MoveJsonPatchOperation
@@ -136,16 +114,10 @@ from .open_ai_provider_options import OpenAiProviderOptions
 from .open_ai_provider_options_openai import OpenAiProviderOptionsOpenai
 from .open_ai_provider_options_openai_reasoning_effort import OpenAiProviderOptionsOpenaiReasoningEffort
 from .open_ai_provider_options_openai_web_search import OpenAiProviderOptionsOpenaiWebSearch
-from .recover_management_webhook_failed_messages_request_body import RecoverManagementWebhookFailedMessagesRequestBody
 from .remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
 from .remove_group_members_request_body import RemoveGroupMembersRequestBody
 from .remove_json_patch_operation import RemoveJsonPatchOperation
 from .replace_json_patch_operation import ReplaceJsonPatchOperation
-from .roll_project_public_api_key_request_body import RollProjectPublicApiKeyRequestBody
-from .roll_project_public_api_key_request_body_expiration_in import RollProjectPublicApiKeyRequestBodyExpirationIn
-from .roll_project_public_api_key_response import RollProjectPublicApiKeyResponse
-from .roll_project_secret_api_key_request_body import RollProjectSecretApiKeyRequestBody
-from .roll_project_secret_api_key_request_body_expiration_in import RollProjectSecretApiKeyRequestBodyExpirationIn
 from .room import Room
 from .room_accesses import RoomAccesses
 from .room_accesses_additional_property_item import RoomAccessesAdditionalPropertyItem
@@ -155,16 +127,12 @@ from .room_subscription_settings import RoomSubscriptionSettings
 from .room_subscription_settings_text_mentions import RoomSubscriptionSettingsTextMentions
 from .room_subscription_settings_threads import RoomSubscriptionSettingsThreads
 from .room_type import RoomType
-from .rotate_management_webhook_secret_response import RotateManagementWebhookSecretResponse
 from .set_presence_request_body import SetPresenceRequestBody
 from .set_presence_request_body_data import SetPresenceRequestBodyData
 from .set_presence_request_body_user_info import SetPresenceRequestBodyUserInfo
 from .subscribe_to_thread_request_body import SubscribeToThreadRequestBody
 from .subscription import Subscription
 from .test_json_patch_operation import TestJsonPatchOperation
-from .test_management_webhook_request_body import TestManagementWebhookRequestBody
-from .test_management_webhook_response import TestManagementWebhookResponse
-from .test_management_webhook_response_message import TestManagementWebhookResponseMessage
 from .thread import Thread
 from .thread_metadata import ThreadMetadata
 from .trigger_inbox_notification_request_body import TriggerInboxNotificationRequestBody
@@ -172,8 +140,6 @@ from .trigger_inbox_notification_request_body_activity_data import TriggerInboxN
 from .unsubscribe_from_thread_request_body import UnsubscribeFromThreadRequestBody
 from .update_ai_copilot_request_body import UpdateAiCopilotRequestBody
 from .update_ai_copilot_request_body_provider import UpdateAiCopilotRequestBodyProvider
-from .update_management_project_request_body import UpdateManagementProjectRequestBody
-from .update_management_webhook_request_body import UpdateManagementWebhookRequestBody
 from .update_notification_settings_request_body import UpdateNotificationSettingsRequestBody
 from .update_room_id_request_body import UpdateRoomIdRequestBody
 from .update_room_organization_id_request_body import UpdateRoomOrganizationIdRequestBody
@@ -192,9 +158,6 @@ from .update_room_subscription_settings_request_body_text_mentions import (
     UpdateRoomSubscriptionSettingsRequestBodyTextMentions,
 )
 from .update_room_subscription_settings_request_body_threads import UpdateRoomSubscriptionSettingsRequestBodyThreads
-from .upsert_management_webhook_headers_request_body import UpsertManagementWebhookHeadersRequestBody
-from .upsert_management_webhook_headers_response import UpsertManagementWebhookHeadersResponse
-from .upsert_management_webhook_headers_response_headers import UpsertManagementWebhookHeadersResponseHeaders
 from .upsert_room_request_body import UpsertRoomRequestBody
 from .user_room_subscription_settings import UserRoomSubscriptionSettings
 from .user_room_subscription_settings_text_mentions import UserRoomSubscriptionSettingsTextMentions
@@ -224,6 +187,7 @@ __all__ = (
     "AnthropicProviderOptionsAnthropicAnthropicThinkingDisabled",
     "AnthropicProviderOptionsAnthropicAnthropicThinkingEnabled",
     "AnthropicProviderOptionsAnthropicAnthropicWebSearch",
+    "AttachmentWithUrl",
     "Authorization",
     "AuthorizeUserRequestBody",
     "AuthorizeUserRequestBodyPermissions",
@@ -245,9 +209,6 @@ __all__ = (
     "CreateFileKnowledgeSourceResponse",
     "CreateGroupRequestBody",
     "CreateGroupRequestBodyScopes",
-    "CreateManagementProjectRequestBody",
-    "CreateManagementWebhookRequestBody",
-    "CreateManagementWebhookRequestBodyAdditionalHeaders",
     "CreateRoomRequestBody",
     "CreateRoomRequestBodyEngine",
     "CreateThreadRequestBody",
@@ -257,8 +218,6 @@ __all__ = (
     "CreateWebKnowledgeSourceResponse",
     "CreateYjsVersionResponse",
     "CreateYjsVersionResponseData",
-    "DeleteManagementWebhookHeadersRequestBody",
-    "DeleteManagementWebhookHeadersResponse",
     "EditCommentMetadataRequestBody",
     "EditCommentMetadataRequestBodyMetadata",
     "EditCommentRequestBody",
@@ -270,9 +229,6 @@ __all__ = (
     "GetGroupsResponse",
     "GetInboxNotificationsResponse",
     "GetKnowledgeSourcesResponse",
-    "GetManagementProjectsResponse",
-    "GetManagementWebhookHeadersResponse",
-    "GetManagementWebhooksResponse",
     "GetRoomsResponse",
     "GetRoomSubscriptionSettingsResponse",
     "GetStorageDocumentFormat",
@@ -311,17 +267,6 @@ __all__ = (
     "KnowledgeSourceWebSource",
     "KnowledgeSourceWebSourceLink",
     "KnowledgeSourceWebSourceLinkType",
-    "ManagementProject",
-    "ManagementProjectPublicKey",
-    "ManagementProjectRegion",
-    "ManagementProjectRollProjectSecretApiKeyResponseSecretKeyResponse",
-    "ManagementProjectSecretKey",
-    "ManagementProjectType",
-    "ManagementWebhook",
-    "ManagementWebhookAdditionalHeaders",
-    "ManagementWebhookEvent",
-    "ManagementWebhookHeadersDelete",
-    "ManagementWebhookSecret",
     "MarkThreadAsResolvedRequestBody",
     "MarkThreadAsUnresolvedRequestBody",
     "MoveJsonPatchOperation",
@@ -332,16 +277,10 @@ __all__ = (
     "OpenAiProviderOptionsOpenai",
     "OpenAiProviderOptionsOpenaiReasoningEffort",
     "OpenAiProviderOptionsOpenaiWebSearch",
-    "RecoverManagementWebhookFailedMessagesRequestBody",
     "RemoveCommentReactionRequestBody",
     "RemoveGroupMembersRequestBody",
     "RemoveJsonPatchOperation",
     "ReplaceJsonPatchOperation",
-    "RollProjectPublicApiKeyRequestBody",
-    "RollProjectPublicApiKeyRequestBodyExpirationIn",
-    "RollProjectPublicApiKeyResponse",
-    "RollProjectSecretApiKeyRequestBody",
-    "RollProjectSecretApiKeyRequestBodyExpirationIn",
     "Room",
     "RoomAccesses",
     "RoomAccessesAdditionalPropertyItem",
@@ -351,16 +290,12 @@ __all__ = (
     "RoomSubscriptionSettingsTextMentions",
     "RoomSubscriptionSettingsThreads",
     "RoomType",
-    "RotateManagementWebhookSecretResponse",
     "SetPresenceRequestBody",
     "SetPresenceRequestBodyData",
     "SetPresenceRequestBodyUserInfo",
     "SubscribeToThreadRequestBody",
     "Subscription",
     "TestJsonPatchOperation",
-    "TestManagementWebhookRequestBody",
-    "TestManagementWebhookResponse",
-    "TestManagementWebhookResponseMessage",
     "Thread",
     "ThreadMetadata",
     "TriggerInboxNotificationRequestBody",
@@ -368,8 +303,6 @@ __all__ = (
     "UnsubscribeFromThreadRequestBody",
     "UpdateAiCopilotRequestBody",
     "UpdateAiCopilotRequestBodyProvider",
-    "UpdateManagementProjectRequestBody",
-    "UpdateManagementWebhookRequestBody",
     "UpdateNotificationSettingsRequestBody",
     "UpdateRoomIdRequestBody",
     "UpdateRoomOrganizationIdRequestBody",
@@ -382,9 +315,6 @@ __all__ = (
     "UpdateRoomSubscriptionSettingsRequestBody",
     "UpdateRoomSubscriptionSettingsRequestBodyTextMentions",
     "UpdateRoomSubscriptionSettingsRequestBodyThreads",
-    "UpsertManagementWebhookHeadersRequestBody",
-    "UpsertManagementWebhookHeadersResponse",
-    "UpsertManagementWebhookHeadersResponseHeaders",
     "UpsertRoomRequestBody",
     "UserRoomSubscriptionSettings",
     "UserRoomSubscriptionSettingsTextMentions",
