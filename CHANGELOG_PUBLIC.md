@@ -63,12 +63,22 @@ See [dev server documentation](https://liveblocks.io/docs/tools/dev-server) for 
 - Fixed a bug preventing inviting new members correctly
 - Internal refactoring of dashboard components to improve performance and efficiency
 
-## Mangement API
-- We added support for setting description on projects for better documentation and organization
+## Infrastructure
+
+- Mangement API: We added support for setting description on projects for better documentation and organization.
+
+## Documentation
+
+- New API reference: [Python SDK](https://liveblocks.io/docs/api-reference/liveblocks-python).
+
+## Website
+
+- New blog post: [What's new in Liveblocks: February 2026](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2026).
+- New blog post: [New React components for adding realtime presence and contextual commenting to your app](https://liveblocks.io/blog/new-react-components-for-adding-realtime-presence-and-contextual-commenting-to-your-app).
 
 ## Contributors
 
-nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire
+nvie, sugardarius, nimeshnayaju, pierrelevaillant, marcbouchenoire, ctnicholas
 
 # Week 11 (2026-03-13)
 
