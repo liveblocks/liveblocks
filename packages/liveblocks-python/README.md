@@ -265,8 +265,13 @@ This endpoint permanently updates the room’s ID. All existing references to th
 
 **Example**
 ```python
+from liveblocks.models import UpdateRoomIdRequestBody
+
 result = client.update_room_id(
     room_id="my-room-id",
+    body=UpdateRoomIdRequestBody(
+        new_room_id="...",
+    ),
 )
 print(result)
 ```
@@ -275,7 +280,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | The new ID for the room |
-| `body` | `UpdateRoomIdRequestBody \| Unset` | No | Request body (application/json) |
+| `body` | `UpdateRoomIdRequestBody` | Yes | Request body (application/json) |
 
 
 ---
@@ -286,8 +291,14 @@ This endpoint updates the room's organization ID. The `fromOrganizationId` must 
 
 **Example**
 ```python
+from liveblocks.models import UpdateRoomOrganizationIdRequestBody
+
 result = client.update_room_organization_id(
     room_id="my-room-id",
+    body=UpdateRoomOrganizationIdRequestBody(
+        from_organization_id="...",
+        to_organization_id="...",
+    ),
 )
 print(result)
 ```
@@ -296,7 +307,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | The ID of the room |
-| `body` | `UpdateRoomOrganizationIdRequestBody \| Unset` | No | Request body (application/json) |
+| `body` | `UpdateRoomOrganizationIdRequestBody` | Yes | Request body (application/json) |
 
 
 ---
@@ -337,7 +348,7 @@ client.set_presence(
     body=SetPresenceRequestBody(
         user_id="...",
         data=...,
-        # user_info=...,
+        user_info=...,
         # ttl=0,
     ),
 )
@@ -424,8 +435,14 @@ A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.
 
 **Example**
 ```python
+from liveblocks.models import InitializeStorageDocumentBody
+
 result = client.initialize_storage_document(
     room_id="my-room-id",
+    body=InitializeStorageDocumentBody(
+        liveblocks_type=...,
+        data=...,
+    ),
 )
 print(result)
 ```
@@ -434,7 +451,7 @@ print(result)
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `room_id` | `str` | Yes | ID of the room |
-| `body` | `InitializeStorageDocumentBody \| Unset` | No | Request body (application/json) |
+| `body` | `InitializeStorageDocumentBody` | Yes | Request body (application/json) |
 
 
 ---
@@ -1082,10 +1099,17 @@ This endpoint removes a comment reaction. A deleted comment reaction is no longe
 
 **Example**
 ```python
+from liveblocks.models import RemoveCommentReactionRequestBody
+
 client.remove_comment_reaction(
     room_id="my-room-id",
     thread_id="th_abc123",
     comment_id="cm_abc123",
+    body=RemoveCommentReactionRequestBody(
+        user_id="...",
+        emoji="...",
+        # removed_at=...,
+    ),
 )
 ```
 **Parameters:**
@@ -1095,7 +1119,7 @@ client.remove_comment_reaction(
 | `room_id` | `str` | Yes | ID of the room |
 | `thread_id` | `str` | Yes | ID of the thread |
 | `comment_id` | `str` | Yes | ID of the comment |
-| `body` | `RemoveCommentReactionRequestBody \| Unset` | No | Request body (application/json) |
+| `body` | `RemoveCommentReactionRequestBody` | Yes | Request body (application/json) |
 
 
 ---
@@ -1517,13 +1541,24 @@ This endpoint triggers an inbox notification. Corresponds to [`liveblocks.trigge
 
 **Example**
 ```python
-client.trigger_inbox_notification()
+from liveblocks.models import TriggerInboxNotificationRequestBody
+
+client.trigger_inbox_notification(
+    body=TriggerInboxNotificationRequestBody(
+        user_id="...",
+        kind="...",
+        subject_id="...",
+        activity_data=...,
+        # room_id="...",
+        # organization_id="...",
+    ),
+)
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `body` | `TriggerInboxNotificationRequestBody \| Unset` | No | Request body (application/json) |
+| `body` | `TriggerInboxNotificationRequestBody` | Yes | Request body (application/json) |
 
 
 ---
@@ -1577,14 +1612,23 @@ This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](htt
 
 **Example**
 ```python
-result = client.create_group()
+from liveblocks.models import CreateGroupRequestBody
+
+result = client.create_group(
+    body=CreateGroupRequestBody(
+        id="...",
+        # member_ids=[],
+        # organization_id="...",
+        # scopes=...,
+    ),
+)
 print(result)
 ```
 **Parameters:**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `body` | `CreateGroupRequestBody \| Unset` | No | Request body (application/json) |
+| `body` | `CreateGroupRequestBody` | Yes | Request body (application/json) |
 
 
 ---

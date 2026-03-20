@@ -317,8 +317,13 @@ print(result)
 This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).
 
 ```python
+from liveblocks.models import UpdateRoomIdRequestBody
+
 result = client.update_room_id(
     room_id="my-room-id",
+    body=UpdateRoomIdRequestBody(
+        new_room_id="...",
+    ),
 )
 print(result)
 ```
@@ -333,7 +338,7 @@ print(result)
   </PropertiesListItem>
   <PropertiesListItem
     name="body"
-    type="UpdateRoomIdRequestBody | Unset"
+    type="UpdateRoomIdRequestBody"
   >
     Request body (application/json).
 
@@ -346,8 +351,14 @@ print(result)
 This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.
 
 ```python
+from liveblocks.models import UpdateRoomOrganizationIdRequestBody
+
 result = client.update_room_organization_id(
     room_id="my-room-id",
+    body=UpdateRoomOrganizationIdRequestBody(
+        from_organization_id="...",
+        to_organization_id="...",
+    ),
 )
 print(result)
 ```
@@ -362,7 +373,7 @@ print(result)
   </PropertiesListItem>
   <PropertiesListItem
     name="body"
-    type="UpdateRoomOrganizationIdRequestBody | Unset"
+    type="UpdateRoomOrganizationIdRequestBody"
   >
     Request body (application/json).
 
@@ -407,7 +418,7 @@ client.set_presence(
     body=SetPresenceRequestBody(
         user_id="...",
         data=...,
-        # user_info=...,
+        user_info=...,
         # ttl=0,
     ),
 )
@@ -517,8 +528,14 @@ The root’s type can only be LiveObject.
 A utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.
 
 ```python
+from liveblocks.models import InitializeStorageDocumentBody
+
 result = client.initialize_storage_document(
     room_id="my-room-id",
+    body=InitializeStorageDocumentBody(
+        liveblocks_type=...,
+        data=...,
+    ),
 )
 print(result)
 ```
@@ -533,7 +550,7 @@ print(result)
   </PropertiesListItem>
   <PropertiesListItem
     name="body"
-    type="InitializeStorageDocumentBody | Unset"
+    type="InitializeStorageDocumentBody"
   >
     Request body (application/json).
 
@@ -1443,10 +1460,17 @@ print(result)
 This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
 
 ```python
+from liveblocks.models import RemoveCommentReactionRequestBody
+
 client.remove_comment_reaction(
     room_id="my-room-id",
     thread_id="th_abc123",
     comment_id="cm_abc123",
+    body=RemoveCommentReactionRequestBody(
+        user_id="...",
+        emoji="...",
+        # removed_at=...,
+    ),
 )
 ```
 
@@ -1474,7 +1498,7 @@ client.remove_comment_reaction(
   </PropertiesListItem>
   <PropertiesListItem
     name="body"
-    type="RemoveCommentReactionRequestBody | Unset"
+    type="RemoveCommentReactionRequestBody"
   >
     Request body (application/json).
 
@@ -2037,13 +2061,24 @@ print(result)
 This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
 
 ```python
-client.trigger_inbox_notification()
+from liveblocks.models import TriggerInboxNotificationRequestBody
+
+client.trigger_inbox_notification(
+    body=TriggerInboxNotificationRequestBody(
+        user_id="...",
+        kind="...",
+        subject_id="...",
+        activity_data=...,
+        # room_id="...",
+        # organization_id="...",
+    ),
+)
 ```
 
 <PropertiesList title="Parameters">
   <PropertiesListItem
     name="body"
-    type="TriggerInboxNotificationRequestBody | Unset"
+    type="TriggerInboxNotificationRequestBody"
   >
     Request body (application/json).
 
@@ -2107,14 +2142,23 @@ print(result)
 This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
 ```python
-result = client.create_group()
+from liveblocks.models import CreateGroupRequestBody
+
+result = client.create_group(
+    body=CreateGroupRequestBody(
+        id="...",
+        # member_ids=[],
+        # organization_id="...",
+        # scopes=...,
+    ),
+)
 print(result)
 ```
 
 <PropertiesList title="Parameters">
   <PropertiesListItem
     name="body"
-    type="CreateGroupRequestBody | Unset"
+    type="CreateGroupRequestBody"
   >
     Request body (application/json).
 
