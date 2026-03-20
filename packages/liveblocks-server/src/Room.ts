@@ -199,7 +199,9 @@ export class BrowserSession<SM, CM extends JsonObject> {
   constructor(
     ticket: Ticket<SM, CM>,
     socket: IServerWebSocket,
-    debug: boolean
+    debug: boolean,
+    /** When restoring from hibernation, pass the original socket creation time so session duration is correct. */
+    createdAt?: Date
   ) {
     this.version = ticket.version;
     this.actor = ticket.actor;
@@ -210,7 +212,7 @@ export class BrowserSession<SM, CM extends JsonObject> {
     this.#_socket = socket;
     this.#_debug = debug;
 
-    const now = new Date();
+    const now = createdAt ?? new Date();
     this.createdAt = now;
     this.#_lastActiveAt = now;
     this.#_hasNotifiedClientStorageUpdateError = false;
@@ -633,14 +635,21 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
       ticket: Ticket<SM, CM>;
       socket: IServerWebSocket;
       lastActivity: Date;
+      /** Original session creation time (e.g. from persisted attachment). Required for correct session duration after hibernation. */
+      createdAt?: Date;
     }[]
   ): void {
     if (this.sessions.size > 0) {
       throw new Error("This API can only be called before any sessions exist");
     }
 
-    for (const { ticket, socket, lastActivity } of sessions) {
-      const newSession = new BrowserSession(ticket, socket, this.#_debug);
+    for (const { ticket, socket, lastActivity, createdAt } of sessions) {
+      const newSession = new BrowserSession(
+        ticket,
+        socket,
+        this.#_debug,
+        createdAt
+      );
       this.sessions.set(ticket.sessionKey, newSession);
       newSession.markActive(lastActivity);
     }

@@ -1,4 +1,4 @@
-# Reusable workflow: build, scan, sign and publish a Docker image to GHCR.
+# Reusable workflow: build and publish a Docker image to GHCR.
 name: "[reusable] Build Docker image"
 
 on:
@@ -23,15 +23,18 @@ on:
       is_release:
         required: true
         type: string
-        description: "'true' for release builds (tag push or workflow_dispatch with version), 'false' otherwise. Controls whether latest tag and version tags are applied."
+        description:
+          "'true' for release builds (tag push or workflow_dispatch with
+          version), 'false' otherwise. Controls whether latest tag and version
+          tags are applied."
       release_version:
         required: true
         type: string
-        description: "Explicit semver for tagging (e.g. 1.0.6, without v prefix). Non-empty only for workflow_dispatch triggers where there is no git tag for type=semver to derive from. Pass empty string for tag-push and non-release builds."
-      scan:
-        required: false
-        type: boolean
-        default: false
+        description:
+          "Explicit semver for tagging (e.g. 1.0.6, without v prefix). Non-empty
+          only for workflow_dispatch triggers where there is no git tag for
+          type=semver to derive from. Pass empty string for tag-push and
+          non-release builds."
     outputs:
       tags:
         value: ${{ jobs.build.outputs.tags }}
@@ -49,8 +52,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
-      security-events: write
 
     steps:
       - name: Checkout
@@ -124,66 +125,3 @@ jobs:
           build-args: ${{ inputs.build-args }}
           cache-from: type=gha,scope=${{ inputs.image }}
           cache-to: type=gha,mode=max,scope=${{ inputs.image }}
-
-      # --- Security scanning ---
-
-      - name: Vulnerability scan with Grype
-        if: inputs.scan && github.event_name != 'pull_request'
-        uses: anchore/scan-action@v6
-        id: grype
-        with:
-          image: ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}
-          fail-build: false
-          output-format: sarif
-
-      - name: Upload Grype SARIF to GitHub Security
-        if: inputs.scan && always() && github.event_name != 'pull_request'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ steps.grype.outputs.sarif }}
-
-      - name: Generate SBOM with Syft
-        if: inputs.scan && github.event_name != 'pull_request'
-        uses: anchore/sbom-action@v0
-        id: sbom
-        with:
-          image: ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}
-          format: cyclonedx-json
-          output-file: sbom.cdx.json
-
-      # --- Signing ---
-
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign image with cosign
-        if: github.event_name != 'pull_request'
-        run: |
-          cosign sign --yes \
-            "ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}"
-
-      - name: Attest SBOM with cosign
-        if: inputs.scan && github.event_name != 'pull_request'
-        run: |
-          cosign attest --yes \
-            --predicate sbom.cdx.json \
-            --type cyclonedx \
-            "ghcr.io/${{ inputs.image }}@${{ steps.build.outputs.digest }}"
-
-      - name: Compute SBOM artifact name
-        if: inputs.scan && github.event_name != 'pull_request'
-        id: sbom-name
-        run: |
-          SAFE_NAME="${IMAGE_NAME//\//-}"
-          echo "artifact=sbom-${SAFE_NAME}" >> "$GITHUB_OUTPUT"
-        env:
-          IMAGE_NAME: ${{ inputs.image }}
-
-      - name: Upload SBOM artifact
-        if: inputs.scan && github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.sbom-name.outputs.artifact }}
-          path: sbom.cdx.json
-          retention-days: 90

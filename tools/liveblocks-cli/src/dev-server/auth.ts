@@ -19,23 +19,21 @@ import { nanoid, Permission } from "@liveblocks/core";
 import type { CreateTicketOptions } from "@liveblocks/server";
 import { ProtocolVersion } from "@liveblocks/server";
 
+import * as Rooms from "./db/rooms";
+import type { LiteAccessToken, LiteIdToken, LiteToken } from "./lib/jwt-lite";
 import { verifyJwtLite } from "./lib/jwt-lite";
 
-/**
- * Returns the scopes for a given room ID based on the permissions map.
- * Supports exact matches and wildcard patterns (e.g., "room-*" matches "room-123").
- */
-function getScopesForRoom(
-  roomId: string,
-  perms: Record<string, Permission[]>
-): string[] {
+function resolvePermissions_acc(
+  token: LiteAccessToken,
+  roomId: string
+): Permission[] {
   // Try exact match first
-  if (perms[roomId]) {
-    return perms[roomId];
+  if (token.perms[roomId]) {
+    return token.perms[roomId];
   }
 
   // Try wildcard patterns
-  for (const [pattern, scopes] of Object.entries(perms)) {
+  for (const [pattern, scopes] of Object.entries(token.perms)) {
     if (pattern.endsWith("*")) {
       const prefix = pattern.slice(0, -1);
       if (roomId.startsWith(prefix)) {
@@ -44,8 +42,44 @@ function getScopesForRoom(
     }
   }
 
-  // No matching permissions
   return [];
+}
+
+function resolvePermissions_id(
+  token: LiteIdToken,
+  roomId: string
+): Permission[] {
+  // ID token: resolve from the rooms DB (room must already exist)
+  const room = Rooms.getRoom(roomId);
+  if (!room) return [];
+
+  const scopes = new Set<Permission>(room.defaultAccesses);
+
+  if (token.gids) {
+    for (const gid of token.gids) {
+      for (const p of room.groupsAccesses[gid] ?? []) {
+        scopes.add(p);
+      }
+    }
+  }
+
+  for (const p of room.usersAccesses[token.uid] ?? []) {
+    scopes.add(p);
+  }
+
+  return Array.from(scopes);
+}
+
+/**
+ * Resolves permissions for a token against a room.
+ * - Access tokens: match roomId against the token's explicit perms map.
+ * - ID tokens: look up the room in the DB and collect the union of
+ *   defaultAccesses, groupsAccesses, and usersAccesses.
+ */
+function resolvePermissions(token: LiteToken, roomId: string): Permission[] {
+  return token.k === "acc"
+    ? resolvePermissions_acc(token, roomId)
+    : resolvePermissions_id(token, roomId);
 }
 
 //
@@ -87,37 +121,21 @@ export function authorizeWebSocket(
       return { ok: false }; // TODO Emit helpful X-Warn here, or not?
     }
 
-    if (payload.k === "acc") {
-      const scopes = getScopesForRoom(roomId, payload.perms);
-      if (scopes.length === 0) {
-        return { ok: false }; // TODO Emit helpful X-Warn here, or not?
-      }
-
-      return {
-        ok: true,
-        roomId,
-        ticketData: {
-          version,
-          id: payload.uid,
-          info: payload.ui,
-          scopes,
-        },
-      };
-    } else if (payload.k === "id") {
-      // TODO Warning that ID tokens are not fully supported yet
-      return {
-        ok: true,
-        roomId,
-        ticketData: {
-          version,
-          id: payload.uid,
-          info: payload.ui,
-          scopes: [Permission.Write],
-        },
-      };
+    const scopes = resolvePermissions(payload, roomId);
+    if (scopes.length === 0) {
+      return { ok: false };
     }
 
-    return { ok: false }; // TODO Emit helpful X-Warn here, or not?
+    return {
+      ok: true,
+      roomId,
+      ticketData: {
+        version,
+        id: payload.uid,
+        info: payload.ui,
+        scopes,
+      },
+    };
   }
 
   // Otherwise check if ?pubkey= is present (public key auth - anonymous user)
@@ -130,13 +148,19 @@ export function authorizeWebSocket(
       };
     }
 
+    // Auto-create the room if it doesn't exist yet
+    Rooms.getOrCreateRoom(roomId, {
+      defaultAccesses: [Permission.Write],
+    });
+
+    // Public key auth always grants write access (matches production behavior)
     return {
       ok: true,
       roomId,
       ticketData: {
         version,
         anonymousId: nanoid(),
-        scopes: ["room:write"], // Public key auth always gets full write access
+        scopes: [Permission.Write],
       },
     };
   }

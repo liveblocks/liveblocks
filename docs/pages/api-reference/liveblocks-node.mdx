@@ -78,6 +78,15 @@ const { body, status } = await liveblocks.identifyUser(
 );
 ```
 
+<Banner title="Don't cache tokens" type="warning">
+
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
+
+</Banner>
+
 ##### Granting ID token permissions
 
 You can pass additional options to `identifyUser`, enabling you to create
@@ -230,8 +239,8 @@ assigning group permissions.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
 
-`organizationId` (optional) is the organization for this user, will be set to `default` if
-not provided.
+`organizationId` (optional) is the organization for this user, will be set to
+`default` if not provided.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all
@@ -323,6 +332,15 @@ const session = liveblocks.prepareSession(
 );
 ```
 
+<Banner title="Don't cache tokens" type="warning">
+
+Never cache your access token authentication endpoint, as your client will not
+function correctly. The Liveblocks client will cache results for you, only
+making requests to the endpoint if necessary, such as when the token has
+expired.
+
+</Banner>
+
 ##### Granting access token permissions
 
 Using `session.allow()`, you can grant full or read-only permissions to the user
@@ -353,10 +371,11 @@ session.allow("design-room:*", session.FULL_ACCESS);
 </Banner>
 
 Additionally, you can pass additional options to `prepareSession`, enabling you
-to create complex permissions using [organizations](/docs/authentication/organizations) and
+to create complex permissions using
+[organizations](/docs/authentication/organizations) and
 [accesses](/docs/authentication/access-tokens/permissions). For example, this
-user can only see resources in the `acme-corp` organization, and they're part of a
-`marketing` group within it.
+user can only see resources in the `acme-corp` organization, and they're part of
+a `marketing` group within it.
 
 ```ts
 const session = liveblocks.prepareSession(
@@ -1802,6 +1821,52 @@ const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
 
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
 more about using binary updates.
+
+### Attachments
+
+#### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]
+
+Returns an attachment's metadata and a presigned download URL. Throws an error
+if the room or attachment isn't found.
+
+```ts
+const attachment = await liveblocks.getAttachment({
+  roomId: "my-room-id",
+  attachmentId: "at_d75sF3...",
+});
+
+// { type: "attachment", id: "at_d75sF3...", name: "document.pdf", ... }
+console.log(attachment);
+
+// The presigned URL to download the attachment
+console.log(attachment.url);
+```
+
+Returns an `AttachmentWithUrl` object with the following properties:
+
+<PropertiesList>
+  <PropertiesListItem name="type" type={'"attachment"'}>
+    The type of the object.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    The attachment ID (starts with "at_").
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the attachment file.
+  </PropertiesListItem>
+  <PropertiesListItem name="mimeType" type="string">
+    The MIME type of the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="number">
+    The size of the attachment in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem name="url" type="string">
+    A presigned URL to download the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="expiresAt" type="string">
+    The expiration time of the presigned URL.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Comments
 

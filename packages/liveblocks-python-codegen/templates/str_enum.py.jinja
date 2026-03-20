@@ -1,0 +1,6 @@
+from enum import StrEnum
+
+class {{ enum.class_info.name }}(StrEnum):
+    {% for key, value in enum.values|dictsort(true) %}
+    {{ key }} = "{{ value }}"
+    {% endfor %}

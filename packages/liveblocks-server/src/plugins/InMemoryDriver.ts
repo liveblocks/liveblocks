@@ -181,6 +181,10 @@ export class InMemoryDriver implements IStorageDriver {
     this._leasedSessions.delete(sessionId);
   }
 
+  takeRowsWritten(): number {
+    return 0;
+  }
+
   next_actor() {
     return ++this._nextActor;
   }

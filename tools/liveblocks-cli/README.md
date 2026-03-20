@@ -43,11 +43,10 @@ Automatically detects your package manager (npm, yarn, pnpm, or bun).
 ## Run with Docker
 
 ```bash
-docker run -p 1153:1153 ghcr.io/liveblocks/cli dev
+docker run -p 1153:1153 ghcr.io/liveblocks/dev-server
 ```
 
-See [DOCKER.md](./DOCKER.md) for configuration, volume mounts, and image
-signature verification.
+See [DOCKER.md](./DOCKER.md) for configuration and volume mounts.
 
 ## License
 
