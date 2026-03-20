@@ -5262,6 +5262,7 @@
                           "teamId": "team_123",
                           "type": "dev",
                           "name": "Frimousse",
+                          "description": "A lightweight, unstyled, and composable emoji picker for React.",
                           "createdAt": "2024-09-03T12:34:56.000Z",
                           "updatedAt": "2024-09-03T12:34:56.000Z",
                           "publicKey": {
@@ -5359,6 +5360,7 @@
                 "example": {
                   "value": {
                     "name": "Frimousse",
+                    "description": "A lightweight, unstyled, and composable emoji picker for React.",
                     "type": "dev",
                     "versionCreationTimeout": false
                   }
@@ -5466,6 +5468,7 @@
                 "example": {
                   "value": {
                     "name": "Valleys",
+                    "description": "A lightweight TypeScript library for assertion-based runtime data validation.",
                     "versionCreationTimeout": false
                   }
                 }
@@ -10009,6 +10012,16 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -10042,6 +10055,7 @@
           "teamId",
           "type",
           "name",
+          "description",
           "createdAt",
           "updatedAt",
           "publicKey",
@@ -10124,6 +10138,9 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "type": {
             "$ref": "#/components/schemas/ManagementProjectType"
           },
@@ -10135,6 +10152,7 @@
         "required": ["type"],
         "example": {
           "name": "My Project",
+          "description": "Project description",
           "type": "dev",
           "versionCreationTimeout": false
         }
@@ -10146,12 +10164,16 @@
           "name": {
             "type": "string"
           },
+          "description": {
+            "type": "string"
+          },
           "versionCreationTimeout": {
             "$ref": "#/components/schemas/ManagementProjectVersionCreationTimeout"
           }
         },
         "example": {
           "name": "Updated Project Name",
+          "description": "Updated project description",
           "versionCreationTimeout": 60
         }
       },
