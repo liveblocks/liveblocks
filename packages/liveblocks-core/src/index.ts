@@ -298,12 +298,12 @@ export type {
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
+  FeedDeletedServerMsg,
   FeedMessagesAddedServerMsg,
   FeedMessagesDeletedServerMsg,
   FeedMessagesListServerMsg,
   FeedMessagesUpdatedServerMsg,
   FeedsAddedServerMsg,
-  FeedsDeletedServerMsg,
   FeedsEventServerMsg,
   FeedsListServerMsg,
   FeedsUpdatedServerMsg,

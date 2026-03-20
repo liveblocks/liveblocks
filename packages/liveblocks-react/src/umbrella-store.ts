@@ -2175,15 +2175,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   }
 
   /**
-   * Removes feeds from the cache (for deleted operations).
+   * Removes a feed from the cache (for deleted operations).
    */
-  public deleteFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
+  public deleteFeed(roomId: RoomId, feedId: string): void {
     const feedsMap = this.#feedsByRoomId.get(roomId);
     if (!feedsMap) return;
 
-    for (const feed of feeds) {
-      feedsMap.delete(feed.feedId);
-    }
+    feedsMap.delete(feedId);
 
     this.#feedsSignal.mutate((state) => {
       state.version++;

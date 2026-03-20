@@ -555,8 +555,8 @@ function RoomProviderInner<
         case ServerMsgCode.FEEDS_UPDATED:
           store.upsertFeeds(room.id, message.feeds);
           break;
-        case ServerMsgCode.FEEDS_DELETED:
-          store.deleteFeeds(room.id, message.feeds);
+        case ServerMsgCode.FEED_DELETED:
+          store.deleteFeed(room.id, message.feedId);
           break;
         case ServerMsgCode.FEED_MESSAGES_ADDED:
         case ServerMsgCode.FEED_MESSAGES_UPDATED:

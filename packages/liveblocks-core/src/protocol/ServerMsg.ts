@@ -38,7 +38,7 @@ export const ServerMsgCode = Object.freeze({
   FEEDS_LIST: 500,
   FEEDS_ADDED: 501,
   FEEDS_UPDATED: 502,
-  FEEDS_DELETED: 503,
+  FEED_DELETED: 503,
   FEED_MESSAGES_LIST: 504,
   FEED_MESSAGES_ADDED: 505,
   FEED_MESSAGES_UPDATED: 506,
@@ -74,7 +74,7 @@ export namespace ServerMsgCode {
   export type FEEDS_LIST = typeof ServerMsgCode.FEEDS_LIST;
   export type FEEDS_ADDED = typeof ServerMsgCode.FEEDS_ADDED;
   export type FEEDS_UPDATED = typeof ServerMsgCode.FEEDS_UPDATED;
-  export type FEEDS_DELETED = typeof ServerMsgCode.FEEDS_DELETED;
+  export type FEED_DELETED = typeof ServerMsgCode.FEED_DELETED;
   export type FEED_MESSAGES_LIST = typeof ServerMsgCode.FEED_MESSAGES_LIST;
   export type FEED_MESSAGES_ADDED = typeof ServerMsgCode.FEED_MESSAGES_ADDED;
   export type FEED_MESSAGES_UPDATED =
@@ -391,7 +391,7 @@ export type FeedsEventServerMsg<
   | FeedsListServerMsg<FM>
   | FeedsAddedServerMsg<FM>
   | FeedsUpdatedServerMsg<FM>
-  | FeedsDeletedServerMsg<FM>
+  | FeedDeletedServerMsg
   | FeedMessagesListServerMsg<FMD>
   | FeedMessagesAddedServerMsg<FMD>
   | FeedMessagesUpdatedServerMsg<FMD>
@@ -414,9 +414,9 @@ export type FeedsUpdatedServerMsg<FM extends Json = Json> = {
   readonly feeds: Feed<FM>[];
 };
 
-export type FeedsDeletedServerMsg<FM extends Json = Json> = {
-  readonly type: ServerMsgCode.FEEDS_DELETED;
-  readonly feeds: Feed<FM>[];
+export type FeedDeletedServerMsg = {
+  readonly type: ServerMsgCode.FEED_DELETED;
+  readonly feedId: string;
 };
 
 export type FeedMessagesListServerMsg<FMD extends Json = Json> = {

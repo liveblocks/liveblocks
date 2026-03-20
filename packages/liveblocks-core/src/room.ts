@@ -97,7 +97,6 @@ import type {
   FeedMessagesListServerMsg,
   FeedMessagesUpdatedServerMsg,
   FeedsAddedServerMsg,
-  FeedsDeletedServerMsg,
   FeedsEventServerMsg,
   FeedsListServerMsg,
   FeedsUpdatedServerMsg,
@@ -2475,9 +2474,8 @@ export function createRoom<
           break;
         }
 
-        case ServerMsgCode.FEEDS_DELETED: {
-          const feedsDeletedMsg = message as FeedsDeletedServerMsg<SM>;
-          eventHub.feeds.notify(feedsDeletedMsg);
+        case ServerMsgCode.FEED_DELETED: {
+          eventHub.feeds.notify(message);
           break;
         }
 
