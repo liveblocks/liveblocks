@@ -676,6 +676,7 @@
         "operationId": "update-room-id",
         "description": "This endpoint permanently updates the room’s ID. All existing references to the old room ID will need to be updated. Returns the updated room. Corresponds to [`liveblocks.updateRoomId`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomid-update-room-id).",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -760,6 +761,7 @@
         "operationId": "update-room-organization-id",
         "description": "This endpoint updates the room's organization ID. The `fromOrganizationId` must match the room's current organization ID. Returns the updated room.",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -2909,6 +2911,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4178,6 +4181,7 @@
           }
         },
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -4240,6 +4244,7 @@
         "tags": ["Groups"],
         "operationId": "create-group",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -9708,7 +9713,8 @@
             "type": "object",
             "properties": {
               "mention": {
-                "type": "boolean"
+                "type": "boolean",
+                "const": true
               }
             }
           },
@@ -9787,7 +9793,8 @@
             "type": "object",
             "properties": {
               "mention": {
-                "type": "boolean"
+                "type": "boolean",
+                "const": true
               }
             }
           }
@@ -10090,7 +10097,7 @@
             ]
           }
         },
-        "required": ["projects", "nextCursor"],
+        "required": ["data", "nextCursor"],
         "additionalProperties": false,
         "example": {
           "data": [
@@ -10574,7 +10581,7 @@
             ]
           }
         },
-        "required": ["webhooks", "nextCursor"],
+        "required": ["data", "nextCursor"],
         "additionalProperties": false,
         "example": {
           "data": [

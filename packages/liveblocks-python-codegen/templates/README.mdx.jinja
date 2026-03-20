@@ -102,9 +102,9 @@ async with client:
 {{ endpoint.description | replace('\\"', '"') }}
 {% endif %}
 
-{% set body_prop = (endpoint.bodies | selectattr("prop.required") | first).prop if endpoint.bodies | selectattr("prop.required") | list else None %}
+{% set body_prop = (endpoint.bodies | first).prop if endpoint.bodies else None %}
 {% if body_prop %}
-{% set body_type = body_prop.get_type_string() %}
+{% set body_type = body_prop.get_type_string(no_optional=True) %}
 {% set body_is_simple = "|" in body_type or "list[" in body_type or body_type in ["File", "Any"] %}
 {% set body_required = (body_prop.required_properties | selectattr("default", "none") | list) if body_prop.required_properties else [] %}
 {% set body_optional = (body_prop.optional_properties or [])[:3] %}
