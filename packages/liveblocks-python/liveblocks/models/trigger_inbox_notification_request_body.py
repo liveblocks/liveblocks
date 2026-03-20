@@ -18,11 +18,12 @@ if TYPE_CHECKING:
 class TriggerInboxNotificationRequestBody:
     """
     Example:
-        {'userId': 'alice', 'kind': 'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}
+        {'userId': 'alice', 'kind': '$fileUploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}
 
     Attributes:
         user_id (str):
-        kind (str):
+        kind (str): A custom notification kind. Must start with '$' and contain only letters and underscores (max 128
+            characters).
         subject_id (str):
         activity_data (TriggerInboxNotificationRequestBodyActivityData):
         room_id (str | Unset):

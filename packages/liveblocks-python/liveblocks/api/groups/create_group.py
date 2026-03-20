@@ -5,12 +5,11 @@ import httpx
 from ... import errors
 from ...models.create_group_request_body import CreateGroupRequestBody
 from ...models.group import Group
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: CreateGroupRequestBody | Unset = UNSET,
+    body: CreateGroupRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -19,8 +18,7 @@ def _get_kwargs(
         "url": "/v2/groups",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -40,7 +38,7 @@ def _parse_response(*, response: httpx.Response) -> Group:
 def _sync(
     *,
     client: httpx.Client,
-    body: CreateGroupRequestBody | Unset = UNSET,
+    body: CreateGroupRequestBody,
 ) -> Group:
     kwargs = _get_kwargs(
         body=body,
@@ -55,7 +53,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: CreateGroupRequestBody | Unset = UNSET,
+    body: CreateGroupRequestBody,
 ) -> Group:
     kwargs = _get_kwargs(
         body=body,

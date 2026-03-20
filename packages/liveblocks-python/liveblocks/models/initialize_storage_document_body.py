@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING, Any, Literal, Self, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..types import UNSET, Unset
-
 if TYPE_CHECKING:
     from ..models.initialize_storage_document_body_data import InitializeStorageDocumentBodyData
 
@@ -16,28 +14,27 @@ if TYPE_CHECKING:
 class InitializeStorageDocumentBody:
     """
     Attributes:
-        liveblocks_type (Literal['LiveObject'] | Unset):
-        data (InitializeStorageDocumentBodyData | Unset):
+        liveblocks_type (Literal['LiveObject']):
+        data (InitializeStorageDocumentBodyData):
     """
 
-    liveblocks_type: Literal["LiveObject"] | Unset = UNSET
-    data: InitializeStorageDocumentBodyData | Unset = UNSET
+    liveblocks_type: Literal["LiveObject"]
+    data: InitializeStorageDocumentBodyData
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         liveblocks_type = self.liveblocks_type
 
-        data: dict[str, Any] | Unset = UNSET
-        if not isinstance(self.data, Unset):
-            data = self.data.to_dict()
+        data = self.data.to_dict()
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update({})
-        if liveblocks_type is not UNSET:
-            field_dict["liveblocksType"] = liveblocks_type
-        if data is not UNSET:
-            field_dict["data"] = data
+        field_dict.update(
+            {
+                "liveblocksType": liveblocks_type,
+                "data": data,
+            }
+        )
 
         return field_dict
 
@@ -46,16 +43,11 @@ class InitializeStorageDocumentBody:
         from ..models.initialize_storage_document_body_data import InitializeStorageDocumentBodyData
 
         d = dict(src_dict)
-        liveblocks_type = cast(Literal["LiveObject"] | Unset, d.pop("liveblocksType", UNSET))
-        if liveblocks_type != "LiveObject" and not isinstance(liveblocks_type, Unset):
+        liveblocks_type = cast(Literal["LiveObject"], d.pop("liveblocksType"))
+        if liveblocks_type != "LiveObject":
             raise ValueError(f"liveblocksType must match const 'LiveObject', got '{liveblocks_type}'")
 
-        _data = d.pop("data", UNSET)
-        data: InitializeStorageDocumentBodyData | Unset
-        if isinstance(_data, Unset):
-            data = UNSET
-        else:
-            data = InitializeStorageDocumentBodyData.from_dict(_data)
+        data = InitializeStorageDocumentBodyData.from_dict(d.pop("data"))
 
         initialize_storage_document_body = cls(
             liveblocks_type=liveblocks_type,
