@@ -9,10 +9,13 @@ import type {
   CommentUserReaction,
   Cursor,
   DistributiveOmit,
+  Feed,
+  FeedMessage,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  Json,
   MessageId,
   NotificationSettings,
   OpaqueClient,
@@ -60,6 +63,8 @@ import type {
   AiChatAsyncResult,
   AiChatMessagesAsyncResult,
   AiChatsAsyncResult,
+  FeedMessagesAsyncResult,
+  FeedsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   InboxNotificationsQuery,
@@ -283,6 +288,21 @@ export function makeInboxNotificationsQueryKey(
   query: InboxNotificationsQuery | undefined
 ) {
   return stableStringify(query ?? {});
+}
+
+export function makeFeedsQueryKey(
+  roomId: string,
+  options?: { since?: number; metadata?: Record<string, Json> }
+) {
+  return stableStringify([roomId, options ?? {}]);
+}
+
+export function makeFeedMessagesQueryKey(
+  roomId: string,
+  feedId: string,
+  options?: { cursor?: string; limit?: number }
+) {
+  return stableStringify([roomId, feedId, options ?? {}]);
 }
 
 /**
@@ -1148,6 +1168,14 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       string,
       LoadableResource<UrlMetadataAsyncResult>
     >;
+    readonly loadingFeeds: DefaultMap<
+      string,
+      LoadableResource<FeedsAsyncResult>
+    >;
+    readonly loadingFeedMessages: DefaultMap<
+      string,
+      LoadableResource<FeedMessagesAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1164,6 +1192,18 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
 
   // Notification Settings
   #notificationSettings: SinglePageResource;
+
+  // Feeds
+  #feedsByRoomId = new Map<RoomId, Map<string, Feed>>();
+  #feedMessagesByFeedId = new Map<string, Map<string, FeedMessage>>();
+
+  // Signals for feeds and feed messages to trigger reactivity
+  readonly #feedsSignal = new MutableSignal<{ version: number }>({
+    version: 0,
+  });
+  readonly #feedMessagesSignal = new MutableSignal<{ version: number }>({
+    version: 0,
+  });
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<TM, CM>();
@@ -1653,6 +1693,118 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       }
     );
 
+    const loadingFeeds = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedsAsyncResult> => {
+        const [roomId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          options?: { since?: number; metadata?: Record<string, Json> },
+        ];
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new Error(
+              `Room '${roomId}' is not available on client. Make sure you're calling useFeeds inside a RoomProvider.`
+            );
+          }
+
+          const result = await room.fetchFeeds({
+            cursor,
+            since: options?.since,
+            metadata: options?.metadata,
+          });
+
+          this.upsertFeeds(roomId, result.feeds);
+
+          return result.nextCursor ?? null;
+        });
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#feedsSignal,
+          (resourceResult, _signalState): FeedsAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const feedsMap = this.#feedsByRoomId.get(roomId);
+            const feeds: Feed[] = feedsMap ? Array.from(feedsMap.values()) : [];
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              feeds,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    const loadingFeedMessages = new DefaultMap(
+      (queryKey: string): LoadableResource<FeedMessagesAsyncResult> => {
+        const [roomId, feedId, options] = JSON.parse(queryKey) as [
+          roomId: RoomId,
+          feedId: string,
+          options?: { cursor?: string; limit?: number },
+        ];
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new Error(
+              `Room '${roomId}' is not available on client. Make sure you're calling useFeedMessages inside a RoomProvider.`
+            );
+          }
+
+          const result = await room.fetchFeedMessages(feedId, {
+            cursor,
+            limit: options?.limit,
+          });
+
+          this.upsertFeedMessages(roomId, feedId, result.messages);
+
+          return result.nextCursor ?? null;
+        });
+
+        const signal = DerivedSignal.from(
+          resource.signal,
+          this.#feedMessagesSignal,
+          (resourceResult, _signalState): FeedMessagesAsyncResult => {
+            if (resourceResult.isLoading || resourceResult.error) {
+              return resourceResult;
+            }
+
+            const messagesMap = this.#feedMessagesByFeedId.get(feedId);
+            const messages: FeedMessage[] = messagesMap
+              ? Array.from(messagesMap.values()).sort(
+                  (a, b) => a.timestamp - b.timestamp
+                )
+              : [];
+
+            const page = resourceResult.data;
+            return {
+              isLoading: false,
+              messages,
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow2
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1669,6 +1821,8 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       messagesByChatId,
       aiChatById,
       urlMetadataByUrl,
+      loadingFeeds,
+      loadingFeedMessages,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
@@ -1999,6 +2153,82 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       result.inboxNotifications.deleted,
       result.subscriptions.deleted
     );
+  }
+
+  /**
+   * Upserts feeds in the cache (for list/added/updated operations).
+   */
+  public upsertFeeds(roomId: RoomId, feeds: readonly Feed[]): void {
+    let feedsMap = this.#feedsByRoomId.get(roomId);
+    if (!feedsMap) {
+      feedsMap = new Map();
+      this.#feedsByRoomId.set(roomId, feedsMap);
+    }
+
+    for (const feed of feeds) {
+      feedsMap.set(feed.feedId, feed);
+    }
+
+    this.#feedsSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Removes a feed from the cache (for deleted operations).
+   */
+  public deleteFeed(roomId: RoomId, feedId: string): void {
+    const feedsMap = this.#feedsByRoomId.get(roomId);
+    if (!feedsMap) return;
+
+    feedsMap.delete(feedId);
+
+    this.#feedsSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Upserts feed messages in the cache (for list/added/updated operations).
+   */
+  public upsertFeedMessages(
+    _roomId: RoomId,
+    feedId: string,
+    messages: readonly FeedMessage[]
+  ): void {
+    let messagesMap = this.#feedMessagesByFeedId.get(feedId);
+    if (!messagesMap) {
+      messagesMap = new Map();
+      this.#feedMessagesByFeedId.set(feedId, messagesMap);
+    }
+
+    for (const message of messages) {
+      messagesMap.set(message.id, message);
+    }
+
+    this.#feedMessagesSignal.mutate((state) => {
+      state.version++;
+    });
+  }
+
+  /**
+   * Removes feed messages from the cache (for deleted operations).
+   */
+  public deleteFeedMessages(
+    _roomId: RoomId,
+    feedId: string,
+    messages: readonly FeedMessage[]
+  ): void {
+    const messagesMap = this.#feedMessagesByFeedId.get(feedId);
+    if (!messagesMap) return;
+
+    for (const message of messages) {
+      messagesMap.delete(message.id);
+    }
+
+    this.#feedMessagesSignal.mutate((state) => {
+      state.version++;
+    });
   }
 
   public async fetchUnreadNotificationsCount(

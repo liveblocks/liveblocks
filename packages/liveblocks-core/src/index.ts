@@ -100,9 +100,11 @@ export type {
   DCM,
   DE,
   DGI,
+  DMD,
   DP,
   DRI,
   DS,
+  DSM,
   DTM,
   DU,
   KDAD,
@@ -240,6 +242,7 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type { Feed, FeedMessage } from "./protocol/Feeds";
 export type {
   GroupData,
   GroupDataPlain,
@@ -295,6 +298,15 @@ export type {
 export type {
   BroadcastedEventServerMsg,
   CommentsEventServerMsg,
+  FeedDeletedServerMsg,
+  FeedMessagesAddedServerMsg,
+  FeedMessagesDeletedServerMsg,
+  FeedMessagesListServerMsg,
+  FeedMessagesUpdatedServerMsg,
+  FeedsAddedServerMsg,
+  FeedsEventServerMsg,
+  FeedsListServerMsg,
+  FeedsUpdatedServerMsg,
   RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,

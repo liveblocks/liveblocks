@@ -20,6 +20,8 @@ import type {
   DS,
   DTM,
   DU,
+  Feed,
+  FeedMessage,
   GroupData,
   GroupDataPlain,
   GroupScopes,
@@ -620,6 +622,26 @@ export type GetWebKnowledgeSourceLinksOptions = {
   knowledgeSourceId: string;
 } & PaginationOptions;
 
+export type CreateFeedOptions<FM extends Json = Json> = {
+  feedId: string;
+  metadata?: FM;
+  timestamp?: number;
+};
+
+export type UpdateFeedOptions<FM extends Json = Json> = {
+  metadata: FM;
+};
+
+export type CreateFeedMessageOptions<FMD extends Json = Json> = {
+  id?: string;
+  timestamp?: number;
+  data: FMD;
+};
+
+export type UpdateFeedMessageOptions<FMD extends Json = Json> = {
+  data: FMD;
+};
+
 type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
 
 export type KnowledgeSource = (
@@ -757,6 +779,27 @@ export class Liveblocks {
       signal: options?.signal,
     });
     xwarn(res, "POST", path);
+    return res;
+  }
+
+  async #patch(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this.#secret}`,
+      "Content-Type": "application/json",
+    };
+    const fetch = await fetchPolyfill();
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(json),
+      signal: options?.signal,
+    });
+    xwarn(res, "PATCH", path);
     return res;
   }
 
@@ -3332,6 +3375,233 @@ export class Liveblocks {
       ...page,
       data: page.data.map(inflateWebKnowledgeSourceLink),
     };
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * Feeds
+   * -----------------------------------------------------------------------------------------------*/
+
+  /**
+   * Returns a list of feeds in a room.
+   * @param params.roomId The room ID to get the feeds from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of feeds.
+   */
+  public async getFeeds<FM extends Json = Json>(
+    params: { roomId: string },
+    options?: RequestOptions
+  ): Promise<{ data: Feed<FM>[] }> {
+    const { roomId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: Feed<FM>[] };
+  }
+
+  /**
+   * Creates a new feed in a room.
+   * @param params.roomId The room ID to create the feed in.
+   * @param params.feedId The feed ID.
+   * @param params.metadata (optional) The metadata for the feed.
+   * @param params.timestamp (optional) The timestamp for the feed. If not provided, the current time will be used.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created feed.
+   */
+  public async createFeed<FM extends Json = Json>(
+    params: { roomId: string } & CreateFeedOptions<FM>,
+    options?: RequestOptions
+  ): Promise<Feed<FM>> {
+    const { roomId, feedId, metadata, timestamp } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/feed`,
+      { feedId, metadata, timestamp },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return ((await res.json()) as { data: Feed<FM> }).data;
+  }
+
+  /**
+   * Returns a feed with the given id.
+   * @param params.roomId The room ID to get the feed from.
+   * @param params.feedId The feed ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The feed.
+   */
+  public async getFeed<FM extends Json = Json>(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<Feed<FM>> {
+    const { roomId, feedId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return ((await res.json()) as { data: Feed<FM> }).data;
+  }
+
+  /**
+   * Updates the metadata of a feed.
+   * @param params.roomId The room ID to update the feed in.
+   * @param params.feedId The feed ID to update.
+   * @param params.metadata The metadata for the feed.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async updateFeed<FM extends Json = Json>(
+    params: {
+      roomId: string;
+      feedId: string;
+    } & UpdateFeedOptions<FM>,
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId, metadata } = params;
+    const res = await this.#patch(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      { metadata },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Deletes a feed.
+   * @param params.roomId The room ID to delete the feed from.
+   * @param params.feedId The feed ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteFeed(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/feeds/${feedId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Returns a list of messages in a feed.
+   * @param params.roomId The room ID to get the feed messages from.
+   * @param params.feedId The feed ID to get the messages from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A list of feed messages.
+   */
+  public async getFeedMessages<FMD extends Json = Json>(
+    params: { roomId: string; feedId: string },
+    options?: RequestOptions
+  ): Promise<{ data: FeedMessage<FMD>[] }> {
+    const { roomId, feedId } = params;
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as { data: FeedMessage<FMD>[] };
+  }
+
+  /**
+   * Creates a new message in a feed.
+   * @param params.roomId The room ID to create the feed message in.
+   * @param params.feedId The feed ID to create the message in.
+   * @param params.id (optional) The message ID. If not provided, one will be generated.
+   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used.
+   * @param params.data The message data.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The created feed message.
+   */
+  public async createFeedMessage<FMD extends Json = Json>(
+    params: {
+      roomId: string;
+      feedId: string;
+    } & CreateFeedMessageOptions<FMD>,
+    options?: RequestOptions
+  ): Promise<FeedMessage<FMD>> {
+    const { roomId, feedId, id, timestamp, data } = params;
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
+      { id, timestamp, data },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return ((await res.json()) as { data: FeedMessage<FMD> }).data;
+  }
+
+  /**
+   * Updates a feed message.
+   * @param params.roomId The room ID to update the feed message in.
+   * @param params.feedId The feed ID to update the message in.
+   * @param params.messageId The message ID to update.
+   * @param params.data The message data.
+   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used. If provided and less than the current time, the message update will be ignored.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async updateFeedMessage<FMD extends Json = Json>(
+    params: {
+      roomId: string;
+      feedId: string;
+      messageId: string;
+      timestamp?: number;
+    } & UpdateFeedMessageOptions<FMD>,
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId, messageId, data, timestamp } = params;
+    const res = await this.#patch(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
+      { data, timestamp },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Deletes a feed message.
+   * @param params.roomId The room ID to delete the feed message from.
+   * @param params.feedId The feed ID to delete the message from.
+   * @param params.messageId The message ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteFeedMessage(
+    params: {
+      roomId: string;
+      feedId: string;
+      messageId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, feedId, messageId } = params;
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 }
 

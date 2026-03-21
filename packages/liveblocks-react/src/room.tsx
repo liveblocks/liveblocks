@@ -22,11 +22,14 @@ import type {
   CommentsEventServerMsg,
   DCM,
   DE,
+  DMD,
   DP,
   DS,
+  DSM,
   DTM,
   DU,
   EnterOptions,
+  FeedsEventServerMsg,
   IYjsProvider,
   LiveblocksErrorContext,
   MentionData,
@@ -90,6 +93,10 @@ import type {
   EditCommentMetadataOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  FeedMessagesAsyncResult,
+  FeedMessagesAsyncSuccess,
+  FeedsAsyncResult,
+  FeedsAsyncSuccess,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -103,16 +110,22 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
+  UseFeedMessagesOptions,
+  UseFeedsOptions,
   UseSearchCommentsOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
-import { makeRoomThreadsQueryKey } from "./umbrella-store";
+import {
+  makeFeedMessagesQueryKey,
+  makeFeedsQueryKey,
+  makeRoomThreadsQueryKey,
+} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
@@ -318,8 +331,10 @@ type RoomLeavePair<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = {
-  room: Room<P, S, U, E, TM, CM>;
+  room: Room<P, S, U, E, TM, CM, SM, MD>;
   leave: () => void;
 };
 
@@ -330,6 +345,8 @@ function RoomProvider<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   props: RoomProviderProps<P, S> & {
     /** @internal */
@@ -338,21 +355,21 @@ function RoomProvider<
 ) {
   const client = useClient<U>();
   const [cache] = useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM, SM, MD>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM> = useCallback(
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, SM, MD> = useCallback(
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, TM, CM> => {
+    ): RoomLeavePair<P, S, U, E, TM, CM, SM, MD> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, TM, CM>(roomId, options);
+      const rv = client.enterRoom<P, S, E, TM, CM, SM, MD>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -387,7 +404,7 @@ function RoomProvider<
   // Room to not be freed and destroyed when the component unmounts later.
   //
   return (
-    <RoomProviderInner<P, S, U, E, TM, CM>
+    <RoomProviderInner<P, S, U, E, TM, CM, SM, MD>
       {...(props as any)}
       stableEnterRoom={stableEnterRoom}
     />
@@ -401,10 +418,12 @@ type EnterRoomType<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 > = (
   roomId: string,
   options: EnterOptions<P, S>
-) => RoomLeavePair<P, S, U, E, TM, CM>;
+) => RoomLeavePair<P, S, U, E, TM, CM, SM, MD>;
 
 /** @internal */
 function RoomProviderInner<
@@ -414,9 +433,11 @@ function RoomProviderInner<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM, SM, MD>;
     BoundRoomContext?: Context<OpaqueRoom | null>;
   }
 ) {
@@ -526,6 +547,36 @@ function RoomProviderInner<
   }, [client, room]);
 
   useEffect(() => {
+    const { store } = getRoomExtrasForClient(client);
+
+    function handleFeedEvent(message: FeedsEventServerMsg): void {
+      switch (message.type) {
+        case ServerMsgCode.FEEDS_ADDED:
+        case ServerMsgCode.FEEDS_UPDATED:
+          store.upsertFeeds(room.id, message.feeds);
+          break;
+        case ServerMsgCode.FEED_DELETED:
+          store.deleteFeed(room.id, message.feedId);
+          break;
+        case ServerMsgCode.FEED_MESSAGES_ADDED:
+        case ServerMsgCode.FEED_MESSAGES_UPDATED:
+          store.upsertFeedMessages(room.id, message.feedId, message.messages);
+          break;
+        case ServerMsgCode.FEED_MESSAGES_DELETED:
+          store.deleteFeedMessages(room.id, message.feedId, message.messages);
+          break;
+        // FEEDS_LIST and FEED_MESSAGES_LIST are handled by fetch promise resolution in room.ts
+        default:
+          break;
+      }
+    }
+
+    return room.events.feeds.subscribe(
+      (message: FeedsEventServerMsg) => void handleFeedEvent(message)
+    );
+  }, [client, room]);
+
+  useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
 
     setRoomLeavePair(pair);
@@ -569,10 +620,12 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: false }
-): Room<P, S, U, E, TM, CM>;
+): Room<P, S, U, E, TM, CM, SM, MD>;
 function useRoom_withRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -580,10 +633,12 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: boolean }
-): Room<P, S, U, E, TM, CM> | null;
+): Room<P, S, U, E, TM, CM, SM, MD> | null;
 function useRoom_withRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -591,11 +646,13 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
+  SM extends Json = Json,
+  MD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: boolean }
-): Room<P, S, U, E, TM, CM> | null {
-  const room = useRoomOrNull<P, S, U, E, TM, CM>(RoomContext);
+): Room<P, S, U, E, TM, CM, SM, MD> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM, SM, MD>(RoomContext);
 
   if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
@@ -611,7 +668,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM>;
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM, SM, MD>;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -619,7 +678,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null;
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -627,8 +688,10 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM> | null {
-  return useRoom_withRoomContext<P, S, U, E, TM, CM>(
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null {
+  return useRoom_withRoomContext<P, S, U, E, TM, CM, SM, MD>(
     GlobalRoomContext,
     options
   );
@@ -1470,6 +1533,210 @@ function useThreads_withRoomContext<
   return result;
 }
 
+function useFeeds_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: UseFeedsOptions
+): FeedsAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  const client = useClient();
+  const { store } = getRoomExtrasForClient(client);
+  const queryKey = makeFeedsQueryKey(room.id, options);
+
+  const loadableResource = store.outputs.loadingFeeds.getOrCreate(queryKey);
+
+  useEffect(() => {
+    void loadableResource.waitUntilLoaded();
+  });
+
+  return useSignal(loadableResource.signal);
+}
+
+function useFeeds(options?: UseFeedsOptions): FeedsAsyncResult {
+  return useFeeds_withRoomContext(GlobalRoomContext, options);
+}
+
+function useFeedMessages_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncResult {
+  const room = useRoom_withRoomContext(RoomContext);
+  const client = useClient();
+  const { store } = getRoomExtrasForClient(client);
+  const queryKey = makeFeedMessagesQueryKey(room.id, feedId, options);
+
+  useEffect(() => {
+    void store.outputs.loadingFeedMessages
+      .getOrCreate(queryKey)
+      .waitUntilLoaded();
+  });
+
+  return useSignal(
+    store.outputs.loadingFeedMessages.getOrCreate(queryKey).signal
+  );
+}
+
+function useFeedMessages(
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncResult {
+  return useFeedMessages_withRoomContext(GlobalRoomContext, feedId, options);
+}
+
+function useFeedsSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  options?: UseFeedsOptions
+): FeedsAsyncSuccess {
+  ensureNotServerSide();
+  const client = useClient();
+  const room = useRoom_withRoomContext(RoomContext);
+
+  const { store } = getRoomExtrasForClient(client);
+  const queryKey = makeFeedsQueryKey(room.id, options);
+
+  use(store.outputs.loadingFeeds.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useFeeds_withRoomContext(RoomContext, options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result as FeedsAsyncSuccess;
+}
+
+function useFeedsSuspense(options?: UseFeedsOptions): FeedsAsyncSuccess {
+  return useFeedsSuspense_withRoomContext(GlobalRoomContext, options);
+}
+
+function useFeedMessagesSuspense_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>,
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncSuccess {
+  ensureNotServerSide();
+
+  const client = useClient();
+  const room = useRoom_withRoomContext(RoomContext);
+
+  const { store } = getRoomExtrasForClient(client);
+  const queryKey = makeFeedMessagesQueryKey(room.id, feedId, options);
+
+  use(store.outputs.loadingFeedMessages.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useFeedMessages_withRoomContext(RoomContext, feedId, options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result as FeedMessagesAsyncSuccess;
+}
+
+function useFeedMessagesSuspense(
+  feedId: string,
+  options?: UseFeedMessagesOptions
+): FeedMessagesAsyncSuccess {
+  return useFeedMessagesSuspense_withRoomContext(
+    GlobalRoomContext,
+    feedId,
+    options
+  );
+}
+
+function useCreateFeed_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string, options?: { metadata?: JsonObject; timestamp?: number }) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (feedId, options) => room.addFeed(feedId, options),
+    [room]
+  );
+}
+
+function useCreateFeed(): (
+  feedId: string,
+  options?: { metadata?: JsonObject; timestamp?: number }
+) => void {
+  return useCreateFeed_withRoomContext(GlobalRoomContext);
+}
+
+function useDeleteFeed_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback((feedId) => room.deleteFeed(feedId), [room]);
+}
+
+function useDeleteFeed(): (feedId: string) => void {
+  return useDeleteFeed_withRoomContext(GlobalRoomContext);
+}
+
+function useUpdateFeedMetadata_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string, metadata: JsonObject) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (feedId, metadata) => room.updateFeed(feedId, metadata),
+    [room]
+  );
+}
+
+function useUpdateFeedMetadata(): (
+  feedId: string,
+  metadata: JsonObject
+) => void {
+  return useUpdateFeedMetadata_withRoomContext(GlobalRoomContext);
+}
+
+function useCreateFeedMessage_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string, data: JsonObject, options?: { id?: string; timestamp?: number }) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (feedId, data, options) => room.addFeedMessage(feedId, data, options),
+    [room]
+  );
+}
+
+function useCreateFeedMessage(): (
+  feedId: string,
+  data: JsonObject,
+  options?: { id?: string; timestamp?: number }
+) => void {
+  return useCreateFeedMessage_withRoomContext(GlobalRoomContext);
+}
+
+function useDeleteFeedMessage_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string, messageId: string) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (feedId, messageId) => room.deleteFeedMessage(feedId, messageId),
+    [room]
+  );
+}
+
+function useDeleteFeedMessage(): (
+  feedId: string,
+  messageId: string
+) => void {
+  return useDeleteFeedMessage_withRoomContext(GlobalRoomContext);
+}
+
+function useUpdateFeedMessage_withRoomContext(
+  RoomContext: Context<OpaqueRoom | null>
+): (feedId: string, messageId: string, data: JsonObject) => void {
+  const room = useRoom_withRoomContext(RoomContext);
+  return useCallback(
+    (feedId, messageId, data) =>
+      room.updateFeedMessage(feedId, messageId, data),
+    [room]
+  );
+}
+
+function useUpdateFeedMessage(): (
+  feedId: string,
+  messageId: string,
+  data: JsonObject
+) => void {
+  return useUpdateFeedMessage_withRoomContext(GlobalRoomContext);
+}
+
 function useThreads<TM extends BaseMetadata, CM extends BaseMetadata>(
   options: UseThreadsOptions<TM> = {}
 ): ThreadsAsyncResult<TM, CM> {
@@ -2005,9 +2272,9 @@ function useEditRoomComment<CM extends BaseMetadata>(
       const updatedMetadata =
         metadata !== undefined
           ? {
-              ...comment.metadata,
-              ...metadata,
-            }
+            ...comment.metadata,
+            ...metadata,
+          }
           : comment.metadata;
 
       const optimisticId = store.optimisticUpdates.add({
@@ -2648,9 +2915,9 @@ function useRoomThreadSubscription(
 function useRoomSubscriptionSettings_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): [
-  RoomSubscriptionSettingsAsyncResult,
-  (settings: Partial<RoomSubscriptionSettings>) => void,
-] {
+    RoomSubscriptionSettingsAsyncResult,
+    (settings: Partial<RoomSubscriptionSettings>) => void,
+  ] {
   const updateRoomSubscriptionSettings =
     useUpdateRoomSubscriptionSettings_withRoomContext(RoomContext);
   const client = useClient();
@@ -2713,9 +2980,9 @@ function useRoomSubscriptionSettings(): [
 function useRoomSubscriptionSettingsSuspense_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): [
-  RoomSubscriptionSettingsAsyncSuccess,
-  (settings: Partial<RoomSubscriptionSettings>) => void,
-] {
+    RoomSubscriptionSettingsAsyncSuccess,
+    (settings: Partial<RoomSubscriptionSettings>) => void,
+  ] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -2785,8 +3052,8 @@ function useHistoryVersionData_withRoomContext(
             error instanceof Error
               ? error
               : new Error(
-                  "An unknown error occurred while loading this version"
-                ),
+                "An unknown error occurred while loading this version"
+              ),
         });
       }
     };
@@ -3380,9 +3647,11 @@ export function createRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM> {
-  type TRoom = Room<P, S, U, E, TM, CM>;
-  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM>;
+  SM extends Json = Json,
+  MD extends Json = Json,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM, SM, MD> {
+  type TRoom = Room<P, S, U, E, TM, CM, SM, MD>;
+  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM, SM, MD>;
 
   const BoundRoomContext = createContext<OpaqueRoom | null>(null);
 
@@ -3677,8 +3946,56 @@ export function createRoomContext<
     return useUpdateRoomSubscriptionSettings_withRoomContext(BoundRoomContext);
   }
 
+  function useFeeds_withBoundRoomContext(
+    ...args: Parameters<typeof useFeeds>
+  ) {
+    return useFeeds_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useFeedMessages_withBoundRoomContext(
+    ...args: Parameters<typeof useFeedMessages>
+  ) {
+    return useFeedMessages_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useFeedsSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useFeedsSuspense>
+  ) {
+    return useFeedsSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useFeedMessagesSuspense_withBoundRoomContext(
+    ...args: Parameters<typeof useFeedMessagesSuspense>
+  ) {
+    return useFeedMessagesSuspense_withRoomContext(BoundRoomContext, ...args);
+  }
+
+  function useCreateFeed_withBoundRoomContext() {
+    return useCreateFeed_withRoomContext(BoundRoomContext);
+  }
+
+  function useDeleteFeed_withBoundRoomContext() {
+    return useDeleteFeed_withRoomContext(BoundRoomContext);
+  }
+
+  function useUpdateFeedMetadata_withBoundRoomContext() {
+    return useUpdateFeedMetadata_withRoomContext(BoundRoomContext);
+  }
+
+  function useCreateFeedMessage_withBoundRoomContext() {
+    return useCreateFeedMessage_withRoomContext(BoundRoomContext);
+  }
+
+  function useDeleteFeedMessage_withBoundRoomContext() {
+    return useDeleteFeedMessage_withRoomContext(BoundRoomContext);
+  }
+
+  function useUpdateFeedMessage_withBoundRoomContext() {
+    return useUpdateFeedMessage_withRoomContext(BoundRoomContext);
+  }
+
   const shared = createSharedContext(client as Client<U>);
-  const bundle: RoomContextBundle<P, S, U, E, TM, CM> = {
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM, SM, MD> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
     RoomProvider:
       RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
@@ -3731,6 +4048,22 @@ export function createRoomContext<
 
     // prettier-ignore
     useThreads: useThreads_withBoundRoomContext as TRoomBundle["useThreads"],
+    // prettier-ignore
+    useFeeds: useFeeds_withBoundRoomContext as TRoomBundle["useFeeds"],
+    // prettier-ignore
+    useFeedMessages: useFeedMessages_withBoundRoomContext as TRoomBundle["useFeedMessages"],
+    // prettier-ignore
+    useCreateFeed: useCreateFeed_withBoundRoomContext as TRoomBundle["useCreateFeed"],
+    // prettier-ignore
+    useDeleteFeed: useDeleteFeed_withBoundRoomContext as TRoomBundle["useDeleteFeed"],
+    // prettier-ignore
+    useUpdateFeedMetadata: useUpdateFeedMetadata_withBoundRoomContext as TRoomBundle["useUpdateFeedMetadata"],
+    // prettier-ignore
+    useCreateFeedMessage: useCreateFeedMessage_withBoundRoomContext as TRoomBundle["useCreateFeedMessage"],
+    // prettier-ignore
+    useDeleteFeedMessage: useDeleteFeedMessage_withBoundRoomContext as TRoomBundle["useDeleteFeedMessage"],
+    // prettier-ignore
+    useUpdateFeedMessage: useUpdateFeedMessage_withBoundRoomContext as TRoomBundle["useUpdateFeedMessage"],
     // prettier-ignore
     useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["useCreateThread"],
     // prettier-ignore
@@ -3832,6 +4165,22 @@ export function createRoomContext<
       // prettier-ignore
       useThreads: useThreadsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useThreads"],
       // prettier-ignore
+      useFeeds: useFeedsSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useFeeds"],
+      // prettier-ignore
+      useFeedMessages: useFeedMessagesSuspense_withBoundRoomContext as TRoomBundle["suspense"]["useFeedMessages"],
+      // prettier-ignore
+      useCreateFeed: useCreateFeed_withBoundRoomContext as TRoomBundle["suspense"]["useCreateFeed"],
+      // prettier-ignore
+      useDeleteFeed: useDeleteFeed_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteFeed"],
+      // prettier-ignore
+      useUpdateFeedMetadata: useUpdateFeedMetadata_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateFeedMetadata"],
+      // prettier-ignore
+      useCreateFeedMessage: useCreateFeedMessage_withBoundRoomContext as TRoomBundle["suspense"]["useCreateFeedMessage"],
+      // prettier-ignore
+      useDeleteFeedMessage: useDeleteFeedMessage_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteFeedMessage"],
+      // prettier-ignore
+      useUpdateFeedMessage: useUpdateFeedMessage_withBoundRoomContext as TRoomBundle["suspense"]["useUpdateFeedMessage"],
+      // prettier-ignore
       useCreateThread: useCreateThread_withBoundRoomContext as TRoomBundle["suspense"]["useCreateThread"],
       // prettier-ignore
       useDeleteThread: useDeleteThread_withBoundRoomContext as TRoomBundle["suspense"]["useDeleteThread"],
@@ -3884,7 +4233,7 @@ export function createRoomContext<
   });
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, DSM, DMD>;
 
 /**
  * Makes a Room available in the component hierarchy below.
@@ -4136,6 +4485,28 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
  * const { threads, error, isLoading } = useThreads();
  */
 const _useThreads: TypedBundle["useThreads"] = useThreads;
+
+/**
+ * Returns feeds for the current room.
+ *
+ * @example
+ * const { feeds, error, isLoading } = useFeeds();
+ */
+const _useFeeds: TypedBundle["useFeeds"] = useFeeds;
+
+/**
+ * Returns messages for a specific feed in the current room.
+ *
+ * @example
+ * const { messages, error, isLoading } = useFeedMessages("feed-id");
+ */
+const _useFeedMessages: TypedBundle["useFeedMessages"] = useFeedMessages;
+
+const _useFeedsSuspense: TypedBundle["suspense"]["useFeeds"] =
+  useFeedsSuspense;
+
+const _useFeedMessagesSuspense: TypedBundle["suspense"]["useFeedMessages"] =
+  useFeedMessagesSuspense;
 
 /**
  * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
@@ -4464,11 +4835,15 @@ export {
   useCanRedo,
   useCanUndo,
   _useCreateComment as useCreateComment,
+  useCreateFeed,
+  useCreateFeedMessage,
   useCreateRoomComment,
   useCreateRoomThread,
   useCreateTextMention,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  useDeleteFeed,
+  useDeleteFeedMessage,
   useDeleteRoomComment,
   useDeleteRoomThread,
   useDeleteTextMention,
@@ -4480,6 +4855,10 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
+  _useFeedMessages as useFeedMessages,
+  _useFeedMessagesSuspense as useFeedMessagesSuspense,
+  _useFeeds as useFeeds,
+  _useFeedsSuspense as useFeedsSuspense,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
@@ -4530,6 +4909,8 @@ export {
   useUndo,
   useUnsubscribeFromRoomThread,
   useUnsubscribeFromThread,
+  useUpdateFeedMessage,
+  useUpdateFeedMetadata,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useYjsProvider,
