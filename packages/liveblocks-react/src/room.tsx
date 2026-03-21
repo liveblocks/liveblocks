@@ -2960,6 +2960,13 @@ function useSuspendUntilPresenceReady_withRoomContext(
 }
 
 /**
+ * @private For internal use only. Do not rely on this hook.
+ */
+export function useSuspendUntilPresenceReady(): void {
+  return useSuspendUntilPresenceReady_withRoomContext(GlobalRoomContext);
+}
+
+/**
  * @internal
  */
 function useSelfSuspense_withRoomContext<
@@ -3172,6 +3179,13 @@ function useSuspendUntilStorageReady_withRoomContext(
 
   const room = useRoom_withRoomContext(RoomContext);
   use(room.waitUntilStorageReady());
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook.
+ */
+export function useSuspendUntilStorageReady(): void {
+  return useSuspendUntilStorageReady_withRoomContext(GlobalRoomContext);
 }
 
 /**

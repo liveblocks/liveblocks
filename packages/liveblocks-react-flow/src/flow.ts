@@ -1,0 +1,709 @@
+import {
+  type DistributiveOmit,
+  type JsonObject,
+  LiveMap,
+  LiveObject,
+  type LsonObject,
+  type Resolve,
+  shallow,
+  Signal,
+  type ToImmutable,
+} from "@liveblocks/core";
+import { useMutation, useStorage } from "@liveblocks/react";
+import {
+  useInitial,
+  useSignal,
+  useSuspendUntilStorageReady,
+} from "@liveblocks/react/_private";
+import {
+  addEdge as defaultAddEdge,
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
+  type OnConnect,
+  type OnEdgesChange,
+  type OnNodesChange,
+} from "@xyflow/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const DEFAULT_STORAGE_KEY = "flow";
+
+// React Flow `Node` properties that are purely ephemeral and local to each client
+// instead of being written to Liveblocks Storage.
+const NODE_LOCAL_KEYS = [
+  "selected",
+  "dragging",
+  "measured",
+  "resizing",
+] as const satisfies (keyof Node)[number][];
+
+// React Flow `Edge` properties that are purely ephemeral and local to each client
+// instead of being written to Liveblocks Storage.
+const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
+
+const EMPTY_ARRAY = [] as unknown[];
+
+export type SerializableNode = Node<JsonObject>;
+export type SerializableEdge = Edge<JsonObject>;
+
+/**
+ * The Liveblocks Storage representation of a React Flow `Node`.
+ *
+ * It doesn't include local-only properties.
+ * The entire node and its `data` property are both stored as `LiveObject`s.
+ */
+export type LiveblocksNode<TNode extends SerializableNode = SerializableNode> =
+  LiveObject<
+    DistributiveOmit<TNode, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
+      data: LiveObject<TNode["data"]>;
+    } & LsonObject
+  >;
+
+/**
+ * The Liveblocks Storage representation of a React Flow `Edge`.
+ *
+ * It doesn't include local-only properties.
+ * The entire edge and its `data` property are both stored as `LiveObject`s.
+ */
+export type LiveblocksEdge<TEdge extends SerializableEdge = SerializableEdge> =
+  LiveObject<
+    DistributiveOmit<TEdge, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
+      data?: LiveObject<NonNullable<TEdge["data"]>>;
+    } & LsonObject
+  >;
+
+/**
+ * The Liveblocks Storage representation of a React Flow diagram made of nodes and edges.
+ *
+ * Nodes and edges are stored as `LiveMap`s keyed by their IDs, enabling
+ * fine-grained conflict-free updates from multiple clients simultaneously.
+ */
+export type LiveblocksFlow<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+> = LiveObject<{
+  nodes: LiveMap<string, LiveblocksNode<TNode>>;
+  edges: LiveMap<string, LiveblocksEdge<TEdge>>;
+}>;
+
+type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
+type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
+
+type UseLiveblocksFlowResult<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+> = Resolve<
+  (
+    | {
+        nodes: null;
+        edges: null;
+        isLoading: true;
+      }
+    | {
+        nodes: TNode[];
+        edges: TEdge[];
+        isLoading: false;
+      }
+  ) & {
+    onNodesChange: OnNodesChange<TNode>;
+    onEdgesChange: OnEdgesChange<TEdge>;
+    onConnect: OnConnect;
+  }
+>;
+
+type LiveblocksFlowSuspenseResult<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+> = Extract<UseLiveblocksFlowResult<TNode, TEdge>, { isLoading: false }>;
+
+type UseLiveblocksFlowOptions<
+  TNode extends SerializableNode,
+  TEdge extends SerializableEdge,
+> = {
+  /**
+   * The initial React Flow nodes and edges.
+   *
+   * @example
+   * ```tsx
+   * const { ... } = useLiveblocksFlow({
+   *   initial: {
+   *     nodes: [
+   *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
+   *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
+   *     ],
+   *     edges: [
+   *       { id: "1-2", source: "1", target: "2" },
+   *     ],
+   *   },
+   * });
+   * ```
+   *
+   * This is equivalent to setting `initialStorage` on `RoomProvider`.
+   *
+   * @example
+   * ```tsx
+   * <RoomProvider
+   *   initialStorage={{
+   *     flow: createLiveblocksFlow([
+   *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
+   *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
+   *     ], [
+   *       { id: "1-2", source: "1", target: "2" },
+   *     ]),
+   *   }}
+   * />
+   * ```
+   */
+  initial?: {
+    nodes?: TNode[];
+    edges?: TEdge[];
+  };
+
+  /**
+   * The key used to store the React Flow diagram in Liveblocks Storage.
+   *
+   * Defaults to `"flow"`.
+   *
+   * @example
+   * ```tsx
+   * const { ... } = useLiveblocksFlow({
+   *   storageKey: "myDiagram",
+   * });
+   * ```
+   */
+  storageKey?: string;
+};
+
+function pick<T extends object, K extends PropertyKey>(
+  from: T,
+  keys: readonly K[]
+): Partial<Record<K, unknown>> {
+  const result: Partial<Record<K, unknown>> = {};
+
+  for (const key of keys) {
+    const value = (from as Record<PropertyKey, unknown>)[key];
+
+    if (value !== undefined && value !== null) {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
+function omit<T extends object, K extends PropertyKey>(
+  from: T,
+  keys: readonly K[]
+): Omit<T, Extract<K, keyof T>> {
+  const result = { ...from } as Partial<T>;
+
+  for (const key of keys) {
+    delete (result as Record<PropertyKey, unknown>)[key];
+  }
+
+  return result as Omit<T, Extract<K, keyof T>>;
+}
+
+function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
+  const previous = cache.get(next.id);
+
+  if (previous && shallow(previous, next)) {
+    return previous;
+  }
+
+  cache.set(next.id, next);
+
+  return next;
+}
+
+function merge<T extends { id: string }, L extends object>(
+  cache: Map<string, T>,
+  remote: ReadonlyMap<string, T>,
+  local: Map<string, L>
+): T[] {
+  // Prune cached items that were deleted remotely.
+  for (const id of cache.keys()) {
+    if (!remote.has(id)) {
+      cache.delete(id);
+    }
+  }
+
+  // Prune local items that were deleted remotely.
+  for (const id of local.keys()) {
+    if (!remote.has(id)) {
+      local.delete(id);
+    }
+  }
+
+  // Reconcile remote and local items.
+  return Array.from(remote.values(), (item) => {
+    const localItem = local.get(item.id);
+
+    return reconcile(
+      cache,
+      localItem ? (Object.assign({}, item, localItem) as T) : item
+    );
+  });
+}
+
+function updateLocalState<T extends object>(
+  map: Map<string, T>,
+  key: string,
+  changes: T
+): boolean {
+  const next: Record<string, unknown> = {};
+
+  for (const change in changes) {
+    const value = (changes as Record<string, unknown>)[change];
+
+    // `false` values aren't stored.
+    if (value !== undefined && value !== false) {
+      next[change] = value;
+    }
+  }
+
+  if (Object.keys(next).length > 0) {
+    map.set(key, next as T);
+
+    return true;
+  } else {
+    const hasItem = map.has(key);
+    map.delete(key);
+
+    return hasItem;
+  }
+}
+
+// Converts a React Flow `Node` into a Liveblocks Storage version, omitting
+// the fields that must stay local to each client.
+function nodeToStorage<TNode extends SerializableNode>(
+  node: TNode
+): LiveblocksNode<TNode> {
+  const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as TNode;
+
+  return new LiveObject({
+    ...(rest as LsonObject),
+    data: new LiveObject(data as LsonObject),
+  }) as LiveblocksNode<TNode>;
+}
+
+// Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
+// the fields that must stay local to each client.
+function edgeToStorage<TEdge extends SerializableEdge>(
+  edge: TEdge
+): LiveblocksEdge<TEdge> {
+  const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as TEdge;
+
+  return new LiveObject({
+    ...(rest as LsonObject),
+
+    // `data` is optional on edges.
+    data: data === undefined ? undefined : new LiveObject(data as LsonObject),
+  }) as LiveblocksEdge<TEdge>;
+}
+
+// Similar to React Flow's `applyNodeChanges()`, but with a split between local
+// and remote changes.
+// https://reactflow.dev/api-reference/utils/apply-node-changes
+function applyNodeChanges<TNode extends SerializableNode>(args: {
+  changes: NodeChange<TNode>[];
+  nodes: LiveMap<string, LiveblocksNode<TNode>>;
+  nextLocal: Map<string, Partial<LocalNodes>>;
+  nodeCache: Map<string, TNode>;
+}): boolean {
+  const { changes, nodes, nextLocal, nodeCache } = args;
+
+  let hasLocalChanged = false;
+
+  for (const change of changes) {
+    switch (change.type) {
+      case "add":
+      case "replace":
+        nodes.set(change.item.id, nodeToStorage(change.item));
+        if (
+          updateLocalState(
+            nextLocal,
+            change.item.id,
+            pick(change.item, NODE_LOCAL_KEYS)
+          )
+        ) {
+          hasLocalChanged = true;
+        }
+        break;
+
+      case "remove":
+        nodes.delete(change.id);
+        nodeCache.delete(change.id);
+        nextLocal.delete(change.id);
+        hasLocalChanged = true;
+        break;
+
+      case "position": {
+        const node = nodes.get(change.id);
+
+        if (!node || !change.position) {
+          break;
+        }
+
+        const previous = node.get("position") as TNode["position"] | undefined;
+
+        if (
+          previous?.x !== change.position.x ||
+          previous?.y !== change.position.y
+        ) {
+          node.set("position", change.position);
+        }
+
+        if (change.dragging !== undefined) {
+          updateLocalState(nextLocal, change.id, {
+            ...nextLocal.get(change.id),
+            dragging: change.dragging,
+          });
+          hasLocalChanged = true;
+        }
+
+        break;
+      }
+
+      case "dimensions": {
+        const node = nodes.get(change.id);
+        const patch: Partial<LocalNodes> = {
+          ...nextLocal.get(change.id),
+        };
+
+        if (
+          node &&
+          change.dimensions !== undefined &&
+          change.setAttributes !== undefined
+        ) {
+          if (
+            change.setAttributes === true ||
+            change.setAttributes === "width"
+          ) {
+            node.set("width", change.dimensions.width);
+          }
+
+          if (
+            change.setAttributes === true ||
+            change.setAttributes === "height"
+          ) {
+            node.set("height", change.dimensions.height);
+          }
+        }
+
+        if (change.dimensions !== undefined) {
+          patch.measured = change.dimensions;
+        }
+
+        if (change.resizing !== undefined) {
+          patch.resizing = change.resizing;
+        }
+
+        updateLocalState(nextLocal, change.id, patch);
+        hasLocalChanged = true;
+        break;
+      }
+
+      case "select":
+        updateLocalState(nextLocal, change.id, {
+          ...nextLocal.get(change.id),
+          selected: change.selected,
+        });
+        hasLocalChanged = true;
+        break;
+    }
+  }
+
+  return hasLocalChanged;
+}
+
+// Similar to React Flow's `applyEdgeChanges()`, but with a split between local
+// and remote changes.
+// https://reactflow.dev/api-reference/utils/apply-edge-changes
+function applyEdgeChanges<TEdge extends SerializableEdge>(args: {
+  changes: EdgeChange<TEdge>[];
+  edges: LiveMap<string, LiveblocksEdge<TEdge>>;
+  nextLocal: Map<string, Partial<LocalEdges>>;
+  edgeCache: Map<string, TEdge>;
+}): boolean {
+  const { changes, edges, nextLocal, edgeCache } = args;
+
+  let hasLocalChanged = false;
+
+  for (const change of changes) {
+    switch (change.type) {
+      case "add":
+      case "replace":
+        edges.set(change.item.id, edgeToStorage(change.item));
+        if (
+          updateLocalState(
+            nextLocal,
+            change.item.id,
+            pick(change.item, EDGE_LOCAL_KEYS)
+          )
+        ) {
+          hasLocalChanged = true;
+        }
+        break;
+
+      case "remove":
+        edges.delete(change.id);
+        edgeCache.delete(change.id);
+        nextLocal.delete(change.id);
+        hasLocalChanged = true;
+        break;
+
+      case "select":
+        updateLocalState(nextLocal, change.id, {
+          ...nextLocal.get(change.id),
+          selected: change.selected,
+        });
+        hasLocalChanged = true;
+        break;
+    }
+  }
+
+  return hasLocalChanged;
+}
+
+/**
+ * Creates a Liveblocks Storage representation of a React Flow diagram from nodes and edges.
+ *
+ * @example
+ * ```tsx
+ * <RoomProvider
+ *   initialStorage={{
+ *     flow: createLiveblocksFlow(initialNodes, initialEdges),
+ *   }}
+ * />
+ * ```
+ */
+export function createLiveblocksFlow<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+>(nodes: TNode[] = [], edges: TEdge[] = []): LiveblocksFlow<TNode, TEdge> {
+  return new LiveObject({
+    nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
+    edges: new LiveMap(edges.map((edge) => [edge.id, edgeToStorage(edge)])),
+  }) as LiveblocksFlow<TNode, TEdge>;
+}
+
+/**
+ * Returns a controlled React Flow state backed by Liveblocks Storage.
+ *
+ * @example
+ * ```tsx
+ * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, isLoading } = useLiveblocksFlow();
+ *
+ * if (isLoading) {
+ *   return <div>Loading…</div>
+ * }
+ *
+ * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * ```
+ */
+export function useLiveblocksFlow<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+>(
+  options: UseLiveblocksFlowOptions<TNode, TEdge> = {}
+): Resolve<UseLiveblocksFlowResult<TNode, TEdge>> {
+  type TFlow = LiveblocksFlow<TNode, TEdge>;
+  type TImmutableFlow = ToImmutable<LiveblocksFlow<TNode, TEdge>>;
+
+  const isStorageLoaded = useStorage(() => true) ?? false;
+
+  // These options are not reactive, only their initial values are used.
+  const frozenOptions = useInitial({
+    initial: options.initial,
+    storageKey: options.storageKey ?? DEFAULT_STORAGE_KEY,
+  });
+
+  // Used to reconcile state changes with stable object references when the changes
+  // are shallowly equal, preventing React Flow from re-rendering unchanged nodes and edges.
+  const nodeCache = useRef<Map<string, TNode>>(new Map());
+  const edgeCache = useRef<Map<string, TEdge>>(new Map());
+
+  // Local-only state lives in signals.
+  const [localNodesΣ] = useState(
+    () => new Signal(new Map<string, Partial<LocalNodes>>())
+  );
+  const [localEdgesΣ] = useState(
+    () => new Signal(new Map<string, Partial<LocalEdges>>())
+  );
+  const localNodes = useSignal(localNodesΣ);
+  const localEdges = useSignal(localEdgesΣ);
+
+  // Remote state lives in Liveblocks Storage.
+  const remoteNodesMap = useStorage((storage) => {
+    const flow = storage[frozenOptions.storageKey] as
+      | TImmutableFlow
+      | undefined;
+
+    return (flow?.nodes ?? null) as ReadonlyMap<string, TNode> | null;
+  });
+  const remoteEdgesMap = useStorage((storage) => {
+    const flow = storage[frozenOptions.storageKey] as
+      | TImmutableFlow
+      | undefined;
+
+    return (flow?.edges ?? null) as ReadonlyMap<string, TEdge> | null;
+  });
+
+  // Merge remote and local layers to get the final state.
+  const nodes = useMemo(
+    () =>
+      remoteNodesMap
+        ? merge(nodeCache.current, remoteNodesMap, localNodes)
+        : null,
+    [remoteNodesMap, localNodes]
+  );
+  const edges = useMemo(
+    () =>
+      remoteEdgesMap
+        ? merge(edgeCache.current, remoteEdgesMap, localEdges)
+        : null,
+    [remoteEdgesMap, localEdges]
+  );
+
+  const onNodesChange = useMutation(
+    ({ storage }, changes: NodeChange<TNode>[]) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+
+      if (!flow) {
+        return;
+      }
+
+      const nextLocal = new Map(localNodesΣ.get());
+      const hasLocalChanged = applyNodeChanges({
+        changes,
+        nodes: flow.get("nodes"),
+        nextLocal,
+        nodeCache: nodeCache.current,
+      });
+
+      if (hasLocalChanged) {
+        localNodesΣ.set(nextLocal);
+      }
+    },
+    []
+  );
+
+  const onEdgesChange = useMutation(
+    ({ storage }, changes: EdgeChange<TEdge>[]) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+
+      if (!flow) {
+        return;
+      }
+
+      const nextLocal = new Map(localEdgesΣ.get());
+      const hasLocalChanged = applyEdgeChanges({
+        changes,
+        edges: flow.get("edges"),
+        nextLocal,
+        edgeCache: edgeCache.current,
+      });
+
+      if (hasLocalChanged) {
+        localEdgesΣ.set(nextLocal);
+      }
+    },
+    []
+  );
+
+  const onConnect = useMutation(({ storage }, connection: Connection) => {
+    const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+
+    if (!flow) {
+      return;
+    }
+
+    const edges = flow.get("edges");
+
+    // Check for duplicate connections.
+    for (const edge of edges.values()) {
+      if (
+        edge.get("source") === connection.source &&
+        edge.get("target") === connection.target &&
+        (edge.get("sourceHandle") ?? null) ===
+          (connection.sourceHandle ?? null) &&
+        (edge.get("targetHandle") ?? null) === (connection.targetHandle ?? null)
+      ) {
+        return;
+      }
+    }
+
+    // Delegate to React Flow's own `addEdge` helper for consistent default
+    // edge ID generation, passing an empty array since de-duplication is
+    // already handled above.
+    const [newEdge] = defaultAddEdge(connection, [] as TEdge[]);
+
+    if (!newEdge) {
+      return;
+    }
+
+    edges.set(newEdge.id, edgeToStorage(newEdge));
+  }, []);
+
+  const setInitialStorage = useMutation(({ storage }) => {
+    // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
+    // initialize Storage if it doesn't already exist.
+    if (storage.get(frozenOptions.storageKey) !== undefined) {
+      return;
+    }
+
+    const { nodes: initialNodes = [], edges: initialEdges = [] } =
+      frozenOptions.initial ?? {};
+
+    storage.set(
+      frozenOptions.storageKey,
+      createLiveblocksFlow(initialNodes, initialEdges)
+    );
+  }, []);
+
+  useEffect(() => {
+    if (isStorageLoaded) {
+      setInitialStorage();
+    }
+  }, [isStorageLoaded, setInitialStorage]);
+
+  return {
+    nodes,
+    edges,
+    isLoading: !isStorageLoaded,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+  } as UseLiveblocksFlowResult<TNode, TEdge>;
+}
+
+/**
+ * Returns a controlled React Flow state backed by Liveblocks Storage.
+ *
+ * @example
+ * ```tsx
+ * const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useLiveblocksFlow();
+ *
+ * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * ```
+ */
+export function useLiveblocksFlowSuspense<
+  TNode extends SerializableNode = SerializableNode,
+  TEdge extends SerializableEdge = SerializableEdge,
+>(
+  options: UseLiveblocksFlowOptions<TNode, TEdge> = {}
+): Resolve<LiveblocksFlowSuspenseResult<TNode, TEdge>> {
+  const result = useLiveblocksFlow<TNode, TEdge>(options);
+
+  useSuspendUntilStorageReady();
+
+  return {
+    ...result,
+    nodes: result.nodes ?? (EMPTY_ARRAY as TNode[]),
+    edges: result.edges ?? (EMPTY_ARRAY as TEdge[]),
+    isLoading: false,
+  };
+}
