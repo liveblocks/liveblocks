@@ -1046,6 +1046,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         // Call next_actor 1000 times concurrently
         const actors = new Set(
           await Promise.all(
+            // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
             Array.from({ length: 1000 }).map(() => driver.next_actor())
           )
         );
@@ -2839,6 +2840,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Write all the entries (can have dupes)
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([key, value]) =>
                   driver.put_meta(key, value)
                 )
@@ -3278,6 +3280,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Put all sessions concurrently
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([sessionId, session]) => {
                   session.sessionId = sessionId;
                   return driver.put_leased_session(session);
@@ -3286,6 +3289,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Verify all sessions exist
               const results = await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.get_leased_session(sessionId)
                 )
@@ -3299,6 +3303,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Cleanup: delete all sessions added in this iteration
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.delete_leased_session(sessionId)
                 )
@@ -3368,8 +3373,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       // Check if expected root has data
       const expectedRoot = expectedNodes.find(([id]) => id === "root");
       const rootHasData =
-        expectedRoot !== undefined &&
-        expectedRoot[1].type === CrdtType.OBJECT &&
+        expectedRoot?.[1].type === CrdtType.OBJECT &&
         Object.keys(expectedRoot[1].data).length > 0;
 
       if (rootHasData) {
