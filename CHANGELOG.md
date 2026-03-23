@@ -1,11 +1,14 @@
-## 3.15.5 (Unreleased)
+## 3.15.5
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
 
 ### Python SDK
 
 - Fix request body for certain endpoints, like `update_room_id`,
   `initialize_storage_document` incorrectly set as optional.
-
-## v3.15.3
 
 ## v3.15.4
 
