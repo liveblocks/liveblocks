@@ -9,9 +9,11 @@ import { nanoid } from "nanoid";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Background,
+  BaseEdge,
   ConnectionLineType,
   ConnectionMode,
   Controls,
+  EdgeLabelRenderer,
   Handle,
   MarkerType,
   MiniMap,
@@ -22,10 +24,12 @@ import {
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
+  getSmoothStepPath,
   useNodes,
   useReactFlow,
   type Connection,
   type Edge,
+  type EdgeProps,
   type MiniMapNodeProps,
   type Node,
   type NodeChange,
@@ -33,15 +37,21 @@ import {
   type OnResize,
 } from "@xyflow/react";
 import {
+  ComponentProps,
   CSSProperties,
   DragEvent,
+  Fragment,
+  KeyboardEvent,
   memo,
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { EXAMPLES } from "../examples";
 import "./whiteboard.css";
+import clsx from "clsx";
+import { AvatarStack } from "@liveblocks/react-ui";
 
 const BLOCK_SHAPES = ["rectangle", "rounded", "circle"] as const;
 const BLOCK_COLORS = {
@@ -49,7 +59,7 @@ const BLOCK_COLORS = {
   blue: "#09f",
   cyan: "#0cd",
   green: "#3c5",
-  yellow: "#fc0",
+  yellow: "#fb0",
   orange: "#f81",
   red: "#f24",
   pink: "#e4b",
@@ -69,45 +79,173 @@ type BlockNodeData = {
   color: BlockColor;
 };
 
+type WhiteboardEdgeData = {
+  label: string;
+};
+
 type WhiteboardNode = Node<BlockNodeData>;
-type WhiteboardEdge = Edge<JsonObject>;
+type WhiteboardEdge = Edge<WhiteboardEdgeData>;
+
+function getInitialNodeLayout(
+  shape: BlockShape,
+  horizontal: "left" | "center" | "right",
+  vertical: number
+) {
+  const INITIAL_NODES_HORIZONTAL_GAP = 250;
+  const INITIAL_NODES_VERTICAL_GAP = 36;
+  const INITIAL_NODES_SIZE = 100;
+  const INITIAL_NODES_LARGE_SIZE = 150;
+
+  const width =
+    shape === "circle" ? INITIAL_NODES_SIZE : INITIAL_NODES_LARGE_SIZE;
+  const midX =
+    horizontal === "center"
+      ? 0
+      : horizontal === "left"
+        ? -INITIAL_NODES_HORIZONTAL_GAP
+        : INITIAL_NODES_HORIZONTAL_GAP;
+  const x = midX - width / 2;
+  const y =
+    vertical * INITIAL_NODES_SIZE + (vertical - 1) * INITIAL_NODES_VERTICAL_GAP;
+
+  return {
+    position: { x, y },
+    width,
+    height: INITIAL_NODES_SIZE,
+  };
+}
 
 const INITIAL_NODES: WhiteboardNode[] = [
   {
-    id: "block-1",
+    id: "brainstorm",
     type: "block",
-    position: { x: 80, y: 130 },
-    data: { label: "Start", shape: "rounded", color: "blue" },
-    style: { width: DEFAULT_BLOCK_SIZE, height: DEFAULT_BLOCK_SIZE },
+    ...getInitialNodeLayout("rectangle", "center", 0),
+    data: { label: "Brainstorm", shape: "rectangle", color: "blue" },
   },
   {
-    id: "block-2",
+    id: "new-product",
     type: "block",
-    position: { x: 340, y: 80 },
-    data: { label: "Idea", shape: "circle", color: "yellow" },
-    style: { width: DEFAULT_BLOCK_SIZE, height: DEFAULT_BLOCK_SIZE },
+    ...getInitialNodeLayout("circle", "center", 1),
+    data: { label: "Idea", shape: "circle", color: "cyan" },
   },
   {
-    id: "block-3",
+    id: "prototype",
     type: "block",
-    position: { x: 580, y: 130 },
-    data: { label: "End", shape: "rectangle", color: "pink" },
-    style: { width: DEFAULT_BLOCK_SIZE, height: DEFAULT_BLOCK_SIZE },
+    ...getInitialNodeLayout("rounded", "center", 2),
+    data: { label: "Prototype", shape: "rounded", color: "purple" },
+  },
+  {
+    id: "refinement",
+    type: "block",
+    ...getInitialNodeLayout("rectangle", "left", 3),
+    data: { label: "Refinement", shape: "rectangle", color: "gray" },
+  },
+  {
+    id: "design",
+    type: "block",
+    ...getInitialNodeLayout("rectangle", "right", 3),
+    data: { label: "Design", shape: "rectangle", color: "green" },
+  },
+  {
+    id: "testing",
+    type: "block",
+    ...getInitialNodeLayout("circle", "right", 4),
+    data: { label: "Testing", shape: "circle", color: "red" },
+  },
+  {
+    id: "production",
+    type: "block",
+    ...getInitialNodeLayout("rectangle", "right", 5),
+    data: { label: "Production", shape: "rectangle", color: "yellow" },
+  },
+  {
+    id: "launch",
+    type: "block",
+    ...getInitialNodeLayout("rounded", "right", 6),
+    data: { label: "Launch", shape: "rounded", color: "orange" },
   },
 ];
-
 const INITIAL_EDGES: WhiteboardEdge[] = [
   {
-    id: "e-1-2",
-    source: "block-1",
-    target: "block-2",
+    id: "e-brainstorm-new-product",
+    source: "brainstorm",
+    target: "new-product",
+    sourceHandle: "src-bottom",
+    targetHandle: "tgt-top",
     type: "smoothstep",
+    data: { label: "" },
   },
   {
-    id: "e-2-3",
-    source: "block-2",
-    target: "block-3",
+    id: "e-new-product-prototype",
+    source: "new-product",
+    target: "prototype",
+    sourceHandle: "src-bottom",
+    targetHandle: "tgt-top",
     type: "smoothstep",
+    data: { label: "" },
+  },
+  {
+    id: "e-prototype-refinement",
+    source: "prototype",
+    target: "refinement",
+    sourceHandle: "src-left",
+    targetHandle: "tgt-top",
+    type: "smoothstep",
+    data: { label: "Not ready" },
+  },
+  {
+    id: "e-prototype-design",
+    source: "prototype",
+    target: "design",
+    sourceHandle: "src-right",
+    targetHandle: "tgt-top",
+    type: "smoothstep",
+    data: { label: "Approved" },
+  },
+  {
+    id: "e-refinement-design",
+    source: "refinement",
+    target: "design",
+    sourceHandle: "src-right",
+    targetHandle: "tgt-left",
+    type: "smoothstep",
+    data: { label: "" },
+  },
+  {
+    id: "e-design-testing",
+    source: "design",
+    target: "testing",
+    sourceHandle: "src-bottom",
+    targetHandle: "tgt-top",
+    type: "smoothstep",
+    data: { label: "" },
+  },
+  {
+    id: "e-testing-refinement",
+    source: "testing",
+    target: "refinement",
+    sourceHandle: "src-left",
+    targetHandle: "tgt-bottom",
+    type: "smoothstep",
+    data: { label: "Needs improvement" },
+  },
+  {
+    id: "e-testing-production",
+    source: "testing",
+    target: "production",
+    sourceHandle: "src-bottom",
+    targetHandle: "tgt-top",
+    type: "smoothstep",
+    data: { label: "" },
+  },
+  {
+    id: "e-production-launch",
+    source: "production",
+    target: "launch",
+    sourceHandle: "src-bottom",
+    targetHandle: "tgt-top",
+    type: "smoothstep",
+    data: { label: "" },
   },
 ];
 
@@ -133,39 +271,24 @@ function ShapeIcon({ shape }: { shape: BlockShape }) {
 
 const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
   const { updateNode } = useReactFlow();
-  const textRef = useRef<HTMLDivElement>(null);
+  const [labelDraft, setLabelDraft] = useState(data.label);
 
   useEffect(() => {
-    const labelElement = textRef.current;
-
-    if (labelElement && document.activeElement !== labelElement) {
-      labelElement.textContent = data.label;
-      labelElement.dataset.empty = data.label === "" ? "true" : "";
-    }
+    setLabelDraft(data.label);
   }, [data.label]);
 
-  const handleBlur = useCallback(() => {
-    const text = textRef.current?.textContent?.trim() ?? "";
+  const commitLabel = useCallback(
+    (text: string) => {
+      const nextLabel = text.trim();
 
-    if (textRef.current) {
-      textRef.current.textContent = text;
-      textRef.current.dataset.empty = text === "" ? "true" : "";
-    }
-
-    updateNode(id, (node) => ({
-      ...node,
-      data: { ...node.data, label: text },
-    }));
-  }, [id, updateNode]);
-
-  const handleInput = useCallback(() => {
-    const labelElement = textRef.current;
-
-    if (labelElement) {
-      labelElement.dataset.empty =
-        (labelElement.textContent?.trim() ?? "") === "" ? "true" : "";
-    }
-  }, []);
+      setLabelDraft(nextLabel);
+      updateNode(id, (node) => ({
+        ...node,
+        data: { ...node.data, label: nextLabel },
+      }));
+    },
+    [id, updateNode]
+  );
 
   const handleShapeChange = useCallback(
     (shape: BlockShape) => {
@@ -238,15 +361,28 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
         }
         data-shape={getBlockShape(data.shape)}
       >
-        <div
-          ref={textRef}
+        <textarea
           className="whiteboard-block-label nodrag"
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={handleBlur}
-          onInput={handleInput}
+          value={labelDraft}
+          placeholder="Type something..."
+          rows={1}
+          onChange={(event) => setLabelDraft(event.target.value)}
+          onBlur={(event) => commitLabel(event.target.value)}
+          onKeyDown={(event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+              event.currentTarget.blur();
+            }
+          }}
+          spellCheck={false}
         />
       </div>
+
+      <NodeResizer
+        minWidth={50}
+        minHeight={50}
+        isVisible={selected}
+        onResize={handleResize}
+      />
 
       {(
         [
@@ -256,24 +392,129 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
           [Position.Left, "left"],
         ] as const
       ).map(([position, side]) => (
-        <Handle
-          key={side}
-          type="source"
-          position={position}
-          id={`src-${side}`}
-          className="whiteboard-handle"
-        />
+        <Fragment key={side}>
+          <Handle
+            type="target"
+            position={position}
+            id={`tgt-${side}`}
+            className="whiteboard-handle"
+          />
+          <Handle
+            type="source"
+            position={position}
+            id={`src-${side}`}
+            className="whiteboard-handle"
+          />
+        </Fragment>
       ))}
-
-      <NodeResizer
-        minWidth={50}
-        minHeight={50}
-        isVisible={selected}
-        onResize={handleResize}
-      />
     </>
   );
 });
+
+const WhiteboardLabelEdge = memo(
+  ({
+    id,
+    data,
+    selected,
+    markerEnd,
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    style,
+  }: EdgeProps<WhiteboardEdge>) => {
+    const { updateEdge } = useReactFlow();
+    const [labelDraft, setLabelDraft] = useState(data?.label ?? "");
+    const [isEditing, setIsEditing] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [edgePath, labelX, labelY] = getSmoothStepPath({
+      sourceX,
+      sourceY,
+      sourcePosition,
+      targetX,
+      targetY,
+      targetPosition,
+      borderRadius: 0,
+    });
+
+    useEffect(() => {
+      setLabelDraft(data?.label ?? "");
+    }, [data?.label]);
+
+    useEffect(() => {
+      if (isEditing) {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    }, [isEditing]);
+
+    const commitLabel = useCallback(
+      (text: string) => {
+        const nextLabel = text.trim();
+
+        setLabelDraft(nextLabel);
+        setIsEditing(false);
+        updateEdge(id, (edge) => ({
+          ...edge,
+          data: {
+            label: nextLabel,
+          },
+        }));
+      },
+      [id, updateEdge]
+    );
+
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      },
+      []
+    );
+
+    return (
+      <>
+        <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+        <EdgeLabelRenderer>
+          <div
+            className="whiteboard-edge-label-shell nodrag nopan"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            }}
+          >
+            {selected && labelDraft.trim() === "" && !isEditing ? (
+              <button
+                type="button"
+                className="whiteboard-edge-label-button"
+                aria-label="Add edge label"
+                onClick={() => setIsEditing(true)}
+              >
+                <span className="whiteboard-edge-label-button-icon">T</span>
+              </button>
+            ) : null}
+            <input
+              ref={inputRef}
+              className="whiteboard-edge-label"
+              data-empty={labelDraft.trim() === "" ? "" : undefined}
+              size={Math.max(labelDraft.trim().length, 4)}
+              value={labelDraft}
+              placeholder="Add label"
+              onChange={(event) => setLabelDraft(event.target.value)}
+              onFocus={() => setIsEditing(true)}
+              onBlur={(event) => commitLabel(event.target.value)}
+              onKeyDown={handleKeyDown}
+              spellCheck={false}
+            />
+          </div>
+        </EdgeLabelRenderer>
+      </>
+    );
+  }
+);
 
 const MiniMapNode = memo(
   ({ id, x: boundsX, y: boundsY, width, height, color }: MiniMapNodeProps) => {
@@ -369,7 +610,7 @@ function FlowToolbar({
     </div>
   );
 }
-function Flow() {
+function Flow({ className, ...props }: ComponentProps<"div">) {
   const didReconnectRef = useRef(false);
   const { screenToFlowPosition } = useReactFlow();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
@@ -488,7 +729,7 @@ function Flow() {
   );
 
   return (
-    <div className="h-screen w-screen">
+    <div className={clsx("relative w-full h-full", className)} {...props}>
       <ReactFlow
         className="whiteboard"
         nodes={nodes}
@@ -497,6 +738,7 @@ function Flow() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={{ block: BlockNode }}
+        edgeTypes={{ smoothstep: WhiteboardLabelEdge }}
         defaultEdgeOptions={{
           type: "smoothstep",
           markerEnd: {
@@ -504,7 +746,7 @@ function Flow() {
           },
         }}
         connectionMode={ConnectionMode.Loose}
-        connectionLineType={ConnectionLineType.SmoothStep}
+        connectionLineType={ConnectionLineType.Step}
         panOnScroll
         panOnDrag={[1]}
         selectionOnDrag
@@ -528,6 +770,11 @@ function Flow() {
         <Panel position="bottom-center">
           <FlowToolbar onAddShape={onAddShapeAtCenter} />
         </Panel>
+        <Panel position="top-right">
+          <div className="whiteboard-avatar-stack">
+            <AvatarStack size={26} gap={3} />
+          </div>
+        </Panel>
         <Background />
       </ReactFlow>
     </div>
@@ -536,12 +783,24 @@ function Flow() {
 
 export default function Page() {
   return (
-    <RoomProvider id={EXAMPLES.whiteboard.roomId}>
-      <ReactFlowProvider>
-        <ClientSideSuspense fallback={null}>
-          <Flow />
-        </ClientSideSuspense>
-      </ReactFlowProvider>
-    </RoomProvider>
+    <div className="relative h-screen w-screen flex flex-col bg-[#f7f9fb]">
+      <RoomProvider id={EXAMPLES.whiteboard.roomId}>
+        <ReactFlowProvider>
+          <ClientSideSuspense
+            fallback={
+              <div className="flex-1 w-full h-full flex items-center justify-center">
+                <img
+                  src="https://liveblocks.io/loading.svg"
+                  alt="Loading"
+                  className="size-16 opacity-20"
+                />
+              </div>
+            }
+          >
+            <Flow className="flex-1" />
+          </ClientSideSuspense>
+        </ReactFlowProvider>
+      </RoomProvider>
+    </div>
   );
 }

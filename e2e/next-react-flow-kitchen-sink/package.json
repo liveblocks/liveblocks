@@ -13,6 +13,7 @@
     "@liveblocks/client": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
+    "@liveblocks/react-ui": "*",
     "@liveblocks/react-flow": "*",
     "@xyflow/react": "^12.10.1",
     "clsx": "^2.1.1",

@@ -8,9 +8,10 @@
 }
 
 .whiteboard {
+  --xy-background-color: #f7f9fb;
   --xy-edge-stroke: #94a3b8;
   --xy-edge-stroke-width: 2;
-  --xy-edge-stroke-selected: #3b82f6;
+  --xy-edge-stroke-selected: #60a5fa;
   --xy-connectionline-stroke: #94a3b8;
   --xy-connectionline-stroke-width: 2;
   --xy-resize-background-color: #3b82f6;
@@ -74,7 +75,12 @@
 }
 
 .whiteboard-block-label {
-  position: relative;
+  display: block;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -84,16 +90,19 @@
   padding: 6px 14px;
   cursor: text;
   word-break: break-word;
-  min-width: 20px;
-  min-height: 1em;
+  field-sizing: content;
+  min-width: 0;
+  min-height: 32px;
   max-width: 100%;
 }
-.react-flow__node-block.selected
-  .whiteboard-block-label[data-empty="true"]::before,
-.whiteboard-block-label[data-empty="true"]:focus::before {
-  content: "Type something…";
+
+.whiteboard-block-label::placeholder {
   color: rgba(255, 255, 255, 0.5);
-  pointer-events: none;
+}
+
+.react-flow__node-block:not(.selected)
+  .whiteboard-block-label:placeholder-shown {
+  opacity: 0;
 }
 
 .whiteboard-handle {
@@ -219,6 +228,83 @@
   border-radius: 50%;
 }
 
+.whiteboard-edge-label-shell {
+  position: absolute;
+  pointer-events: all;
+}
+
+.whiteboard-edge-label-button {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.85);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 4px 14px rgba(15, 23, 42, 0.08);
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+}
+
+.whiteboard-edge-label-button:hover {
+  border-color: #60a5fa;
+  color: #2563eb;
+}
+
+.whiteboard-edge-label-button-icon {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.whiteboard-edge-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  min-width: 0;
+  max-width: 220px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 4px 14px rgba(15, 23, 42, 0.08);
+  color: #334155;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  outline: none;
+  transition:
+    opacity 0.12s,
+    box-shadow 0.12s,
+    border-color 0.12s,
+    background-color 0.12s;
+}
+
+.whiteboard-edge-label:focus {
+  border-color: #3b82f6;
+}
+
+.whiteboard-edge-label::placeholder {
+  color: #94a3b8;
+}
+
+.whiteboard-edge-label[data-empty]:not(:focus) {
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: none;
+  background: transparent;
+  border-color: transparent;
+}
+
 .whiteboard-toolbar {
   display: flex;
   align-items: center;
@@ -284,4 +370,18 @@
 .whiteboard-toolbar-item:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+.whiteboard-avatar-stack {
+  position: relative;
+}
+
+.whiteboard-avatar-stack::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
 }
