@@ -1,0 +1,287 @@
+/* Strip React Flow's default styles */
+.react-flow__node-block {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.whiteboard {
+  --xy-edge-stroke: #94a3b8;
+  --xy-edge-stroke-width: 2;
+  --xy-edge-stroke-selected: #3b82f6;
+  --xy-connectionline-stroke: #94a3b8;
+  --xy-connectionline-stroke-width: 2;
+  --xy-resize-background-color: #3b82f6;
+}
+
+.react-flow__edge:not(.selected) .react-flow__arrowhead polyline {
+  stroke: var(--xy-edge-stroke);
+}
+
+.react-flow__edge:not(.selected) .react-flow__arrowhead polyline.arrowclosed {
+  fill: var(--xy-edge-stroke);
+}
+
+.react-flow__edge.selected .react-flow__arrowhead polyline {
+  stroke: var(--xy-edge-stroke-selected);
+}
+
+.react-flow__edge.selected .react-flow__arrowhead polyline.arrowclosed {
+  fill: var(--xy-edge-stroke-selected);
+}
+
+.whiteboard-block {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.whiteboard-block[data-shape="rectangle"],
+.whiteboard-block[data-shape="rounded"],
+.whiteboard-block[data-shape="circle"] {
+  background-color: var(--whiteboard-block-color);
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.15s;
+}
+
+.whiteboard-block[data-shape="rectangle"] {
+  border-radius: 8px;
+}
+
+.whiteboard-block[data-shape="rounded"] {
+  border-radius: 9999px;
+}
+
+.whiteboard-block[data-shape="circle"] {
+  border-radius: 50%;
+}
+
+.react-flow__node-block.selected .whiteboard-block[data-shape="rectangle"],
+.react-flow__node-block.selected .whiteboard-block[data-shape="rounded"],
+.react-flow__node-block.selected .whiteboard-block[data-shape="circle"] {
+  border-color: #3b82f6;
+  box-shadow:
+    0 0 0 2.5px rgba(59, 130, 246, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.whiteboard-block-label {
+  position: relative;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  color: #fff;
+  outline: none;
+  padding: 6px 14px;
+  cursor: text;
+  word-break: break-word;
+  min-width: 20px;
+  min-height: 1em;
+  max-width: 100%;
+}
+.react-flow__node-block.selected
+  .whiteboard-block-label[data-empty="true"]::before,
+.whiteboard-block-label[data-empty="true"]:focus::before {
+  content: "Type something…";
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+.whiteboard-handle {
+  width: 10px !important;
+  height: 10px !important;
+  background: #3b82f6 !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.5) !important;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.react-flow__resize-control.handle {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  border: none;
+  border-radius: 1px;
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.5);
+}
+
+.react-flow__node:hover .whiteboard-handle,
+.react-flow__node.selected .whiteboard-handle {
+  opacity: 1;
+}
+
+.whiteboard-node-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.whiteboard-node-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.whiteboard-node-toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background: #e2e8f0;
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.whiteboard-node-toolbar-button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
+}
+
+.whiteboard-node-toolbar-button:hover {
+  background: #f1f5f9;
+}
+
+.whiteboard-node-toolbar-button[data-active] {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.whiteboard-node-toolbar-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #e2e8f0;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform 0.1s,
+    border-color 0.1s,
+    box-shadow 0.1s;
+}
+
+.whiteboard-node-toolbar-color:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.whiteboard-node-toolbar-color[data-active] {
+  border-color: #1e293b;
+  transform: scale(1.1);
+}
+
+.whiteboard-shape-icon {
+  display: inline-block;
+  border: 1.5px solid #64748b;
+  flex-shrink: 0;
+}
+
+.whiteboard-shape-icon[data-shape="rectangle"] {
+  width: 15px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.whiteboard-shape-icon[data-shape="rounded"] {
+  width: 15px;
+  height: 10px;
+  border-radius: 5px;
+}
+
+.whiteboard-shape-icon[data-shape="circle"] {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.whiteboard-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  user-select: none;
+}
+
+.whiteboard-toolbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.whiteboard-toolbar-separator {
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.whiteboard-toolbar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1.5px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  cursor: grab;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  transition:
+    background 0.1s,
+    border-color 0.1s,
+    color 0.1s;
+  white-space: nowrap;
+}
+
+.whiteboard-toolbar-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.whiteboard-toolbar-item:active {
+  cursor: grabbing;
+}
+
+.whiteboard-toolbar-item:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
