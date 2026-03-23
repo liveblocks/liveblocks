@@ -1,0 +1,107 @@
+name: Publish Python package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: >
+          PEP 440 version to publish (e.g. 0.1.0, 1.0.0a1, 1.0.0rc1). See
+          https://packaging.python.org/en/latest/specifications/version-specifiers/
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.RELEASE_COMMIT_WRITE_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          uv run --with packaging --no-project -- python - <<'PY'
+          import os
+          import sys
+          from packaging.version import Version, InvalidVersion
+
+          version = os.environ["VERSION"]
+
+          try:
+              parsed = Version(version)
+          except InvalidVersion:
+              print(f"::error::'{version}' is not a valid PEP 440 version. "
+                    "Examples: 0.1.0, 1.0.0a1, 1.0.0b2, 1.0.0rc1, 1.0.0.post1, 1.0.0.dev1")
+              raise SystemExit(1)
+
+          if str(parsed) != version:
+              print(f"::error::Version must be in canonical form. "
+                    f"Got '{version}', expected '{parsed}'.")
+              raise SystemExit(1)
+
+          if len(parsed.release) != 3:
+              print("::error::Version must use exactly three release components: X.Y.Z "
+                    "(examples: 0.1.0, 1.0.0rc1, 1.0.0.post1, 1.0.0.dev1).")
+              raise SystemExit(1)
+
+          if parsed.epoch != 0:
+              print("::error::Epochs are not allowed for releases.")
+              raise SystemExit(1)
+
+          if parsed.local is not None:
+              print("::error::Local versions (+...) are not allowed for releases.")
+              raise SystemExit(1)
+
+          print(f"Validated version: {version}")
+          PY
+
+      - name: Setup git config
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+      - name: Set version in pyproject.toml
+        working-directory: packages/liveblocks-python
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+
+      - name: Set version in codegen config
+        working-directory: packages/liveblocks-python-codegen
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sed -i "s/^package_version_override: .*/package_version_override: $VERSION/" config.yaml
+
+      - name: Commit and push version bump
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git add packages/liveblocks-python/pyproject.toml packages/liveblocks-python-codegen/config.yaml
+          git commit -m "Bump liveblocks-python to $VERSION"
+          git push origin HEAD
+
+      - name: Build and publish
+        working-directory: packages/liveblocks-python
+        run: |
+          uv build
+          uv publish --trusted-publishing always
+
+      - name: Create release tag
+        env:
+          VERSION: ${{ inputs.version }}
+          GIT_TAG: python-v${{ inputs.version }}
+        run: |
+          git tag "$GIT_TAG" -m "Release liveblocks-python $VERSION"
+          git push origin "$GIT_TAG"

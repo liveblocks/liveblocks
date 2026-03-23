@@ -1822,6 +1822,52 @@ const binaryYjsUpdate = await liveblocks.getYjsDocumentAsBinaryUpdate(
 Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn
 more about using binary updates.
 
+### Attachments
+
+#### Liveblocks.getAttachment [#get-rooms-roomId-attachments-attachmentId]
+
+Returns an attachment's metadata and a presigned download URL. Throws an error
+if the room or attachment isn't found.
+
+```ts
+const attachment = await liveblocks.getAttachment({
+  roomId: "my-room-id",
+  attachmentId: "at_d75sF3...",
+});
+
+// { type: "attachment", id: "at_d75sF3...", name: "document.pdf", ... }
+console.log(attachment);
+
+// The presigned URL to download the attachment
+console.log(attachment.url);
+```
+
+Returns an `AttachmentWithUrl` object with the following properties:
+
+<PropertiesList>
+  <PropertiesListItem name="type" type={'"attachment"'}>
+    The type of the object.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    The attachment ID (starts with "at_").
+  </PropertiesListItem>
+  <PropertiesListItem name="name" type="string">
+    The name of the attachment file.
+  </PropertiesListItem>
+  <PropertiesListItem name="mimeType" type="string">
+    The MIME type of the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="size" type="number">
+    The size of the attachment in bytes.
+  </PropertiesListItem>
+  <PropertiesListItem name="url" type="string">
+    A presigned URL to download the attachment.
+  </PropertiesListItem>
+  <PropertiesListItem name="expiresAt" type="string">
+    The expiration time of the presigned URL.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Comments
 
 #### Liveblocks.getThreads [#get-rooms-roomId-threads]

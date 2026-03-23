@@ -16,6 +16,7 @@
  */
 
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import { NestedMap } from "~/lib/NestedMap";
 

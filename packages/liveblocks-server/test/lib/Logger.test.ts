@@ -16,6 +16,7 @@
  */
 
 import type { JsonObject } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
 
 import type { LogLevel } from "~/lib/Logger";
 import { Logger, LogTarget } from "~/lib/Logger";

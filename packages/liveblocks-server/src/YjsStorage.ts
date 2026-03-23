@@ -248,11 +248,13 @@ export class YjsStorage {
     doc: Y.Doc,
     docId: YDocId
   ): Promise<Y.Doc> => {
-    const storedKeys: string[] = [];
-    for (const [key, update] of await this.driver.iter_y_updates(docId)) {
-      Y.applyUpdate(doc, update);
-      storedKeys.push(key);
-    }
+    const docUpdates = Object.fromEntries(
+      await this.driver.iter_y_updates(docId)
+    );
+    const updates = Object.values(docUpdates);
+    const newupdate = Y.mergeUpdates(updates);
+    const storedKeys = Object.keys(docUpdates);
+    Y.applyUpdate(doc, newupdate);
     // after compaction, there will only be one unique key.
     if (this.shouldCompact(storedKeys)) {
       await this._compactYJSUpdates(doc, docId, storedKeys);
