@@ -751,6 +751,10 @@
         "path": "/tools/nextjs-starter-kit"
       },
       {
+        "title": "Agent skills",
+        "path": "/tools/agent-skills"
+      },
+      {
         "title": "MCP server",
         "path": "/tools/mcp-server"
       },

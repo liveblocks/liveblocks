@@ -1,0 +1,66 @@
+---
+meta:
+  title: "Agent skills"
+  parentTitle: "Tools"
+  description:
+    "Use Liveblocks agent skills to help develop your LIveblocks app more
+    easily."
+---
+
+Create your Liveblocks applications more easily with our agent skills, designed
+to help AI coding assistants follow best practices for Liveblocks and Yjs. These
+skills use the [Agent Skills](https://agentskills.io/home) format.
+
+<Figure>
+  <video autoPlay loop muted playsInline height={521} width={768}>
+    <source
+      src="/assets/agent-skills/agent-skills-claude.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+## Install
+
+Install with the following command:
+
+```bash
+npx skills add liveblocks/skills
+```
+
+## Skills
+
+### liveblocks-best-practices
+
+Best practices for using Liveblocks. Contains 40+ comprehensive references
+related to each feature of Liveblocks. Use it when building, debugging, or
+answering questions about Liveblocks.
+
+### yjs-best-practices
+
+Best practices for using Yjs. Contains info on fixing common issues, structuring
+your data efficiently, and avoiding bugs. Use it when building, debugging, or
+answering questions about Yjs.
+
+## Usage
+
+After installation, skills are automatically available in your AI tool. Your
+agent will use them when it judges they are relevant. For example, the following
+questions will trigger skills:
+
+```
+How do I handle unstable Wi-Fi connections with Liveblocks?
+```
+
+```
+How do I pass custom headers to my auth endpoint?
+```
+
+```
+Why is my Y.Map growing so large?
+```
+
+## Source code
+
+The source code is available in our
+[GitHub repository](https://github.com/liveblocks/skills).
