@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  ClientSideSuspense,
-  RoomProvider,
-  type JsonObject,
-} from "@liveblocks/react";
+import type { ThreadData } from "@liveblocks/client";
+import { ClientSideSuspense, RoomProvider, useSelf } from "@liveblocks/react";
+import { useEditThreadMetadata, useThreads } from "@liveblocks/react/suspense";
 import { nanoid } from "nanoid";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
@@ -27,6 +25,8 @@ import {
   getSmoothStepPath,
   useNodes,
   useReactFlow,
+  useStore,
+  useStoreApi,
   type Connection,
   type Edge,
   type EdgeProps,
@@ -34,26 +34,44 @@ import {
   type Node,
   type NodeChange,
   type NodeProps,
+  type NodeRemoveChange,
   type OnResize,
 } from "@xyflow/react";
 import {
+  AvatarStack,
+  CommentPin,
+  FloatingComposer,
+  FloatingThread,
+} from "@liveblocks/react-ui";
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
   ComponentProps,
   CSSProperties,
-  DragEvent,
   Fragment,
   KeyboardEvent,
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
 } from "react";
 import { EXAMPLES } from "../examples";
 import "./whiteboard.css";
 import clsx from "clsx";
-import { AvatarStack } from "@liveblocks/react-ui";
 
 const BLOCK_SHAPES = ["rectangle", "rounded", "circle"] as const;
+
 const BLOCK_COLORS = {
   gray: "#678",
   blue: "#09f",
@@ -265,8 +283,134 @@ function getBlockColor(color: BlockColor | undefined): string {
   return BLOCK_COLORS[color ?? DEFAULT_BLOCK_COLOR];
 }
 
+function getNodeDimensions(node: WhiteboardNode): {
+  width: number;
+  height: number;
+} {
+  const w =
+    typeof node.width === "number"
+      ? node.width
+      : typeof node.style?.width === "number"
+        ? node.style.width
+        : (node.measured?.width ?? DEFAULT_BLOCK_SIZE);
+  const h =
+    typeof node.height === "number"
+      ? node.height
+      : typeof node.style?.height === "number"
+        ? node.style.height
+        : (node.measured?.height ?? DEFAULT_BLOCK_SIZE);
+  return { width: w, height: h };
+}
+
+/** Normalized 0–1 coordinates on the block; updates correctly when the block is resized. */
+function flowPointToNormalizedAttach(
+  node: WhiteboardNode,
+  flowX: number,
+  flowY: number
+): { nx: number; ny: number } {
+  const { width: w, height: h } = getNodeDimensions(node);
+  const safeW = Math.max(w, 1);
+  const safeH = Math.max(h, 1);
+  return {
+    nx: (flowX - node.position.x) / safeW,
+    ny: (flowY - node.position.y) / safeH,
+  };
+}
+
+function normalizedAttachToFlowPoint(
+  node: WhiteboardNode,
+  nx: number,
+  ny: number
+): { flowX: number; flowY: number } {
+  const { width: w, height: h } = getNodeDimensions(node);
+  const safeW = Math.max(w, 1);
+  const safeH = Math.max(h, 1);
+  return {
+    flowX: node.position.x + nx * safeW,
+    flowY: node.position.y + ny * safeH,
+  };
+}
+
+function getBlockNodeAtFlowPoint(
+  nodes: WhiteboardNode[],
+  flowX: number,
+  flowY: number
+): WhiteboardNode | undefined {
+  const blocks = nodes.filter((n) => n.type === "block");
+  for (const n of blocks) {
+    const { width, height } = getNodeDimensions(n);
+    const px = n.position.x;
+    const py = n.position.y;
+    if (
+      flowX >= px &&
+      flowX <= px + width &&
+      flowY >= py &&
+      flowY <= py + height
+    ) {
+      return n;
+    }
+  }
+  return undefined;
+}
+
+/** While remote metadata still references a deleted node, avoid rendering (prevents a flash at the origin). */
+function isThreadAttachedToMissingNode(
+  thread: ThreadData,
+  nodes: WhiteboardNode[]
+): boolean {
+  const aid = thread.metadata.attachedToNodeId;
+  if (!aid) {
+    return false;
+  }
+  return !nodes.some((n) => n.id === aid);
+}
+
+function getThreadPinFlowPosition(
+  thread: ThreadData,
+  nodes: WhiteboardNode[]
+): { flowX: number; flowY: number } {
+  const nx = typeof thread.metadata.x === "number" ? thread.metadata.x : 0;
+  const ny = typeof thread.metadata.y === "number" ? thread.metadata.y : 0;
+  const aid = thread.metadata.attachedToNodeId;
+  if (aid) {
+    const n = nodes.find((node) => node.id === aid);
+    if (n) {
+      const { width: w, height: h } = getNodeDimensions(n);
+      const safeW = Math.max(w, 1);
+      const safeH = Math.max(h, 1);
+      return {
+        flowX: n.position.x + nx * safeW,
+        flowY: n.position.y + ny * safeH,
+      };
+    }
+  }
+  return { flowX: nx, flowY: ny };
+}
+
 function ShapeIcon({ shape }: { shape: BlockShape }) {
   return <span className="whiteboard-shape-icon" data-shape={shape} />;
+}
+
+function BlockDragPreview({ shape }: { shape: BlockShape }) {
+  return (
+    <div
+      className="whiteboard-block-drag-preview"
+      style={{
+        width: DEFAULT_BLOCK_SIZE,
+        height: DEFAULT_BLOCK_SIZE,
+      }}
+    >
+      <div
+        className="whiteboard-block"
+        style={
+          {
+            "--whiteboard-block-color": getBlockColor(DEFAULT_BLOCK_COLOR),
+          } as CSSProperties
+        }
+        data-shape={getBlockShape(shape)}
+      />
+    </div>
+  );
 }
 
 const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
@@ -312,7 +456,8 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
       updateNode(id, (node) => ({
         ...node,
         position: { x, y },
-        style: { ...node.style, width, height },
+        width,
+        height,
       }));
     },
     [id, updateNode]
@@ -364,7 +509,7 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
         <textarea
           className="whiteboard-block-label nodrag"
           value={labelDraft}
-          placeholder="Type something..."
+          placeholder="Add text"
           rows={1}
           onChange={(event) => setLabelDraft(event.target.value)}
           onBlur={(event) => commitLabel(event.target.value)}
@@ -547,76 +692,542 @@ const MiniMapNode = memo(
   }
 );
 
-function FlowToolbar({
-  onAddShape,
-}: {
-  onAddShape: (shape: BlockShape) => void;
-}) {
-  const suppressClickAfterDrop = useRef(false);
+function DraggableFlowThread({ thread }: { thread: ThreadData }) {
+  const nodes = useNodes<WhiteboardNode>();
+  const transform = useStore((state) => state.transform);
+  const [panX, panY, zoom] = transform;
+  const domNode = useStore((state) => state.domNode);
 
-  const handleDragStart = useCallback((event: DragEvent, shape: BlockShape) => {
-    event.dataTransfer.setData("application/whiteboard-shape", shape);
-    event.dataTransfer.effectAllowed = "move";
-  }, []);
+  const defaultOpen = useMemo(() => {
+    return Number(new Date()) - Number(new Date(thread.createdAt)) <= 100;
+  }, [thread]);
 
-  const handleDragEnd = useCallback((event: DragEvent) => {
-    if (event.dataTransfer.dropEffect !== "none") {
-      suppressClickAfterDrop.current = true;
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
-      window.setTimeout(() => {
-        suppressClickAfterDrop.current = false;
-      }, 0);
-    }
-  }, []);
+  const {
+    isDragging,
+    attributes,
+    listeners,
+    setNodeRef,
+    transform: dragDelta,
+  } = useDraggable({
+    id: thread.id,
+    data: { thread },
+  });
 
-  const handleShapeItemClick = useCallback(
-    (shape: BlockShape) => {
-      if (suppressClickAfterDrop.current) {
-        return;
-      }
-      onAddShape(shape);
-    },
-    [onAddShape]
+  const { flowX, flowY } = useMemo(
+    () => getThreadPinFlowPosition(thread, nodes),
+    [thread, nodes]
   );
 
-  return (
-    <div className="whiteboard-toolbar">
-      {BLOCK_SHAPES.map((shape) => {
-        const label = capitalize(shape);
+  const x = flowX * zoom + panX + (dragDelta?.x ?? 0);
+  const y = flowY * zoom + panY + (dragDelta?.y ?? 0);
 
-        return (
-          <div
-            key={shape}
-            className="whiteboard-toolbar-item"
-            draggable
-            onDragStart={(dragEvent) => handleDragStart(dragEvent, shape)}
-            onDragEnd={handleDragEnd}
-            onClick={() => handleShapeItemClick(shape)}
-            onKeyDown={(keyboardEvent) => {
-              if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
-                keyboardEvent.preventDefault();
-                onAddShape(shape);
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            title={`Add ${label} (click) or drag onto the canvas`}
-          >
-            <ShapeIcon shape={shape} />
-            <span>{label}</span>
-          </div>
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (domNode) {
+        e.preventDefault();
+        e.stopPropagation();
+        domNode.dispatchEvent(
+          new WheelEvent("wheel", {
+            deltaX: e.deltaX,
+            deltaY: e.deltaY,
+            deltaZ: e.deltaZ,
+            deltaMode: e.deltaMode,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            bubbles: true,
+          })
         );
-      })}
+      }
+    },
+    [domNode]
+  );
+
+  if (isThreadAttachedToMissingNode(thread, nodes)) {
+    return null;
+  }
+
+  return (
+    <FloatingThread
+      thread={thread}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      defaultOpen={defaultOpen}
+      side="right"
+      style={{ pointerEvents: isDragging ? "none" : "auto" }}
+    >
+      <div
+        ref={setNodeRef}
+        className="whiteboard-flow-comment-pin-wrap nodrag nopan"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transform: `translate3d(${x}px, ${y}px, 0)`,
+          pointerEvents: "auto",
+        }}
+        onWheel={handleWheel}
+      >
+        <CommentPin
+          userId={thread.comments[0]?.userId}
+          corner="top-left"
+          {...listeners}
+          {...attributes}
+        />
+      </div>
+    </FloatingThread>
+  );
+}
+
+function NewThreadCursor() {
+  const [coords, setCoords] = useState({ x: -10000, y: -10000 });
+
+  useEffect(() => {
+    const updatePosition = (e: globalThis.MouseEvent) => {
+      setCoords({ x: e.clientX, y: e.clientY });
+    };
+
+    document.addEventListener("mousemove", updatePosition, false);
+    document.addEventListener("mouseenter", updatePosition, false);
+
+    return () => {
+      document.removeEventListener("mousemove", updatePosition);
+      document.removeEventListener("mouseenter", updatePosition);
+    };
+  }, []);
+
+  return (
+    <CommentPin
+      corner="top-left"
+      style={{
+        cursor: "none",
+        position: "fixed",
+        top: 0,
+        left: 0,
+        transform: `translate(${coords.x}px, ${coords.y}px)`,
+        zIndex: 999999,
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+function NewShapeCursor({ shape }: { shape: BlockShape }) {
+  const [coords, setCoords] = useState({ x: -10000, y: -10000 });
+
+  useEffect(() => {
+    const updatePosition = (e: globalThis.MouseEvent) => {
+      setCoords({ x: e.clientX, y: e.clientY });
+    };
+
+    document.addEventListener("mousemove", updatePosition, false);
+    document.addEventListener("mouseenter", updatePosition, false);
+
+    return () => {
+      document.removeEventListener("mousemove", updatePosition);
+      document.removeEventListener("mouseenter", updatePosition);
+    };
+  }, []);
+
+  const half = DEFAULT_BLOCK_SIZE / 2;
+
+  return (
+    <div
+      className="whiteboard-shape-place-cursor"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        transform: `translate(${coords.x - half}px, ${coords.y - half}px)`,
+        zIndex: 999999,
+        pointerEvents: "none",
+        cursor: "none",
+      }}
+    >
+      <BlockDragPreview shape={shape} />
     </div>
   );
 }
+
+type ThreadPinPlacement =
+  | { kind: "canvas"; flow: { x: number; y: number } }
+  | {
+      kind: "block";
+      nodeId: string;
+      /** 0–1 relative to block width/height (stable when the block is resized) */
+      normalized: { x: number; y: number };
+    };
+
+function PlaceThreadControl({
+  placingState,
+  onPlacingStateChange,
+  placement,
+  pendingShape,
+}: {
+  placingState: "initial" | "placing" | "placed";
+  onPlacingStateChange: (state: "initial" | "placing" | "placed") => void;
+  placement: ThreadPinPlacement | null;
+  pendingShape: BlockShape | null;
+}) {
+  return (
+    <>
+      {pendingShape ? <NewShapeCursor shape={pendingShape} /> : null}
+      {placingState === "placing" ? <NewThreadCursor /> : null}
+
+      {placingState === "placed" && placement ? (
+        <ThreadComposer
+          placement={placement}
+          onSubmit={() => onPlacingStateChange("initial")}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ThreadComposer({
+  placement,
+  onSubmit,
+}: {
+  placement: ThreadPinPlacement;
+  onSubmit: () => void;
+}) {
+  const creatorId = useSelf((me) => me.id);
+  const nodes = useNodes<WhiteboardNode>();
+  const transform = useStore((state) => state.transform);
+  const [panX, panY, zoom] = transform;
+
+  const composerMetadata = useMemo(() => {
+    if (placement.kind === "canvas") {
+      const { x, y } = placement.flow;
+      return { x, y } as const;
+    }
+    return {
+      x: placement.normalized.x,
+      y: placement.normalized.y,
+      attachedToNodeId: placement.nodeId,
+    } as const;
+  }, [placement]);
+
+  const { x, y } = useMemo(() => {
+    if (placement.kind === "canvas") {
+      const { x: fx, y: fy } = placement.flow;
+      return {
+        x: fx * zoom + panX,
+        y: fy * zoom + panY,
+      };
+    }
+    const n = nodes.find((node) => node.id === placement.nodeId);
+    if (n) {
+      const { flowX: absX, flowY: absY } = normalizedAttachToFlowPoint(
+        n,
+        placement.normalized.x,
+        placement.normalized.y
+      );
+      return {
+        x: absX * zoom + panX,
+        y: absY * zoom + panY,
+      };
+    }
+    return { x: 0, y: 0 };
+  }, [placement, nodes, zoom, panX, panY]);
+
+  return (
+    <div
+      className="whiteboard-thread-composer-anchor nodrag nopan"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        transform: `translate3d(${x}px, ${y}px, 0)`,
+        pointerEvents: "auto",
+      }}
+    >
+      <FloatingComposer
+        defaultOpen
+        metadata={composerMetadata}
+        onComposerSubmit={onSubmit}
+        onOpenChange={(open) => {
+          if (!open) {
+            onSubmit();
+          }
+        }}
+        side="right"
+      >
+        <div className="whiteboard-flow-comment-pin-wrap nodrag nopan">
+          <CommentPin
+            userId={creatorId ?? undefined}
+            corner="top-left"
+            className="nodrag nopan"
+            style={{ pointerEvents: "none" }}
+          />
+        </div>
+      </FloatingComposer>
+    </div>
+  );
+}
+
+function WhiteboardCanvasDnd({
+  children,
+  placingState,
+  onPlacingStateChange,
+  placement,
+  pendingShape,
+}: {
+  children: ReactNode;
+  placingState: "initial" | "placing" | "placed";
+  onPlacingStateChange: (state: "initial" | "placing" | "placed") => void;
+  placement: ThreadPinPlacement | null;
+  pendingShape: BlockShape | null;
+}) {
+  const { threads } = useThreads();
+  const editThreadMetadata = useEditThreadMetadata();
+  const storeApi = useStoreApi();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, delta } = event;
+      const data = active.data.current;
+
+      const thread = data?.thread as ThreadData | undefined;
+      if (thread) {
+        const [, , zoom] = storeApi.getState().transform;
+        const nodes = storeApi.getState().nodes as WhiteboardNode[];
+        const dx = delta.x / zoom;
+        const dy = delta.y / zoom;
+
+        const { flowX: startFx, flowY: startFy } = getThreadPinFlowPosition(
+          thread,
+          nodes
+        );
+        const finalFlowX = startFx + dx;
+        const finalFlowY = startFy + dy;
+
+        const hit = getBlockNodeAtFlowPoint(nodes, finalFlowX, finalFlowY);
+        if (hit) {
+          const { nx, ny } = flowPointToNormalizedAttach(
+            hit,
+            finalFlowX,
+            finalFlowY
+          );
+          editThreadMetadata({
+            threadId: thread.id,
+            metadata: {
+              attachedToNodeId: hit.id,
+              x: nx,
+              y: ny,
+            },
+          });
+        } else {
+          editThreadMetadata({
+            threadId: thread.id,
+            metadata: {
+              attachedToNodeId: null,
+              x: finalFlowX,
+              y: finalFlowY,
+            },
+          });
+        }
+      }
+    },
+    [editThreadMetadata, storeApi]
+  );
+
+  return (
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      {children}
+      <div className="whiteboard-flow-comments-root lb-root">
+        {threads.map((thread) => (
+          <DraggableFlowThread key={thread.id} thread={thread} />
+        ))}
+        <PlaceThreadControl
+          placingState={placingState}
+          onPlacingStateChange={onPlacingStateChange}
+          placement={placement}
+          pendingShape={pendingShape}
+        />
+      </div>
+    </DndContext>
+  );
+}
+
+function ToolbarShapeItem({
+  shape,
+  onSelectForPlacement,
+  isActive,
+}: {
+  shape: BlockShape;
+  onSelectForPlacement: (shape: BlockShape) => void;
+  isActive: boolean;
+}) {
+  const label = capitalize(shape);
+
+  return (
+    <div
+      className={clsx(
+        "whiteboard-toolbar-item whiteboard-toolbar-item--shape",
+        isActive && "whiteboard-toolbar-item--active-tool"
+      )}
+      data-active-tool={isActive ? "" : undefined}
+      onClick={() => onSelectForPlacement(shape)}
+      onKeyDown={(keyboardEvent) => {
+        if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+          keyboardEvent.preventDefault();
+          onSelectForPlacement(shape);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      title={`Place ${label} — click the canvas to add (Escape to cancel)`}
+    >
+      <ShapeIcon shape={shape} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function FlowToolbar({
+  pendingShape,
+  onSelectShapeForPlacement,
+  onAddComment,
+  placingState,
+}: {
+  pendingShape: BlockShape | null;
+  onSelectShapeForPlacement: (shape: BlockShape) => void;
+  onAddComment: () => void;
+  placingState: "initial" | "placing" | "placed";
+}) {
+  return (
+    <div className="whiteboard-toolbar">
+      {BLOCK_SHAPES.map((shape) => (
+        <ToolbarShapeItem
+          key={shape}
+          shape={shape}
+          onSelectForPlacement={onSelectShapeForPlacement}
+          isActive={pendingShape === shape}
+        />
+      ))}
+      <div className="whiteboard-toolbar-separator" />
+      <button
+        type="button"
+        className={clsx(
+          "whiteboard-toolbar-item whiteboard-toolbar-item--comment",
+          placingState === "placing" && "whiteboard-toolbar-item--active-tool"
+        )}
+        title="Add comment pin — click the canvas to place (Escape to cancel)"
+        aria-label="Add comment pin"
+        data-active-tool={placingState === "placing" ? "" : undefined}
+        onClick={onAddComment}
+      >
+        <span className="whiteboard-shape-icon">💬</span>
+        Comment
+      </button>
+    </div>
+  );
+}
+
 function Flow({ className, ...props }: ComponentProps<"div">) {
   const didReconnectRef = useRef(false);
-  const { screenToFlowPosition } = useReactFlow();
+  const reactFlow = useReactFlow<WhiteboardNode, WhiteboardEdge>();
+  const [placingState, setPlacingState] = useState<
+    "initial" | "placing" | "placed"
+  >("initial");
+  const [placement, setPlacement] = useState<ThreadPinPlacement | null>(null);
+  const [pendingShape, setPendingShape] = useState<BlockShape | null>(null);
+  const { threads } = useThreads();
+  const editThreadMetadata = useEditThreadMetadata();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useLiveblocksFlow<WhiteboardNode, WhiteboardEdge>({
       initial: { nodes: INITIAL_NODES, edges: INITIAL_EDGES },
     });
+
+  const isPlacementMode = pendingShape !== null || placingState === "placing";
+
+  useEffect(() => {
+    if (placingState === "initial") {
+      setPlacement(null);
+    }
+  }, [placingState]);
+
+  useEffect(() => {
+    const onKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== "Escape") {
+        return;
+      }
+      if (pendingShape !== null) {
+        setPendingShape(null);
+      }
+      if (placingState !== "initial") {
+        setPlacingState("initial");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [pendingShape, placingState]);
+
+  const commitThreadPlacementAtScreenPoint = useCallback(
+    (clientX: number, clientY: number) => {
+      if (placingState !== "placing") {
+        return;
+      }
+
+      const flowPos = reactFlow.screenToFlowPosition({
+        x: clientX,
+        y: clientY,
+      });
+      const nodesNow = reactFlow.getNodes();
+      const hit = getBlockNodeAtFlowPoint(nodesNow, flowPos.x, flowPos.y);
+      if (hit) {
+        const { nx, ny } = flowPointToNormalizedAttach(
+          hit,
+          flowPos.x,
+          flowPos.y
+        );
+        setPlacement({
+          kind: "block",
+          nodeId: hit.id,
+          normalized: { x: nx, y: ny },
+        });
+      } else {
+        setPlacement({ kind: "canvas", flow: flowPos });
+      }
+      setPlacingState("placed");
+    },
+    [placingState]
+  );
+
+  const handlePaneClickWhilePlacing = useCallback(
+    (event: ReactMouseEvent) => {
+      if (placingState !== "placing") {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      commitThreadPlacementAtScreenPoint(event.clientX, event.clientY);
+    },
+    [placingState, commitThreadPlacementAtScreenPoint]
+  );
+
+  const handleNodeClickWhilePlacing = useCallback(
+    (event: ReactMouseEvent, node: WhiteboardNode) => {
+      if (placingState !== "placing" || node.type !== "block") {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      commitThreadPlacementAtScreenPoint(event.clientX, event.clientY);
+    },
+    [placingState, commitThreadPlacementAtScreenPoint]
+  );
 
   const addBlockAtPosition = useCallback(
     (shape: BlockShape, position: { x: number; y: number }) => {
@@ -629,7 +1240,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
           shape,
           color: DEFAULT_BLOCK_COLOR,
         },
-        style: { width: DEFAULT_BLOCK_SIZE, height: DEFAULT_BLOCK_SIZE },
+        width: DEFAULT_BLOCK_SIZE,
+        height: DEFAULT_BLOCK_SIZE,
         selected: true,
       };
 
@@ -646,50 +1258,88 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     [nodes, onNodesChange]
   );
 
-  const onAddShapeAtCenter = useCallback(
-    (shape: BlockShape) => {
-      addBlockAtPosition(
-        shape,
-        screenToFlowPosition({
-          x: window.innerWidth / 2,
-          y: window.innerHeight / 2,
-        })
-      );
-    },
-    [addBlockAtPosition, screenToFlowPosition]
-  );
+  const commitShapeAtScreenPoint = useCallback(
+    (clientX: number, clientY: number) => {
+      const shape = pendingShape;
 
-  const onDragOver = useCallback((event: DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  const onDrop = useCallback(
-    (event: DragEvent) => {
-      event.preventDefault();
-
-      const shapePayload = event.dataTransfer.getData(
-        "application/whiteboard-shape"
-      );
-
-      if (!isBlockShape(shapePayload)) {
+      if (shape === null) {
         return;
       }
-
-      const flowPosition = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
+      const flowPosition = reactFlow.screenToFlowPosition({
+        x: clientX,
+        y: clientY,
       });
-
       const halfWidth = DEFAULT_BLOCK_SIZE / 2;
       const halfHeight = DEFAULT_BLOCK_SIZE / 2;
-
-      addBlockAtPosition(shapePayload, {
+      addBlockAtPosition(shape, {
         x: flowPosition.x - halfWidth,
         y: flowPosition.y - halfHeight,
       });
+      setPendingShape(null);
     },
-    [addBlockAtPosition, screenToFlowPosition]
+    [pendingShape, addBlockAtPosition]
+  );
+
+  const handlePaneClick = useCallback(
+    (event: ReactMouseEvent) => {
+      if (pendingShape !== null) {
+        event.preventDefault();
+        event.stopPropagation();
+        commitShapeAtScreenPoint(event.clientX, event.clientY);
+        return;
+      }
+      handlePaneClickWhilePlacing(event);
+    },
+    [pendingShape, commitShapeAtScreenPoint, handlePaneClickWhilePlacing]
+  );
+
+  const handleNodeClick = useCallback(
+    (event: ReactMouseEvent, node: WhiteboardNode) => {
+      if (pendingShape !== null) {
+        event.preventDefault();
+        event.stopPropagation();
+        commitShapeAtScreenPoint(event.clientX, event.clientY);
+        return;
+      }
+      handleNodeClickWhilePlacing(event, node);
+    },
+    [pendingShape, commitShapeAtScreenPoint, handleNodeClickWhilePlacing]
+  );
+
+  const onNodesChangeWithThreadDetach = useCallback(
+    (changes: NodeChange<WhiteboardNode>[]) => {
+      const removedIds = changes
+        .filter((c): c is NodeRemoveChange => c.type === "remove")
+        .map((c) => c.id);
+      if (removedIds.length > 0) {
+        const currentNodes = reactFlow.getNodes();
+        for (const thread of threads) {
+          const aid = thread.metadata.attachedToNodeId;
+          if (!aid || !removedIds.includes(aid)) {
+            continue;
+          }
+          const node = currentNodes.find((n) => n.id === aid);
+          if (!node) {
+            continue;
+          }
+          const nx =
+            typeof thread.metadata.x === "number" ? thread.metadata.x : 0;
+          const ny =
+            typeof thread.metadata.y === "number" ? thread.metadata.y : 0;
+          const { flowX, flowY } = normalizedAttachToFlowPoint(node, nx, ny);
+          editThreadMetadata({
+            threadId: thread.id,
+            metadata: {
+              attachedToNodeId: null,
+              x: flowX,
+              y: flowY,
+            },
+          });
+        }
+      }
+      onNodesChange(changes);
+    },
+    [threads, onNodesChange, editThreadMetadata]
   );
 
   const onReconnect = useCallback(
@@ -729,14 +1379,31 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   );
 
   return (
-    <div className={clsx("relative w-full h-full", className)} {...props}>
+    <div
+      className={clsx(
+        "relative w-full h-full",
+        isPlacementMode && "whiteboard--placement-mode",
+        className
+      )}
+      {...props}
+    >
       <ReactFlow
         className="whiteboard"
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={onNodesChangeWithThreadDetach}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onPaneClick={handlePaneClick}
+        onNodeClick={handleNodeClick}
+        onPaneContextMenu={(event) => {
+          if (!isPlacementMode) {
+            return;
+          }
+          event.preventDefault();
+          setPlacingState("initial");
+          setPendingShape(null);
+        }}
         nodeTypes={{ block: BlockNode }}
         edgeTypes={{ smoothstep: WhiteboardLabelEdge }}
         defaultEdgeOptions={{
@@ -749,33 +1416,51 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         connectionLineType={ConnectionLineType.Step}
         panOnScroll
         panOnDrag={[1]}
-        selectionOnDrag
+        elementsSelectable={!isPlacementMode}
+        selectionOnDrag={!isPlacementMode}
         selectionMode={SelectionMode.Partial}
         fitView
         edgesReconnectable
         onReconnect={onReconnect}
         onReconnectEnd={onReconnectEnd}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
       >
-        <Cursors />
-        <Controls />
-        <MiniMap
-          nodeComponent={MiniMapNode}
-          nodeColor={(node) =>
-            getBlockColor((node.data as BlockNodeData)?.color)
-          }
-          nodeStrokeWidth={0}
-        />
-        <Panel position="bottom-center">
-          <FlowToolbar onAddShape={onAddShapeAtCenter} />
-        </Panel>
-        <Panel position="top-right">
-          <div className="whiteboard-avatar-stack">
-            <AvatarStack size={26} gap={3} />
-          </div>
-        </Panel>
-        <Background />
+        <WhiteboardCanvasDnd
+          placingState={placingState}
+          onPlacingStateChange={setPlacingState}
+          placement={placement}
+          pendingShape={pendingShape}
+        >
+          <Cursors />
+          <Controls />
+          <MiniMap
+            nodeComponent={MiniMapNode}
+            nodeColor={(node) =>
+              getBlockColor((node.data as BlockNodeData)?.color)
+            }
+            nodeStrokeWidth={0}
+          />
+          <Panel position="bottom-center">
+            <FlowToolbar
+              pendingShape={pendingShape}
+              onSelectShapeForPlacement={(shape) => {
+                setPlacingState("initial");
+                setPlacement(null);
+                setPendingShape(shape);
+              }}
+              onAddComment={() => {
+                setPendingShape(null);
+                setPlacingState("placing");
+              }}
+              placingState={placingState}
+            />
+          </Panel>
+          <Panel position="top-right">
+            <div className="whiteboard-avatar-stack">
+              <AvatarStack size={32} gap={3} />
+            </div>
+          </Panel>
+          <Background />
+        </WhiteboardCanvasDnd>
       </ReactFlow>
     </div>
   );

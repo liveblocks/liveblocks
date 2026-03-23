@@ -10,11 +10,12 @@
     "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@liveblocks/client": "*",
     "@liveblocks/node": "*",
     "@liveblocks/react": "*",
-    "@liveblocks/react-ui": "*",
     "@liveblocks/react-flow": "*",
+    "@liveblocks/react-ui": "*",
     "@xyflow/react": "^12.10.1",
     "clsx": "^2.1.1",
     "nanoid": "^5.1.7",

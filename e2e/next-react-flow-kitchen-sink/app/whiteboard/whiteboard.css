@@ -17,6 +17,10 @@
   --xy-resize-background-color: #3b82f6;
 }
 
+.whiteboard .react-flow__pane.selection {
+  cursor: default;
+}
+
 .react-flow__edge:not(.selected) .react-flow__arrowhead polyline {
   stroke: var(--xy-edge-stroke);
 }
@@ -206,8 +210,11 @@
 
 .whiteboard-shape-icon {
   display: inline-block;
-  border: 1.5px solid #64748b;
   flex-shrink: 0;
+}
+
+.whiteboard-shape-icon[data-shape] {
+  border: 1.5px solid #64748b;
 }
 
 .whiteboard-shape-icon[data-shape="rectangle"] {
@@ -346,7 +353,7 @@
   border: 1.5px solid transparent;
   border-radius: 7px;
   background: transparent;
-  cursor: grab;
+  cursor: pointer;
   font-size: 12px;
   font-weight: 500;
   color: #475569;
@@ -363,8 +370,22 @@
   color: #1e293b;
 }
 
-.whiteboard-toolbar-item:active {
+.whiteboard-toolbar-item--active-tool {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1e40af;
+  cursor: none;
+}
+
+.whiteboard-toolbar-item--comment:not(.whiteboard-toolbar-item--active-tool) {
+  cursor: pointer;
+}
+
+.whiteboard-block-drag-preview {
+  pointer-events: none;
   cursor: grabbing;
+  filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.12))
+    drop-shadow(0 8px 24px rgba(15, 23, 42, 0.1));
 }
 
 .whiteboard-toolbar-item:focus-visible {
@@ -384,4 +405,65 @@
   z-index: -1;
   pointer-events: none;
   backdrop-filter: blur(12px);
+}
+
+.whiteboard-flow-comments-root {
+  position: absolute;
+  inset: 0;
+  /* Below `.react-flow__panel` / Controls / MiniMap (5); same layer as `.react-flow__renderer` (4), later in DOM so pins stay above the graph */
+  z-index: 4;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.whiteboard--placement-mode .react-flow .react-flow__pane {
+  cursor: none;
+}
+
+.whiteboard--placement-mode .react-flow .react-flow__node,
+.whiteboard--placement-mode .react-flow .react-flow__node.draggable,
+.whiteboard--placement-mode .react-flow .react-flow__node.draggable.dragging {
+  cursor: none;
+}
+
+.whiteboard--placement-mode .whiteboard-block-label {
+  cursor: none !important;
+}
+
+.whiteboard--placement-mode .react-flow .react-flow__resize-control {
+  cursor: none;
+}
+
+.whiteboard--placement-mode .react-flow__handle.connectionindicator {
+  cursor: none;
+}
+
+.whiteboard--placement-mode .whiteboard-edge-label,
+.whiteboard--placement-mode .whiteboard-edge-label-button {
+  cursor: none;
+}
+
+.whiteboard--placement-mode .react-flow__panel,
+.whiteboard--placement-mode .react-flow__controls {
+  cursor: default;
+}
+
+.whiteboard-flow-comment-pin-wrap .lb-comment-pin {
+  cursor: grab;
+}
+
+.whiteboard-flow-comment-pin-wrap:active .lb-comment-pin {
+  cursor: grabbing;
+}
+
+.whiteboard--placement-mode .whiteboard-flow-comment-pin-wrap .lb-comment-pin,
+.whiteboard--placement-mode
+  .whiteboard-flow-comment-pin-wrap:active
+  .lb-comment-pin {
+  cursor: none;
+}
+
+.whiteboard-thread-composer-anchor {
+  pointer-events: auto;
+  z-index: 4;
 }
