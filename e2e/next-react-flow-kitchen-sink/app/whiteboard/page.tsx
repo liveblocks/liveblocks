@@ -69,6 +69,7 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { EXAMPLES } from "../examples";
@@ -588,6 +589,13 @@ const BlockNode = memo(({ id, data, selected }: NodeProps<WhiteboardNode>) => {
           onChange={(event) => setLabelDraft(event.target.value)}
           onBlur={(event) => commitLabel(event.target.value)}
           onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              event.stopPropagation();
+              event.currentTarget.blur();
+              return;
+            }
+
             if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
               event.currentTarget.blur();
             }
@@ -646,8 +654,10 @@ const WhiteboardLabelEdge = memo(
   }: EdgeProps<WhiteboardEdge>) => {
     const { updateEdge } = useReactFlow();
     const [labelDraft, setLabelDraft] = useState(data?.label ?? "");
-    const [isEditing, setIsEditing] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [edgeChromeHovered, setEdgeChromeHovered] = useState(false);
+    const [labelFocused, setLabelFocused] = useState(false);
+    const edgeGroupRef = useRef<SVGGElement>(null);
+    const labelShellRef = useRef<HTMLDivElement>(null);
     const [edgePath, labelX, labelY] = getSmoothStepPath({
       sourceX,
       sourceY,
@@ -662,19 +672,40 @@ const WhiteboardLabelEdge = memo(
       setLabelDraft(data?.label ?? "");
     }, [data?.label]);
 
-    useEffect(() => {
-      if (isEditing) {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }
-    }, [isEditing]);
+    const pointerWithinLabelChrome = useCallback(
+      (target: EventTarget | null) => {
+        if (target == null || !(target instanceof Node)) {
+          return false;
+        }
+
+        return (
+          (edgeGroupRef.current?.contains(target) ?? false) ||
+          (labelShellRef.current?.contains(target) ?? false)
+        );
+      },
+      []
+    );
+
+    const handleChromePointerEnter = useCallback(() => {
+      setEdgeChromeHovered(true);
+    }, []);
+
+    const handleChromePointerLeave = useCallback(
+      (event: ReactPointerEvent) => {
+        if (pointerWithinLabelChrome(event.relatedTarget)) {
+          return;
+        }
+
+        setEdgeChromeHovered(false);
+      },
+      [pointerWithinLabelChrome]
+    );
 
     const commitLabel = useCallback(
       (text: string) => {
         const nextLabel = text.trim();
 
         setLabelDraft(nextLabel);
-        setIsEditing(false);
         updateEdge(id, (edge) => ({
           ...edge,
           data: {
@@ -690,44 +721,75 @@ const WhiteboardLabelEdge = memo(
         if (event.key === "Enter") {
           event.preventDefault();
           event.currentTarget.blur();
+          return;
+        }
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          event.currentTarget.blur();
         }
       },
       []
     );
 
+    const showLabelChrome = selected || edgeChromeHovered || labelFocused;
+    const trimmedLabel = labelDraft.trim();
+
+    const mirrorText = useMemo(
+      () => (labelDraft.length > 0 ? labelDraft : "Add label"),
+      [labelDraft]
+    );
+
     return (
       <>
-        <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+        <g
+          ref={edgeGroupRef}
+          onPointerEnter={handleChromePointerEnter}
+          onPointerLeave={handleChromePointerLeave}
+        >
+          <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+        </g>
         <EdgeLabelRenderer>
           <div
+            ref={labelShellRef}
             className="whiteboard-edge-label-shell nodrag nopan"
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             }}
+            onPointerEnter={handleChromePointerEnter}
+            onPointerLeave={handleChromePointerLeave}
           >
-            {selected && labelDraft.trim() === "" && !isEditing ? (
-              <button
-                type="button"
-                className="whiteboard-edge-label-button"
-                aria-label="Add edge label"
-                onClick={() => setIsEditing(true)}
+            {showLabelChrome ? (
+              <div className="whiteboard-edge-label-sizing">
+                <span className="whiteboard-edge-label-mirror" aria-hidden>
+                  {mirrorText}
+                </span>
+                <input
+                  className="whiteboard-edge-label"
+                  value={labelDraft}
+                  placeholder="Add label"
+                  onChange={(event) => setLabelDraft(event.target.value)}
+                  onFocus={(event) => {
+                    setLabelFocused(true);
+                    event.currentTarget.select();
+                  }}
+                  onBlur={(event) => {
+                    commitLabel(event.target.value);
+                    setLabelFocused(false);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  spellCheck={false}
+                />
+              </div>
+            ) : trimmedLabel ? (
+              <span
+                className="whiteboard-edge-label-readonly"
+                title={trimmedLabel}
               >
-                <span className="whiteboard-edge-label-button-icon">T</span>
-              </button>
+                {trimmedLabel}
+              </span>
             ) : null}
-            <input
-              ref={inputRef}
-              className="whiteboard-edge-label"
-              data-empty={labelDraft.trim() === "" ? "" : undefined}
-              size={Math.max(labelDraft.trim().length, 4)}
-              value={labelDraft}
-              placeholder="Add label"
-              onChange={(event) => setLabelDraft(event.target.value)}
-              onFocus={() => setIsEditing(true)}
-              onBlur={(event) => commitLabel(event.target.value)}
-              onKeyDown={handleKeyDown}
-              spellCheck={false}
-            />
           </div>
         </EdgeLabelRenderer>
       </>
