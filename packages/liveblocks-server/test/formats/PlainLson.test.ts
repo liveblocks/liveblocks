@@ -25,6 +25,7 @@ import type {
 import { CrdtType, isRootStorageNode, makePosition } from "@liveblocks/core";
 import fc from "fast-check";
 import { reduce } from "itertools";
+import { describe, expect, test } from "vitest";
 
 import type { IReadableSnapshot } from "~";
 import {
@@ -566,12 +567,12 @@ describe("iterPlainLson", () => {
     // Get first value
     const first = iterator.next();
     expect(first.done).toBe(false);
-    expect(first.value![0]).toBe("root");
+    expect(first.value[0]).toBe("root");
 
     // Get second value
     const second = iterator.next();
     expect(second.done).toBe(false);
-    expect(second.value![0]).toBe("si:1");
+    expect(second.value[0]).toBe("si:1");
 
     // Verify iteration completes
     const third = iterator.next();

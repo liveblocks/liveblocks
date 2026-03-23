@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { describe, expect, test } from "vitest";
+
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 import type { ActorID } from "~/Room";
 import { Room } from "~/Room";

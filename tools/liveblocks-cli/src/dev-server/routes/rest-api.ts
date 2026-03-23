@@ -513,6 +513,7 @@ zen.route("GET /v2/rooms/<roomId>/active_users", ({ p }) => {
   zen.route("DELETE /v2/rooms/<roomId>/threads/<threadId>/comments/<commentId>", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/threads/<threadId>/comments/<commentId>/add-reaction", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/threads/<threadId>/comments/<commentId>/remove-reaction", () => NOT_IMPLEMENTED());
+  zen.route("GET /v2/rooms/<roomId>/attachments/<attachmentId>", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/users/<userId>/notification-settings", () => NOT_IMPLEMENTED());
   zen.route("GET /v2/rooms/<roomId>/users/<userId>/subscription-settings", () => NOT_IMPLEMENTED());
   zen.route("POST /v2/rooms/<roomId>/users/<userId>/notification-settings", () => NOT_IMPLEMENTED());
