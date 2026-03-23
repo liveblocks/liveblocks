@@ -346,6 +346,7 @@
 }
 
 .whiteboard-toolbar-item {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -356,6 +357,7 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
+  font-family: inherit;
   color: #475569;
   transition:
     background 0.1s,
@@ -407,10 +409,9 @@
   backdrop-filter: blur(12px);
 }
 
-.whiteboard-flow-comments-root {
+.whiteboard-comments {
   position: absolute;
   inset: 0;
-  /* Below `.react-flow__panel` / Controls / MiniMap (5); same layer as `.react-flow__renderer` (4), later in DOM so pins stay above the graph */
   z-index: 4;
   pointer-events: none;
   isolation: isolate;
