@@ -8,8 +8,8 @@ from attrs import define as _attrs_define
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.create_room_request_body import CreateRoomRequestBody
     from ..models.update_room_request_body import UpdateRoomRequestBody
+    from ..models.upsert_room_request_body_create import UpsertRoomRequestBodyCreate
 
 
 @_attrs_define
@@ -22,13 +22,12 @@ class UpsertRoomRequestBody:
     Attributes:
         update (UpdateRoomRequestBody):  Example: {'defaultAccesses': ['room:write'], 'usersAccesses': {'alice':
             ['room:write']}, 'groupsAccesses': {'marketing': ['room:write']}, 'metadata': {'color': 'blue'}}.
-        create (CreateRoomRequestBody | Unset):  Example: {'id': 'my-room-id', 'defaultAccesses': ['room:write'],
-            'metadata': {'color': 'blue'}, 'usersAccesses': {'alice': ['room:write']}, 'groupsAccesses': {'product':
-            ['room:write']}}.
+        create (UpsertRoomRequestBodyCreate | Unset): Fields to use when creating the room if it does not exist. Unlike
+            the create-room endpoint, `id` is not included here because it is provided in the URL path.
     """
 
     update: UpdateRoomRequestBody
-    create: CreateRoomRequestBody | Unset = UNSET
+    create: UpsertRoomRequestBodyCreate | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         update = self.update.to_dict()
@@ -51,18 +50,18 @@ class UpsertRoomRequestBody:
 
     @classmethod
     def from_dict(cls, src_dict: Mapping[str, Any]) -> Self:
-        from ..models.create_room_request_body import CreateRoomRequestBody
         from ..models.update_room_request_body import UpdateRoomRequestBody
+        from ..models.upsert_room_request_body_create import UpsertRoomRequestBodyCreate
 
         d = dict(src_dict)
         update = UpdateRoomRequestBody.from_dict(d.pop("update"))
 
         _create = d.pop("create", UNSET)
-        create: CreateRoomRequestBody | Unset
+        create: UpsertRoomRequestBodyCreate | Unset
         if isinstance(_create, Unset):
             create = UNSET
         else:
-            create = CreateRoomRequestBody.from_dict(_create)
+            create = UpsertRoomRequestBodyCreate.from_dict(_create)
 
         upsert_room_request_body = cls(
             update=update,

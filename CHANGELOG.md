@@ -1,9 +1,14 @@
-## 3.15.5 [Not yet released]
+## 3.15.5
 
 ### `@liveblocks/tiptap`
 
 - Improve clipboard handling when text nodes containing comments were copied or
   pasted.
+
+### Python SDK
+
+- Fix request body for certain endpoints, like `update_room_id`,
+  `initialize_storage_document` incorrectly set as optional.
 
 ## v3.15.4
 
@@ -12,14 +17,14 @@
 - Add `Liveblocks.getAttachment()` method to get an attachment's metadata and a
   presigned download URL.
 
-### `Python SDK`
+### Python SDK
 
 - Add `get_attachment()` method to get an attachment's metadata and a presigned
   download URL.
 
 ## v3.15.3
 
-### `Python SDK`
+### Python SDK
 
 - Introduce the Python package. Install with `pip install liveblocks`. Provides
   sync and async clients for the full Liveblocks API (rooms, storage, threads,

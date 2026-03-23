@@ -4,12 +4,11 @@ import httpx
 
 from ... import errors
 from ...models.trigger_inbox_notification_request_body import TriggerInboxNotificationRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     *,
-    body: TriggerInboxNotificationRequestBody | Unset = UNSET,
+    body: TriggerInboxNotificationRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -18,8 +17,7 @@ def _get_kwargs(
         "url": "/v2/inbox-notifications/trigger",
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -37,7 +35,7 @@ def _parse_response(*, response: httpx.Response) -> None:
 def _sync(
     *,
     client: httpx.Client,
-    body: TriggerInboxNotificationRequestBody | Unset = UNSET,
+    body: TriggerInboxNotificationRequestBody,
 ) -> None:
     kwargs = _get_kwargs(
         body=body,
@@ -52,7 +50,7 @@ def _sync(
 async def _asyncio(
     *,
     client: httpx.AsyncClient,
-    body: TriggerInboxNotificationRequestBody | Unset = UNSET,
+    body: TriggerInboxNotificationRequestBody,
 ) -> None:
     kwargs = _get_kwargs(
         body=body,
