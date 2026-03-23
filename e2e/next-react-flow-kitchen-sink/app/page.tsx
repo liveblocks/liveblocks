@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { deleteStorage } from "./delete-storage";
 import { EXAMPLES } from "./examples";
-import { ActionButton } from "./action-button";
+import { ResetRoomButton } from "./reset-room-button";
 
 export default function Home() {
   return (
@@ -14,10 +13,7 @@ export default function Home() {
             <Link href={`/${name}`} className="underline">
               {example.label}
             </Link>
-            <form action={deleteStorage} className="inline">
-              <input type="hidden" name="roomId" value={example.roomId} />
-              <ActionButton>Reset</ActionButton>
-            </form>
+            <ResetRoomButton roomId={example.roomId} />
           </div>
         ))}
       </div>
