@@ -159,6 +159,7 @@ from .update_room_subscription_settings_request_body_text_mentions import (
 )
 from .update_room_subscription_settings_request_body_threads import UpdateRoomSubscriptionSettingsRequestBodyThreads
 from .upsert_room_request_body import UpsertRoomRequestBody
+from .upsert_room_request_body_create import UpsertRoomRequestBodyCreate
 from .user_room_subscription_settings import UserRoomSubscriptionSettings
 from .user_room_subscription_settings_text_mentions import UserRoomSubscriptionSettingsTextMentions
 from .user_room_subscription_settings_threads import UserRoomSubscriptionSettingsThreads
@@ -316,6 +317,7 @@ __all__ = (
     "UpdateRoomSubscriptionSettingsRequestBodyTextMentions",
     "UpdateRoomSubscriptionSettingsRequestBodyThreads",
     "UpsertRoomRequestBody",
+    "UpsertRoomRequestBodyCreate",
     "UserRoomSubscriptionSettings",
     "UserRoomSubscriptionSettingsTextMentions",
     "UserRoomSubscriptionSettingsThreads",

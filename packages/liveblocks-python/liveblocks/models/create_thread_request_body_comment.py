@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from attrs import define as _attrs_define
 from dateutil.parser import isoparse
@@ -24,12 +24,14 @@ class CreateThreadRequestBodyComment:
         created_at (datetime.datetime | Unset):
         metadata (CommentMetadata | Unset): Custom metadata attached to a comment. Supports maximum 50 entries. Key
             length has a limit of 40 characters maximum. Value length has a limit of 4000 characters maximum for strings.
+        attachment_ids (list[str] | Unset):
     """
 
     user_id: str
     body: CommentBody
     created_at: datetime.datetime | Unset = UNSET
     metadata: CommentMetadata | Unset = UNSET
+    attachment_ids: list[str] | Unset = UNSET
 
     def to_dict(self) -> dict[str, Any]:
         user_id = self.user_id
@@ -44,6 +46,10 @@ class CreateThreadRequestBodyComment:
         if not isinstance(self.metadata, Unset):
             metadata = self.metadata.to_dict()
 
+        attachment_ids: list[str] | Unset = UNSET
+        if not isinstance(self.attachment_ids, Unset):
+            attachment_ids = self.attachment_ids
+
         field_dict: dict[str, Any] = {}
 
         field_dict.update(
@@ -56,6 +62,8 @@ class CreateThreadRequestBodyComment:
             field_dict["createdAt"] = created_at
         if metadata is not UNSET:
             field_dict["metadata"] = metadata
+        if attachment_ids is not UNSET:
+            field_dict["attachmentIds"] = attachment_ids
 
         return field_dict
 
@@ -83,11 +91,14 @@ class CreateThreadRequestBodyComment:
         else:
             metadata = CommentMetadata.from_dict(_metadata)
 
+        attachment_ids = cast(list[str], d.pop("attachmentIds", UNSET))
+
         create_thread_request_body_comment = cls(
             user_id=user_id,
             body=body,
             created_at=created_at,
             metadata=metadata,
+            attachment_ids=attachment_ids,
         )
 
         return create_thread_request_body_comment

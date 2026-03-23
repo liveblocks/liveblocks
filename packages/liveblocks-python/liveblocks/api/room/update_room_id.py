@@ -6,13 +6,12 @@ import httpx
 from ... import errors
 from ...models.room import Room
 from ...models.update_room_id_request_body import UpdateRoomIdRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
     room_id: str,
     *,
-    body: UpdateRoomIdRequestBody | Unset = UNSET,
+    body: UpdateRoomIdRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -23,8 +22,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -45,7 +43,7 @@ def _sync(
     room_id: str,
     *,
     client: httpx.Client,
-    body: UpdateRoomIdRequestBody | Unset = UNSET,
+    body: UpdateRoomIdRequestBody,
 ) -> Room:
     kwargs = _get_kwargs(
         room_id=room_id,
@@ -62,7 +60,7 @@ async def _asyncio(
     room_id: str,
     *,
     client: httpx.AsyncClient,
-    body: UpdateRoomIdRequestBody | Unset = UNSET,
+    body: UpdateRoomIdRequestBody,
 ) -> Room:
     kwargs = _get_kwargs(
         room_id=room_id,

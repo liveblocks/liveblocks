@@ -462,7 +462,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomIdRequestBody | Unset = UNSET,
+        body: UpdateRoomIdRequestBody,
     ) -> Room:
         """Update room ID
 
@@ -473,7 +473,7 @@ class Liveblocks:
 
         Args:
             room_id (str): The new ID for the room Example: my-room-id.
-            body (UpdateRoomIdRequestBody | Unset):  Example: {'newRoomId': 'new-room-id'}.
+            body (UpdateRoomIdRequestBody):  Example: {'newRoomId': 'new-room-id'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -495,7 +495,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+        body: UpdateRoomOrganizationIdRequestBody,
     ) -> Room:
         """Update room organization ID
 
@@ -504,7 +504,7 @@ class Liveblocks:
 
         Args:
             room_id (str): The ID of the room Example: my-room-id.
-            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+            body (UpdateRoomOrganizationIdRequestBody):  Example: {'fromOrganizationId':
                 'org_123456789', 'toOrganizationId': 'org_987654321'}.
 
         Raises:
@@ -679,7 +679,7 @@ class Liveblocks:
         self,
         room_id: str,
         *,
-        body: InitializeStorageDocumentBody | Unset = UNSET,
+        body: InitializeStorageDocumentBody,
     ) -> InitializeStorageDocumentResponse:
         r"""Initialize Storage document
 
@@ -702,7 +702,7 @@ class Liveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            body (InitializeStorageDocumentBody | Unset):
+            body (InitializeStorageDocumentBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -1590,7 +1590,7 @@ class Liveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: RemoveCommentReactionRequestBody | Unset = UNSET,
+        body: RemoveCommentReactionRequestBody,
     ) -> None:
         """Remove comment reaction
 
@@ -1603,7 +1603,7 @@ class Liveblocks:
             room_id (str): ID of the room Example: my-room-id.
             thread_id (str): ID of the thread Example: th_abc123.
             comment_id (str): ID of the comment Example: cm_abc123.
-            body (RemoveCommentReactionRequestBody | Unset):
+            body (RemoveCommentReactionRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2208,7 +2208,7 @@ class Liveblocks:
     def trigger_inbox_notification(
         self,
         *,
-        body: TriggerInboxNotificationRequestBody | Unset = UNSET,
+        body: TriggerInboxNotificationRequestBody,
     ) -> None:
         """Trigger inbox notification
 
@@ -2217,8 +2217,8 @@ class Liveblocks:
         node#post-inbox-notifications-trigger).
 
         Args:
-            body (TriggerInboxNotificationRequestBody | Unset):  Example: {'userId': 'alice', 'kind':
-                'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
+            body (TriggerInboxNotificationRequestBody):  Example: {'userId': 'alice', 'kind':
+                '$fileUploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -2297,7 +2297,7 @@ class Liveblocks:
     def create_group(
         self,
         *,
-        body: CreateGroupRequestBody | Unset = UNSET,
+        body: CreateGroupRequestBody,
     ) -> Group:
         """Create group
 
@@ -2305,8 +2305,8 @@ class Liveblocks:
         [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
-            body (CreateGroupRequestBody | Unset):  Example: {'id': 'engineering', 'memberIds':
-                ['alice', 'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
+            body (CreateGroupRequestBody):  Example: {'id': 'engineering', 'memberIds': ['alice',
+                'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3271,7 +3271,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomIdRequestBody | Unset = UNSET,
+        body: UpdateRoomIdRequestBody,
     ) -> Room:
         """Update room ID
 
@@ -3282,7 +3282,7 @@ class AsyncLiveblocks:
 
         Args:
             room_id (str): The new ID for the room Example: my-room-id.
-            body (UpdateRoomIdRequestBody | Unset):  Example: {'newRoomId': 'new-room-id'}.
+            body (UpdateRoomIdRequestBody):  Example: {'newRoomId': 'new-room-id'}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -3304,7 +3304,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: UpdateRoomOrganizationIdRequestBody | Unset = UNSET,
+        body: UpdateRoomOrganizationIdRequestBody,
     ) -> Room:
         """Update room organization ID
 
@@ -3313,7 +3313,7 @@ class AsyncLiveblocks:
 
         Args:
             room_id (str): The ID of the room Example: my-room-id.
-            body (UpdateRoomOrganizationIdRequestBody | Unset):  Example: {'fromOrganizationId':
+            body (UpdateRoomOrganizationIdRequestBody):  Example: {'fromOrganizationId':
                 'org_123456789', 'toOrganizationId': 'org_987654321'}.
 
         Raises:
@@ -3488,7 +3488,7 @@ class AsyncLiveblocks:
         self,
         room_id: str,
         *,
-        body: InitializeStorageDocumentBody | Unset = UNSET,
+        body: InitializeStorageDocumentBody,
     ) -> InitializeStorageDocumentResponse:
         r"""Initialize Storage document
 
@@ -3511,7 +3511,7 @@ class AsyncLiveblocks:
 
         Args:
             room_id (str): ID of the room Example: my-room-id.
-            body (InitializeStorageDocumentBody | Unset):
+            body (InitializeStorageDocumentBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -4399,7 +4399,7 @@ class AsyncLiveblocks:
         thread_id: str,
         comment_id: str,
         *,
-        body: RemoveCommentReactionRequestBody | Unset = UNSET,
+        body: RemoveCommentReactionRequestBody,
     ) -> None:
         """Remove comment reaction
 
@@ -4412,7 +4412,7 @@ class AsyncLiveblocks:
             room_id (str): ID of the room Example: my-room-id.
             thread_id (str): ID of the thread Example: th_abc123.
             comment_id (str): ID of the comment Example: cm_abc123.
-            body (RemoveCommentReactionRequestBody | Unset):
+            body (RemoveCommentReactionRequestBody):
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5017,7 +5017,7 @@ class AsyncLiveblocks:
     async def trigger_inbox_notification(
         self,
         *,
-        body: TriggerInboxNotificationRequestBody | Unset = UNSET,
+        body: TriggerInboxNotificationRequestBody,
     ) -> None:
         """Trigger inbox notification
 
@@ -5026,8 +5026,8 @@ class AsyncLiveblocks:
         node#post-inbox-notifications-trigger).
 
         Args:
-            body (TriggerInboxNotificationRequestBody | Unset):  Example: {'userId': 'alice', 'kind':
-                'file-uploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
+            body (TriggerInboxNotificationRequestBody):  Example: {'userId': 'alice', 'kind':
+                '$fileUploaded', 'subjectId': 'file123', 'activityData': {'url': 'url-to-file'}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
@@ -5106,7 +5106,7 @@ class AsyncLiveblocks:
     async def create_group(
         self,
         *,
-        body: CreateGroupRequestBody | Unset = UNSET,
+        body: CreateGroupRequestBody,
     ) -> Group:
         """Create group
 
@@ -5114,8 +5114,8 @@ class AsyncLiveblocks:
         [`liveblocks.createGroup`](https://liveblocks.io/docs/api-reference/liveblocks-node#create-group).
 
         Args:
-            body (CreateGroupRequestBody | Unset):  Example: {'id': 'engineering', 'memberIds':
-                ['alice', 'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
+            body (CreateGroupRequestBody):  Example: {'id': 'engineering', 'memberIds': ['alice',
+                'bob'], 'organizationId': 'org_123456789', 'scopes': {'mention': True}}.
 
         Raises:
             errors.LiveblocksError: If the server returns a response with non-2xx status code.
