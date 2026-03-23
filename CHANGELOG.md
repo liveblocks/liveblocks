@@ -1,3 +1,10 @@
+## 3.15.5 [Not yet released]
+
+### `@liveblocks/tiptap`
+
+- Improve clipboard handling when text nodes containing comments were copied or
+  pasted.
+
 ## v3.15.4
 
 ### `@liveblocks/node`
