@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
   // Create a session for the current user (access token auth)
   // userInfo is made available in Liveblocks user hooks, e.g. useSelf
-  const session = liveblocks.prepareSession(`${user.id}`, {
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: user.info,
   });
 
