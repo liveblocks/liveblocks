@@ -7,13 +7,36 @@ import {
   useUser,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
-import { Cursor } from "@liveblocks/react-ui";
-import { cn, makeCursorSpring } from "@liveblocks/react-ui/_private";
+import { Cursor as DefaultCursor } from "@liveblocks/react-ui";
+import {
+  cn,
+  makeCursorSpring,
+  useStableComponent,
+} from "@liveblocks/react-ui/_private";
 import { useReactFlow, useStore, useStoreApi } from "@xyflow/react";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { forwardRef, useCallback, useEffect, useRef } from "react";
 
 const DEFAULT_PRESENCE_KEY = "cursor";
+
+export interface CursorsCursorProps {
+  /**
+   * The user ID for this cursor.
+   */
+  userId: string;
+
+  /**
+   * The connection ID for this cursor.
+   */
+  connectionId: number;
+}
+
+interface CursorsComponents {
+  /**
+   * The component used to display each cursor.
+   */
+  Cursor: ComponentType<CursorsCursorProps>;
+}
 
 export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -22,6 +45,11 @@ export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
    * Defaults to `"cursor"`.
    */
   presenceKey?: string;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<CursorsComponents>;
 }
 
 type Coordinates = {
@@ -45,21 +73,31 @@ function $coordinates(value: unknown): Coordinates | undefined {
   return undefined;
 }
 
+function DefaultCursorWithUserInfo({ userId }: CursorsCursorProps) {
+  const { user, isLoading } = useUser(userId);
+  const color = $string(user?.color);
+  const name = $string(user?.name);
+
+  if (isLoading) {
+    return null;
+  }
+
+  return <DefaultCursor color={color} label={name} />;
+}
+
 function PresenceCursor({
   connectionId,
   presenceKey,
+  Cursor,
 }: {
   connectionId: number;
   presenceKey: string;
+  Cursor: ComponentType<CursorsCursorProps>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
   const reactFlowStoreApi = useStoreApi();
   const userId = useOther(connectionId, (other) => $string(other.id));
-  const { user, isLoading } = useUser(userId ?? "");
-  const hasUserInfo = userId !== undefined && !isLoading;
-  const color = $string(user?.color);
-  const name = $string(user?.name);
 
   useLayoutEffect(() => {
     const spring = makeCursorSpring();
@@ -73,7 +111,7 @@ function PresenceCursor({
         return;
       }
 
-      if (!hasUserInfo || coordinates === null) {
+      if (coordinates === null) {
         element.style.transform = "translate3d(0, 0, 0)";
         element.style.display = "none";
         return;
@@ -107,15 +145,16 @@ function PresenceCursor({
       unsubscribeTransform();
       unsubscribeOther();
     };
-  }, [room, connectionId, presenceKey, hasUserInfo, reactFlowStoreApi]);
+  }, [room, connectionId, presenceKey, reactFlowStoreApi]);
+
+  if (!userId) {
+    return null;
+  }
 
   return (
-    <Cursor
-      color={color}
-      label={name}
-      ref={cursorRef}
-      style={{ display: "none" }}
-    />
+    <div ref={cursorRef} style={{ display: "none" }}>
+      <Cursor userId={userId} connectionId={connectionId} />
+    </div>
   );
 }
 
@@ -128,9 +167,19 @@ function PresenceCursor({
  */
 export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
   (
-    { className, children, presenceKey = DEFAULT_PRESENCE_KEY, ...props },
+    {
+      className,
+      children,
+      presenceKey = DEFAULT_PRESENCE_KEY,
+      components,
+      ...props
+    },
     forwardedRef
   ) => {
+    const Cursor = useStableComponent(
+      components?.Cursor,
+      DefaultCursorWithUserInfo
+    );
     const reactFlow = useReactFlow();
     const updateMyPresence = useUpdateMyPresence();
     const othersConnectionIds = useOthersConnectionIds();
@@ -191,6 +240,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
             key={connectionId}
             connectionId={connectionId}
             presenceKey={presenceKey}
+            Cursor={Cursor}
           />
         ))}
 

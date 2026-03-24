@@ -10,18 +10,40 @@ import {
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
+  ComponentType,
   MutableRefObject,
   PointerEvent,
 } from "react";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 
+import type { GlobalComponents } from "../components";
 import { cn } from "../utils/cn";
 import { makeCursorSpring } from "../utils/cursor-spring";
 import { useRefs } from "../utils/use-refs";
+import { useStableComponent } from "../utils/use-stable-component";
 import { useWindowFocus } from "../utils/use-window-focus";
-import { Cursor } from "./Cursor";
+import { Cursor as DefaultCursor } from "./Cursor";
 
 const DEFAULT_PRESENCE_KEY = "cursor";
+
+export interface CursorsCursorProps {
+  /**
+   * The user ID for this cursor.
+   */
+  userId: string;
+
+  /**
+   * The connection ID for this cursor.
+   */
+  connectionId: number;
+}
+
+interface CursorsComponents {
+  /**
+   * The component used to display each cursor.
+   */
+  Cursor: ComponentType<CursorsCursorProps>;
+}
 
 export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -31,6 +53,11 @@ export interface CursorsProps extends ComponentPropsWithoutRef<"div"> {
    * Defaults to `"cursor"`.
    */
   presenceKey?: string;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents & CursorsComponents>;
 }
 
 type Coordinates = {
@@ -59,24 +86,34 @@ function $coordinates(value: unknown): Coordinates | undefined {
   return undefined;
 }
 
+function DefaultCursorWithUserInfo({ userId }: CursorsCursorProps) {
+  const { user, isLoading } = useUser(userId ?? "");
+  const color = $string(user?.color);
+  const name = $string(user?.name);
+
+  if (isLoading) {
+    return null;
+  }
+
+  return <DefaultCursor color={color} label={name} />;
+}
+
 function PresenceCursor({
   connectionId,
   presenceKey,
   sizeRef,
   sizeEvents,
+  Cursor,
 }: {
   connectionId: number;
   presenceKey: string;
   sizeRef: MutableRefObject<Size | null>;
   sizeEvents: EventSource<void>;
+  Cursor: ComponentType<CursorsCursorProps>;
 }) {
   const room = useRoom();
   const cursorRef = useRef<HTMLDivElement>(null);
   const userId = useOther(connectionId, (other) => $string(other.id));
-  const { user, isLoading } = useUser(userId ?? "");
-  const hasUserInfo = userId !== undefined && !isLoading;
-  const color = $string(user?.color);
-  const name = $string(user?.name);
 
   useLayoutEffect(() => {
     const spring = makeCursorSpring();
@@ -89,7 +126,7 @@ function PresenceCursor({
         return;
       }
 
-      if (!hasUserInfo || coordinates === null) {
+      if (coordinates === null) {
         element.style.transform = "translate3d(0, 0, 0)";
         element.style.display = "none";
         return;
@@ -119,15 +156,16 @@ function PresenceCursor({
       unsubscribeSize();
       unsubscribeOther();
     };
-  }, [room, connectionId, presenceKey, sizeRef, sizeEvents, hasUserInfo]);
+  }, [room, connectionId, presenceKey, sizeRef, sizeEvents]);
+
+  if (!userId) {
+    return null;
+  }
 
   return (
-    <Cursor
-      color={color}
-      label={name}
-      ref={cursorRef}
-      style={{ display: "none" }}
-    />
+    <div ref={cursorRef} style={{ display: "none" }}>
+      <Cursor userId={userId} connectionId={connectionId} />
+    </div>
   );
 }
 
@@ -136,9 +174,19 @@ function PresenceCursor({
  */
 export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
   (
-    { className, children, presenceKey = DEFAULT_PRESENCE_KEY, ...props },
+    {
+      className,
+      children,
+      presenceKey = DEFAULT_PRESENCE_KEY,
+      components,
+      ...props
+    },
     forwardedRef
   ) => {
+    const Cursor = useStableComponent(
+      components?.Cursor,
+      DefaultCursorWithUserInfo
+    );
     const containerRef = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, containerRef);
     const updateMyPresence = useUpdateMyPresence();
@@ -236,6 +284,7 @@ export const Cursors = forwardRef<HTMLDivElement, CursorsProps>(
               presenceKey={presenceKey}
               sizeRef={sizeRef}
               sizeEvents={sizeEvents}
+              Cursor={Cursor}
             />
           ))}
         </div>

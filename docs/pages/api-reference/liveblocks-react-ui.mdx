@@ -3899,6 +3899,42 @@ properties.
 </LiveblocksProvider>
 ```
 
+##### Customize cursors
+
+Pass a `Cursor` component through the `components` prop to control how each
+cursor is rendered. It receives `userId` and `connectionId` via its props. Its
+position and visibility are still handled by `Cursors`.
+
+```tsx
+import { Cursors, Cursor, type CursorsCursorProps } from "@liveblocks/react-ui";
+import { useUser } from "@liveblocks/react";
+
+function MyCursor({ userId }: CursorsCursorProps) {
+  const { user, isLoading } = useUser(userId);
+
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <Cursor
+      label={
+        user ? (
+          <>
+            {user.countryFlag} {user.name}
+          </>
+        ) : undefined
+      }
+      color={user?.color}
+    />
+  );
+}
+
+<Cursors className="relative h-full w-full" components={{ Cursor: MyCursor }}>
+  <YourCanvas />
+</Cursors>;
+```
+
 ##### Props [#Cursors-props]
 
 <PropertiesList>
@@ -3908,6 +3944,12 @@ properties.
     defaultValue={`"cursor"`}
   >
     The key used to store cursor coordinates in users’ Presence.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<GlobalComponents & CursorsComponents>"
+  >
+    Override the component’s components.
   </PropertiesListItem>
 </PropertiesList>
 
