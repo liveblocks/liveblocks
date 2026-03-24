@@ -15,6 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { Promise_withResolvers } from "@liveblocks/core";
+import { E_ALREADY_LOCKED } from "async-mutex";
 import { describe, expect, test } from "vitest";
 
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
@@ -159,6 +161,98 @@ describe("room", () => {
     const ticket = await room.createTicket();
     await room.startBrowserSession(ticket, new MockServerWebSocket());
     room.endBrowserSession(ticket.sessionKey, 1001, "bleh");
+  });
+});
+
+describe("maintenance mode", () => {
+  test("isInMaintenance is false by default", () => {
+    const room = new Room("test-room");
+    expect(room.isInMaintenance).toBe(false);
+  });
+
+  test("isInMaintenance is true while callback is running", async () => {
+    const room = new Room("test-room");
+
+    await room.runInMaintenanceMode(() => {
+      expect(room.isInMaintenance).toBe(true);
+      return Promise.resolve();
+    });
+
+    expect(room.isInMaintenance).toBe(false);
+  });
+
+  test("isInMaintenance is true while callback is running (even if it throws)", async () => {
+    const room = new Room("test-room");
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/require-await
+      await room.runInMaintenanceMode(async () => {
+        expect(room.isInMaintenance).toBe(true);
+        throw new Error("boom");
+      });
+    } catch {
+      // Swallow
+    }
+
+    expect(room.isInMaintenance).toBe(false);
+  });
+
+  test("runInMaintenanceMode propagates callback errors", async () => {
+    const room = new Room("test-room");
+
+    await expect(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      room.runInMaintenanceMode(async () => {
+        throw new Error("boom");
+      })
+    ).rejects.toThrow("boom");
+  });
+
+  test("runInMaintenanceMode returns the callback result", async () => {
+    const room = new Room("test-room");
+    const result = await room.runInMaintenanceMode(() => Promise.resolve(42));
+    expect(result).toBe(42);
+  });
+
+  test("concurrent runInMaintenanceMode throws E_ALREADY_LOCKED", async () => {
+    const room = new Room("test-room");
+
+    const ready = Promise_withResolvers<void>();
+    const first = Promise_withResolvers<void>();
+
+    const second = room.runInMaintenanceMode(async () => {
+      ready.resolve(); // Signal that we're inside maintenance mode
+      await first.promise; // Wait until the test says we can finish
+      return "done";
+    });
+
+    expect(room.isInMaintenance).toBe(true);
+    await ready.promise;
+    expect(room.isInMaintenance).toBe(true);
+
+    // Second attempt should throw immediately
+    await expect(
+      room.runInMaintenanceMode(() => Promise.resolve("nope"))
+    ).rejects.toBe(E_ALREADY_LOCKED);
+
+    first.resolve();
+    expect(await second).toBe("done");
+    expect(room.isInMaintenance).toBe(false);
+  });
+
+  test("runInMaintenanceMode releases mutex on callback error", async () => {
+    const room = new Room("test-room");
+    const err = new Error("boom");
+
+    await expect(
+      // eslint-disable-next-line @typescript-eslint/require-await
+      room.runInMaintenanceMode(async () => {
+        throw err;
+      })
+    ).rejects.toBe(err);
+
+    // Mutex should be released even after an error
+    expect(room.isInMaintenance).toBe(false);
   });
 });
 
