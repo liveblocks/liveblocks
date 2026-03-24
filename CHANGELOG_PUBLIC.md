@@ -20,7 +20,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 13 (2026-03-27)
 
+## Liveblocks dev server (v1.2.0)
+
+New dev server features:
+
+- Live socket inspector view
+- Maintenance mode toggle (to reject new WebSocket connections)
+
 ## Contributors
+
+nvie
 
 # Week 12 (2026-03-20)
 
