@@ -167,18 +167,45 @@ export type SyncConfig = {
     | undefined;
 };
 
+type CustomNodeTypeLiterals<N> =
+  N extends Node<any, infer T extends string>
+    ? string extends T
+      ? never
+      : T
+    : never;
+
+type NodeTypeLiterals<N> =
+  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
+  | "*"
+  | "default"
+  | "input"
+  | "output"
+  | "group"
+  | CustomNodeTypeLiterals<N>;
+
+type CustomEdgeTypeLiterals<E> =
+  E extends Edge<any, infer T extends string>
+    ? string extends T
+      ? never
+      : T
+    : never;
+
+type EdgeTypeLiterals<N> =
+  | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
+  | "*"
+  | "default"
+  | "straight"
+  | "step"
+  | "smoothstep"
+  | "simplebezier"
+  | CustomEdgeTypeLiterals<N>;
+
 export type NodeSyncConfig<N extends Node> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
-  [key in (string & {}) | "*" | NonNullable<N["type"]>]?: SyncConfig;
-  // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  //      Please bare with me, this type does not yet work as intended.
+  [key in NodeTypeLiterals<N>]?: SyncConfig;
 };
 
 export type EdgeSyncConfig<E extends Edge> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
-  [key in (string & {}) | "*" | NonNullable<E["type"]>]?: SyncConfig;
-  // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  //      Please bare with me, this type does not yet work as intended.
+  [key in EdgeTypeLiterals<E>]?: SyncConfig;
 };
 
 type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
