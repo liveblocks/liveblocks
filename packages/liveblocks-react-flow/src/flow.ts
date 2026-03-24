@@ -1,6 +1,6 @@
 import type {
   DistributiveOmit,
-  JsonObject,
+  Json,
   LsonObject,
   Resolve,
   ToImmutable,
@@ -42,21 +42,17 @@ const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
 
 const EMPTY_ARRAY = [] as unknown[];
 
-export type SerializableNode = Node<JsonObject>;
-export type SerializableEdge = Edge<JsonObject>;
-
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
  *
  * It doesn't include local-only properties.
  * The entire node and its `data` property are both stored as `LiveObject`s.
  */
-export type LiveblocksNode<N extends SerializableNode = SerializableNode> =
-  LiveObject<
-    DistributiveOmit<N, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
-      data: LiveObject<N["data"]>;
-    } & LsonObject
-  >;
+export type LiveblocksNode<N extends Node = Node> = LiveObject<
+  DistributiveOmit<N, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
+    data: LiveObject<N["data"] & LsonObject>;
+  } & LsonObject
+>;
 
 /**
  * The Liveblocks Storage representation of a React Flow `Edge`.
@@ -64,12 +60,11 @@ export type LiveblocksNode<N extends SerializableNode = SerializableNode> =
  * It doesn't include local-only properties.
  * The entire edge and its `data` property are both stored as `LiveObject`s.
  */
-export type LiveblocksEdge<E extends SerializableEdge = SerializableEdge> =
-  LiveObject<
-    DistributiveOmit<E, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
-      data?: LiveObject<NonNullable<E["data"]>>;
-    } & LsonObject
-  >;
+export type LiveblocksEdge<E extends Edge = Edge> = LiveObject<
+  DistributiveOmit<E, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
+    data?: LiveObject<NonNullable<E["data"]> & LsonObject>;
+  } & LsonObject
+>;
 
 /**
  * The Liveblocks Storage representation of a React Flow diagram made of nodes and edges.
@@ -78,8 +73,8 @@ export type LiveblocksEdge<E extends SerializableEdge = SerializableEdge> =
  * fine-grained conflict-free updates from multiple clients simultaneously.
  */
 export type LiveblocksFlow<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
+  N extends Node = Node,
+  E extends Edge = Edge,
 > = LiveObject<{
   nodes: LiveMap<string, LiveblocksNode<N>>;
   edges: LiveMap<string, LiveblocksEdge<E>>;
@@ -89,8 +84,8 @@ type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
 type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
 
 type UseLiveblocksFlowResult<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
+  N extends Node = Node,
+  E extends Edge = Edge,
 > = Resolve<
   (
     | {
@@ -111,64 +106,120 @@ type UseLiveblocksFlowResult<
 >;
 
 type LiveblocksFlowSuspenseResult<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
+  N extends Node = Node,
+  E extends Edge = Edge,
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
 
-type UseLiveblocksFlowOptions<
-  N extends SerializableNode,
-  E extends SerializableEdge,
-> = {
-  /**
-   * The initial React Flow nodes and edges.
-   *
-   * @example
-   * ```tsx
-   * const { ... } = useLiveblocksFlow({
-   *   initial: {
-   *     nodes: [
-   *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
-   *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
-   *     ],
-   *     edges: [
-   *       { id: "1-2", source: "1", target: "2" },
-   *     ],
-   *   },
-   * });
-   * ```
-   *
-   * This is equivalent to setting `initialStorage` on `RoomProvider`.
-   *
-   * @example
-   * ```tsx
-   * <RoomProvider
-   *   initialStorage={{
-   *     flow: createLiveblocksFlow([
-   *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
-   *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
-   *     ], [
-   *       { id: "1-2", source: "1", target: "2" },
-   *     ]),
-   *   }}
-   * />
-   * ```
-   */
-  initial?: {
-    nodes?: N[];
-    edges?: E[];
+/**
+ * A pair of callbacks for custom serialization of non-JSON-serializable
+ * values. Called right before syncing a value and right after receiving it
+ * from other clients.
+ */
+export type CustomSerializationConfig<T = unknown> = {
+  serialize: (value: T) => Json;
+  deserialize: (value: Json) => T;
+};
+
+/**
+ * Per-key sync configuration for node/edge `data` properties.
+ *
+ * true
+ *   Sync this property to Liveblocks Storage. Arrays and objects in the value
+ *   will be stored as LiveLists and LiveObjects, enabling fine-grained
+ *   conflict-free merging. This is the default for all keys.
+ *
+ * false
+ *   Don't sync this property. It stays local to the current client. This
+ *   property will be `undefined` on other clients.
+ *
+ * "readonly"
+ *   Sync this property, but store arrays and objects as plain JSON instead of
+ *   converting them to LiveLists/LiveObjects. This can be more performant if
+ *   clients only replace this property as a whole and never mutate fields
+ *   inside it.
+ *
+ * { serialize, deserialize }
+ *   Sync with custom serialization. `serialize` is called right before storing
+ *   the value; `deserialize` is called right after receiving it from other
+ *   clients.
+ *
+ * @example
+ * ```ts
+ * const sync: SyncConfig = {
+ *   label: true,             // sync as LiveObject (default)
+ *   createdAt: false,        // local-only
+ *   color: {                 // custom serde
+ *     serialize: (c) => c.toHex(),
+ *     deserialize: (hex) => Color.fromHex(hex),
+ *   },
+ *   nested: {                // recursive config
+ *     deep: false,
+ *   },
+ * };
+ * ```
+ */
+export type SyncConfig = {
+  [key: string]:
+    | boolean
+    | "readonly"
+    | CustomSerializationConfig
+    | SyncConfig
+    | undefined;
+};
+
+export type NodeSyncConfig<N extends Node> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
+  [key in (string & {}) | "*" | NonNullable<N["type"]>]?: SyncConfig;
+};
+
+export type EdgeSyncConfig<E extends Edge> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
+  [key in (string & {}) | "*" | NonNullable<E["type"]>]?: SyncConfig;
+};
+
+type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
+  nodes?: {
+    /**
+     * The initial React Flow nodes.
+     *
+     * @example
+     * ```tsx
+     * const { ... } = useLiveblocksFlow({
+     *   nodes: {
+     *     initial: [
+     *       { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
+     *       { id: "2", position: { x: 0, y: 100 }, data: { label: "Node 2" } },
+     *     ],
+     *   },
+     * });
+     * ```
+     */
+    initial?: N[];
+    /**
+     * Per-type sync configuration for node data keys.
+     *
+     * Use `"*"` as a fallback for all node types. Type-specific entries are
+     * deep-merged on top of `"*"`, with explicitly named keys taking
+     * precedence.
+     */
+    sync?: NodeSyncConfig<N>;
+  };
+
+  edges?: {
+    initial?: E[];
+    /**
+     * Per-type sync configuration for edge data keys.
+     *
+     * Use `"*"` as a fallback for all edge types. Type-specific entries are
+     * deep-merged on top of `"*"`, with explicitly named keys taking
+     * precedence.
+     */
+    sync?: EdgeSyncConfig<E>;
   };
 
   /**
    * The key used to store the React Flow diagram in Liveblocks Storage.
-   *
    * Defaults to `"flow"`.
-   *
-   * @example
-   * ```tsx
-   * const { ... } = useLiveblocksFlow({
-   *   storageKey: "myDiagram",
-   * });
-   * ```
    */
   storageKey?: string;
 };
@@ -275,7 +326,7 @@ function updateLocalState<T extends object>(
 
 // Converts a React Flow `Node` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-function nodeToStorage<N extends SerializableNode>(node: N): LiveblocksNode<N> {
+function nodeToStorage<N extends Node>(node: N): LiveblocksNode<N> {
   const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as N;
 
   return new LiveObject({
@@ -286,7 +337,7 @@ function nodeToStorage<N extends SerializableNode>(node: N): LiveblocksNode<N> {
 
 // Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
 // the fields that must stay local to each client.
-function edgeToStorage<E extends SerializableEdge>(edge: E): LiveblocksEdge<E> {
+function edgeToStorage<E extends Edge>(edge: E): LiveblocksEdge<E> {
   const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as E;
 
   return new LiveObject({
@@ -300,7 +351,7 @@ function edgeToStorage<E extends SerializableEdge>(edge: E): LiveblocksEdge<E> {
 // Similar to React Flow's `applyNodeChanges()`, but with a split between local
 // and remote changes.
 // https://reactflow.dev/api-reference/utils/apply-node-changes
-function applyNodeChanges<N extends SerializableNode>(args: {
+function applyNodeChanges<N extends Node>(args: {
   changes: NodeChange<N>[];
   nodes: LiveMap<string, LiveblocksNode<N>>;
   nextLocal: Map<string, Partial<LocalNodes>>;
@@ -415,7 +466,7 @@ function applyNodeChanges<N extends SerializableNode>(args: {
 // Similar to React Flow's `applyEdgeChanges()`, but with a split between local
 // and remote changes.
 // https://reactflow.dev/api-reference/utils/apply-edge-changes
-function applyEdgeChanges<E extends SerializableEdge>(args: {
+function applyEdgeChanges<E extends Edge>(args: {
   changes: EdgeChange<E>[];
   edges: LiveMap<string, LiveblocksEdge<E>>;
   nextLocal: Map<string, Partial<LocalEdges>>;
@@ -474,8 +525,8 @@ function applyEdgeChanges<E extends SerializableEdge>(args: {
  * ```
  */
 export function createLiveblocksFlow<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
+  N extends Node = Node,
+  E extends Edge = Edge,
 >(nodes: N[] = [], edges: E[] = []): LiveblocksFlow<N, E> {
   return new LiveObject({
     nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
@@ -497,10 +548,7 @@ export function createLiveblocksFlow<
  * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
  * ```
  */
-export function useLiveblocksFlow<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
->(
+export function useLiveblocksFlow<N extends Node = Node, E extends Edge = Edge>(
   options: UseLiveblocksFlowOptions<N, E> = {}
 ): Resolve<UseLiveblocksFlowResult<N, E>> {
   type TFlow = LiveblocksFlow<N, E>;
@@ -510,7 +558,8 @@ export function useLiveblocksFlow<
 
   // These options are not reactive, only their initial values are used.
   const frozenOptions = useInitial({
-    initial: options.initial,
+    nodes: options.nodes,
+    edges: options.edges,
     storageKey: options.storageKey ?? DEFAULT_STORAGE_KEY,
   });
 
@@ -642,9 +691,10 @@ export function useLiveblocksFlow<
       return;
     }
 
-    const { nodes: initialNodes = [], edges: initialEdges = [] } =
-      frozenOptions.initial ?? {};
+    const initialNodes = frozenOptions.nodes?.initial ?? [];
+    const initialEdges = frozenOptions.edges?.initial ?? [];
 
+    // TODO: Apply sync config when creating initial storage (filter/serialize data keys)
     storage.set(
       frozenOptions.storageKey,
       createLiveblocksFlow(initialNodes, initialEdges)
@@ -678,8 +728,8 @@ export function useLiveblocksFlow<
  * ```
  */
 export function useLiveblocksFlowSuspense<
-  N extends SerializableNode = SerializableNode,
-  E extends SerializableEdge = SerializableEdge,
+  N extends Node = Node,
+  E extends Edge = Edge,
 >(
   options: UseLiveblocksFlowOptions<N, E> = {}
 ): Resolve<LiveblocksFlowSuspenseResult<N, E>> {

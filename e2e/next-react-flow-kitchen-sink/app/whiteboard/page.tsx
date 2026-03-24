@@ -1253,7 +1253,8 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
   const editThreadMetadata = useEditThreadMetadata();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useLiveblocksFlow<WhiteboardNode, WhiteboardEdge>({
-      initial: { nodes: INITIAL_NODES, edges: INITIAL_EDGES },
+      nodes: { initial: INITIAL_NODES },
+      edges: { initial: INITIAL_EDGES },
     });
 
   const isPlacementMode = pendingShape !== null || placingState === "placing";

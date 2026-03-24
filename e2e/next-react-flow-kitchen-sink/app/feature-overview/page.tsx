@@ -438,7 +438,8 @@ const INITIAL_EDGES = [
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
     useLiveblocksFlow<FeatureOverviewNode>({
-      initial: { nodes: INITIAL_NODES, edges: INITIAL_EDGES },
+      nodes: { initial: INITIAL_NODES },
+      edges: { initial: INITIAL_EDGES },
     });
 
   return (
