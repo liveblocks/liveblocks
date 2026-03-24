@@ -2,7 +2,7 @@
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
-import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
+import { ReactFlow } from "@xyflow/react";
 import { EXAMPLES } from "../examples";
 
 function Flow() {
@@ -60,8 +60,6 @@ function Flow() {
         fitView
       >
         <Cursors />
-        <MiniMap />
-        <Controls />
       </ReactFlow>
     </div>
   );
