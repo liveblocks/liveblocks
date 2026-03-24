@@ -170,11 +170,15 @@ export type SyncConfig = {
 export type NodeSyncConfig<N extends Node> = {
   // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
   [key in (string & {}) | "*" | NonNullable<N["type"]>]?: SyncConfig;
+  // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //      Please bare with me, this type does not yet work as intended.
 };
 
 export type EdgeSyncConfig<E extends Edge> = {
   // eslint-disable-next-line @typescript-eslint/ban-types -- Deliberate use of (string & {}) trick
   [key in (string & {}) | "*" | NonNullable<E["type"]>]?: SyncConfig;
+  // TODO ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //      Please bare with me, this type does not yet work as intended.
 };
 
 type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
