@@ -26,8 +26,8 @@ Hooks from this package are available from two entry points, similar to
   returns `nodes` and `edges` as `null` until Liveblocks Storage is ready.
 - **`@liveblocks/react-flow/suspense`** — the export named `useLiveblocksFlow`
   suspends until Liveblocks Storage is ready. `nodes` and `edges` are always
-  arrays; wrap the tree in [`ClientSideSuspense`][] (or React `Suspense`) so
-  loading is handled above.
+  arrays; wrap the tree in `ClientSideSuspense` (or React `Suspense`) so loading
+  is handled above.
 
 ```tsx highlight="1,4-5,13-17"
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
@@ -88,9 +88,8 @@ Returns controlled [React Flow](https://reactflow.dev/) state backed by
 Liveblocks Storage. Nodes and edges are stored in `LiveMap`s keyed by id so
 multiple clients can edit the graph concurrently.
 
-The hook initializes an empty diagram (or your `nodes.initial` / `edges.initial`
+The hook initializes an empty flow (or your `nodes.initial` / `edges.initial`
 defaults) the first time Storage loads for the room, in the same way as
-[`RoomProvider`][]’s
 [`initialStorage`](/docs/api-reference/liveblocks-react#RoomProvider) — it only
 writes if the `storageKey` root is not already present.
 
@@ -162,7 +161,7 @@ export default function Page() {
     yet. Omit `initial` or pass an empty array for no default edges.
   </PropertiesListItem>
   <PropertiesListItem name="storageKey" type="string" optional>
-    Root key for this diagram in Liveblocks Storage. Defaults to `"flow"`. See
+    Root key for this flow in Liveblocks Storage. Defaults to `"flow"`. See
     [`storageKey`](#storageKey).
   </PropertiesListItem>
 </PropertiesList>
@@ -214,12 +213,12 @@ height, `data`, handles, and edge endpoints) is synchronized through Storage.
 
 ## Storage key [#storageKey]
 
-By default, `useLiveblocksFlow` reads and writes the diagram under the Storage
-root key **`"flow"`**. Pass `storageKey` when you need a different property
-name—for example **several independent graphs in the same room**, or to **avoid
+By default, `useLiveblocksFlow` reads and writes the flow under the Storage root
+key **`"flow"`**. Pass `storageKey` when you need a different property name—for
+example **several independent graphs in the same room**, or to **avoid
 colliding** with other features that use Storage on the same root object.
 
-The value must match everywhere you seed or read that diagram:
+The value must match everywhere you seed or read that flow:
 
 - The same string on **`useLiveblocksFlow({ storageKey: "…" })`**
 - The matching key on **`initialStorage`** when using
@@ -284,9 +283,9 @@ later does not move data to another key.
 
 ## createLiveblocksFlow [#createLiveblocksFlow]
 
-Builds the Liveblocks `LiveObject` / `LiveMap` tree for a diagram so you can
-seed [`RoomProvider`][] with `initialStorage` instead of (or in addition to) the
-hook’s `nodes.initial` / `edges.initial` (or legacy `initial`) options. Use the
+Builds the Liveblocks live structure tree for a flow so you can seed your Room
+provider with `initialStorage` instead of (or in addition to) the hook’s
+`nodes.initial` / `edges.initial` (or legacy `initial`) options. Use the
 **same** property name as [`storageKey`](#storageKey) on
 [`useLiveblocksFlow`](#useLiveblocksFlow) (default `flow`).
 
