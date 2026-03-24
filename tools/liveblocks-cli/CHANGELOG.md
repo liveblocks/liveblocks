@@ -1,5 +1,7 @@
 ## vNEXT (not yet released)
 
+## v1.2.0
+
 - Add live socket inspector view
 - Add maintenance mode toggle (to reject new WebSocket connections)
 
