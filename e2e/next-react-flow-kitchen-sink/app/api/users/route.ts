@@ -1,6 +1,5 @@
+import { USERS } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
-
-import { USERS } from "../auth/liveblocks/route";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

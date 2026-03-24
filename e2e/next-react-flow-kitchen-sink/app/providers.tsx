@@ -20,6 +20,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
         return response.json();
       }}
+      resolveMentionSuggestions={async ({ text }) => {
+        const response = await fetch(
+          `/api/users/search?text=${encodeURIComponent(text)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Problem resolving mention suggestions");
+        }
+
+        const userIds = await response.json();
+        return userIds;
+      }}
     >
       {children}
     </LiveblocksProvider>
