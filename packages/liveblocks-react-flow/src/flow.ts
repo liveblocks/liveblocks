@@ -1,31 +1,28 @@
-import {
-  type DistributiveOmit,
-  type JsonObject,
-  LiveMap,
-  LiveObject,
-  type LsonObject,
-  type Resolve,
-  shallow,
-  Signal,
-  type ToImmutable,
+import type {
+  DistributiveOmit,
+  JsonObject,
+  LsonObject,
+  Resolve,
+  ToImmutable,
 } from "@liveblocks/core";
+import { LiveMap, LiveObject, shallow, Signal } from "@liveblocks/core";
 import { useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
   useSignal,
   useSuspendUntilStorageReady,
 } from "@liveblocks/react/_private";
-import {
-  addEdge as defaultAddEdge,
-  type Connection,
-  type Edge,
-  type EdgeChange,
-  type Node,
-  type NodeChange,
-  type OnConnect,
-  type OnEdgesChange,
-  type OnNodesChange,
+import type {
+  Connection,
+  Edge,
+  EdgeChange,
+  Node,
+  NodeChange,
+  OnConnect,
+  OnEdgesChange,
+  OnNodesChange,
 } from "@xyflow/react";
+import { addEdge as defaultAddEdge } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const DEFAULT_STORAGE_KEY = "flow";
