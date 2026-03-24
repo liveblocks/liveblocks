@@ -805,6 +805,10 @@
         "path": "/api-reference/liveblocks-react-ui"
       },
       {
+        "title": "@liveblocks/react-flow",
+        "path": "/api-reference/liveblocks-react-flow"
+      },
+      {
         "title": "@liveblocks/react-tiptap",
         "path": "/api-reference/liveblocks-react-tiptap"
       },
