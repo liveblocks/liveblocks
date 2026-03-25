@@ -4395,6 +4395,44 @@ object.toImmutable();
   </PropertiesListItem>
 </PropertiesList>
 
+### setLocal [#LiveObject.setLocal]
+
+Sets a local-only property that is not synchronized over the wire. The value
+will be visible via `get()`, `toObject()`, and `toImmutable()` on this client
+only. Other clients and the server will see `undefined` for this key.
+
+Only keys whose type includes `undefined` are allowed, because the value will be
+absent on other clients. Only JSON-serializable values are supported (not
+`LiveObject`, `LiveList`, or `LiveMap`).
+
+```ts
+const object = new LiveObject<{ name: string; draft?: string }>({
+  name: "Ada",
+});
+object.setLocal("draft", "work in progress");
+
+// On this client: { name: "Ada", draft: "work in progress" }
+object.toImmutable();
+
+// On other clients: { name: "Ada" }
+```
+
+If the key already has a synced value, calling `setLocal` will delete the synced
+value from the server (undoable). If another client later sets the same key, the
+remote value wins and the local-only value is cleared.
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="key" type="string" required>
+    The key of the property you're setting locally. Must be an optional key in
+    the type definition.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="Json" required>
+    The JSON-serializable value to set locally.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### update [#LiveObject.update]
 
 Adds or updates multiple properties at once. Nested changes to other Storage
