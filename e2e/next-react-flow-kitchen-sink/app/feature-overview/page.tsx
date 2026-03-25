@@ -8,6 +8,7 @@ import {
   BuiltInEdge,
   BuiltInNode,
   Controls,
+  Edge,
   EdgeLabelRenderer,
   getBezierPath,
   Handle,
@@ -32,33 +33,25 @@ const EMOJIS = ["🚀", "🔥", "✨"] as const;
 const DIMENSION_ATTRIBUTES = ["width", "height"] as const;
 
 type AnnotationNode = Node<
-  {
-    level: number;
-    label: string;
-    arrowStyle: Record<string, string | number>;
-  },
+  { level: number; label: string; arrowStyle: Record<string, string | number> },
   "annotation"
 >;
-
-type ToolbarNode = Node<
-  {
-    emoji: string;
-  },
-  "tools"
->;
-
-type ResizerNode = Node<
-  {
-    label: string;
-  },
-  "resizer"
->;
+type ToolbarNode = Node<{ emoji: string }, "tools">;
+type ResizerNode = Node<{ label: string }, "resizer">;
+type TextInputNode = Node<Record<string, never>, "textinput">;
+type CircleNode = Node<Record<string, never>, "circle">;
 
 type FeatureOverviewNode =
   | BuiltInNode
   | AnnotationNode
   | ToolbarNode
-  | ResizerNode;
+  | ResizerNode
+  | TextInputNode
+  | CircleNode;
+
+type ButtonEdge = Edge<Record<string, never>, "button">;
+
+type FeatureOverviewEdge = BuiltInEdge | ButtonEdge;
 
 const AnnotationNode = memo(({ data }: NodeProps<AnnotationNode>) => {
   const { level, label, arrowStyle } = data;
@@ -337,7 +330,9 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
   },
   {
     id: "2-2",
-    data: {},
+    data: {
+      emoji: "🚀",
+    },
     type: "tools",
     position: { x: 50, y: 50 },
     style: {
@@ -391,7 +386,7 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
   },
 ];
 
-const INITIAL_EDGES: BuiltInEdge[] = [
+const INITIAL_EDGES: FeatureOverviewEdge[] = [
   {
     id: "e1-2",
     source: "1-1",
@@ -444,7 +439,7 @@ const INITIAL_EDGES: BuiltInEdge[] = [
 
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow<FeatureOverviewNode>({
+    useLiveblocksFlow<FeatureOverviewNode, FeatureOverviewEdge>({
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
     });
