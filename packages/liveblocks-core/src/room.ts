@@ -63,6 +63,9 @@ import type {
   ClientMsg,
   DeleteFeedClientMsg,
   DeleteFeedMessageClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
   FetchFeedMessagesClientMsg,
   FetchFeedsClientMsg,
   UpdateFeedClientMsg,
@@ -644,7 +647,7 @@ export type Room<
     cursor?: string;
     since?: number;
     limit?: number;
-    metadata?: Record<string, Json>;
+    metadata?: FeedFetchMetadataFilter;
   }): Promise<{
     feeds: Feed<SM>[];
     nextCursor?: string;
@@ -671,7 +674,7 @@ export type Room<
   addFeed(
     feedId: string,
     options?: {
-      metadata?: JsonObject;
+      metadata?: FeedCreateMetadata;
       timestamp?: number;
     }
   ): void;
@@ -679,7 +682,7 @@ export type Room<
   /**
    * Updates metadata for an existing feed via WebSocket.
    */
-  updateFeed(feedId: string, metadata: JsonObject): void;
+  updateFeed(feedId: string, metadata: FeedUpdateMetadata): void;
 
   /**
    * Deletes a feed via WebSocket.
@@ -2784,7 +2787,7 @@ export function createRoom<
     cursor?: string;
     since?: number;
     limit?: number;
-    metadata?: Record<string, Json>;
+    metadata?: FeedFetchMetadataFilter;
   }): Promise<{ feeds: Feed<SM>[]; nextCursor?: string }> {
     const requestId = nanoid();
 
@@ -2858,7 +2861,7 @@ export function createRoom<
 
   function addFeed(
     feedId: string,
-    options?: { metadata?: JsonObject; timestamp?: number }
+    options?: { metadata?: FeedCreateMetadata; timestamp?: number }
   ): void {
     const message: AddFeedClientMsg = {
       type: ClientMsgCode.ADD_FEED,
@@ -2870,7 +2873,7 @@ export function createRoom<
     flushNowOrSoon();
   }
 
-  function updateFeed(feedId: string, metadata: JsonObject): void {
+  function updateFeed(feedId: string, metadata: FeedUpdateMetadata): void {
     const message: UpdateFeedClientMsg = {
       type: ClientMsgCode.UPDATE_FEED,
       feedId,

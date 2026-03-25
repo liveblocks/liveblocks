@@ -4,6 +4,8 @@ import type {
   BroadcastOptions,
   Client,
   CommentData,
+  FeedCreateMetadata,
+  FeedUpdateMetadata,
   History,
   Json,
   JsonObject,
@@ -1640,7 +1642,7 @@ function useFeedMessagesSuspense(
 
 function useCreateFeed_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
-): (feedId: string, options?: { metadata?: JsonObject; timestamp?: number }) => void {
+): (feedId: string, options?: { metadata?: FeedCreateMetadata; timestamp?: number }) => void {
   const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
     (feedId, options) => room.addFeed(feedId, options),
@@ -1650,7 +1652,7 @@ function useCreateFeed_withRoomContext(
 
 function useCreateFeed(): (
   feedId: string,
-  options?: { metadata?: JsonObject; timestamp?: number }
+  options?: { metadata?: FeedCreateMetadata; timestamp?: number }
 ) => void {
   return useCreateFeed_withRoomContext(GlobalRoomContext);
 }
@@ -1668,7 +1670,7 @@ function useDeleteFeed(): (feedId: string) => void {
 
 function useUpdateFeedMetadata_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
-): (feedId: string, metadata: JsonObject) => void {
+): (feedId: string, metadata: FeedUpdateMetadata) => void {
   const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
     (feedId, metadata) => room.updateFeed(feedId, metadata),
@@ -1678,7 +1680,7 @@ function useUpdateFeedMetadata_withRoomContext(
 
 function useUpdateFeedMetadata(): (
   feedId: string,
-  metadata: JsonObject
+  metadata: FeedUpdateMetadata
 ) => void {
   return useUpdateFeedMetadata_withRoomContext(GlobalRoomContext);
 }

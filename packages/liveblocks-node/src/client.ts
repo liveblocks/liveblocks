@@ -21,7 +21,9 @@ import type {
   DTM,
   DU,
   Feed,
+  FeedCreateMetadata,
   FeedMessage,
+  FeedUpdateMetadata,
   GroupData,
   GroupDataPlain,
   GroupScopes,
@@ -622,14 +624,14 @@ export type GetWebKnowledgeSourceLinksOptions = {
   knowledgeSourceId: string;
 } & PaginationOptions;
 
-export type CreateFeedOptions<FM extends Json = Json> = {
+export type CreateFeedOptions = {
   feedId: string;
-  metadata?: FM;
+  metadata?: FeedCreateMetadata;
   timestamp?: number;
 };
 
-export type UpdateFeedOptions<FM extends Json = Json> = {
-  metadata: FM;
+export type UpdateFeedOptions = {
+  metadata: FeedUpdateMetadata;
 };
 
 export type CreateFeedMessageOptions<FMD extends Json = Json> = {
@@ -3413,7 +3415,7 @@ export class Liveblocks {
    * @returns The created feed.
    */
   public async createFeed<FM extends Json = Json>(
-    params: { roomId: string } & CreateFeedOptions<FM>,
+    params: { roomId: string } & CreateFeedOptions,
     options?: RequestOptions
   ): Promise<Feed<FM>> {
     const { roomId, feedId, metadata, timestamp } = params;
@@ -3458,11 +3460,11 @@ export class Liveblocks {
    * @param params.metadata The metadata for the feed.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async updateFeed<FM extends Json = Json>(
+  public async updateFeed(
     params: {
       roomId: string;
       feedId: string;
-    } & UpdateFeedOptions<FM>,
+    } & UpdateFeedOptions,
     options?: RequestOptions
   ): Promise<void> {
     const { roomId, feedId, metadata } = params;

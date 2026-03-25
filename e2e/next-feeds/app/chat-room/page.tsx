@@ -282,7 +282,7 @@ function MessagesPanel({
 }
 
 function ChatRoom() {
-  const { feeds, isLoading } = useFeeds({ metadata: { channel: true } });
+  const { feeds, isLoading } = useFeeds({ metadata: { channel: "true" } });
   const [selectedFeedId, setSelectedFeedId] = useState<string | null>(null);
   const createFeedFn = useCreateFeed();
   const deleteFeedFn = useDeleteFeed();
@@ -311,7 +311,11 @@ function ChatRoom() {
   const createChatroom = () => {
     const feedId = nanoid();
     createFeedFn(feedId, {
-      metadata: { name: "New Channel", channel: true, created: new Date().toISOString() },
+      metadata: {
+        name: "New Channel",
+        channel: "true",
+        created: new Date().toISOString(),
+      },
     });
     setSelectedFeedId(feedId);
   };
@@ -322,7 +326,10 @@ function ChatRoom() {
     setEditingName(feed.metadata?.name || `${feed.feedId.slice(0, 12)}...`);
   };
 
-  const saveRename = (feedId: string, metadata: Record<string, unknown>) => {
+  const saveRename = (
+    feedId: string,
+    metadata: Record<string, string | string[] | null>
+  ) => {
     const trimmed = editingName.trim();
     if (trimmed) {
       updateFeedMetadataFn(feedId, { ...metadata, name: trimmed });
@@ -355,7 +362,11 @@ function ChatRoom() {
   ) => {
     const threadFeedId = nanoid();
     createFeedFn(threadFeedId, {
-      metadata: { name: "Thread", channel: false, created: new Date().toISOString() },
+      metadata: {
+        name: "Thread",
+        channel: "false",
+        created: new Date().toISOString(),
+      },
     });
     updateFeedMessageFn(parentFeedId, messageId, {
       ...messageData,

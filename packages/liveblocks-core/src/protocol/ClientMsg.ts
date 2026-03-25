@@ -133,13 +133,22 @@ export type UpdateYDocClientMsg = {
   readonly v2?: boolean; // if it's a v2 update
 };
 
+/** Metadata filter for {@link FetchFeedsClientMsg}. Values are matched as strings. */
+export type FeedFetchMetadataFilter = Record<string, string>;
+
+/** Metadata for {@link AddFeedClientMsg}. */
+export type FeedCreateMetadata = Record<string, string | string[]>;
+
+/** Metadata for {@link UpdateFeedClientMsg}. Use `null` to remove a key. */
+export type FeedUpdateMetadata = Record<string, string | string[] | null>;
+
 export type FetchFeedsClientMsg = {
   readonly type: ClientMsgCode.FETCH_FEEDS;
   readonly requestId: string;
   readonly cursor?: string;
   readonly since?: number;
   readonly limit?: number;
-  readonly metadata?: Record<string, Json>;
+  readonly metadata?: FeedFetchMetadataFilter;
 };
 
 export type FetchFeedMessagesClientMsg = {
@@ -154,14 +163,14 @@ export type FetchFeedMessagesClientMsg = {
 export type AddFeedClientMsg = {
   readonly type: ClientMsgCode.ADD_FEED;
   readonly feedId: string;
-  readonly metadata?: JsonObject;
+  readonly metadata?: FeedCreateMetadata;
   readonly timestamp?: number;
 };
 
 export type UpdateFeedClientMsg = {
   readonly type: ClientMsgCode.UPDATE_FEED;
   readonly feedId: string;
-  readonly metadata: JsonObject;
+  readonly metadata: FeedUpdateMetadata;
 };
 
 export type DeleteFeedClientMsg = {

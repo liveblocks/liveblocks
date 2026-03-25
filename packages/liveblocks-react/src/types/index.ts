@@ -30,7 +30,10 @@ import type {
   DGI,
   DRI,
   Feed,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
   FeedMessage,
+  FeedUpdateMetadata,
   GroupData,
   HistoryVersion,
   InboxNotificationData,
@@ -220,7 +223,7 @@ export type UseFeedsOptions = {
   /**
    * Optional metadata filter. Only feeds with matching metadata will be returned.
    */
-  metadata?: Record<string, Json>;
+  metadata?: FeedFetchMetadataFilter;
 };
 
 export type UseFeedMessagesOptions = {
@@ -1222,7 +1225,7 @@ export type RoomContextBundle<
        */
       useCreateFeed(): (
         feedId: string,
-        options?: { metadata?: JsonObject; timestamp?: number }
+        options?: { metadata?: FeedCreateMetadata; timestamp?: number }
       ) => void;
 
       /**
@@ -1241,7 +1244,10 @@ export type RoomContextBundle<
        * const updateFeedMetadata = useUpdateFeedMetadata();
        * updateFeedMetadata("feed-id", { name: "Updated Name" });
        */
-      useUpdateFeedMetadata(): (feedId: string, metadata: JsonObject) => void;
+      useUpdateFeedMetadata(): (
+        feedId: string,
+        metadata: FeedUpdateMetadata
+      ) => void;
 
       /**
        * Returns a function that adds a message to a feed in the current room.
@@ -1417,12 +1423,12 @@ export type RoomContextBundle<
             ): FeedMessagesAsyncSuccess<MD>;
             useCreateFeed(): (
               feedId: string,
-              options?: { metadata?: JsonObject; timestamp?: number }
+              options?: { metadata?: FeedCreateMetadata; timestamp?: number }
             ) => void;
             useDeleteFeed(): (feedId: string) => void;
             useUpdateFeedMetadata(): (
               feedId: string,
-              metadata: JsonObject
+              metadata: FeedUpdateMetadata
             ) => void;
             useCreateFeedMessage(): (
               feedId: string,

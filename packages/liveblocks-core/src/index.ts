@@ -204,6 +204,9 @@ export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
+  FeedCreateMetadata,
+  FeedFetchMetadataFilter,
+  FeedUpdateMetadata,
   FetchStorageClientMsg,
   FetchYDocClientMsg,
   UpdatePresenceClientMsg,

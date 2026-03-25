@@ -4,11 +4,12 @@ declare global {
     FeedMetadata: {
       agentName?: string;
       model?: string;
-      temperature?: number;
+      temperature?: string;
       created?: string;
       updated?: string;
       name?: string;
-      channel?: boolean;
+      /** Channel feeds use `"true"`; thread feeds use `"false"`. */
+      channel?: string;
     };
 
     // Feed message data (used for FeedMessage.data from useFeedMessages)
