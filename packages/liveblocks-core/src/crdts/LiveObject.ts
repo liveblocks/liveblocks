@@ -531,6 +531,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     value: Extract<Exclude<O[TKey], undefined>, Json>
   ): void {
     this._pool?.assertStorageIsWritable();
+    this.delete(key as keyof O);
     this.#local.set(key, value);
     this.invalidate();
   }

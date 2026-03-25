@@ -1440,6 +1440,33 @@ describe("LiveObject", () => {
       expect(storageB.root.get("child2")!.get("y")).toBeUndefined();
     });
 
+    test("setLocal on an already-synced key deletes the synced value from other clients", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      // First, sync a value
+      storageA.root.set("foo", "synced");
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBe("synced");
+      });
+
+      // Now override with setLocal
+      storageA.root.setLocal("foo", "local-only");
+
+      // Client A sees the local value
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B should no longer see "synced" — the key should be deleted
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBeUndefined();
+      });
+    });
+
     test("delete on a local-only key removes it without sending ops", async () => {
       const { storageA, storageB } = await prepareStorageTest<{
         a: number;
