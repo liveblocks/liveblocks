@@ -59,7 +59,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
-  #map: Map<string, Lson>;
+  #synced: Map<string, Lson>;
 
   /**
    * Tracks unacknowledged local changes per property to preserve optimistic
@@ -141,7 +141,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
     }
 
-    this.#map = new Map(Object.entries(o));
+    this.#synced = new Map(Object.entries(o));
   }
 
   /** @internal */
@@ -161,7 +161,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     ops.push(op);
 
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this.#synced) {
       if (isLiveNode(value)) {
         for (const childOp of value._toOps(this._id, key)) {
           ops.push(childOp);
@@ -202,7 +202,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       if (isLiveStructure(child)) {
         child._setParentLink(liveObj, crdt.parentKey);
       }
-      liveObj.#map.set(crdt.parentKey, child);
+      liveObj.#synced.set(crdt.parentKey, child);
       liveObj.invalidate();
     }
 
@@ -213,7 +213,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   _attach(id: string, pool: ManagedPool): void {
     super._attach(id, pool);
 
-    for (const [_key, value] of this.#map) {
+    for (const [_key, value] of this.#synced) {
       if (isLiveNode(value)) {
         value._attach(pool.generateId(), pool);
       }
@@ -253,7 +253,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     const thisId = nn(this._id);
-    const previousValue = this.#map.get(key);
+    const previousValue = this.#synced.get(key);
     let reverse: Op[];
     if (isLiveNode(previousValue)) {
       reverse = previousValue._toOps(thisId, key);
@@ -270,7 +270,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       ];
     }
 
-    this.#map.set(key, child);
+    this.#synced.set(key, child);
     this.invalidate();
 
     if (isLiveStructure(child)) {
@@ -295,9 +295,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       const parentKey = nn(child._parentKey);
       const reverse = child._toOps(id, parentKey);
 
-      for (const [key, value] of this.#map) {
+      for (const [key, value] of this.#synced) {
         if (value === child) {
-          this.#map.delete(key);
+          this.#synced.delete(key);
           this.invalidate();
         }
       }
@@ -322,7 +322,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   _detach(): void {
     super._detach();
 
-    for (const value of this.#map.values()) {
+    for (const value of this.#synced.values()) {
       if (isLiveNode(value)) {
         value._detach();
       }
@@ -345,7 +345,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const data: JsonObject = {};
 
     // Add only the static Json data fields into the objects
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this.#synced) {
       if (!isLiveNode(value)) {
         data[key] = value;
       }
@@ -378,7 +378,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     };
 
     for (const key in op.data as Partial<O>) {
-      const oldValue = this.#map.get(key);
+      const oldValue = this.#synced.get(key);
       if (isLiveNode(oldValue)) {
         for (const childOp of oldValue._toOps(id, key)) {
           reverse.push(childOp);
@@ -413,7 +413,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         continue;
       }
 
-      const oldValue = this.#map.get(key);
+      const oldValue = this.#synced.get(key);
 
       if (isLiveNode(oldValue)) {
         oldValue._detach();
@@ -421,7 +421,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
       isModified = true;
       updateDelta[key] = { type: "update" };
-      this.#map.set(key, value);
+      this.#synced.set(key, value);
       this.invalidate();
     }
 
@@ -445,7 +445,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const key = op.key;
 
     // If property does not exist, exit without notifying
-    const oldValue = this.#map.get(key);
+    const oldValue = this.#synced.get(key);
     if (oldValue === undefined) {
       return { modified: false };
     }
@@ -471,7 +471,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       ];
     }
 
-    this.#map.delete(key);
+    this.#synced.delete(key);
     this.invalidate();
     return {
       modified: {
@@ -489,7 +489,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return Object.fromEntries(this.#map) as O;
+    return Object.fromEntries(this.#synced) as O;
   }
 
   /**
@@ -508,7 +508,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
-    return this.#map.get(key as string) as O[TKey];
+    return this.#synced.get(key as string) as O[TKey];
   }
 
   /**
@@ -519,7 +519,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._pool?.assertStorageIsWritable();
     const keyAsString = key as string;
 
-    const oldValue = this.#map.get(keyAsString);
+    const oldValue = this.#synced.get(keyAsString);
     if (oldValue === undefined) {
       return;
     }
@@ -528,7 +528,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       if (isLiveNode(oldValue)) {
         oldValue._detach();
       }
-      this.#map.delete(keyAsString);
+      this.#synced.delete(keyAsString);
       this.invalidate();
       return;
     }
@@ -548,7 +548,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       ];
     }
 
-    this.#map.delete(keyAsString);
+    this.#synced.delete(keyAsString);
     this.invalidate();
 
     const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
@@ -587,7 +587,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     // can immediately throw as soon as the max object size is exceeded.
     if (LiveObject.detectLargeObjects) {
       const data: Record<string, Json> = {};
-      for (const [key, value] of this.#map) {
+      for (const [key, value] of this.#synced) {
         if (!isLiveNode(value)) {
           data[key] = value;
         }
@@ -623,7 +623,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           continue;
         }
 
-        const oldValue = this.#map.get(key);
+        const oldValue = this.#synced.get(key);
         if (isLiveNode(oldValue)) {
           oldValue._detach();
         }
@@ -632,7 +632,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           newValue._setParentLink(this, key);
         }
 
-        this.#map.set(key, newValue);
+        this.#synced.set(key, newValue);
         this.invalidate();
       }
 
@@ -659,7 +659,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         continue;
       }
 
-      const oldValue = this.#map.get(key);
+      const oldValue = this.#synced.get(key);
 
       if (isLiveNode(oldValue)) {
         for (const childOp of oldValue._toOps(this._id, key)) {
@@ -698,7 +698,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         this.#unackedOpsByKey.set(key, opId);
       }
 
-      this.#map.set(key, newValue);
+      this.#synced.set(key, newValue);
       this.invalidate();
       updateDelta[key] = { type: "update" };
     }
@@ -747,7 +747,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       type: "LiveObject",
       id: nodeId,
       key,
-      payload: Array.from(this.#map.entries()).map(([key, value]) =>
+      payload: Array.from(this.#synced.entries()).map(([key, value]) =>
         isLiveNode(value)
           ? value.toTreeNode(key)
           : { type: "Json", id: `${nodeId}:${key}`, key, payload: value }
@@ -758,7 +758,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /** @internal */
   _toImmutable(): ToImmutable<O> {
     const result: { [key: string]: unknown } = {};
-    for (const [key, val] of this.#map) {
+    for (const [key, val] of this.#synced) {
       result[key] = isLiveStructure(val) ? val.toImmutable() : val;
     }
     return (
@@ -769,7 +769,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   clone(): LiveObject<O> {
     return new LiveObject(
       Object.fromEntries(
-        Array.from(this.#map).map(([key, value]) => [
+        Array.from(this.#synced).map(([key, value]) => [
           key,
           isLiveStructure(value) ? value.clone() : deepClone(value),
         ])
