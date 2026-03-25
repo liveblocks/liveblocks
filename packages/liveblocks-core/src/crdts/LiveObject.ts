@@ -23,6 +23,7 @@ import type {
 import { CrdtType, isRootStorageNode } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
+import type { OptionalKeys } from "../types/Patchable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {
@@ -33,6 +34,14 @@ import {
 } from "./liveblocks-helpers";
 import type { UpdateDelta } from "./UpdateDelta";
 import type { ToImmutable } from "./utils";
+
+/**
+ * Optional keys of O whose non-undefined type is plain Json (not a
+ * LiveStructure). These are the only keys eligible for setLocal().
+ */
+type OptionalJsonKeys<O> = {
+  [K in OptionalKeys<O>]: Exclude<O[K], undefined> extends Json ? K : never;
+}[OptionalKeys<O>];
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
@@ -501,6 +510,19 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     // TODO: Find out why typescript complains
     this._pool?.assertStorageIsWritable();
     this.update({ [key]: value } as unknown as Partial<O>);
+  }
+
+  /**
+   * Sets a local-only property that is not synchronized over the wire.
+   * The value will be visible via get(), toObject(), and toImmutable() on
+   * this client only. Other clients and the server will see `undefined`
+   * for this key.
+   */
+  setLocal<TKey extends OptionalJsonKeys<O>>(
+    _key: TKey,
+    _value: Exclude<O[TKey], undefined>
+  ): void {
+    throw new Error("Implement me");
   }
 
   /**
