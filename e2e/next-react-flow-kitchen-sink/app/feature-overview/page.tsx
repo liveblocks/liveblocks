@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  ClientSideSuspense,
-  JsonObject,
-  RoomProvider,
-} from "@liveblocks/react";
+import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
 import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Background,
@@ -33,25 +29,30 @@ import { EXAMPLES } from "../examples";
 const EMOJIS = ["🚀", "🔥", "✨"] as const;
 const DIMENSION_ATTRIBUTES = ["width", "height"] as const;
 
-type AnnotationNode = Node<{
-  level: number;
-  label: string;
-  arrowStyle: Record<string, string | number>;
-}>;
+type AnnotationNode = Node<
+  {
+    level: number;
+    label: string;
+    arrowStyle: Record<string, string | number>;
+  },
+  "annotation"
+>;
 
-type ToolbarNode = Node<{
-  emoji: string;
-}>;
+type ToolbarNode = Node<
+  {
+    emoji: string;
+  },
+  "tools"
+>;
 
-type ResizerNode = Node<{
-  label: string;
-}>;
+type ResizerNode = Node<
+  {
+    label: string;
+  },
+  "resizer"
+>;
 
-type FeatureOverviewNode =
-  | Node<JsonObject>
-  | AnnotationNode
-  | ToolbarNode
-  | ResizerNode;
+type FeatureOverviewNode = Node | AnnotationNode | ToolbarNode | ResizerNode;
 
 const AnnotationNode = memo(({ data }: NodeProps<AnnotationNode>) => {
   const { level, label, arrowStyle } = data;

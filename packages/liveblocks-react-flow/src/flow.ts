@@ -13,6 +13,8 @@ import {
   useSuspendUntilStorageReady,
 } from "@liveblocks/react/_private";
 import type {
+  BuiltInEdge,
+  BuiltInNode,
   Connection,
   Edge,
   EdgeChange,
@@ -167,7 +169,7 @@ export type SyncConfig = {
     | undefined;
 };
 
-type CustomNodeTypeLiterals<N> =
+type InferNodeTypeLiterals<N> =
   N extends Node<any, infer T extends string>
     ? string extends T
       ? never
@@ -177,28 +179,21 @@ type CustomNodeTypeLiterals<N> =
 type NodeTypeLiterals<N> =
   | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
   | "*"
-  | "default"
-  | "input"
-  | "output"
-  | "group"
-  | CustomNodeTypeLiterals<N>;
+  | InferNodeTypeLiterals<BuiltInNode | N>;
 
-type CustomEdgeTypeLiterals<E> =
+type InferEdgeTypeLiterals<E> =
   E extends Edge<any, infer T extends string>
     ? string extends T
       ? never
       : T
     : never;
 
-type EdgeTypeLiterals<N> =
+type EdgeTypeLiterals<E> =
   | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
   | "*"
-  | "default"
-  | "straight"
-  | "step"
-  | "smoothstep"
+  // TODO: `BuiltInEdge` doesn't include `simplebezier` yet, we should fix that.
   | "simplebezier"
-  | CustomEdgeTypeLiterals<N>;
+  | InferEdgeTypeLiterals<BuiltInEdge | E>;
 
 export type NodeSyncConfig<N extends Node> = {
   [key in NodeTypeLiterals<N>]?: SyncConfig;
