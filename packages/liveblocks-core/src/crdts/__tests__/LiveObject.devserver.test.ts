@@ -1467,6 +1467,65 @@ describe("LiveObject", () => {
       });
     });
 
+    test("undo after setLocal on a fresh key is a no-op", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("foo", "local-only");
+      expect(root.get("foo")).toBe("local-only");
+
+      room.history.undo();
+
+      // setLocal on a fresh key doesn't push to undo stack, so undo is a no-op
+      expect(root.get("foo")).toBe("local-only");
+    });
+
+    test("undo after setLocal on a synced key restores the synced value", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("foo", "synced");
+      expect(root.get("foo")).toBe("synced");
+
+      root.setLocal("foo", "local-only");
+      expect(root.get("foo")).toBe("local-only");
+
+      // Undo restores the synced value and clears the local overlay
+      room.history.undo();
+      expect(root.get("foo")).toBe("synced");
+    });
+
+    test("undo then redo after setLocal on a synced key", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("foo", "synced");
+      root.setLocal("foo", "local-only");
+
+      // Undo restores synced value
+      room.history.undo();
+      expect(root.get("foo")).toBe("synced");
+
+      // Redo re-deletes the synced value, but local value is NOT restored
+      room.history.redo();
+      expect(root.get("foo")).toBeUndefined();
+    });
+
     test("delete on a local-only key removes it without sending ops", async () => {
       const { storageA, storageB } = await prepareStorageTest<{
         a: number;
