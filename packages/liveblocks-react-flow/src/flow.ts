@@ -50,7 +50,7 @@ const EMPTY_ARRAY = [] as unknown[];
  * It doesn't include local-only properties.
  * The entire node and its `data` property are both stored as `LiveObject`s.
  */
-export type LiveblocksNode<N extends Node = Node> = LiveObject<
+export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
   DistributiveOmit<N, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
     data: LiveObject<N["data"] & LsonObject>;
   } & LsonObject
@@ -62,7 +62,7 @@ export type LiveblocksNode<N extends Node = Node> = LiveObject<
  * It doesn't include local-only properties.
  * The entire edge and its `data` property are both stored as `LiveObject`s.
  */
-export type LiveblocksEdge<E extends Edge = Edge> = LiveObject<
+export type LiveblocksEdge<E extends Edge = BuiltInEdge> = LiveObject<
   DistributiveOmit<E, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
     data?: LiveObject<NonNullable<E["data"]> & LsonObject>;
   } & LsonObject
@@ -75,8 +75,8 @@ export type LiveblocksEdge<E extends Edge = Edge> = LiveObject<
  * fine-grained conflict-free updates from multiple clients simultaneously.
  */
 export type LiveblocksFlow<
-  N extends Node = Node,
-  E extends Edge = Edge,
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
 > = LiveObject<{
   nodes: LiveMap<string, LiveblocksNode<N>>;
   edges: LiveMap<string, LiveblocksEdge<E>>;
@@ -86,8 +86,8 @@ type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
 type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
 
 type UseLiveblocksFlowResult<
-  N extends Node = Node,
-  E extends Edge = Edge,
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
 > = Resolve<
   (
     | {
@@ -108,8 +108,8 @@ type UseLiveblocksFlowResult<
 >;
 
 type LiveblocksFlowSuspenseResult<
-  N extends Node = Node,
-  E extends Edge = Edge,
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
 > = Extract<UseLiveblocksFlowResult<N, E>, { isLoading: false }>;
 
 /**
@@ -179,7 +179,7 @@ type InferNodeTypeLiterals<N> =
 type NodeTypeLiterals<N> =
   | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
   | "*"
-  | InferNodeTypeLiterals<BuiltInNode | N>;
+  | InferNodeTypeLiterals<N>;
 
 type InferEdgeTypeLiterals<E> =
   E extends Edge<any, infer T extends string>
@@ -191,9 +191,7 @@ type InferEdgeTypeLiterals<E> =
 type EdgeTypeLiterals<E> =
   | (string & {}) // eslint-disable-line @typescript-eslint/ban-types
   | "*"
-  // TODO: `BuiltInEdge` doesn't include `simplebezier` yet, we should fix that.
-  | "simplebezier"
-  | InferEdgeTypeLiterals<BuiltInEdge | E>;
+  | InferEdgeTypeLiterals<E>;
 
 export type NodeSyncConfig<N extends Node> = {
   [key in NodeTypeLiterals<N>]?: SyncConfig;
@@ -551,8 +549,8 @@ function applyEdgeChanges<E extends Edge>(args: {
  * ```
  */
 export function createLiveblocksFlow<
-  N extends Node = Node,
-  E extends Edge = Edge,
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
 >(nodes: N[] = [], edges: E[] = []): LiveblocksFlow<N, E> {
   return new LiveObject({
     nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
@@ -574,7 +572,10 @@ export function createLiveblocksFlow<
  * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
  * ```
  */
-export function useLiveblocksFlow<N extends Node = Node, E extends Edge = Edge>(
+export function useLiveblocksFlow<
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
+>(
   options: UseLiveblocksFlowOptions<N, E> = {}
 ): Resolve<UseLiveblocksFlowResult<N, E>> {
   type TFlow = LiveblocksFlow<N, E>;
@@ -754,8 +755,8 @@ export function useLiveblocksFlow<N extends Node = Node, E extends Edge = Edge>(
  * ```
  */
 export function useLiveblocksFlowSuspense<
-  N extends Node = Node,
-  E extends Edge = Edge,
+  N extends Node = BuiltInNode,
+  E extends Edge = BuiltInEdge,
 >(
   options: UseLiveblocksFlowOptions<N, E> = {}
 ): Resolve<LiveblocksFlowSuspenseResult<N, E>> {

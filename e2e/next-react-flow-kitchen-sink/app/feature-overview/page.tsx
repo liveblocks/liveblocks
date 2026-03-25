@@ -5,6 +5,8 @@ import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import {
   Background,
   BaseEdge,
+  BuiltInEdge,
+  BuiltInNode,
   Controls,
   EdgeLabelRenderer,
   getBezierPath,
@@ -52,7 +54,11 @@ type ResizerNode = Node<
   "resizer"
 >;
 
-type FeatureOverviewNode = Node | AnnotationNode | ToolbarNode | ResizerNode;
+type FeatureOverviewNode =
+  | BuiltInNode
+  | AnnotationNode
+  | ToolbarNode
+  | ResizerNode;
 
 const AnnotationNode = memo(({ data }: NodeProps<AnnotationNode>) => {
   const { level, label, arrowStyle } = data;
@@ -385,7 +391,7 @@ const INITIAL_NODES: FeatureOverviewNode[] = [
   },
 ];
 
-const INITIAL_EDGES = [
+const INITIAL_EDGES: BuiltInEdge[] = [
   {
     id: "e1-2",
     source: "1-1",

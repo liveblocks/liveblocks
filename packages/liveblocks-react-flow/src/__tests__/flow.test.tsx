@@ -1,7 +1,7 @@
 import type { PlainLsonObject } from "@liveblocks/core";
 import { useMutation } from "@liveblocks/react";
 import { act, screen, waitFor } from "@testing-library/react";
-import type { Edge, Node } from "@xyflow/react";
+import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
 import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
@@ -10,11 +10,23 @@ import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
 import { useLiveblocksFlow as useLiveblocksFlowSuspense } from "../suspense";
 import { render, renderHook } from "./_utils";
 
-const NODES: Node<{ label: string }>[] = [
-  { id: "1", position: { x: 0, y: 0 }, data: { label: "Node 1" } },
-  { id: "2", position: { x: 100, y: 100 }, data: { label: "Node 2" } },
+const NODES: BuiltInNode[] = [
+  {
+    // TODO We can remove this "type" field again once @xyflow/react's release is out that includes this type fix: https://github.com/xyflow/xyflow/pull/5735
+    type: "default",
+    id: "1",
+    position: { x: 0, y: 0 },
+    data: { label: "Node 1" },
+  },
+  {
+    // TODO We can remove this "type" field again once @xyflow/react's release is out that includes this type fix: https://github.com/xyflow/xyflow/pull/5735
+    type: "default",
+    id: "2",
+    position: { x: 100, y: 100 },
+    data: { label: "Node 2" },
+  },
 ];
-const EDGES: Edge<never>[] = [{ id: "e1-2", source: "1", target: "2" }];
+const EDGES: BuiltInEdge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
 describe("createLiveblocksFlow", () => {
   test("should initialize a flow with nodes and edges", () => {
@@ -133,10 +145,12 @@ describe("useLiveblocksFlow", () => {
 
     const newNode = {
       id: "n1",
+      // TODO We can remove this "type" field again once @xyflow/react's release is out that includes this type fix: https://github.com/xyflow/xyflow/pull/5735
+      type: "default",
       position: { x: 10, y: 20 },
       data: { label: "New" },
       selected: true,
-    } satisfies Node;
+    } satisfies BuiltInNode;
 
     act(() => {
       result.current.onNodesChange([{ type: "add", item: newNode }]);
@@ -163,7 +177,7 @@ describe("useLiveblocksFlow", () => {
       source: "1",
       target: "2",
       selected: true,
-    } satisfies Edge;
+    } satisfies BuiltInEdge;
 
     act(() => {
       result.current.onEdgesChange([{ type: "add", item: newEdge }]);
