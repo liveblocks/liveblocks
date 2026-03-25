@@ -395,7 +395,7 @@ export type FeedsEventServerMsg<
   | FeedMessagesListServerMsg<FMD>
   | FeedMessagesAddedServerMsg<FMD>
   | FeedMessagesUpdatedServerMsg<FMD>
-  | FeedMessagesDeletedServerMsg<FMD>;
+  | FeedMessagesDeletedServerMsg;
 
 export type FeedsListServerMsg<FM extends Json = Json> = {
   readonly type: ServerMsgCode.FEEDS_LIST;
@@ -439,8 +439,8 @@ export type FeedMessagesUpdatedServerMsg<FMD extends Json = Json> = {
   readonly messages: FeedMessage<FMD>[];
 };
 
-export type FeedMessagesDeletedServerMsg<FMD extends Json = Json> = {
+export type FeedMessagesDeletedServerMsg = {
   readonly type: ServerMsgCode.FEED_MESSAGES_DELETED;
   readonly feedId: string;
-  readonly messages: FeedMessage<FMD>[];
+  readonly messageIds: readonly string[];
 };

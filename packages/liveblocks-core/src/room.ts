@@ -2510,7 +2510,7 @@ export function createRoom<
 
         case ServerMsgCode.FEED_MESSAGES_DELETED: {
           const feedMsgsDeletedMsg =
-            message as FeedMessagesDeletedServerMsg<MD>;
+            message as FeedMessagesDeletedServerMsg;
           eventHub.feeds.notify(feedMsgsDeletedMsg);
           break;
         }

@@ -563,7 +563,7 @@ function RoomProviderInner<
           store.upsertFeedMessages(room.id, message.feedId, message.messages);
           break;
         case ServerMsgCode.FEED_MESSAGES_DELETED:
-          store.deleteFeedMessages(room.id, message.feedId, message.messages);
+          store.deleteFeedMessages(room.id, message.feedId, message.messageIds);
           break;
         // FEEDS_LIST and FEED_MESSAGES_LIST are handled by fetch promise resolution in room.ts
         default:

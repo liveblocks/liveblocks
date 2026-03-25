@@ -2217,13 +2217,13 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
   public deleteFeedMessages(
     _roomId: RoomId,
     feedId: string,
-    messages: readonly FeedMessage[]
+    messageIds: readonly string[]
   ): void {
     const messagesMap = this.#feedMessagesByFeedId.get(feedId);
     if (!messagesMap) return;
 
-    for (const message of messages) {
-      messagesMap.delete(message.id);
+    for (const messageId of messageIds) {
+      messagesMap.delete(messageId);
     }
 
     this.#feedMessagesSignal.mutate((state) => {
