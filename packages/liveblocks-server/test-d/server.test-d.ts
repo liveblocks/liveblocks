@@ -1,8 +1,8 @@
 import { expectType } from "tsd";
 
 import type { JsonObject } from "@liveblocks/core";
-import type { IServerWebSocket, Ticket } from "@liveblocks/server";
-import { InMemoryDriver, ProtocolVersion, Room } from "@liveblocks/server";
+import type { IServerWebSocket, Ticket } from "../dist";
+import { InMemoryDriver, ProtocolVersion, Room } from "../dist";
 
 // Assume we have some external values to use
 declare const socket: IServerWebSocket;

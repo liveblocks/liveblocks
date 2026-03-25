@@ -17,6 +17,7 @@
 
 import type { JsonObject, Permission } from "@liveblocks/core";
 import { nanoid, WebsocketCloseCodes } from "@liveblocks/core";
+import type { Millis } from "@liveblocks/server";
 import { DefaultMap, Room } from "@liveblocks/server";
 import { Database } from "bun:sqlite";
 import { mkdirSync, mkdtempSync, rmSync } from "fs";
@@ -454,13 +455,6 @@ export async function deleteRoom(roomId: string): Promise<void> {
 
   const room = instances.get(roomId);
   if (room) {
-    // TODO: Ideally, unload() should require the room to be in maintenance
-    // mode first and kick users from the room as an implementation detail,
-    // which would block new incoming connections before kicking existing
-    // sessions. Our production backend already enforces this via the
-    // onRoomWillUnload hook, but the dev server doesn't have maintenance mode
-    // implemented yet. Until then, we kick all sessions here to prevent them
-    // from using stale/closed storage drivers.
     room.endSessionBy(
       () => true,
       WebsocketCloseCodes.KICKED,
@@ -494,6 +488,78 @@ export function getRoomInstance(
 ): Room<RoomMeta, SessionMeta, ClientMeta> {
   ensureInit();
   return instances.getOrCreate(roomId);
+}
+
+let globalMaintenanceUntil: Promise<void> | null = null;
+
+/**
+ * Enter maintenance mode on all active rooms. Each room's
+ * runInMaintenanceMode will hold until `until` resolves
+ * (i.e. when 'm' is pressed again).
+ */
+export function enterGlobalMaintenance(until: Promise<void>): void {
+  globalMaintenanceUntil = until;
+  for (const room of instances.values()) {
+    void room
+      .runInMaintenanceMode(() => until)
+      .catch(() => {
+        // Room was already in maintenance (E_ALREADY_LOCKED), skip
+      });
+  }
+  void until.then(() => {
+    globalMaintenanceUntil = null;
+  });
+}
+
+/**
+ * Returns true if a room should refuse new connections.
+ */
+export function shouldRefuseConnection(roomId: string): boolean {
+  if (globalMaintenanceUntil !== null) return true;
+  const room = instances.get(roomId);
+  return room !== undefined && room.isInMaintenance;
+}
+
+export type ActiveConnection = {
+  roomId: string;
+  actor: number;
+  userId: string | undefined;
+  connectedAt: Millis;
+  lastActiveAt: Millis;
+};
+
+/**
+ * Returns a flat list of all active connections across all rooms.
+ */
+export function listActiveConnections(): ActiveConnection[] {
+  const result: ActiveConnection[] = [];
+  for (const [roomId, room] of instances) {
+    for (const session of room.listSessions()) {
+      result.push({
+        roomId,
+        actor: session.actor,
+        userId: session.user.id ?? session.user.anonymousId,
+        connectedAt: session.createdAt,
+        lastActiveAt: session.lastActiveAt,
+      });
+    }
+  }
+  return result;
+}
+
+/**
+ * Kill a specific connection by room ID and actor.
+ */
+export function killConnection(roomId: string, actor: number): boolean {
+  const room = instances.get(roomId);
+  if (!room) return false;
+  return (
+    room.endSessionBy(
+      (session) => session.actor === actor,
+      WebsocketCloseCodes.KICKED,
+      "Deliberately disconnected"
+    ) > 0
+  );
 }
 
 /**

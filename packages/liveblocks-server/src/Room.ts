@@ -32,7 +32,7 @@ import {
   tryParseJson,
   WebsocketCloseCodes as CloseCode,
 } from "@liveblocks/core";
-import { Mutex } from "async-mutex";
+import { Mutex, tryAcquire } from "async-mutex";
 import { array, formatInline } from "decoders";
 import { chunked } from "itertools";
 import { nanoid } from "nanoid";
@@ -77,6 +77,8 @@ const BLACK_HOLE = new Logger([
 
 export type LoadingState = "initial" | "loading" | "loaded";
 export type ActorID = Brand<number, "ActorID">;
+/** Number of milliseconds since Unix epoch. */
+export type Millis = Brand<number, "Millis">;
 
 /**
  * Session keys are also known as the "nonce" in the protocol. It's a random,
@@ -180,7 +182,7 @@ export class BrowserSession<SM, CM extends JsonObject> {
 
   public readonly version: ProtocolVersion; // Liveblocks protocol version this client will speak
   public readonly actor: ActorID; // Must be unique within the room
-  public readonly createdAt: Date;
+  public readonly createdAt: Millis;
 
   // Externally provided (public!) user metadata. This information will get shared with other clients
   public readonly user: IUserData;
@@ -190,7 +192,8 @@ export class BrowserSession<SM, CM extends JsonObject> {
 
   readonly #_socket: IServerWebSocket;
   readonly #_debug: boolean;
-  #_lastActiveAt: Date;
+  /** Updated on every incoming message (including pings) via handleData(). Used for idle timeout detection. */
+  #_lastActiveAt: Millis;
 
   // We keep a status in-memory in the session of whether we already sent a rejected ops message to the client.
   #_hasNotifiedClientStorageUpdateError: boolean;
@@ -212,16 +215,16 @@ export class BrowserSession<SM, CM extends JsonObject> {
     this.#_socket = socket;
     this.#_debug = debug;
 
-    const now = createdAt ?? new Date();
+    const now = (createdAt?.getTime() ?? Date.now()) as Millis;
     this.createdAt = now;
     this.#_lastActiveAt = now;
     this.#_hasNotifiedClientStorageUpdateError = false;
   }
 
-  get lastActiveAt(): Date {
+  get lastActiveAt(): Millis {
     const lastPing = this.#_socket.getLastPongTimestamp?.();
-    if (lastPing && lastPing > this.#_lastActiveAt) {
-      return lastPing;
+    if (lastPing && lastPing.getTime() > this.#_lastActiveAt) {
+      return lastPing.getTime() as Millis;
     } else {
       return this.#_lastActiveAt;
     }
@@ -231,10 +234,9 @@ export class BrowserSession<SM, CM extends JsonObject> {
     return this.#_hasNotifiedClientStorageUpdateError;
   }
 
-  markActive(now = new Date()): void {
-    if (now > this.#_lastActiveAt) {
-      this.#_lastActiveAt = now;
-    }
+  /** @internal - This should have to be called only from Room, never externally */
+  markActive(now?: Date): void {
+    this.#_lastActiveAt = (now ? now.getTime() : Date.now()) as Millis;
   }
 
   setHasNotifiedClientStorageUpdateError(): void {
@@ -435,6 +437,16 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   public readonly driver: IStorageDriver;
   public logger: Logger;
 
+  /**
+   * While a room is in "maintenance mode", all WebSocket connections to the
+   * room should be rejected until it's pulled out of maintenance mode again.
+   * Maintenance mode should only last a couple of milliseconds, typically.
+   *
+   * This mutex ensures that concurrent destructive operations (like
+   * init-storage, storage-reset, etc.) cannot interfere with one another.
+   */
+  private readonly _maintenanceMode = new Mutex();
+
   private _loadData$: Promise<void> | null = null;
   private _data: InternalData | null = null;
   private _qsize = 0;
@@ -529,6 +541,27 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
   public get mutex(): Mutex            { return this.data.mutex; } // prettier-ignore
 
   private get data(): InternalData      { return this._data ?? raise("Cannot use room before it's loaded"); } // prettier-ignore
+
+  // ------------------------------------------------------------------------------------
+  // Maintenance mode
+  // ------------------------------------------------------------------------------------
+
+  /**
+   * Returns true if the room is currently in maintenance mode.
+   * When in maintenance mode, callers should refuse new WebSocket connections.
+   */
+  public get isInMaintenance(): boolean {
+    return this._maintenanceMode.isLocked();
+  }
+
+  /**
+   * Tries to enter maintenance mode and run the given callback exclusively.
+   * If the room is already in maintenance mode, throws E_ALREADY_LOCKED
+   * immediately instead of queuing the request.
+   */
+  public async runInMaintenanceMode<T>(callback: () => Promise<T>): Promise<T> {
+    return tryAcquire(this._maintenanceMode).runExclusive(callback);
+  }
 
   // ------------------------------------------------------------------------------------
   // Public API
@@ -860,6 +893,7 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     const text =
       typeof data === "string" ? data : raise("Unsupported message format");
 
+    this.sessions.get(key)?.markActive();
     if (text === "ping") {
       await this.handlePing(key, ctx);
     } else {

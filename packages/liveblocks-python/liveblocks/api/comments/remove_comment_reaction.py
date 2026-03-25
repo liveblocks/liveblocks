@@ -5,7 +5,6 @@ import httpx
 
 from ... import errors
 from ...models.remove_comment_reaction_request_body import RemoveCommentReactionRequestBody
-from ...types import UNSET, Unset
 
 
 def _get_kwargs(
@@ -13,7 +12,7 @@ def _get_kwargs(
     thread_id: str,
     comment_id: str,
     *,
-    body: RemoveCommentReactionRequestBody | Unset = UNSET,
+    body: RemoveCommentReactionRequestBody,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
 
@@ -26,8 +25,7 @@ def _get_kwargs(
         ),
     }
 
-    if not isinstance(body, Unset):
-        _kwargs["json"] = body.to_dict()
+    _kwargs["json"] = body.to_dict()
 
     headers["Content-Type"] = "application/json"
 
@@ -48,7 +46,7 @@ def _sync(
     comment_id: str,
     *,
     client: httpx.Client,
-    body: RemoveCommentReactionRequestBody | Unset = UNSET,
+    body: RemoveCommentReactionRequestBody,
 ) -> None:
     kwargs = _get_kwargs(
         room_id=room_id,
@@ -69,7 +67,7 @@ async def _asyncio(
     comment_id: str,
     *,
     client: httpx.AsyncClient,
-    body: RemoveCommentReactionRequestBody | Unset = UNSET,
+    body: RemoveCommentReactionRequestBody,
 ) -> None:
     kwargs = _get_kwargs(
         room_id=room_id,

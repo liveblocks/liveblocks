@@ -201,7 +201,7 @@ export async function selfCheck(storage: Storage): Promise<void> {
     const inMemoryNodes = new Map<string, SerializedCrdt>(driver.iter_nodes());
     assert(inMemoryNodes.size > 0, "Expected at least 1 node");
 
-    const root = inMemoryNodes.get("root");
+    const root = inMemoryNodes.get("root") as SerializedRootObject | undefined;
     assert(root !== undefined, 'Expected to have a "root" node');
 
     // Check each node
@@ -1046,6 +1046,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         // Call next_actor 1000 times concurrently
         const actors = new Set(
           await Promise.all(
+            // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
             Array.from({ length: 1000 }).map(() => driver.next_actor())
           )
         );
@@ -1899,7 +1900,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
               // iter_nodes includes all inserted children
               for (const [key, value] of db.iter_nodes()) {
                 if (entries.has(key)) {
-                  expect(value).toEqual(entries.get(key));
+                  expect(value).toEqual(entries.get(key)!);
                 } else {
                   expect(key).toEqual("root");
                 }
@@ -2043,7 +2044,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               for (const [key, value] of db.iter_nodes()) {
                 if (entries.has(key)) {
-                  expect(value).toEqual(entries.get(key));
+                  expect(value).toEqual(entries.get(key)!);
                 } else {
                   expect(key).toEqual("root");
                 }
@@ -2131,7 +2132,8 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Snapshot should return the same data as the driver
               for (const [id] of entries) {
-                expect(snapshot.get_node(id)).toEqual(db.get_node(id));
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+                expect(snapshot.get_node(id)).toEqual(db.get_node(id) as any);
               }
             }
           )
@@ -2255,7 +2257,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Snapshot should still have the original data (snapshot isolation)
-        expect(snapshot.get_node("root")).toEqual({
+        expect(snapshot.get_root()).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, b: 2, c: 3 },
         });
@@ -2280,7 +2282,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
         });
 
         // Snapshot should still have the original data (snapshot isolation)
-        expect(snapshot.get_node("root")).toEqual({
+        expect(snapshot.get_root()).toEqual({
           type: CrdtType.OBJECT,
           data: { a: 1, b: 2 },
         });
@@ -2838,6 +2840,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Write all the entries (can have dupes)
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([key, value]) =>
                   driver.put_meta(key, value)
                 )
@@ -3277,6 +3280,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
             async (entries) => {
               // Put all sessions concurrently
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries).map(([sessionId, session]) => {
                   session.sessionId = sessionId;
                   return driver.put_leased_session(session);
@@ -3285,6 +3289,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Verify all sessions exist
               const results = await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.get_leased_session(sessionId)
                 )
@@ -3298,6 +3303,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
 
               // Cleanup: delete all sessions added in this iteration
               await Promise.all(
+                // eslint-disable-next-line @typescript-eslint/await-thenable -- Awaitable<T> is fine with Promise.all
                 Array.from(entries.keys()).map((sessionId) =>
                   driver.delete_leased_session(sessionId)
                 )
@@ -3367,8 +3373,7 @@ export function generateFullTestSuite<TDriver extends IStorageDriver>(config: {
       // Check if expected root has data
       const expectedRoot = expectedNodes.find(([id]) => id === "root");
       const rootHasData =
-        expectedRoot !== undefined &&
-        expectedRoot[1].type === CrdtType.OBJECT &&
+        expectedRoot?.[1].type === CrdtType.OBJECT &&
         Object.keys(expectedRoot[1].data).length > 0;
 
       if (rootHasData) {
