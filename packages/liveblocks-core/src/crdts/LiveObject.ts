@@ -817,7 +817,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   clone(): LiveObject<O> {
-    return new LiveObject(
+    const cloned = new LiveObject(
       Object.fromEntries(
         Array.from(this.#synced).map(([key, value]) => [
           key,
@@ -825,5 +825,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         ])
       ) as O
     );
+    for (const [key, value] of this.#local) {
+      cloned.#local.set(key, deepClone(value));
+    }
+    return cloned;
   }
 }

@@ -1384,6 +1384,62 @@ describe("LiveObject", () => {
       });
     });
 
+    test("clone preserves local-only properties", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local-only");
+      const cloned = root.clone();
+
+      expect(cloned.get("a")).toBe(1);
+      expect(cloned.get("b")).toBe("local-only");
+      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+    });
+
+    test("clone preserves local-only properties on detached LiveObject", () => {
+      const obj = new LiveObject<{ a: number; b?: string }>({ a: 1 });
+      obj.setLocal("b", "local-only");
+      const cloned = obj.clone();
+
+      expect(cloned.get("a")).toBe(1);
+      expect(cloned.get("b")).toBe("local-only");
+      expect(cloned.toImmutable()).toEqual({ a: 1, b: "local-only" });
+    });
+
+    test("clone with local props injected into sibling: both have local prop on A, neither on B", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        child1?: LiveObject<{ x: number; y?: string }>;
+        child2?: LiveObject<{ x: number; y?: string }>;
+      }>({
+        liveblocksType: "LiveObject",
+        data: {},
+      });
+
+      const obj = new LiveObject<{ x: number; y?: string }>({ x: 1 });
+      storageA.root.set("child1", obj);
+      obj.setLocal("y", "local-only");
+
+      const cloned = obj.clone();
+      storageA.root.set("child2", cloned);
+
+      // Client A: both children have the local prop
+      expect(storageA.root.get("child1")!.get("y")).toBe("local-only");
+      expect(storageA.root.get("child2")!.get("y")).toBe("local-only");
+
+      // Client B: neither child has the local prop
+      await vi.waitFor(() => {
+        expect(storageB.root.get("child1")!.get("x")).toBe(1);
+        expect(storageB.root.get("child2")!.get("x")).toBe(1);
+      });
+      expect(storageB.root.get("child1")!.get("y")).toBeUndefined();
+      expect(storageB.root.get("child2")!.get("y")).toBeUndefined();
+    });
+
     test("delete on a local-only key removes it without sending ops", async () => {
       const { storageA, storageB } = await prepareStorageTest<{
         a: number;
