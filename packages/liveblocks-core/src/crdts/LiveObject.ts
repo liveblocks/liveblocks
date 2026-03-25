@@ -69,6 +69,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #synced: Map<string, Lson>;
+  #local: Map<string, Json> = new Map();
 
   /**
    * Tracks unacknowledged local changes per property to preserve optimistic
@@ -498,7 +499,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return Object.fromEntries(this.#synced) as O;
+    const result = Object.fromEntries(this.#synced);
+    for (const [key, value] of this.#local) {
+      result[key] = value;
+    }
+    return result as O;
   }
 
   /**
@@ -519,10 +524,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * for this key.
    */
   setLocal<TKey extends OptionalJsonKeys<O>>(
-    _key: TKey,
-    _value: Exclude<O[TKey], undefined>
+    key: TKey,
+    value: Extract<Exclude<O[TKey], undefined>, Json>
   ): void {
-    throw new Error("Implement me");
+    this._pool?.assertStorageIsWritable();
+    this.#local.set(key, value);
+    this.invalidate();
   }
 
   /**
@@ -530,7 +537,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
-    return this.#synced.get(key as string) as O[TKey];
+    return (
+      this.#local.has(key as string)
+        ? this.#local.get(key as string)
+        : this.#synced.get(key as string)
+    ) as O[TKey];
   }
 
   /**
@@ -782,6 +793,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const result: { [key: string]: unknown } = {};
     for (const [key, val] of this.#synced) {
       result[key] = isLiveStructure(val) ? val.toImmutable() : val;
+    }
+    for (const [key, val] of this.#local) {
+      result[key] = val;
     }
     return (
       process.env.NODE_ENV === "production" ? result : Object.freeze(result)

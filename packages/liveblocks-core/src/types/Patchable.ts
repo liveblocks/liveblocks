@@ -1,9 +1,10 @@
 /**
  * Extracts the optional keys (whose values are allowed to be `undefined`).
  */
-export type OptionalKeys<T> = {
-  [K in keyof T]-?: undefined extends T[K] ? K : never;
-}[keyof T];
+export type OptionalKeys<T> = Extract<
+  { [K in keyof T]-?: undefined extends T[K] ? K : never }[keyof T],
+  string
+>;
 
 type MakeOptionalFieldsNullable<T> = {
   [K in keyof T]: K extends OptionalKeys<T> ? T[K] | null : T[K];

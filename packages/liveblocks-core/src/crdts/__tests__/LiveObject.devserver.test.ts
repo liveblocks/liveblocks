@@ -1250,4 +1250,95 @@ describe("LiveObject", () => {
       }).toThrow(/LiveObject size exceeded limit/);
     });
   });
+
+  describe("setLocal", () => {
+    test("setLocal value is visible via get, toObject, and toImmutable", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local");
+
+      expect(root.get("b")).toBe("local");
+      expect(root.toObject()).toEqual({ a: 1, b: "local" });
+      expect(root.toImmutable()).toEqual({ a: 1, b: "local" });
+    });
+
+    test("setLocal does not sync to other clients", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("b", "local");
+
+      // Client A sees local value
+      expect(storageA.root.get("b")).toBe("local");
+
+      // Client B does not see local value (wait a bit to confirm nothing syncs)
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+      });
+    });
+
+    test("setLocal value is not synced but set value is", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+        bar?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      storageA.root.set("bar", "synced");
+
+      // Client A sees both
+      expect(storageA.root.get("foo")).toBe("local-only");
+      expect(storageA.root.get("bar")).toBe("synced");
+
+      // Client B only sees bar, not foo
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "synced" });
+      });
+    });
+
+    test("client A sees local + remote values, client B sees only remote", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+        bar?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      storageB.root.set("bar", "from-B");
+
+      // Wait for B's change to sync
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1, bar: "from-B" });
+      });
+
+      // Wait for A to receive B's synced change
+      await vi.waitFor(() => {
+        expect(storageA.root.get("bar")).toBe("from-B");
+      });
+
+      // Client A sees both foo (local) and bar (synced from B)
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B sees only bar
+      expect(storageB.root.get("foo")).toBeUndefined();
+    });
+  });
 });
