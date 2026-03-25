@@ -1340,5 +1340,69 @@ describe("LiveObject", () => {
       // Client B sees only bar
       expect(storageB.root.get("foo")).toBeUndefined();
     });
+
+    test("calling .set() on a local-only key clears the local overlay", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Now set it as a synced value
+      storageA.root.set("foo", "synced");
+      expect(storageA.root.get("foo")).toBe("synced");
+
+      // Client B should now see it too
+      await vi.waitFor(() => {
+        expect(storageB.root.get("foo")).toBe("synced");
+      });
+    });
+
+    test("remote .set() on a local-only key clears the local overlay", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      // Client B sets the same key as synced
+      storageB.root.set("foo", "from-B");
+
+      // Client A should see B's value (remote wins)
+      await vi.waitFor(() => {
+        expect(storageA.root.get("foo")).toBe("from-B");
+      });
+    });
+
+    test("delete on a local-only key removes it without sending ops", async () => {
+      const { storageA, storageB } = await prepareStorageTest<{
+        a: number;
+        foo?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      storageA.root.setLocal("foo", "local-only");
+      expect(storageA.root.get("foo")).toBe("local-only");
+
+      storageA.root.delete("foo");
+      expect(storageA.root.get("foo")).toBeUndefined();
+
+      // Client B should still not see foo (nothing was synced)
+      await vi.waitFor(() => {
+        expect(storageB.root.toImmutable()).toEqual({ a: 1 });
+      });
+    });
   });
 });

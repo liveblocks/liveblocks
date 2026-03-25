@@ -280,6 +280,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       ];
     }
 
+    this.#local.delete(key);
     this.#synced.set(key, child);
     this.invalidate();
 
@@ -431,6 +432,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
       isModified = true;
       updateDelta[key] = { type: "update" };
+      this.#local.delete(key);
       this.#synced.set(key, value);
       this.invalidate();
     }
@@ -481,6 +483,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       ];
     }
 
+    this.#local.delete(key);
     this.#synced.delete(key);
     this.invalidate();
     return {
@@ -551,6 +554,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   delete(key: keyof O): void {
     this._pool?.assertStorageIsWritable();
     const keyAsString = key as string;
+
+    // If key is local-only, just remove from local overlay
+    if (this.#local.has(keyAsString) && !this.#synced.has(keyAsString)) {
+      this.#local.delete(keyAsString);
+      this.invalidate();
+      return;
+    }
+
+    this.#local.delete(keyAsString);
 
     const oldValue = this.#synced.get(keyAsString);
     if (oldValue === undefined) {
@@ -665,6 +677,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           newValue._setParentLink(this, key);
         }
 
+        this.#local.delete(key);
         this.#synced.set(key, newValue);
         this.invalidate();
       }
@@ -731,6 +744,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         this.#unackedOpsByKey.set(key, opId);
       }
 
+      this.#local.delete(key);
       this.#synced.set(key, newValue);
       this.invalidate();
       updateDelta[key] = { type: "update" };
