@@ -634,15 +634,15 @@ type RoomContextBundleCommon<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = {
   /**
    * You normally don't need to directly interact with the RoomContext, but
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: Context<Room<P, S, U, E, TM, CM, SM, MD> | null>;
+  RoomContext: Context<Room<P, S, U, E, TM, CM, FM, FMD> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -657,10 +657,10 @@ type RoomContextBundleCommon<
    */
   useRoom(options?: {
     allowOutsideRoom: false;
-  }): Room<P, S, U, E, TM, CM, SM, MD>;
+  }): Room<P, S, U, E, TM, CM, FM, FMD>;
   useRoom(options: {
     allowOutsideRoom: boolean;
-  }): Room<P, S, U, E, TM, CM, SM, MD> | null;
+  }): Room<P, S, U, E, TM, CM, FM, FMD> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
@@ -1121,10 +1121,10 @@ export type RoomContextBundle<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = Resolve<
-  RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
+  RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
     SharedContextBundle<U>["classic"] & {
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1203,7 +1203,7 @@ export type RoomContextBundle<
        * @example
        * const { feeds, error, isLoading } = useFeeds();
        */
-      useFeeds(options?: UseFeedsOptions): FeedsAsyncResult<SM>;
+      useFeeds(options?: UseFeedsOptions): FeedsAsyncResult<FM>;
 
       /**
        * Returns messages for a specific feed in the current room.
@@ -1214,7 +1214,7 @@ export type RoomContextBundle<
       useFeedMessages(
         feedId: string,
         options?: UseFeedMessagesOptions
-      ): FeedMessagesAsyncResult<MD>;
+      ): FeedMessagesAsyncResult<FMD>;
 
       /**
        * Returns a function that creates a new feed in the current room.
@@ -1334,7 +1334,7 @@ export type RoomContextBundle<
       useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
-        RoomContextBundleCommon<P, S, U, E, TM, CM, SM, MD> &
+        RoomContextBundleCommon<P, S, U, E, TM, CM, FM, FMD> &
           SharedContextBundle<U>["suspense"] & {
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
@@ -1409,7 +1409,7 @@ export type RoomContextBundle<
              * @example
              * const { feeds } = useFeeds();
              */
-            useFeeds(options?: UseFeedsOptions): FeedsAsyncSuccess<SM>;
+            useFeeds(options?: UseFeedsOptions): FeedsAsyncSuccess<FM>;
 
             /**
              * Returns messages for a specific feed in the current room.
@@ -1420,7 +1420,7 @@ export type RoomContextBundle<
             useFeedMessages(
               feedId: string,
               options?: UseFeedMessagesOptions
-            ): FeedMessagesAsyncSuccess<MD>;
+            ): FeedMessagesAsyncSuccess<FMD>;
             useCreateFeed(): (
               feedId: string,
               options?: { metadata?: FeedCreateMetadata; timestamp?: number }

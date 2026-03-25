@@ -24,10 +24,10 @@ import type {
   CommentsEventServerMsg,
   DCM,
   DE,
-  DMD,
+  DFMD,
   DP,
   DS,
-  DSM,
+  DFM,
   DTM,
   DU,
   EnterOptions,
@@ -333,10 +333,10 @@ type RoomLeavePair<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = {
-  room: Room<P, S, U, E, TM, CM, SM, MD>;
+  room: Room<P, S, U, E, TM, CM, FM, FMD>;
   leave: () => void;
 };
 
@@ -347,8 +347,8 @@ function RoomProvider<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 >(
   props: RoomProviderProps<P, S> & {
     /** @internal */
@@ -357,21 +357,21 @@ function RoomProvider<
 ) {
   const client = useClient<U>();
   const [cache] = useState(
-    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM, SM, MD>>()
+    () => new Map<string, RoomLeavePair<P, S, U, E, TM, CM, FM, FMD>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, SM, MD> = useCallback(
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, TM, CM, FM, FMD> = useCallback(
     (
       roomId: string,
       options: EnterOptions<P, S>
-    ): RoomLeavePair<P, S, U, E, TM, CM, SM, MD> => {
+    ): RoomLeavePair<P, S, U, E, TM, CM, FM, FMD> => {
       const cached = cache.get(roomId);
       if (cached) return cached;
 
-      const rv = client.enterRoom<P, S, E, TM, CM, SM, MD>(roomId, options);
+      const rv = client.enterRoom<P, S, E, TM, CM, FM, FMD>(roomId, options);
 
       // Wrap the leave function to also delete the cached value
       const origLeave = rv.leave;
@@ -406,7 +406,7 @@ function RoomProvider<
   // Room to not be freed and destroyed when the component unmounts later.
   //
   return (
-    <RoomProviderInner<P, S, U, E, TM, CM, SM, MD>
+    <RoomProviderInner<P, S, U, E, TM, CM, FM, FMD>
       {...(props as any)}
       stableEnterRoom={stableEnterRoom}
     />
@@ -420,12 +420,12 @@ type EnterRoomType<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 > = (
   roomId: string,
   options: EnterOptions<P, S>
-) => RoomLeavePair<P, S, U, E, TM, CM, SM, MD>;
+) => RoomLeavePair<P, S, U, E, TM, CM, FM, FMD>;
 
 /** @internal */
 function RoomProviderInner<
@@ -435,11 +435,11 @@ function RoomProviderInner<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 >(
   props: RoomProviderProps<P, S> & {
-    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM, SM, MD>;
+    stableEnterRoom: EnterRoomType<P, S, U, E, TM, CM, FM, FMD>;
     BoundRoomContext?: Context<OpaqueRoom | null>;
   }
 ) {
@@ -622,12 +622,12 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: false }
-): Room<P, S, U, E, TM, CM, SM, MD>;
+): Room<P, S, U, E, TM, CM, FM, FMD>;
 function useRoom_withRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -635,12 +635,12 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: boolean }
-): Room<P, S, U, E, TM, CM, SM, MD> | null;
+): Room<P, S, U, E, TM, CM, FM, FMD> | null;
 function useRoom_withRoomContext<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -648,13 +648,13 @@ function useRoom_withRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
+  FM extends Json = Json,
+  FMD extends Json = Json,
 >(
   RoomContext: Context<OpaqueRoom | null>,
   options?: { allowOutsideRoom: boolean }
-): Room<P, S, U, E, TM, CM, SM, MD> | null {
-  const room = useRoomOrNull<P, S, U, E, TM, CM, SM, MD>(RoomContext);
+): Room<P, S, U, E, TM, CM, FM, FMD> | null {
+  const room = useRoomOrNull<P, S, U, E, TM, CM, FM, FMD>(RoomContext);
 
   if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
@@ -670,9 +670,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
->(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM, SM, MD>;
+  FM extends Json = Json,
+  FMD extends Json = Json,
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, TM, CM, FM, FMD>;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -680,9 +680,9 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
->(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null;
+  FM extends Json = Json,
+  FMD extends Json = Json,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, FM, FMD> | null;
 function useRoom<
   P extends JsonObject = DP,
   S extends LsonObject = DS,
@@ -690,10 +690,10 @@ function useRoom<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
->(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, SM, MD> | null {
-  return useRoom_withRoomContext<P, S, U, E, TM, CM, SM, MD>(
+  FM extends Json = Json,
+  FMD extends Json = Json,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, TM, CM, FM, FMD> | null {
+  return useRoom_withRoomContext<P, S, U, E, TM, CM, FM, FMD>(
     GlobalRoomContext,
     options
   );
@@ -3649,11 +3649,11 @@ export function createRoomContext<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = Json,
-  MD extends Json = Json,
->(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM, SM, MD> {
-  type TRoom = Room<P, S, U, E, TM, CM, SM, MD>;
-  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM, SM, MD>;
+  FM extends Json = Json,
+  FMD extends Json = Json,
+>(client: OpaqueClient): RoomContextBundle<P, S, U, E, TM, CM, FM, FMD> {
+  type TRoom = Room<P, S, U, E, TM, CM, FM, FMD>;
+  type TRoomBundle = RoomContextBundle<P, S, U, E, TM, CM, FM, FMD>;
 
   const BoundRoomContext = createContext<OpaqueRoom | null>(null);
 
@@ -3997,7 +3997,7 @@ export function createRoomContext<
   }
 
   const shared = createSharedContext(client as Client<U>);
-  const bundle: RoomContextBundle<P, S, U, E, TM, CM, SM, MD> = {
+  const bundle: RoomContextBundle<P, S, U, E, TM, CM, FM, FMD> = {
     RoomContext: BoundRoomContext as Context<TRoom | null>,
     RoomProvider:
       RoomProvider_withImplicitLiveblocksProviderAndBoundRoomContext,
@@ -4235,7 +4235,7 @@ export function createRoomContext<
   });
 }
 
-type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, DSM, DMD>;
+type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DTM, DCM, DFM, DFMD>;
 
 /**
  * Makes a Room available in the component hierarchy below.

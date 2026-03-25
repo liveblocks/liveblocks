@@ -20,10 +20,10 @@ import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type {
   DCM,
   DE,
-  DMD,
+  DFM,
+  DFMD,
   DP,
   DS,
-  DSM,
   DTM,
   DU,
 } from "./globals/augmentation";
@@ -142,6 +142,8 @@ import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
 export type TimeoutID = ReturnType<typeof setTimeout>;
+
+const FEEDS_TIMEOUT = 5_000; // 5 seconds
 
 //
 // NOTE:
@@ -552,8 +554,8 @@ export type Room<
   E extends Json = DE,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = DSM,
-  MD extends Json = DMD,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 > = {
   /**
    * @private
@@ -649,7 +651,7 @@ export type Room<
     limit?: number;
     metadata?: FeedFetchMetadataFilter;
   }): Promise<{
-    feeds: Feed<SM>[];
+    feeds: Feed<FM>[];
     nextCursor?: string;
   }>;
 
@@ -664,7 +666,7 @@ export type Room<
       limit?: number;
     }
   ): Promise<{
-    messages: FeedMessage<MD>[];
+    messages: FeedMessage<FMD>[];
     nextCursor?: string;
   }>;
 
@@ -775,7 +777,7 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
-    readonly feeds: Observable<FeedsEventServerMsg<SM, MD>>;
+    readonly feeds: Observable<FeedsEventServerMsg<FM, FMD>>;
 
     /**
      * Called right before the room is destroyed. The event cannot be used to
@@ -1485,12 +1487,12 @@ export function createRoom<
   E extends Json,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = DSM,
-  MD extends Json = DMD,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 >(
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<TM, CM>
-): Room<P, S, U, E, TM, CM, SM, MD> {
+): Room<P, S, U, E, TM, CM, FM, FMD> {
   const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -1734,7 +1736,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
-    feeds: makeEventSource<FeedsEventServerMsg<SM, MD>>(),
+    feeds: makeEventSource<FeedsEventServerMsg<FM, FMD>>(),
     roomWillDestroy: makeEventSource<void>(),
   };
 
@@ -2452,7 +2454,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.FEEDS_LIST: {
-          const feedsListMsg = message as FeedsListServerMsg<SM>;
+          const feedsListMsg = message as FeedsListServerMsg<FM>;
           const pending = pendingFeedsRequests.get(feedsListMsg.requestId);
           if (pending) {
             pending.resolve({
@@ -2466,13 +2468,13 @@ export function createRoom<
         }
 
         case ServerMsgCode.FEEDS_ADDED: {
-          const feedsAddedMsg = message as FeedsAddedServerMsg<SM>;
+          const feedsAddedMsg = message as FeedsAddedServerMsg<FM>;
           eventHub.feeds.notify(feedsAddedMsg);
           break;
         }
 
         case ServerMsgCode.FEEDS_UPDATED: {
-          const feedsUpdatedMsg = message as FeedsUpdatedServerMsg<SM>;
+          const feedsUpdatedMsg = message as FeedsUpdatedServerMsg<FM>;
           eventHub.feeds.notify(feedsUpdatedMsg);
           break;
         }
@@ -2483,7 +2485,7 @@ export function createRoom<
         }
 
         case ServerMsgCode.FEED_MESSAGES_LIST: {
-          const feedMsgsListMsg = message as FeedMessagesListServerMsg<MD>;
+          const feedMsgsListMsg = message as FeedMessagesListServerMsg<FMD>;
           const pending = pendingFeedMessagesRequests.get(
             feedMsgsListMsg.requestId
           );
@@ -2499,14 +2501,14 @@ export function createRoom<
         }
 
         case ServerMsgCode.FEED_MESSAGES_ADDED: {
-          const feedMsgsAddedMsg = message as FeedMessagesAddedServerMsg<MD>;
+          const feedMsgsAddedMsg = message as FeedMessagesAddedServerMsg<FMD>;
           eventHub.feeds.notify(feedMsgsAddedMsg);
           break;
         }
 
         case ServerMsgCode.FEED_MESSAGES_UPDATED: {
           const feedMsgsUpdatedMsg =
-            message as FeedMessagesUpdatedServerMsg<MD>;
+            message as FeedMessagesUpdatedServerMsg<FMD>;
           eventHub.feeds.notify(feedMsgsUpdatedMsg);
           break;
         }
@@ -2656,7 +2658,7 @@ export function createRoom<
   const pendingFeedsRequests = new Map<
     string,
     {
-      resolve: (value: { feeds: Feed<SM>[]; nextCursor?: string }) => void;
+      resolve: (value: { feeds: Feed<FM>[]; nextCursor?: string }) => void;
       reject: (error: Error) => void;
     }
   >();
@@ -2666,7 +2668,7 @@ export function createRoom<
     string,
     {
       resolve: (value: {
-        messages: FeedMessage<MD>[];
+        messages: FeedMessage<FMD>[];
         nextCursor?: string;
       }) => void;
       reject: (error: Error) => void;
@@ -2788,11 +2790,11 @@ export function createRoom<
     since?: number;
     limit?: number;
     metadata?: FeedFetchMetadataFilter;
-  }): Promise<{ feeds: Feed<SM>[]; nextCursor?: string }> {
+  }): Promise<{ feeds: Feed<FM>[]; nextCursor?: string }> {
     const requestId = nanoid();
 
     const { promise, resolve, reject } = Promise_withResolvers<{
-      feeds: Feed<SM>[];
+      feeds: Feed<FM>[];
       nextCursor?: string;
     }>();
 
@@ -2815,7 +2817,7 @@ export function createRoom<
         pendingFeedsRequests.delete(requestId);
         reject(new Error("Feeds fetch timeout"));
       }
-    }, 30000);
+    }, FEEDS_TIMEOUT);
 
     return promise;
   }
@@ -2827,11 +2829,11 @@ export function createRoom<
       since?: number;
       limit?: number;
     }
-  ): Promise<{ messages: FeedMessage<MD>[]; nextCursor?: string }> {
+  ): Promise<{ messages: FeedMessage<FMD>[]; nextCursor?: string }> {
     const requestId = nanoid();
 
     const { promise, resolve, reject } = Promise_withResolvers<{
-      messages: FeedMessage<MD>[];
+      messages: FeedMessage<FMD>[];
       nextCursor?: string;
     }>();
 
@@ -2854,7 +2856,7 @@ export function createRoom<
         pendingFeedMessagesRequests.delete(requestId);
         reject(new Error("Feed messages fetch timeout"));
       }
-    }, 30000);
+    }, FEEDS_TIMEOUT);
 
     return promise;
   }

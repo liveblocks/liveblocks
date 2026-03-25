@@ -10,11 +10,11 @@ import type {
   DCM,
   DE,
   DGI,
-  DMD,
+  DFMD,
   DP,
   DRI,
   DS,
-  DSM,
+  DFM,
   DTM,
   DU,
 } from "./globals/augmentation";
@@ -202,9 +202,9 @@ export type PrivateClientApi<
   as<
     TM2 extends BaseMetadata,
     CM2 extends BaseMetadata,
-    SM2 extends Json = SM,
-    MD2 extends Json = MD,
-  >(): Client<U, TM2, CM2, SM2, MD2>;
+    FM2 extends Json = FM,
+    FMD2 extends Json = FMD,
+  >(): Client<U, TM2, CM2, FM2, FMD2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
@@ -372,8 +372,8 @@ export type Client<
   U extends BaseUserMeta = DU,
   TM extends BaseMetadata = DTM,
   CM extends BaseMetadata = DCM,
-  SM extends Json = DSM,
-  MD extends Json = DMD,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 > = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
@@ -386,11 +386,11 @@ export type Client<
     E extends Json = DE,
     TM2 extends BaseMetadata = TM,
     CM2 extends BaseMetadata = CM,
-    SM2 extends Json = SM,
-    MD2 extends Json = MD,
+    FM2 extends Json = FM,
+    FMD2 extends Json = FMD,
   >(
     roomId: string
-  ): Room<P, S, U, E, TM2, CM2, SM2, MD2> | null;
+  ): Room<P, S, U, E, TM2, CM2, FM2, FMD2> | null;
 
   /**
    * Enter a room.
@@ -404,8 +404,8 @@ export type Client<
     E extends Json = DE,
     TM2 extends BaseMetadata = TM,
     CM2 extends BaseMetadata = CM,
-    SM2 extends Json = SM,
-    MD2 extends Json = MD,
+    FM2 extends Json = FM,
+    FMD2 extends Json = FMD,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -413,7 +413,7 @@ export type Client<
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, TM2, CM2, SM2, MD2>;
+    room: Room<P, S, U, E, TM2, CM2, FM2, FMD2>;
     leave: () => void;
   };
 
@@ -486,7 +486,7 @@ export type Client<
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U, TM, CM, SM, MD>;
+  readonly [kInternal]: PrivateClientApi<U, TM, CM, FM, FMD>;
 
   /**
    * Returns the current global sync status of the Liveblocks client. If any
@@ -716,12 +716,12 @@ export function createClient<U extends BaseUserMeta = DU>(
     E extends Json,
     TM extends BaseMetadata,
     CM extends BaseMetadata,
-    SM extends Json,
-    MD extends Json,
+    FM extends Json,
+    FMD extends Json,
   >(
     details: RoomDetails
   ): {
-    room: Room<P, S, U, E, TM, CM, SM, MD>;
+    room: Room<P, S, U, E, TM, CM, FM, FMD>;
     leave: () => void;
   } {
     // Create a new self-destructing leave function
@@ -742,7 +742,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
     details.unsubs.add(leave);
     return {
-      room: details.room as Room<P, S, U, E, TM, CM, SM, MD>,
+      room: details.room as Room<P, S, U, E, TM, CM, FM, FMD>,
       leave,
     };
   }
@@ -754,8 +754,8 @@ export function createClient<U extends BaseUserMeta = DU>(
     E extends Json,
     TM extends BaseMetadata,
     CM extends BaseMetadata,
-    SM extends Json,
-    MD extends Json,
+    FM extends Json,
+    FMD extends Json,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -763,7 +763,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, TM, CM, SM, MD>;
+    room: Room<P, S, U, E, TM, CM, FM, FMD>;
     leave: () => void;
   } {
     const existing = roomsById.get(roomId);
@@ -782,7 +782,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         ? options.initialStorage(roomId)
         : options.initialStorage) ?? ({} as S);
 
-    const newRoom = createRoom<P, S, U, E, TM, CM, SM, MD>(
+    const newRoom = createRoom<P, S, U, E, TM, CM, FM, FMD>(
       { initialPresence, initialStorage },
       {
         roomId,
@@ -843,11 +843,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     E extends Json,
     TM extends BaseMetadata,
     CM extends BaseMetadata,
-    SM extends Json,
-    MD extends Json,
-  >(roomId: string): Room<P, S, U, E, TM, CM, SM, MD> | null {
+    FM extends Json,
+    FMD extends Json,
+  >(roomId: string): Room<P, S, U, E, TM, CM, FM, FMD> | null {
     const room = roomsById.get(roomId)?.room;
-    return room ? (room as Room<P, S, U, E, TM, CM, SM, MD>) : null;
+    return room ? (room as Room<P, S, U, E, TM, CM, FM, FMD>) : null;
   }
 
   function logout() {
