@@ -187,8 +187,8 @@ export type PrivateClientApi<
   U extends BaseUserMeta,
   TM extends BaseMetadata,
   CM extends BaseMetadata,
-  SM extends Json = DSM,
-  MD extends Json = DMD,
+  FM extends Json = DFM,
+  FMD extends Json = DFMD,
 > = {
   readonly currentUserId: Signal<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, MentionData[]>;
