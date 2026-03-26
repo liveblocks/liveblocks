@@ -452,7 +452,6 @@ export abstract class AbstractCrdt {
 
   /**
    * @internal
-   *
    * Return an snapshot of this Live tree for use in DevTools.
    */
   toTreeNode(key: string): DevTools.LsonTreeNode {
@@ -467,6 +466,17 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   abstract _toImmutable(): Immutable;
+
+  /**
+   * @private
+   * Returns true if the cached immutable snapshot exists and is
+   * reference-equal to the given value. Does not trigger a recompute.
+   */
+  immutableIs(value: unknown): boolean {
+    return (
+      this.#cachedImmutable !== undefined && this.#cachedImmutable === value
+    );
+  }
 
   /**
    * Return an immutable snapshot of this Live node and its children.

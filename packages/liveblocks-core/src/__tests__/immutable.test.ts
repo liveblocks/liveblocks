@@ -113,6 +113,32 @@ function applyStateChanges<TState extends JsonObject>(
   return { oldState, newState };
 }
 
+describe("immutableIs", () => {
+  test("returns true when cached immutable matches the provided value", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    const snapshot = liveObj.toImmutable();
+    expect(liveObj.immutableIs(snapshot)).toBe(true);
+  });
+
+  test("returns false when toImmutable was never called", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    expect(liveObj.immutableIs({ a: 1 })).toBe(false);
+  });
+
+  test("returns false after invalidation", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    const snapshot = liveObj.toImmutable();
+    liveObj.set("a", 2);
+    expect(liveObj.immutableIs(snapshot)).toBe(false);
+  });
+
+  test("returns false when value does not match", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    liveObj.toImmutable();
+    expect(liveObj.immutableIs({ a: 999 })).toBe(false);
+  });
+});
+
 describe("patchLiveObjectKey", () => {
   test("should set string", () => {
     const liveObject = new LiveObject();

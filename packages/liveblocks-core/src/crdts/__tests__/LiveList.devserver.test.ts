@@ -817,4 +817,30 @@ describe("LiveList", () => {
       expect(callback).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("immutableIs", () => {
+    test("returns true when cached immutable matches the given value", () => {
+      const list = new LiveList(["a", "b", "c"]);
+      const imm = list.toImmutable();
+      expect(list.immutableIs(imm)).toBe(true);
+    });
+
+    test("returns false for a different array with equal contents", () => {
+      const list = new LiveList(["a", "b"]);
+      list.toImmutable();
+      expect(list.immutableIs(["a", "b"])).toBe(false);
+    });
+
+    test("returns false when cache has been invalidated", () => {
+      const list = new LiveList(["a"]);
+      const imm = list.toImmutable();
+      list.push("b");
+      expect(list.immutableIs(imm)).toBe(false);
+    });
+
+    test("returns false when toImmutable has never been called", () => {
+      const list = new LiveList([1, 2, 3]);
+      expect(list.immutableIs([1, 2, 3])).toBe(false);
+    });
+  });
 });
