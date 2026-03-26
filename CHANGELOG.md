@@ -1,11 +1,5 @@
 ## vNEXT (not yet released)
 
-### `@liveblocks/client`
-
-- Add `LiveObject.setLocal()` method for setting local-only properties that are
-  not synchronized over the wire. Useful for client-side-only state like UI
-  flags or draft values that should live alongside synced CRDT data.
-
 ## v3.15.4
 
 ### `@liveblocks/node`

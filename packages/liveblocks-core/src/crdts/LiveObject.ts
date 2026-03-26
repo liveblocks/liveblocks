@@ -525,10 +525,14 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
+   * @experimental
+   *
    * Sets a local-only property that is not synchronized over the wire.
    * The value will be visible via get(), toObject(), and toImmutable() on
    * this client only. Other clients and the server will see `undefined`
    * for this key.
+   *
+   * Caveat: this method will not add changes to the undo/redo stack.
    */
   setLocal<TKey extends OptionalJsonKeys<O>>(
     key: TKey,
