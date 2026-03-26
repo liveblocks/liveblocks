@@ -515,8 +515,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param value The value of the property to add
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
-    // TODO: Find out why typescript complains
-    this._pool?.assertStorageIsWritable();
     this.update({ [key]: value } as unknown as Partial<O>);
   }
 
