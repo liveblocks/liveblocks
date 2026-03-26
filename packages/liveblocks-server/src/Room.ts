@@ -28,7 +28,7 @@ import {
   nodeStreamToCompactNodes,
   OpCode,
   raise,
-  ServerMsgCode,
+  ServerMsgCode as CoreServerMsgCode,
   tryParseJson,
   WebsocketCloseCodes as CloseCode,
 } from "@liveblocks/core";
@@ -39,27 +39,48 @@ import { nanoid } from "nanoid";
 
 import type { Guid } from "~/decoders";
 import { clientMsgDecoder } from "~/decoders";
-import type { IServerWebSocket, IStorageDriver } from "~/interfaces";
+import type {
+  IServerWebSocket,
+  IStorageDriver,
+  ListFeedMessagesOptions,
+  ListFeedMessagesResult,
+  ListFeedsOptions,
+  ListFeedsResult,
+} from "~/interfaces";
 import { Logger } from "~/lib/Logger";
 import { makeNewInMemoryDriver } from "~/plugins/InMemoryDriver";
 import type {
+  AddFeedClientMsg,
+  AddFeedMessageClientMsg,
   ClientMsg as GenericClientMsg,
+  DeleteFeedClientMsg,
+  DeleteFeedMessageClientMsg,
+  FeedMessagesServerMsg,
+  FeedsServerMsg,
+  FetchFeedMessagesClientMsg,
+  FetchFeedsClientMsg,
   IgnoredOp,
   Op,
   ServerMsg as GenericServerMsg,
   ServerWireOp,
+  UpdateFeedClientMsg,
+  UpdateFeedMessageClientMsg,
 } from "~/protocol";
-import { ProtocolVersion } from "~/protocol";
 import { Storage } from "~/Storage";
 import { YjsStorage } from "~/YjsStorage";
 
 import { tryCatch } from "./lib/tryCatch";
 import { UniqueMap } from "./lib/UniqueMap";
-import type { LeasedSession } from "./types";
+import { feedFailureServerMsg, feedRequestFailed } from "./protocol/feedErrors";
+import { FeedMsgCode, FeedRequestErrorCode } from "./protocol/feedMessages";
+import { ProtocolVersion } from "./protocol/ProtocolVersion";
+import type { Feed, FeedMessage, LeasedSession } from "./types";
 import { isLeasedSessionExpired, makeRoomStateMsg } from "./utils";
 
 const messagesDecoder = array(clientMsgDecoder);
 
+// Temporary patch
+const ServerMsgCode = { ...CoreServerMsgCode, ...FeedMsgCode };
 const HIGHEST_PROTOCOL_VERSION = Math.max(
   ...Object.values(ProtocolVersion).filter(
     (v): v is number => typeof v === "number"
@@ -89,8 +110,20 @@ export type Millis = Brand<number, "Millis">;
 export type SessionKey = Brand<string, "SessionKey">;
 
 export type PreSerializedServerMsg = Brand<string, "PreSerializedServerMsg">;
-type ClientMsg = GenericClientMsg<JsonObject, Json>;
-type ServerMsg = GenericServerMsg<JsonObject, BaseUserMeta, Json>;
+type ClientMsg =
+  | GenericClientMsg<JsonObject, Json>
+  | FetchFeedsClientMsg
+  | FetchFeedMessagesClientMsg
+  | AddFeedClientMsg
+  | UpdateFeedClientMsg
+  | DeleteFeedClientMsg
+  | AddFeedMessageClientMsg
+  | UpdateFeedMessageClientMsg
+  | DeleteFeedMessageClientMsg;
+type ServerMsg =
+  | GenericServerMsg<JsonObject, BaseUserMeta, Json>
+  | FeedMessagesServerMsg
+  | FeedsServerMsg; // Temp patched server msgs
 
 /**
  * Creates a collector for deferred promises (side effects that should run
@@ -1189,6 +1222,117 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Feed APIs
+  // ---------------------------------------------------------------------------
+
+  /**
+   * List feeds with pagination and filtering.
+   */
+  public async listFeeds(options?: ListFeedsOptions): Promise<ListFeedsResult> {
+    return await this.driver.list_feeds(options);
+  }
+
+  /**
+   * Get a specific feed by feed ID.
+   */
+  public async getFeed(feedId: string): Promise<Feed | undefined> {
+    return await this.driver.get_feed(feedId);
+  }
+
+  /**
+   * Create a new feed.
+   * If timestamp is not provided, current server time is used.
+   */
+  public async createFeed(
+    feed: Omit<Feed, "createdAt" | "updatedAt"> & { timestamp?: number }
+  ): Promise<Feed> {
+    const now = feed.timestamp ?? Date.now();
+    const fullFeed: Feed = {
+      ...feed,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await this.driver.create_feed(fullFeed);
+    return fullFeed;
+  }
+
+  /**
+   * Update a feed's metadata.
+   */
+  public async updateFeedMetadata(
+    feedId: string,
+    metadata: Json
+  ): Promise<void> {
+    await this.driver.update_feed_metadata(feedId, metadata);
+  }
+
+  /**
+   * Delete a feed.
+   */
+  public async deleteFeed(feedId: string): Promise<void> {
+    await this.driver.delete_feed(feedId);
+  }
+
+  /**
+   * List feed messages for a feed with pagination.
+   */
+  public async listFeedMessages(
+    feedId: string,
+    options?: ListFeedMessagesOptions
+  ): Promise<ListFeedMessagesResult> {
+    return await this.driver.list_feed_messages(feedId, options);
+  }
+
+  /**
+   * Add a message to a feed.
+   * If message id is not provided, a unique ID is automatically generated.
+   * If timestamp is not provided, current server time is used.
+   */
+  public async addFeedMessage(
+    feedId: string,
+    message: Omit<FeedMessage, "id" | "createdAt" | "updatedAt"> &
+      Partial<Pick<FeedMessage, "id">> & { timestamp?: number }
+  ): Promise<FeedMessage> {
+    const now = message.timestamp ?? Date.now();
+    const fullMessage: FeedMessage = {
+      id: message.id ?? nanoid(),
+      createdAt: now,
+      updatedAt: now,
+      data: message.data,
+    };
+    await this.driver.add_feed_message(feedId, fullMessage);
+    return fullMessage;
+  }
+
+  /**
+   * Update a feed message's data.
+   * Returns the updated message.
+   */
+  public async updateFeedMessage(
+    feedId: string,
+    messageId: string,
+    data: Json,
+    timestamp?: number
+  ): Promise<FeedMessage> {
+    return await this.driver.update_feed_message(
+      feedId,
+      messageId,
+      data,
+      timestamp ?? Date.now()
+    );
+  }
+
+  /**
+   * Delete a feed message.
+   */
+  public async deleteFeedMessage(
+    feedId: string,
+    messageId: string
+  ): Promise<void> {
+    await this.driver.delete_feed_message(feedId, messageId);
+  }
+
   /**
    * Will send the given ServerMsg through all Session, except the Session
    * where the message originates from.
@@ -1644,6 +1788,185 @@ export class Room<RM, SM, CM extends JsonObject, C = undefined> {
           if (p$) defer(p$);
         }
 
+        break;
+      }
+
+      // Feed messages
+      case FeedMsgCode.FETCH_FEEDS: {
+        const fetchMsg = msg;
+        const [result, err] = await tryCatch(
+          this.listFeeds({
+            cursor: fetchMsg.cursor,
+            since: fetchMsg.since,
+            limit: fetchMsg.limit,
+            metadata: fetchMsg.metadata,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(fetchMsg.requestId, err));
+          break;
+        }
+        replyImmediately({
+          type: FeedMsgCode.FEEDS_LIST,
+          requestId: fetchMsg.requestId,
+          feeds: result.feeds,
+          nextCursor: result.nextCursor,
+        });
+        break;
+      }
+
+      case FeedMsgCode.FETCH_FEED_MESSAGES: {
+        const fetchMsg = msg;
+        const [result, err] = await tryCatch(
+          this.listFeedMessages(fetchMsg.feedId, {
+            cursor: fetchMsg.cursor,
+            since: fetchMsg.since,
+            limit: fetchMsg.limit,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(fetchMsg.requestId, err));
+          break;
+        }
+        replyImmediately({
+          type: FeedMsgCode.FEED_MESSAGES_LIST,
+          requestId: fetchMsg.requestId,
+          feedId: fetchMsg.feedId,
+          messages: result.messages,
+          nextCursor: result.nextCursor,
+        });
+        break;
+      }
+
+      case FeedMsgCode.ADD_FEED: {
+        const addMsg = msg;
+        const [feed, err] = await tryCatch(
+          this.createFeed({
+            feedId: addMsg.feedId,
+            metadata: (addMsg.metadata as Json) ?? {},
+            timestamp: addMsg.timestamp,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(addMsg.requestId, err));
+          break;
+        }
+        const feedsMsg = {
+          type: FeedMsgCode.FEEDS_ADDED,
+          feeds: [feed],
+        };
+        replyImmediately(feedsMsg);
+        scheduleFanOut(feedsMsg);
+        break;
+      }
+
+      case FeedMsgCode.UPDATE_FEED: {
+        const updateMsg = msg;
+        const [, metaErr] = await tryCatch(
+          this.updateFeedMetadata(updateMsg.feedId, updateMsg.metadata as Json)
+        );
+        if (metaErr) {
+          replyImmediately(feedFailureServerMsg(updateMsg.requestId, metaErr));
+          break;
+        }
+        const feed = await this.getFeed(updateMsg.feedId);
+        if (!feed) {
+          replyImmediately(
+            feedRequestFailed(
+              updateMsg.requestId,
+              FeedRequestErrorCode.FEED_NOT_FOUND
+            )
+          );
+          break;
+        }
+        const feedsMsg = {
+          type: FeedMsgCode.FEEDS_UPDATED,
+          feeds: [feed],
+        };
+        replyImmediately(feedsMsg);
+        scheduleFanOut(feedsMsg);
+        break;
+      }
+
+      case FeedMsgCode.DELETE_FEED: {
+        const deleteMsg = msg;
+        const [, err] = await tryCatch(this.deleteFeed(deleteMsg.feedId));
+        if (err) {
+          replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
+          break;
+        }
+        const feedDeletedMsg = {
+          type: FeedMsgCode.FEED_DELETED,
+          feedId: deleteMsg.feedId,
+        };
+        replyImmediately(feedDeletedMsg);
+        scheduleFanOut(feedDeletedMsg);
+        break;
+      }
+
+      case FeedMsgCode.ADD_FEED_MESSAGE: {
+        const addMsg = msg;
+        const [message, err] = await tryCatch(
+          this.addFeedMessage(addMsg.feedId, {
+            data: addMsg.data as Json,
+            id: addMsg.id,
+            timestamp: addMsg.timestamp,
+          })
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(addMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_ADDED,
+          feedId: addMsg.feedId,
+          messages: [message],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
+        break;
+      }
+
+      case FeedMsgCode.UPDATE_FEED_MESSAGE: {
+        const updateMsg = msg;
+        const [message, err] = await tryCatch(
+          this.updateFeedMessage(
+            updateMsg.feedId,
+            updateMsg.messageId,
+            updateMsg.data as Json,
+            updateMsg.timestamp
+          )
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(updateMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_UPDATED,
+          feedId: updateMsg.feedId,
+          messages: [message],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
+        break;
+      }
+
+      case FeedMsgCode.DELETE_FEED_MESSAGE: {
+        const deleteMsg = msg;
+        const [, err] = await tryCatch(
+          this.deleteFeedMessage(deleteMsg.feedId, deleteMsg.messageId)
+        );
+        if (err) {
+          replyImmediately(feedFailureServerMsg(deleteMsg.requestId, err));
+          break;
+        }
+        const feedMessagesMsg = {
+          type: FeedMsgCode.FEED_MESSAGES_DELETED,
+          feedId: deleteMsg.feedId,
+          messageIds: [deleteMsg.messageId],
+        };
+        replyImmediately(feedMessagesMsg);
+        scheduleFanOut(feedMessagesMsg);
         break;
       }
 

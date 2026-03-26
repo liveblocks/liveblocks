@@ -47,3 +47,24 @@ export type LeasedSession = {
   ttl: number; // time-to-live in milliseconds (default: 60000 = 1 minute)
   actorId: number;
 };
+
+/**
+ * Feed message data structure for messages within feeds.
+ */
+export type FeedMessage = {
+  id: string; // Unique identifier
+  createdAt: number; // Unix timestamp in milliseconds, stable for ordering
+  updatedAt: number; // Unix timestamp in milliseconds, used for stale-update protection
+  data: Json; // Arbitrary JSON data
+};
+
+/**
+ * Feed data structure for feed-related data within a room.
+ * Note: Messages are stored separately and accessed via list_feed_messages.
+ */
+export type Feed = {
+  feedId: string; // Unique identifier for the feed
+  metadata: Json; // Arbitrary JSON metadata
+  createdAt: number; // Unix timestamp in milliseconds, stable for ordering
+  updatedAt: number; // Unix timestamp in milliseconds, same as createdAt on insert
+};

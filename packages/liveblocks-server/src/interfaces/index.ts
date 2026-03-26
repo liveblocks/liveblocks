@@ -20,5 +20,9 @@ export type {
   IReadableSnapshot,
   IStorageDriver,
   IStorageDriverNodeAPI,
+  ListFeedMessagesOptions,
+  ListFeedMessagesResult,
+  ListFeedsOptions,
+  ListFeedsResult,
 } from "./IStorageDriver";
 export type { LeasedSession } from "~/types";

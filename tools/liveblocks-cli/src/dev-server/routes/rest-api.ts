@@ -43,7 +43,7 @@ import type { DbRoom, RoomFilters } from "~/dev-server/db/rooms";
 import * as Rooms from "~/dev-server/db/rooms";
 import { authorizeSecretKey } from "~/dev-server/lib/auth";
 import { yDocToJson } from "~/dev-server/lib/ydoc";
-import { NOT_IMPLEMENTED } from "~/dev-server/responses";
+import { DUMMY, NOT_IMPLEMENTED } from "~/dev-server/responses";
 
 enum SerializationFormat {
   PlainLson = "plain-lson", // the default
@@ -474,6 +474,117 @@ zen.route("GET /v2/rooms/<roomId>/active_users", ({ p }) => {
   }));
 
   return json({ data });
+});
+
+zen.route("DELETE /v2/rooms/<roomId>/feeds/<feedId>", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    ok: true,
+  });
+});
+zen.route(
+  "DELETE /v2/rooms/<roomId>/feeds/<feedId>/messages/<messageId>",
+  ({ p }) => {
+    if (!Rooms.getRoom(p.roomId)) {
+      throw ROOM_NOT_FOUND(p.roomId);
+    }
+    return DUMMY({
+      ok: true,
+    });
+  }
+);
+zen.route("GET /v2/rooms/<roomId>/feeds", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    feeds: [
+      {
+        feedId: "123",
+        metadata: {
+          title: "Test Feed",
+          description: "This is a test feed",
+        },
+        timestamp: new Date().getTime(),
+      },
+    ],
+    nextCursor: null,
+  });
+});
+zen.route("GET /v2/rooms/<roomId>/feeds/<feedId>", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    feedId: "123",
+    timestamp: new Date().getTime(),
+    metadata: {
+      title: "Test Feed",
+      description: "This is a test feed",
+    },
+  });
+});
+zen.route("GET /v2/rooms/<roomId>/feeds/<feedId>/messages", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    messages: [
+      {
+        messageId: "123",
+        data: {
+          content: "This is a test message",
+        },
+      },
+    ],
+    nextCursor: null,
+  });
+});
+zen.route("PATCH /v2/rooms/<roomId>/feeds/<feedId>", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    ok: true,
+  });
+});
+zen.route(
+  "PATCH /v2/rooms/<roomId>/feeds/<feedId>/messages/<messageId>",
+  ({ p }) => {
+    if (!Rooms.getRoom(p.roomId)) {
+      throw ROOM_NOT_FOUND(p.roomId);
+    }
+    return DUMMY({
+      ok: true,
+    });
+  }
+);
+zen.route("POST /v2/rooms/<roomId>/feed", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    feedId: "123",
+    timestamp: new Date().getTime(),
+    metadata: {
+      title: "Test Feed",
+      description: "This is a test feed",
+    },
+  });
+});
+zen.route("POST /v2/rooms/<roomId>/feeds/<feedId>/messages", ({ p }) => {
+  if (!Rooms.getRoom(p.roomId)) {
+    throw ROOM_NOT_FOUND(p.roomId);
+  }
+  return DUMMY({
+    id: "123",
+    timestamp: new Date().getTime(),
+    data: {
+      content: "This is a test message",
+    },
+  });
 });
 
 /**
