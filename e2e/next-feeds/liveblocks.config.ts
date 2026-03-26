@@ -10,6 +10,8 @@ declare global {
       name?: string;
       /** Channel feeds use `"true"`; thread feeds use `"false"`. */
       channel?: string;
+      /** Kitchen-sink demo: random tag for metadata filter examples. */
+      sinkTag?: string;
     };
 
     // Feed message data (used for FeedMessage.data from useFeedMessages)

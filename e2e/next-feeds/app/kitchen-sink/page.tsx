@@ -1,7 +1,6 @@
 "use client";
-import { nanoid } from "@liveblocks/core";
+import { LiveblocksError, nanoid } from "@liveblocks/core";
 import {
-  ClientSideSuspense,
   RoomProvider,
   useCreateFeed,
   useCreateFeedMessage,
@@ -11,37 +10,21 @@ import {
   useFeeds,
   useUpdateFeedMetadata,
   useUpdateFeedMessage,
-} from "@liveblocks/react/suspense";
-import { Suspense, useState } from "react";
+} from "@liveblocks/react";
+import { useState } from "react";
 
-const ROOM_ID = "liveblocks:examples:feeds";
+const ROOM_ID = "liveblocks:examples:feeds:sql";
+
+const FEEDS_PAGE_LIMIT = 3;
+
+function randomSinkTag(): "alpha" | "beta" {
+  return Math.random() < 0.5 ? "alpha" : "beta";
+}
 
 export default function Page() {
   return (
     <RoomProvider id={ROOM_ID}>
-      <ClientSideSuspense
-        fallback={
-          <div className="h-screen w-full flex items-center justify-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={20}
-              height={20}
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              role="presentation"
-              className="lb-icon"
-            >
-              <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
-            </svg>
-          </div>
-        }
-      >
-        <Sample />
-      </ClientSideSuspense>
+      <Sample />
     </RoomProvider>
   );
 }
@@ -67,7 +50,25 @@ function FeedMessages({
   onDeleteMessage: (messageId: string) => void;
   onDeleteMessageHttp: (messageId: string) => void;
 }) {
-  const { messages } = useFeedMessages(feedId);
+  const { messages, error: messagesError, isLoading: messagesLoading } =
+    useFeedMessages(feedId);
+
+  if (messagesError) {
+    return (
+      <div className="mt-4 border-t pt-4 rounded border border-red-200 bg-red-50 p-3 text-red-800 text-sm">
+        <p className="font-medium">Could not load messages</p>
+        <p className="mt-1">{messagesError.message}</p>
+      </div>
+    );
+  }
+
+  if (messagesLoading) {
+    return (
+      <div className="mt-4 border-t pt-4 text-gray-500 text-sm">
+        Loading messages...
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 border-t pt-4">
@@ -152,7 +153,20 @@ function FeedMessages({
 }
 
 function Sample() {
-  const { feeds, isLoading } = useFeeds();
+  const [sinkFilter, setSinkFilter] = useState<"all" | "alpha" | "beta">("all");
+  const {
+    feeds,
+    isLoading,
+    error,
+    hasFetchedAll,
+    isFetchingMore,
+    fetchMore,
+    fetchMoreError,
+  } = useFeeds({
+    limit: FEEDS_PAGE_LIMIT,
+    metadata:
+      sinkFilter === "all" ? undefined : { sinkTag: sinkFilter },
+  });
   const [expandedFeed, setExpandedFeed] = useState<string | null>(null);
   const [newMessageText, setNewMessageText] = useState<Record<string, string>>({});
 
@@ -166,7 +180,10 @@ function Sample() {
   const createFeed = () => {
     const feedId = nanoid();
     createFeedFn(feedId, {
-      metadata: { created: new Date().toISOString() },
+      metadata: {
+        created: new Date().toISOString(),
+        sinkTag: randomSinkTag(),
+      },
     });
   };
 
@@ -178,7 +195,10 @@ function Sample() {
         body: JSON.stringify({
           roomId: ROOM_ID,
           feedId: nanoid(),
-          metadata: { created: new Date().toISOString() },
+          metadata: {
+            created: new Date().toISOString(),
+            sinkTag: randomSinkTag(),
+          },
         }),
       });
       const data = await response.json();
@@ -315,6 +335,26 @@ function Sample() {
     }
   };
 
+  if (error) {
+    const detail =
+      error instanceof LiveblocksError &&
+        error.context.type === "FEED_REQUEST_ERROR"
+        ? ` (${error.context.code})`
+        : "";
+    return (
+      <main className="h-screen w-full max-w-4xl mx-auto flex p-4 py-8 flex-col">
+        <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-900">
+          <h1 className="text-xl font-bold mb-2">Could not load feeds{detail}</h1>
+          <p className="text-sm whitespace-pre-wrap">{error.message}</p>
+          <p className="mt-4 text-xs text-red-700">
+            Feeds require a room on storage engine v2. Create or use a v2 room,
+            or check the server error above.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="h-screen w-full max-w-4xl mx-auto flex p-4 py-8 flex-col overflow-y-auto">
       <div className="flex items-center justify-between mb-4">
@@ -335,6 +375,48 @@ function Sample() {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+        <span className="font-medium text-gray-700">Filter by sinkTag:</span>
+        {(["all", "alpha", "beta"] as const).map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSinkFilter(key)}
+            className={`rounded px-3 py-1 capitalize ${
+              sinkFilter === key
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100"
+            }`}
+          >
+            {key}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 p-3 text-sm">
+        <span className="text-gray-600">
+          Page size: {FEEDS_PAGE_LIMIT} · hasFetchedAll:{" "}
+          {String(hasFetchedAll ?? false)} · isFetchingMore:{" "}
+          {String(isFetchingMore ?? false)}
+        </span>
+        {fetchMoreError ? (
+          <span className="text-red-600">fetchMore: {fetchMoreError.message}</span>
+        ) : null}
+        <button
+          type="button"
+          disabled={
+            isLoading ||
+            isFetchingMore ||
+            hasFetchedAll ||
+            fetchMore === undefined
+          }
+          onClick={() => void fetchMore?.()}
+          className="rounded bg-indigo-100 px-3 py-1 font-medium text-indigo-900 hover:bg-indigo-200 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Load more feeds
+        </button>
       </div>
 
       <div className="flex flex-col gap-4">
@@ -402,38 +484,30 @@ function Sample() {
               </div>
 
               {isExpanded && (
-                <Suspense
-                  fallback={
-                    <div className="mt-4 border-t pt-4 text-gray-500 text-sm">
-                      Loading messages...
-                    </div>
+                <FeedMessages
+                  feedId={feed.feedId}
+                  newMessageText={newMessageText[feed.feedId] || ""}
+                  onMessageTextChange={(text) =>
+                    setNewMessageText((prev) => ({
+                      ...prev,
+                      [feed.feedId]: text,
+                    }))
                   }
-                >
-                  <FeedMessages
-                    feedId={feed.feedId}
-                    newMessageText={newMessageText[feed.feedId] || ""}
-                    onMessageTextChange={(text) =>
-                      setNewMessageText((prev) => ({
-                        ...prev,
-                        [feed.feedId]: text,
-                      }))
-                    }
-                    onCreateMessage={() => createMessage(feed.feedId)}
-                    onCreateMessageHttp={() => createMessageHttp(feed.feedId)}
-                    onUpdateMessage={(messageId) =>
-                      updateMessage(feed.feedId, messageId)
-                    }
-                    onUpdateMessageHttp={(messageId) =>
-                      updateMessageHttp(feed.feedId, messageId)
-                    }
-                    onDeleteMessage={(messageId) =>
-                      deleteMessage(feed.feedId, messageId)
-                    }
-                    onDeleteMessageHttp={(messageId) =>
-                      deleteMessageHttp(feed.feedId, messageId)
-                    }
-                  />
-                </Suspense>
+                  onCreateMessage={() => createMessage(feed.feedId)}
+                  onCreateMessageHttp={() => createMessageHttp(feed.feedId)}
+                  onUpdateMessage={(messageId) =>
+                    updateMessage(feed.feedId, messageId)
+                  }
+                  onUpdateMessageHttp={(messageId) =>
+                    updateMessageHttp(feed.feedId, messageId)
+                  }
+                  onDeleteMessage={(messageId) =>
+                    deleteMessage(feed.feedId, messageId)
+                  }
+                  onDeleteMessageHttp={(messageId) =>
+                    deleteMessageHttp(feed.feedId, messageId)
+                  }
+                />
               )}
             </div>
           );
