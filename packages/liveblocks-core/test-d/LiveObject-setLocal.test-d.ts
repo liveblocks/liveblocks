@@ -43,3 +43,22 @@ expectError(obj.setLocal("nonexistent", 42));
 // Return type of get() includes local values
 expectType<number | undefined>(obj.get("optionalJson"));
 expectType<string>(obj.get("required"));
+
+// Index signature with optional values
+type IndexedSchema = {
+  [key: string]: string | number | undefined;
+  required: string;
+  localOnly?: string;
+};
+
+declare const indexed: LiveObject<IndexedSchema>;
+
+// Allowed: the named optional Json key
+indexed.setLocal("localOnly", "hello");
+
+// Disallowed: we know that undefined isn't a legal value for 'required' field here, so don't allow it
+expectError(indexed.setLocal("required", "hello"));
+expectError(indexed.setLocal("unknownKey", "hello")); // Despite the index signature, we don't allow _any_ string key here. We require users to use explicitly-optional keys only.
+
+// Disallowed: wrong value type for localOnly
+expectError(indexed.setLocal("localOnly", 42));

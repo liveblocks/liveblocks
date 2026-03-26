@@ -1,5 +1,4 @@
 import { LiveObject } from "@liveblocks/client";
-import type { Lson } from "@liveblocks/core";
 import { lsonToJson } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -15,11 +14,6 @@ import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-type ObjectStorage = {
-  [key: string]: Lson | undefined;
-  localOnly?: string;
-};
-
 const {
   RoomProvider,
   useCanRedo,
@@ -33,7 +27,10 @@ const {
 } = createRoomContext<
   never,
   {
-    object: LiveObject<ObjectStorage>;
+    object: LiveObject<{
+      [key: string]: number | LiveObject<{ a: number }> | undefined;
+      localOnly?: number;
+    }>;
   }
 >(client);
 
@@ -77,7 +74,7 @@ function Sandbox() {
     obj.delete(key);
   }, []);
 
-  const setLocal_ = useMutation(({ storage }, value: string) => {
+  const setLocal_ = useMutation(({ storage }, value: number) => {
     const obj = storage.get("object");
     obj.setLocal("localOnly", value);
   }, []);
@@ -108,7 +105,7 @@ function Sandbox() {
   const nextNestedKey = randomInt(10).toString();
   const nextNestedValue = { a: randomInt(10) };
   const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
-  const nextLocalValue = `local-${randomInt(100)}`;
+  const nextLocalValue = randomInt(100);
   const hasLocalOnly = "localOnly" in obj;
 
   return (

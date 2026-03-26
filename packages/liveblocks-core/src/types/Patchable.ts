@@ -1,7 +1,7 @@
 /**
  * Extracts the optional keys (whose values are allowed to be `undefined`).
  */
-export type OptionalKeys<T> = Extract<
+type OptionalKeys<T> = Extract<
   { [K in keyof T]-?: undefined extends T[K] ? K : never }[keyof T],
   string
 >;

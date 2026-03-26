@@ -22,8 +22,8 @@ import type {
 } from "../protocol/StorageNode";
 import { CrdtType, isRootStorageNode } from "../protocol/StorageNode";
 import type * as DevTools from "../types/DevToolsTreeNode";
+import type { KnownKeys } from "../types/KnownKeys";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { OptionalKeys } from "../types/Patchable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import {
@@ -38,10 +38,16 @@ import type { ToImmutable } from "./utils";
 /**
  * Optional keys of O whose non-undefined type is plain Json (not a
  * LiveStructure). These are the only keys eligible for setLocal().
+ * Uses KnownKeys to only consider explicitly-named keys, not index signatures.
+ * Checks optionality inline to avoid index signature pollution of OptionalKeys.
  */
 type OptionalJsonKeys<O> = {
-  [K in OptionalKeys<O>]: Exclude<O[K], undefined> extends Json ? K : never;
-}[OptionalKeys<O>];
+  [K in KnownKeys<O>]: undefined extends O[K]
+    ? Exclude<O[K], undefined> extends Json
+      ? K
+      : never
+    : never;
+}[KnownKeys<O>];
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
