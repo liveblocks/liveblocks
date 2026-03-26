@@ -1,7 +1,9 @@
 import {
   findNonSerializableValue,
   isLiveList,
+  isLiveMap,
   isLiveObject,
+  isLiveStructure,
 } from "./crdts/liveblocks-helpers";
 import { LiveList } from "./crdts/LiveList";
 import { LiveMap } from "./crdts/LiveMap";
@@ -108,6 +110,136 @@ export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
   // XXX 🤯 Actually I think deepLiveifyObject(obj, config) could eventually be
   // equivalent to reconcileLiveObject(new LiveObject(), jsonObj, config) 😌
   return deepLiveify(obj) as LiveObject<LsonObject>;
+}
+
+/**
+ * Reconciles a LiveObject to match the given plain object. Only mutates keys
+ * that actually changed. Recursively reconciles the entire Live tree below it.
+ */
+export function reconcileLiveRoot<O extends LsonObject>(
+  liveObj: LiveObject<O>,
+  jsonObj: JsonObject
+  /* config? */
+): void {
+  if (liveObj.immutableIs(jsonObj)) return;
+  if (!isPlainObject(jsonObj))
+    throw new Error(
+      "Reconciling the document root expects a plain object value"
+    );
+
+  reconcileLiveObject(liveObj, jsonObj);
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Dispatcher: given a LiveStructure and a Json value, either reconciles the
+ * existing live instance in place (when types match) or creates a new
+ * deep-liveified tree (when types don't match). Returns the resulting Lson.
+ */
+function reconcile(
+  live: Lson,
+  json: Json
+  /* config? */
+): Lson {
+  if (isLiveObject(live) && isPlainObject(json)) {
+    return reconcileLiveObject(live, json);
+  } else if (isLiveList(live) && Array.isArray(json)) {
+    return reconcileLiveList(live, json);
+  } else if (isLiveMap(live) && isPlainObject(json)) {
+    return reconcileLiveMap(live);
+  } else {
+    // Type mismatch or scalar — create fresh
+    return deepLiveify(json);
+  }
+}
+
+function reconcileLiveMap(
+  _liveMap: LiveMap<string, Lson>
+  /* config? */
+): LiveMap<string, Lson> {
+  throw new Error("Reconciling a LiveMap is not supported yet");
+  // return liveMap;
+}
+
+function reconcileLiveObject<O extends LsonObject>(
+  liveObj: LiveObject<O>,
+  jsonObj: JsonObject
+  /* config? */
+): LiveObject<O> {
+  type L = O[keyof O];
+
+  const currentKeys = liveObj.keys();
+
+  for (const key in jsonObj) {
+    currentKeys.delete(key);
+    const newVal = jsonObj[key];
+
+    if (newVal === undefined) {
+      liveObj.delete(key);
+      continue;
+    }
+
+    const curVal = liveObj.get(key);
+    if (curVal === undefined) {
+      // New key
+      liveObj.set(key, deepLiveify(newVal) as L);
+    } else if (isLiveStructure(curVal)) {
+      // Reconcile existing live structure
+      const next = reconcile(curVal, newVal);
+      if (next !== curVal) {
+        liveObj.set(key, next as L);
+      }
+    } else if (curVal !== newVal) {
+      // Scalar changed
+      liveObj.set(key, deepLiveify(newVal) as L);
+    }
+  }
+
+  // Delete keys absent from jsonObj
+  for (const key of currentKeys) {
+    liveObj.delete(key);
+  }
+
+  return liveObj;
+}
+
+function reconcileLiveList<T extends Lson>(
+  liveList: LiveList<T>,
+  jsonArr: Json[]
+  /* config? */
+): LiveList<T> {
+  const curLen = liveList.length;
+  const newLen = jsonArr.length;
+
+  // Reconcile overlapping range
+  for (let i = 0; i < Math.min(curLen, newLen); i++) {
+    const curVal = liveList.get(i);
+    const newVal = jsonArr[i];
+
+    if (isLiveStructure(curVal)) {
+      const next = reconcile(curVal, newVal);
+      if (next !== curVal) {
+        liveList.set(i, next as T);
+      }
+    } else if (curVal !== newVal) {
+      liveList.set(i, deepLiveify(newVal) as T);
+    }
+  }
+
+  // Append new elements
+  for (let i = curLen; i < newLen; i++) {
+    liveList.push(deepLiveify(jsonArr[i]) as T);
+  }
+
+  // Remove excess elements from the end
+  for (let i = curLen - 1; i >= newLen; i--) {
+    liveList.delete(i);
+  }
+
+  return liveList;
 }
 
 export function legacy_patchLiveList<T extends Lson>(

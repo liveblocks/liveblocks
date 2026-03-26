@@ -112,6 +112,7 @@ export {
   legacy_patchImmutableObject,
   legacy_patchLiveObjectKey,
   lsonToJson,
+  reconcileLiveRoot,
 } from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";

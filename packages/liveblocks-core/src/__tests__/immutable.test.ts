@@ -1,3 +1,4 @@
+import * as fc from "fast-check";
 import type { MockInstance } from "vitest";
 import {
   afterEach,
@@ -15,16 +16,23 @@ import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject, ToJson } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
+  deepLiveifyObject,
   legacy_patchImmutableObject,
   legacy_patchLiveObject,
   legacy_patchLiveObjectKey,
   lsonToJson,
+  reconcileLiveRoot,
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
 import type { JsonObject } from "../lib/Json";
 import type { PlainLsonObject } from "../types/PlainLson";
-import { enterConnectAndGetStorage, initRoom } from "./_devserver";
+import {
+  enterConnectAndGetStorage,
+  initRoom,
+  prepareStorageUpdateTest,
+} from "./_devserver";
+import { objectUpdate } from "./_updatesUtils";
 
 /**
  * Sets up two real clients (A and B) connected to the same room via the dev
@@ -113,6 +121,11 @@ function applyStateChanges<TState extends JsonObject>(
   return { oldState, newState };
 }
 
+const jsonObject = fc.dictionary(
+  fc.string().filter((s) => s !== "__proto__"),
+  fc.jsonValue().map((x) => JSON.parse(JSON.stringify(x)) as unknown)
+);
+
 describe("immutableIs", () => {
   test("returns true when cached immutable matches the provided value", () => {
     const liveObj = new LiveObject({ a: 1 });
@@ -136,6 +149,243 @@ describe("immutableIs", () => {
     const liveObj = new LiveObject({ a: 1 });
     liveObj.toImmutable();
     expect(liveObj.immutableIs({ a: 999 })).toBe(false);
+  });
+});
+
+describe("reconcileLiveObject", () => {
+  test("updates a changed scalar value", () => {
+    const liveObj = new LiveObject({ a: 1, b: 2 });
+    reconcileLiveRoot(liveObj, { a: 1, b: 3 });
+    expect(liveObj.toImmutable()).toEqual({ a: 1, b: 3 });
+  });
+
+  test("adds a new key", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    reconcileLiveRoot(liveObj, { a: 1, b: "hello" });
+    expect(liveObj.toImmutable()).toEqual({ a: 1, b: "hello" });
+  });
+
+  test("deletes a removed key", () => {
+    const liveObj = new LiveObject({ a: 1, b: 2 });
+    reconcileLiveRoot(liveObj, { a: 1 });
+    expect(liveObj.toImmutable()).toEqual({ a: 1 });
+  });
+
+  test("leaves unchanged scalars untouched", () => {
+    const liveObj = new LiveObject({ a: 1, b: 2 });
+    const before = liveObj.toImmutable();
+
+    reconcileLiveRoot(liveObj, { a: 1, b: 2 });
+    expect(liveObj.toImmutable()).toEqual({ a: 1, b: 2 });
+
+    // Referentially identical when a no-op
+    expect(liveObj.toImmutable()).toBe(before);
+  });
+
+  test("deep-liveifies a new nested object", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    reconcileLiveRoot(liveObj, { a: 1, nested: { x: 10 } });
+    expect(liveObj.toImmutable()).toEqual({ a: 1, nested: { x: 10 } });
+    expect(liveObj.get("nested")).toBeInstanceOf(LiveObject);
+  });
+
+  test("recursively reconciles a nested LiveObject", () => {
+    const liveObj = new LiveObject({
+      nested: new LiveObject({ x: 1, y: 2 }),
+    });
+    const nestedBefore = liveObj.get("nested");
+    reconcileLiveRoot(liveObj, { nested: { x: 1, y: 99 } });
+    expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 99 } });
+    // Same LiveObject instance — reconciled in place, not replaced
+    expect(liveObj.get("nested")).toBe(nestedBefore);
+  });
+
+  test("replaces LiveObject with scalar when type changes", () => {
+    const liveObj = new LiveObject({
+      val: new LiveObject({ x: 1 }),
+    });
+    reconcileLiveRoot(liveObj, { val: 42 });
+    expect(liveObj.toImmutable()).toEqual({ val: 42 });
+  });
+
+  test("deep-liveifies a new array as LiveList", () => {
+    const liveObj = new LiveObject({ a: 1 });
+    reconcileLiveRoot(liveObj, { a: 1, items: [1, 2, 3] });
+    expect(liveObj.toImmutable()).toEqual({ a: 1, items: [1, 2, 3] });
+    expect(liveObj.get("items")).toBeInstanceOf(LiveList);
+  });
+
+  test("reconciles a nested LiveList", () => {
+    const liveObj = new LiveObject({
+      items: new LiveList([1, 2, 3]),
+    });
+    const listBefore = liveObj.get("items");
+    reconcileLiveRoot(liveObj, { items: [1, 2, 4] });
+    expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 4] });
+    // Same LiveList instance
+    expect(liveObj.get("items")).toBe(listBefore);
+  });
+
+  test("skips subtree when cached immutable matches", () => {
+    const nested = new LiveObject({ x: 1, y: 2 });
+    const liveObj = new LiveObject({ nested });
+    const snapshot = nested.toImmutable();
+    reconcileLiveRoot(liveObj, { nested: snapshot });
+    expect(liveObj.toImmutable()).toEqual({ nested: { x: 1, y: 2 } });
+    expect(liveObj.get("nested")).toBe(nested);
+  });
+
+  test("handles deeply nested updates minimally", () => {
+    const liveObj = new LiveObject({
+      foo: new LiveObject({
+        bar: new LiveObject({ qux: 1, other: "keep" }),
+      }),
+    });
+    const barBefore = liveObj.get("foo")?.get("bar");
+    reconcileLiveRoot(liveObj, {
+      foo: { bar: { qux: 123, other: "keep" } },
+    });
+    expect(liveObj.toImmutable()).toEqual({
+      foo: { bar: { qux: 123, other: "keep" } },
+    });
+    // Same LiveObject instances preserved
+    expect(liveObj.get("foo")?.get("bar")).toBe(barBefore);
+  });
+
+  test("replaces LiveObject in list when json is scalar", () => {
+    const liveObj = new LiveObject({
+      items: new LiveList([new LiveObject({ a: 1 })]),
+    });
+    reconcileLiveRoot(liveObj, { items: [42] });
+    expect(liveObj.toImmutable()).toEqual({ items: [42] });
+  });
+
+  test("appends elements when new array is longer", () => {
+    const liveObj = new LiveObject({
+      items: new LiveList([1, 2]),
+    });
+    reconcileLiveRoot(liveObj, { items: [1, 2, 3, 4] });
+    expect(liveObj.toImmutable()).toEqual({ items: [1, 2, 3, 4] });
+  });
+
+  test("removes elements when new array is shorter", () => {
+    const liveObj = new LiveObject({
+      items: new LiveList([1, 2, 3, 4]),
+    });
+    reconcileLiveRoot(liveObj, { items: [1, 2] });
+    expect(liveObj.toImmutable()).toEqual({ items: [1, 2] });
+  });
+
+  test("replaces LiveList with scalar when type changes", () => {
+    const liveObj = new LiveObject({
+      val: new LiveList([1, 2]),
+    });
+    reconcileLiveRoot(liveObj, { val: "hello" });
+    expect(liveObj.toImmutable()).toEqual({ val: "hello" });
+  });
+
+  test("replaces scalar with LiveObject when type changes", () => {
+    const liveObj = new LiveObject({ val: 42 });
+    reconcileLiveRoot(liveObj, { val: { a: 1 } });
+    expect(liveObj.toImmutable()).toEqual({ val: { a: 1 } });
+    expect(liveObj.get("val")).toBeInstanceOf(LiveObject);
+  });
+
+  test("replaces scalar with LiveList when type changes", () => {
+    const liveObj = new LiveObject({ val: 42 });
+    reconcileLiveRoot(liveObj, { val: [1, 2] });
+    expect(liveObj.toImmutable()).toEqual({ val: [1, 2] });
+    expect(liveObj.get("val")).toBeInstanceOf(LiveList);
+  });
+
+  test("throws when encountering a LiveMap", () => {
+    const liveObj = new LiveObject({
+      map: new LiveMap([["a", 1]]),
+    });
+    expect(() => reconcileLiveRoot(liveObj, { map: { a: 2 } })).toThrow(
+      "LiveMap is not supported yet"
+    );
+  });
+
+  test("property: reconciling to any JsonObject produces matching immutable", () => {
+    fc.assert(
+      fc.property(jsonObject, jsonObject, (initial, target) => {
+        const liveObj = deepLiveifyObject(initial);
+        expect(liveObj.toImmutable()).toEqual(initial);
+
+        reconcileLiveRoot(liveObj, target);
+        expect(liveObj.toImmutable()).toEqual(target);
+      })
+    );
+  });
+
+  // --- Dev-server tests: verify minimal ops ---
+
+  test("changing one nested key only emits update for that key path", async () => {
+    const { rootA, expectUpdates } = await prepareStorageUpdateTest<{
+      nested: LiveObject<{ x: number; y: number }>;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        nested: { liveblocksType: "LiveObject", data: { x: 1, y: 2 } },
+      },
+    });
+
+    reconcileLiveRoot(rootA, { nested: { x: 1, y: 99 } });
+
+    await expectUpdates([
+      [
+        // Only the inner "nested" object should fire with { y: update }
+        objectUpdate({ x: 1, y: 99 }, { y: { type: "update" } }),
+      ],
+    ]);
+  });
+
+  test("unchanged data emits no updates", async () => {
+    const { rootA, expectUpdates } = await prepareStorageUpdateTest<{
+      a: number;
+      b: number;
+    }>({
+      liveblocksType: "LiveObject",
+      data: { a: 1, b: 2 },
+    });
+
+    reconcileLiveRoot(rootA, { a: 1, b: 2 });
+
+    await expectUpdates([]);
+  });
+
+  test("deeply nested change only emits updates along the changed path", async () => {
+    const { rootA, expectUpdates } = await prepareStorageUpdateTest<{
+      foo: LiveObject<{
+        bar: LiveObject<{ qux: number; keep: string }>;
+      }>;
+    }>({
+      liveblocksType: "LiveObject",
+      data: {
+        foo: {
+          liveblocksType: "LiveObject",
+          data: {
+            bar: {
+              liveblocksType: "LiveObject",
+              data: { qux: 1, keep: "same" },
+            },
+          },
+        },
+      },
+    });
+
+    reconcileLiveRoot(rootA, { foo: { bar: { qux: 123, keep: "same" } } });
+
+    await expectUpdates([
+      [
+        // Only the innermost "bar" object fires with { qux: update }
+        objectUpdate(
+          { qux: 123, keep: "same" },
+          { qux: { type: "update" } }
+        ),
+      ],
+    ]);
   });
 });
 
