@@ -5,7 +5,7 @@ import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
 import { Suspense } from "react";
 import { describe, expect, test } from "vitest";
 
-import type { LiveblocksFlow } from "../flow";
+import type { LiveblocksFlow } from "../types";
 import { createLiveblocksFlow, useLiveblocksFlow } from "../index";
 import { useLiveblocksFlow as useLiveblocksFlowSuspense } from "../suspense";
 import { render, renderHook } from "./_utils";
