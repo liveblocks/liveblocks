@@ -33,7 +33,12 @@ import {
   getRandomPointInBounds,
 } from "@/app/flowchart/shared";
 import { z } from "zod";
-import { LiveblocksEdge, LiveblocksNode } from "@liveblocks/react-flow";
+import {
+  LiveblocksEdge,
+  LiveblocksNode,
+  toLiveblocksEdge,
+  toLiveblocksNode,
+} from "@liveblocks/react-flow";
 
 const PRESENCE_PROGRESS_TTL_SECONDS = 20;
 const PRESENCE_DONE_TTL_SECONDS = 2;
@@ -102,24 +107,6 @@ function getBoundsFromLiveblocksNodes(
   }
 
   return hasNodes ? { minX, minY, maxX, maxY } : null;
-}
-
-function createLiveblocksNode(
-  node: FlowchartNode
-): LiveblocksNode<FlowchartNode> {
-  return new LiveObject({
-    ...node,
-    data: new LiveObject(node.data),
-  } as unknown as JsonObject) as LiveblocksNode<FlowchartNode>;
-}
-
-function createLiveblocksEdge(
-  edge: FlowchartEdge
-): LiveblocksEdge<FlowchartEdge> {
-  return new LiveObject({
-    ...edge,
-    data: new LiveObject(edge.data),
-  } as unknown as JsonObject) as LiveblocksEdge<FlowchartEdge>;
 }
 
 async function runFlowchartAgent(roomId: string, prompt: string) {
@@ -198,40 +185,40 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
       await generateText({
         model: openai("gpt-5.4-nano"),
         system: dedent`
-            You edit a live collaborative React Flow flowchart.
+          You edit a live collaborative React Flow flowchart.
 
-            Node shape: { id, position: { x, y }, width, height, data: { label, shape, color } }.
-            Edge shape: { id, source, target, sourceHandle, targetHandle, data: { label } }.
+          Node shape: { id, position: { x, y }, width, height, data: { label, shape, color } }.
+          Edge shape: { id, source, target, sourceHandle, targetHandle, data: { label } }.
 
-            Rules:
-            - Keep nodes as "block" and edges as "${FLOWCHART_EDGE_TYPE}".
-            - Shapes: ${BLOCK_SHAPES.join(" | ")}.
-            - Colors: ${Object.keys(BLOCK_COLORS).join(", ")}.
-            - Make small, deliberate changes that are easy to follow visually.
-            - Prefer updating the current diagram over rebuilding it.
-            - Keep labels short.
-            - Maintain readable spacing and avoid overlap.
-            - Vary shape, color, and size only when it helps readability.
-            - Delete nodes or edges only when the user clearly asks.
-            - Edge handles are chosen automatically from geometry.
-            - Moving a node automatically refreshes its connected edges.
-          `,
+          Rules:
+          - Keep nodes as "block" and edges as "${FLOWCHART_EDGE_TYPE}".
+          - Shapes: ${BLOCK_SHAPES.join(" | ")}.
+          - Colors: ${Object.keys(BLOCK_COLORS).join(", ")}.
+          - Make small, deliberate changes that are easy to follow visually.
+          - Prefer updating the current diagram over rebuilding it.
+          - Keep labels short.
+          - Maintain readable spacing and avoid overlap.
+          - Vary shape, color, and size only when it helps readability.
+          - Delete nodes or edges only when the user clearly asks.
+          - Edge handles are chosen automatically from geometry.
+          - Moving a node automatically refreshes its connected edges.
+        `,
         prompt: dedent`
-            <diagram>
-              ${JSON.stringify(
-                {
-                  nodes: Object.fromEntries(nodes.toImmutable()),
-                  edges: Object.fromEntries(edges.toImmutable()),
-                },
-                null,
-                2
-              )}
-            </diagram>
+          <diagram>
+            ${JSON.stringify(
+              {
+                nodes: Object.fromEntries(nodes.toImmutable()),
+                edges: Object.fromEntries(edges.toImmutable()),
+              },
+              null,
+              2
+            )}
+          </diagram>
 
-            <user-message>
-              ${prompt}
-            </user-message>
-          `,
+          <user-message>
+            ${prompt}
+          </user-message>
+        `,
         providerOptions: { openai: { reasoningEffort: "low" } },
         tools: {
           addNode: tool({
@@ -261,7 +248,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 }
 
                 const node = createFlowchartNode({ ...newNode, id });
-                nodes.set(id, createLiveblocksNode(node));
+                nodes.set(id, toLiveblocksNode(node));
 
                 await pause();
 
@@ -402,7 +389,7 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                   targetHandle,
                   label: "",
                 });
-                edges.set(id, createLiveblocksEdge(edge));
+                edges.set(id, toLiveblocksEdge(edge));
 
                 await pause();
 
@@ -425,7 +412,6 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 return { ok: true, id };
               }),
           }),
-
           updateEdge: tool({
             description: "Update one edge.",
             inputSchema: z.object({
@@ -477,7 +463,6 @@ async function runFlowchartAgent(roomId: string, prompt: string) {
                 return { ok: true, id: updatedEdge.id };
               }),
           }),
-
           deleteEdge: tool({
             description: "Delete one edge.",
             inputSchema: idSchema,

@@ -9,10 +9,9 @@ export { Cursors } from "./cursors";
 export type {
   CustomSerializationConfig,
   EdgeSyncConfig,
-  LiveblocksEdge,
-  LiveblocksFlow,
-  LiveblocksNode,
   NodeSyncConfig,
   SyncConfig,
 } from "./flow";
 export { createLiveblocksFlow, useLiveblocksFlow } from "./flow";
+export { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
+export type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";

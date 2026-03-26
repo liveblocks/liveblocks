@@ -1,10 +1,4 @@
-import type {
-  DistributiveOmit,
-  Json,
-  LsonObject,
-  Resolve,
-  ToImmutable,
-} from "@liveblocks/core";
+import type { Json, Resolve, ToImmutable } from "@liveblocks/core";
 import { LiveMap, LiveObject, shallow, Signal } from "@liveblocks/core";
 import { useMutation, useStorage } from "@liveblocks/react";
 import {
@@ -27,63 +21,21 @@ import type {
 import { addEdge as defaultAddEdge } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const DEFAULT_STORAGE_KEY = "flow";
-
-// React Flow `Node` properties that are purely ephemeral and local to each client
-// instead of being written to Liveblocks Storage.
-const NODE_LOCAL_KEYS = [
-  "selected",
-  "dragging",
-  "measured",
-  "resizing",
-] as const satisfies (keyof Node)[number][];
-
-// React Flow `Edge` properties that are purely ephemeral and local to each client
-// instead of being written to Liveblocks Storage.
-const EDGE_LOCAL_KEYS = ["selected"] as const satisfies (keyof Edge)[number][];
+import {
+  DEFAULT_STORAGE_KEY,
+  EDGE_LOCAL_KEYS,
+  NODE_LOCAL_KEYS,
+} from "./constants";
+import { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
+import type {
+  LiveblocksEdge,
+  LiveblocksFlow,
+  LiveblocksNode,
+  LocalEdges,
+  LocalNodes,
+} from "./types";
 
 const EMPTY_ARRAY = [] as unknown[];
-
-/**
- * The Liveblocks Storage representation of a React Flow `Node`.
- *
- * It doesn't include local-only properties.
- * The entire node and its `data` property are both stored as `LiveObject`s.
- */
-export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
-  DistributiveOmit<N, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
-    data: LiveObject<N["data"] & LsonObject>;
-  } & LsonObject
->;
-
-/**
- * The Liveblocks Storage representation of a React Flow `Edge`.
- *
- * It doesn't include local-only properties.
- * The entire edge and its `data` property are both stored as `LiveObject`s.
- */
-export type LiveblocksEdge<E extends Edge = BuiltInEdge> = LiveObject<
-  DistributiveOmit<E, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
-    data?: LiveObject<NonNullable<E["data"]> & LsonObject>;
-  } & LsonObject
->;
-
-/**
- * The Liveblocks Storage representation of a React Flow diagram made of nodes and edges.
- *
- * Nodes and edges are stored as `LiveMap`s keyed by their IDs, enabling
- * fine-grained conflict-free updates from multiple clients simultaneously.
- */
-export type LiveblocksFlow<
-  N extends Node = BuiltInNode,
-  E extends Edge = BuiltInEdge,
-> = LiveObject<{
-  nodes: LiveMap<string, LiveblocksNode<N>>;
-  edges: LiveMap<string, LiveblocksEdge<E>>;
-}>;
-
-type LocalNodes = Partial<Record<(typeof NODE_LOCAL_KEYS)[number], unknown>>;
-type LocalEdges = Partial<Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>>;
 
 type UseLiveblocksFlowResult<
   N extends Node = BuiltInNode,
@@ -265,19 +217,6 @@ function pick<T extends object, K extends PropertyKey>(
   return result;
 }
 
-function omit<T extends object, K extends PropertyKey>(
-  from: T,
-  keys: readonly K[]
-): Omit<T, Extract<K, keyof T>> {
-  const result = { ...from } as Partial<T>;
-
-  for (const key of keys) {
-    delete (result as Record<PropertyKey, unknown>)[key];
-  }
-
-  return result as Omit<T, Extract<K, keyof T>>;
-}
-
 function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
   const previous = cache.get(next.id);
 
@@ -348,30 +287,6 @@ function updateLocalState<T extends object>(
   }
 }
 
-// Converts a React Flow `Node` into a Liveblocks Storage version, omitting
-// the fields that must stay local to each client.
-function nodeToStorage<N extends Node>(node: N): LiveblocksNode<N> {
-  const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as N;
-
-  return new LiveObject({
-    ...(rest as LsonObject),
-    data: new LiveObject(data as LsonObject),
-  }) as LiveblocksNode<N>;
-}
-
-// Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
-// the fields that must stay local to each client.
-function edgeToStorage<E extends Edge>(edge: E): LiveblocksEdge<E> {
-  const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as E;
-
-  return new LiveObject({
-    ...(rest as LsonObject),
-
-    // `data` is optional on edges.
-    data: data === undefined ? undefined : new LiveObject(data as LsonObject),
-  }) as LiveblocksEdge<E>;
-}
-
 // Similar to React Flow's `applyNodeChanges()`, but with a split between local
 // and remote changes.
 // https://reactflow.dev/api-reference/utils/apply-node-changes
@@ -389,7 +304,7 @@ function applyNodeChanges<N extends Node>(args: {
     switch (change.type) {
       case "add":
       case "replace":
-        nodes.set(change.item.id, nodeToStorage(change.item));
+        nodes.set(change.item.id, toLiveblocksNode(change.item));
         if (
           updateLocalState(
             nextLocal,
@@ -504,7 +419,7 @@ function applyEdgeChanges<E extends Edge>(args: {
     switch (change.type) {
       case "add":
       case "replace":
-        edges.set(change.item.id, edgeToStorage(change.item));
+        edges.set(change.item.id, toLiveblocksEdge(change.item));
         if (
           updateLocalState(
             nextLocal,
@@ -553,8 +468,8 @@ export function createLiveblocksFlow<
   E extends Edge = BuiltInEdge,
 >(nodes: N[] = [], edges: E[] = []): LiveblocksFlow<N, E> {
   return new LiveObject({
-    nodes: new LiveMap(nodes.map((node) => [node.id, nodeToStorage(node)])),
-    edges: new LiveMap(edges.map((edge) => [edge.id, edgeToStorage(edge)])),
+    nodes: new LiveMap(nodes.map((node) => [node.id, toLiveblocksNode(node)])),
+    edges: new LiveMap(edges.map((edge) => [edge.id, toLiveblocksEdge(edge)])),
   }) as LiveblocksFlow<N, E>;
 }
 
@@ -708,7 +623,7 @@ export function useLiveblocksFlow<
       return;
     }
 
-    edges.set(newEdge.id, edgeToStorage(newEdge));
+    edges.set(newEdge.id, toLiveblocksEdge(newEdge));
   }, []);
 
   const setInitialStorage = useMutation(({ storage }) => {
