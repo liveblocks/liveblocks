@@ -1,9 +1,9 @@
+import type { MockInstance } from "vitest";
 import {
   afterEach,
   beforeAll,
   describe,
   expect,
-  type MockInstance,
   onTestFinished,
   test,
   vi,
@@ -16,9 +16,9 @@ import type { LsonObject, ToJson } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
   legacy_patchImmutableObject,
+  legacy_patchLiveObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObject,
-  patchLiveObjectKey,
 } from "../immutable";
 import { kInternal } from "../internal";
 import * as console from "../lib/fancy-console";
@@ -32,12 +32,12 @@ import { enterConnectAndGetStorage, initRoom } from "./_devserver";
  *
  * Returns:
  * - `storage`  — client A's storage root (the "active" client that tests
- *   mutate via `patchLiveObjectKey` / `patchLiveObject`)
+ *   mutate via `legacy_patchLiveObjectKey` / `legacy_patchLiveObject`)
  * - `refStorage` — client B's storage root (the "reference" client that
  *   passively receives changes via server-mediated sync)
  * - `state` — a plain-JSON mirror of client A's storage, shared by reference
  *   with the caller. Tests mutate this object directly (e.g.
- *   `state.foo = "bar"`) and then call `patchLiveObjectKey` to propagate
+ *   `state.foo = "bar"`) and then call `legacy_patchLiveObjectKey` to propagate
  *   the diff into the live CRDT tree.
  * - `expectStorageAndState(data, itemsCount?)` — asserts that both clients'
  *   storage equals `data`, that the CRDT node count matches `itemsCount`
@@ -139,22 +139,22 @@ describe("immutableIs", () => {
   });
 });
 
-describe("patchLiveObjectKey", () => {
+describe("legacy_patchLiveObjectKey", () => {
   test("should set string", () => {
     const liveObject = new LiveObject();
-    patchLiveObjectKey(liveObject, "key", undefined, "value");
+    legacy_patchLiveObjectKey(liveObject, "key", undefined, "value");
     expect(liveObject.get("key")).toBe("value");
   });
 
   test("should set number", () => {
     const liveObject = new LiveObject();
-    patchLiveObjectKey(liveObject, "key", undefined, 0);
+    legacy_patchLiveObjectKey(liveObject, "key", undefined, 0);
     expect(liveObject.get("key")).toBe(0);
   });
 
   test("should set LiveObject if next is object", () => {
     const liveObject = new LiveObject<{ key: LiveObject<{ a: number }> }>();
-    patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
+    legacy_patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
     const value = liveObject.get("key");
     expect(value instanceof LiveObject).toBe(true);
     expect(value.toObject()).toEqual({ a: 0 });
@@ -162,7 +162,7 @@ describe("patchLiveObjectKey", () => {
 
   test("should delete key if next is undefined", () => {
     const liveObject = new LiveObject({ key: "value" });
-    patchLiveObjectKey(liveObject, "key", "value", undefined);
+    legacy_patchLiveObjectKey(liveObject, "key", "value", undefined);
     expect(liveObject.toObject()).toEqual({});
   });
 });
@@ -184,7 +184,7 @@ describe("2 ways tests with two clients", () => {
         state.syncObj = { a: 1 };
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
@@ -211,7 +211,7 @@ describe("2 ways tests with two clients", () => {
         state.syncObj.a = 1;
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
@@ -238,7 +238,7 @@ describe("2 ways tests with two clients", () => {
         state.syncObj.a = { subA: "ok" };
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
@@ -265,7 +265,12 @@ describe("2 ways tests with two clients", () => {
         state.doc = { sub: [0] };
       });
 
-      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+      legacy_patchLiveObjectKey(
+        storage.root,
+        "doc",
+        oldState["doc"],
+        newState["doc"]
+      );
 
       await expectStorageAndState({ doc: { sub: [0] } }, 4);
     });
@@ -287,7 +292,12 @@ describe("2 ways tests with two clients", () => {
         state.doc = { sub: { subSub: [{ a: 1 }] } };
       });
 
-      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+      legacy_patchLiveObjectKey(
+        storage.root,
+        "doc",
+        oldState["doc"],
+        newState["doc"]
+      );
 
       await expectStorageAndState({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5);
     });
@@ -309,7 +319,12 @@ describe("2 ways tests with two clients", () => {
         state.doc = { pos: { a: { b: 1 } } };
       });
 
-      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+      legacy_patchLiveObjectKey(
+        storage.root,
+        "doc",
+        oldState["doc"],
+        newState["doc"]
+      );
 
       await expectStorageAndState({ doc: { pos: { a: { b: 1 } } } }, 4);
     });
@@ -331,7 +346,7 @@ describe("2 ways tests with two clients", () => {
         delete state.syncObj.a;
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
@@ -358,7 +373,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList = [2];
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -383,7 +398,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList.push("a");
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -408,7 +423,7 @@ describe("2 ways tests with two clients", () => {
         state.list[0] = "D";
       });
 
-      patchLiveObject(storage.root, oldState, newState);
+      legacy_patchLiveObject(storage.root, oldState, newState);
 
       await expectStorageAndState({ list: ["D", "B", "C"] }, 5);
     });
@@ -428,7 +443,7 @@ describe("2 ways tests with two clients", () => {
         state.list[2] = "D";
       });
 
-      patchLiveObject(storage.root, oldState, newState);
+      legacy_patchLiveObject(storage.root, oldState, newState);
 
       await expectStorageAndState({ list: ["A", "B", "D"] }, 5);
     });
@@ -448,7 +463,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList.unshift("b");
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -476,7 +491,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList = ["d", "b", "c", "a"];
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -504,7 +519,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList[0].a = 2;
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -529,7 +544,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList.shift();
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -554,7 +569,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList.pop();
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -582,7 +597,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList = ["a"];
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -610,7 +625,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList = ["c"];
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -638,7 +653,7 @@ describe("2 ways tests with two clients", () => {
         state.syncList = [];
       });
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncList",
         oldState["syncList"],
@@ -678,7 +693,7 @@ describe("2 ways tests with two clients", () => {
 
       state.syncObj.a = () => {};
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],
@@ -711,7 +726,7 @@ describe("2 ways tests with two clients", () => {
 
       state.syncObj.a = () => {};
 
-      patchLiveObjectKey(
+      legacy_patchLiveObjectKey(
         storage.root,
         "syncObj",
         oldState["syncObj"],

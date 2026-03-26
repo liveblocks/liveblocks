@@ -1395,12 +1395,7 @@ describe("LiveObject", () => {
       root.setLocal("b", "local");
 
       expect(receivedUpdates).toEqual([
-        [
-          objectUpdate(
-            { a: 1, b: "local" },
-            { b: { type: "update" } }
-          ),
-        ],
+        [objectUpdate({ a: 1, b: "local" }, { b: { type: "update" } })],
       ]);
     });
 

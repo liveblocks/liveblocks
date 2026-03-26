@@ -733,11 +733,7 @@ describe("LiveMap", () => {
     test("returns false for a different map with equal contents", () => {
       const map = new LiveMap([["a", 1]]);
       map.toImmutable();
-      expect(
-        map.immutableIs(
-          new Map([["a", 1]])
-        )
-      ).toBe(false);
+      expect(map.immutableIs(new Map([["a", 1]]))).toBe(false);
     });
 
     test("returns false when cache has been invalidated", () => {

@@ -108,7 +108,7 @@ export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
   return deepLiveify(obj) as LiveObject<LsonObject>;
 }
 
-export function patchLiveList<T extends Lson>(
+export function legacy_patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
@@ -182,7 +182,7 @@ export function patchLiveList<T extends Lson>(
         isPlainObject(prevNode) &&
         isPlainObject(nextNode)
       ) {
-        patchLiveObject(liveListNode, prevNode, nextNode);
+        legacy_patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
         liveList.set(i, deepLiveify(nextNode) as T);
         //                                    ^^^^ FIXME Not entirely true
@@ -203,7 +203,7 @@ export function patchLiveList<T extends Lson>(
   }
 }
 
-export function patchLiveObjectKey<
+export function legacy_patchLiveObjectKey<
   O extends LsonObject,
   K extends keyof O,
   V extends Json,
@@ -230,20 +230,20 @@ export function patchLiveObjectKey<
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
-    patchLiveList(value, prev, next);
+    legacy_patchLiveList(value, prev, next);
   } else if (
     isLiveObject(value) &&
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev, next);
+    legacy_patchLiveObject(value, prev, next);
   } else {
     liveObject.set(key, deepLiveify(next) as O[K]);
     //                                    ^^^^^^^ FIXME Not entirely true
   }
 }
 
-export function patchLiveObject<O extends LsonObject>(
+export function legacy_patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
   prev: ToJson<O>,
   next: ToJson<O>
@@ -251,7 +251,7 @@ export function patchLiveObject<O extends LsonObject>(
   const updates: Partial<O> = {};
 
   for (const key in next) {
-    patchLiveObjectKey(root, key, prev[key] as Json, next[key] as Json);
+    legacy_patchLiveObjectKey(root, key, prev[key] as Json, next[key] as Json);
   }
 
   for (const key in prev) {

@@ -4,4 +4,5 @@
  */
 export type KnownKeys<T> = keyof {
   [K in keyof T as {} extends Record<K, 1> ? never : K]: true;
-} & string;
+} &
+  string;

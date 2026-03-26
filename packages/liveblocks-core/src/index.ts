@@ -110,8 +110,8 @@ export type {
 export {
   deepLiveifyObject,
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "./immutable";
 export { kInternal } from "./internal";
 export { makeAbortController } from "./lib/abortController";

@@ -11,8 +11,8 @@ import type { EnterOptions, OpaqueClient, OpaqueRoom } from "@liveblocks/core";
 import {
   detectDupes,
   legacy_patchImmutableObject,
+  legacy_patchLiveObjectKey,
   lsonToJson,
-  patchLiveObjectKey,
 } from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
@@ -248,7 +248,12 @@ const internalEnhancer = <TState>(options: {
 
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
-                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
+                legacy_patchLiveObjectKey(
+                  root,
+                  key,
+                  undefined,
+                  store.getState()[key]
+                );
               } else {
                 updates[key] = lsonToJson(liveblocksStatePart);
               }
@@ -383,7 +388,7 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     if (oldState[key] !== newState[key]) {
       const oldVal = oldState[key];
       const newVal = newState[key];
-      patchLiveObjectKey(root, key, oldVal as any, newVal);
+      legacy_patchLiveObjectKey(root, key, oldVal as any, newVal);
     }
   }
 }
