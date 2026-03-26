@@ -2,7 +2,10 @@
 
 ## v3.16.0
 
-...
+### `@liveblocks/client`
+
+- Fix potential ~15s WebSocket connection delay on macOS when using the dev
+  server locally
 
 ## v3.15.5
 
@@ -2116,7 +2119,7 @@ const client = createClient(/* options */);
 // ✅ After
 <LiveblocksProvider /* options */>
   <App />
-</LiveblocksProvider>
+</LiveblocksProvider>;
 ```
 
 For full upgrade instructions and codemods, see the

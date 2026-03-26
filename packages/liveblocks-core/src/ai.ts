@@ -1493,6 +1493,12 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
+    // Rewrite "localhost" to "127.0.0.1" to avoid a ~15s delay caused by
+    // browsers trying to connect over IPv6 (::1) first before falling back
+    // to IPv4.
+    if (url.hostname === "localhost") {
+      url.hostname = "127.0.0.1";
+    }
     url.pathname = "/ai/v7";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {

@@ -3369,6 +3369,12 @@ export function makeCreateSocketDelegateForRoom(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
+    // Rewrite "localhost" to "127.0.0.1" to avoid a ~15s delay caused by
+    // browsers trying to connect over IPv6 (::1) first before falling back
+    // to IPv4.
+    if (url.hostname === "localhost") {
+      url.hostname = "127.0.0.1";
+    }
     url.pathname = "/v8";
     url.searchParams.set("roomId", roomId);
     if (authValue.type === "secret") {
