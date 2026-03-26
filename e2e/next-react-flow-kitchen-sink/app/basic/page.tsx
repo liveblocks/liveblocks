@@ -6,7 +6,7 @@ import { ReactFlow } from "@xyflow/react";
 import { EXAMPLES } from "../examples";
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
       nodes: {
         initial: [
@@ -59,6 +59,7 @@ function Flow() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         fitView
       >
         <Cursors />

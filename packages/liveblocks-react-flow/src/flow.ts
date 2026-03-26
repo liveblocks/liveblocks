@@ -20,6 +20,7 @@ import type {
   Node,
   NodeChange,
   OnConnect,
+  OnDelete,
   OnEdgesChange,
   OnNodesChange,
 } from "@xyflow/react";
@@ -55,6 +56,7 @@ type UseLiveblocksFlowResult<
     onNodesChange: OnNodesChange<N>;
     onEdgesChange: OnEdgesChange<E>;
     onConnect: OnConnect;
+    onDelete: OnDelete<N, E>;
   }
 >;
 
@@ -229,8 +231,8 @@ function applyNodeChanges<N extends Node>(
         break;
       }
 
+      // Removals are handled by onDelete for atomic undo
       case "remove":
-        nodes.delete(change.id);
         break;
 
       case "position": {
@@ -341,8 +343,8 @@ function applyEdgeChanges<E extends Edge>(
         break;
       }
 
+      // Removals are handled by onDelete for atomic undo
       case "remove":
-        edges.delete(change.id);
         break;
 
       case "select":
@@ -384,13 +386,13 @@ export function createLiveblocksFlow<
  *
  * @example
  * ```tsx
- * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, isLoading } = useLiveblocksFlow();
+ * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete, isLoading } = useLiveblocksFlow();
  *
  * if (isLoading) {
  *   return <div>Loading…</div>
  * }
  *
- * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDelete={onDelete} />;
  * ```
  */
 export function useLiveblocksFlow<
@@ -483,6 +485,27 @@ export function useLiveblocksFlow<
     edges.set(newEdge.id, toLiveblocksEdge(newEdge));
   }, []);
 
+  const onDelete = useMutation(
+    ({ storage }, params: { nodes: N[]; edges: E[] }) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      if (!flow) {
+        return;
+      }
+
+      const nodesMap = flow.get("nodes");
+      const edgesMap = flow.get("edges");
+
+      for (const edge of params.edges) {
+        edgesMap.delete(edge.id);
+      }
+
+      for (const node of params.nodes) {
+        nodesMap.delete(node.id);
+      }
+    },
+    []
+  );
+
   const setInitialStorage = useMutation(({ storage }) => {
     // Similarly to `initialStorage` on `Client.enterRoom` and `RoomProvider`, we only
     // initialize Storage if it doesn't already exist.
@@ -513,6 +536,7 @@ export function useLiveblocksFlow<
     onNodesChange,
     onEdgesChange,
     onConnect,
+    onDelete,
   } as UseLiveblocksFlowResult<N, E>;
 }
 
@@ -521,9 +545,9 @@ export function useLiveblocksFlow<
  *
  * @example
  * ```tsx
- * const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useLiveblocksFlow();
+ * const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } = useLiveblocksFlow();
  *
- * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />;
+ * return <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onDelete={onDelete} />;
  * ```
  */
 export function useLiveblocksFlowSuspense<

@@ -438,7 +438,7 @@ const INITIAL_EDGES: FeatureOverviewEdge[] = [
 ];
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<FeatureOverviewNode, FeatureOverviewEdge>({
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
@@ -452,6 +452,7 @@ function Flow() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         fitView
         attributionPosition="top-right"
         nodeTypes={{

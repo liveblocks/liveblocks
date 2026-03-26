@@ -64,7 +64,7 @@ const ColorSelectorNode = memo(
 );
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<Node<JsonObject> | ColorSelectorNode>({
       nodes: {
         initial: [
@@ -118,6 +118,7 @@ function Flow() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         style={{ background: color }}
         nodeTypes={{
           selectorNode: ColorSelectorNode,

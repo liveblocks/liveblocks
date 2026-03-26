@@ -1179,7 +1179,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
     submitFlowchartAgentAction,
     null
   );
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<FlowchartNode, FlowchartEdge>({
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
@@ -1392,6 +1392,7 @@ function Flow({ className, ...props }: ComponentProps<"div">) {
         onNodesChange={onNodesChangeWithThreadDetach}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         onPaneClick={handleCanvasClickForPlacement}
         onNodeClick={handleCanvasClickForPlacement}
         onPaneContextMenu={(event) => {

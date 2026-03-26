@@ -33,8 +33,15 @@ Hooks from this package are available from two entry points, similar to
 import { useLiveblocksFlow } from "@liveblocks/react-flow";
 
 export function Flow() {
-  const { nodes, edges, isLoading, onNodesChange, onEdgesChange, onConnect } =
-    useLiveblocksFlow();
+  const {
+    nodes,
+    edges,
+    isLoading,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onDelete,
+  } = useLiveblocksFlow();
 
   if (isLoading || nodes === null || edges === null) {
     return <div>Loading…</div>;
@@ -47,6 +54,7 @@ export function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
     />
   );
 }
@@ -57,7 +65,7 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow();
 
   return (
@@ -67,6 +75,7 @@ function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
     />
   );
 }
@@ -101,7 +110,7 @@ import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { Controls, MiniMap, ReactFlow } from "@xyflow/react";
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({
       nodes: {
         initial: [
@@ -131,6 +140,7 @@ function Flow() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onDelete={onDelete}
         fitView
       >
         <MiniMap />
@@ -198,6 +208,11 @@ hook mounts. Later changes to those props do not reconfigure Storage.
     Pass to React Flow’s `onConnect`. Adds new edges to Storage (deduplicated by
     source, target, and handles).
   </PropertiesListItem>
+  <PropertiesListItem name="onDelete" type="OnDelete">
+    Pass to React Flow’s `onDelete`. Handles node and edge deletions atomically
+    so that deleting a node and its related edges count as a single undoable
+    action.
+  </PropertiesListItem>
 </PropertiesList>
 
 #### Local state vs Storage
@@ -229,7 +244,7 @@ import { useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { ReactFlow } from "@xyflow/react";
 
 function FlowA() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({ storageKey: "flowA" });
 
   return (
@@ -239,12 +254,13 @@ function FlowA() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
     />
   );
 }
 
 function FlowB() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow({ storageKey: "flowB" });
 
   return (
@@ -254,6 +270,7 @@ function FlowB() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
     />
   );
 }
@@ -360,7 +377,7 @@ const TaskNodeView = memo(({ id, data }: NodeProps<TaskNode>) => {
 });
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<TaskNode | Node<JsonObject>>({
       nodes: {
         initial: [
@@ -381,6 +398,7 @@ function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
       nodeTypes={{ task: TaskNodeView }}
     />
   );
@@ -399,7 +417,7 @@ import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
 import { ReactFlow } from "@xyflow/react";
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } =
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow();
 
   return (
@@ -409,6 +427,7 @@ function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onDelete={onDelete}
     >
       <Cursors />
     </ReactFlow>
