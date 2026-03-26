@@ -191,7 +191,7 @@ describe("useLiveblocksFlow", () => {
     });
   });
 
-  test("should remove edge from flow when onEdgesChange remove is called", async () => {
+  test("should remove edge from flow when onDelete is called", async () => {
     const { result } = await renderHook(() =>
       useLiveblocksFlow({
         nodes: { initial: NODES },
@@ -204,13 +204,16 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.edges).toHaveLength(1);
 
     act(() => {
-      result.current.onEdgesChange([{ type: "remove", id: "e1-2" }]);
+      result.current.onDelete({
+        nodes: [],
+        edges: [{ id: "e1-2", source: "1", target: "2" }],
+      });
     });
 
     await waitFor(() => expect(result.current.edges).toHaveLength(0));
   });
 
-  test("should remove node from flow when onNodesChange remove is called", async () => {
+  test("should remove node from flow when onDelete is called", async () => {
     const { result } = await renderHook(() =>
       useLiveblocksFlow({
         nodes: { initial: NODES },
@@ -223,7 +226,10 @@ describe("useLiveblocksFlow", () => {
     expect(result.current.nodes).toHaveLength(2);
 
     act(() => {
-      result.current.onNodesChange([{ type: "remove", id: "1" }]);
+      result.current.onDelete({
+        nodes: [NODES[0]],
+        edges: [],
+      });
     });
 
     await waitFor(() => expect(result.current.nodes).toHaveLength(1));
