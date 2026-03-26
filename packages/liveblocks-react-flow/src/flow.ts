@@ -1,6 +1,12 @@
-import type { Json, LsonObject, Resolve, ToImmutable } from "@liveblocks/core";
+import type {
+  History,
+  Json,
+  LsonObject,
+  Resolve,
+  ToImmutable,
+} from "@liveblocks/core";
 import { LiveMap, LiveObject } from "@liveblocks/core";
-import { useMutation, useStorage } from "@liveblocks/react";
+import { useHistory, useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
   useSuspendUntilStorageReady,
@@ -204,7 +210,8 @@ type EdgeLocalLO = LiveObject<Edge & LsonObject>;
 // https://reactflow.dev/api-reference/utils/apply-node-changes
 function applyNodeChanges<N extends Node>(
   changes: NodeChange<N>[],
-  nodes: LiveMap<string, LiveblocksNode<N>>
+  nodes: LiveMap<string, LiveblocksNode<N>>,
+  history: History
 ): void {
   for (const change of changes) {
     switch (change.type) {
@@ -244,6 +251,11 @@ function applyNodeChanges<N extends Node>(
 
         if (change.dragging !== undefined) {
           const n = node as unknown as NodeLocalLO;
+          if (change.dragging) {
+            history.pause();
+          } else {
+            history.resume();
+          }
           n.setLocal("dragging", change.dragging);
         }
 
@@ -283,6 +295,11 @@ function applyNodeChanges<N extends Node>(
         }
 
         if (change.resizing !== undefined) {
+          if (change.resizing) {
+            history.pause();
+          } else {
+            history.resume();
+          }
           n.setLocal("resizing", change.resizing);
         }
 
@@ -385,6 +402,7 @@ export function useLiveblocksFlow<
   type TFlow = LiveblocksFlow<N, E>;
   type TImmutableFlow = ToImmutable<LiveblocksFlow<N, E>>;
 
+  const history = useHistory();
   const isStorageLoaded = useStorage(() => true) ?? false;
 
   // These options are not reactive, only their initial values are used.
@@ -410,14 +428,17 @@ export function useLiveblocksFlow<
     return flow?.edges ? ([...flow.edges.values()] as E[]) : null;
   });
 
-  const onNodesChange = useMutation(({ storage }, changes: NodeChange<N>[]) => {
-    const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
-    if (!flow) {
-      return;
-    }
+  const onNodesChange = useMutation(
+    ({ storage }, changes: NodeChange<N>[]) => {
+      const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
+      if (!flow) {
+        return;
+      }
 
-    applyNodeChanges(changes, flow.get("nodes"));
-  }, []);
+      applyNodeChanges(changes, flow.get("nodes"), history);
+    },
+    [history]
+  );
 
   const onEdgesChange = useMutation(({ storage }, changes: EdgeChange<E>[]) => {
     const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
