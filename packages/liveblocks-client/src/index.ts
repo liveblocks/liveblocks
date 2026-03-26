@@ -32,6 +32,8 @@ export type {
   EnsureJson,
   FeedCreateMetadata,
   FeedFetchMetadataFilter,
+  FeedRequestError,
+  FeedRequestFailedServerMsg,
   FeedUpdateMetadata,
   History,
   HistoryVersion,
@@ -76,6 +78,7 @@ export type {
 export {
   createClient,
   defineAiTool,
+  FeedRequestErrorCode,
   getMentionsFromCommentBody,
   isNotificationChannelEnabled,
   LiveblocksError,

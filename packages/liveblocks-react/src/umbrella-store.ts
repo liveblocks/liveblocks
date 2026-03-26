@@ -42,7 +42,9 @@ import {
   DefaultMap,
   DerivedSignal,
   getSubscriptionKey,
+  HttpError,
   kInternal,
+  LiveblocksError,
   MutableSignal,
   nanoid,
   nn,
@@ -292,7 +294,11 @@ export function makeInboxNotificationsQueryKey(
 
 export function makeFeedsQueryKey(
   roomId: string,
-  options?: { since?: number; metadata?: FeedFetchMetadataFilter }
+  options?: {
+    since?: number;
+    metadata?: FeedFetchMetadataFilter;
+    limit?: number;
+  }
 ) {
   return stableStringify([roomId, options ?? {}]);
 }
@@ -412,17 +418,43 @@ const noop = Promise.resolve();
  *
  * @internal Only exported for unit tests.
  */
+function defaultPaginatedRetryStop(err: unknown): boolean {
+  return err instanceof HttpError && err.status >= 400 && err.status < 500;
+}
+
+/** Do not auto-retry permanent feed failures (e.g. v1 room, validation). */
+function feedPaginatedRetryStop(err: unknown): boolean {
+  return (
+    defaultPaginatedRetryStop(err) ||
+    (err instanceof LiveblocksError && err.context.type === "FEED_REQUEST_ERROR")
+  );
+}
+
 export class PaginatedResource {
   readonly #signal: Signal<AsyncResult<PaginationState>>;
   public readonly signal: ISignal<AsyncResult<PaginationState>>;
 
   #fetchPage: (cursor?: string) => Promise<string | null>;
   #pendingFetchMore: Promise<void> | null;
+  #shouldStopRetrying: (err: unknown) => boolean;
+  /** When true, keep error state and do not auto-refetch after 5s (see waitUntilLoaded error handler). */
+  #persistErrorWithoutReset: (err: unknown) => boolean;
 
-  constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
+  constructor(
+    fetchPage: (cursor?: string) => Promise<string | null>,
+    options?: {
+      shouldStopRetrying?: (err: unknown) => boolean;
+      /** Permanent failures: skip the 5s reset that would re-issue the initial fetch (e.g. repeated FETCH_FEEDS). */
+      persistErrorWithoutReset?: (err: unknown) => boolean;
+    }
+  ) {
     this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
     this.#fetchPage = fetchPage;
     this.#pendingFetchMore = null;
+    this.#shouldStopRetrying =
+      options?.shouldStopRetrying ?? defaultPaginatedRetryStop;
+    this.#persistErrorWithoutReset =
+      options?.persistErrorWithoutReset ?? (() => false);
     this.signal = this.#signal.asReadonly();
 
     autobind(this);
@@ -503,7 +535,8 @@ export class PaginatedResource {
     const initialPageFetch$ = autoRetry(
       () => this.#fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000]
+      [5000, 5000, 10000, 15000],
+      this.#shouldStopRetrying
     );
 
     const promise = usify(initialPageFetch$);
@@ -526,6 +559,10 @@ export class PaginatedResource {
       },
       (err) => {
         this.#signal.set(ASYNC_ERR(err as Error));
+
+        if (this.#persistErrorWithoutReset(err)) {
+          return;
+        }
 
         // Wait for 5 seconds before removing the request
         setTimeout(() => {
@@ -1697,27 +1734,38 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
       (queryKey: string): LoadableResource<FeedsAsyncResult> => {
         const [roomId, options] = JSON.parse(queryKey) as [
           roomId: RoomId,
-          options?: { since?: number; metadata?: FeedFetchMetadataFilter },
+          options?: {
+            since?: number;
+            metadata?: FeedFetchMetadataFilter;
+            limit?: number;
+          },
         ];
 
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const room = this.#client.getRoom(roomId);
-          if (room === null) {
-            throw new Error(
-              `Room '${roomId}' is not available on client. Make sure you're calling useFeeds inside a RoomProvider.`
-            );
+        const resource = new PaginatedResource(
+          async (cursor?: string) => {
+            const room = this.#client.getRoom(roomId);
+            if (room === null) {
+              throw new Error(
+                `Room '${roomId}' is not available on client. Make sure you're calling useFeeds inside a RoomProvider.`
+              );
+            }
+
+            const result = await room.fetchFeeds({
+              cursor,
+              since: options?.since,
+              metadata: options?.metadata,
+              limit: options?.limit,
+            });
+
+            this.upsertFeeds(roomId, result.feeds);
+
+            return result.nextCursor ?? null;
+          },
+          {
+            shouldStopRetrying: feedPaginatedRetryStop,
+            persistErrorWithoutReset: feedPaginatedRetryStop,
           }
-
-          const result = await room.fetchFeeds({
-            cursor,
-            since: options?.since,
-            metadata: options?.metadata,
-          });
-
-          this.upsertFeeds(roomId, result.feeds);
-
-          return result.nextCursor ?? null;
-        });
+        );
 
         const signal = DerivedSignal.from(
           resource.signal,
@@ -1755,23 +1803,29 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
           options?: { cursor?: string; limit?: number },
         ];
 
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const room = this.#client.getRoom(roomId);
-          if (room === null) {
-            throw new Error(
-              `Room '${roomId}' is not available on client. Make sure you're calling useFeedMessages inside a RoomProvider.`
-            );
+        const resource = new PaginatedResource(
+          async (cursor?: string) => {
+            const room = this.#client.getRoom(roomId);
+            if (room === null) {
+              throw new Error(
+                `Room '${roomId}' is not available on client. Make sure you're calling useFeedMessages inside a RoomProvider.`
+              );
+            }
+
+            const result = await room.fetchFeedMessages(feedId, {
+              cursor,
+              limit: options?.limit,
+            });
+
+            this.upsertFeedMessages(roomId, feedId, result.messages);
+
+            return result.nextCursor ?? null;
+          },
+          {
+            shouldStopRetrying: feedPaginatedRetryStop,
+            persistErrorWithoutReset: feedPaginatedRetryStop,
           }
-
-          const result = await room.fetchFeedMessages(feedId, {
-            cursor,
-            limit: options?.limit,
-          });
-
-          this.upsertFeedMessages(roomId, feedId, result.messages);
-
-          return result.nextCursor ?? null;
-        });
+        );
 
         const signal = DerivedSignal.from(
           resource.signal,

@@ -162,6 +162,7 @@ export type FetchFeedMessagesClientMsg = {
 
 export type AddFeedClientMsg = {
   readonly type: ClientMsgCode.ADD_FEED;
+  readonly requestId: string;
   readonly feedId: string;
   readonly metadata?: FeedCreateMetadata;
   readonly timestamp?: number;
@@ -169,17 +170,20 @@ export type AddFeedClientMsg = {
 
 export type UpdateFeedClientMsg = {
   readonly type: ClientMsgCode.UPDATE_FEED;
+  readonly requestId: string;
   readonly feedId: string;
   readonly metadata: FeedUpdateMetadata;
 };
 
 export type DeleteFeedClientMsg = {
   readonly type: ClientMsgCode.DELETE_FEED;
+  readonly requestId: string;
   readonly feedId: string;
 };
 
 export type AddFeedMessageClientMsg = {
   readonly type: ClientMsgCode.ADD_FEED_MESSAGE;
+  readonly requestId: string;
   readonly feedId: string;
   readonly data: JsonObject;
   readonly id?: string;
@@ -188,6 +192,7 @@ export type AddFeedMessageClientMsg = {
 
 export type UpdateFeedMessageClientMsg = {
   readonly type: ClientMsgCode.UPDATE_FEED_MESSAGE;
+  readonly requestId: string;
   readonly feedId: string;
   readonly messageId: string;
   readonly data: JsonObject;
@@ -196,6 +201,7 @@ export type UpdateFeedMessageClientMsg = {
 
 export type DeleteFeedMessageClientMsg = {
   readonly type: ClientMsgCode.DELETE_FEED_MESSAGE;
+  readonly requestId: string;
   readonly feedId: string;
   readonly messageId: string;
 };

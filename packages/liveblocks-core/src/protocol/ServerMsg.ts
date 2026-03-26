@@ -43,6 +43,7 @@ export const ServerMsgCode = Object.freeze({
   FEED_MESSAGES_ADDED: 505,
   FEED_MESSAGES_UPDATED: 506,
   FEED_MESSAGES_DELETED: 507,
+  FEED_REQUEST_FAILED: 508,
 
   // Error codes
   REJECT_STORAGE_OP: 299, // Sent if a mutation was not allowed on the server (i.e. due to permissions, limit exceeded, etc)
@@ -81,6 +82,7 @@ export namespace ServerMsgCode {
     typeof ServerMsgCode.FEED_MESSAGES_UPDATED;
   export type FEED_MESSAGES_DELETED =
     typeof ServerMsgCode.FEED_MESSAGES_DELETED;
+  export type FEED_REQUEST_FAILED = typeof ServerMsgCode.FEED_REQUEST_FAILED;
   export type COMMENT_METADATA_UPDATED =
     typeof ServerMsgCode.COMMENT_METADATA_UPDATED;
   export type REJECT_STORAGE_OP = typeof ServerMsgCode.REJECT_STORAGE_OP;
@@ -395,7 +397,31 @@ export type FeedsEventServerMsg<
   | FeedMessagesListServerMsg<FMD>
   | FeedMessagesAddedServerMsg<FMD>
   | FeedMessagesUpdatedServerMsg<FMD>
-  | FeedMessagesDeletedServerMsg;
+  | FeedMessagesDeletedServerMsg
+  | FeedRequestFailedServerMsg;
+
+/** Error codes for {@link FeedRequestFailedServerMsg}. */
+export const FeedRequestErrorCode = {
+  INTERNAL: "INTERNAL",
+  FEED_ALREADY_EXISTS: "FEED_ALREADY_EXISTS",
+  FEED_NOT_FOUND: "FEED_NOT_FOUND",
+  FEED_MESSAGE_NOT_FOUND: "FEED_MESSAGE_NOT_FOUND",
+} as const;
+
+/** String literals accepted in {@link FeedRequestFailedServerMsg}.code */
+export type FeedRequestError =
+  (typeof FeedRequestErrorCode)[keyof typeof FeedRequestErrorCode];
+
+/**
+ * Sent to the client when a feed mutation referenced by `requestId` failed
+ * (e.g. validation or permission error).
+ */
+export type FeedRequestFailedServerMsg = {
+  readonly type: ServerMsgCode.FEED_REQUEST_FAILED;
+  readonly requestId: string;
+  readonly code: string;
+  readonly reason?: string;
+};
 
 export type FeedsListServerMsg<FM extends Json = Json> = {
   readonly type: ServerMsgCode.FEEDS_LIST;

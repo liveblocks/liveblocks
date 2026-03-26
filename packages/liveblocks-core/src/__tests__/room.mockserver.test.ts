@@ -2476,4 +2476,194 @@ describe("room", () => {
       expect(room.isStorageReady()).toEqual(true);
     });
   });
+
+  describe("feed mutations", () => {
+    test("addFeed client message includes requestId", async () => {
+      const { room, wss } = createTestableRoom({}, undefined, undefined, {
+        throttleDelay: 0,
+      });
+      room.connect();
+      await waitUntilStatus(room, "connected");
+      const p = room.addFeed("my-feed", { metadata: { name: "x" } });
+      await vi.waitFor(() => {
+        const found = wss.receivedMessagesRaw.some((raw) => {
+          const batch = JSON.parse(raw) as Array<{ type: number }>;
+          return batch.some((m) => m.type === ClientMsgCode.ADD_FEED);
+        });
+        expect(found).toBe(true);
+      });
+      const raw = wss.receivedMessagesRaw.find((r) => {
+        const batch = JSON.parse(r) as Array<{ type: number }>;
+        return batch.some((m) => m.type === ClientMsgCode.ADD_FEED);
+      })!;
+      const batch = JSON.parse(raw) as Array<{
+        type: number;
+        requestId?: string;
+        feedId?: string;
+      }>;
+      const addFeedMsg = batch.find((m) => m.type === ClientMsgCode.ADD_FEED)!;
+      expect(addFeedMsg.requestId).toBeDefined();
+      expect(addFeedMsg.feedId).toBe("my-feed");
+      wss.last.send(
+        serverMessage({
+          type: ServerMsgCode.FEEDS_ADDED,
+          feeds: [
+            {
+              feedId: "my-feed",
+              metadata: {},
+              timestamp: Date.now(),
+            },
+          ],
+        })
+      );
+      await p;
+    });
+
+    test("addFeed rejects when server sends FEED_REQUEST_FAILED", async () => {
+      const { room, wss } = createTestableRoom({}, undefined, undefined, {
+        throttleDelay: 0,
+      });
+      room.connect();
+      await waitUntilStatus(room, "connected");
+      const p = room.addFeed("dup", {});
+      await vi.waitFor(() => {
+        const found = wss.receivedMessagesRaw.some((raw) => {
+          const batch = JSON.parse(raw) as Array<{ type: number }>;
+          return batch.some((m) => m.type === ClientMsgCode.ADD_FEED);
+        });
+        expect(found).toBe(true);
+      });
+      const raw = wss.receivedMessagesRaw.find((r) => {
+        const batch = JSON.parse(r) as Array<{ type: number }>;
+        return batch.some((m) => m.type === ClientMsgCode.ADD_FEED);
+      })!;
+      const batch = JSON.parse(raw) as Array<{
+        requestId: string;
+        type: number;
+      }>;
+      const requestId = batch.find(
+        (m) => m.type === ClientMsgCode.ADD_FEED
+      )!.requestId;
+      wss.last.send(
+        serverMessage({
+          type: ServerMsgCode.FEED_REQUEST_FAILED,
+          requestId,
+          code: "FEED_ALREADY_EXISTS",
+          reason: "exists",
+        })
+      );
+      await expect(p).rejects.toMatchObject({
+        name: "LiveblocksError",
+        context: {
+          type: "FEED_REQUEST_ERROR",
+          roomId: "room-id",
+          requestId,
+          code: "FEED_ALREADY_EXISTS",
+          reason: "exists",
+        },
+      });
+    });
+
+    test("fetchFeeds sends limit on first page and cursor on the next page", async () => {
+      const { room, wss } = createTestableRoom({}, undefined, undefined, {
+        throttleDelay: 0,
+      });
+      room.connect();
+      await waitUntilStatus(room, "connected");
+
+      const p1 = room.fetchFeeds({ limit: 1 });
+
+      await vi.waitFor(() => {
+        const found = wss.receivedMessagesRaw.some((raw) => {
+          const batch = JSON.parse(raw) as Array<{ type: number }>;
+          return batch.some((m) => m.type === ClientMsgCode.FETCH_FEEDS);
+        });
+        expect(found).toBe(true);
+      });
+
+      const raw1 = wss.receivedMessagesRaw.find((r) => {
+        const batch = JSON.parse(r) as Array<{ type: number }>;
+        return batch.some((m) => m.type === ClientMsgCode.FETCH_FEEDS);
+      })!;
+      const batch1 = JSON.parse(raw1) as Array<{
+        type: number;
+        requestId?: string;
+        limit?: number;
+        cursor?: string;
+      }>;
+      const fetchMsg1 = batch1.find((m) => m.type === ClientMsgCode.FETCH_FEEDS)!;
+      expect(fetchMsg1.limit).toBe(1);
+      expect(fetchMsg1.cursor).toBeUndefined();
+
+      const requestId1 = fetchMsg1.requestId!;
+      wss.last.send(
+        serverMessage({
+          type: ServerMsgCode.FEEDS_LIST,
+          requestId: requestId1,
+          feeds: [
+            {
+              feedId: "feed-page-1",
+              metadata: {},
+              timestamp: Date.now(),
+            },
+          ],
+          nextCursor: "cursor-2",
+        })
+      );
+
+      const result1 = await p1;
+      expect(result1.feeds).toHaveLength(1);
+      expect(result1.feeds[0]?.feedId).toBe("feed-page-1");
+      expect(result1.nextCursor).toBe("cursor-2");
+
+      const p2 = room.fetchFeeds({ cursor: "cursor-2", limit: 1 });
+
+      await vi.waitFor(() => {
+        const rawsWithFetch = wss.receivedMessagesRaw.filter((raw) => {
+          const batch = JSON.parse(raw) as Array<{ type: number }>;
+          return batch.some((m) => m.type === ClientMsgCode.FETCH_FEEDS);
+        });
+        expect(rawsWithFetch.length).toBeGreaterThanOrEqual(2);
+      });
+
+      const rawsWithFetch = wss.receivedMessagesRaw.filter((raw) => {
+        const batch = JSON.parse(raw) as Array<{ type: number }>;
+        return batch.some((m) => m.type === ClientMsgCode.FETCH_FEEDS);
+      });
+      const lastRaw = rawsWithFetch[rawsWithFetch.length - 1];
+      expect(lastRaw).toBeDefined();
+      const batch2 = JSON.parse(lastRaw) as Array<{
+        type: number;
+        requestId?: string;
+        limit?: number;
+        cursor?: string;
+      }>;
+      const fetchMsg2 = batch2.find((m) => m.type === ClientMsgCode.FETCH_FEEDS)!;
+      expect(fetchMsg2.limit).toBe(1);
+      expect(fetchMsg2.cursor).toBe("cursor-2");
+
+      const requestId2 = fetchMsg2.requestId!;
+      wss.last.send(
+        serverMessage({
+          type: ServerMsgCode.FEEDS_LIST,
+          requestId: requestId2,
+          feeds: [
+            {
+              feedId: "feed-page-2",
+              metadata: {},
+              timestamp: Date.now(),
+            },
+          ],
+          nextCursor: undefined,
+        })
+      );
+
+      const result2 = await p2;
+      expect(result2.feeds).toHaveLength(1);
+      expect(result2.feeds[0]?.feedId).toBe("feed-page-2");
+      expect(result2.nextCursor).toBeUndefined();
+
+      room.destroy();
+    });
+  });
 });

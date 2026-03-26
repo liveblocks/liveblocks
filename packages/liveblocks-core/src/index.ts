@@ -99,12 +99,12 @@ export type {
   DAD,
   DCM,
   DE,
-  DGI,
+  DFM,
   DFMD,
+  DGI,
   DP,
   DRI,
   DS,
-  DFM,
   DTM,
   DU,
   KDAD,
@@ -306,6 +306,8 @@ export type {
   FeedMessagesDeletedServerMsg,
   FeedMessagesListServerMsg,
   FeedMessagesUpdatedServerMsg,
+  FeedRequestError,
+  FeedRequestFailedServerMsg,
   FeedsAddedServerMsg,
   FeedsEventServerMsg,
   FeedsListServerMsg,
@@ -320,7 +322,7 @@ export type {
   UserLeftServerMsg,
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
-export { ServerMsgCode } from "./protocol/ServerMsg";
+export { FeedRequestErrorCode, ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   ChildStorageNode,
   CompactChildNode,

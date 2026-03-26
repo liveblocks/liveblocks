@@ -224,6 +224,10 @@ export type UseFeedsOptions = {
    * Optional metadata filter. Only feeds with matching metadata will be returned.
    */
   metadata?: FeedFetchMetadataFilter;
+  /**
+   * Optional limit for the number of feeds to fetch per page.
+   */
+  limit?: number;
 };
 
 export type UseFeedMessagesOptions = {
@@ -1226,7 +1230,7 @@ export type RoomContextBundle<
       useCreateFeed(): (
         feedId: string,
         options?: { metadata?: FeedCreateMetadata; timestamp?: number }
-      ) => void;
+      ) => Promise<void>;
 
       /**
        * Returns a function that deletes a feed from the current room.
@@ -1235,7 +1239,7 @@ export type RoomContextBundle<
        * const deleteFeed = useDeleteFeed();
        * deleteFeed("feed-id");
        */
-      useDeleteFeed(): (feedId: string) => void;
+      useDeleteFeed(): (feedId: string) => Promise<void>;
 
       /**
        * Returns a function that updates a feed's metadata in the current room.
@@ -1247,7 +1251,7 @@ export type RoomContextBundle<
       useUpdateFeedMetadata(): (
         feedId: string,
         metadata: FeedUpdateMetadata
-      ) => void;
+      ) => Promise<void>;
 
       /**
        * Returns a function that adds a message to a feed in the current room.
@@ -1260,7 +1264,7 @@ export type RoomContextBundle<
         feedId: string,
         data: JsonObject,
         options?: { id?: string; timestamp?: number }
-      ) => void;
+      ) => Promise<void>;
 
       /**
        * Returns a function that deletes a message from a feed in the current room.
@@ -1272,7 +1276,7 @@ export type RoomContextBundle<
       useDeleteFeedMessage(): (
         feedId: string,
         messageId: string
-      ) => void;
+      ) => Promise<void>;
 
       /**
        * Returns a function that updates a feed message in the current room.
@@ -1285,7 +1289,7 @@ export type RoomContextBundle<
         feedId: string,
         messageId: string,
         data: JsonObject
-      ) => void;
+      ) => Promise<void>;
 
       /**
        * Returns the result of searching comments by text in the current room. The result includes the id and the plain text content of the matched comments along with the parent thread id of the comment.
@@ -1424,26 +1428,26 @@ export type RoomContextBundle<
             useCreateFeed(): (
               feedId: string,
               options?: { metadata?: FeedCreateMetadata; timestamp?: number }
-            ) => void;
-            useDeleteFeed(): (feedId: string) => void;
+            ) => Promise<void>;
+            useDeleteFeed(): (feedId: string) => Promise<void>;
             useUpdateFeedMetadata(): (
               feedId: string,
               metadata: FeedUpdateMetadata
-            ) => void;
+            ) => Promise<void>;
             useCreateFeedMessage(): (
               feedId: string,
               data: JsonObject,
               options?: { id?: string; timestamp?: number }
-            ) => void;
+            ) => Promise<void>;
             useDeleteFeedMessage(): (
               feedId: string,
               messageId: string
-            ) => void;
+            ) => Promise<void>;
             useUpdateFeedMessage(): (
               feedId: string,
               messageId: string,
               data: JsonObject
-            ) => void;
+            ) => Promise<void>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
