@@ -9,6 +9,10 @@ declare global {
       };
     };
 
+    Presence: {
+      thinking?: boolean;
+    };
+
     ThreadMetadata: {
       // A block node ID that the thread is attached to
       attachedToNodeId?: string;

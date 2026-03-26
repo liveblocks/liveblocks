@@ -1,3 +1,12 @@
+export const AI_AGENT_USER = {
+  id: "#agent",
+  info: {
+    name: "AI Agent",
+    color: "#555",
+    avatar: "https://liveblocks.io/api/avatar?u=agent&agent=true",
+  },
+};
+
 export const USERS = [
   {
     id: "user-0",

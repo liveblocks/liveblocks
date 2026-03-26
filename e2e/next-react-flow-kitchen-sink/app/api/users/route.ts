@@ -1,4 +1,4 @@
-import { USERS } from "@/database";
+import { AI_AGENT_USER, USERS } from "@/database";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    userIds.map((userId) => USERS.find((u) => u.id === userId)?.info ?? null)
+    userIds.map(
+      (userId) =>
+        [AI_AGENT_USER, ...USERS].find((u) => u.id === userId)?.info ?? null
+    )
   );
 }

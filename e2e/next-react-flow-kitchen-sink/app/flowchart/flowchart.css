@@ -1,4 +1,3 @@
-/* Strip React Flow's default styles */
 .react-flow__node-block {
   padding: 0;
   border: none;
@@ -7,7 +6,7 @@
   border-radius: 0;
 }
 
-.whiteboard {
+.flowchart {
   --xy-background-color: #f7f9fb;
   --xy-edge-stroke: #94a3b8;
   --xy-edge-stroke-width: 2;
@@ -17,7 +16,7 @@
   --xy-resize-background-color: #3b82f6;
 }
 
-.whiteboard .react-flow__pane.selection {
+.flowchart .react-flow__pane.selection {
   cursor: default;
 }
 
@@ -37,7 +36,7 @@
   fill: var(--xy-edge-stroke-selected);
 }
 
-.whiteboard-block {
+.flowchart-block {
   width: 100%;
   height: 100%;
   display: flex;
@@ -46,10 +45,10 @@
   position: relative;
 }
 
-.whiteboard-block[data-shape="rectangle"],
-.whiteboard-block[data-shape="rounded"],
-.whiteboard-block[data-shape="circle"] {
-  background-color: var(--whiteboard-block-color);
+.flowchart-block[data-shape="rectangle"],
+.flowchart-block[data-shape="rounded"],
+.flowchart-block[data-shape="circle"] {
+  background-color: var(--flowchart-block-color);
   border: 1.5px solid rgba(0, 0, 0, 0.1);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.04),
@@ -57,28 +56,28 @@
   transition: box-shadow 0.15s;
 }
 
-.whiteboard-block[data-shape="rectangle"] {
+.flowchart-block[data-shape="rectangle"] {
   border-radius: 8px;
 }
 
-.whiteboard-block[data-shape="rounded"] {
+.flowchart-block[data-shape="rounded"] {
   border-radius: 9999px;
 }
 
-.whiteboard-block[data-shape="circle"] {
+.flowchart-block[data-shape="circle"] {
   border-radius: 50%;
 }
 
-.react-flow__node-block.selected .whiteboard-block[data-shape="rectangle"],
-.react-flow__node-block.selected .whiteboard-block[data-shape="rounded"],
-.react-flow__node-block.selected .whiteboard-block[data-shape="circle"] {
+.react-flow__node-block.selected .flowchart-block[data-shape="rectangle"],
+.react-flow__node-block.selected .flowchart-block[data-shape="rounded"],
+.react-flow__node-block.selected .flowchart-block[data-shape="circle"] {
   border-color: #3b82f6;
   box-shadow:
     0 0 0 2.5px rgba(59, 130, 246, 0.25),
     0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-.whiteboard-block-label {
+.flowchart-block-label {
   display: block;
   width: 100%;
   resize: none;
@@ -100,16 +99,16 @@
   max-width: 100%;
 }
 
-.whiteboard-block-label::placeholder {
+.flowchart-block-label::placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
 
 .react-flow__node-block:not(.selected)
-  .whiteboard-block-label:placeholder-shown {
+  .flowchart-block-label:placeholder-shown {
   opacity: 0;
 }
 
-.whiteboard-handle {
+.flowchart-handle {
   width: 10px !important;
   height: 10px !important;
   background: #3b82f6 !important;
@@ -128,12 +127,12 @@
   box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.5);
 }
 
-.react-flow__node:hover .whiteboard-handle,
-.react-flow__node.selected .whiteboard-handle {
+.react-flow__node:hover .flowchart-handle,
+.react-flow__node.selected .flowchart-handle {
   opacity: 1;
 }
 
-.whiteboard-node-toolbar {
+.flowchart-node-toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -146,13 +145,13 @@
     0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-.whiteboard-node-toolbar-section {
+.flowchart-node-toolbar-section {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.whiteboard-node-toolbar-separator {
+.flowchart-node-toolbar-separator {
   width: 1px;
   height: 20px;
   background: #e2e8f0;
@@ -160,7 +159,7 @@
   flex-shrink: 0;
 }
 
-.whiteboard-node-toolbar-button {
+.flowchart-node-toolbar-button {
   width: 28px;
   height: 28px;
   display: flex;
@@ -176,16 +175,16 @@
     border-color 0.1s;
 }
 
-.whiteboard-node-toolbar-button:hover {
+.flowchart-node-toolbar-button:hover {
   background: #f1f5f9;
 }
 
-.whiteboard-node-toolbar-button[data-active] {
+.flowchart-node-toolbar-button[data-active] {
   border-color: #3b82f6;
   background: #eff6ff;
 }
 
-.whiteboard-node-toolbar-color {
+.flowchart-node-toolbar-color {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -198,44 +197,44 @@
     box-shadow 0.1s;
 }
 
-.whiteboard-node-toolbar-color:hover {
+.flowchart-node-toolbar-color:hover {
   transform: scale(1.2);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
-.whiteboard-node-toolbar-color[data-active] {
+.flowchart-node-toolbar-color[data-active] {
   border-color: #1e293b;
   transform: scale(1.1);
 }
 
-.whiteboard-shape-icon {
+.flowchart-shape-icon {
   display: inline-block;
   flex-shrink: 0;
 }
 
-.whiteboard-shape-icon[data-shape] {
+.flowchart-shape-icon[data-shape] {
   border: 1.5px solid #64748b;
 }
 
-.whiteboard-shape-icon[data-shape="rectangle"] {
+.flowchart-shape-icon[data-shape="rectangle"] {
   width: 15px;
   height: 10px;
   border-radius: 2px;
 }
 
-.whiteboard-shape-icon[data-shape="rounded"] {
+.flowchart-shape-icon[data-shape="rounded"] {
   width: 15px;
   height: 10px;
   border-radius: 5px;
 }
 
-.whiteboard-shape-icon[data-shape="circle"] {
+.flowchart-shape-icon[data-shape="circle"] {
   width: 11px;
   height: 11px;
   border-radius: 50%;
 }
 
-.whiteboard-edge-label-shell {
+.flowchart-edge-label-container {
   position: absolute;
   pointer-events: all;
   display: inline-flex;
@@ -245,18 +244,18 @@
   min-width: 0;
 }
 
-.whiteboard-edge-label-sizing {
+.flowchart-edge-label-sizing {
   position: relative;
   display: inline-grid;
   width: min(220px, max-content);
   vertical-align: middle;
 }
 
-.whiteboard-edge-label-sizing > .whiteboard-edge-label-mirror {
+.flowchart-edge-label-sizing > .flowchart-edge-label-sizing-text {
   grid-area: 1 / 1;
 }
 
-.whiteboard-edge-label-sizing > .whiteboard-edge-label {
+.flowchart-edge-label-sizing > .flowchart-edge-label {
   grid-area: 1 / 1;
   position: absolute;
   inset: 0;
@@ -264,7 +263,7 @@
   height: 100%;
 }
 
-.whiteboard-edge-label-mirror {
+.flowchart-edge-label-sizing-text {
   visibility: hidden;
   white-space: pre;
   box-sizing: border-box;
@@ -278,7 +277,7 @@
   max-width: 220px;
 }
 
-.whiteboard-edge-label {
+.flowchart-edge-label {
   min-width: 0;
   max-width: none;
   padding: 4px 5px;
@@ -299,11 +298,11 @@
     background-color 0.12s;
 }
 
-.whiteboard-edge-label::placeholder {
+.flowchart-edge-label::placeholder {
   color: #94a3b8;
 }
 
-.whiteboard-edge-label-readonly {
+.flowchart-edge-label-readonly {
   display: inline-block;
   box-sizing: border-box;
   max-width: 220px;
@@ -322,7 +321,7 @@
   text-overflow: ellipsis;
 }
 
-.whiteboard-toolbar {
+.flowchart-toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -337,7 +336,7 @@
   user-select: none;
 }
 
-.whiteboard-toolbar-label {
+.flowchart-toolbar-label {
   font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
@@ -347,7 +346,7 @@
   white-space: nowrap;
 }
 
-.whiteboard-toolbar-separator {
+.flowchart-toolbar-separator {
   width: 1px;
   height: 18px;
   background: #e2e8f0;
@@ -355,7 +354,7 @@
   flex-shrink: 0;
 }
 
-.whiteboard-toolbar-item {
+.flowchart-toolbar-item {
   appearance: none;
   display: flex;
   align-items: center;
@@ -376,40 +375,40 @@
   white-space: nowrap;
 }
 
-.whiteboard-toolbar-item:hover {
+.flowchart-toolbar-item:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #1e293b;
 }
 
-.whiteboard-toolbar-item--active-tool {
+.flowchart-toolbar-item[data-active] {
   border-color: #3b82f6;
   background: #eff6ff;
   color: #1e40af;
   cursor: none;
 }
 
-.whiteboard-toolbar-item--comment:not(.whiteboard-toolbar-item--active-tool) {
+.flowchart-toolbar-item-comment:not([data-active]) {
   cursor: pointer;
 }
 
-.whiteboard-block-drag-preview {
+.flowchart-block-drag-preview {
   pointer-events: none;
   cursor: grabbing;
   filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.12))
     drop-shadow(0 8px 24px rgba(15, 23, 42, 0.1));
 }
 
-.whiteboard-toolbar-item:focus-visible {
+.flowchart-toolbar-item:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-.whiteboard-avatar-stack {
+.flowchart-avatar-stack {
   position: relative;
 }
 
-.whiteboard-avatar-stack::before {
+.flowchart-avatar-stack::before {
   content: "";
   position: absolute;
   inset: -4px;
@@ -419,7 +418,7 @@
   backdrop-filter: blur(12px);
 }
 
-.whiteboard-comments {
+.flowchart-comments {
   position: absolute;
   inset: 0;
   z-index: 4;
@@ -427,54 +426,171 @@
   isolation: isolate;
 }
 
-.whiteboard--placement-mode .react-flow .react-flow__pane {
+.flowchart[data-placing] .react-flow .react-flow__pane {
   cursor: none;
 }
 
-.whiteboard--placement-mode .react-flow .react-flow__node,
-.whiteboard--placement-mode .react-flow .react-flow__node.draggable,
-.whiteboard--placement-mode .react-flow .react-flow__node.draggable.dragging {
+.flowchart[data-placing] .react-flow .react-flow__node,
+.flowchart[data-placing] .react-flow .react-flow__node.draggable,
+.flowchart[data-placing] .react-flow .react-flow__node.draggable.dragging {
   cursor: none;
 }
 
-.whiteboard--placement-mode .whiteboard-block-label {
+.flowchart[data-placing] .flowchart-block-label {
   cursor: none !important;
 }
 
-.whiteboard--placement-mode .react-flow .react-flow__resize-control {
+.flowchart[data-placing] .react-flow .react-flow__resize-control {
   cursor: none;
 }
 
-.whiteboard--placement-mode .react-flow__handle.connectionindicator {
+.flowchart[data-placing] .react-flow__handle.connectionindicator {
   cursor: none;
 }
 
-.whiteboard--placement-mode .whiteboard-edge-label,
-.whiteboard--placement-mode .whiteboard-edge-label-readonly {
+.flowchart[data-placing] .flowchart-edge-label,
+.flowchart[data-placing] .flowchart-edge-label-readonly {
   cursor: none;
 }
 
-.whiteboard--placement-mode .react-flow__panel,
-.whiteboard--placement-mode .react-flow__controls {
+.flowchart[data-placing] .react-flow__panel,
+.flowchart[data-placing] .react-flow__controls {
   cursor: default;
 }
 
-.whiteboard-flow-comment-pin-wrap .lb-comment-pin {
+.flowchart-flow-comment-pin-wrap .lb-comment-pin {
   cursor: grab;
 }
 
-.whiteboard-flow-comment-pin-wrap:active .lb-comment-pin {
+.flowchart-flow-comment-pin-wrap:active .lb-comment-pin {
   cursor: grabbing;
 }
 
-.whiteboard--placement-mode .whiteboard-flow-comment-pin-wrap .lb-comment-pin,
-.whiteboard--placement-mode
-  .whiteboard-flow-comment-pin-wrap:active
+.flowchart[data-placing] .flowchart-flow-comment-pin-wrap .lb-comment-pin,
+.flowchart[data-placing]
+  .flowchart-flow-comment-pin-wrap:active
   .lb-comment-pin {
   cursor: none;
 }
 
-.whiteboard-thread-composer-anchor {
+.flowchart-thread-composer-anchor {
   pointer-events: auto;
   z-index: 4;
+}
+
+.flowchart-agent-panel {
+  width: min(320px, calc(100vw - 48px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 8px 24px rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.flowchart-agent-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.02em;
+}
+
+.flowchart-agent-textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 72px;
+  max-height: 200px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+}
+
+.flowchart-agent-textarea:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+.flowchart-agent-textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.flowchart-agent-submit {
+  align-self: flex-start;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.flowchart-agent-submit:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.flowchart-agent-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flowchart-agent-cursor-thinking {
+  animation: shimmer-inverted 2s linear infinite;
+}
+
+@keyframes shimmer {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 75%) 36%,
+      rgb(0 0 0 / 20%) 48%,
+      rgb(0 0 0 / 20%) 52%,
+      rgb(0 0 0 / 75%) 64%
+    );
+    mask-size: 300% 100%;
+  }
+
+  from {
+    mask-position: 100% 0;
+  }
+
+  to {
+    mask-position: 0% 0;
+  }
+}
+
+@keyframes shimmer-inverted {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 50%) 36%,
+      rgb(0 0 0 / 95%) 48%,
+      rgb(0 0 0 / 95%) 52%,
+      rgb(0 0 0 / 50%) 64%
+    );
+    mask-size: 300% 100%;
+  }
+
+  from {
+    mask-position: 100% 0;
+  }
+
+  to {
+    mask-position: 0% 0;
+  }
 }
