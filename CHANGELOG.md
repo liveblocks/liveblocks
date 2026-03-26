@@ -1,4 +1,10 @@
-## 3.15.5
+## vNEXT (not yet released)
+
+## v3.16.0
+
+...
+
+## v3.15.5
 
 ### `@liveblocks/tiptap`
 
