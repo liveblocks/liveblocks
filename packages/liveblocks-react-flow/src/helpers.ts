@@ -24,6 +24,26 @@ function omit<T extends object, K extends PropertyKey>(
  * Converts a React Flow `Node` into a Liveblocks Storage version, omitting
  * the fields that must stay local to each client.
  */
+// XXX Eventually™, this can become:
+//
+// deepLiveifyObject(
+//   node,
+//   {
+//     // Don't sync these
+//     selected: false,
+//     dragging: false,
+//     measured: false,
+//     resizing: false,
+//
+//     // Don't deep-livify these
+//     size: "atomic",
+//     position: "atomic",
+//
+//     ...
+//     data, // literally whatever the user provided via the sync config for this node type
+//   }
+// )
+//
 export function toLiveblocksNode<N extends Node>(node: N): LiveblocksNode<N> {
   const { data, ...rest } = omit(node, NODE_LOCAL_KEYS) as N;
 
@@ -39,6 +59,18 @@ export function toLiveblocksNode<N extends Node>(node: N): LiveblocksNode<N> {
  * Converts a React Flow `Edge` into a Liveblocks Storage version, omitting
  * the fields that must stay local to each client.
  */
+// XXX Eventually™, this can become:
+//
+// deepLiveifyObject(
+//   edge,
+//   {
+//     // Don't sync these
+//     selected: false,
+//
+//     data, // literally whatever the user provided via the sync config for this edge type
+//   }
+// )
+//
 export function toLiveblocksEdge<E extends Edge>(edge: E): LiveblocksEdge<E> {
   const { data, ...rest } = omit(edge, EDGE_LOCAL_KEYS) as E;
 

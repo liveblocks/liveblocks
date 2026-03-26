@@ -105,6 +105,8 @@ function deepLiveify(value: Lson | LsonObject): Lson {
  * arrays to LiveLists. Expects a plain object at the top level.
  */
 export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
+  // XXX 🤯 Actually I think deepLiveifyObject(obj, config) could eventually be
+  // equivalent to reconcileLiveObject(new LiveObject(), jsonObj, config) 😌
   return deepLiveify(obj) as LiveObject<LsonObject>;
 }
 
