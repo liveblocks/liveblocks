@@ -504,6 +504,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     };
   }
 
+  /** @private */
+  keys(): Set<string> {
+    const result = new Set(this.#synced.keys());
+    for (const key of this.#local.keys()) {
+      result.add(key);
+    }
+    return result;
+  }
+
   /**
    * Transform the LiveObject into a javascript object
    */
