@@ -100,6 +100,14 @@ function deepLiveify(value: Lson | LsonObject): Lson {
   }
 }
 
+/**
+ * Recursively converts all nested plain objects to LiveObjects and all nested
+ * arrays to LiveLists. Expects a plain object at the top level.
+ */
+export function deepLiveifyObject(obj: LsonObject): LiveObject<LsonObject> {
+  return deepLiveify(obj) as LiveObject<LsonObject>;
+}
+
 export function patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,

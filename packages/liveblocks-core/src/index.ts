@@ -108,6 +108,7 @@ export type {
   KDAD,
 } from "./globals/augmentation";
 export {
+  deepLiveifyObject,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,

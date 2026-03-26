@@ -1,4 +1,5 @@
-import { LiveObject, type LsonObject } from "@liveblocks/core";
+import type { LsonObject } from "@liveblocks/core";
+import { deepLiveifyObject, LiveObject } from "@liveblocks/core";
 import type { Edge, Node } from "@xyflow/react";
 
 import { EDGE_LOCAL_KEYS, NODE_LOCAL_KEYS } from "./constants";
@@ -28,7 +29,7 @@ export function toLiveblocksNode<N extends Node>(node: N): LiveblocksNode<N> {
 
   return new LiveObject({
     ...(rest as LsonObject),
-    data: new LiveObject(data as LsonObject),
+    data: deepLiveifyObject(data as LsonObject),
   }) as LiveblocksNode<N>;
 }
 
@@ -45,6 +46,7 @@ export function toLiveblocksEdge<E extends Edge>(edge: E): LiveblocksEdge<E> {
     ...(rest as LsonObject),
 
     // `data` is optional on edges.
-    data: data === undefined ? undefined : new LiveObject(data as LsonObject),
+    data:
+      data === undefined ? undefined : deepLiveifyObject(data as LsonObject),
   }) as LiveblocksEdge<E>;
 }

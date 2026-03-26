@@ -1,4 +1,5 @@
 import type { PlainLsonObject } from "@liveblocks/core";
+import { LiveList, LiveObject } from "@liveblocks/core";
 import { useMutation } from "@liveblocks/react";
 import { act, screen, waitFor } from "@testing-library/react";
 import type { BuiltInEdge, BuiltInNode } from "@xyflow/react";
@@ -36,6 +37,37 @@ describe("createLiveblocksFlow", () => {
     expect(flow.get("edges").size).toBe(1);
     expect(flow.get("nodes").get("1")?.get("data").get("label")).toBe("Node 1");
     expect(flow.get("edges").get("e1-2")?.get("source")).toBe("1");
+  });
+
+  test("should deep-liveify nested objects and arrays in node data", () => {
+    const nodes: BuiltInNode[] = [
+      {
+        type: "default",
+        id: "1",
+        position: { x: 0, y: 0 },
+        data: {
+          label: "Node 1",
+          metadata: { color: "red", tags: ["a", "b"] },
+        },
+      },
+    ];
+
+    const flow = createLiveblocksFlow(nodes, []);
+    const nodeData = flow.get("nodes").get("1")?.get("data");
+
+    // Top-level data is a LiveObject
+    expect(nodeData).toBeInstanceOf(LiveObject);
+    // Scalar values stay as-is
+    expect(nodeData?.get("label")).toBe("Node 1");
+    // Nested object becomes a LiveObject
+    const metadata = nodeData?.get("metadata");
+    expect(metadata).toBeInstanceOf(LiveObject);
+    expect(metadata?.get("color")).toBe("red");
+    // Nested array becomes a LiveList
+    const tags = metadata?.get("tags");
+    expect(tags).toBeInstanceOf(LiveList);
+    expect(tags?.get(0)).toBe("a");
+    expect(tags?.get(1)).toBe("b");
   });
 
   test("should support initializing an empty flow", () => {
