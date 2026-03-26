@@ -1702,7 +1702,7 @@ describe("LiveObject", () => {
 
       expect(receivedUpdates).toEqual([
         [
-          objectUpdate(
+          objectUpdate<{ a: number; b?: string }>(
             { a: 1 },
             { b: { type: "delete", deletedItem: "local" } }
           ),

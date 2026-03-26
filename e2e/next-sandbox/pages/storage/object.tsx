@@ -1,4 +1,5 @@
 import { LiveObject } from "@liveblocks/client";
+import type { Lson } from "@liveblocks/core";
 import { lsonToJson } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -14,6 +15,11 @@ import { createLiveblocksClient } from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
+type ObjectStorage = {
+  [key: string]: Lson | undefined;
+  localOnly?: string;
+};
+
 const {
   RoomProvider,
   useCanRedo,
@@ -27,9 +33,7 @@ const {
 } = createRoomContext<
   never,
   {
-    object: LiveObject<{
-      [key: string]: number | LiveObject<{ a: number }>;
-    }>;
+    object: LiveObject<ObjectStorage>;
   }
 >(client);
 
@@ -73,6 +77,16 @@ function Sandbox() {
     obj.delete(key);
   }, []);
 
+  const setLocal_ = useMutation(({ storage }, value: string) => {
+    const obj = storage.get("object");
+    obj.setLocal("localOnly", value);
+  }, []);
+
+  const deleteLocal_ = useMutation(({ storage }) => {
+    const obj = storage.get("object");
+    obj.delete("localOnly");
+  }, []);
+
   const clear = useMutation(({ storage }) => {
     const obj = storage.get("object");
     const keys = Object.keys(obj.toObject());
@@ -94,6 +108,8 @@ function Sandbox() {
   const nextNestedKey = randomInt(10).toString();
   const nextNestedValue = { a: randomInt(10) };
   const nextKeyToDelete = canDelete ? keys[randomInt(keys.length)] : "";
+  const nextLocalValue = `local-${randomInt(100)}`;
+  const hasLocalOnly = "localOnly" in obj;
 
   return (
     <div>
@@ -120,6 +136,22 @@ function Sandbox() {
           )}`}
         >
           Set nested
+        </Button>
+
+        <Button
+          id="set-local"
+          onClick={() => setLocal_(nextLocalValue)}
+          subtitle={`localOnly → ${JSON.stringify(nextLocalValue)}`}
+        >
+          Set local
+        </Button>
+
+        <Button
+          id="delete-local"
+          enabled={hasLocalOnly}
+          onClick={() => deleteLocal_()}
+        >
+          Delete local
         </Button>
 
         <Button
