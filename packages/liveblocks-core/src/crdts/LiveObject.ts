@@ -529,9 +529,34 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     value: Extract<Exclude<O[TKey], undefined>, Json>
   ): void {
     this._pool?.assertStorageIsWritable();
-    this.delete(key as keyof O);
+
+    // Prepare synced-key deletion (if applicable) — does NOT dispatch yet
+    const deleteResult = this.#prepareDelete(key);
+
+    // Set the new local value
     this.#local.set(key, value);
     this.invalidate();
+
+    // Single dispatch combining delete ops (if any) with local-change notification
+    if (this._pool !== undefined && this._id !== undefined) {
+      const ops = deleteResult?.[0] ?? [];
+      const reverse = deleteResult?.[1] ?? [];
+      const storageUpdates =
+        deleteResult?.[2] ?? new Map<string, LiveObjectUpdates<O>>();
+
+      // Ensure our node has a StorageUpdate entry for the key being set
+      const existing = storageUpdates.get(this._id);
+      storageUpdates.set(this._id, {
+        node: this,
+        type: "LiveObject",
+        updates: {
+          ...existing?.updates,
+          [key]: { type: "update" } satisfies UpdateDelta,
+        } as { [K in keyof O]: UpdateDelta },
+      });
+
+      this._pool.dispatch(ops, reverse, storageUpdates);
+    }
   }
 
   /**
@@ -547,52 +572,88 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /**
-   * Deletes a key from the LiveObject
-   * @param key The key of the property to delete
+   * Removes a synced key, returning the ops, reverse ops, and storage updates
+   * needed to notify the pool. Returns null if the key doesn't exist in
+   * #synced or pool/id are unavailable. Does NOT dispatch.
    */
-  delete(key: keyof O): void {
+  #prepareDelete(
+    key: keyof O
+  ):
+    | [
+        ops: ClientWireOp[],
+        reverse: Op[],
+        storageUpdates: Map<string, LiveObjectUpdates<O>>,
+      ]
+    | null {
     this._pool?.assertStorageIsWritable();
-    const keyAsString = key as string;
+
+    const k = key as string;
 
     // If key is local-only, just remove from local overlay
-    if (this.#local.has(keyAsString) && !this.#synced.has(keyAsString)) {
-      this.#local.delete(keyAsString);
+    if (this.#local.has(k) && !this.#synced.has(k)) {
+      const oldValue = this.#local.get(k) as Lson;
+      this.#local.delete(k);
       this.invalidate();
-      return;
+
+      // Return empty ops but with a StorageUpdate so subscribers get notified
+      if (this._pool !== undefined && this._id !== undefined) {
+        const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
+        storageUpdates.set(this._id, {
+          node: this,
+          type: "LiveObject",
+          updates: {
+            [k]: {
+              type: "delete",
+              deletedItem: oldValue,
+            } satisfies UpdateDelta,
+          } as { [K in keyof O]: UpdateDelta },
+        });
+        return [[], [], storageUpdates];
+      }
+
+      return null;
     }
 
-    this.#local.delete(keyAsString);
+    this.#local.delete(k);
 
-    const oldValue = this.#synced.get(keyAsString);
+    const oldValue = this.#synced.get(k);
     if (oldValue === undefined) {
-      return;
+      return null;
     }
 
     if (this._pool === undefined || this._id === undefined) {
       if (isLiveNode(oldValue)) {
         oldValue._detach();
       }
-      this.#synced.delete(keyAsString);
+      this.#synced.delete(k);
       this.invalidate();
-      return;
+      return null;
     }
 
+    const ops: ClientWireOp[] = [
+      {
+        type: OpCode.DELETE_OBJECT_KEY,
+        key: k,
+        id: this._id,
+        opId: this._pool.generateOpId(),
+      },
+    ];
     let reverse: Op[];
 
     if (isLiveNode(oldValue)) {
       oldValue._detach();
-      reverse = oldValue._toOps(this._id, keyAsString);
+      reverse = oldValue._toOps(this._id, k);
     } else {
       reverse = [
         {
           type: OpCode.UPDATE_OBJECT,
-          data: { [keyAsString]: oldValue },
+          data: { [k]: oldValue },
           id: this._id,
         },
       ];
     }
 
-    this.#synced.delete(keyAsString);
+    this.#synced.delete(k);
     this.invalidate();
 
     const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
@@ -606,18 +667,19 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       },
     });
 
-    this._pool.dispatch(
-      [
-        {
-          type: OpCode.DELETE_OBJECT_KEY,
-          key: keyAsString,
-          id: this._id,
-          opId: this._pool.generateOpId(),
-        },
-      ],
-      reverse,
-      storageUpdates
-    );
+    return [ops, reverse, storageUpdates];
+  }
+
+  /**
+   * Deletes a key from the LiveObject
+   * @param key The key of the property to delete
+   */
+  delete(key: keyof O): void {
+    const result = this.#prepareDelete(key);
+    if (result) {
+      const [ops, reverse, storageUpdates] = result;
+      this._pool?.dispatch(ops, reverse, storageUpdates);
+    }
   }
 
   /**

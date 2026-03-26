@@ -1252,6 +1252,158 @@ describe("LiveObject", () => {
   });
 
   describe("setLocal", () => {
+    test("first setLocal notifies with no deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "local");
+
+      expect(receivedUpdates).toEqual([
+        [objectUpdate({ a: 1, b: "local" }, { b: { type: "update" } })],
+      ]);
+    });
+
+    test("second setLocal notifies with previous value as deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "first");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "second");
+
+      expect(receivedUpdates).toEqual([
+        [objectUpdate({ a: 1, b: "second" }, { b: { type: "update" } })],
+      ]);
+    });
+
+    test("batched setLocal calls produce a single notification", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+        c?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      room.batch(() => {
+        root.setLocal("b", "hello");
+        root.setLocal("c", "world");
+      });
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1, b: "hello", c: "world" },
+            { b: { type: "update" }, c: { type: "update" } }
+          ),
+        ],
+      ]);
+    });
+
+    test("mixed batch with set and setLocal produces a single notification", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+        c?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      room.batch(() => {
+        root.set("b", "synced");
+        root.setLocal("c", "local");
+      });
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1, b: "synced", c: "local" },
+            { b: { type: "update" }, c: { type: "update" } }
+          ),
+        ],
+      ]);
+    });
+
+    test("setLocal on a synced key notifies deep subscribers", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.set("b", "synced");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.setLocal("b", "local");
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1, b: "local" },
+            { b: { type: "update" } }
+          ),
+        ],
+      ]);
+    });
+
     test("setLocal value is visible via get, toObject, and toImmutable", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         a: number;
@@ -1524,6 +1676,38 @@ describe("LiveObject", () => {
       // Redo re-deletes the synced value, but local value is NOT restored
       room.history.redo();
       expect(root.get("foo")).toBeUndefined();
+    });
+
+    test("delete on a local-only key notifies deep subscribers with deletedItem", async () => {
+      const { room, root } = await prepareIsolatedStorageTest<{
+        a: number;
+        b?: string;
+      }>({
+        liveblocksType: "LiveObject",
+        data: { a: 1 },
+      });
+
+      root.setLocal("b", "local");
+
+      const receivedUpdates: JsonStorageUpdate[][] = [];
+      onTestFinished(
+        room.subscribe(
+          root,
+          (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+          { isDeep: true }
+        )
+      );
+
+      root.delete("b");
+
+      expect(receivedUpdates).toEqual([
+        [
+          objectUpdate(
+            { a: 1 },
+            { b: { type: "delete", deletedItem: "local" } }
+          ),
+        ],
+      ]);
     });
 
     test("delete on a local-only key removes it without sending ops", async () => {

@@ -1594,9 +1594,13 @@ export function createRoom<
       }
       context.activeBatch.reverseOps.pushLeft(reverse);
     } else {
-      addToUndoStack(reverse);
-      context.redoStack.length = 0;
-      dispatchOps(ops);
+      if (reverse.length > 0) {
+        addToUndoStack(reverse);
+      }
+      if (ops.length > 0) {
+        context.redoStack.length = 0;
+        dispatchOps(ops);
+      }
       notify({ storageUpdates });
     }
   }
