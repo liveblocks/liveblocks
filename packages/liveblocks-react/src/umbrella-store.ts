@@ -426,7 +426,8 @@ function defaultPaginatedRetryStop(err: unknown): boolean {
 function feedPaginatedRetryStop(err: unknown): boolean {
   return (
     defaultPaginatedRetryStop(err) ||
-    (err instanceof LiveblocksError && err.context.type === "FEED_REQUEST_ERROR")
+    (err instanceof LiveblocksError &&
+      err.context.type === "FEED_REQUEST_ERROR")
   );
 }
 
