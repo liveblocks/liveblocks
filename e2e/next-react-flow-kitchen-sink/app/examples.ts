@@ -3,6 +3,10 @@ export const EXAMPLES = {
     label: "Basic",
     roomId: "liveblocks:examples:next-react-flow-kitchen-sink:basic",
   },
+  "basic-undo-redo": {
+    label: "Basic with undo-redo",
+    roomId: "liveblocks:examples:next-react-flow-kitchen-sink:basic-undo-redo",
+  },
   "feature-overview": {
     label: "Feature overview",
     roomId: "liveblocks:examples:next-react-flow-kitchen-sink:feature-overview",
