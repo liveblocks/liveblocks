@@ -1839,7 +1839,7 @@ export class UmbrellaStore<TM extends BaseMetadata, CM extends BaseMetadata> {
             const messagesMap = this.#feedMessagesByFeedId.get(feedId);
             const messages: FeedMessage[] = messagesMap
               ? Array.from(messagesMap.values()).sort(
-                  (a, b) => a.timestamp - b.timestamp
+                  (a, b) => a.createdAt - b.createdAt
                 )
               : [];
 

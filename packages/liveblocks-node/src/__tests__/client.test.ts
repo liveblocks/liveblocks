@@ -4781,12 +4781,14 @@ describe("client", () => {
       const feed: Feed = {
         feedId: "feed_123",
         metadata: { key: "value" },
-        timestamp: 1234567890,
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
       };
 
       const feedMessage: FeedMessage = {
         id: "msg_123",
-        timestamp: 1234567890,
+        createdAt: 1234567890,
+        updatedAt: 1234567890,
         data: { content: "Hello" },
       };
 
@@ -4974,7 +4976,7 @@ describe("client", () => {
           ).resolves.toEqual(feedMessage);
         });
 
-        test("should create a feed message with id and timestamp", async () => {
+        test("should create a feed message with id and createdAt", async () => {
           server.use(
             http.post(
               `${DEFAULT_BASE_URL}/v2/rooms/:roomId/feeds/:feedId/messages`,
@@ -4993,7 +4995,7 @@ describe("client", () => {
               roomId: "room_123",
               feedId: "feed_123",
               id: "msg_123",
-              timestamp: 1234567890,
+              createdAt: 1234567890,
               data: { content: "Hello" },
             })
           ).resolves.toEqual(feedMessage);

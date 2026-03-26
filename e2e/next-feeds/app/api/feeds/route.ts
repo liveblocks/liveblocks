@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { roomId, feedId, metadata, timestamp } = body;
+    const { roomId, feedId, metadata, createdAt } = body;
 
     if (!roomId) {
       return new NextResponse("Missing roomId in body", { status: 400 });
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       roomId,
       feedId,
       metadata,
-      timestamp,
+      createdAt,
     });
 
     return NextResponse.json(feed);

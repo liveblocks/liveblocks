@@ -165,7 +165,7 @@ export type AddFeedClientMsg = {
   readonly requestId: string;
   readonly feedId: string;
   readonly metadata?: FeedCreateMetadata;
-  readonly timestamp?: number;
+  readonly createdAt?: number;
 };
 
 export type UpdateFeedClientMsg = {
@@ -187,7 +187,7 @@ export type AddFeedMessageClientMsg = {
   readonly feedId: string;
   readonly data: JsonObject;
   readonly id?: string;
-  readonly timestamp?: number;
+  readonly createdAt?: number;
 };
 
 export type UpdateFeedMessageClientMsg = {
@@ -196,7 +196,7 @@ export type UpdateFeedMessageClientMsg = {
   readonly feedId: string;
   readonly messageId: string;
   readonly data: JsonObject;
-  readonly timestamp?: number;
+  readonly updatedAt?: number;
 };
 
 export type DeleteFeedMessageClientMsg = {

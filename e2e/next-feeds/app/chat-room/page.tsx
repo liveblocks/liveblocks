@@ -55,14 +55,14 @@ export default function Page() {
 function ThreadMessage({
   message,
 }: {
-  message: { id: string; timestamp: number; data: FeedMessageData };
+  message: { id: string; createdAt: number; data: FeedMessageData };
 }) {
   const data = message.data as FeedMessageData;
   return (
     <div className="p-2 rounded bg-gray-50">
       <span className="text-xs font-medium text-gray-500 mr-2">{data.role}</span>
       <span className="text-xs text-gray-400">
-        {new Date(message.timestamp).toLocaleTimeString()}
+        {new Date(message.createdAt).toLocaleTimeString()}
       </span>
       <p className="text-sm mt-1 whitespace-pre-wrap">{data.content}</p>
     </div>
@@ -125,7 +125,7 @@ function MessageBubble({
   onReplyNewThread,
   onReplyInThread,
 }: {
-  message: { id: string; timestamp: number; data: FeedMessageData };
+  message: { id: string; createdAt: number; data: FeedMessageData };
   feedId: string;
   onReplyNewThread: (replyText: string) => void;
   onReplyInThread: (threadFeedId: string, replyText: string) => void;
@@ -153,7 +153,7 @@ function MessageBubble({
             {data.role}
           </span>
           <span className="text-xs text-gray-400">
-            {new Date(message.timestamp).toLocaleTimeString()}
+            {new Date(message.createdAt).toLocaleTimeString()}
           </span>
           <p className="text-sm mt-1 whitespace-pre-wrap">{data.content}</p>
         </div>
@@ -303,7 +303,9 @@ function ChatRoom() {
 
   useEffect(() => {
     if (selectedFeedId && !channels.some((c) => c.feedId === selectedFeedId)) {
-      const mostRecent = [...channels].sort((a, b) => b.timestamp - a.timestamp)[0];
+      const mostRecent = [...channels].sort(
+        (a, b) => b.updatedAt - a.updatedAt
+      )[0];
       setSelectedFeedId(mostRecent?.feedId ?? null);
     }
   }, [channels, selectedFeedId]);
@@ -349,7 +351,7 @@ function ChatRoom() {
     if (selectedFeedId === feedId) {
       const remaining = channels
         .filter((c) => c.feedId !== feedId)
-        .sort((a, b) => b.timestamp - a.timestamp);
+        .sort((a, b) => b.updatedAt - a.updatedAt);
       setSelectedFeedId(remaining[0]?.feedId ?? null);
     }
   };

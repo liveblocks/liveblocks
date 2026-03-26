@@ -112,7 +112,7 @@ function FeedMessages({
             >
               <div className="flex-1">
                 <div className="text-xs text-gray-500 mb-1">
-                  {new Date(message.timestamp).toLocaleString()}
+                  {new Date(message.createdAt).toLocaleString()}
                 </div>
                 <pre className="text-sm whitespace-pre-wrap">
                   {JSON.stringify(message.data, null, 2)}
@@ -384,11 +384,10 @@ function Sample() {
             key={key}
             type="button"
             onClick={() => setSinkFilter(key)}
-            className={`rounded px-3 py-1 capitalize ${
-              sinkFilter === key
-                ? "bg-indigo-600 text-white"
-                : "bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100"
-            }`}
+            className={`rounded px-3 py-1 capitalize ${sinkFilter === key
+              ? "bg-indigo-600 text-white"
+              : "bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-100"
+              }`}
           >
             {key}
           </button>
@@ -438,7 +437,7 @@ function Sample() {
                     Feed: {feed.feedId.slice(0, 20)}...
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Created: {new Date(feed.timestamp).toLocaleString()}
+                    Created: {new Date(feed.createdAt).toLocaleString()}
                   </p>
                   {feed.metadata && Object.keys(feed.metadata).length > 0 && (
                     <div className="mt-2">

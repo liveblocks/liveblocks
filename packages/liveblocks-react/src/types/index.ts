@@ -1229,7 +1229,7 @@ export type RoomContextBundle<
        */
       useCreateFeed(): (
         feedId: string,
-        options?: { metadata?: FeedCreateMetadata; timestamp?: number }
+        options?: { metadata?: FeedCreateMetadata; createdAt?: number }
       ) => Promise<void>;
 
       /**
@@ -1263,7 +1263,7 @@ export type RoomContextBundle<
       useCreateFeedMessage(): (
         feedId: string,
         data: JsonObject,
-        options?: { id?: string; timestamp?: number }
+        options?: { id?: string; createdAt?: number }
       ) => Promise<void>;
 
       /**
@@ -1288,7 +1288,8 @@ export type RoomContextBundle<
       useUpdateFeedMessage(): (
         feedId: string,
         messageId: string,
-        data: JsonObject
+        data: JsonObject,
+        options?: { updatedAt?: number }
       ) => Promise<void>;
 
       /**
@@ -1427,7 +1428,7 @@ export type RoomContextBundle<
             ): FeedMessagesAsyncSuccess<FMD>;
             useCreateFeed(): (
               feedId: string,
-              options?: { metadata?: FeedCreateMetadata; timestamp?: number }
+              options?: { metadata?: FeedCreateMetadata; createdAt?: number }
             ) => Promise<void>;
             useDeleteFeed(): (feedId: string) => Promise<void>;
             useUpdateFeedMetadata(): (
@@ -1437,7 +1438,7 @@ export type RoomContextBundle<
             useCreateFeedMessage(): (
               feedId: string,
               data: JsonObject,
-              options?: { id?: string; timestamp?: number }
+              options?: { id?: string; createdAt?: number }
             ) => Promise<void>;
             useDeleteFeedMessage(): (
               feedId: string,
@@ -1446,7 +1447,8 @@ export type RoomContextBundle<
             useUpdateFeedMessage(): (
               feedId: string,
               messageId: string,
-              data: JsonObject
+              data: JsonObject,
+              options?: { updatedAt?: number }
             ) => Promise<void>;
 
             /**

@@ -627,7 +627,7 @@ export type GetWebKnowledgeSourceLinksOptions = {
 export type CreateFeedOptions = {
   feedId: string;
   metadata?: FeedCreateMetadata;
-  timestamp?: number;
+  createdAt?: number;
 };
 
 export type UpdateFeedOptions = {
@@ -636,12 +636,13 @@ export type UpdateFeedOptions = {
 
 export type CreateFeedMessageOptions<FMD extends Json = Json> = {
   id?: string;
-  timestamp?: number;
+  createdAt?: number;
   data: FMD;
 };
 
 export type UpdateFeedMessageOptions<FMD extends Json = Json> = {
   data: FMD;
+  updatedAt?: number;
 };
 
 type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
@@ -3410,7 +3411,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to create the feed in.
    * @param params.feedId The feed ID.
    * @param params.metadata (optional) The metadata for the feed.
-   * @param params.timestamp (optional) The timestamp for the feed. If not provided, the current time will be used.
+   * @param params.createdAt (optional) Creation time in ms. If not provided, the current time will be used.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed.
    */
@@ -3418,10 +3419,10 @@ export class Liveblocks {
     params: { roomId: string } & CreateFeedOptions,
     options?: RequestOptions
   ): Promise<Feed<FM>> {
-    const { roomId, feedId, metadata, timestamp } = params;
+    const { roomId, feedId, metadata, createdAt } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/feed`,
-      { feedId, metadata, timestamp },
+      { feedId, metadata, createdAt },
       options
     );
     if (!res.ok) {
@@ -3527,7 +3528,7 @@ export class Liveblocks {
    * @param params.roomId The room ID to create the feed message in.
    * @param params.feedId The feed ID to create the message in.
    * @param params.id (optional) The message ID. If not provided, one will be generated.
-   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used.
+   * @param params.createdAt (optional) Creation time in ms. If not provided, the current time will be used.
    * @param params.data The message data.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created feed message.
@@ -3539,10 +3540,10 @@ export class Liveblocks {
     } & CreateFeedMessageOptions<FMD>,
     options?: RequestOptions
   ): Promise<FeedMessage<FMD>> {
-    const { roomId, feedId, id, timestamp, data } = params;
+    const { roomId, feedId, id, createdAt, data } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages`,
-      { id, timestamp, data },
+      { id, createdAt, data },
       options
     );
     if (!res.ok) {
@@ -3557,7 +3558,7 @@ export class Liveblocks {
    * @param params.feedId The feed ID to update the message in.
    * @param params.messageId The message ID to update.
    * @param params.data The message data.
-   * @param params.timestamp (optional) The message timestamp. If not provided, the current time will be used. If provided and less than the current time, the message update will be ignored.
+   * @param params.updatedAt (optional) Last-known update time in ms for stale-update protection. If omitted, the server uses the current time.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async updateFeedMessage<FMD extends Json = Json>(
@@ -3565,14 +3566,13 @@ export class Liveblocks {
       roomId: string;
       feedId: string;
       messageId: string;
-      timestamp?: number;
     } & UpdateFeedMessageOptions<FMD>,
     options?: RequestOptions
   ): Promise<void> {
-    const { roomId, feedId, messageId, data, timestamp } = params;
+    const { roomId, feedId, messageId, data, updatedAt } = params;
     const res = await this.#patch(
       url`/v2/rooms/${roomId}/feeds/${feedId}/messages/${messageId}`,
-      { data, timestamp },
+      { data, updatedAt },
       options
     );
     if (!res.ok) {

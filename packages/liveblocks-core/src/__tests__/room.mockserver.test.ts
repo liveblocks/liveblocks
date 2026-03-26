@@ -2504,6 +2504,7 @@ describe("room", () => {
       const addFeedMsg = batch.find((m) => m.type === ClientMsgCode.ADD_FEED)!;
       expect(addFeedMsg.requestId).toBeDefined();
       expect(addFeedMsg.feedId).toBe("my-feed");
+      const now = Date.now();
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.FEEDS_ADDED,
@@ -2511,7 +2512,8 @@ describe("room", () => {
             {
               feedId: "my-feed",
               metadata: {},
-              timestamp: Date.now(),
+              createdAt: now,
+              updatedAt: now,
             },
           ],
         })
@@ -2591,11 +2593,14 @@ describe("room", () => {
         limit?: number;
         cursor?: string;
       }>;
-      const fetchMsg1 = batch1.find((m) => m.type === ClientMsgCode.FETCH_FEEDS)!;
+      const fetchMsg1 = batch1.find(
+        (m) => m.type === ClientMsgCode.FETCH_FEEDS
+      )!;
       expect(fetchMsg1.limit).toBe(1);
       expect(fetchMsg1.cursor).toBeUndefined();
 
       const requestId1 = fetchMsg1.requestId!;
+      const t1 = Date.now();
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.FEEDS_LIST,
@@ -2604,7 +2609,8 @@ describe("room", () => {
             {
               feedId: "feed-page-1",
               metadata: {},
-              timestamp: Date.now(),
+              createdAt: t1,
+              updatedAt: t1,
             },
           ],
           nextCursor: "cursor-2",
@@ -2638,11 +2644,14 @@ describe("room", () => {
         limit?: number;
         cursor?: string;
       }>;
-      const fetchMsg2 = batch2.find((m) => m.type === ClientMsgCode.FETCH_FEEDS)!;
+      const fetchMsg2 = batch2.find(
+        (m) => m.type === ClientMsgCode.FETCH_FEEDS
+      )!;
       expect(fetchMsg2.limit).toBe(1);
       expect(fetchMsg2.cursor).toBe("cursor-2");
 
       const requestId2 = fetchMsg2.requestId!;
+      const t2 = Date.now();
       wss.last.send(
         serverMessage({
           type: ServerMsgCode.FEEDS_LIST,
@@ -2651,7 +2660,8 @@ describe("room", () => {
             {
               feedId: "feed-page-2",
               metadata: {},
-              timestamp: Date.now(),
+              createdAt: t2,
+              updatedAt: t2,
             },
           ],
           nextCursor: undefined,

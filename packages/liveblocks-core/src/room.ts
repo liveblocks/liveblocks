@@ -679,7 +679,7 @@ export type Room<
     feedId: string,
     options?: {
       metadata?: FeedCreateMetadata;
-      timestamp?: number;
+      createdAt?: number;
     }
   ): Promise<void>;
 
@@ -701,7 +701,7 @@ export type Room<
     data: JsonObject,
     options?: {
       id?: string;
-      timestamp?: number;
+      createdAt?: number;
     }
   ): Promise<void>;
 
@@ -711,7 +711,8 @@ export type Room<
   updateFeedMessage(
     feedId: string,
     messageId: string,
-    data: JsonObject
+    data: JsonObject,
+    options?: { updatedAt?: number }
   ): Promise<void>;
 
   /**
@@ -3099,7 +3100,7 @@ export function createRoom<
 
   function addFeed(
     feedId: string,
-    options?: { metadata?: FeedCreateMetadata; timestamp?: number }
+    options?: { metadata?: FeedCreateMetadata; createdAt?: number }
   ): Promise<void> {
     const requestId = nanoid();
     const promise = registerFeedMutation(requestId, "add-feed", feedId);
@@ -3108,7 +3109,7 @@ export function createRoom<
       requestId,
       feedId,
       metadata: options?.metadata,
-      timestamp: options?.timestamp,
+      createdAt: options?.createdAt,
     };
     context.buffer.messages.push(message);
     flushNowOrSoon();
@@ -3148,7 +3149,7 @@ export function createRoom<
   function addFeedMessage(
     feedId: string,
     data: JsonObject,
-    options?: { id?: string; timestamp?: number }
+    options?: { id?: string; createdAt?: number }
   ): Promise<void> {
     const requestId = nanoid();
     const promise = registerFeedMutation(requestId, "add-message", feedId, {
@@ -3160,7 +3161,7 @@ export function createRoom<
       feedId,
       data,
       id: options?.id,
-      timestamp: options?.timestamp,
+      createdAt: options?.createdAt,
     };
     context.buffer.messages.push(message);
     flushNowOrSoon();
@@ -3170,7 +3171,8 @@ export function createRoom<
   function updateFeedMessage(
     feedId: string,
     messageId: string,
-    data: JsonObject
+    data: JsonObject,
+    options?: { updatedAt?: number }
   ): Promise<void> {
     const requestId = nanoid();
     const promise = registerFeedMutation(requestId, "update-message", feedId, {
@@ -3182,6 +3184,7 @@ export function createRoom<
       feedId,
       messageId,
       data,
+      updatedAt: options?.updatedAt,
     };
     context.buffer.messages.push(message);
     flushNowOrSoon();

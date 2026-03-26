@@ -1644,7 +1644,7 @@ function useCreateFeed_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
 ): (
   feedId: string,
-  options?: { metadata?: FeedCreateMetadata; timestamp?: number }
+  options?: { metadata?: FeedCreateMetadata; createdAt?: number }
 ) => Promise<void> {
   const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
@@ -1655,7 +1655,7 @@ function useCreateFeed_withRoomContext(
 
 function useCreateFeed(): (
   feedId: string,
-  options?: { metadata?: FeedCreateMetadata; timestamp?: number }
+  options?: { metadata?: FeedCreateMetadata; createdAt?: number }
 ) => Promise<void> {
   return useCreateFeed_withRoomContext(GlobalRoomContext);
 }
@@ -1693,7 +1693,7 @@ function useCreateFeedMessage_withRoomContext(
 ): (
   feedId: string,
   data: JsonObject,
-  options?: { id?: string; timestamp?: number }
+  options?: { id?: string; createdAt?: number }
 ) => Promise<void> {
   const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
@@ -1705,7 +1705,7 @@ function useCreateFeedMessage_withRoomContext(
 function useCreateFeedMessage(): (
   feedId: string,
   data: JsonObject,
-  options?: { id?: string; timestamp?: number }
+  options?: { id?: string; createdAt?: number }
 ) => Promise<void> {
   return useCreateFeedMessage_withRoomContext(GlobalRoomContext);
 }
@@ -1729,11 +1729,16 @@ function useDeleteFeedMessage(): (
 
 function useUpdateFeedMessage_withRoomContext(
   RoomContext: Context<OpaqueRoom | null>
-): (feedId: string, messageId: string, data: JsonObject) => Promise<void> {
+): (
+  feedId: string,
+  messageId: string,
+  data: JsonObject,
+  options?: { updatedAt?: number }
+) => Promise<void> {
   const room = useRoom_withRoomContext(RoomContext);
   return useCallback(
-    (feedId, messageId, data) =>
-      room.updateFeedMessage(feedId, messageId, data),
+    (feedId, messageId, data, options) =>
+      room.updateFeedMessage(feedId, messageId, data, options),
     [room]
   );
 }
@@ -1741,7 +1746,8 @@ function useUpdateFeedMessage_withRoomContext(
 function useUpdateFeedMessage(): (
   feedId: string,
   messageId: string,
-  data: JsonObject
+  data: JsonObject,
+  options?: { updatedAt?: number }
 ) => Promise<void> {
   return useUpdateFeedMessage_withRoomContext(GlobalRoomContext);
 }
