@@ -6,8 +6,6 @@ import type {
 } from "@liveblocks/core";
 import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
 
-import type { EDGE_LOCAL_KEYS, NODE_LOCAL_KEYS } from "./constants";
-
 /**
  * The Liveblocks Storage representation of a React Flow `Node`.
  *
@@ -15,7 +13,7 @@ import type { EDGE_LOCAL_KEYS, NODE_LOCAL_KEYS } from "./constants";
  * The entire node and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
-  DistributiveOmit<N, (typeof NODE_LOCAL_KEYS)[number] | "data"> & {
+  DistributiveOmit<N, "data"> & {
     data: LiveObject<N["data"] & LsonObject>;
   } & LsonObject
 >;
@@ -27,7 +25,7 @@ export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
  * The entire edge and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksEdge<E extends Edge = BuiltInEdge> = LiveObject<
-  DistributiveOmit<E, (typeof EDGE_LOCAL_KEYS)[number] | "data"> & {
+  DistributiveOmit<E, "data"> & {
     data?: LiveObject<NonNullable<E["data"]> & LsonObject>;
   } & LsonObject
 >;
@@ -45,10 +43,3 @@ export type LiveblocksFlow<
   nodes: LiveMap<string, LiveblocksNode<N>>;
   edges: LiveMap<string, LiveblocksEdge<E>>;
 }>;
-
-export type LocalNodes = Partial<
-  Record<(typeof NODE_LOCAL_KEYS)[number], unknown>
->;
-export type LocalEdges = Partial<
-  Record<(typeof EDGE_LOCAL_KEYS)[number], unknown>
->;

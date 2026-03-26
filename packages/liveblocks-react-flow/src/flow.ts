@@ -1,9 +1,8 @@
-import type { Json, Resolve, ToImmutable } from "@liveblocks/core";
-import { LiveMap, LiveObject, shallow, Signal } from "@liveblocks/core";
+import type { Json, LsonObject, Resolve, ToImmutable } from "@liveblocks/core";
+import { LiveMap, LiveObject } from "@liveblocks/core";
 import { useMutation, useStorage } from "@liveblocks/react";
 import {
   useInitial,
-  useSignal,
   useSuspendUntilStorageReady,
 } from "@liveblocks/react/_private";
 import type {
@@ -19,7 +18,7 @@ import type {
   OnNodesChange,
 } from "@xyflow/react";
 import { addEdge as defaultAddEdge } from "@xyflow/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect } from "react";
 
 import {
   DEFAULT_STORAGE_KEY,
@@ -27,13 +26,7 @@ import {
   NODE_LOCAL_KEYS,
 } from "./constants";
 import { toLiveblocksEdge, toLiveblocksNode } from "./helpers";
-import type {
-  LiveblocksEdge,
-  LiveblocksFlow,
-  LiveblocksNode,
-  LocalEdges,
-  LocalNodes,
-} from "./types";
+import type { LiveblocksEdge, LiveblocksFlow, LiveblocksNode } from "./types";
 
 const EMPTY_ARRAY = [] as unknown[];
 
@@ -200,127 +193,37 @@ type UseLiveblocksFlowOptions<N extends Node, E extends Edge> = {
   storageKey?: string;
 };
 
-function pick<T extends object, K extends PropertyKey>(
-  from: T,
-  keys: readonly K[]
-): Partial<Record<K, unknown>> {
-  const result: Partial<Record<K, unknown>> = {};
+// Narrowed LiveObject type for calling setLocal/delete with known local keys.
+// Needed because TypeScript can't resolve OptionalJsonKeys on generic
+// LiveblocksNode<N>/LiveblocksEdge<E> types.
+type NodeLocalLO = LiveObject<Node & LsonObject>;
+type EdgeLocalLO = LiveObject<Edge & LsonObject>;
 
-  for (const key of keys) {
-    const value = (from as Record<PropertyKey, unknown>)[key];
-
-    if (value !== undefined && value !== null) {
-      result[key] = value;
-    }
-  }
-
-  return result;
-}
-
-function reconcile<T extends { id: string }>(cache: Map<string, T>, next: T) {
-  const previous = cache.get(next.id);
-
-  if (previous && shallow(previous, next)) {
-    return previous;
-  }
-
-  cache.set(next.id, next);
-
-  return next;
-}
-
-function merge<T extends { id: string }, L extends object>(
-  cache: Map<string, T>,
-  remote: ReadonlyMap<string, T>,
-  local: Map<string, L>
-): T[] {
-  // Prune cached items that were deleted remotely.
-  for (const id of cache.keys()) {
-    if (!remote.has(id)) {
-      cache.delete(id);
-    }
-  }
-
-  // Prune local items that were deleted remotely.
-  for (const id of local.keys()) {
-    if (!remote.has(id)) {
-      local.delete(id);
-    }
-  }
-
-  // Reconcile remote and local items.
-  return Array.from(remote.values(), (item) => {
-    const localItem = local.get(item.id);
-
-    return reconcile(
-      cache,
-      localItem ? (Object.assign({}, item, localItem) as T) : item
-    );
-  });
-}
-
-function updateLocalState<T extends object>(
-  map: Map<string, T>,
-  key: string,
-  changes: T
-): boolean {
-  const next: Record<string, unknown> = {};
-
-  for (const change in changes) {
-    const value = (changes as Record<string, unknown>)[change];
-
-    // `false` values aren't stored.
-    if (value !== undefined && value !== false) {
-      next[change] = value;
-    }
-  }
-
-  if (Object.keys(next).length > 0) {
-    map.set(key, next as T);
-
-    return true;
-  } else {
-    const hasItem = map.has(key);
-    map.delete(key);
-
-    return hasItem;
-  }
-}
-
-// Similar to React Flow's `applyNodeChanges()`, but with a split between local
-// and remote changes.
+// Similar to React Flow's `applyNodeChanges()`, but writes local-only
+// properties via `setLocal()` / `delete()` on the LiveObject directly.
 // https://reactflow.dev/api-reference/utils/apply-node-changes
-function applyNodeChanges<N extends Node>(args: {
-  changes: NodeChange<N>[];
-  nodes: LiveMap<string, LiveblocksNode<N>>;
-  nextLocal: Map<string, Partial<LocalNodes>>;
-  nodeCache: Map<string, N>;
-}): boolean {
-  const { changes, nodes, nextLocal, nodeCache } = args;
-
-  let hasLocalChanged = false;
-
+function applyNodeChanges<N extends Node>(
+  changes: NodeChange<N>[],
+  nodes: LiveMap<string, LiveblocksNode<N>>
+): void {
   for (const change of changes) {
     switch (change.type) {
       case "add":
-      case "replace":
-        nodes.set(change.item.id, toLiveblocksNode(change.item));
-        if (
-          updateLocalState(
-            nextLocal,
-            change.item.id,
-            pick(change.item, NODE_LOCAL_KEYS)
-          )
-        ) {
-          hasLocalChanged = true;
+      case "replace": {
+        const lo = toLiveblocksNode(change.item);
+        nodes.set(change.item.id, lo);
+        const n = lo as unknown as NodeLocalLO;
+        for (const key of NODE_LOCAL_KEYS) {
+          const value = change.item[key];
+          if (value !== undefined && value !== false) {
+            n.setLocal(key, value);
+          }
         }
         break;
+      }
 
       case "remove":
         nodes.delete(change.id);
-        nodeCache.delete(change.id);
-        nextLocal.delete(change.id);
-        hasLocalChanged = true;
         break;
 
       case "position": {
@@ -340,11 +243,8 @@ function applyNodeChanges<N extends Node>(args: {
         }
 
         if (change.dragging !== undefined) {
-          updateLocalState(nextLocal, change.id, {
-            ...nextLocal.get(change.id),
-            dragging: change.dragging,
-          });
-          hasLocalChanged = true;
+          const n = node as unknown as NodeLocalLO;
+          n.setLocal("dragging", change.dragging);
         }
 
         break;
@@ -352,12 +252,12 @@ function applyNodeChanges<N extends Node>(args: {
 
       case "dimensions": {
         const node = nodes.get(change.id);
-        const patch: Partial<LocalNodes> = {
-          ...nextLocal.get(change.id),
-        };
+
+        if (!node) {
+          break;
+        }
 
         if (
-          node &&
           change.dimensions !== undefined &&
           change.setAttributes !== undefined
         ) {
@@ -376,79 +276,68 @@ function applyNodeChanges<N extends Node>(args: {
           }
         }
 
+        const n = node as unknown as NodeLocalLO;
+
         if (change.dimensions !== undefined) {
-          patch.measured = change.dimensions;
+          n.setLocal("measured", change.dimensions);
         }
 
         if (change.resizing !== undefined) {
-          patch.resizing = change.resizing;
+          n.setLocal("resizing", change.resizing);
         }
 
-        updateLocalState(nextLocal, change.id, patch);
-        hasLocalChanged = true;
         break;
       }
 
       case "select":
-        updateLocalState(nextLocal, change.id, {
-          ...nextLocal.get(change.id),
-          selected: change.selected,
-        });
-        hasLocalChanged = true;
+        {
+          const node = nodes.get(change.id);
+          if (!node) break;
+          const n = node as unknown as NodeLocalLO;
+          n.setLocal("selected", change.selected);
+        }
         break;
     }
   }
-
-  return hasLocalChanged;
 }
 
-// Similar to React Flow's `applyEdgeChanges()`, but with a split between local
-// and remote changes.
+// Similar to React Flow's `applyEdgeChanges()`, but writes local-only
+// properties via `setLocal()` / `delete()` on the LiveObject directly.
 // https://reactflow.dev/api-reference/utils/apply-edge-changes
-function applyEdgeChanges<E extends Edge>(args: {
-  changes: EdgeChange<E>[];
-  edges: LiveMap<string, LiveblocksEdge<E>>;
-  nextLocal: Map<string, Partial<LocalEdges>>;
-  edgeCache: Map<string, E>;
-}): boolean {
-  const { changes, edges, nextLocal, edgeCache } = args;
-
-  let hasLocalChanged = false;
-
+function applyEdgeChanges<E extends Edge>(
+  changes: EdgeChange<E>[],
+  edges: LiveMap<string, LiveblocksEdge<E>>
+): void {
   for (const change of changes) {
     switch (change.type) {
       case "add":
-      case "replace":
-        edges.set(change.item.id, toLiveblocksEdge(change.item));
-        if (
-          updateLocalState(
-            nextLocal,
-            change.item.id,
-            pick(change.item, EDGE_LOCAL_KEYS)
-          )
-        ) {
-          hasLocalChanged = true;
+      case "replace": {
+        const lo = toLiveblocksEdge(change.item);
+        edges.set(change.item.id, lo);
+        const e = lo as unknown as EdgeLocalLO;
+        for (const key of EDGE_LOCAL_KEYS) {
+          const value = change.item[key];
+          if (value !== undefined && value !== false) {
+            e.setLocal(key, value);
+          }
         }
         break;
+      }
 
       case "remove":
         edges.delete(change.id);
-        edgeCache.delete(change.id);
-        nextLocal.delete(change.id);
-        hasLocalChanged = true;
         break;
 
       case "select":
-        updateLocalState(nextLocal, change.id, {
-          ...nextLocal.get(change.id),
-          selected: change.selected,
-        });
-        hasLocalChanged = true;
+        {
+          const edge = edges.get(change.id);
+          if (!edge) break;
+          const e = edge as unknown as EdgeLocalLO;
+          e.setLocal("selected", change.selected);
+        }
         break;
     }
   }
-
-  return hasLocalChanged;
 }
 
 /**
@@ -505,91 +394,38 @@ export function useLiveblocksFlow<
     storageKey: options.storageKey ?? DEFAULT_STORAGE_KEY,
   });
 
-  // Used to reconcile state changes with stable object references when the changes
-  // are shallowly equal, preventing React Flow from re-rendering unchanged nodes and edges.
-  const nodeCache = useRef<Map<string, N>>(new Map());
-  const edgeCache = useRef<Map<string, E>>(new Map());
-
-  // Local-only state lives in signals.
-  const [localNodesΣ] = useState(
-    () => new Signal(new Map<string, Partial<LocalNodes>>())
-  );
-  const [localEdgesΣ] = useState(
-    () => new Signal(new Map<string, Partial<LocalEdges>>())
-  );
-  const localNodes = useSignal(localNodesΣ);
-  const localEdges = useSignal(localEdgesΣ);
-
-  // Remote state lives in Liveblocks Storage.
-  const remoteNodesMap = useStorage((storage) => {
+  // Storage already includes local overlays via toImmutable(), so no
+  // separate local layer is needed. Individual node/edge immutable references
+  // are already stable (only change when the underlying LiveObject changes).
+  const nodes = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
       | TImmutableFlow
       | undefined;
-
-    return (flow?.nodes ?? null) as ReadonlyMap<string, N> | null;
+    return flow?.nodes ? ([...flow.nodes.values()] as N[]) : null;
   });
-  const remoteEdgesMap = useStorage((storage) => {
+  const edges = useStorage((storage) => {
     const flow = storage[frozenOptions.storageKey] as
       | TImmutableFlow
       | undefined;
-
-    return (flow?.edges ?? null) as ReadonlyMap<string, E> | null;
+    return flow?.edges ? ([...flow.edges.values()] as E[]) : null;
   });
-
-  // Merge remote and local layers to get the final state.
-  const nodes = useMemo(
-    () =>
-      remoteNodesMap
-        ? merge(nodeCache.current, remoteNodesMap, localNodes)
-        : null,
-    [remoteNodesMap, localNodes]
-  );
-  const edges = useMemo(
-    () =>
-      remoteEdgesMap
-        ? merge(edgeCache.current, remoteEdgesMap, localEdges)
-        : null,
-    [remoteEdgesMap, localEdges]
-  );
 
   const onNodesChange = useMutation(({ storage }, changes: NodeChange<N>[]) => {
     const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
-
     if (!flow) {
       return;
     }
 
-    const nextLocal = new Map(localNodesΣ.get());
-    const hasLocalChanged = applyNodeChanges({
-      changes,
-      nodes: flow.get("nodes"),
-      nextLocal,
-      nodeCache: nodeCache.current,
-    });
-
-    if (hasLocalChanged) {
-      localNodesΣ.set(nextLocal);
-    }
+    applyNodeChanges(changes, flow.get("nodes"));
   }, []);
 
   const onEdgesChange = useMutation(({ storage }, changes: EdgeChange<E>[]) => {
     const flow = storage.get(frozenOptions.storageKey) as TFlow | undefined;
-
     if (!flow) {
       return;
     }
 
-    const nextLocal = new Map(localEdgesΣ.get());
-    const hasLocalChanged = applyEdgeChanges({
-      changes,
-      edges: flow.get("edges"),
-      nextLocal,
-      edgeCache: edgeCache.current,
-    });
-
-    if (hasLocalChanged) {
-      localEdgesΣ.set(nextLocal);
-    }
+    applyEdgeChanges(changes, flow.get("edges"));
   }, []);
 
   const onConnect = useMutation(({ storage }, connection: Connection) => {
