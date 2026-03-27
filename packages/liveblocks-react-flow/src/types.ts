@@ -13,9 +13,7 @@ import type { BuiltInEdge, BuiltInNode, Edge, Node } from "@xyflow/react";
  * The entire node and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
-  DistributiveOmit<N, "data"> & {
-    data: LiveObject<N["data"] & LsonObject>;
-  } & LsonObject
+  DistributiveOmit<N, "data"> & { data: LiveObject<LsonObject> } & LsonObject
 >;
 
 /**
@@ -25,9 +23,7 @@ export type LiveblocksNode<N extends Node = BuiltInNode> = LiveObject<
  * The entire edge and its `data` property are both stored as `LiveObject`s.
  */
 export type LiveblocksEdge<E extends Edge = BuiltInEdge> = LiveObject<
-  DistributiveOmit<E, "data"> & {
-    data?: LiveObject<NonNullable<E["data"]> & LsonObject>;
-  } & LsonObject
+  DistributiveOmit<E, "data"> & { data?: LiveObject<LsonObject> } & LsonObject
 >;
 
 /**

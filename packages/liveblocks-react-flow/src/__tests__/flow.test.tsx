@@ -1,4 +1,4 @@
-import type { PlainLsonObject } from "@liveblocks/core";
+import type { LsonObject, PlainLsonObject } from "@liveblocks/core";
 import { LiveList, LiveObject } from "@liveblocks/core";
 import { useMutation } from "@liveblocks/react";
 import { act, screen, waitFor } from "@testing-library/react";
@@ -55,25 +55,18 @@ describe("createLiveblocksFlow", () => {
     const flow = createLiveblocksFlow(nodes, []);
     const nodeData = flow.get("nodes").get("1")?.get("data");
 
-    // Top-level data is a LiveObject
+    // Top-level data is a LiveObject with deeply liveified contents
     expect(nodeData).toBeInstanceOf(LiveObject);
-    // Scalar values stay as-is
-    expect(nodeData?.get("label")).toBe("Node 1");
+    expect(nodeData?.toImmutable()).toEqual({
+      label: "Node 1",
+      metadata: { color: "red", tags: ["a", "b"] },
+    });
+
     // Nested object becomes a LiveObject
-    const metadata = nodeData?.get("metadata");
+    const metadata = nodeData?.get("metadata") as LiveObject<LsonObject>;
     expect(metadata).toBeInstanceOf(LiveObject);
-    // @ts-expect-error - The return type of createLiveblocksFlow needs to be refined
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    expect(metadata?.get("color")).toBe("red");
     // Nested array becomes a LiveList
-    // @ts-expect-error - The return type of createLiveblocksFlow needs to be refined
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const tags = metadata?.get("tags");
-    expect(tags).toBeInstanceOf(LiveList);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
-    expect(tags?.get(0)).toBe("a");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call
-    expect(tags?.get(1)).toBe("b");
+    expect(metadata.get("tags")).toBeInstanceOf(LiveList);
   });
 
   test("should support initializing an empty flow", () => {
