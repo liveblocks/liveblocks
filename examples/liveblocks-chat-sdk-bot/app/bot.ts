@@ -21,84 +21,83 @@ export const bot = new Chat<{ liveblocks: LiveblocksAdapter }>({
 
 // Handle @-mentions of the bot
 bot.onNewMention(async (thread, message) => {
-  await Promise.all([
-    thread.adapter.addReaction(thread.id, message.id, "👀"),
-    thread.post({
-      ast: {
-        type: "root",
-        children: [
-          {
-            type: "paragraph",
-            children: [
-              {
-                type: "text",
-                value: "Hello ",
-              },
-              {
-                type: "strong",
-                children: [
-                  {
-                    type: "text",
-                    value: message.author.userName,
-                  },
-                ],
-              },
-              {
-                type: "text",
-                value: "!",
-              },
-            ],
-          },
-          {
-            type: "paragraph",
-            children: [
-              {
-                type: "text",
-                value: "I'm ",
-              },
-              {
-                type: "strong",
-                children: [
-                  {
-                    type: "text",
-                    value: "Liveblocks Bot",
-                  },
-                ],
-              },
-              {
-                type: "text",
-                value:
-                  ". You can @-mention me again or react to my messages to see me respond.",
-              },
-            ],
-          },
-          {
-            type: "paragraph",
-            children: [
-              {
-                type: "text",
-                value: "You can learn more about this demo by visiting the ",
-              },
-              {
-                type: "link",
-                url: "https://liveblocks.io/docs/examples/liveblocks-chat-sdk",
-                children: [
-                  {
-                    type: "text",
-                    value: "Liveblocks Chat SDK documentation",
-                  },
-                ],
-              },
-              {
-                type: "text",
-                value: ".",
-              },
-            ],
-          },
-        ],
-      },
-    }),
-  ]);
+  await thread.adapter.addReaction(thread.id, message.id, "👀");
+
+  await thread.post({
+    ast: {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "text",
+              value: "Hello ",
+            },
+            {
+              type: "strong",
+              children: [
+                {
+                  type: "text",
+                  value: message.author.userName,
+                },
+              ],
+            },
+            {
+              type: "text",
+              value: "!",
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "text",
+              value: "I'm ",
+            },
+            {
+              type: "strong",
+              children: [
+                {
+                  type: "text",
+                  value: "Liveblocks Bot",
+                },
+              ],
+            },
+            {
+              type: "text",
+              value:
+                ". You can @-mention me again or react to my messages to see me respond.",
+            },
+          ],
+        },
+        {
+          type: "paragraph",
+          children: [
+            {
+              type: "text",
+              value: "You can learn more about this demo by visiting the ",
+            },
+            {
+              type: "link",
+              url: "https://liveblocks.io/docs/examples/liveblocks-chat-sdk",
+              children: [
+                {
+                  type: "text",
+                  value: "Liveblocks + Chat SDK example documentation",
+                },
+              ],
+            },
+            {
+              type: "text",
+              value: ".",
+            },
+          ],
+        },
+      ],
+    },
+  });
 });
 
 bot.onReaction(async (event) => {

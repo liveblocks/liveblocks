@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Chat SDK bot
+# Chat SDK + Liveblocks adapter bot
 
 <p>
   <a href="https://liveblocks.io/docs/examples/liveblocks-chat-sdk">
@@ -20,9 +20,11 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a bot on comments threads using the
-[Chat SDK](https://chat-sdk.dev), the [@liveblocks/chat](https://liveblocks.io/docs/api-reference/liveblocks-chat)
-adapter, [Liveblocks](https://liveblocks.io), and [Next.js](https://nextjs.org/).
+This example shows how to build a bot on Liveblocks comment threads using the
+[Chat SDK](https://chat-sdk.dev): [`@liveblocks/chat`](https://liveblocks.io/docs/api-reference/liveblocks-chat)
+is Liveblocks’ **platform adapter** for the Chat SDK, and [`@chat-adapter/state-memory`](https://www.npmjs.com/package/@chat-adapter/state-memory)
+provides the Chat SDK **state** adapter. The UI runs on [Liveblocks](https://liveblocks.io)
+and [Next.js](https://nextjs.org/).
 
 When someone @-mentions the bot in a thread, it replies in the thread; adding a
 reaction to a message triggers a short reply as well.
@@ -43,7 +45,7 @@ you to automatically get your API key from your
 
 ### Setting up webhooks
 
-The Chat SDK adapter needs Liveblocks webhooks to receive new comments and reactions.
+The Liveblocks adapter (`@liveblocks/chat`) needs Liveblocks webhooks to receive new comments and reactions.
 
 - Follow our guide on [testing webhooks locally](https://liveblocks.io/docs/guides/how-to-test-webhooks-on-localhost). When creating the webhook endpoint, enable the **commentCreated**, **commentReactionAdded**, and **commentReactionRemoved** events (see [webhook events](https://liveblocks.io/docs/platform/webhooks#edit-endpoint-events))
 - Copy your **webhook secret** (`whsec_…`) from the webhooks dashboard
