@@ -107,30 +107,67 @@ export class LiveblocksAdapter<
       this.#logger.error("Failed to verify webhook request", { error });
       return new Response("Invalid webhook request", { status: 401 });
     }
-    if (event.type !== "commentCreated") {
-      return new Response(null, { status: 200 });
+
+    if (event.type === "commentCreated") {
+      const threadId = this.encodeThreadId({
+        roomId: event.data.roomId,
+        threadId: event.data.threadId,
+      });
+
+      const comment = await this.#client.getComment({
+        roomId: event.data.roomId,
+        threadId: event.data.threadId,
+        commentId: event.data.commentId,
+      });
+      if (comment.deletedAt !== undefined) {
+        return new Response(null, { status: 200 });
+      }
+
+      this.#chat?.processMessage(
+        this,
+        threadId,
+        () => this.#convertLiveblocksCommentDataToChatMessage(comment),
+        options
+      );
+    } else if (
+      event.type === "commentReactionAdded" ||
+      event.type === "commentReactionRemoved"
+    ) {
+      const threadId = this.encodeThreadId({
+        roomId: event.data.roomId,
+        threadId: event.data.threadId,
+      });
+
+      const userId =
+        event.type === "commentReactionAdded"
+          ? event.data.addedBy
+          : event.data.removedBy;
+
+      const resolvedUsers = await this.#resolveUsers?.({ userIds: [userId] });
+      const user = resolvedUsers?.[0];
+
+      this.#chat?.processReaction(
+        {
+          added: event.type === "commentReactionAdded",
+          emoji: defaultEmojiResolver.fromGChat(event.data.emoji),
+          rawEmoji: event.data.emoji,
+          messageId: event.data.commentId,
+          threadId,
+          user: {
+            userId,
+            userName: user?.name ?? userId,
+            fullName: user?.name ?? userId,
+            // This assumes that the current bot is the only bot in the thread; if we want
+            // to support multiple bots, we need to add a way to determine the bot's user id.
+            isBot: userId === this.#botUserId,
+            isMe: userId === this.#botUserId,
+          },
+          raw: event.data,
+          adapter: this,
+        },
+        options
+      );
     }
-
-    const threadId = this.encodeThreadId({
-      roomId: event.data.roomId,
-      threadId: event.data.threadId,
-    });
-
-    const comment = await this.#client.getComment({
-      roomId: event.data.roomId,
-      threadId: event.data.threadId,
-      commentId: event.data.commentId,
-    });
-    if (comment.deletedAt !== undefined) {
-      return new Response(null, { status: 200 });
-    }
-
-    this.#chat?.processMessage(
-      this,
-      threadId,
-      () => this.#convertLiveblocksCommentDataToChatMessage(comment),
-      options
-    );
 
     return new Response(null, { status: 200 });
   }
@@ -646,7 +683,8 @@ export class LiveblocksAdapter<
         userId: comment.userId,
         userName: users.get(comment.userId)?.name ?? comment.userId,
         fullName: users.get(comment.userId)?.name ?? comment.userId,
-        // This assumes that the current bot is the only bot in the thread; if we want to support multiple bots, we need to add a way to determine the bot's user id.
+        // This assumes that the current bot is the only bot in the thread; if we want
+        // to support multiple bots, we need to add a way to determine the bot's user id.
         isBot: comment.userId === this.#botUserId,
         isMe: comment.userId === this.#botUserId,
       },

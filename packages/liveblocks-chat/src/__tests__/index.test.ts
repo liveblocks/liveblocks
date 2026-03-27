@@ -14,7 +14,7 @@ import {
   getRoomIdFromChannelId,
   LiveblocksAdapter,
   type LiveblocksAdapterConfig,
-} from "../index";
+} from "../adapter";
 
 type AdapterConfig = LiveblocksAdapterConfig<BaseUserMeta, BaseGroupInfo>;
 
@@ -388,6 +388,177 @@ describe("LiveblocksAdapter", () => {
       expect(call[0]).toBe(adapter);
       expect(call[1]).toBe("liveblocks:room_1:th_1");
       expect(typeof call[2]).toBe("function");
+    });
+
+    test("calls processReaction with added: true for commentReactionAdded", async () => {
+      const adapter = createDummyAdapter();
+      const processReaction = vi.fn();
+      await adapter.initialize({ processReaction } as unknown as ChatInstance);
+
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "commentReactionAdded",
+        data: {
+          projectId: "p1",
+          roomId: "room_1",
+          threadId: "th_1",
+          commentId: "cm_1",
+          emoji: "👍",
+          addedAt: "2024-01-01T00:00:00.000Z",
+          addedBy: "user_1",
+        },
+      });
+
+      const res = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+      expect(res.status).toBe(200);
+      expect(processReaction).toHaveBeenCalledTimes(1);
+      const call = processReaction.mock.calls[0]!;
+      const event = call[0];
+      expect(event.added).toBe(true);
+      expect(event.rawEmoji).toBe("👍");
+      expect(event.messageId).toBe("cm_1");
+      expect(event.threadId).toBe("liveblocks:room_1:th_1");
+      expect(event.user.userId).toBe("user_1");
+      expect(event.user.userName).toBe("user_1");
+      expect(event.user.isBot).toBe(false);
+      expect(event.user.isMe).toBe(false);
+      expect(event.adapter).toBe(adapter);
+    });
+
+    test("sets isBot and isMe to true when reaction is from bot user", async () => {
+      const adapter = createDummyAdapter({ botUserId: "bot-user-id" });
+      const processReaction = vi.fn();
+      await adapter.initialize({ processReaction } as unknown as ChatInstance);
+
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "commentReactionAdded",
+        data: {
+          projectId: "p1",
+          roomId: "room_1",
+          threadId: "th_1",
+          commentId: "cm_1",
+          emoji: "👍",
+          addedAt: "2024-01-01T00:00:00.000Z",
+          addedBy: "bot-user-id",
+        },
+      });
+
+      const res = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+      expect(res.status).toBe(200);
+      const event = processReaction.mock.calls[0]![0];
+      expect(event.user.isBot).toBe(true);
+      expect(event.user.isMe).toBe(true);
+    });
+
+    test("resolves user name via resolveUsers for reaction events", async () => {
+      const resolveUsers = vi.fn().mockResolvedValue([{ name: "Alice Smith" }]);
+      const adapter = createDummyAdapter({ resolveUsers });
+      const processReaction = vi.fn();
+      await adapter.initialize({ processReaction } as unknown as ChatInstance);
+
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "commentReactionAdded",
+        data: {
+          projectId: "p1",
+          roomId: "room_1",
+          threadId: "th_1",
+          commentId: "cm_1",
+          emoji: "👍",
+          addedAt: "2024-01-01T00:00:00.000Z",
+          addedBy: "user_alice",
+        },
+      });
+
+      const res = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+      expect(res.status).toBe(200);
+      expect(resolveUsers).toHaveBeenCalledWith({ userIds: ["user_alice"] });
+      const event = processReaction.mock.calls[0]![0];
+      expect(event.user.userId).toBe("user_alice");
+      expect(event.user.userName).toBe("Alice Smith");
+      expect(event.user.fullName).toBe("Alice Smith");
+    });
+
+    test("calls processReaction with added: false for commentReactionRemoved", async () => {
+      const adapter = createDummyAdapter();
+      const processReaction = vi.fn();
+      await adapter.initialize({ processReaction } as unknown as ChatInstance);
+
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "commentReactionRemoved",
+        data: {
+          projectId: "p1",
+          roomId: "room_1",
+          threadId: "th_1",
+          commentId: "cm_1",
+          emoji: "❤️",
+          removedAt: "2024-01-01T00:00:00.000Z",
+          removedBy: "user_2",
+        },
+      });
+
+      const res = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        })
+      );
+      expect(res.status).toBe(200);
+      expect(processReaction).toHaveBeenCalledTimes(1);
+      const call = processReaction.mock.calls[0]!;
+      const event = call[0];
+      expect(event.added).toBe(false);
+      expect(event.rawEmoji).toBe("❤️");
+      expect(event.messageId).toBe("cm_1");
+      expect(event.threadId).toBe("liveblocks:room_1:th_1");
+      expect(event.user.userId).toBe("user_2");
+      expect(event.user.userName).toBe("user_2");
+      expect(event.adapter).toBe(adapter);
+    });
+
+    test("passes options to processReaction for reaction events", async () => {
+      const adapter = createDummyAdapter();
+      const processReaction = vi.fn();
+      await adapter.initialize({ processReaction } as unknown as ChatInstance);
+
+      mocks.mockVerifyRequest.mockReturnValue({
+        type: "commentReactionAdded",
+        data: {
+          projectId: "p1",
+          roomId: "room_1",
+          threadId: "th_1",
+          commentId: "cm_1",
+          emoji: "🎉",
+          addedAt: "2024-01-01T00:00:00.000Z",
+          addedBy: "user_1",
+        },
+      });
+
+      const waitUntil = vi.fn();
+      const res = await adapter.handleWebhook(
+        new Request("https://example.com/webhook", {
+          method: "POST",
+          body: "{}",
+        }),
+        { waitUntil }
+      );
+      expect(res.status).toBe(200);
+      expect(processReaction).toHaveBeenCalledTimes(1);
+      const call = processReaction.mock.calls[0]!;
+      expect(call[1]).toEqual({ waitUntil });
     });
   });
 
