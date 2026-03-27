@@ -1,4 +1,5 @@
-import { Chat, toAiMessages } from "chat";
+import { Chat } from "chat";
+import { chatMessagesToAiMessages } from "@/app/chatMessagesToAiMessages";
 import {
   createLiveblocksAdapter,
   LiveblocksAdapter,
@@ -45,7 +46,7 @@ bot.onNewMention(async (thread, message) => {
   const response = streamText({
     model,
     system: SYSTEM_PROMPT,
-    messages: await toAiMessages([message]),
+    messages: await chatMessagesToAiMessages([message]),
   });
   await thread.post(response.fullStream);
 });
