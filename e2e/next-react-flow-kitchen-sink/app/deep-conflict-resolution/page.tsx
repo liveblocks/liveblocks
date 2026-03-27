@@ -1,7 +1,7 @@
 "use client";
 
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react";
-import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow/suspense";
+import { Cursors, useLiveblocksFlow } from "@liveblocks/react-flow";
 import {
   Background,
   Handle,
@@ -331,6 +331,7 @@ const INITIAL_EDGES = [{ id: "a-b", source: "a", target: "b" }];
 function Flow() {
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, onDelete } =
     useLiveblocksFlow<ShapeNode>({
+      suspense: true,
       nodes: { initial: INITIAL_NODES },
       edges: { initial: INITIAL_EDGES },
     });
